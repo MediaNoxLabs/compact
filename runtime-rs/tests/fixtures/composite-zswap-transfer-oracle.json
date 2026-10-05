@@ -1,0 +1,2497 @@
+[
+  {
+    "name": "transfer",
+    "left": true,
+    "value": "42",
+    "start": "7",
+    "initialPrivateState": [],
+    "args": [
+      {
+        "nonce": [
+          6,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "color": [
+          8,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "value": "42",
+        "mt_index": "3"
+      },
+      {
+        "nonce": [
+          7,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "color": [
+          8,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "value": "42"
+      },
+      {
+        "is_left": true,
+        "left": {
+          "bytes": [
+            5,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "right": {
+          "bytes": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      [
+        10,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        11,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    ],
+    "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a340008404104000401040408010404080403040c000410080104041458030424480104030401080104040104010401084041000024207472616e73666572000400081c20000424080104042890030440804d62ab32aa06ee023a9d19036a4302a472670812c3bda0dde848da0d37ea2080140820182c201003000400",
+    "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a340008404104000401040408010404080403040c000410080104041458030424480104030401080104040104010401084041000024207472616e73666572000400081c20000424080104042890030440804d62ab32aa06ee023a9d19036a4302a472670812c3bda0dde848da0d37ea2080140820182c201003000400",
+    "result": {
+      "first": "30",
+      "consumed": [],
+      "claimed_input": [],
+      "emitted": [],
+      "claimed_output": [],
+      "address": {
+        "bytes": [
+          9,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "after": "41"
+    },
+    "output": {
+      "value": [
+        [
+          30
+        ],
+        [
+          9
+        ],
+        [
+          41
+        ]
+      ],
+      "alignment": [
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 16
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 16
+          }
+        }
+      ]
+    },
+    "input": {
+      "value": [
+        [
+          6
+        ],
+        [
+          8
+        ],
+        [
+          42
+        ],
+        [
+          3
+        ],
+        [
+          7
+        ],
+        [
+          8
+        ],
+        [
+          42
+        ],
+        [
+          1
+        ],
+        [
+          5
+        ],
+        [],
+        [
+          10
+        ],
+        [
+          11
+        ]
+      ],
+      "alignment": [
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 16
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 8
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 16
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 1
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 32
+          }
+        }
+      ]
+    },
+    "privateState": [
+      3,
+      4
+    ],
+    "privateOutputs": [
+      {
+        "value": [
+          [
+            30
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 8
+            }
+          }
+        ]
+      },
+      {
+        "value": [],
+        "alignment": []
+      },
+      {
+        "value": [],
+        "alignment": []
+      },
+      {
+        "value": [
+          [
+            41
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 8
+            }
+          }
+        ]
+      }
+    ],
+    "publicTranscript": [
+      {
+        "swap": {
+          "n": 0
+        }
+      },
+      {
+        "idx": {
+          "cached": true,
+          "pushPath": true,
+          "path": [
+            {
+              "tag": "value",
+              "value": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "push": {
+          "storage": false,
+          "value": {
+            "tag": "cell",
+            "content": {
+              "value": [
+                [
+                  10
+                ]
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 32
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "push": {
+          "storage": false,
+          "value": {
+            "tag": "null"
+          }
+        }
+      },
+      {
+        "ins": {
+          "cached": true,
+          "n": 2
+        }
+      },
+      {
+        "swap": {
+          "n": 0
+        }
+      },
+      {
+        "swap": {
+          "n": 0
+        }
+      },
+      {
+        "idx": {
+          "cached": true,
+          "pushPath": true,
+          "path": [
+            {
+              "tag": "value",
+              "value": {
+                "value": [
+                  [
+                    2
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "push": {
+          "storage": false,
+          "value": {
+            "tag": "cell",
+            "content": {
+              "value": [
+                [
+                  11
+                ]
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 32
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "push": {
+          "storage": false,
+          "value": {
+            "tag": "null"
+          }
+        }
+      },
+      {
+        "ins": {
+          "cached": true,
+          "n": 2
+        }
+      },
+      {
+        "swap": {
+          "n": 0
+        }
+      },
+      {
+        "dup": {
+          "n": 2
+        }
+      },
+      {
+        "idx": {
+          "cached": true,
+          "pushPath": false,
+          "path": [
+            {
+              "tag": "value",
+              "value": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "popeq": {
+          "cached": true,
+          "result": {
+            "value": [
+              [
+                9
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "bytes",
+                  "length": 32
+                }
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "queries": [
+      {
+        "ops": [
+          {
+            "swap": {
+              "n": 0
+            }
+          },
+          {
+            "idx": {
+              "cached": true,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "push": {
+              "storage": false,
+              "value": {
+                "tag": "cell",
+                "content": {
+                  "value": [
+                    [
+                      10
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "push": {
+              "storage": false,
+              "value": {
+                "tag": "null"
+              }
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 2
+            }
+          },
+          {
+            "swap": {
+              "n": 0
+            }
+          }
+        ],
+        "gas": {
+          "readTime": "0",
+          "computeTime": "1102190592",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      },
+      {
+        "ops": [
+          {
+            "swap": {
+              "n": 0
+            }
+          },
+          {
+            "idx": {
+              "cached": true,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      [
+                        2
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "push": {
+              "storage": false,
+              "value": {
+                "tag": "cell",
+                "content": {
+                  "value": [
+                    [
+                      11
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "push": {
+              "storage": false,
+              "value": {
+                "tag": "null"
+              }
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 2
+            }
+          },
+          {
+            "swap": {
+              "n": 0
+            }
+          }
+        ],
+        "gas": {
+          "readTime": "0",
+          "computeTime": "1102190592",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      },
+      {
+        "ops": [
+          {
+            "dup": {
+              "n": 2
+            }
+          },
+          {
+            "idx": {
+              "cached": true,
+              "pushPath": false,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "popeq": {
+              "cached": true
+            }
+          }
+        ],
+        "gas": {
+          "readTime": "0",
+          "computeTime": "1080730348",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      }
+    ],
+    "replayGas": {
+      "readTime": "0",
+      "computeTime": "1136138594",
+      "bytesWritten": "0",
+      "bytesDeleted": "0"
+    },
+    "plan": {
+      "coinPublicKey": {
+        "bytes": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "currentIndex": "8",
+      "inputs": [
+        {
+          "nonce": [
+            6,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "color": [
+            8,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "value": "42",
+          "mt_index": "3"
+        }
+      ],
+      "outputs": [
+        {
+          "coinInfo": {
+            "nonce": [
+              7,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "color": [
+              8,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "value": "42"
+          },
+          "recipient": {
+            "is_left": true,
+            "left": {
+              "bytes": [
+                5,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ]
+            },
+            "right": {
+              "bytes": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "effects": {
+      "claimedNullifiers": [
+        "0a00000000000000000000000000000000000000000000000000000000000000"
+      ],
+      "claimedShieldedReceives": [],
+      "claimedShieldedSpends": [
+        "0b00000000000000000000000000000000000000000000000000000000000000"
+      ],
+      "claimedContractCalls": [],
+      "shieldedMints": {},
+      "unshieldedMints": {},
+      "unshieldedInputs": {},
+      "unshieldedOutputs": {},
+      "claimedUnshieldedSpends": {}
+    }
+  },
+  {
+    "name": "transfer",
+    "left": false,
+    "value": "42",
+    "start": "11",
+    "initialPrivateState": [
+      99
+    ],
+    "args": [
+      {
+        "nonce": [
+          6,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "color": [
+          8,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "value": "42",
+        "mt_index": "3"
+      },
+      {
+        "nonce": [
+          7,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "color": [
+          8,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "value": "42"
+      },
+      {
+        "is_left": false,
+        "left": {
+          "bytes": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "right": {
+          "bytes": [
+            9,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      [
+        10,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        11,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    ],
+    "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a340008404104000401040408010404080403040c000410080104041458030424480104030401080104040104010401084041000024207472616e73666572000400081c20000424080104042890030440804d62ab32aa06ee023a9d19036a4302a472670812c3bda0dde848da0d37ea2080140820182c201003000400",
+    "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a340008404104000401040408010404080403040c000410080104041458030424480104030401080104040104010401084041000024207472616e73666572000400081c20000424080104042890030440804d62ab32aa06ee023a9d19036a4302a472670812c3bda0dde848da0d37ea2080140820182c201003000400",
+    "result": {
+      "first": "31",
+      "consumed": [],
+      "claimed_input": [],
+      "emitted": [],
+      "claimed_output": [],
+      "address": {
+        "bytes": [
+          9,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "after": "42"
+    },
+    "output": {
+      "value": [
+        [
+          31
+        ],
+        [
+          9
+        ],
+        [
+          42
+        ]
+      ],
+      "alignment": [
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 16
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 16
+          }
+        }
+      ]
+    },
+    "input": {
+      "value": [
+        [
+          6
+        ],
+        [
+          8
+        ],
+        [
+          42
+        ],
+        [
+          3
+        ],
+        [
+          7
+        ],
+        [
+          8
+        ],
+        [
+          42
+        ],
+        [],
+        [],
+        [
+          9
+        ],
+        [
+          10
+        ],
+        [
+          11
+        ]
+      ],
+      "alignment": [
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 16
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 8
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 16
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 1
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 32
+          }
+        }
+      ]
+    },
+    "privateState": [
+      99,
+      3,
+      4
+    ],
+    "privateOutputs": [
+      {
+        "value": [
+          [
+            31
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 8
+            }
+          }
+        ]
+      },
+      {
+        "value": [],
+        "alignment": []
+      },
+      {
+        "value": [],
+        "alignment": []
+      },
+      {
+        "value": [
+          [
+            42
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 8
+            }
+          }
+        ]
+      }
+    ],
+    "publicTranscript": [
+      {
+        "swap": {
+          "n": 0
+        }
+      },
+      {
+        "idx": {
+          "cached": true,
+          "pushPath": true,
+          "path": [
+            {
+              "tag": "value",
+              "value": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "push": {
+          "storage": false,
+          "value": {
+            "tag": "cell",
+            "content": {
+              "value": [
+                [
+                  10
+                ]
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 32
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "push": {
+          "storage": false,
+          "value": {
+            "tag": "null"
+          }
+        }
+      },
+      {
+        "ins": {
+          "cached": true,
+          "n": 2
+        }
+      },
+      {
+        "swap": {
+          "n": 0
+        }
+      },
+      {
+        "swap": {
+          "n": 0
+        }
+      },
+      {
+        "idx": {
+          "cached": true,
+          "pushPath": true,
+          "path": [
+            {
+              "tag": "value",
+              "value": {
+                "value": [
+                  [
+                    2
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "push": {
+          "storage": false,
+          "value": {
+            "tag": "cell",
+            "content": {
+              "value": [
+                [
+                  11
+                ]
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 32
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "push": {
+          "storage": false,
+          "value": {
+            "tag": "null"
+          }
+        }
+      },
+      {
+        "ins": {
+          "cached": true,
+          "n": 2
+        }
+      },
+      {
+        "swap": {
+          "n": 0
+        }
+      },
+      {
+        "dup": {
+          "n": 2
+        }
+      },
+      {
+        "idx": {
+          "cached": true,
+          "pushPath": false,
+          "path": [
+            {
+              "tag": "value",
+              "value": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "popeq": {
+          "cached": true,
+          "result": {
+            "value": [
+              [
+                9
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "bytes",
+                  "length": 32
+                }
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "queries": [
+      {
+        "ops": [
+          {
+            "swap": {
+              "n": 0
+            }
+          },
+          {
+            "idx": {
+              "cached": true,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "push": {
+              "storage": false,
+              "value": {
+                "tag": "cell",
+                "content": {
+                  "value": [
+                    [
+                      10
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "push": {
+              "storage": false,
+              "value": {
+                "tag": "null"
+              }
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 2
+            }
+          },
+          {
+            "swap": {
+              "n": 0
+            }
+          }
+        ],
+        "gas": {
+          "readTime": "0",
+          "computeTime": "1102190592",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      },
+      {
+        "ops": [
+          {
+            "swap": {
+              "n": 0
+            }
+          },
+          {
+            "idx": {
+              "cached": true,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      [
+                        2
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "push": {
+              "storage": false,
+              "value": {
+                "tag": "cell",
+                "content": {
+                  "value": [
+                    [
+                      11
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "push": {
+              "storage": false,
+              "value": {
+                "tag": "null"
+              }
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 2
+            }
+          },
+          {
+            "swap": {
+              "n": 0
+            }
+          }
+        ],
+        "gas": {
+          "readTime": "0",
+          "computeTime": "1102190592",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      },
+      {
+        "ops": [
+          {
+            "dup": {
+              "n": 2
+            }
+          },
+          {
+            "idx": {
+              "cached": true,
+              "pushPath": false,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "popeq": {
+              "cached": true
+            }
+          }
+        ],
+        "gas": {
+          "readTime": "0",
+          "computeTime": "1080730348",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      }
+    ],
+    "replayGas": {
+      "readTime": "0",
+      "computeTime": "1136138594",
+      "bytesWritten": "0",
+      "bytesDeleted": "0"
+    },
+    "plan": {
+      "coinPublicKey": {
+        "bytes": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "currentIndex": "12",
+      "inputs": [
+        {
+          "nonce": [
+            6,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "color": [
+            8,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "value": "42",
+          "mt_index": "3"
+        }
+      ],
+      "outputs": [
+        {
+          "coinInfo": {
+            "nonce": [
+              7,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "color": [
+              8,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "value": "42"
+          },
+          "recipient": {
+            "is_left": false,
+            "left": {
+              "bytes": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ]
+            },
+            "right": {
+              "bytes": [
+                9,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "effects": {
+      "claimedNullifiers": [
+        "0a00000000000000000000000000000000000000000000000000000000000000"
+      ],
+      "claimedShieldedReceives": [],
+      "claimedShieldedSpends": [
+        "0b00000000000000000000000000000000000000000000000000000000000000"
+      ],
+      "claimedContractCalls": [],
+      "shieldedMints": {},
+      "unshieldedMints": {},
+      "unshieldedInputs": {},
+      "unshieldedOutputs": {},
+      "claimedUnshieldedSpends": {}
+    }
+  }
+]

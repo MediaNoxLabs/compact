@@ -1,0 +1,414 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "marker",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "composite_zswap_transfer_oracle.compact",
+        "line": 17,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "next_value",
+      "parameters": [
+        {
+          "name": "tag",
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "18446744073709551615"
+      },
+      "source": {
+        "file": "composite_zswap_transfer_oracle.compact",
+        "line": 27,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "transfer",
+      "parameters": [
+        {
+          "name": "input",
+          "ty": {
+            "kind": "struct",
+            "name": "QualifiedShieldedCoinInfo",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "color",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "340282366920938463463374607431768211455"
+                }
+              },
+              {
+                "name": "mt_index",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "18446744073709551615"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "coin",
+          "ty": {
+            "kind": "struct",
+            "name": "ShieldedCoinInfo",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "color",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "340282366920938463463374607431768211455"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "recipient",
+          "ty": {
+            "kind": "struct",
+            "name": "Either",
+            "fields": [
+              {
+                "name": "is_left",
+                "ty": {
+                  "kind": "boolean"
+                }
+              },
+              {
+                "name": "left",
+                "ty": {
+                  "kind": "struct",
+                  "name": "ZswapCoinPublicKey",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "right",
+                "ty": {
+                  "kind": "struct",
+                  "name": "ContractAddress",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "nullifier",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "commitment",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Transfer",
+        "fields": [
+          {
+            "name": "first",
+            "ty": {
+              "kind": "unsigned",
+              "max": "340282366920938463463374607431768211455"
+            }
+          },
+          {
+            "name": "consumed",
+            "ty": {
+              "kind": "unit"
+            }
+          },
+          {
+            "name": "claimed_input",
+            "ty": {
+              "kind": "unit"
+            }
+          },
+          {
+            "name": "emitted",
+            "ty": {
+              "kind": "unit"
+            }
+          },
+          {
+            "name": "claimed_output",
+            "ty": {
+              "kind": "unit"
+            }
+          },
+          {
+            "name": "address",
+            "ty": {
+              "kind": "struct",
+              "name": "ContractAddress",
+              "fields": [
+                {
+                  "name": "bytes",
+                  "ty": {
+                    "kind": "bytes",
+                    "length": 32
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "after",
+            "ty": {
+              "kind": "unsigned",
+              "max": "340282366920938463463374607431768211455"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "struct_literal",
+          "ty": {
+            "kind": "struct",
+            "name": "Transfer",
+            "fields": [
+              {
+                "name": "first",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "340282366920938463463374607431768211455"
+                }
+              },
+              {
+                "name": "consumed",
+                "ty": {
+                  "kind": "unit"
+                }
+              },
+              {
+                "name": "claimed_input",
+                "ty": {
+                  "kind": "unit"
+                }
+              },
+              {
+                "name": "emitted",
+                "ty": {
+                  "kind": "unit"
+                }
+              },
+              {
+                "name": "claimed_output",
+                "ty": {
+                  "kind": "unit"
+                }
+              },
+              {
+                "name": "address",
+                "ty": {
+                  "kind": "struct",
+                  "name": "ContractAddress",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "after",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "340282366920938463463374607431768211455"
+                }
+              }
+            ]
+          },
+          "fields": [
+            {
+              "kind": "unsigned_cast",
+              "max": "340282366920938463463374607431768211455",
+              "value": {
+                "kind": "witness_call",
+                "name": "next_value",
+                "arguments": [
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "unsigned_literal",
+                      "value": "3",
+                      "max": "255"
+                    },
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "255"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": "create_zswap_input",
+              "coin": {
+                "kind": "parameter",
+                "name": "input"
+              }
+            },
+            {
+              "kind": "kernel_claim",
+              "claim": "nullifier",
+              "value": {
+                "kind": "parameter",
+                "name": "nullifier"
+              }
+            },
+            {
+              "kind": "create_zswap_output",
+              "coin": {
+                "kind": "parameter",
+                "name": "coin"
+              },
+              "recipient": {
+                "kind": "parameter",
+                "name": "recipient"
+              }
+            },
+            {
+              "kind": "kernel_claim",
+              "claim": "coin_spend",
+              "value": {
+                "kind": "parameter",
+                "name": "commitment"
+              }
+            },
+            {
+              "kind": "kernel_self",
+              "ty": {
+                "kind": "struct",
+                "name": "ContractAddress",
+                "fields": [
+                  {
+                    "name": "bytes",
+                    "ty": {
+                      "kind": "bytes",
+                      "length": 32
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": "unsigned_cast",
+              "max": "340282366920938463463374607431768211455",
+              "value": {
+                "kind": "witness_call",
+                "name": "next_value",
+                "arguments": [
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "unsigned_literal",
+                      "value": "4",
+                      "max": "255"
+                    },
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "255"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "composite_zswap_transfer_oracle.compact",
+        "line": 30,
+        "column": 1
+      }
+    }
+  ]
+}

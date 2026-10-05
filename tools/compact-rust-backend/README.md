@@ -69,9 +69,9 @@ TypeScript/native/recorded output, private sequence, program and gas parity.
 Named source fields use the compiler's normalized declared-member order. All
 three nonempty paths prove and ledger-apply under the existing unbalanced smoke
 policy. `snapshot(false)` preserves zero operations and rejects preparation with
-`EmptyTranscript`, matching the pinned ledger boundary. The `planned` Zswap
-output intent remains a separate recording gap. Runtime ABI47/schema20 stay
-unchanged by this slice.
+`EmptyTranscript`, matching the pinned ledger boundary. ADR0191 below adds the
+`planned` Zswap output member using the same typed planner. ADR0187 itself made
+no runtime ABI or schema change.
 
 ## Portable compiler archives
 
@@ -1092,8 +1092,9 @@ Night-backed Dust pays fees separately. Unchanged default strictness and ledger
 application pass, including actual output index/commitment, stored coin and exact
 spent-nullifier replay rejection. A wrong Kernel claim rejects the exact upstream
 effects check; balancing is disabled only for that negative. No wallet/network or
-finality claim is made. Composite-return `planned` and broader offer composition
-remain separate work. Funded smoke requires `MIDNIGHT_LEDGER_TEST_STATIC_DIR`.
+finality claim is made. ADR0191 below covers composite-return `planned`; broader
+offer composition remains separate work. Funded smoke requires
+`MIDNIGHT_LEDGER_TEST_STATIC_DIR`.
 
 ### Context-derived token query recording (ADR0190)
 
@@ -1148,3 +1149,52 @@ and both Rust execution modes is 1,360,000,000. The fixture retains `reportedGas
 cost because query setup/cache behavior differs. This delivery preserves these
 behaviors and does not claim equality between wrapper gas and aggregate gas, or
 invent post-error contexts/costs.
+
+### Unit-valued shielded composite results (ADR0191)
+
+The original `stateful_struct_oracle.planned` and the separate
+`composite_zswap_transfer_oracle.transfer` have recorded and observed-call APIs.
+The composite profile reuses the existing typed values, scopes, member ordering
+and declaration-directed helper dispatch. A small shared effect-leaf emitter
+accepts already evaluated operands and calls existing frame methods; it owns no
+second evaluator or call graph. The bounded profile admits exact input/output
+intents and Kernel claims, requires a structurally present public query, and
+rejects mint composition. Runtime ABI48 and IR schema20 are unchanged.
+
+Before this slice, `planned` could execute only through the native API:
+
+```rust
+let execution = ledger_contract::planned(context, &witnesses, coin, recipient)?;
+```
+
+It now also returns its typed composite through a recorded, offer-bound call:
+
+```rust
+let contract = ledger_contract::Contract::from(witnesses);
+let call = contract.recording().planned_call(
+    offer_bound.observed(), private_state, coin, recipient,
+)?;
+let result = &call.recorded().execution.result;
+// result.first, result.emitted: (), result.address, result.after
+let prepared = offer_bound.prepare(call, verifier, communication_randomness)?;
+```
+
+Native execution may allocate provisional intents. Offer-backed preparation
+retains ADR0188's exact input/output order, cursor and index-map validation.
+Extra wallet inputs, trailing change and transients remain unsupported; generic
+unbound preparation rejects the nonempty plan. The original output-only circuit
+cannot fund value42: its exact offer fails the shielded-token -42 balance check,
+and adding a wallet input fails reconciliation. A contract recipient fails the
+exact missing-receive-claim check under default strictness, including at value0.
+
+Four original and two transfer TypeScript cases compare native/recorded aligned
+results, witnesses, private/public transcripts, effects, replay, gas and exact
+intents/indices. The original `planned` user output with value0 is proved and
+ledger-applied with separate Night-backed Dust. The separate composite transfer
+uses an explicitly seeded contract-owned input and a distinct output42 of the
+same token, with actual nullifier/spend claims and same-frame `Kernel.self`.
+Both retain ordered Unit members and independently verified call proofs with
+binding-tamper rejection. No synthetic public query, missing claim or funding
+input is inserted. Run `check_compactc_target.py --composite-zswap --proof` for
+these strict cases; its nonproof mode checks compiler admission. The actual local
+parity gate joins proof applicability to contract-info before testing fixtures.

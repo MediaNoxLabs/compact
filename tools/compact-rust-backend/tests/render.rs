@@ -10818,7 +10818,7 @@ fn kernel_recording_rejects_public_slot_composition_and_escaped_scopes() {
 }
 
 #[test]
-fn stateful_structs_validate_member_types_and_keep_zswap_members_native_only() {
+fn stateful_structs_validate_member_types_and_record_zswap_unit_members() {
     let mut contract: Contract =
         serde_json::from_str(include_str!("stateful-struct-schema20-ir.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
@@ -10830,7 +10830,7 @@ fn stateful_structs_validate_member_types_and_keep_zswap_members_native_only() {
             .capabilities
             .circuits
             .iter()
-            .all(|c| c.recorded == (c.name != "planned") && c.observed_call == c.recorded)
+            .all(|c| c.recorded && c.observed_call)
     );
     for mode in 0..4 {
         let mut wrong = contract.clone();
@@ -11147,4 +11147,106 @@ fn zswap_recording_does_not_adopt_query_helpers_or_escaped_bindings() {
         },
     });
     assert!(render_with_capabilities(&contract).is_err());
+}
+
+#[test]
+fn composite_intents_require_public_queries_and_exact_typed_effect_operands() {
+    let original: Contract =
+        serde_json::from_str(include_str!("stateful-struct-schema20-ir.json")).unwrap();
+    let transfer: Contract =
+        serde_json::from_str(include_str!("composite-zswap-transfer-schema20-ir.json")).unwrap();
+    for source in [&original, &transfer] {
+        let out = render_with_capabilities(source).unwrap();
+        assert!(
+            out.capabilities
+                .circuits
+                .iter()
+                .all(|c| c.recorded && c.observed_call)
+        );
+        assert!(out.source.contains("create_zswap_output("));
+        assert!(out.source.contains("kernel_self()?"));
+        assert!(!out.source.contains(".call_local("));
+    }
+    for mode in 0..4 {
+        let mut invalid = original.clone();
+        let planned = invalid
+            .stateful_circuits
+            .iter_mut()
+            .find(|c| c.name == "planned")
+            .unwrap();
+        let StateReturn::Expression {
+            value: Expr::StructLiteral { fields, .. },
+        } = &mut planned.return_value
+        else {
+            panic!("planned literal")
+        };
+        match mode {
+            0 | 1 => {
+                let Expr::CreateZswapOutput { coin, recipient } = &mut fields[1] else {
+                    panic!("output member")
+                };
+                if mode == 0 {
+                    **coin = Expr::Boolean { value: false };
+                } else {
+                    **recipient = Expr::Boolean { value: false };
+                }
+            }
+            2 => {
+                let Expr::CreateZswapOutput { coin, .. } = &mut fields[1] else {
+                    panic!("output member")
+                };
+                **coin = Expr::Parameter {
+                    name: "escaped".into(),
+                };
+            }
+            _ => fields[1] = Expr::Boolean { value: true },
+        }
+        assert!(
+            render_with_capabilities(&invalid).is_err(),
+            "malformed effect mode {mode}"
+        );
+    }
+    let mut no_query = original.clone();
+    let planned = no_query
+        .stateful_circuits
+        .iter_mut()
+        .find(|c| c.name == "planned")
+        .unwrap();
+    let StateReturn::Expression {
+        value: Expr::StructLiteral { fields, .. },
+    } = &mut planned.return_value
+    else {
+        panic!("planned literal")
+    };
+    let Expr::KernelSelf { ty } = &fields[2] else {
+        panic!("Kernel.self")
+    };
+    fields[2] = Expr::Default { ty: ty.clone() };
+    let out = render_with_capabilities(&no_query).unwrap();
+    let planned = out
+        .capabilities
+        .circuits
+        .iter()
+        .find(|c| c.name == "planned")
+        .unwrap();
+    assert!(!planned.recorded && !planned.observed_call);
+    // Mint composition has no evidence in this narrowly admitted value profile.
+    let mut unsupported = transfer.clone();
+    let StateReturn::Expression {
+        value: Expr::StructLiteral { fields, .. },
+    } = &mut unsupported.stateful_circuits[0].return_value
+    else {
+        panic!("transfer literal")
+    };
+    fields[2] = Expr::KernelMintShielded {
+        domain: Box::new(Expr::Parameter {
+            name: "nullifier".into(),
+        }),
+        amount: Box::new(Expr::UnsignedLiteral {
+            value: "1".into(),
+            max: u64::MAX.to_string(),
+        }),
+    };
+    let out = render_with_capabilities(&unsupported).unwrap();
+    assert!(!out.capabilities.circuits[0].recorded);
 }

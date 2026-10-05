@@ -38,6 +38,7 @@ mod asset_writable;
 mod bboard;
 mod boolean_pair_assert;
 mod closed_pure_field;
+mod composite_zswap;
 mod counter_less_than;
 mod effectful_return;
 mod election_commit;
@@ -2010,6 +2011,27 @@ fn run() -> Result<(), Box<dyn Error>> {
             Ok(Ok(())) => Ok(()),
             Ok(Err(error)) => Err(error.into()),
             Err(_) => Err("microDAO token proof thread panicked".into()),
+        };
+    }
+    if first.as_deref() == Some(OsStr::new("--composite-zswap")) {
+        let root = arguments.next().ok_or(
+            "usage: compact-rust-proof-smoke --composite-zswap <original-proof> <transfer-proof>",
+        )?;
+        let transfer = arguments.next().ok_or("missing transfer proof directory")?;
+        if arguments.next().is_some() {
+            return Err("unexpected composite Zswap argument".into());
+        }
+        let proof = std::thread::Builder::new()
+            .name("composite-zswap-proof".into())
+            .stack_size(64 * 1024 * 1024)
+            .spawn(move || {
+                composite_zswap::run(Path::new(&root), Path::new(&transfer))
+                    .map_err(|e| e.to_string())
+            })?;
+        return match proof.join() {
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(error)) => Err(error.into()),
+            Err(_) => Err("composite Zswap proof thread panicked".into()),
         };
     }
     if first.as_deref() == Some(OsStr::new("--stateful-struct")) {

@@ -16,6 +16,7 @@
 //! Emit complete replayable traces from supported typed stateful IR.
 //! Unsupported effect shapes have no generated recorded entry point.
 
+mod intent_effect;
 mod kernel_plan;
 mod typed_plan;
 mod zswap_plan;

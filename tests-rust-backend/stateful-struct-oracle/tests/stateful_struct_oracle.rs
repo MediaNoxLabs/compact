@@ -225,6 +225,25 @@ fn composite_recording_matches_ts_members_calls_and_empty_branch() {
                 let v = json!({"head":snapshot(&out.execution.result.head),"tail":out.execution.result.tail.value().to_string()});
                 check_recorded(out, v, row);
             }
+            "planned" => {
+                let coin = types::ShieldedCoinInfo {
+                    nonce: runtime::FixedBytes::new(bytes(7)),
+                    color: runtime::FixedBytes::new(bytes(8)),
+                    value: runtime::BoundedUint::new(42).unwrap(),
+                };
+                let recipient = types::Either {
+                    is_left: false,
+                    left: types::ZswapCoinPublicKey {
+                        bytes: runtime::FixedBytes::new(bytes(0)),
+                    },
+                    right: types::ContractAddress {
+                        bytes: runtime::FixedBytes::new(bytes(9)),
+                    },
+                };
+                let out = c::recorded::planned(ctx, &Witnesses, coin, recipient).unwrap();
+                let v = json!({"first":out.execution.result.first.value().to_string(),"emitted":[],"address":{"bytes":out.execution.result.address.bytes.0},"after":out.execution.result.after.value().to_string()});
+                check_recorded(out, v, row);
+            }
             _ => {}
         }
     }

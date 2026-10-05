@@ -16,7 +16,6 @@
 //! Bounded intent recording and inlined Unit helper effects.
 
 use super::*;
-use crate::ir::KernelClaimKind;
 
 #[derive(Clone)]
 struct Value {
@@ -88,78 +87,25 @@ impl ZswapPlan<'_> {
     }
 
     fn effect(&mut self, expr: &Expr, scope: &Scope, steps: &mut Vec<syn::Stmt>) -> Option<()> {
-        match expr {
-            Expr::CreateZswapInput { coin } => {
-                let coin = self.value(coin, scope, steps)?;
-                if coin.ty != crate::stateful::qualified_coin_type() {
-                    return None;
-                }
-                let coin = coin.expr;
-                steps.push(syn::parse_quote! { let frame = frame.create_zswap_input(
-                    runtime::ledger::coin_info_from_compact(#coin.nonce, #coin.color, #coin.value.value()).qualify(#coin.mt_index.value() as u64)
-                ); });
-                self.effects += 1;
-            }
-            Expr::CreateZswapOutput { coin, recipient } => {
-                let coin = self.value(coin, scope, steps)?;
-                if coin.ty != crate::stateful::shielded_coin_type() {
-                    return None;
-                }
-                let recipient = self.value(recipient, scope, steps)?;
-                if recipient.ty != crate::stateful::shielded_recipient_type() {
-                    return None;
-                }
-                let (coin, recipient) = (coin.expr, recipient.expr);
-                steps.push(syn::parse_quote! { let frame = frame.create_zswap_output(
-                    runtime::ledger::coin_info_from_compact(#coin.nonce, #coin.color, #coin.value.value()),
-                    runtime::ledger::coin_recipient_from_compact(#recipient.is_left, #recipient.left.bytes, #recipient.right.bytes)
-                )?; });
-                self.effects += 1;
-            }
-            Expr::KernelClaim { claim, value } => {
-                self.public_queries += 1;
-                let value = self.value(value, scope, steps)?;
-                if value.ty != (Type::Bytes { length: 32 }) {
-                    return None;
-                }
-                let value = value.expr;
-                let (variant, carrier) = match claim {
-                    KernelClaimKind::Nullifier => ("Nullifier", "CoinNullifier"),
-                    KernelClaimKind::CoinSpend => ("CoinSpend", "CoinCommitment"),
-                    KernelClaimKind::CoinReceive => ("CoinReceive", "CoinCommitment"),
-                };
-                let variant = ident(variant).ok()?;
-                let carrier = ident(carrier).ok()?;
-                steps.push(syn::parse_quote! {
-                    let frame = frame.kernel_claim(runtime::ledger::KernelClaim::#variant(
-                        runtime::ledger::#carrier(runtime::ledger::HashOutput((#value).into_array()))
-                    ))?;
-                });
-            }
-            Expr::KernelMintShielded { domain, amount } => {
-                self.public_queries += 1;
-                // Materialize domain before evaluating amount's witness.
-                let domain = self.value(domain, scope, steps)?;
-                if domain.ty != (Type::Bytes { length: 32 }) {
-                    return None;
-                }
-                let amount = self.value(amount, scope, steps)?;
-                if amount.ty
-                    != (Type::Unsigned {
-                        max: u64::MAX.to_string(),
-                    })
-                {
-                    return None;
-                }
-                let (domain, amount) = (domain.expr, amount.expr);
-                steps.push(syn::parse_quote! {
-                    let frame = frame.kernel_mint_shielded(
-                        runtime::ledger::HashOutput((#domain).into_array()), (#amount).value() as u64,
-                    )?;
-                });
-            }
+        // Evaluate operands in source order before the shared typed leaf emitter.
+        let operands: Vec<&Expr> = match expr {
+            Expr::CreateZswapInput { coin } => vec![coin],
+            Expr::CreateZswapOutput { coin, recipient } => vec![coin, recipient],
+            Expr::KernelClaim { value, .. } => vec![value],
+            Expr::KernelMintShielded { domain, amount } => vec![domain, amount],
             _ => return None,
-        }
+        };
+        let operands = operands
+            .into_iter()
+            .map(|operand| {
+                let value = self.value(operand, scope, steps)?;
+                Some((value.ty, value.expr))
+            })
+            .collect::<Option<Vec<_>>>()?;
+        let effect = intent_effect::emit(expr, &operands)?;
+        self.effects += usize::from(effect.intent);
+        self.public_queries += usize::from(effect.public_query);
+        steps.push(effect.statement);
         Some(())
     }
 

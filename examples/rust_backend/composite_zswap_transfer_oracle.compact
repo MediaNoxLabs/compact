@@ -1,0 +1,42 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import CompactStandardLibrary;
+export ledger marker: Field;
+export struct Transfer {
+  first: Uint<128>;
+  consumed: [];
+  claimed_input: [];
+  emitted: [];
+  claimed_output: [];
+  address: ContractAddress;
+  after: Uint<128>;
+}
+witness next_value(tag: Uint<8>): Uint<64>;
+
+// Actual upstream nullifier/commitment bind the exact funded offer; no change.
+export circuit transfer(input: QualifiedShieldedCoinInfo, coin: ShieldedCoinInfo,
+                        recipient: Either<ZswapCoinPublicKey, ContractAddress>,
+                        nullifier: Bytes<32>, commitment: Bytes<32>): Transfer {
+  return Transfer {
+    first: disclose(next_value(3)) as Uint<128>,
+    consumed: createZswapInput(input),
+    claimed_input: kernel.claimZswapNullifier(disclose(nullifier)),
+    emitted: createZswapOutput(coin, recipient),
+    claimed_output: kernel.claimZswapCoinSpend(disclose(commitment)),
+    address: kernel.self(),
+    after: disclose(next_value(4)) as Uint<128>
+  };
+}

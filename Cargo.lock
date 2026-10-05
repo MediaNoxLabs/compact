@@ -1028,6 +1028,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-composite-zswap-transfer-oracle-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-stateful-struct-oracle-fixture",
+ "hex",
+ "midnight-base-crypto",
+ "midnight-coin-structure",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-constructor-assert-sequence-fixture"
 version = "0.1.0"
 dependencies = [
@@ -1946,6 +1962,7 @@ dependencies = [
  "compact-rust-chunked-list-fixture",
  "compact-rust-chunked-map-fixture",
  "compact-rust-chunked-set-observed-fixture",
+ "compact-rust-composite-zswap-transfer-oracle-fixture",
  "compact-rust-constructor-list-actions-fixture",
  "compact-rust-constructor-map-actions-fixture",
  "compact-rust-counter-fixture",

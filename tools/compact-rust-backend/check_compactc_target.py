@@ -1206,7 +1206,8 @@ def main() -> None:
     parser.add_argument("--wide-add", action="store_true", help="check bounded native wide addition and original-source progress")
     parser.add_argument("--micro-dao-reveal", action="store_true", help="check original microDAO reveal recording; optional selective proof")
     parser.add_argument("--micro-dao-token", action="store_true", help="check original microDAO token recording; optional selective proof")
-    parser.add_argument("--stateful-struct", action="store_true", help="check ordered typed native struct construction and its remaining original-source boundary")
+    parser.add_argument("--composite-zswap", action="store_true", help="check composite intent recording and optional original-zero/funded-transfer proofs")
+    parser.add_argument("--stateful-struct", action="store_true", help="check ordered composite recording and original micro-dao native admission")
     parser.add_argument("--kernel-shielded-effects", action="store_true", help="check typed Kernel recording and optional call/funded-mint proofs")
     parser.add_argument("--native-zswap-intents", action="store_true", help="check recorded Zswap intent admission and optional strict funded transfer proof")
     parser.add_argument("--qualified-coin-cell", action="store_true",
@@ -1300,6 +1301,19 @@ def main() -> None:
                 run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--micro-dao-reveal" if args.micro_dao_reveal else "--micro-dao-token", str(output))
             print("original microDAO: vote_reveal and dao_voting_token recorded, five proof-required gaps retained")
             return
+        if args.composite_zswap:
+            outputs = []
+            for stem, names in [("stateful_struct_oracle", {"snapshot", "reverse", "nested", "planned"}), ("composite_zswap_transfer_oracle", {"transfer"})]:
+                output = base / stem
+                run(compiler, "--target", "rust", "--rust-require-recording", *([] if args.proof else ["--skip-zk"]), str(ROOT / f"examples/rust_backend/{stem}.compact"), str(output))
+                report = json.loads((output / "contract/rust-capabilities.json").read_text())
+                assert {row["name"] for row in report["circuits"]} == names
+                assert all(row["recorded"] and row["observed_call"] and row["proof_required"] for row in report["circuits"])
+                outputs.append(output)
+            if args.proof:
+                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--composite-zswap", *(str(output) for output in outputs))
+            print("composite Unit intents and same-frame Kernel queries admitted; exact offer policy retained")
+            return
         if args.stateful_struct:
             source = ROOT / "examples/rust_backend/stateful_struct_oracle.compact"
             output = base / "stateful-struct"
@@ -1312,11 +1326,11 @@ def main() -> None:
             report = json.loads((output / "contract/rust-capabilities.json").read_text())
             assert len(report["circuits"]) == 4
             for row in report["circuits"]:
-                assert row["recorded"] == (row["name"] != "planned")
+                assert row["recorded"]
                 assert row["observed_call"] == row["recorded"]
                 assert row["proof_required"]
             strict = subprocess.run([compiler, "--target", "rust", "--rust-require-recording", "--skip-zk", str(source), str(base / "strict-struct")], cwd=ROOT, capture_output=True,text=True)
-            assert strict.returncode != 0 and "planned" in strict.stderr
+            assert strict.returncode == 0, strict.stderr
             if args.proof:
                 proof = base / "stateful-struct-proof"
                 run(compiler,"--target","rust",str(source),str(proof))
@@ -1667,6 +1681,8 @@ def main() -> None:
         run(sys.executable, str(Path(__file__).resolve()), "--kernel-shielded-effects",
             *(["--proof"] if args.proof else []))
         run(sys.executable, str(Path(__file__).resolve()), "--stateful-struct")
+        run(sys.executable, str(Path(__file__).resolve()), "--composite-zswap",
+            *(["--proof"] if args.proof else []))
         run(sys.executable, str(Path(__file__).resolve()), "--micro-dao-token",
             *(["--proof"] if args.proof else []))
         run(sys.executable, str(Path(__file__).resolve()), "--micro-dao-reveal",

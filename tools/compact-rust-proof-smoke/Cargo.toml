@@ -132,3 +132,5 @@ compact-rust-effectful-return-oracle-fixture = { path = "../../tests-rust-backen
 compact-rust-stateful-assert-oracle-fixture = { path = "../../tests-rust-backend/stateful-assert-oracle", features = ["ledger-transaction"] }
 compact-rust-stateful-struct-oracle-fixture = { path = "../../tests-rust-backend/stateful-struct-oracle", features = ["ledger-transaction"] }
 compact-rust-test-center-micro-dao-fixture = { path = "../../tests-rust-backend/test-center-micro-dao", features = ["ledger-transaction"] }
+
+compact-rust-composite-zswap-transfer-oracle-fixture = { path = "../../tests-rust-backend/composite-zswap-transfer-oracle", features = ["ledger-transaction"] }

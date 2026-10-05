@@ -697,6 +697,79 @@ pub mod ledger_contract {
             };
             Ok(frame.finish(__compact_plan_19))
         }
+        pub fn planned<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: crate::types::ShieldedCoinInfo,
+            __compact_param_1: crate::types::Either,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, crate::types::Planned>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_plan_0: runtime::BoundedUint<255> =
+                runtime::BoundedUint::<255>::new(3u128)
+                    .expect("Compact Uint literal fits its maximum");
+            let __compact_plan_1: runtime::BoundedUint<255> = __compact_plan_0;
+            let (frame, __compact_plan_2): (_, runtime::BoundedUint<18446744073709551615>) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.next_value(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_plan_1,
+                    )
+                })?;
+            let __compact_plan_3: runtime::BoundedUint<340282366920938463463374607431768211455> =
+                runtime::cast_unsigned::<
+                    18446744073709551615,
+                    340282366920938463463374607431768211455,
+                >(__compact_plan_2)?;
+            let frame = frame.create_zswap_output(
+                runtime::ledger::coin_info_from_compact(
+                    (__compact_param_0).clone().nonce,
+                    (__compact_param_0).clone().color,
+                    (__compact_param_0).clone().value.value(),
+                ),
+                runtime::ledger::coin_recipient_from_compact(
+                    (__compact_param_1).clone().is_left,
+                    (__compact_param_1).clone().left.bytes,
+                    (__compact_param_1).clone().right.bytes,
+                ),
+            )?;
+            let __compact_plan_4: () = ();
+            let (frame, __compact_plan_5) = frame.kernel_self()?;
+            let __compact_plan_6: crate::types::ContractAddress = crate::types::ContractAddress {
+                bytes: runtime::ledger::contract_address_bytes(&__compact_plan_5),
+            };
+            let __compact_plan_7: runtime::BoundedUint<255> =
+                runtime::BoundedUint::<255>::new(4u128)
+                    .expect("Compact Uint literal fits its maximum");
+            let __compact_plan_8: runtime::BoundedUint<255> = __compact_plan_7;
+            let (frame, __compact_plan_9): (_, runtime::BoundedUint<18446744073709551615>) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.next_value(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_plan_8,
+                    )
+                })?;
+            let __compact_plan_10: runtime::BoundedUint<340282366920938463463374607431768211455> =
+                runtime::cast_unsigned::<
+                    18446744073709551615,
+                    340282366920938463463374607431768211455,
+                >(__compact_plan_9)?;
+            let __compact_plan_11: crate::types::Planned = crate::types::Planned {
+                first: __compact_plan_3,
+                emitted: __compact_plan_4,
+                address: __compact_plan_6,
+                after: __compact_plan_10,
+            };
+            Ok(frame.finish(__compact_plan_11))
+        }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
         impl Contract {}
@@ -795,6 +868,41 @@ pub mod ledger_contract {
                 let recorded = self.nested(observed.circuit_context(private_state))?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "nested", input,
+                ))
+            }
+            pub fn planned<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                coin: crate::types::ShieldedCoinInfo,
+                recipient: crate::types::Either,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, crate::types::Planned>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                planned(context, self.witnesses, coin, recipient)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn planned_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                coin: crate::types::ShieldedCoinInfo,
+                recipient: crate::types::Either,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, crate::types::Planned>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(((coin).clone(), (recipient).clone()));
+                let recorded =
+                    self.planned(observed.circuit_context(private_state), coin, recipient)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "planned", input,
                 ))
             }
         }

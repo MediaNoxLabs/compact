@@ -49,6 +49,9 @@ struct Plan<'a> {
     effectful_field_cells: bool,
     read_only_assertions: bool,
     composite_values: bool,
+    composite_intents: bool,
+    intent_effects: usize,
+    intent_queries: usize,
     counter_hash_helpers: bool,
     scalar_arguments: bool,
     scalar_body_depth: usize,
@@ -255,6 +258,30 @@ impl Plan<'_> {
                     ty.clone(),
                     steps,
                 )
+            }
+            Expr::CreateZswapInput { .. }
+            | Expr::CreateZswapOutput { .. }
+            | Expr::KernelClaim { .. }
+                if self.composite_intents =>
+            {
+                let operands: Vec<&Expr> = match expression {
+                    Expr::CreateZswapInput { coin } => vec![coin],
+                    Expr::CreateZswapOutput { coin, recipient } => vec![coin, recipient],
+                    Expr::KernelClaim { value, .. } => vec![value],
+                    _ => unreachable!(),
+                };
+                let operands = operands
+                    .into_iter()
+                    .map(|operand| {
+                        let value = self.expression(operand, scope, steps)?;
+                        Some((value.ty, value.value))
+                    })
+                    .collect::<Option<Vec<_>>>()?;
+                let effect = intent_effect::emit(expression, &operands)?;
+                self.intent_effects += usize::from(effect.intent);
+                self.intent_queries += usize::from(effect.public_query);
+                steps.push(effect.statement);
+                self.bind(syn::parse_quote!(()), Type::Unit, steps)
             }
             Expr::KernelSelf { ty } if *ty == contract_address_type() => {
                 self.kernel_self_reads += 1;
@@ -1356,6 +1383,9 @@ pub(super) fn lower_effectful<'a>(
         effectful_field_cells: true,
         read_only_assertions: false,
         composite_values: false,
+        composite_intents: false,
+        intent_effects: 0,
+        intent_queries: 0,
         counter_hash_helpers: false,
         scalar_arguments: false,
         scalar_body_depth: 0,
@@ -1564,6 +1594,9 @@ pub(super) fn lower_context_query<'a>(
         effectful_field_cells: false,
         read_only_assertions: false,
         composite_values: false,
+        composite_intents: false,
+        intent_effects: 0,
+        intent_queries: 0,
         counter_hash_helpers: false,
         scalar_arguments: false,
         scalar_body_depth: 0,
@@ -1588,15 +1621,19 @@ pub(super) fn lower_context_query<'a>(
         })
 }
 
-fn composite_type(ty: &Type) -> bool {
+fn composite_type(ty: &Type, intents: bool) -> bool {
     match ty {
+        Type::Unit if intents => true,
         Type::Boolean | Type::Bytes { length: 32 } => true,
         Type::Unsigned { max } => matches!(
             crate::unsigned_maximum(max),
             Ok(crate::UnsignedMaximum::Small(_))
         ),
         Type::Struct { fields, .. } => {
-            !fields.is_empty() && fields.iter().all(|field| composite_type(&field.ty))
+            !fields.is_empty()
+                && fields
+                    .iter()
+                    .all(|field| composite_type(&field.ty, intents))
         }
         _ => false,
     }
@@ -1606,26 +1643,39 @@ fn composite_value(
     witnesses: &HashMap<&str, &WitnessDeclaration>,
     circuits: &HashMap<&str, &StatefulCircuit>,
     visiting: &mut HashSet<String>,
+    intents: bool,
 ) -> bool {
     match value {
+        Expr::CreateZswapInput { coin } if intents => {
+            composite_value(coin, witnesses, circuits, visiting, intents)
+        }
+        Expr::CreateZswapOutput { coin, recipient } if intents => [coin, recipient]
+            .iter()
+            .all(|v| composite_value(v, witnesses, circuits, visiting, intents)),
+        Expr::KernelClaim { value, .. } if intents => {
+            composite_value(value, witnesses, circuits, visiting, intents)
+        }
         Expr::Parameter { .. } | Expr::Boolean { .. } => true,
-        Expr::UnsignedLiteral { max, .. } => composite_type(&Type::Unsigned { max: max.clone() }),
+        Expr::UnsignedLiteral { max, .. } => {
+            composite_type(&Type::Unsigned { max: max.clone() }, intents)
+        }
         Expr::KernelSelf { ty } => *ty == contract_address_type(),
         Expr::Default {
             ty: ty @ Type::Struct { .. },
-        } => composite_type(ty),
+        } => composite_type(ty, intents),
         Expr::StructLiteral { ty, fields } => {
-            composite_type(ty)
+            composite_type(ty, intents)
                 && fields
                     .iter()
-                    .all(|field| composite_value(field, witnesses, circuits, visiting))
+                    .all(|field| composite_value(field, witnesses, circuits, visiting, intents))
         }
         Expr::Coerce { value, ty } => {
-            composite_type(ty) && composite_value(value, witnesses, circuits, visiting)
+            composite_type(ty, intents)
+                && composite_value(value, witnesses, circuits, visiting, intents)
         }
         Expr::UnsignedCast { value, max } => {
-            composite_type(&Type::Unsigned { max: max.clone() })
-                && composite_value(value, witnesses, circuits, visiting)
+            composite_type(&Type::Unsigned { max: max.clone() }, intents)
+                && composite_value(value, witnesses, circuits, visiting, intents)
         }
         Expr::If {
             condition,
@@ -1633,12 +1683,12 @@ fn composite_value(
             otherwise,
         } => [condition, then, otherwise]
             .iter()
-            .all(|v| composite_value(v, witnesses, circuits, visiting)),
+            .all(|v| composite_value(v, witnesses, circuits, visiting, intents)),
         Expr::Let { bindings, body } => {
             bindings.iter().all(|binding| {
-                composite_type(&binding.ty)
-                    && composite_value(&binding.value, witnesses, circuits, visiting)
-            }) && composite_value(body, witnesses, circuits, visiting)
+                composite_type(&binding.ty, intents)
+                    && composite_value(&binding.value, witnesses, circuits, visiting, intents)
+            }) && composite_value(body, witnesses, circuits, visiting, intents)
         }
         Expr::WitnessCall { name, arguments } => witnesses.get(name.as_str()).is_some_and(|w| {
             w.result
@@ -1650,19 +1700,19 @@ fn composite_value(
                     .all(|p| p.ty == (Type::Unsigned { max: "255".into() }))
                 && arguments
                     .iter()
-                    .all(|a| composite_value(a, witnesses, circuits, visiting))
+                    .all(|a| composite_value(a, witnesses, circuits, visiting, intents))
         }),
         Expr::Call { name, arguments } => {
             if !arguments
                 .iter()
-                .all(|a| composite_value(a, witnesses, circuits, visiting))
+                .all(|a| composite_value(a, witnesses, circuits, visiting, intents))
                 || !visiting.insert(name.clone())
             {
                 return false;
             }
-            let valid = circuits
-                .get(name.as_str())
-                .is_some_and(|callee| composite_circuit(callee, witnesses, circuits, visiting));
+            let valid = circuits.get(name.as_str()).is_some_and(|callee| {
+                composite_circuit(callee, witnesses, circuits, visiting, intents)
+            });
             visiting.remove(name);
             valid
         }
@@ -1674,12 +1724,20 @@ fn composite_circuit(
     witnesses: &HashMap<&str, &WitnessDeclaration>,
     circuits: &HashMap<&str, &StatefulCircuit>,
     visiting: &mut HashSet<String>,
+    intents: bool,
 ) -> bool {
     circuit.actions.is_empty()
         && matches!(circuit.result, Type::Struct { .. })
-        && composite_type(&circuit.result)
-        && circuit.parameters.iter().all(|p| p.ty == Type::Boolean)
-        && matches!(&circuit.return_value, StateReturn::Expression { value } if composite_value(value,witnesses,circuits,visiting))
+        && composite_type(&circuit.result, intents)
+        && circuit.parameters.iter().all(|p| {
+            p.ty == Type::Boolean
+                || (intents
+                    && (p.ty == crate::stateful::shielded_coin_type()
+                        || p.ty == crate::stateful::qualified_coin_type()
+                        || p.ty == crate::stateful::shielded_recipient_type()
+                        || p.ty == (Type::Bytes { length: 32 })))
+        })
+        && matches!(&circuit.return_value, StateReturn::Expression { value } if composite_value(value,witnesses,circuits,visiting,intents))
 }
 pub(super) fn lower_composite<'a>(
     circuit: &StatefulCircuit,
@@ -1688,12 +1746,17 @@ pub(super) fn lower_composite<'a>(
     pure: &'a HashMap<&'a str, &'a PureCircuit>,
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
 ) -> Option<TypedPlan> {
-    if !composite_circuit(
-        circuit,
-        witnesses,
-        circuits,
-        &mut HashSet::from([circuit.name.clone()]),
-    ) {
+    let audit = |intents| {
+        composite_circuit(
+            circuit,
+            witnesses,
+            circuits,
+            &mut HashSet::from([circuit.name.clone()]),
+            intents,
+        )
+    };
+    let intents = !audit(false);
+    if intents && !audit(true) {
         return None;
     }
     let mut plan = Plan {
@@ -1717,6 +1780,9 @@ pub(super) fn lower_composite<'a>(
         effectful_field_cells: false,
         read_only_assertions: false,
         composite_values: true,
+        composite_intents: intents,
+        intent_effects: 0,
+        intent_queries: 0,
         counter_hash_helpers: false,
         scalar_arguments: false,
         scalar_body_depth: 0,
@@ -1752,10 +1818,13 @@ pub(super) fn lower_composite<'a>(
     };
     let mut steps = Vec::new();
     let result = plan.expression(value, &scope, &mut steps)?;
-    (result.ty == circuit.result).then_some(TypedPlan {
-        steps,
-        result: result.value,
-    })
+    (result.ty == circuit.result
+        && (!intents
+            || (plan.intent_effects > 0 && plan.kernel_self_reads + plan.intent_queries > 0)))
+        .then_some(TypedPlan {
+            steps,
+            result: result.value,
+        })
 }
 
 pub(super) fn lower<'a>(
@@ -1853,6 +1922,9 @@ pub(super) fn lower<'a>(
         effectful_field_cells: false,
         read_only_assertions: assertion_entry,
         composite_values: false,
+        composite_intents: false,
+        intent_effects: 0,
+        intent_queries: 0,
         counter_hash_helpers: circuit.parameters.is_empty() && circuit.result == Type::Unit,
         scalar_arguments: false,
         scalar_body_depth: 0,
@@ -2269,7 +2341,7 @@ mod tests {
         for index in 0..3 {
             assert!(planned(&source, index).is_some());
         }
-        assert!(planned(&source, 3).is_none());
+        assert!(planned(&source, 3).is_some());
         let mut extra_effect = source.clone();
         extra_effect.stateful_circuits[0]
             .actions
@@ -2399,6 +2471,9 @@ mod tests {
             effectful_field_cells: false,
             read_only_assertions: false,
             composite_values: false,
+            composite_intents: false,
+            intent_effects: 0,
+            intent_queries: 0,
             counter_hash_helpers: false,
             scalar_arguments: false,
             scalar_body_depth: 0,
@@ -2487,6 +2562,9 @@ mod tests {
             effectful_field_cells: false,
             read_only_assertions: false,
             composite_values: false,
+            composite_intents: false,
+            intent_effects: 0,
+            intent_queries: 0,
             counter_hash_helpers: false,
             scalar_arguments: false,
             scalar_body_depth: 0,

@@ -74,6 +74,7 @@ mod micro_dao_advance_support;
 mod micro_dao_reveal;
 #[path = "../../../tests-rust-backend/test-center-micro-dao/support/reveal.rs"]
 mod micro_dao_reveal_support;
+mod micro_dao_set_topic;
 mod micro_dao_token;
 mod mixed_width_recording;
 mod opaque_string_map;
@@ -2148,6 +2149,15 @@ fn run() -> Result<(), Box<dyn Error>> {
             Ok(Err(error)) => Err(error.into()),
             Err(_) => Err("terminal lexical return proof thread panicked".into()),
         };
+    }
+    if first.as_deref() == Some(OsStr::new("--micro-dao-set-topic")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --micro-dao-set-topic <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err("unexpected argument".into());
+        }
+        return micro_dao_set_topic::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--micro-dao-advance")) {
         let root = arguments

@@ -1583,3 +1583,36 @@ with a single contract-owned input and user output in the guaranteed segment,
 default strict offer binding and separate NIGHT-backed Dust. Binding mutation
 and spent-nullifier replay reject. Fixtures start from an explicitly seeded
 prior game; `start` remains the original Coracle recording gap.
+
+### Original microDAO set_topic and explicit fallible funding (ADR211)
+
+The unchanged original `set_topic` export now has a recorded/observed Rust API.
+A separate `GuardedShieldedDeposit` policy audits the received seed, selected
+historical merge, the shared singleton bridge, typed costs and optional Cells.
+The existing Plan owns all values, lexical scopes, helper calls and branch-local
+frame evaluation. Authority/phase/cost checks and the witness prefix retain
+source order. Unsupported hidden effects, malformed slots/types, changed seed
+provenance, helper cycles and receive-after-merge remain refused.
+
+`ContractTransientCoins::from_transients_for_placement` explicitly retains
+upstream pairs constructed for the selected placement. Whole-fallible binding
+now composes exact selected wallet Inputs and complete Transients with historical
+contract inputs. Both input owner classes require the exact `[1,s]` vector;
+each output requires `[s]`, including both transient proof halves. Full proof
+identity, disjoint input/output coverage, causal source events, observed state
+and canonical allocation stay sealed. Defaults remain guaranteed; no proof is
+retargeted, and mixed guaranteed/fallible calls remain outside this policy.
+The consumer API is additive; generated calls retain ABI49/schema20.
+
+Sixteen corrected-TS/native/recorded cases preserve exact transcripts, private
+outputs, effects, query gas and failure witness prefixes. Raw TS replay uses
+its provisional commitment table and reports wrapper-last-query, query-sum and
+whole-program replay gas separately. Canonical offer-backed recording is tested
+separately by two original-key, independently Dust-funded proofs with default
+ledger strictness. Empty pot is wholly guaranteed (44 VM operations); occupied
+pot is wholly fallible (71 operations). Both apply, store the authoritative
+qualified pot index and reject spent-nullifier replay. The occupied proof also
+checks precise concurrent-state `ReadMismatch`: fallible coin and contract
+updates roll back while guaranteed Dust/replay effects persist. Coins and prior
+contract state are explicitly seeded offline, not a proved DAO lifecycle.
+`vote_commit`, `buy_in` and `cash_out` remain the three original microDAO gaps.

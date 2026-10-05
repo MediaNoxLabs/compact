@@ -66,7 +66,7 @@ fn effects(mut value: Value) -> Value {
     value
 }
 #[test]
-fn original_set_topic_native_preserves_independent_typescript_cases() {
+fn original_set_topic_native_and_recorded_preserve_independent_typescript_cases() {
     let data = fixture();
     let rows = data["rows"].as_array().unwrap();
     assert_eq!(rows.len(), 16);
@@ -84,6 +84,20 @@ fn original_set_topic_native_preserves_independent_typescript_cases() {
             },
             coin(row),
         );
+        let recorded_witness = support::Witness::new(mode(row));
+        let recorded = c::recorded::set_topic(
+            context(row),
+            &recorded_witness,
+            row["options"]["topic"]
+                .as_str()
+                .unwrap_or("Proposal 🗳️")
+                .into(),
+            types::ZswapCoinPublicKey {
+                bytes: FixedBytes::new([5; 32]),
+            },
+            coin(row),
+        );
+        assert_eq!(json!(*recorded_witness.calls.borrow()), row["witnessCalls"]);
         assert_eq!(
             json!(*witness.calls.borrow()),
             row["witnessCalls"],
@@ -92,6 +106,10 @@ fn original_set_topic_native_preserves_independent_typescript_cases() {
         );
         if let Some(error) = row.get("error") {
             let actual = result.err().expect("TS rejection must reject");
+            assert_eq!(
+                recorded.err().expect("recorded rejection").to_string(),
+                actual.to_string()
+            );
             if row["name"] == "mergeOverflow" {
                 assert!(matches!(
                     actual,
@@ -114,6 +132,57 @@ fn original_set_topic_native_preserves_independent_typescript_cases() {
             continue;
         }
         let result = result.unwrap();
+        let recorded = recorded.unwrap();
+        assert_eq!(
+            recorded.execution.context.query.state,
+            result.context.query.state
+        );
+        assert_eq!(
+            recorded.execution.context.query.effects,
+            result.context.query.effects
+        );
+        assert_eq!(
+            recorded.execution.context.circuit_zswap(),
+            result.context.circuit_zswap()
+        );
+        assert_eq!(
+            recorded.execution.context.private_state,
+            result.context.private_state
+        );
+        assert_eq!(
+            recorded.execution.private_transcript_outputs,
+            result.private_transcript_outputs
+        );
+        assert_eq!(recorded.execution.gas_cost, result.gas_cost);
+        assert_eq!(json!(recorded.public.verify_ops()), row["publicTranscript"]);
+        // Match the independent raw TS replay's provisional commitment table.
+        // Strict proof tests separately use the retained offer's canonical map.
+        let mut initial = recorded.public.initial().clone();
+        initial.call_context.com_indices = recorded
+            .execution
+            .context
+            .query
+            .call_context
+            .com_indices
+            .clone();
+        let replay = initial
+            .query(
+                recorded.public.verify_ops(),
+                None,
+                &recorded.execution.context.cost_model,
+            )
+            .unwrap();
+        assert_eq!(replay.context.state, result.context.query.state);
+        assert_eq!(replay.context.effects, result.context.query.effects);
+        for dimension in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            assert_eq!(
+                json!(replay.gas_cost)[dimension]
+                    .as_u64()
+                    .unwrap()
+                    .to_string(),
+                row["replayProbe"]["gas"][dimension]
+            );
+        }
         let expected: runtime::ledger::ContractState<runtime::ledger::DefaultDB> =
             midnight_serialize::tagged_deserialize(
                 &mut hex::decode(row["after"].as_str().unwrap())

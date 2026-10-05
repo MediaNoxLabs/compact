@@ -20,6 +20,7 @@ use super::*;
 use crate::coerce_expression;
 use crate::ir::{KernelClaimKind, ReturnPlan};
 mod field_observations;
+mod guarded_deposit;
 mod immediate_send;
 mod phase_reset;
 mod shielded_merge;
@@ -48,6 +49,7 @@ enum CompositeDomain {
     ShieldedPayout,
     ActionfulShieldedPayout,
     ShieldedMerge(shielded_merge::Inputs),
+    GuardedShieldedDeposit,
     FieldObservations,
     TerminalReturns,
 }
@@ -63,12 +65,17 @@ impl CompositeDomain {
     }
 
     fn shielded_helpers(self) -> bool {
-        self.shielded_send() || matches!(self, Self::ShieldedMerge(_))
+        self.shielded_send() || self.shielded_merge()
     }
+    fn shielded_merge(self) -> bool {
+        matches!(self, Self::ShieldedMerge(_) | Self::GuardedShieldedDeposit)
+    }
+
     fn singleton_bridge(self) -> bool {
         matches!(
             self,
             Self::ImmediateShieldedSend
+                | Self::GuardedShieldedDeposit
                 | Self::ShieldedMerge(shielded_merge::Inputs::ReceivedRight)
         )
     }
@@ -84,6 +91,7 @@ impl CompositeDomain {
                 | Self::ShieldedPayout
                 | Self::ActionfulShieldedPayout
                 | Self::ShieldedMerge(_)
+                | Self::GuardedShieldedDeposit
         )
     }
     fn intents(self) -> bool {
@@ -96,6 +104,7 @@ impl CompositeDomain {
                 | Self::ShieldedPayout
                 | Self::ActionfulShieldedPayout
                 | Self::ShieldedMerge(_)
+                | Self::GuardedShieldedDeposit
         )
     }
 }
@@ -325,7 +334,7 @@ impl Plan<'_> {
                         self.composite_domain,
                         CompositeDomain::ShieldedPayout | CompositeDomain::ActionfulShieldedPayout
                     )
-                    || matches!(self.composite_domain, CompositeDomain::ShieldedMerge(_)) =>
+                    || self.composite_domain.shielded_merge() =>
             {
                 let condition = self.expression(condition, scope, steps)?;
                 if condition.ty != Type::Boolean {
@@ -441,12 +450,15 @@ impl Plan<'_> {
                 {
                     return None;
                 }
-                if matches!(self.composite_domain, CompositeDomain::ShieldedMerge(_))
+                if self.composite_domain.shielded_merge()
                     && !matches!(
                         (source_max.as_str(), max.as_str()),
                         (shielded_merge::INPUT, shielded_merge::WIDENED)
                             | (shielded_merge::SUM, shielded_merge::INPUT)
                     )
+                    && !(self.composite_domain == CompositeDomain::GuardedShieldedDeposit
+                        && source_max == u64::MAX.to_string()
+                        && max == shielded_merge::INPUT)
                 {
                     return None;
                 }
@@ -454,8 +466,7 @@ impl Plan<'_> {
                 self.bind(converted, Type::Unsigned { max: max.clone() }, steps)
             }
             Expr::UnsignedAdd { max, left, right }
-                if self.phase_reset
-                    || matches!(self.composite_domain, CompositeDomain::ShieldedMerge(_)) =>
+                if self.phase_reset || self.composite_domain.shielded_merge() =>
             {
                 let left = self.expression(left, scope, steps)?;
                 let right = self.expression(right, scope, steps)?;
@@ -596,6 +607,12 @@ impl Plan<'_> {
             }
             Expr::WitnessCall { name, arguments } => {
                 let declaration = *self.witnesses.get(name.as_str())?;
+                if self.composite_domain == CompositeDomain::GuardedShieldedDeposit
+                    && (declaration.result != (Type::Bytes { length: 32 })
+                        || !declaration.parameters.is_empty())
+                {
+                    return None;
+                }
                 if self.composite_domain == CompositeDomain::ShieldedPayout
                     && declaration.result != (Type::Bytes { length: 32 })
                 {
@@ -847,7 +864,14 @@ impl Plan<'_> {
                 if self.read_only_assertions && *ty != Type::Boolean {
                     return None;
                 }
+                if self.composite_domain == CompositeDomain::GuardedShieldedDeposit
+                    && !guarded_deposit::read_type(ty)
+                {
+                    return None;
+                }
                 if !cell_type(ty)
+                    && !(self.composite_domain == CompositeDomain::GuardedShieldedDeposit
+                        && guarded_deposit::read_type(ty))
                     && !(self.composite_domain == CompositeDomain::ShieldedPayout
                         && shielded_payout::cell_type(ty))
                     && !(self.composite_domain == CompositeDomain::ActionfulShieldedPayout
@@ -1368,7 +1392,14 @@ impl Plan<'_> {
                 if self.effectful_field_cells && *ty != Type::Field {
                     return None;
                 }
+                if self.composite_domain == CompositeDomain::GuardedShieldedDeposit
+                    && !guarded_deposit::write_type(ty)
+                {
+                    return None;
+                }
                 if !cell_type(ty)
+                    && !(self.composite_domain == CompositeDomain::GuardedShieldedDeposit
+                        && guarded_deposit::write_type(ty))
                     && !(self.unit_actions && unit_actions::value_type(ty))
                     && !(self.phase_reset && phase_reset::cell_type(ty))
                     && !(ty == &Type::Field
@@ -2497,7 +2528,7 @@ fn shielded_value(
             if matches!(
                 domain,
                 CompositeDomain::ShieldedPayout | CompositeDomain::ActionfulShieldedPayout
-            ) || matches!(domain, CompositeDomain::ShieldedMerge(_)) =>
+            ) || domain.shielded_merge() =>
         {
             visit(condition, visiting)
         }
@@ -2523,9 +2554,7 @@ fn shielded_value(
         | Expr::UpgradeFromTransient { value }
         | Expr::CreateZswapInput { coin: value }
         | Expr::KernelClaim { value, .. } => visit(value, visiting),
-        Expr::UnsignedAdd { left, right, .. }
-            if matches!(domain, CompositeDomain::ShieldedMerge(_)) =>
-        {
+        Expr::UnsignedAdd { left, right, .. } if domain.shielded_merge() => {
             visit(left, visiting) && visit(right, visiting)
         }
         Expr::CreateZswapOutput { coin, recipient }
@@ -4119,4 +4148,15 @@ pub(super) fn lower_immediate_shielded_send<'a>(
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
 ) -> Option<TypedPlan> {
     immediate_send::lower(circuit, ledger, witnesses, pure, circuits)
+}
+
+/// Guarded receive, optional historical merge and typed Cell update policy.
+pub(super) fn lower_guarded_deposit<'a>(
+    circuit: &StatefulCircuit,
+    ledger: &'a HashMap<&'a str, &'a LedgerField>,
+    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
+    pure: &'a HashMap<&'a str, &'a PureCircuit>,
+    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
+) -> Option<TypedPlan> {
+    guarded_deposit::lower(circuit, ledger, witnesses, pure, circuits)
 }

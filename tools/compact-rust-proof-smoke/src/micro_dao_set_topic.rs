@@ -2,13 +2,14 @@
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
 //! Original set_topic: guaranteed empty pot and whole-fallible funded merge.
-//! Prepared independently of emitter admission; register after ADR209 handoff.
+//! Prior contract/coin state is explicitly seeded offline, not a proved DAO lifecycle.
 use super::micro_dao_advance_support as support;
 use super::*;
 use compact_rust_test_center_micro_dao_fixture::{
     ledger_contract as c, ledger_slots as slots, types,
 };
 use midnight_compact_runtime as runtime;
+use midnight_ledger::error::MalformedTransaction;
 use midnight_zswap::{Input, Offer, Output, Transient};
 use runtime::transaction::{
     ContractTransientCoins, OfferBackedObservedState, OfferBindingOptions, OfferPlacement,
@@ -59,7 +60,7 @@ fn run_case(root: &Path, occupied: bool) -> Result<(), Box<dyn Error>> {
             buy_in_dust: BoundedUint::new(3)?,
         },
     )?;
-    let mut prior = initial.into_circuit_context(ContractAddress::default());
+    let mut prior = initial.into_circuit_context(runtime::ledger::ContractAddress::default());
     if occupied {
         prior = slots::pot
             .write(prior, compact_qualified(h.qualify(0)))?
@@ -274,7 +275,7 @@ fn run_case(root: &Path, occupied: bool) -> Result<(), Box<dyn Error>> {
     };
     if occupied {
         assert!(structure.guaranteed_coins.is_none());
-        assert_eq!(structure.fallible_coins.len(), 1);
+        assert_eq!(structure.fallible_coins.iter().count(), 1);
         assert_eq!(*structure.fallible_coins.get(&1).unwrap(), offer);
     } else {
         assert!(structure.fallible_coins.is_empty());
@@ -295,12 +296,16 @@ fn run_case(root: &Path, occupied: bool) -> Result<(), Box<dyn Error>> {
         .enable_all()
         .build()?
         .block_on(fees.balance_tx(rng, sealed, &resolver))?;
+    tagged_serialize(
+        &sealed,
+        &mut File::create(root.join(format!("set-topic-{occupied}-sealed.bin")))?,
+    )?;
     let Transaction::Standard(structure) = &sealed else {
         panic!("standard")
     };
     if occupied {
         assert!(structure.guaranteed_coins.is_none());
-        assert_eq!(structure.fallible_coins.len(), 1);
+        assert_eq!(structure.fallible_coins.iter().count(), 1);
         for row in structure.intents.iter() {
             if *row.0 != 1 {
                 assert!(row.1.actions.is_empty());

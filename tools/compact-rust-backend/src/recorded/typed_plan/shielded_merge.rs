@@ -81,6 +81,40 @@ fn received_bridge(
             .is_some_and(|callee| singleton_bridge(callee))
 }
 
+// Reuse the same exact declaration audit when a caller supplies a Cell read
+// as its historical operand. Actual caller provenance is checked by its domain.
+pub(super) fn received_helper(
+    name: &str,
+    pure: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+) -> bool {
+    let Some(callee) = circuits.get(name) else {
+        return false;
+    };
+    let [left, right] = callee.parameters.as_slice() else {
+        return false;
+    };
+    left.ty == crate::stateful::qualified_coin_type()
+        && right.ty == crate::stateful::shielded_coin_type()
+        && received_bridge(
+            &Expr::Call {
+                name: name.to_owned(),
+                arguments: vec![
+                    Expr::Parameter {
+                        name: left.name.clone(),
+                    },
+                    Expr::Parameter {
+                        name: right.name.clone(),
+                    },
+                ],
+            },
+            left,
+            right,
+            pure,
+            circuits,
+        )
+}
+
 pub(super) fn lower<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,

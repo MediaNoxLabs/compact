@@ -2877,6 +2877,356 @@ pub mod ledger_contract {
             };
             Ok(frame.finish(()))
         }
+        pub fn set_topic<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::OpaqueString,
+            __compact_param_1: crate::types::ZswapCoinPublicKey,
+            __compact_param_2: crate::types::ShieldedCoinInfo,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_plan_0: runtime::BoundedUint<340282366920938463463374607431768211455> =
+                ((__compact_param_2).clone()).value;
+            let (frame, __compact_plan_1): (_, crate::types::Costs) =
+                crate::ledger_slots::costs.record_read(frame)?;
+            let __compact_plan_2: runtime::BoundedUint<18446744073709551615> =
+                (__compact_plan_1).seed_dust;
+            let __compact_plan_3: runtime::BoundedUint<340282366920938463463374607431768211455> =
+                runtime::cast_unsigned::<
+                    18446744073709551615,
+                    340282366920938463463374607431768211455,
+                >(__compact_plan_2)?;
+            let __compact_plan_4: bool = __compact_plan_0 == __compact_plan_3;
+            let (frame, __compact_plan_9): (_, bool) = if __compact_plan_4 {
+                let __compact_plan_5: runtime::FixedBytes<32> = ((__compact_param_2).clone()).color;
+                let __compact_plan_6: runtime::FixedBytes<32> =
+                    crate::pure_circuits::nativeToken()?;
+                let __compact_plan_7: bool = __compact_plan_5 == __compact_plan_6;
+                (frame, __compact_plan_7)
+            } else {
+                let __compact_plan_8: bool = false;
+                (frame, __compact_plan_8)
+            };
+            if !__compact_plan_9 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Expected configured seed dust as seed".to_owned(),
+                ));
+            }
+            let (frame, __compact_plan_10): (_, runtime::FixedBytes<32>) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.local_secret_key(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            let __compact_plan_11: runtime::FixedBytes<32> = __compact_plan_10;
+            let __compact_plan_12: runtime::FixedBytes<32> = __compact_plan_11;
+            let __compact_plan_13: runtime::FixedBytes<32> =
+                crate::pure_circuits::public_key(__compact_plan_12)?;
+            let __compact_plan_14: runtime::FixedBytes<32> = __compact_plan_13;
+            let (frame, __compact_plan_15): (_, runtime::FixedBytes<32>) =
+                crate::ledger_slots::organizer.record_read(frame)?;
+            let __compact_plan_16: bool = __compact_plan_15 == __compact_plan_14;
+            if !__compact_plan_16 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Attempted to set topic without authorization".to_owned(),
+                ));
+            }
+            let (frame, __compact_plan_17): (_, crate::types::LedgerState) =
+                crate::ledger_slots::state.record_read(frame)?;
+            let __compact_plan_18: crate::types::LedgerState = crate::types::LedgerState::setup;
+            let __compact_plan_19: bool = __compact_plan_17 == __compact_plan_18;
+            if !__compact_plan_19 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Attempted to set topic after setup phase".to_owned(),
+                ));
+            }
+            let __compact_plan_20: crate::types::ShieldedCoinInfo = (__compact_param_2).clone();
+            let (frame, __compact_plan_21) = frame.kernel_self()?;
+            let __compact_plan_22: crate::types::ContractAddress = crate::types::ContractAddress {
+                bytes: runtime::ledger::contract_address_bytes(&__compact_plan_21),
+            };
+            let __compact_plan_23: crate::types::ContractAddress = __compact_plan_22;
+            let __compact_plan_24: crate::types::Either =
+                crate::pure_circuits::right(__compact_plan_23)?;
+            let __compact_plan_25: crate::types::Either = __compact_plan_24;
+            let frame = frame.create_zswap_output(
+                runtime::ledger::coin_info_from_compact(
+                    (__compact_plan_20).clone().nonce,
+                    (__compact_plan_20).clone().color,
+                    (__compact_plan_20).clone().value.value(),
+                ),
+                runtime::ledger::coin_recipient_from_compact(
+                    (__compact_plan_25).clone().is_left,
+                    (__compact_plan_25).clone().left.bytes,
+                    (__compact_plan_25).clone().right.bytes,
+                ),
+            )?;
+            let __compact_plan_26: () = ();
+            let __compact_plan_27: crate::types::ShieldedCoinInfo = (__compact_plan_20).clone();
+            let __compact_plan_28: crate::types::Either = (__compact_plan_25).clone();
+            let __compact_plan_29: runtime::FixedBytes<32> =
+                crate::pure_circuits::coinCommitment(__compact_plan_27, __compact_plan_28)?;
+            let __compact_plan_30: runtime::FixedBytes<32> = __compact_plan_29;
+            let frame = frame.kernel_claim(runtime::ledger::KernelClaim::CoinReceive(
+                runtime::ledger::CoinCommitment(runtime::ledger::HashOutput(
+                    (__compact_plan_30).into_array(),
+                )),
+            ))?;
+            let __compact_plan_31: () = ();
+            let (frame, __compact_plan_32): (_, bool) =
+                crate::ledger_slots::pot_has_coin.record_read(frame)?;
+            let (frame, __compact_plan_35): (_, bool) = if __compact_plan_32 {
+                let __compact_plan_33: bool = false;
+                (frame, __compact_plan_33)
+            } else {
+                let __compact_plan_34: bool = true;
+                (frame, __compact_plan_34)
+            };
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform branch frames preserve ordered recording steps"
+            )]
+            let frame = if __compact_plan_35 {
+                let (frame, __compact_plan_36) = frame.kernel_self()?;
+                let __compact_plan_37: crate::types::ContractAddress =
+                    crate::types::ContractAddress {
+                        bytes: runtime::ledger::contract_address_bytes(&__compact_plan_36),
+                    };
+                let __compact_plan_38: crate::types::ContractAddress = __compact_plan_37;
+                let __compact_plan_39: crate::types::Either =
+                    crate::pure_circuits::right(__compact_plan_38)?;
+                let __compact_plan_40: crate::types::Either = __compact_plan_39;
+                let frame = crate::ledger_slots::pot.record_write_coin(
+                    frame,
+                    runtime::ledger::coin_info_from_compact(
+                        (__compact_param_2).clone().nonce,
+                        (__compact_param_2).clone().color,
+                        (__compact_param_2).clone().value.value(),
+                    ),
+                    runtime::ledger::coin_recipient_from_compact(
+                        (__compact_plan_40).clone().is_left,
+                        (__compact_plan_40).clone().left.bytes,
+                        (__compact_plan_40).clone().right.bytes,
+                    ),
+                )?;
+                let __compact_plan_41: bool = true;
+                let frame =
+                    crate::ledger_slots::pot_has_coin.record_write(frame, __compact_plan_41)?;
+                frame
+            } else {
+                let (frame, __compact_plan_42): (_, crate::types::QualifiedShieldedCoinInfo) =
+                    crate::ledger_slots::pot.record_read(frame)?;
+                let __compact_plan_43: crate::types::QualifiedShieldedCoinInfo = __compact_plan_42;
+                let __compact_plan_44: crate::types::ShieldedCoinInfo = (__compact_param_2).clone();
+                let __compact_plan_45: crate::types::QualifiedShieldedCoinInfo =
+                    (__compact_plan_43).clone();
+                let __compact_plan_46: crate::types::ShieldedCoinInfo = (__compact_plan_44).clone();
+                let __compact_plan_47: crate::types::QualifiedShieldedCoinInfo =
+                    crate::pure_circuits::upcastQualifiedCoin(__compact_plan_46)?;
+                let __compact_plan_48: crate::types::QualifiedShieldedCoinInfo = __compact_plan_47;
+                let (frame, __compact_plan_49) = frame.kernel_self()?;
+                let __compact_plan_50: crate::types::ContractAddress =
+                    crate::types::ContractAddress {
+                        bytes: runtime::ledger::contract_address_bytes(&__compact_plan_49),
+                    };
+                let __compact_plan_51: crate::types::ContractAddress = __compact_plan_50;
+                let frame = frame.create_zswap_input(
+                    runtime::ledger::coin_info_from_compact(
+                        (__compact_plan_45).clone().nonce,
+                        (__compact_plan_45).clone().color,
+                        (__compact_plan_45).clone().value.value(),
+                    )
+                    .qualify((__compact_plan_45).clone().mt_index.value() as u64),
+                );
+                let __compact_plan_52: () = ();
+                let __compact_plan_53: crate::types::QualifiedShieldedCoinInfo =
+                    (__compact_plan_45).clone();
+                let __compact_plan_54: crate::types::ShieldedCoinInfo =
+                    crate::pure_circuits::downcastQualifiedCoin(__compact_plan_53)?;
+                let __compact_plan_55: crate::types::ShieldedCoinInfo = __compact_plan_54;
+                let __compact_plan_56: crate::types::ContractAddress = (__compact_plan_51).clone();
+                let __compact_plan_57: runtime::FixedBytes<32> =
+                    crate::pure_circuits::coinNullifier(__compact_plan_55, __compact_plan_56)?;
+                let __compact_plan_58: runtime::FixedBytes<32> = __compact_plan_57;
+                let frame = frame.kernel_claim(runtime::ledger::KernelClaim::Nullifier(
+                    runtime::ledger::CoinNullifier(runtime::ledger::HashOutput(
+                        (__compact_plan_58).into_array(),
+                    )),
+                ))?;
+                let __compact_plan_59: () = ();
+                let frame = frame.create_zswap_input(
+                    runtime::ledger::coin_info_from_compact(
+                        (__compact_plan_48).clone().nonce,
+                        (__compact_plan_48).clone().color,
+                        (__compact_plan_48).clone().value.value(),
+                    )
+                    .qualify((__compact_plan_48).clone().mt_index.value() as u64),
+                );
+                let __compact_plan_60: () = ();
+                let __compact_plan_61: crate::types::QualifiedShieldedCoinInfo =
+                    (__compact_plan_48).clone();
+                let __compact_plan_62: crate::types::ShieldedCoinInfo =
+                    crate::pure_circuits::downcastQualifiedCoin(__compact_plan_61)?;
+                let __compact_plan_63: crate::types::ShieldedCoinInfo = __compact_plan_62;
+                let __compact_plan_64: crate::types::ContractAddress = (__compact_plan_51).clone();
+                let __compact_plan_65: runtime::FixedBytes<32> =
+                    crate::pure_circuits::coinNullifier(__compact_plan_63, __compact_plan_64)?;
+                let __compact_plan_66: runtime::FixedBytes<32> = __compact_plan_65;
+                let frame = frame.kernel_claim(runtime::ledger::KernelClaim::Nullifier(
+                    runtime::ledger::CoinNullifier(runtime::ledger::HashOutput(
+                        (__compact_plan_66).into_array(),
+                    )),
+                ))?;
+                let __compact_plan_67: () = ();
+                let __compact_plan_68: runtime::FixedBytes<32> =
+                    ((__compact_plan_45).clone()).color;
+                let __compact_plan_69: runtime::FixedBytes<32> =
+                    ((__compact_plan_48).clone()).color;
+                let __compact_plan_70: bool = __compact_plan_68 == __compact_plan_69;
+                if !__compact_plan_70 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "Can only merge coins of the same color".to_owned(),
+                    ));
+                }
+                let __compact_plan_71: runtime::Field = runtime::Field::from_le_bytes(&[
+                    109u8, 105u8, 100u8, 110u8, 105u8, 103u8, 104u8, 116u8, 58u8, 107u8, 101u8,
+                    114u8, 110u8, 101u8, 108u8, 58u8, 110u8, 111u8, 110u8, 99u8, 101u8, 95u8,
+                    101u8, 118u8, 111u8, 108u8, 118u8, 101u8, 0u8, 0u8, 0u8, 0u8,
+                ])
+                .expect("validated Compact Field literal");
+                let __compact_plan_72: runtime::FixedBytes<32> =
+                    ((__compact_plan_45).clone()).nonce;
+                let __compact_plan_73: runtime::Field =
+                    runtime::degrade_to_transient(__compact_plan_72);
+                let __compact_plan_74: (runtime::Field, runtime::Field) =
+                    (__compact_plan_71, __compact_plan_73);
+                let __compact_plan_75: runtime::Field = runtime::transient_hash(__compact_plan_74);
+                let __compact_plan_76: runtime::FixedBytes<32> =
+                    runtime::upgrade_from_transient(__compact_plan_75);
+                let __compact_plan_77: runtime::FixedBytes<32> =
+                    ((__compact_plan_45).clone()).color;
+                let __compact_plan_78: runtime::BoundedUint<
+                    340282366920938463463374607431768211455,
+                > = ((__compact_plan_45).clone()).value;
+                let __compact_plan_79: runtime::WideUint<
+                    1u128,
+                    340282366920938463463374607431768211454u128,
+                > = <runtime::WideUint<
+                    1u128,
+                    340282366920938463463374607431768211454u128,
+                >>::from_le_bytes(&(__compact_plan_78).value().to_le_bytes())?;
+                let __compact_plan_80: runtime::BoundedUint<
+                    340282366920938463463374607431768211455,
+                > = ((__compact_plan_48).clone()).value;
+                let __compact_plan_81: runtime::WideUint<
+                    1u128,
+                    340282366920938463463374607431768211454u128,
+                > = <runtime::WideUint<
+                    1u128,
+                    340282366920938463463374607431768211454u128,
+                >>::from_le_bytes(&(__compact_plan_80).value().to_le_bytes())?;
+                let __compact_plan_82: runtime::WideUint<
+                    1u128,
+                    340282366920938463463374607431768211455u128,
+                > = runtime::add_wide_unsigned::<
+                    1u128,
+                    340282366920938463463374607431768211455u128,
+                    _,
+                    _,
+                >(__compact_plan_79, __compact_plan_81)?;
+                let __compact_plan_83: runtime::BoundedUint<
+                    340282366920938463463374607431768211455,
+                > = runtime::narrow_wide_uint::<
+                    340282366920938463463374607431768211455,
+                    1,
+                    340282366920938463463374607431768211455,
+                >(__compact_plan_82)?;
+                let __compact_plan_84: crate::types::ShieldedCoinInfo =
+                    crate::types::ShieldedCoinInfo {
+                        nonce: __compact_plan_76,
+                        color: __compact_plan_77,
+                        value: __compact_plan_83,
+                    };
+                let __compact_plan_85: crate::types::ShieldedCoinInfo = __compact_plan_84;
+                let __compact_plan_86: crate::types::ContractAddress = (__compact_plan_51).clone();
+                let __compact_plan_87: crate::types::Either =
+                    crate::pure_circuits::right(__compact_plan_86)?;
+                let frame = frame.create_zswap_output(
+                    runtime::ledger::coin_info_from_compact(
+                        (__compact_plan_85).clone().nonce,
+                        (__compact_plan_85).clone().color,
+                        (__compact_plan_85).clone().value.value(),
+                    ),
+                    runtime::ledger::coin_recipient_from_compact(
+                        __compact_plan_87.is_left,
+                        __compact_plan_87.left.bytes,
+                        __compact_plan_87.right.bytes,
+                    ),
+                )?;
+                let __compact_plan_88: () = ();
+                let __compact_plan_89: crate::types::ShieldedCoinInfo = (__compact_plan_85).clone();
+                let __compact_plan_90: crate::types::ContractAddress = (__compact_plan_51).clone();
+                let __compact_plan_91: crate::types::Either =
+                    crate::pure_circuits::right(__compact_plan_90)?;
+                let __compact_plan_92: crate::types::Either = __compact_plan_91;
+                let __compact_plan_93: runtime::FixedBytes<32> =
+                    crate::pure_circuits::coinCommitment(__compact_plan_89, __compact_plan_92)?;
+                let __compact_plan_94: runtime::FixedBytes<32> = __compact_plan_93;
+                let frame = frame.kernel_claim(runtime::ledger::KernelClaim::CoinSpend(
+                    runtime::ledger::CoinCommitment(runtime::ledger::HashOutput(
+                        (__compact_plan_94).into_array(),
+                    )),
+                ))?;
+                let __compact_plan_95: () = ();
+                let frame = frame.kernel_claim(runtime::ledger::KernelClaim::CoinReceive(
+                    runtime::ledger::CoinCommitment(runtime::ledger::HashOutput(
+                        (__compact_plan_94).into_array(),
+                    )),
+                ))?;
+                let __compact_plan_96: () = ();
+                let __compact_plan_97: crate::types::ShieldedCoinInfo = (__compact_plan_85).clone();
+                let (frame, __compact_plan_98) = frame.kernel_self()?;
+                let __compact_plan_99: crate::types::ContractAddress =
+                    crate::types::ContractAddress {
+                        bytes: runtime::ledger::contract_address_bytes(&__compact_plan_98),
+                    };
+                let __compact_plan_100: crate::types::ContractAddress = __compact_plan_99;
+                let __compact_plan_101: crate::types::Either =
+                    crate::pure_circuits::right(__compact_plan_100)?;
+                let __compact_plan_102: crate::types::Either = __compact_plan_101;
+                let frame = crate::ledger_slots::pot.record_write_coin(
+                    frame,
+                    runtime::ledger::coin_info_from_compact(
+                        (__compact_plan_97).clone().nonce,
+                        (__compact_plan_97).clone().color,
+                        (__compact_plan_97).clone().value.value(),
+                    ),
+                    runtime::ledger::coin_recipient_from_compact(
+                        (__compact_plan_102).clone().is_left,
+                        (__compact_plan_102).clone().left.bytes,
+                        (__compact_plan_102).clone().right.bytes,
+                    ),
+                )?;
+                frame
+            };
+            let __compact_plan_103: runtime::OpaqueString = (__compact_param_0).clone();
+            let __compact_plan_104: crate::types::Maybe =
+                crate::pure_circuits::__compact_function_some_179(__compact_plan_103)?;
+            let __compact_plan_105: crate::types::Maybe = __compact_plan_104;
+            let frame =
+                crate::ledger_slots::topic.record_write(frame, (__compact_plan_105).clone())?;
+            let __compact_plan_106: crate::types::ZswapCoinPublicKey = (__compact_param_1).clone();
+            let __compact_plan_107: crate::types::MaybeCompact1 =
+                crate::pure_circuits::__compact_function_some_180(__compact_plan_106)?;
+            let __compact_plan_108: crate::types::MaybeCompact1 = __compact_plan_107;
+            let frame = crate::ledger_slots::beneficiary
+                .record_write(frame, (__compact_plan_108).clone())?;
+            let __compact_plan_109: crate::types::LedgerState = crate::types::LedgerState::commit;
+            let frame = crate::ledger_slots::state.record_write(frame, __compact_plan_109)?;
+            Ok(frame.finish(()))
+        }
         pub fn dao_voting_token<Private>(
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<
@@ -2998,6 +3348,57 @@ pub mod ledger_contract {
                 let recorded = self.advance(observed.circuit_context(private_state))?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "advance", input,
+                ))
+            }
+            pub fn set_topic<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                topic_param: runtime::OpaqueString,
+                beneficiary_param: crate::types::ZswapCoinPublicKey,
+                seedCoin: crate::types::ShieldedCoinInfo,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                set_topic(
+                    context,
+                    self.witnesses,
+                    topic_param,
+                    beneficiary_param,
+                    seedCoin,
+                )
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn set_topic_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                topic_param: runtime::OpaqueString,
+                beneficiary_param: crate::types::ZswapCoinPublicKey,
+                seedCoin: crate::types::ShieldedCoinInfo,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::concat(&[
+                    runtime::fab::AlignedValue::from((topic_param).clone()),
+                    runtime::fab::AlignedValue::from((beneficiary_param).clone()),
+                    runtime::fab::AlignedValue::from((seedCoin).clone()),
+                ]);
+                let recorded = self.set_topic(
+                    observed.circuit_context(private_state),
+                    topic_param,
+                    beneficiary_param,
+                    seedCoin,
+                )?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "set_topic",
+                    input,
                 ))
             }
             pub fn dao_voting_token<Private>(

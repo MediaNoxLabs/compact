@@ -420,6 +420,63 @@ impl<const MAX: u128> FromFieldRepr for BoundedUint<MAX> {
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct WideUint<const MAX_HIGH: u128, const MAX_LOW: u128>([u8; 32]);
 
+mod unsigned_operand_sealed {
+    pub trait Sealed {}
+}
+
+/// Checked Compact integer operands supported by native wide addition.
+///
+/// Sealed to the runtime's bound-checked integer carriers. Limbs are ordered
+/// high then low; this view does not change their FAB or field encoding.
+pub trait UnsignedOperand: unsigned_operand_sealed::Sealed {
+    #[doc(hidden)]
+    fn unsigned_limbs(self) -> (u128, u128);
+}
+impl<const MAX: u128> unsigned_operand_sealed::Sealed for BoundedUint<MAX> {}
+impl<const MAX: u128> UnsignedOperand for BoundedUint<MAX> {
+    fn unsigned_limbs(self) -> (u128, u128) {
+        (0, self.value())
+    }
+}
+impl<const HIGH: u128, const LOW: u128> unsigned_operand_sealed::Sealed for WideUint<HIGH, LOW> {}
+impl<const HIGH: u128, const LOW: u128> UnsignedOperand for WideUint<HIGH, LOW> {
+    fn unsigned_limbs(self) -> (u128, u128) {
+        (
+            u128::from_le_bytes(self.0[16..].try_into().expect("high limb")),
+            u128::from_le_bytes(self.0[..16].try_into().expect("low limb")),
+        )
+    }
+}
+fn checked_add_unsigned_limbs(
+    left: (u128, u128),
+    right: (u128, u128),
+) -> Result<(u128, u128), CompactError> {
+    let (low, carry) = left.1.overflowing_add(right.1);
+    let high = left
+        .0
+        .checked_add(right.0)
+        .and_then(|high| high.checked_add(u128::from(carry)))
+        .ok_or(CompactError::UnsignedOverflow)?;
+    Ok((high, low))
+}
+
+/// Add without modular reduction, then enforce the declared wide result bound.
+pub fn add_wide_unsigned<
+    const HIGH: u128,
+    const LOW: u128,
+    L: UnsignedOperand,
+    R: UnsignedOperand,
+>(
+    left: L,
+    right: R,
+) -> Result<WideUint<HIGH, LOW>, CompactError> {
+    let (high, low) = checked_add_unsigned_limbs(left.unsigned_limbs(), right.unsigned_limbs())?;
+    let mut bytes = [0u8; 32];
+    bytes[..16].copy_from_slice(&low.to_le_bytes());
+    bytes[16..].copy_from_slice(&high.to_le_bytes());
+    WideUint::from_le_bytes(&bytes)
+}
+
 pub fn narrow_wide_uint<const TARGET_MAX: u128, const SOURCE_HIGH: u128, const SOURCE_LOW: u128>(
     value: WideUint<SOURCE_HIGH, SOURCE_LOW>,
 ) -> Result<BoundedUint<TARGET_MAX>, CompactError> {
@@ -521,5 +578,25 @@ impl<const MAX_HIGH: u128, const MAX_LOW: u128> BinaryHashRepr for WideUint<MAX_
 
     fn binary_len(&self) -> usize {
         Self::BYTE_LENGTH as usize
+    }
+}
+
+#[cfg(test)]
+mod wide_add_limb_tests {
+    use super::*;
+    #[test]
+    fn checked_add_carry_and_high_limb_overflow() {
+        assert_eq!(
+            checked_add_unsigned_limbs((0, u128::MAX), (0, 1)).unwrap(),
+            (1, 0)
+        );
+        assert!(matches!(
+            checked_add_unsigned_limbs((u128::MAX, 0), (1, 0)),
+            Err(CompactError::UnsignedOverflow)
+        ));
+        assert!(matches!(
+            checked_add_unsigned_limbs((u128::MAX, u128::MAX), (0, 1)),
+            Err(CompactError::UnsignedOverflow)
+        ));
     }
 }

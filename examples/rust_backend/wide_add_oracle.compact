@@ -1,0 +1,14 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger marker: Field;
+witness next_value(tag: Uint<8>): Uint<128>;
+export pure circuit add128(a: Uint<128>, b: Uint<128>): Uint<129> { return a + b; }
+export pure circuit merge128(a: Uint<128>, b: Uint<128>): Uint<128> { return (a + b) as Uint<128>; }
+export pure circuit mixed(a: Uint<129>, b: Uint<8>): Uint<130> { return a + b; }
+export pure circuit narrow129(a: Uint<129>, b: Uint<8>): Uint<129> { return (a + b) as Uint<129>; }
+export circuit witnessed(selected: Boolean): Uint<129> {
+  if(disclose(selected)) { return (disclose(next_value(1)) + disclose(next_value(2))) as Uint<129>; }
+  else { return 0 as Uint<129>; }
+}

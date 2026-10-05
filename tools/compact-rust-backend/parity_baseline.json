@@ -290,6 +290,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/wide_add_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "add128",
+    "signature": "export pure circuit add128(a: Uint<128>, b: Uint<128>): Uint<129>",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/literal_coercion_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -3370,6 +3378,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/wide_add_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "merge128",
+    "signature": "export pure circuit merge128(a: Uint<128>, b: Uint<128>): Uint<128>",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/nested_witness_call_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -3383,6 +3399,14 @@
     "kind": "circuit",
     "name": "mint",
     "signature": "export circuit mint(domain: Bytes<32>, amount: Uint<64>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/wide_add_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "mixed",
+    "signature": "export pure circuit mixed(a: Uint<129>, b: Uint<8>): Uint<130>",
     "visibility": "export"
   },
   {
@@ -3439,6 +3463,14 @@
     "kind": "circuit",
     "name": "multiply_uint",
     "signature": "export circuit multiply_uint(left: Uint<8>, right: Uint<8>): Uint<16>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/wide_add_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "narrow129",
+    "signature": "export pure circuit narrow129(a: Uint<129>, b: Uint<8>): Uint<129>",
     "visibility": "export"
   },
   {
@@ -6538,6 +6570,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/wide_add_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "witnessed",
+    "signature": "export circuit witnessed(selected: Boolean): Uint<129>",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/boolean_logic.compact",
     "module_path": [],
     "kind": "circuit",
@@ -7614,6 +7654,14 @@
     "kind": "witness",
     "name": "next_recipient",
     "signature": "witness next_recipient(): Either<ZswapCoinPublicKey, ContractAddress>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/wide_add_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "next_value",
+    "signature": "witness next_value(tag: Uint<8>): Uint<128>",
     "visibility": "internal"
   },
   {

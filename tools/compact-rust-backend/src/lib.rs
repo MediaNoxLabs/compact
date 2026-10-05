@@ -7,7 +7,7 @@ pub use recorded::{RecordingGap, RecordingGapCode};
 mod stateful;
 mod witness;
 
-const RUNTIME_ABI_VERSION: u32 = 45;
+const RUNTIME_ABI_VERSION: u32 = 46;
 pub const RUST_CAPABILITY_SCHEMA_VERSION: u32 = 3;
 
 const GENERATED_HEADER: &str = r#"// This file is part of Compact.
@@ -522,6 +522,46 @@ pub(crate) fn unsigned_cast_syntax(
             syn::parse_quote!(<#target>::from_le_bytes((#value).as_le_bytes())?)
         }
     })
+}
+
+/// Both expression emitters share admission and exact runtime arithmetic selection.
+pub(crate) fn unsigned_arithmetic_syntax(
+    operation: &Expr,
+    left: syn::Expr,
+    right: syn::Expr,
+    left_max: &str,
+    right_max: &str,
+    result_max: &str,
+) -> Result<syn::Expr, RenderError> {
+    let left_bound = unsigned_maximum(left_max)?;
+    let right_bound = unsigned_maximum(right_max)?;
+    let result_bound = unsigned_maximum(result_max)?;
+    if matches!(operation, Expr::UnsignedAdd { .. })
+        && let UnsignedMaximum::Wide { high, low } = result_bound
+    {
+        let high = syn::LitInt::new(&format!("{high}u128"), Span::call_site());
+        let low = syn::LitInt::new(&format!("{low}u128"), Span::call_site());
+        return Ok(syn::parse_quote!(runtime::add_wide_unsigned::<#high,#low,_,_>(#left,#right)?));
+    }
+    for (bound, text) in [
+        (left_bound, left_max),
+        (right_bound, right_max),
+        (result_bound, result_max),
+    ] {
+        if matches!(bound, UnsignedMaximum::Wide { .. }) {
+            return Err(RenderError::InvalidUnsignedMaximum(text.to_owned()));
+        }
+    }
+    let left_max = syn::LitInt::new(left_max, Span::call_site());
+    let right_max = syn::LitInt::new(right_max, Span::call_site());
+    let result_max = syn::LitInt::new(result_max, Span::call_site());
+    let helper: syn::Path = match operation {
+        Expr::UnsignedAdd { .. } => syn::parse_quote!(runtime::add_unsigned),
+        Expr::UnsignedSubtract { .. } => syn::parse_quote!(runtime::subtract_unsigned),
+        Expr::UnsignedMultiply { .. } => syn::parse_quote!(runtime::multiply_unsigned),
+        _ => unreachable!("unsigned arithmetic caller"),
+    };
+    Ok(syn::parse_quote!(#helper::<#left_max,#right_max,#result_max>(#left,#right)?))
 }
 
 fn rust_type(ty: &Type) -> Result<syn::Type, RenderError> {
@@ -2152,12 +2192,6 @@ fn expression_with_calls(
         Expr::UnsignedAdd { max, left, right }
         | Expr::UnsignedSubtract { max, left, right }
         | Expr::UnsignedMultiply { max, left, right } => {
-            let result_max = max
-                .parse::<u128>()
-                .map_err(|_| RenderError::InvalidUnsignedMaximum(max.clone()))?;
-            if result_max.to_string() != *max {
-                return Err(RenderError::InvalidUnsignedMaximum(max.clone()));
-            }
             let (left, left_type) = expression_with_calls(left, parameters, circuits)?;
             let (right, right_type) = expression_with_calls(right, parameters, circuits)?;
             let Type::Unsigned { max: left_max } = left_type else {
@@ -2172,21 +2206,8 @@ fn expression_with_calls(
                     actual: right_type,
                 });
             };
-            let left_max = syn::LitInt::new(&left_max, Span::call_site());
-            let right_max = syn::LitInt::new(&right_max, Span::call_site());
-            let result_max = syn::LitInt::new(max, Span::call_site());
-            let operation: syn::Path = match expr {
-                Expr::UnsignedAdd { .. } => syn::parse_quote!(runtime::add_unsigned),
-                Expr::UnsignedSubtract { .. } => {
-                    syn::parse_quote!(runtime::subtract_unsigned)
-                }
-                Expr::UnsignedMultiply { .. } => {
-                    syn::parse_quote!(runtime::multiply_unsigned)
-                }
-                _ => unreachable!(),
-            };
             Ok((
-                syn::parse_quote!(#operation::<#left_max, #right_max, #result_max>(#left, #right)?),
+                unsigned_arithmetic_syntax(expr, left, right, &left_max, &right_max, max)?,
                 Type::Unsigned { max: max.clone() },
             ))
         }
@@ -2247,8 +2268,11 @@ fn expression_with_calls(
             let (left, left_ty) = expression_with_calls(left, parameters, circuits)?;
             let (right, right_ty) = expression_with_calls(right, parameters, circuits)?;
             for actual in [left_ty, right_ty] {
-                if !matches!(actual, Type::Unsigned { .. }) {
+                let Type::Unsigned { max } = &actual else {
                     return Err(RenderError::ExpectedUnsigned(actual));
+                };
+                if matches!(unsigned_maximum(max)?, UnsignedMaximum::Wide { .. }) {
+                    return Err(RenderError::InvalidUnsignedMaximum(max.clone()));
                 }
             }
             let rendered = match operator {

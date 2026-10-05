@@ -45,8 +45,8 @@ pub use natives::{
 };
 pub use opaque::{OpaqueBytes, OpaqueString};
 pub use primitives::{
-    BoundedUint, FixedBytes, FixedVector, JubjubPoint, WideUint, add_unsigned, cast_unsigned,
-    multiply_unsigned, narrow_wide_uint, subtract_unsigned,
+    BoundedUint, FixedBytes, FixedVector, JubjubPoint, UnsignedOperand, WideUint, add_unsigned,
+    add_wide_unsigned, cast_unsigned, multiply_unsigned, narrow_wide_uint, subtract_unsigned,
 };
 
 /// Ledger FAB types used by the generated user-type derive.
@@ -57,7 +57,7 @@ pub mod fab {
 }
 
 /// Increment when generated Rust and the runtime's public contract change.
-pub const RUST_RUNTIME_ABI: u32 = 45;
+pub const RUST_RUNTIME_ABI: u32 = 46;
 /// The ledger line selected by this Compact branch's `flake.nix`.
 pub const LEDGER_VERSION: &str = "ledger-8.0.3";
 

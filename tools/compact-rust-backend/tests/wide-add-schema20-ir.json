@@ -1,0 +1,349 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "marker",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "wide_add_oracle.compact",
+        "line": 5,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "next_value",
+      "parameters": [
+        {
+          "name": "tag",
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "340282366920938463463374607431768211455"
+      },
+      "source": {
+        "file": "wide_add_oracle.compact",
+        "line": 6,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+    {
+      "name": "add128",
+      "parameters": [
+        {
+          "name": "a",
+          "ty": {
+            "kind": "unsigned",
+            "max": "340282366920938463463374607431768211455"
+          }
+        },
+        {
+          "name": "b",
+          "ty": {
+            "kind": "unsigned",
+            "max": "340282366920938463463374607431768211455"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "680564733841876926926749214863536422911"
+      },
+      "body": {
+        "kind": "unsigned_cast",
+        "max": "680564733841876926926749214863536422911",
+        "value": {
+          "kind": "unsigned_add",
+          "max": "680564733841876926926749214863536422910",
+          "left": {
+            "kind": "unsigned_cast",
+            "max": "680564733841876926926749214863536422910",
+            "value": {
+              "kind": "parameter",
+              "name": "a"
+            }
+          },
+          "right": {
+            "kind": "unsigned_cast",
+            "max": "680564733841876926926749214863536422910",
+            "value": {
+              "kind": "parameter",
+              "name": "b"
+            }
+          }
+        }
+      },
+      "source": {
+        "file": "wide_add_oracle.compact",
+        "line": 7,
+        "column": 1
+      }
+    },
+    {
+      "name": "merge128",
+      "parameters": [
+        {
+          "name": "a",
+          "ty": {
+            "kind": "unsigned",
+            "max": "340282366920938463463374607431768211455"
+          }
+        },
+        {
+          "name": "b",
+          "ty": {
+            "kind": "unsigned",
+            "max": "340282366920938463463374607431768211455"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "340282366920938463463374607431768211455"
+      },
+      "body": {
+        "kind": "unsigned_cast",
+        "max": "340282366920938463463374607431768211455",
+        "value": {
+          "kind": "unsigned_add",
+          "max": "680564733841876926926749214863536422911",
+          "left": {
+            "kind": "unsigned_cast",
+            "max": "680564733841876926926749214863536422910",
+            "value": {
+              "kind": "parameter",
+              "name": "a"
+            }
+          },
+          "right": {
+            "kind": "unsigned_cast",
+            "max": "680564733841876926926749214863536422910",
+            "value": {
+              "kind": "parameter",
+              "name": "b"
+            }
+          }
+        }
+      },
+      "source": {
+        "file": "wide_add_oracle.compact",
+        "line": 8,
+        "column": 1
+      }
+    },
+    {
+      "name": "mixed",
+      "parameters": [
+        {
+          "name": "a",
+          "ty": {
+            "kind": "unsigned",
+            "max": "680564733841876926926749214863536422911"
+          }
+        },
+        {
+          "name": "b",
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "1361129467683753853853498429727072845823"
+      },
+      "body": {
+        "kind": "unsigned_cast",
+        "max": "1361129467683753853853498429727072845823",
+        "value": {
+          "kind": "unsigned_add",
+          "max": "680564733841876926926749214863536423166",
+          "left": {
+            "kind": "unsigned_cast",
+            "max": "680564733841876926926749214863536423166",
+            "value": {
+              "kind": "parameter",
+              "name": "a"
+            }
+          },
+          "right": {
+            "kind": "unsigned_cast",
+            "max": "680564733841876926926749214863536423166",
+            "value": {
+              "kind": "parameter",
+              "name": "b"
+            }
+          }
+        }
+      },
+      "source": {
+        "file": "wide_add_oracle.compact",
+        "line": 9,
+        "column": 1
+      }
+    },
+    {
+      "name": "narrow129",
+      "parameters": [
+        {
+          "name": "a",
+          "ty": {
+            "kind": "unsigned",
+            "max": "680564733841876926926749214863536422911"
+          }
+        },
+        {
+          "name": "b",
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "680564733841876926926749214863536422911"
+      },
+      "body": {
+        "kind": "unsigned_cast",
+        "max": "680564733841876926926749214863536422911",
+        "value": {
+          "kind": "unsigned_add",
+          "max": "1361129467683753853853498429727072845823",
+          "left": {
+            "kind": "unsigned_cast",
+            "max": "680564733841876926926749214863536423166",
+            "value": {
+              "kind": "parameter",
+              "name": "a"
+            }
+          },
+          "right": {
+            "kind": "unsigned_cast",
+            "max": "680564733841876926926749214863536423166",
+            "value": {
+              "kind": "parameter",
+              "name": "b"
+            }
+          }
+        }
+      },
+      "source": {
+        "file": "wide_add_oracle.compact",
+        "line": 10,
+        "column": 1
+      }
+    }
+  ],
+  "stateful_circuits": [
+    {
+      "name": "witnessed",
+      "parameters": [
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "680564733841876926926749214863536422911"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "if",
+          "condition": {
+            "kind": "parameter",
+            "name": "selected"
+          },
+          "then": {
+            "kind": "unsigned_cast",
+            "max": "680564733841876926926749214863536422911",
+            "value": {
+              "kind": "unsigned_add",
+              "max": "680564733841876926926749214863536422911",
+              "left": {
+                "kind": "unsigned_cast",
+                "max": "680564733841876926926749214863536422910",
+                "value": {
+                  "kind": "witness_call",
+                  "name": "next_value",
+                  "arguments": [
+                    {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "unsigned_literal",
+                        "value": "1",
+                        "max": "255"
+                      },
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "255"
+                      }
+                    }
+                  ]
+                }
+              },
+              "right": {
+                "kind": "unsigned_cast",
+                "max": "680564733841876926926749214863536422910",
+                "value": {
+                  "kind": "witness_call",
+                  "name": "next_value",
+                  "arguments": [
+                    {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "unsigned_literal",
+                        "value": "2",
+                        "max": "255"
+                      },
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "255"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "otherwise": {
+            "kind": "unsigned_literal",
+            "value": "0",
+            "max": "680564733841876926926749214863536422911"
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "wide_add_oracle.compact",
+        "line": 11,
+        "column": 1
+      }
+    }
+  ]
+}

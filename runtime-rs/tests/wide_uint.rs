@@ -65,3 +65,36 @@ fn arbitrary_wide_maximum_rejects_values_above_its_bound() {
         .is_err()
     );
 }
+
+#[test]
+fn wide_addition_preserves_carry_arbitrary_bounds_and_checked_narrowing() {
+    use midnight_compact_runtime::{BoundedUint, add_wide_unsigned};
+    let max = BoundedUint::<{ u128::MAX }>::new(u128::MAX).unwrap();
+    let one = BoundedUint::<255>::new(1).unwrap();
+    let carry = add_wide_unsigned::<1, { u128::MAX }, _, _>(max, one).unwrap();
+    assert_eq!(
+        carry.as_le_bytes(),
+        &[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+    );
+    assert!(narrow_wide_uint::<{ u128::MAX }, 1, { u128::MAX }>(carry).is_err());
+    let double = add_wide_unsigned::<1, { u128::MAX - 1 }, _, _>(max, max).unwrap();
+    let mut expected = [255; 17];
+    expected[0] = 254;
+    expected[16] = 1;
+    assert_eq!(double.as_le_bytes(), expected);
+    assert!(add_wide_unsigned::<1, { u128::MAX - 2 }, _, _>(max, max).is_err());
+    let bound = WideUint::<1, { u128::MAX }>::from_le_bytes(&[
+        255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 1,
+    ])
+    .unwrap();
+    assert!(add_wide_unsigned::<1, { u128::MAX }, _, _>(bound, one).is_err());
+    let grown = add_wide_unsigned::<3, { u128::MAX }, _, _>(bound, one).unwrap();
+    assert_eq!(
+        grown.as_le_bytes(),
+        &[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+    );
+    let wide248 = Uint248::from_le_bytes(&[255; 31]).unwrap();
+    assert!(
+        add_wide_unsigned::<{ (1u128 << 120) - 1 }, { u128::MAX }, _, _>(wide248, one).is_err()
+    );
+}

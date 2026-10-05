@@ -27,7 +27,7 @@ use crate::{
     RenderError, UnsignedMaximum, coerce_expression, condition_needs_statement, discard_expression,
     expression_with_calls, field_to_bytes_32_syntax, ident, ledger_path_expr,
     list_head_result_type, map_slot_types, public_parameter_idents, retained_value, rust_type,
-    unsigned_cast_syntax, unsigned_maximum,
+    unsigned_arithmetic_syntax, unsigned_cast_syntax, unsigned_maximum,
 };
 
 pub(crate) fn qualified_coin_type() -> Type {
@@ -1492,12 +1492,6 @@ pub(crate) fn render_state_expression(
         Expr::UnsignedAdd { max, left, right }
         | Expr::UnsignedSubtract { max, left, right }
         | Expr::UnsignedMultiply { max, left, right } => {
-            let result_max = max
-                .parse::<u128>()
-                .map_err(|_| RenderError::InvalidUnsignedMaximum(max.clone()))?;
-            if result_max.to_string() != *max {
-                return Err(RenderError::InvalidUnsignedMaximum(max.clone()));
-            }
             let (left, left_ty, left_effect) = render_state_expression(
                 left,
                 parameters,
@@ -1544,17 +1538,15 @@ pub(crate) fn render_state_expression(
             );
             *next_temp += 1;
             statements.push(syn::parse_quote!(let #right_name = #right;));
-            let left_max = syn::LitInt::new(&left_max, Span::call_site());
-            let right_max = syn::LitInt::new(&right_max, Span::call_site());
-            let result_max = syn::LitInt::new(max, Span::call_site());
-            let operation: syn::Path = match value {
-                Expr::UnsignedAdd { .. } => syn::parse_quote!(runtime::add_unsigned),
-                Expr::UnsignedSubtract { .. } => syn::parse_quote!(runtime::subtract_unsigned),
-                Expr::UnsignedMultiply { .. } => syn::parse_quote!(runtime::multiply_unsigned),
-                _ => unreachable!(),
-            };
             Ok((
-                syn::parse_quote!(#operation::<#left_max, #right_max, #result_max>(#left_name, #right_name)?),
+                unsigned_arithmetic_syntax(
+                    value,
+                    syn::parse_quote!(#left_name),
+                    syn::parse_quote!(#right_name),
+                    &left_max,
+                    &right_max,
+                    max,
+                )?,
                 Type::Unsigned { max: max.clone() },
                 left_effect || right_effect,
             ))
@@ -1674,8 +1666,11 @@ pub(crate) fn render_state_expression(
                 ledger_fields,
                 query_effect,
             )?;
-            if !matches!(left_ty, Type::Unsigned { .. }) {
+            let Type::Unsigned { max } = &left_ty else {
                 return Err(RenderError::ExpectedUnsigned(left_ty));
+            };
+            if matches!(unsigned_maximum(max)?, UnsignedMaximum::Wide { .. }) {
+                return Err(RenderError::InvalidUnsignedMaximum(max.clone()));
             }
             let left_name = syn::Ident::new(
                 &format!("__compact_value_{}", *next_temp),
@@ -1694,8 +1689,11 @@ pub(crate) fn render_state_expression(
                 ledger_fields,
                 query_effect,
             )?;
-            if !matches!(right_ty, Type::Unsigned { .. }) {
+            let Type::Unsigned { max } = &right_ty else {
                 return Err(RenderError::ExpectedUnsigned(right_ty));
+            };
+            if matches!(unsigned_maximum(max)?, UnsignedMaximum::Wide { .. }) {
+                return Err(RenderError::InvalidUnsignedMaximum(max.clone()));
             }
             let rendered = match operator {
                 ComparisonOperator::Less => syn::parse_quote!(#left_name.value() < #right.value()),

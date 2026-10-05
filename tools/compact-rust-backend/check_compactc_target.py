@@ -1095,6 +1095,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--consumer", action="store_true", help="build and run a separate consumer")
     parser.add_argument("--proof", action="store_true", help="generate ZKIR and proving keys")
+    parser.add_argument("--wide-add", action="store_true", help="check bounded native wide addition and original-source progress")
     parser.add_argument("--stateful-struct", action="store_true", help="check ordered typed native struct construction and its remaining original-source boundary")
     parser.add_argument("--kernel-shielded-effects", action="store_true", help="check typed native Kernel admission and recording boundary")
     parser.add_argument("--native-zswap-intents", action="store_true", help="check native Zswap intent admission and explicit recording refusal")
@@ -1123,6 +1124,26 @@ def main() -> None:
     compiler = os.environ.get("COMPACTC", "compactc")
     with tempfile.TemporaryDirectory(prefix="compactc-target-") as temporary:
         base = Path(temporary)
+        if args.wide_add:
+            source = ROOT / "examples/rust_backend/wide_add_oracle.compact"
+            output = base / "wide-add"
+            run(compiler, "--target", "rust", "--skip-zk", str(source), str(output))
+            generated = (output / "contract/lib.rs").read_text()
+            assert "runtime::add_wide_unsigned" in generated
+            assert "runtime::narrow_wide_uint" in generated
+            assert "RUST_RUNTIME_ABI == 46" in generated
+            report = json.loads((output / "contract/rust-capabilities.json").read_text())
+            assert len(report["circuits"]) == 1
+            row = report["circuits"][0]
+            assert not row["recorded"] and not row["observed_call"]
+            assert not row["proof_required"] and row["recording_status"] == "not_applicable"
+            original = subprocess.run([compiler, "--target", "rust", "--skip-zk", str(ROOT / "test-center/test-contracts/micro-dao.compact"), str(base / "original-dao")], cwd=ROOT, capture_output=True, text=True)
+            assert original.returncode != 0
+            assert "micro-dao.compact line 187" in original.stderr
+            assert "stateful expression requires stateful evaluation" in original.stderr
+            assert not (base / "original-dao/contract/lib.rs").exists()
+            print("wide addition admitted; original micro-dao advances to stateful evaluation at line187")
+            return
         if args.stateful_struct:
             source = ROOT / "examples/rust_backend/stateful_struct_oracle.compact"
             output = base / "stateful-struct"
@@ -1139,10 +1160,10 @@ def main() -> None:
                 assert row["proof_required"]
             original = subprocess.run([compiler, "--target", "rust", "--skip-zk", str(ROOT / "test-center/test-contracts/micro-dao.compact"), str(base / "original-dao")], cwd=ROOT, capture_output=True, text=True)
             assert original.returncode != 0
-            assert 'unsupported Compact Uint maximum "680564733841876926926749214863536422911"' in original.stderr
-            assert "standard-library.compact line 207" in original.stderr
+            assert "stateful expression requires stateful evaluation" in original.stderr
+            assert "micro-dao.compact line 187" in original.stderr
             assert not (base / "original-dao/contract/lib.rs").exists()
-            print("ordered typed stateful structs admitted; original micro-dao next gap is exact Uint129 intermediate")
+            print("ordered typed stateful structs admitted; original micro-dao next gap is stateful evaluation at line187")
             return
         if args.kernel_shielded_effects:
             source = ROOT / "examples/rust_backend/kernel_shielded_effects_oracle.compact"
@@ -1482,6 +1503,7 @@ def main() -> None:
         run(sys.executable, str(Path(__file__).resolve()), "--native-zswap-intents")
         run(sys.executable, str(Path(__file__).resolve()), "--kernel-shielded-effects")
         run(sys.executable, str(Path(__file__).resolve()), "--stateful-struct")
+        run(sys.executable, str(Path(__file__).resolve()), "--wide-add")
         ts, rust, both, pure = (base / name for name in ("ts", "rust", "both", "pure"))
         run(compiler, "--skip-zk", str(SOURCE), str(ts))
         assert (ts / "contract/index.js").is_file()

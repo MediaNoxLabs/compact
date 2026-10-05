@@ -1,0 +1,31 @@
+# This file is part of Compact.
+# Copyright (C) 2026 Midnight Foundation
+# SPDX-License-Identifier: Apache-2.0
+
+[package]
+name = "compact-rust-wide-add-oracle-fixture"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+
+[lints.clippy]
+bool_comparison = "allow"
+
+[lib]
+path = "lib.rs"
+
+[features]
+ledger-transaction = ["midnight-compact-runtime/ledger-transaction"]
+
+[dependencies]
+midnight-compact-runtime = { path = "../../runtime-rs" }
+
+[dev-dependencies]
+hex = "0.4"
+serde = "1"
+serde_json = "1"
+midnight-base-crypto = "=1.0.0"
+midnight-coin-structure = "=2.0.1"
+midnight-onchain-state = "=3.0.0"
+midnight-serialize = "=1.0.0"
+midnight-storage = "=2.0.1"

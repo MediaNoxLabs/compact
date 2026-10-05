@@ -2741,7 +2741,7 @@ fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
     let source = render(&contract).unwrap();
     assert!(source.contains("CompactCellValue, CompactEnum"));
     assert!(source.contains("pub enum Choice"));
-    assert!(source.contains("RUST_RUNTIME_ABI == 45"));
+    assert!(source.contains("RUST_RUNTIME_ABI == 46"));
     assert!(!source.contains("impl FieldRepr for Choice"));
     assert!(!source.contains("impl BinaryHashRepr for Choice"));
     assert!(!source.contains("impl FromFieldRepr for Choice"));
@@ -10701,4 +10701,105 @@ fn stateful_structs_validate_member_types_and_keep_effectful_members_native_only
         body: value,
     });
     assert!(render_with_capabilities(&pure).is_err());
+}
+
+#[test]
+fn wide_addition_validates_every_bound_and_does_not_admit_other_wide_operators() {
+    let mut contract: Contract =
+        serde_json::from_str(include_str!("wide-add-schema20-ir.json")).unwrap();
+    contract.schema_version = SCHEMA_VERSION;
+    let out = render_with_capabilities(&contract).unwrap();
+    assert!(out.source.contains("runtime::add_wide_unsigned"));
+    assert!(out.source.contains("runtime::narrow_wide_uint"));
+    for mode in 0..6 {
+        let mut wrong = contract.clone();
+        let c = wrong
+            .circuits
+            .iter_mut()
+            .find(|c| c.name == "add128")
+            .unwrap();
+        let Expr::UnsignedCast { value, .. } = &mut c.body else {
+            panic!()
+        };
+        let Expr::UnsignedAdd { max, left, right } = value.as_mut() else {
+            panic!()
+        };
+        match mode {
+            0 => *max = "0680564733841876926926749214863536422910".into(),
+            1 => {
+                *max = "452312848583266388373324160190187140051835877600158453279131187530910662656"
+                    .into()
+            }
+            2 => **left = Expr::Boolean { value: false },
+            3 => {
+                let Expr::UnsignedCast { max, .. } = left.as_mut() else {
+                    panic!()
+                };
+                *max = "-1".into();
+            }
+            4 => {
+                **value = Expr::UnsignedSubtract {
+                    max: max.clone(),
+                    left: left.clone(),
+                    right: right.clone(),
+                }
+            }
+            5 => {
+                **value = Expr::UnsignedMultiply {
+                    max: max.clone(),
+                    left: left.clone(),
+                    right: right.clone(),
+                }
+            }
+            _ => unreachable!(),
+        }
+        assert!(
+            render_with_capabilities(&wrong).is_err(),
+            "invalid wide arithmetic mode {mode}"
+        );
+    }
+    let mut wrong = contract.clone();
+    let c = wrong
+        .circuits
+        .iter_mut()
+        .find(|c| c.name == "mixed")
+        .unwrap();
+    c.result = Type::Boolean;
+    c.body = Expr::Compare {
+        operator: compact_rust_backend::ir::ComparisonOperator::Less,
+        left: Box::new(Expr::Parameter { name: "a".into() }),
+        right: Box::new(Expr::Parameter { name: "b".into() }),
+    };
+    assert!(render_with_capabilities(&wrong).is_err());
+    // Stateful arithmetic shares the same admission checks.
+    for kind in ["unsigned_subtract", "unsigned_multiply", "compare"] {
+        let mut value: serde_json::Value =
+            serde_json::from_str(include_str!("wide-add-schema20-ir.json")).unwrap();
+        fn replace(value: &mut serde_json::Value, kind: &str) {
+            if let Some(obj) = value.as_object_mut() {
+                if obj.get("kind").and_then(|v| v.as_str()) == Some("unsigned_add") {
+                    obj.insert("kind".into(), kind.into());
+                    if kind == "compare" {
+                        obj.remove("max");
+                        obj.insert("operator".into(), "less".into());
+                    }
+                    return;
+                }
+                for v in obj.values_mut() {
+                    replace(v, kind);
+                }
+            } else if let Some(values) = value.as_array_mut() {
+                for v in values {
+                    replace(v, kind);
+                }
+            }
+        }
+        replace(&mut value["stateful_circuits"], kind);
+        let mut wrong: Contract = serde_json::from_value(value).unwrap();
+        wrong.schema_version = SCHEMA_VERSION;
+        assert!(
+            render_with_capabilities(&wrong).is_err(),
+            "stateful wide {kind}"
+        );
+    }
 }

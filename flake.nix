@@ -216,7 +216,9 @@
             checkPhase = "";
           });
 
-          packages.compact-rust-cli = pkgs.rustPlatform.buildRustPackage {
+          packages.compact-rust-cli = let
+            linking-pkgs = if pkgs.lib.hasSuffix "linux" system then pkgs.pkgsMusl else pkgs;
+          in linking-pkgs.rustPlatform.buildRustPackage {
             pname = "compact-rust-cli";
             version = "0.1.0";
             # The CLI build needs only its crate sources; local harness scripts
@@ -365,7 +367,7 @@
                 chmod +x "$out/bin/$exe"
               done
             '' + (if isDarwin then ''
-              for exe in compactc-scheme format-compact fixup-compact; do
+              for exe in compactc compactc-scheme format-compact fixup-compact; do
                 install_name_tool -change ${pkgs.darwin.libiconv}/lib/libiconv.2.dylib /usr/lib/libiconv.2.dylib "$out/bin/$exe"
               done
             '' else "");
@@ -412,6 +414,20 @@
               install_name_tool -change ${inputs.zkir.inputs.nixpkgs.legacyPackages.${system}.darwin.libiconv}/lib/libiconv.2.dylib /usr/lib/libiconv.2.dylib "$out/lib/zkir"
               install_name_tool -change ${inputs.zkir-v3.inputs.nixpkgs.legacyPackages.${system}.darwin.libiconv}/lib/libiconv.2.dylib /usr/lib/libiconv.2.dylib "$out/lib/zkir-v3"
             '' else "");
+
+            # Execution on a Nix-equipped host can hide store-only libraries.
+            # Fail the portable Darwin build if any executable still needs one.
+            doInstallCheck = isDarwin;
+            installCheckPhase = ''
+              for exe in bin/compactc.bin bin/compactc-scheme bin/format-compact bin/fixup-compact lib/zkir lib/zkir-v3; do
+                otool -L "$out/$exe" > "$TMPDIR/compactc-libraries"
+                if grep -Eq '^[[:space:]]+/nix/store/' "$TMPDIR/compactc-libraries"; then
+                  cat "$TMPDIR/compactc-libraries" >&2
+                  echo "Portable compiler retains a Nix library dependency: $exe" >&2
+                  exit 1
+                fi
+              done
+            '';
 
             dontFixup = true;
           };

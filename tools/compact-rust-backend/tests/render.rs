@@ -26,6 +26,66 @@ use compact_rust_backend::{
 };
 
 #[test]
+fn discarded_field_binding_keeps_reads_but_rejects_wrong_slot_type_and_nonunit_body() {
+    let mut contract: Contract =
+        serde_json::from_str(include_str!("unused-field-read-ir.json")).unwrap();
+    contract.schema_version = SCHEMA_VERSION;
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    let mut pure_only = contract.clone();
+    let StateReturn::Expression {
+        value: Expr::Let { bindings, .. },
+    } = &mut pure_only.stateful_circuits[0].return_value
+    else {
+        unreachable!()
+    };
+    bindings[0].value = Expr::Parameter { name: "a".into() };
+    assert!(
+        !render_with_capabilities(&pure_only)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
+    );
+
+    let mut unsupported = contract.clone();
+    let StateReturn::Expression {
+        value: Expr::Let { bindings, .. },
+    } = &mut unsupported.stateful_circuits[0].return_value
+    else {
+        unreachable!()
+    };
+    bindings.push(LocalBinding {
+        name: "hash".into(),
+        ty: Type::Bytes { length: 32 },
+        value: Expr::PersistentHash {
+            value: Box::new(Expr::Parameter { name: "b".into() }),
+        },
+    });
+    assert!(
+        !render_with_capabilities(&unsupported)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
+    );
+    let mut wrong_index = contract.clone();
+    wrong_index.ledger_fields[0].index = 1;
+    assert!(render(&wrong_index).is_err());
+    let mut wrong_type = contract.clone();
+    wrong_type.ledger_fields[0].declaration = LedgerFieldKind::Cell { ty: Type::Boolean };
+    assert!(render(&wrong_type).is_err());
+    let StateReturn::Expression {
+        value: Expr::Let { body, .. },
+    } = &mut contract.stateful_circuits[0].return_value
+    else {
+        unreachable!()
+    };
+    **body = Expr::FieldLiteral { value: "7".into() };
+    assert!(render(&contract).is_err());
+}
+
+#[test]
 fn direct_plain_merkle_root_recording_requires_exact_digest_and_slot() {
     let digest = Type::Struct {
         name: "MerkleTreeDigest".into(),

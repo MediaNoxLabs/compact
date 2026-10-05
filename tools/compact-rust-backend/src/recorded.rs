@@ -6324,6 +6324,49 @@ fn render_recorded_item(
     let result_ty = rust_type(&circuit.result)?;
     let (return_steps, result): (Vec<syn::Stmt>, syn::Expr) = match &circuit.return_value {
         StateReturn::Expression {
+            value: Expr::Let { bindings, body },
+        } if circuit.result == Type::Unit
+            && circuit.actions.is_empty()
+            && matches!(body.as_ref(), Expr::Unit)
+            && bindings.iter().all(|binding| binding.ty == Type::Field)
+            && bindings
+                .iter()
+                .any(|binding| contains_cell_read(&binding.value)) =>
+        {
+            // An unused value may still perform a public ledger read. Evaluate
+            // each binding in lexical order before discarding the unit result.
+            let mut return_steps = Vec::new();
+            let mut locals = HashMap::new();
+            for (index, binding) in bindings.iter().enumerate() {
+                let Some(value) = field_expression(
+                    &binding.value,
+                    &locals,
+                    &parameters,
+                    ledger_fields,
+                    witnesses,
+                    circuits,
+                    shared_callees,
+                    &mut return_steps,
+                    &mut next_temp,
+                    &mut visiting,
+                )?
+                else {
+                    return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
+                        &binding.value,
+                        format!("return_value.value.bindings[{index}].value"),
+                    )));
+                };
+                let local = syn::Ident::new(
+                    &format!("__compact_recorded_discarded_field_{next_temp}"),
+                    Span::call_site(),
+                );
+                next_temp += 1;
+                return_steps.push(syn::parse_quote!(let #local: runtime::Field = #value;));
+                locals.insert(binding.name.clone(), syn::parse_quote!(#local));
+            }
+            (return_steps, syn::parse_quote!(()))
+        }
+        StateReturn::Expression {
             value: Expr::Parameter { name },
         } if recorded_root_return
             .as_ref()

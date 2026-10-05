@@ -62,6 +62,12 @@ EXTRA = {
         FIXTURES / "adt-list-vector-field-4/lib.rs",
     ROOT / "examples/adt/tests/list_bytes.compact":
         FIXTURES / "adt-list-bytes/lib.rs",
+    ROOT / "examples/bugs/pm-19252/example_seven.compact":
+        FIXTURES / "pm-19252-unused-read-seven" / "lib.rs",
+    ROOT / "examples/bugs/pm-19252/example_eight_a.compact":
+        FIXTURES / "pm-19252-unused-read-eight-a" / "lib.rs",
+    ROOT / "examples/bugs/pm-19252/example_eight_b.compact":
+        FIXTURES / "pm-19252-unused-read-eight-b" / "lib.rs",
 }
 
 

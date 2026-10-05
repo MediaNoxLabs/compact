@@ -1606,6 +1606,15 @@ def main() -> None:
                 for extension in ("zkir", "bzkir"):
                     assert (output / "zkir" / f"ping.{extension}").is_file()
                 vector_map_proofs.append(output)
+            unused_field_read_proofs = []
+            for name in ("seven", "eight_a", "eight_b"):
+                output = base / f"unused-field-read-{name}-proof"
+                source = ROOT / "examples/bugs/pm-19252" / f"example_{name}.compact"
+                run(compiler, "--target", "rust", "--rust-require-recording", str(source), str(output))
+                check_manifest(output)
+                capabilities = json.loads((output / "contract/rust-capabilities.json").read_text())
+                assert all(row["recorded"] and row["observed_call"] for row in capabilities["circuits"])
+                unused_field_read_proofs.append(output)
             let_return_proof = base / "let-return-proof"
             run(compiler, "--target", "rust", str(LET_RETURN_SOURCE), str(let_return_proof))
             check_manifest(let_return_proof)
@@ -1915,6 +1924,8 @@ def main() -> None:
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--let-return", str(let_return_proof),
             )
+            run("cargo", "run", "--quiet", "--locked", "-p", "compact-rust-proof-smoke", "--",
+                "--unused-field-reads", *(str(output) for output in unused_field_read_proofs))
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--vector-map", *(str(output) for output in vector_map_proofs),

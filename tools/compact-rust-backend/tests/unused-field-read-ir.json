@@ -1,0 +1,81 @@
+{
+  "schema_version": 12,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "vara",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "example_seven.compact",
+        "line": 16,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "test",
+      "parameters": [
+        {
+          "name": "a",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "b",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "add",
+                "left": {
+                  "kind": "cell_read",
+                  "field": "vara",
+                  "index": 0
+                },
+                "right": {
+                  "kind": "parameter",
+                  "name": "a"
+                }
+              }
+            }
+          ],
+          "body": {
+            "kind": "unit"
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "example_seven.compact",
+        "line": 18,
+        "column": 1
+      }
+    }
+  ]
+}

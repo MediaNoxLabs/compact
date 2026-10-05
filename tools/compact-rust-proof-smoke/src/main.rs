@@ -56,6 +56,7 @@ mod struct_constructor_cell;
 mod test_center_counter;
 mod test_center_welcome;
 mod unsigned_recording;
+mod unused_field_reads;
 mod vector_map;
 mod witness_assert;
 mod witness_vector_action;
@@ -1785,6 +1786,19 @@ fn run() -> Result<(), Box<dyn Error>> {
             Ok(Err(error)) => Err(error.into()),
             Err(_) => Err("impure Field helper proof thread panicked".into()),
         };
+    }
+    if first.as_deref() == Some(OsStr::new("--unused-field-reads")) {
+        let seven = arguments.next().ok_or("expected seven proof output")?;
+        let eight_a = arguments.next().ok_or("expected eight-a proof output")?;
+        let eight_b = arguments.next().ok_or("expected eight-b proof output")?;
+        if arguments.next().is_some() {
+            return Err("unexpected unused-field-reads argument".into());
+        }
+        return unused_field_reads::run(
+            Path::new(&seven),
+            Path::new(&eight_a),
+            Path::new(&eight_b),
+        );
     }
     if first.as_deref() == Some(OsStr::new("--let-return")) {
         let root = arguments

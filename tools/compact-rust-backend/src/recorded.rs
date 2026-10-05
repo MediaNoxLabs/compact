@@ -21,8 +21,8 @@ use serde::Serialize;
 use std::collections::{HashMap, HashSet};
 
 use crate::ir::{
-    ComparisonOperator, CounterAmount, Expr, LedgerField, LedgerFieldKind, LocalBinding,
-    PureCircuit, StateAction, StateReturn, StatefulCircuit, Type, WitnessDeclaration,
+    CounterAmount, Expr, LedgerField, LedgerFieldKind, LocalBinding, PureCircuit, StateAction,
+    StateReturn, StatefulCircuit, Type, WitnessDeclaration,
 };
 use crate::stateful::circuit_uses_witness;
 use crate::{
@@ -1571,28 +1571,104 @@ fn render_recorded_item(
         Ok(Some(steps))
     }
 
-    // A custody grant read has a disclosed opaque key, one Map membership
-    // guard, one typed composite lookup, and a closed pure time assertion.
-    // Keep this exact asset shape separate from general OpaqueString Lets and
-    // general struct Map lookups until their own proof parity is established.
-    fn closed_custody_grant_steps(
+    // Type-check the complete pure guard against a closed scalar expression
+    // language. This rejects effects and calls even when they occur in a
+    // branch that a particular fixture does not exercise.
+    fn guarded_map_pure_type(expr: &Expr, scope: &HashMap<String, Type>) -> Option<Type> {
+        match expr {
+            Expr::Unit => Some(Type::Unit),
+            Expr::Boolean { .. } => Some(Type::Boolean),
+            Expr::UnsignedLiteral { max, .. } => Some(Type::Unsigned { max: max.clone() }),
+            Expr::Parameter { name } => scope.get(name).cloned(),
+            Expr::StructField {
+                value,
+                field,
+                index,
+            } => {
+                let Type::Struct { fields, .. } = guarded_map_pure_type(value, scope)? else {
+                    return None;
+                };
+                fields
+                    .get(*index)
+                    .filter(|part| part.name == *field)
+                    .map(|part| part.ty.clone())
+            }
+            Expr::Let { bindings, body } => {
+                let mut local = scope.clone();
+                for binding in bindings {
+                    if local.contains_key(&binding.name)
+                        || guarded_map_pure_type(&binding.value, &local)? != binding.ty
+                    {
+                        return None;
+                    }
+                    local.insert(binding.name.clone(), binding.ty.clone());
+                }
+                guarded_map_pure_type(body, &local)
+            }
+            Expr::Compare { left, right, .. } => {
+                let left = guarded_map_pure_type(left, scope)?;
+                (matches!(left, Type::Unsigned { .. })
+                    && guarded_map_pure_type(right, scope)? == left)
+                    .then_some(Type::Boolean)
+            }
+            Expr::UnsignedSubtract { max, left, right } => {
+                let ty = Type::Unsigned { max: max.clone() };
+                (guarded_map_pure_type(left, scope)? == ty
+                    && guarded_map_pure_type(right, scope)? == ty)
+                    .then_some(ty)
+            }
+            Expr::If {
+                condition,
+                then,
+                otherwise,
+            } => {
+                if guarded_map_pure_type(condition, scope)? != Type::Boolean {
+                    return None;
+                }
+                let then_ty = guarded_map_pure_type(then, scope)?;
+                (guarded_map_pure_type(otherwise, scope)? == then_ty).then_some(then_ty)
+            }
+            Expr::Assert { condition, .. } => {
+                (guarded_map_pure_type(condition, scope)? == Type::Boolean).then_some(Type::Unit)
+            }
+            Expr::Sequence { steps, value } => {
+                for step in steps {
+                    if guarded_map_pure_type(step, scope)? != Type::Unit {
+                        return None;
+                    }
+                }
+                guarded_map_pure_type(value, scope)
+            }
+            Expr::Coerce { value, ty } => {
+                (guarded_map_pure_type(value, scope)? == *ty).then(|| ty.clone())
+            }
+            _ => None,
+        }
+    }
+
+    fn guarded_map_has_assert(expr: &Expr) -> bool {
+        match expr {
+            Expr::Assert { .. } => true,
+            Expr::Sequence { steps, value } => {
+                steps.iter().any(guarded_map_has_assert) || guarded_map_has_assert(value)
+            }
+            Expr::If {
+                then, otherwise, ..
+            } => guarded_map_has_assert(then) || guarded_map_has_assert(otherwise),
+            Expr::Let { body, .. } => guarded_map_has_assert(body),
+            _ => false,
+        }
+    }
+
+    // This pattern is keyed by typed provenance and operation order rather
+    // than contract, Map, struct, or pure-circuit names.
+    fn closed_guarded_struct_map_read_steps(
         circuit: &StatefulCircuit,
         parameters: &HashMap<&str, (&Type, syn::Ident)>,
         ledger_fields: &HashMap<&str, &LedgerField>,
         pure_circuits: &HashMap<&str, &PureCircuit>,
     ) -> Result<Option<Vec<syn::Stmt>>, RenderError> {
-        let [key_parameter, time_parameter] = circuit.parameters.as_slice() else {
-            return Ok(None);
-        };
-        let uint64 = Type::Unsigned {
-            max: u64::MAX.to_string(),
-        };
-        if circuit.name != "assertGrantEffective"
-            || key_parameter.ty != Type::OpaqueString
-            || time_parameter.ty != uint64
-            || circuit.result != Type::Unit
-            || circuit.return_value != StateReturn::Unit
-        {
+        if circuit.result != Type::Unit || circuit.return_value != StateReturn::Unit {
             return Ok(None);
         }
         let [
@@ -1607,8 +1683,17 @@ fn render_recorded_item(
         let [key_binding] = key_bindings.as_slice() else {
             return Ok(None);
         };
+        let Expr::Parameter {
+            name: key_source_name,
+        } = &key_binding.value
+        else {
+            return Ok(None);
+        };
         if key_binding.ty != Type::OpaqueString
-            || !matches!(&key_binding.value, Expr::Parameter { name } if name == &key_parameter.name)
+            || !matches!(
+                parameters.get(key_source_name.as_str()),
+                Some((Type::OpaqueString, _))
+            )
         {
             return Ok(None);
         }
@@ -1619,92 +1704,54 @@ fn render_recorded_item(
             StateAction::Assert {
                 condition:
                     Expr::MapMember {
-                        field: member_field,
-                        index: member_index,
+                        field,
+                        index,
                         key: member_key,
                     },
                 message,
             },
             StateAction::Let {
-                bindings: grant_bindings,
-                action: grant_action,
+                bindings: value_bindings,
+                action: pure_action,
             },
         ] = actions.as_slice()
         else {
             return Ok(None);
         };
-        let [grant_binding] = grant_bindings.as_slice() else {
+        let [value_binding] = value_bindings.as_slice() else {
             return Ok(None);
         };
         let Expr::MapLookup {
             field: lookup_field,
             index: lookup_index,
             key: lookup_key,
-        } = &grant_binding.value
+        } = &value_binding.value
         else {
             return Ok(None);
         };
         let StateAction::PureCall {
             name: pure_name,
             arguments,
-        } = grant_action.as_ref()
+        } = pure_action.as_ref()
         else {
             return Ok(None);
         };
-        let [grant_argument, time_argument] = arguments.as_slice() else {
-            return Ok(None);
-        };
-        if member_field != "custodyGrants"
-            || lookup_field != member_field
-            || member_index != lookup_index
+        if lookup_field != field
+            || lookup_index != index
             || !matches!(member_key.as_ref(), Expr::Parameter { name } if name == &key_binding.name)
             || !matches!(lookup_key.as_ref(), Expr::Parameter { name } if name == &key_binding.name)
-            || pure_name != "assertGrantNotFuture"
-            || !matches!(grant_argument, Expr::Coerce { value, ty }
-                if ty == &grant_binding.ty && matches!(value.as_ref(), Expr::Parameter { name } if name == &grant_binding.name))
-            || !matches!(time_argument, Expr::Coerce { value, ty }
-                if ty == &uint64 && matches!(value.as_ref(), Expr::Parameter { name } if name == &time_parameter.name))
+            || !matches!(value_binding.ty, Type::Struct { .. })
         {
             return Ok(None);
         }
-        let Type::Struct {
-            name: grant_name,
-            fields: grant_fields,
-        } = &grant_binding.ty
-        else {
+        let Some(slot) = ledger_fields.get(field.as_str()) else {
             return Ok(None);
         };
-        let [code, holder, granted_at] = grant_fields.as_slice() else {
-            return Ok(None);
-        };
-        let Type::Struct {
-            name: holder_name,
-            fields: holder_fields,
-        } = &holder.ty
-        else {
-            return Ok(None);
-        };
-        if grant_name != "CustodyGrant"
-            || code.name != "code"
-            || code.ty != (Type::Bytes { length: 32 })
-            || holder.name != "holder"
-            || holder_name != "ContractAddress"
-            || !matches!(holder_fields.as_slice(), [field]
-                if field.name == "bytes" && field.ty == (Type::Bytes { length: 32 }))
-            || granted_at.name != "grantedAt"
-            || granted_at.ty != uint64
-        {
-            return Ok(None);
-        }
-        let Some(slot) = ledger_fields.get(member_field.as_str()) else {
-            return Ok(None);
-        };
-        if slot.index != *member_index
-            || slot.physical_path() != [1, 11]
+        if slot.index != *index
             || slot.declaration
                 != (LedgerFieldKind::Map {
                     key: Type::OpaqueString,
-                    value: grant_binding.ty.clone(),
+                    value: value_binding.ty.clone(),
                 })
         {
             return Ok(None);
@@ -1712,80 +1759,94 @@ fn render_recorded_item(
         let Some(pure) = pure_circuits.get(pure_name.as_str()) else {
             return Ok(None);
         };
-        let [pure_grant, pure_time] = pure.parameters.as_slice() else {
-            return Ok(None);
-        };
-        let Expr::Sequence {
-            steps: pure_steps,
-            value: pure_value,
-        } = &pure.body
-        else {
-            return Ok(None);
-        };
-        let [
-            Expr::Assert {
-                condition: pure_condition,
-                ..
-            },
-        ] = pure_steps.as_slice()
-        else {
-            return Ok(None);
-        };
-        let Expr::Let {
-            bindings: pure_bindings,
-            body,
-        } = pure_condition.as_ref()
-        else {
-            return Ok(None);
-        };
-        let [projected] = pure_bindings.as_slice() else {
-            return Ok(None);
-        };
         if pure.result != Type::Unit
-            || pure_grant.ty != grant_binding.ty
-            || pure_time.ty != uint64
-            || !matches!(pure_value.as_ref(), Expr::Unit)
-            || projected.ty != uint64
-            || !matches!(&projected.value, Expr::StructField { value, field, index: 2 }
-                if field == "grantedAt" && matches!(value.as_ref(), Expr::Parameter { name } if name == &pure_grant.name))
-            || !matches!(body.as_ref(), Expr::Compare { operator: ComparisonOperator::LessEqual, left, right }
-                if matches!(left.as_ref(), Expr::Parameter { name } if name == &projected.name)
-                    && matches!(right.as_ref(), Expr::Parameter { name } if name == &pure_time.name))
+            || pure.parameters.len() != arguments.len()
+            || !guarded_map_has_assert(&pure.body)
         {
             return Ok(None);
         }
+        let scope: HashMap<String, Type> = pure
+            .parameters
+            .iter()
+            .map(|parameter| (parameter.name.clone(), parameter.ty.clone()))
+            .collect();
+        if guarded_map_pure_type(&pure.body, &scope) != Some(Type::Unit) {
+            return Ok(None);
+        }
+        let mut argument_sources = Vec::new();
+        let mut looked_up_count = 0;
+        for (argument, pure_parameter) in arguments.iter().zip(&pure.parameters) {
+            let Expr::Coerce { value, ty } = argument else {
+                return Ok(None);
+            };
+            if ty != &pure_parameter.ty {
+                return Ok(None);
+            }
+            let Expr::Parameter { name } = value.as_ref() else {
+                return Ok(None);
+            };
+            if name == &value_binding.name {
+                if ty != &value_binding.ty {
+                    return Ok(None);
+                }
+                looked_up_count += 1;
+                argument_sources.push(None);
+            } else {
+                let Some((source_ty, source)) = parameters.get(name.as_str()) else {
+                    return Ok(None);
+                };
+                if *source_ty != ty {
+                    return Ok(None);
+                }
+                argument_sources.push(Some(source.clone()));
+            }
+        }
+        if looked_up_count != 1 {
+            return Ok(None);
+        }
         let (_, key_source) = parameters
-            .get(key_parameter.name.as_str())
-            .expect("closed grant key is declared");
-        let (_, time_source) = parameters
-            .get(time_parameter.name.as_str())
-            .expect("closed grant time is declared");
-        let slot = ident(member_field)?;
+            .get(key_source_name.as_str())
+            .expect("checked key");
+        let slot = ident(field)?;
         let method = ident(pure_name)?;
-        let grant_ty = rust_type(&grant_binding.ty)?;
-        let steps = vec![
-            syn::parse_quote!(let __compact_recorded_grant_key: runtime::OpaqueString = (#key_source).clone();),
+        let value_ty = rust_type(&value_binding.ty)?;
+        let mut steps = vec![
+            syn::parse_quote!(let __compact_recorded_map_key: runtime::OpaqueString = (#key_source).clone();),
             syn::parse_quote!(
-                let (frame, __compact_recorded_grant_member): (_, bool) =
-                    crate::ledger_slots::#slot.record_member(frame, __compact_recorded_grant_key.clone())?;
+                let (frame, __compact_recorded_map_member): (_, bool) =
+                    crate::ledger_slots::#slot.record_member(frame, __compact_recorded_map_key.clone())?;
             ),
             syn::parse_quote!(
-                if !__compact_recorded_grant_member {
+                if !__compact_recorded_map_member {
                     return Err(runtime::CompactError::AssertionFailed(#message.to_owned()));
                 }
             ),
             syn::parse_quote!(
-                let (frame, __compact_recorded_grant): (_, #grant_ty) =
-                    crate::ledger_slots::#slot.record_lookup(frame, __compact_recorded_grant_key)?;
-            ),
-            syn::parse_quote!(
-                let __compact_recorded_as_of: runtime::BoundedUint<18446744073709551615> =
-                    #time_source;
-            ),
-            syn::parse_quote!(
-                crate::pure_circuits::#method(__compact_recorded_grant, __compact_recorded_as_of)?;
+                let (frame, __compact_recorded_map_value): (_, #value_ty) =
+                    crate::ledger_slots::#slot.record_lookup(frame, __compact_recorded_map_key)?;
             ),
         ];
+        let mut typed_arguments = Vec::new();
+        for (index, (source, pure_parameter)) in
+            argument_sources.iter().zip(&pure.parameters).enumerate()
+        {
+            let arg = ident(&format!("__compact_recorded_guard_arg_{index}"))?;
+            let arg_ty = rust_type(&pure_parameter.ty)?;
+            if let Some(source) = source {
+                if matches!(
+                    pure_parameter.ty,
+                    Type::Unsigned { .. } | Type::Boolean | Type::Field
+                ) {
+                    steps.push(syn::parse_quote!(let #arg: #arg_ty = #source;));
+                } else {
+                    steps.push(syn::parse_quote!(let #arg: #arg_ty = (#source).clone();));
+                }
+            } else {
+                steps.push(syn::parse_quote!(let #arg: #arg_ty = __compact_recorded_map_value;));
+            }
+            typed_arguments.push(arg);
+        }
+        steps.push(syn::parse_quote!(crate::pure_circuits::#method(#(#typed_arguments),*)?;));
         Ok(Some(steps))
     }
 
@@ -6108,7 +6169,7 @@ fn render_recorded_item(
     let opaque_map_operation = closed_opaque_map_operation(circuit, ledger_fields);
     let opaque_asset_removal = closed_opaque_asset_removal(circuit, ledger_fields);
     let custody_steps =
-        closed_custody_grant_steps(circuit, &parameters, ledger_fields, pure_circuits)?;
+        closed_guarded_struct_map_read_steps(circuit, &parameters, ledger_fields, pure_circuits)?;
     let custody_gate = custody_steps.is_some();
     let guarded_pure_steps =
         closed_guarded_struct_pure_steps(circuit, &parameters, pure_circuits, circuits)?.or(

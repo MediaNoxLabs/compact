@@ -105,13 +105,9 @@ export struct Provenance {
 }
 
 // `note` is the deliberate variable-length (`Compress`-aligned) leaf.
-// `OpaqueString::FIELD_SIZE == 0`, so a NON-empty note gives the
-// generated `from_field_repr` no slot to carry its bytes and the
-// composite decode must fail LOUDLY rather than mis-slice — a
-// documented runtime limitation (see `decode_via_field_repr` in
-// runtime-rs/src/std_lib/adts.rs). Keeping the field here puts BOTH
-// halves of that contract under an executing test: the empty leaf
-// round-trips, the non-empty one errors.
+// Ledger composite reads use `CompactCellValue` alignment atoms, giving
+// this opaque string exactly one Compress atom even when it is nonempty.
+// The recorded read parity test exercises that nonempty case.
 export struct AssetRecord {
   code: Bytes<32>,
   note: Opaque<"string">,

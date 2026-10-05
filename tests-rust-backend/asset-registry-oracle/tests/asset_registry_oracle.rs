@@ -16,11 +16,12 @@
 // limitations under the License.
 
 use compact_rust_asset_registry_oracle_fixture::ledger_contract::{
-    LedgerView, Witnesses, assertGrantEffective, close, initial_state, recorded, removeRecord,
-    setCustodyGrant, setRecord, setWatch, tag,
+    LedgerView, Witnesses, assertGrantEffective, assertStoredRecordFresh, close, initial_state,
+    recorded, removeRecord, setCustodyGrant, setRecord, setWatch, tag,
 };
 use compact_rust_asset_registry_oracle_fixture::types::{
-    AssetClass, AssetRecord, ContractAddress as Holder, CustodyGrant, ListMutation, RecordMutation,
+    AssetClass, AssetRecord, ContractAddress as Holder, CustodyGrant, FreshnessPolicy,
+    ListMutation, Provenance, RecordMutation,
 };
 use midnight_compact_runtime as runtime;
 use midnight_onchain_state::state::{
@@ -270,6 +271,33 @@ fn context_with_record() -> runtime::context::CircuitContext<()> {
     )
     .unwrap()
     .context
+}
+
+#[test]
+fn composite_map_read_preserves_nonempty_opaque_note() {
+    let initial = initial_state(ConstructorContext::new(()), &ParityStub).unwrap();
+    let key = runtime::OpaqueString::from("asset-note");
+    let record = AssetRecord {
+        note: runtime::OpaqueString::from("nonempty note"),
+        kind: AssetClass::Instrument,
+        ..Default::default()
+    };
+    let inserted = setRecord(
+        initial.into_circuit_context(ContractAddress::default()),
+        &ParityStub,
+        key.clone(),
+        record.clone(),
+        RecordMutation::Insert,
+    )
+    .unwrap();
+    let actual = runtime::ledger::map_view_at_path::<runtime::OpaqueString, AssetRecord, _>(
+        inserted.context.query.state.get_ref(),
+        &[1, 10],
+    )
+    .unwrap()
+    .lookup(key)
+    .unwrap();
+    assert_eq!(actual, record);
 }
 
 #[test]
@@ -545,4 +573,153 @@ fn recorded_grant_effectiveness_rejects_missing_and_future_grants() {
     .err()
     .unwrap();
     assert_eq!(future.to_string(), oracle["futureError"]);
+}
+
+fn context_with_fresh_record() -> runtime::context::CircuitContext<()> {
+    let initial = initial_state(ConstructorContext::new(()), &ParityStub).unwrap();
+    let record = AssetRecord {
+        code: runtime::FixedBytes::new([0; 32]),
+        note: runtime::OpaqueString::from("nonempty note"),
+        provenance: Provenance {
+            facility: runtime::FixedBytes::new([4; 32]),
+            registeredAt: runtime::BoundedUint::new(100).unwrap(),
+        },
+        kind: AssetClass::Instrument,
+        quantity: runtime::BoundedUint::new(5).unwrap(),
+    };
+    setRecord(
+        initial.into_circuit_context(ContractAddress::default()),
+        &ParityStub,
+        runtime::OpaqueString::from("asset-1"),
+        record,
+        RecordMutation::Insert,
+    )
+    .unwrap()
+    .context
+}
+
+fn freshness_policy() -> FreshnessPolicy {
+    FreshnessPolicy {
+        enforceMaxAge: true,
+        maxAge: runtime::BoundedUint::new(50).unwrap(),
+    }
+}
+
+#[test]
+fn recorded_stored_freshness_matches_typescript_native_and_replay() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/asset-stored-record-fresh.json"
+    ))
+    .unwrap();
+    let expected = &oracle["fresh"];
+    let native_context = context_with_fresh_record();
+    let recorded_context = context_with_fresh_record();
+    assert_eq!(
+        state_hex(native_context.query.state.get_ref().clone()),
+        oracle["preReadHex"]
+    );
+    let key = runtime::OpaqueString::from("asset-1");
+    let time = runtime::BoundedUint::new(120).unwrap();
+    let native =
+        assertStoredRecordFresh(native_context, key.clone(), freshness_policy(), time).unwrap();
+    let recorded =
+        recorded::assertStoredRecordFresh(recorded_context, key, freshness_policy(), time).unwrap();
+    let _: () = native.result;
+    let _: () = recorded.execution.result;
+    assert_eq!(expected["result"], serde_json::json!([]));
+    assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+    for output in [&native, &recorded.execution] {
+        assert_eq!(
+            state_hex(output.context.query.state.get_ref().clone()),
+            expected["stateHex"]
+        );
+        assert_eq!(expected["stateHex"], oracle["preReadHex"]);
+        assert!(output.private_transcript_outputs.is_empty());
+        let gas = serde_json::to_value(output.gas_cost).unwrap();
+        for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            let amount: u64 = expected["queries"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|query| {
+                    query["gasCost"][key]
+                        .as_str()
+                        .unwrap()
+                        .parse::<u64>()
+                        .unwrap()
+                })
+                .sum();
+            assert_eq!(gas[key], amount, "{key}");
+        }
+    }
+    assert_eq!(
+        native.context.query.effects,
+        recorded.execution.context.query.effects
+    );
+    assert_eq!(expected["privateTranscriptOutputs"], serde_json::json!([]));
+    let _: () = recorded.execution.context.private_state;
+    assert!(expected["privateState"].is_null());
+
+    let mut program = serde_json::to_value(recorded.public.verify_ops()).unwrap();
+    let expected_program = expected["queries"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .flat_map(|query| query["program"].as_array().unwrap().iter().cloned())
+        .collect::<Vec<_>>();
+    assert_eq!(program.as_array().unwrap().len(), expected_program.len());
+    for operation in program.as_array_mut().unwrap() {
+        if let Some(popeq) = operation.get_mut("popeq") {
+            popeq.as_object_mut().unwrap().remove("result");
+        }
+    }
+    assert_eq!(program, serde_json::Value::Array(expected_program));
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(replay.context.effects, native.context.query.effects);
+    assert_eq!(
+        state_hex(replay.context.state.get_ref().clone()),
+        expected["stateHex"]
+    );
+    let replay_gas = serde_json::to_value(replay.gas_cost).unwrap();
+    for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+        let amount: u64 = oracle["replayGas"][key].as_str().unwrap().parse().unwrap();
+        assert_eq!(replay_gas[key], amount, "replay {key}");
+    }
+}
+
+#[test]
+fn recorded_stored_freshness_preserves_missing_future_and_stale_guards() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/asset-stored-record-fresh.json"
+    ))
+    .unwrap();
+    let initial = initial_state(ConstructorContext::new(()), &ParityStub).unwrap();
+    let missing = recorded::assertStoredRecordFresh(
+        initial.into_circuit_context(ContractAddress::default()),
+        runtime::OpaqueString::from("missing"),
+        freshness_policy(),
+        runtime::BoundedUint::new(120).unwrap(),
+    )
+    .err()
+    .unwrap();
+    assert_eq!(missing.to_string(), oracle["missingError"]);
+    for (time, error) in [(99, "futureError"), (200, "staleError")] {
+        let rejected = recorded::assertStoredRecordFresh(
+            context_with_fresh_record(),
+            runtime::OpaqueString::from("asset-1"),
+            freshness_policy(),
+            runtime::BoundedUint::new(time).unwrap(),
+        )
+        .err()
+        .unwrap();
+        assert_eq!(rejected.to_string(), oracle[error]);
+    }
 }

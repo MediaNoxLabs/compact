@@ -29,6 +29,7 @@ mod adt_set_vector;
 mod asset_freshness;
 mod asset_grant_effective;
 mod asset_removal;
+mod asset_stored_record_fresh;
 mod asset_writable;
 mod boolean_pair_assert;
 mod closed_pure_field;
@@ -1636,6 +1637,17 @@ fn main() -> Result<(), Box<dyn Error>> {
             );
         }
         return asset_grant_effective::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--asset-stored-record-fresh")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --asset-stored-record-fresh <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --asset-stored-record-fresh <proof-output>".into(),
+            );
+        }
+        return asset_stored_record_fresh::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--adt-set-vector")) {
         let root = arguments

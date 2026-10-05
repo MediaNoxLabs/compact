@@ -17,10 +17,9 @@ use std::io::Write;
 use std::process::{Command, Stdio};
 
 use compact_rust_backend::ir::{
-    ComparisonOperator, Constructor, ConstructorStep, Contract, CounterAmount, Expr, LedgerField,
-    LedgerFieldKind, LocalBinding, NativeWitnessBuiltin, Parameter, PureCircuit, SCHEMA_VERSION,
-    SourceLocation, StateAction, StateReturn, StatefulCircuit, StructField, Type, TypeAlias,
-    WitnessDeclaration,
+    Constructor, ConstructorStep, Contract, CounterAmount, Expr, LedgerField, LedgerFieldKind,
+    LocalBinding, NativeWitnessBuiltin, Parameter, PureCircuit, SCHEMA_VERSION, SourceLocation,
+    StateAction, StateReturn, StatefulCircuit, StructField, Type, TypeAlias, WitnessDeclaration,
 };
 use compact_rust_backend::{
     RenderError, render, render_with_capabilities, render_with_proof_capabilities,
@@ -661,17 +660,77 @@ fn custody_grant_recording_requires_typed_lookup_and_closed_pure_assertion() {
     let Expr::Sequence { steps, .. } = &mut changed_guard.circuits[0].body else {
         unreachable!()
     };
-    let Expr::Assert { condition, .. } = &mut steps[0] else {
+    steps.insert(
+        0,
+        Expr::Assert {
+            condition: Box::new(Expr::NotEqual {
+                left: Box::new(Expr::FieldLiteral { value: "1".into() }),
+                right: Box::new(Expr::FieldLiteral { value: "0".into() }),
+            }),
+            message: "extra guard".into(),
+        },
+    );
+    assert!(
+        !recorded(&changed_guard).0,
+        "extra pure work is outside the closed guard"
+    );
+}
+
+#[test]
+fn guarded_struct_map_read_requires_typed_lookup_and_closed_freshness_guard() {
+    let contract: Contract =
+        serde_json::from_str(include_str!("asset-stored-record-fresh-schema12-ir.json")).unwrap();
+    let recorded = |contract: &Contract| {
+        let rendered = render_with_capabilities(contract).unwrap();
+        let capability = rendered
+            .capabilities
+            .circuits
+            .iter()
+            .find(|capability| capability.name == "assertStoredRecordFresh")
+            .unwrap();
+        (capability.recorded, rendered.source)
+    };
+    let (available, source) = recorded(&contract);
+    assert!(available);
+    assert!(source.contains("pub fn assertStoredRecordFresh<Private"));
+    assert!(source.contains("record_lookup(frame"));
+
+    let mut wrong_key = contract.clone();
+    let StateAction::Let { action, .. } = &mut wrong_key.stateful_circuits[0].actions[0] else {
         unreachable!()
     };
-    let Expr::Let { body, .. } = condition.as_mut() else {
+    let StateAction::Sequence { actions } = action.as_mut() else {
         unreachable!()
     };
-    let Expr::Compare { operator, .. } = body.as_mut() else {
+    let StateAction::Let { bindings, .. } = &mut actions[1] else {
         unreachable!()
     };
-    *operator = ComparisonOperator::GreaterEqual;
-    assert!(!recorded(&changed_guard).0, "pure guard must be less-equal");
+    let Expr::MapLookup { key, .. } = &mut bindings[0].value else {
+        unreachable!()
+    };
+    **key = Expr::Parameter {
+        name: "recordId".into(),
+    };
+    assert!(!recorded(&wrong_key).0, "lookup must use the scoped key");
+
+    let mut extra_pure_work = contract;
+    let Expr::Sequence { steps, .. } = &mut extra_pure_work.circuits[0].body else {
+        unreachable!()
+    };
+    steps.insert(
+        0,
+        Expr::Assert {
+            condition: Box::new(Expr::NotEqual {
+                left: Box::new(Expr::FieldLiteral { value: "1".into() }),
+                right: Box::new(Expr::FieldLiteral { value: "0".into() }),
+            }),
+            message: "extra guard".into(),
+        },
+    );
+    assert!(
+        !recorded(&extra_pure_work).0,
+        "pure body must stay in the audited subset"
+    );
 }
 
 #[test]

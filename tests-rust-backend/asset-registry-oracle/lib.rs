@@ -1434,6 +1434,37 @@ pub mod ledger_contract {
             let (frame, _) = __compact_recorded_body_recordWrite(frame, witnesses)?;
             Ok(frame.finish(()))
         }
+        pub fn assertStoredRecordFresh<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::OpaqueString,
+            __compact_param_1: crate::types::FreshnessPolicy,
+            __compact_param_2: runtime::BoundedUint<18446744073709551615>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_map_key: runtime::OpaqueString = (__compact_param_0).clone();
+            let (frame, __compact_recorded_map_member): (_, bool) = crate::ledger_slots::records
+                .record_member(frame, __compact_recorded_map_key.clone())?;
+            if !__compact_recorded_map_member {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "record does not exist".to_owned(),
+                ));
+            }
+            let (frame, __compact_recorded_map_value): (_, crate::types::AssetRecord) =
+                crate::ledger_slots::records.record_lookup(frame, __compact_recorded_map_key)?;
+            let __compact_recorded_guard_arg_0: crate::types::FreshnessPolicy =
+                (__compact_param_1).clone();
+            let __compact_recorded_guard_arg_1: crate::types::AssetRecord =
+                __compact_recorded_map_value;
+            let __compact_recorded_guard_arg_2: runtime::BoundedUint<18446744073709551615> =
+                __compact_param_2;
+            crate::pure_circuits::assertRecordFreshEnough(
+                __compact_recorded_guard_arg_0,
+                __compact_recorded_guard_arg_1,
+                __compact_recorded_guard_arg_2,
+            )?;
+            Ok(frame.finish(()))
+        }
         pub fn assertGrantEffective<Private>(
             context: runtime::context::CircuitContext<Private>,
             __compact_param_0: runtime::OpaqueString,
@@ -1441,23 +1472,25 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_grant_key: runtime::OpaqueString = (__compact_param_0).clone();
-            let (frame, __compact_recorded_grant_member): (_, bool) =
+            let __compact_recorded_map_key: runtime::OpaqueString = (__compact_param_0).clone();
+            let (frame, __compact_recorded_map_member): (_, bool) =
                 crate::ledger_slots::custodyGrants
-                    .record_member(frame, __compact_recorded_grant_key.clone())?;
-            if !__compact_recorded_grant_member {
+                    .record_member(frame, __compact_recorded_map_key.clone())?;
+            if !__compact_recorded_map_member {
                 return Err(runtime::CompactError::AssertionFailed(
                     "grant does not exist".to_owned(),
                 ));
             }
-            let (frame, __compact_recorded_grant): (_, crate::types::CustodyGrant) =
+            let (frame, __compact_recorded_map_value): (_, crate::types::CustodyGrant) =
                 crate::ledger_slots::custodyGrants
-                    .record_lookup(frame, __compact_recorded_grant_key)?;
-            let __compact_recorded_as_of: runtime::BoundedUint<18446744073709551615> =
+                    .record_lookup(frame, __compact_recorded_map_key)?;
+            let __compact_recorded_guard_arg_0: crate::types::CustodyGrant =
+                __compact_recorded_map_value;
+            let __compact_recorded_guard_arg_1: runtime::BoundedUint<18446744073709551615> =
                 __compact_param_1;
             crate::pure_circuits::assertGrantNotFuture(
-                __compact_recorded_grant,
-                __compact_recorded_as_of,
+                __compact_recorded_guard_arg_0,
+                __compact_recorded_guard_arg_1,
             )?;
             Ok(frame.finish(()))
         }
@@ -1505,6 +1538,51 @@ pub mod ledger_contract {
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
         impl Contract {
+            pub fn assertStoredRecordFresh<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                recordId: runtime::OpaqueString,
+                policy: crate::types::FreshnessPolicy,
+                currentTime: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::assertStoredRecordFresh(
+                    context,
+                    recordId,
+                    policy,
+                    currentTime,
+                )
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn assertStoredRecordFresh_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                recordId: runtime::OpaqueString,
+                policy: crate::types::FreshnessPolicy,
+                currentTime: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::concat(&[
+                    runtime::fab::AlignedValue::from((recordId).clone()),
+                    runtime::fab::AlignedValue::from((policy).clone()),
+                    runtime::fab::AlignedValue::from(currentTime),
+                ]);
+                let recorded = self.assertStoredRecordFresh(
+                    observed.circuit_context(private_state),
+                    recordId,
+                    policy,
+                    currentTime,
+                )?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "assertStoredRecordFresh",
+                    input,
+                ))
+            }
             pub fn assertGrantEffective<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
@@ -1637,6 +1715,46 @@ pub mod ledger_contract {
                 let recorded = self.tag(observed.circuit_context(private_state), value)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "tag", input,
+                ))
+            }
+            pub fn assertStoredRecordFresh<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                recordId: runtime::OpaqueString,
+                policy: crate::types::FreshnessPolicy,
+                currentTime: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                assertStoredRecordFresh(context, recordId, policy, currentTime)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn assertStoredRecordFresh_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                recordId: runtime::OpaqueString,
+                policy: crate::types::FreshnessPolicy,
+                currentTime: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::concat(&[
+                    runtime::fab::AlignedValue::from((recordId).clone()),
+                    runtime::fab::AlignedValue::from((policy).clone()),
+                    runtime::fab::AlignedValue::from(currentTime),
+                ]);
+                let recorded = self.assertStoredRecordFresh(
+                    observed.circuit_context(private_state),
+                    recordId,
+                    policy,
+                    currentTime,
+                )?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "assertStoredRecordFresh",
+                    input,
                 ))
             }
             pub fn assertGrantEffective<Private>(

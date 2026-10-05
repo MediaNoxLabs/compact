@@ -39,7 +39,6 @@ mod bboard;
 mod boolean_pair_assert;
 mod closed_pure_field;
 mod counter_less_than;
-mod root_let_action_return;
 mod election_commit;
 #[path = "../../../tests-rust-backend/election-oracle/support/commit.rs"]
 mod election_membership_support;
@@ -66,6 +65,7 @@ mod pure_assert_call;
 mod pure_field_arguments;
 mod qualified_coin_cell;
 mod qualified_coin_set;
+mod root_let_action_return;
 mod schnorr_attestation;
 mod stateful_pair_hash;
 mod stateful_pure_return;
@@ -1962,7 +1962,9 @@ fn run() -> Result<(), Box<dyn Error>> {
         let proof = std::thread::Builder::new()
             .name("root-let-action-return-proof".into())
             .stack_size(64 * 1024 * 1024)
-            .spawn(move || root_let_action_return::run(Path::new(&root)).map_err(|e| e.to_string()))?;
+            .spawn(move || {
+                root_let_action_return::run(Path::new(&root)).map_err(|e| e.to_string())
+            })?;
         return match proof.join() {
             Ok(Ok(())) => Ok(()),
             Ok(Err(error)) => Err(error.into()),

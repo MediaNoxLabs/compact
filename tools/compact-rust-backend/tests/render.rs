@@ -27,6 +27,88 @@ use compact_rust_backend::{
 };
 
 #[test]
+fn effectful_recording_audits_both_branches_slots_and_lexical_scope() {
+    let source: serde_json::Value =
+        serde_json::from_str(include_str!("effectful-return-schema20-ir.json")).unwrap();
+    let parse = |value| serde_json::from_value::<Contract>(value).unwrap();
+    let accepted = render_with_capabilities(&parse(source.clone())).unwrap();
+    assert!(accepted.capabilities.circuits[0].recorded);
+    assert!(accepted.capabilities.circuits[0].observed_call);
+    let branch = "/stateful_circuits/0/return_value/body/result/result";
+    let mut wrong_slot = source.clone();
+    wrong_slot
+        .pointer_mut(&format!("{branch}/then/result/actions/0/index"))
+        .map(|v| *v = serde_json::json!(1))
+        .unwrap();
+    assert!(render(&parse(wrong_slot)).is_err());
+    let mut wrong_branch = source.clone();
+    wrong_branch
+        .pointer_mut(&format!("{branch}/otherwise/result/result/value"))
+        .map(|v| *v = serde_json::json!({"kind":"boolean", "value":false}))
+        .unwrap();
+    assert!(render(&parse(wrong_branch)).is_err());
+    let mut escaping = source.clone();
+    escaping
+        .pointer_mut(&format!("{branch}/otherwise/result/result/value"))
+        .map(|v| *v = serde_json::json!({"kind":"parameter", "name":"selected"}))
+        .unwrap();
+    assert!(render(&parse(escaping)).is_err());
+    let mut wrong_witness = source.clone();
+    wrong_witness["witnesses"][0]["result"] = serde_json::json!({"kind":"boolean"});
+    assert!(render(&parse(wrong_witness)).is_err());
+    // Even a statically unselected branch must fit the audited action domain.
+    let mut unsupported = source.clone();
+    unsupported
+        .pointer_mut(&format!("{branch}/condition"))
+        .map(|v| *v = serde_json::json!({"kind":"boolean", "value":true}))
+        .unwrap();
+    unsupported.pointer_mut(&format!("{branch}/otherwise/result/actions")).unwrap().as_array_mut().unwrap().push(
+        serde_json::json!({"kind":"assert", "condition":{"kind":"boolean", "value":true}, "message":"outside effectful recording profile"}));
+    let report = render_with_capabilities(&parse(unsupported)).unwrap();
+    assert!(!report.capabilities.circuits[0].recorded);
+    assert!(!report.capabilities.circuits[0].observed_call);
+    let mut missing_slot = source.clone();
+    missing_slot["ledger_fields"]
+        .as_array_mut()
+        .unwrap()
+        .remove(0);
+    assert!(render(&parse(missing_slot)).is_err());
+    let mut wrong_parameter = source.clone();
+    wrong_parameter["stateful_circuits"][0]["parameters"][0]["ty"] =
+        serde_json::json!({"kind":"boolean"});
+    assert!(render(&parse(wrong_parameter)).is_err());
+    let mut wrong_result = source.clone();
+    wrong_result["stateful_circuits"][0]["result"] = serde_json::json!({"kind":"boolean"});
+    assert!(render(&parse(wrong_result)).is_err());
+    let mut wrong_arity = source.clone();
+    wrong_arity["witnesses"][0]["parameters"] =
+        serde_json::json!([{"name":"extra", "ty":{"kind":"field"}}]);
+    assert!(render(&parse(wrong_arity)).is_err());
+    let mut action_local_escape = source.clone();
+    action_local_escape
+        .pointer_mut(&format!("{branch}/otherwise/result/result/value"))
+        .map(|v| *v = serde_json::json!({"kind":"parameter", "name":"local_action_only"}))
+        .unwrap();
+    action_local_escape
+        .pointer_mut(&format!(
+            "{branch}/otherwise/result/actions/0/bindings/0/name"
+        ))
+        .map(|v| *v = serde_json::json!("local_action_only"))
+        .unwrap();
+    action_local_escape
+        .pointer_mut(&format!(
+            "{branch}/otherwise/result/actions/0/action/value/name"
+        ))
+        .map(|v| *v = serde_json::json!("local_action_only"))
+        .unwrap();
+    assert!(render(&parse(action_local_escape)).is_err());
+    // Slot declaration changes must not silently retype a Field read.
+    let mut wrong_type = source;
+    wrong_type["ledger_fields"][0]["declaration"]["ty"] = serde_json::json!({"kind":"boolean"});
+    assert!(render(&parse(wrong_type)).is_err());
+}
+
+#[test]
 fn effectful_return_plan_owns_order_scope_and_typed_branch_results() {
     let before = Expr::Parameter {
         name: "before".into(),
@@ -94,7 +176,8 @@ fn effectful_return_plan_owns_order_scope_and_typed_branch_results() {
         }],
     };
     let rendered = render_with_capabilities(&contract).unwrap();
-    assert!(!rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].observed_call);
     assert!(
         rendered
             .source

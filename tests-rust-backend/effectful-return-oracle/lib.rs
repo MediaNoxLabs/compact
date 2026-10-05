@@ -162,19 +162,116 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    /// Circuits with a replayable ordered ledger program.
+    pub mod recorded {
+        use midnight_compact_runtime as runtime;
+        pub fn choose<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::Field,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_plan_0): (_, runtime::Field) =
+                crate::ledger_slots::state.record_read(frame)?;
+            let __compact_plan_1: runtime::Field = __compact_plan_0;
+            let __compact_plan_2: runtime::Field = runtime::Field::from(1u128);
+            let __compact_plan_3: runtime::Field = __compact_plan_1 + __compact_plan_2;
+            let __compact_plan_4: runtime::Field = __compact_plan_3;
+            let frame = crate::ledger_slots::state.record_write(frame, __compact_plan_4)?;
+            let (frame, __compact_plan_5): (_, runtime::Field) =
+                crate::ledger_slots::state.record_read(frame)?;
+            let __compact_plan_6: runtime::Field = runtime::Field::from(1u128);
+            let __compact_plan_7: bool = __compact_plan_5 == __compact_plan_6;
+            let (frame, __compact_plan_15): (_, runtime::Field) = if __compact_plan_7 {
+                let __compact_plan_8: runtime::Field = __compact_plan_1;
+                let frame = crate::ledger_slots::state.record_write(frame, __compact_param_0)?;
+                (frame, __compact_plan_8)
+            } else {
+                let __compact_plan_9: runtime::BoundedUint<100> =
+                    runtime::BoundedUint::<100>::new(100u128)
+                        .expect("Compact Uint literal fits its maximum");
+                let __compact_plan_10: runtime::BoundedUint<100> = __compact_plan_9;
+                let (frame, __compact_plan_11): (_, runtime::Field) =
+                    frame.try_witness_metered(|context, meter| {
+                        witnesses.mark(context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }))
+                    })?;
+                let __compact_plan_12: runtime::Field = __compact_plan_11;
+                let frame = crate::ledger_slots::unused.record_write(frame, __compact_plan_12)?;
+                let __compact_plan_13: runtime::Field =
+                    runtime::Field::from((__compact_plan_10).value());
+                let __compact_plan_14: runtime::Field = __compact_plan_1 + __compact_plan_13;
+                (frame, __compact_plan_14)
+            };
+            Ok(frame.finish(__compact_plan_15))
+        }
+        /// Typed handle for circuits with a complete recorded trace.
+        pub struct Contract;
+        impl Contract {}
+        /// A recording handle with access to the contract's witnesses.
+        pub struct BorrowedContract<'a, W> {
+            pub(super) witnesses: &'a W,
+        }
+        impl<W> BorrowedContract<'_, W> {
+            pub fn choose<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                next: runtime::Field,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                choose(context, self.witnesses, next)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn choose_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                next: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, runtime::Field>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(next);
+                let recorded = self.choose(observed.circuit_context(private_state), next)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "choose", input,
+                ))
+            }
+        }
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]
         witnesses: W,
+        pub recording: recorded::Contract,
     }
     impl<W> From<W> for Contract<W> {
         fn from(witnesses: W) -> Self {
-            Self { witnesses }
+            Self {
+                witnesses,
+                recording: recorded::Contract,
+            }
         }
     }
     impl Default for Contract<()> {
         fn default() -> Self {
-            Self { witnesses: () }
+            Self {
+                witnesses: (),
+                recording: recorded::Contract,
+            }
         }
     }
     impl<W> Contract<W> {
@@ -187,6 +284,12 @@ pub mod ledger_contract {
             W: TryWitnesses<Private>,
         {
             crate::ledger_contract::choose(context, &self.witnesses, next)
+        }
+        /// Borrow the contract's witnesses for a replayable circuit call.
+        pub fn recording(&self) -> recorded::BorrowedContract<'_, W> {
+            recorded::BorrowedContract {
+                witnesses: &self.witnesses,
+            }
         }
     }
 }

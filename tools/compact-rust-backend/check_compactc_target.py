@@ -1276,14 +1276,10 @@ def main() -> None:
             assert branch["otherwise"]["bindings"][0]["name"] == "offset"
             assert branch["otherwise"]["result"]["actions"][0]["kind"] == "let"
             caps = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert [(row["name"], row["recorded"], row["observed_call"],
-                     row["recording_unavailable"]["ir_node"]) for row in caps["circuits"]] == [
-                ("choose", False, False, "StateReturn::Effectful")]
-            strict = subprocess.run(
-                [compiler, "--target", "rust", "--rust-require-recording", "--skip-zk",
-                 str(EFFECTFUL_RETURN_SOURCE), str(base / "strict")],
-                cwd=ROOT, capture_output=True, text=True)
-            assert strict.returncode != 0 and "choose" in strict.stderr
+            assert [(row["name"], row["recorded"], row["observed_call"])
+                    for row in caps["circuits"]] == [("choose", True, True)]
+            run(compiler, "--target", "rust", "--rust-require-recording", "--skip-zk",
+                str(EFFECTFUL_RETURN_SOURCE), str(base / "strict"))
             for name, source, expected in [
                 ("welcome", TEST_CENTER_WELCOME_SOURCE, 3),
                 ("bboard", TEST_CENTER_BBOARD_SOURCE, 2),
@@ -1298,7 +1294,13 @@ def main() -> None:
                 assert all(row["return_value"]["kind"] != "effectful"
                            for row in existing_ir["stateful_circuits"])
             check_coracle_source(compiler, base)
-            print("typed effectful returns admitted; complete Coracle compiles with 4 explicit recording gaps")
+            if args.proof:
+                proof = base / "effectful-return-proof"
+                run(compiler, "--target", "rust", "--rust-require-recording",
+                    str(EFFECTFUL_RETURN_SOURCE), str(proof))
+                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                    "--effectful-return", str(proof))
+            print("typed effectful Field returns record selected effects and scoped branch results")
             return
         if args.qualified_coin_cell:
             output = base / "qualified-coin-cell"
@@ -1746,6 +1748,11 @@ def main() -> None:
                 str(ROOT_LET_ACTION_RETURN_SOURCE), str(root_let_proof))
             run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--root-let-action-return", str(root_let_proof))
+            effectful_proof = base / "effectful-return-proof"
+            run(compiler, "--target", "rust", "--rust-require-recording",
+                str(EFFECTFUL_RETURN_SOURCE), str(effectful_proof))
+            run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--effectful-return", str(effectful_proof))
             counter_less_than_proof = base / "counter-less-than-proof"
             run(compiler, "--target", "rust", "--rust-require-recording",
                 str(ROOT / "examples/rust_backend/counter_less_than_oracle.compact"), str(counter_less_than_proof))

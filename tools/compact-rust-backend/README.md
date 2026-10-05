@@ -11,6 +11,23 @@ The latter two execute canonical ledger-8 VM queries and contribute their cost
 to Rust circuit results. TypeScript currently reports zero wrapper gas for
 witness-only VM queries; the Rust result sums the observed query costs.
 
+## Effectful return recording
+
+The bounded Field Cell profile records an ordered return body containing lexical
+bindings, reads/writes, and conditional Field returns. Conditions execute after
+preceding effects; only the selected branch consumes witnesses or emits VM
+operations. Field witnesses, Field addition/equality, and literal unsigned locals
+explicitly cast to Field preserve their declared types. Each branch returns the
+updated recording frame with its typed result. Both branches are audited before
+recording is advertised; unsupported effects and types remain explicit gaps.
+
+`effectful_return_oracle.compact` has independent TypeScript/native/recorded
+transcript, state, private-output, query-gas and replay-gas parity, plus both-branch
+proof verification and ledger application under the existing unbalanced smoke
+policy. This does not establish funded transaction admission or recording parity
+for arbitrary effectful returns. The earlier single-slot root-Let profile keeps
+its separate admission rules. IR schema 20 and runtime ABI 46 are unchanged.
+
 ## Compile a contract
 
 The packaged `compactc` accepts a repeatable `--target` option. TypeScript is

@@ -113,3 +113,98 @@ fn conditional_returns_keep_ordered_effects_and_skip_the_other_branch() {
         context = result.context;
     }
 }
+
+#[test]
+fn effectful_returns_record_exact_selected_program_and_replay() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/effectful-return-oracle.json"
+    ))
+    .unwrap();
+    let mut native_context = initial_state(ConstructorContext::new(0u64))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let mut recorded_context = initial_state(ConstructorContext::new(0u64))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    for (name, next) in [("chosen", 9u64), ("unchosen", 8)] {
+        let reference = &oracle[name];
+        let native = choose(native_context, &Mark, Field::from(next)).unwrap();
+        let recorded =
+            compact_rust_effectful_return_oracle_fixture::ledger_contract::recorded::choose(
+                recorded_context,
+                &Mark,
+                Field::from(next),
+            )
+            .unwrap();
+        assert_eq!(native.result, recorded.execution.result);
+        assert_eq!(
+            serde_json::to_value(runtime::fab::AlignedValue::from(recorded.execution.result))
+                .unwrap(),
+            reference["output"]
+        );
+        assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+        assert_eq!(
+            native.context.query.state.get_ref(),
+            recorded.execution.context.query.state.get_ref()
+        );
+        assert_eq!(
+            native.context.query.effects,
+            recorded.execution.context.query.effects
+        );
+        assert_eq!(
+            native.context.private_state,
+            recorded.execution.context.private_state
+        );
+        assert_eq!(
+            native.private_transcript_outputs,
+            recorded.execution.private_transcript_outputs
+        );
+        assert_eq!(
+            serde_json::to_value(&recorded.execution.private_transcript_outputs).unwrap(),
+            reference["privateTranscriptOutputs"]
+        );
+        assert_eq!(
+            recorded.execution.context.private_state,
+            reference["privateState"].as_u64().unwrap()
+        );
+        assert_eq!(
+            serde_json::to_value(recorded.public.verify_ops()).unwrap(),
+            reference["publicTranscript"]
+        );
+        let replay = recorded
+            .public
+            .initial()
+            .query(
+                recorded.public.verify_ops(),
+                None,
+                &recorded.execution.context.cost_model,
+            )
+            .unwrap();
+        assert_eq!(
+            replay.context.state.get_ref(),
+            native.context.query.state.get_ref()
+        );
+        assert_eq!(replay.context.effects, native.context.query.effects);
+        assert_eq!(
+            state_hex(replay.context.state.get_ref().clone()),
+            reference["afterStateHex"]
+        );
+        let replay_gas = serde_json::to_value(replay.gas_cost).unwrap();
+        let native_gas = serde_json::to_value(native.gas_cost).unwrap();
+        for dim in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            assert_eq!(
+                replay_gas[dim].as_u64().unwrap().to_string(),
+                reference["replayGas"][dim]
+            );
+            let sum: u64 = reference["queries"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|q| q["gasCost"][dim].as_str().unwrap().parse::<u64>().unwrap())
+                .sum();
+            assert_eq!(native_gas[dim], sum);
+        }
+        native_context = native.context;
+        recorded_context = recorded.execution.context;
+    }
+}

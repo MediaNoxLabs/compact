@@ -2229,14 +2229,19 @@ fn render_recorded_item(
     shared_callees: &HashSet<String>,
     helper: bool,
 ) -> Result<RecordingOutcome<syn::Item>, RenderError> {
-    // This form owns branch-local ledger and witness effects. Until recorded
-    // lowering can audit that same ordered plan, no specialized recording
-    // gate may admit it through a coincidental action/return shape.
-    if matches!(circuit.return_value, StateReturn::Effectful { .. }) {
-        return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-            &circuit.return_value,
-        )));
-    }
+    // Audit the complete ordered plan before any ordinary specialized gate.
+    let effectful_plan = if matches!(circuit.return_value, StateReturn::Effectful { .. }) {
+        let Some(plan) =
+            typed_plan::lower_effectful(circuit, ledger_fields, witnesses, pure_circuits)
+        else {
+            return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                &circuit.return_value,
+            )));
+        };
+        Some(plan)
+    } else {
+        None
+    };
     if circuit.internal && !helper {
         return Ok(RecordingOutcome::Unsupported(RecordingGap::no_effect()));
     }
@@ -7936,7 +7941,11 @@ fn render_recorded_item(
         }
     }
 
-    let mut organizer_steps =
+    let mut typed_result = None;
+    let mut organizer_steps = if let Some(plan) = effectful_plan {
+        typed_result = Some(plan.result);
+        Some(plan.steps)
+    } else {
         closed_organizer_gate_steps(circuit, ledger_fields, witnesses, pure_circuits, circuits)?
             .or(closed_authorized_optional_write_steps(
                 circuit,
@@ -7955,8 +7964,8 @@ fn render_recorded_item(
                 ledger_fields,
                 witnesses,
                 pure_circuits,
-            )?);
-    let mut typed_result = None;
+            )?)
+    };
     if organizer_steps.is_none()
         && let Some(plan) = typed_plan::lower(circuit, ledger_fields, witnesses, pure_circuits)
     {

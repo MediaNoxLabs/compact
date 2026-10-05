@@ -1951,6 +1951,7 @@ dependencies = [
  "compact-rust-counter-fixture",
  "compact-rust-counter-less-than-oracle-fixture",
  "compact-rust-counter-parameter-fixture",
+ "compact-rust-effectful-return-oracle-fixture",
  "compact-rust-election-oracle-fixture",
  "compact-rust-field-cast-uint128-fixture",
  "compact-rust-field-to-bytes32-oracle-fixture",

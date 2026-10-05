@@ -1,0 +1,254 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "state",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "effectful_return_oracle.compact",
+        "line": 18,
+        "column": 1
+      }
+    },
+    {
+      "id": "unused",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "effectful_return_oracle.compact",
+        "line": 19,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "mark",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "source": {
+        "file": "effectful_return_oracle.compact",
+        "line": 20,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "choose",
+      "parameters": [
+        {
+          "name": "next",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "return_value": {
+        "kind": "effectful",
+        "body": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "before",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "cell_read",
+                "field": "state",
+                "index": 0
+              }
+            }
+          ],
+          "result": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "tmp_5",
+                    "ty": {
+                      "kind": "field"
+                    },
+                    "value": {
+                      "kind": "add",
+                      "left": {
+                        "kind": "parameter",
+                        "name": "before"
+                      },
+                      "right": {
+                        "kind": "field_literal",
+                        "value": "1"
+                      }
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "cell_write",
+                  "field": "state",
+                  "index": 0,
+                  "value": {
+                    "kind": "parameter",
+                    "name": "tmp_5"
+                  }
+                }
+              }
+            ],
+            "result": {
+              "kind": "conditional",
+              "condition": {
+                "kind": "equal",
+                "left": {
+                  "kind": "cell_read",
+                  "field": "state",
+                  "index": 0
+                },
+                "right": {
+                  "kind": "field_literal",
+                  "value": "1"
+                }
+              },
+              "then": {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "selected",
+                    "ty": {
+                      "kind": "field"
+                    },
+                    "value": {
+                      "kind": "parameter",
+                      "name": "before"
+                    }
+                  }
+                ],
+                "result": {
+                  "kind": "sequence",
+                  "actions": [
+                    {
+                      "kind": "cell_write",
+                      "field": "state",
+                      "index": 0,
+                      "value": {
+                        "kind": "parameter",
+                        "name": "next"
+                      }
+                    }
+                  ],
+                  "result": {
+                    "kind": "value",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "selected"
+                    }
+                  }
+                }
+              },
+              "otherwise": {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "offset",
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "100"
+                    },
+                    "value": {
+                      "kind": "unsigned_literal",
+                      "value": "100",
+                      "max": "100"
+                    }
+                  }
+                ],
+                "result": {
+                  "kind": "sequence",
+                  "actions": [
+                    {
+                      "kind": "let",
+                      "bindings": [
+                        {
+                          "name": "tmp_6",
+                          "ty": {
+                            "kind": "field"
+                          },
+                          "value": {
+                            "kind": "witness_call",
+                            "name": "mark",
+                            "arguments": [
+                            ]
+                          }
+                        }
+                      ],
+                      "action": {
+                        "kind": "cell_write",
+                        "field": "unused",
+                        "index": 1,
+                        "value": {
+                          "kind": "parameter",
+                          "name": "tmp_6"
+                        }
+                      }
+                    }
+                  ],
+                  "result": {
+                    "kind": "value",
+                    "value": {
+                      "kind": "add",
+                      "left": {
+                        "kind": "parameter",
+                        "name": "before"
+                      },
+                      "right": {
+                        "kind": "field_cast",
+                        "value": {
+                          "kind": "parameter",
+                          "name": "offset"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "effectful_return_oracle.compact",
+        "line": 22,
+        "column": 1
+      }
+    }
+  ]
+}

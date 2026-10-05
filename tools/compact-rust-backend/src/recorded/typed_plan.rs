@@ -18,6 +18,7 @@
 
 use super::*;
 use crate::coerce_expression;
+use crate::ir::ReturnPlan;
 
 #[derive(Clone)]
 struct TypedValue {
@@ -42,6 +43,7 @@ struct Plan<'a> {
     cell_writes: usize,
     field_cell_writes: usize,
     field_cell_slot: Option<(String, u8)>,
+    effectful_field_cells: bool,
     optional_cells: usize,
     opaque_cells: usize,
     historic_roots: usize,
@@ -261,7 +263,9 @@ impl Plan<'_> {
                 let (left, right) = (left.value, right.value);
                 self.bind(syn::parse_quote!(#left == #right), Type::Boolean, steps)
             }
-            Expr::Add { left, right } if self.field_cell_slot.is_some() => {
+            Expr::Add { left, right }
+                if self.field_cell_slot.is_some() || self.effectful_field_cells =>
+            {
                 let left = self.expression(left, scope, steps)?;
                 let right = self.expression(right, scope, steps)?;
                 if left.ty != Type::Field || right.ty != Type::Field {
@@ -374,11 +378,17 @@ impl Plan<'_> {
             }
             Expr::FieldCast { value } => {
                 let value = self.expression(value, scope, steps)?;
-                if value.ty
-                    != (Type::Unsigned {
-                        max: "18446744073709551615".into(),
-                    })
-                {
+                let Type::Unsigned { max } = &value.ty else {
+                    return None;
+                };
+                if if self.effectful_field_cells {
+                    !matches!(
+                        crate::unsigned_maximum(max).ok()?,
+                        crate::UnsignedMaximum::Small(_)
+                    )
+                } else {
+                    max != "18446744073709551615"
+                } {
                     return None;
                 }
                 let value = value.value;
@@ -404,9 +414,13 @@ impl Plan<'_> {
                 let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
                     return None;
                 };
+                if self.effectful_field_cells && *ty != Type::Field {
+                    return None;
+                }
                 if !cell_type(ty)
                     && !(ty == &Type::Field
-                        && self.field_cell_slot.as_ref() == Some(&(field.clone(), *index)))
+                        && (self.effectful_field_cells
+                            || self.field_cell_slot.as_ref() == Some(&(field.clone(), *index))))
                 {
                     return None;
                 }
@@ -569,6 +583,61 @@ impl Plan<'_> {
         Some(scoped)
     }
 
+    fn return_plan(
+        &mut self,
+        body: &ReturnPlan,
+        scope: &Scope,
+        steps: &mut Vec<syn::Stmt>,
+    ) -> Option<TypedValue> {
+        match body {
+            ReturnPlan::Value { value } => self.expression(value, scope, steps),
+            ReturnPlan::Sequence { actions, result } => {
+                for action in actions {
+                    self.action(action, scope, steps)?;
+                }
+                self.return_plan(result, scope, steps)
+            }
+            ReturnPlan::Let { bindings, result } => {
+                let scoped = self.bindings(bindings, scope, steps)?;
+                self.return_plan(result, &scoped, steps)
+            }
+            ReturnPlan::Conditional {
+                condition,
+                then,
+                otherwise,
+            } => {
+                let condition = self.expression(condition, scope, steps)?;
+                if condition.ty != Type::Boolean {
+                    return None;
+                }
+                let mut then_steps = Vec::new();
+                let mut else_steps = Vec::new();
+                let then = self.return_plan(then, scope, &mut then_steps)?;
+                let otherwise = self.return_plan(otherwise, scope, &mut else_steps)?;
+                if then.ty != otherwise.ty {
+                    return None;
+                }
+                let result_ty = rust_type(&then.ty).ok()?;
+                let observed = self.fresh();
+                let (condition, then_value, else_value) =
+                    (condition.value, then.value, otherwise.value);
+                steps.push(syn::parse_quote! {
+                    let (frame, #observed): (_, #result_ty) = if #condition {
+                        #(#then_steps)*
+                        (frame, #then_value)
+                    } else {
+                        #(#else_steps)*
+                        (frame, #else_value)
+                    };
+                });
+                Some(TypedValue {
+                    ty: then.ty,
+                    value: syn::parse_quote!(#observed),
+                })
+            }
+        }
+    }
+
     fn action(
         &mut self,
         action: &StateAction,
@@ -618,9 +687,13 @@ impl Plan<'_> {
                 let LedgerFieldKind::Cell { ty } = &self.field(field, *index)?.declaration else {
                     return None;
                 };
+                if self.effectful_field_cells && *ty != Type::Field {
+                    return None;
+                }
                 if !cell_type(ty)
                     && !(ty == &Type::Field
-                        && self.field_cell_slot.as_ref() == Some(&(field.clone(), *index)))
+                        && (self.effectful_field_cells
+                            || self.field_cell_slot.as_ref() == Some(&(field.clone(), *index))))
                 {
                     return None;
                 }
@@ -881,6 +954,166 @@ pub(super) struct TypedPlan {
     pub result: syn::Expr,
 }
 
+// Bounded admission is separate from the existing single-slot root-Let profile.
+fn effectful_value(value: &Expr, witnesses: &HashMap<&str, &WitnessDeclaration>) -> bool {
+    match value {
+        Expr::Parameter { .. }
+        | Expr::FieldLiteral { .. }
+        | Expr::Boolean { .. }
+        | Expr::UnsignedLiteral { .. }
+        | Expr::CellRead { .. } => true,
+        Expr::Add { left, right } | Expr::Equal { left, right } => {
+            effectful_value(left, witnesses) && effectful_value(right, witnesses)
+        }
+        Expr::If {
+            condition,
+            then,
+            otherwise,
+        } => {
+            effectful_value(condition, witnesses)
+                && effectful_value(then, witnesses)
+                && effectful_value(otherwise, witnesses)
+        }
+        Expr::Let { bindings, body } => {
+            effectful_bindings(bindings, witnesses) && effectful_value(body, witnesses)
+        }
+        Expr::Coerce {
+            value,
+            ty: Type::Field | Type::Boolean,
+        } => effectful_value(value, witnesses),
+        Expr::FieldCast { value } => effectful_value(value, witnesses),
+        Expr::WitnessCall { name, arguments } => witnesses.get(name.as_str()).is_some_and(|w| {
+            w.result == Type::Field
+                && w.parameters.iter().all(|p| p.ty == Type::Field)
+                && arguments.iter().all(|a| effectful_value(a, witnesses))
+        }),
+        _ => false,
+    }
+}
+fn effectful_bindings(
+    bindings: &[LocalBinding],
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+) -> bool {
+    bindings.iter().all(|b| {
+        (matches!(b.ty, Type::Field | Type::Boolean)
+            || matches!(
+                (&b.ty, &b.value),
+                (Type::Unsigned { .. }, Expr::UnsignedLiteral { .. })
+            ))
+            && effectful_value(&b.value, witnesses)
+    })
+}
+fn effectful_action(action: &StateAction, witnesses: &HashMap<&str, &WitnessDeclaration>) -> bool {
+    match action {
+        StateAction::CellWrite { value, .. } => effectful_value(value, witnesses),
+        StateAction::Sequence { actions } => actions.iter().all(|a| effectful_action(a, witnesses)),
+        StateAction::Let { bindings, action } => {
+            effectful_bindings(bindings, witnesses) && effectful_action(action, witnesses)
+        }
+        _ => false,
+    }
+}
+fn effectful_body(
+    body: &ReturnPlan,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    branches: &mut usize,
+) -> bool {
+    match body {
+        ReturnPlan::Value { value } => effectful_value(value, witnesses),
+        ReturnPlan::Let { bindings, result } => {
+            effectful_bindings(bindings, witnesses) && effectful_body(result, witnesses, branches)
+        }
+        ReturnPlan::Sequence { actions, result } => {
+            actions.iter().all(|a| effectful_action(a, witnesses))
+                && effectful_body(result, witnesses, branches)
+        }
+        ReturnPlan::Conditional {
+            condition,
+            then,
+            otherwise,
+        } => {
+            *branches += 1;
+            effectful_value(condition, witnesses)
+                && effectful_body(then, witnesses, branches)
+                && effectful_body(otherwise, witnesses, branches)
+        }
+    }
+}
+
+pub(super) fn lower_effectful<'a>(
+    circuit: &StatefulCircuit,
+    ledger: &'a HashMap<&'a str, &'a LedgerField>,
+    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
+    pure: &'a HashMap<&'a str, &'a PureCircuit>,
+) -> Option<TypedPlan> {
+    let StateReturn::Effectful { body } = &circuit.return_value else {
+        return None;
+    };
+    let mut branches = 0;
+    if !circuit.actions.is_empty()
+        || circuit.result != Type::Field
+        || !circuit.parameters.iter().all(|p| p.ty == Type::Field)
+        || !effectful_body(body, witnesses, &mut branches)
+        || branches == 0
+    {
+        return None;
+    }
+    let mut plan = Plan {
+        ledger,
+        witnesses,
+        pure,
+        next: 0,
+        root_observations: 0,
+        tree_writes: 0,
+        set_writes: 0,
+        counter_writes: 0,
+        counter_reads: 0,
+        counter_comparisons: 0,
+        cell_reads: 0,
+        cell_writes: 0,
+        field_cell_writes: 0,
+        field_cell_slot: None,
+        effectful_field_cells: true,
+        optional_cells: 0,
+        opaque_cells: 0,
+        historic_roots: 0,
+        historic_writes: 0,
+        qualified_set_reads: 0,
+        qualified_set_writes: 0,
+        qualified_cell_writes: 0,
+    };
+    let scope = circuit
+        .parameters
+        .iter()
+        .enumerate()
+        .map(|(i, p)| {
+            let name = syn::Ident::new(&format!("__compact_param_{i}"), Span::call_site());
+            (
+                p.name.clone(),
+                TypedValue {
+                    ty: p.ty.clone(),
+                    value: syn::parse_quote!(#name),
+                },
+            )
+        })
+        .collect();
+    let mut steps = Vec::new();
+    let result = plan.return_plan(body, &scope, &mut steps)?;
+    if result.ty != circuit.result
+        || plan.cell_reads == 0
+        || plan.cell_writes == 0
+        || plan.cell_writes != plan.field_cell_writes
+        || plan.optional_cells != 0
+        || plan.opaque_cells != 0
+    {
+        return None;
+    }
+    Some(TypedPlan {
+        steps,
+        result: result.value,
+    })
+}
+
 pub(super) fn lower<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -957,6 +1190,7 @@ pub(super) fn lower<'a>(
         cell_writes: 0,
         field_cell_writes: 0,
         field_cell_slot: field_cell_slot.clone(),
+        effectful_field_cells: false,
         optional_cells: 0,
         opaque_cells: 0,
         historic_roots: 0,
@@ -1134,6 +1368,7 @@ mod tests {
             cell_writes: 0,
             field_cell_writes: 0,
             field_cell_slot: None,
+            effectful_field_cells: false,
             optional_cells: 0,
             opaque_cells: 0,
             historic_roots: 0,
@@ -1209,6 +1444,7 @@ mod tests {
             cell_writes: 0,
             field_cell_writes: 0,
             field_cell_slot: None,
+            effectful_field_cells: false,
             optional_cells: 0,
             opaque_cells: 0,
             historic_roots: 0,

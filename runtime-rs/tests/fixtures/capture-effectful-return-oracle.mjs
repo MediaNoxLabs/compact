@@ -30,9 +30,11 @@ const gas = (cost) => Object.fromEntries(
   Object.entries(cost).map(([key, value]) => [key, value.toString()]),
 );
 const queries = [];
+const programs = [];
 const originalQuery = runtime.QueryContext.prototype.query;
 runtime.QueryContext.prototype.query = function (...args) {
   const result = originalQuery.call(this, ...args);
+  programs.push(args[0]);
   queries.push({
     gasCost: gas(result.gasCost),
     opTags: args[0].map((operation) =>
@@ -48,11 +50,18 @@ const initial = contract.initialState({
 const initialStateHex = stateHex(initial.currentContractState);
 function call(next) {
   const queryStart = queries.length;
+  const programStart = programs.length;
   const context = runtime.createCircuitContext(
     runtime.dummyContractAddress(), coinPublicKey,
     initial.currentContractState.data, initial.currentPrivateState,
   );
   const output = contract.circuits.choose(context, next);
+  const replayContext = runtime.createCircuitContext(
+    runtime.dummyContractAddress(), coinPublicKey,
+    initial.currentContractState.data, initial.currentPrivateState,
+  );
+  const replay = originalQuery.call(replayContext.currentQueryContext,
+    programs.slice(programStart).flat(), replayContext.costModel);
   initial.currentPrivateState = output.context.currentPrivateState;
   initial.currentContractState.data = new runtime.ChargedState(
     output.context.currentQueryContext.state.state,
@@ -64,6 +73,10 @@ function call(next) {
     afterStateHex: stateHex(initial.currentContractState),
     effects: output.context.currentQueryContext.effects,
     reportedGas: gas(output.gasCost),
+    replayGas: gas(replay.gasCost),
+    publicTranscript: output.proofData.publicTranscript,
+    privateTranscriptOutputs: output.proofData.privateTranscriptOutputs,
+    output: output.proofData.output,
     queries: queries.slice(queryStart),
     privateTranscriptCount: output.proofData.privateTranscriptOutputs.length,
   };
@@ -72,4 +85,4 @@ process.stdout.write(JSON.stringify({
   initialStateHex,
   chosen: call(9n),
   unchosen: call(8n),
-}, null, 2) + '\n');
+}, (_, value) => value instanceof Uint8Array ? Array.from(value) : typeof value === 'bigint' ? value.toString() : value, 2) + '\n');

@@ -57,6 +57,7 @@ INTERNAL_PURE_CALL_SOURCE = ROOT / "examples/rust_backend/internal_pure_call.com
 STATEFUL_PURE_CALL_SOURCE = ROOT / "examples/rust_backend/stateful_pure_call.compact"
 FIELD_CAST_UINT128_SOURCE = ROOT / "examples/rust_backend/field_cast_uint128.compact"
 WIDENING_ARITH_SOURCE = ROOT / "examples/rust_backend/widening_arith_oracle.compact"
+MIXED_WIDTH_OPERAND_SOURCE = ROOT / "examples/rust_backend/mixed_width_operand_oracle.compact"
 TERNARY_COND_SOURCE = ROOT / "examples/rust_backend/ternary_cond_oracle.compact"
 NESTED_STATEFUL_TERNARY_SOURCE = ROOT / "examples/rust_backend/nested_stateful_ternary.compact"
 ASSET_REGISTRY_SOURCE = ROOT / "examples/rust_backend/asset_registry_oracle.compact"
@@ -1503,6 +1504,7 @@ def main() -> None:
             for label, source, circuit in (
                 ("field-cast-uint128", FIELD_CAST_UINT128_SOURCE, "save"),
                 ("widening-arith", WIDENING_ARITH_SOURCE, "recordArea"),
+                ("mixed-width-operand", MIXED_WIDTH_OPERAND_SOURCE, "recordMatching"),
             ):
                 proof_output = base / f"{label}-proof"
                 run(compiler, "--target", "rust", "--rust-require-recording", str(source), str(proof_output))
@@ -1821,6 +1823,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--closed-pure-unsigned-call", str(unsigned_recording_proofs["widening-arith"]),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--mixed-width-recording", str(unsigned_recording_proofs["mixed-width-operand"]),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

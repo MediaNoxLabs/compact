@@ -1457,6 +1457,122 @@ fn render_recorded_item(
         Ok(Some(steps))
     }
 
+    // A mixed-width product assertion lives in a pure Unit circuit because
+    // the stateful source cannot inline ordering comparisons. Admit only its
+    // exact two-Uint32, multiply-by-four, less-equal body before Counter-one.
+    fn closed_guarded_unsigned_product_steps(
+        circuit: &StatefulCircuit,
+        parameters: &HashMap<&str, (&Type, syn::Ident)>,
+        pure_circuits: &HashMap<&str, &PureCircuit>,
+    ) -> Result<Option<Vec<syn::Stmt>>, RenderError> {
+        const UINT32: &str = "4294967295";
+        const PRODUCT: &str = "17179869180";
+        let [left, right] = circuit.parameters.as_slice() else {
+            return Ok(None);
+        };
+        if ![left, right]
+            .iter()
+            .all(|parameter| matches!(&parameter.ty, Type::Unsigned { max } if max == UINT32))
+            || circuit.result != Type::Unit
+            || circuit.return_value != StateReturn::Unit
+        {
+            return Ok(None);
+        }
+        let [StateAction::PureCall { name, arguments }, continuation] = circuit.actions.as_slice()
+        else {
+            return Ok(None);
+        };
+        if !closed_counter_one_continuation(continuation) {
+            return Ok(None);
+        }
+        let Some(pure) = pure_circuits.get(name.as_str()) else {
+            return Ok(None);
+        };
+        if pure.result != Type::Unit
+            || pure.parameters.len() != 2
+            || arguments.len() != 2
+            || pure
+                .parameters
+                .iter()
+                .any(|parameter| !matches!(&parameter.ty, Type::Unsigned { max } if max == UINT32))
+        {
+            return Ok(None);
+        }
+        let Expr::Sequence { steps, value } = &pure.body else {
+            return Ok(None);
+        };
+        let [Expr::Assert { condition, .. }] = steps.as_slice() else {
+            return Ok(None);
+        };
+        if !matches!(value.as_ref(), Expr::Unit) {
+            return Ok(None);
+        }
+        let Expr::Let { bindings, body } = condition.as_ref() else {
+            return Ok(None);
+        };
+        let [binding] = bindings.as_slice() else {
+            return Ok(None);
+        };
+        if binding.ty
+            != (Type::Unsigned {
+                max: PRODUCT.into(),
+            })
+        {
+            return Ok(None);
+        }
+        let Expr::UnsignedMultiply {
+            max,
+            left: product_left,
+            right: product_right,
+        } = &binding.value
+        else {
+            return Ok(None);
+        };
+        if max != PRODUCT
+            || !matches!(product_left.as_ref(), Expr::UnsignedCast { max, value }
+                if max == PRODUCT && matches!(value.as_ref(), Expr::Parameter { name } if name == &pure.parameters[0].name))
+            || !matches!(product_right.as_ref(), Expr::UnsignedLiteral { value, max }
+                if value == "4" && max == PRODUCT)
+            || !matches!(body.as_ref(), Expr::Compare { operator: crate::ir::ComparisonOperator::LessEqual, left, right }
+                if matches!(left.as_ref(), Expr::Parameter { name } if name == &binding.name)
+                    && matches!(right.as_ref(), Expr::UnsignedCast { max, value }
+                        if max == PRODUCT && matches!(value.as_ref(), Expr::Parameter { name } if name == &pure.parameters[1].name)))
+        {
+            return Ok(None);
+        }
+        let mut typed_arguments = Vec::new();
+        let mut output = Vec::new();
+        for (index, ((argument, source), target)) in arguments
+            .iter()
+            .zip(&circuit.parameters)
+            .zip(&pure.parameters)
+            .enumerate()
+        {
+            if source.ty != target.ty
+                || !matches!(argument, Expr::Coerce { value, ty }
+                    if ty == &source.ty && matches!(value.as_ref(), Expr::Parameter { name } if name == &source.name))
+            {
+                return Ok(None);
+            }
+            let (_, rust_name) = parameters
+                .get(source.name.as_str())
+                .expect("closed unsigned guard argument is a declared parameter");
+            let typed = syn::Ident::new(
+                &format!("__compact_recorded_product_arg_{index}"),
+                Span::call_site(),
+            );
+            output.push(syn::parse_quote!(
+                let #typed: runtime::BoundedUint<4294967295> = #rust_name;
+            ));
+            typed_arguments.push(typed);
+        }
+        let method = ident(name)?;
+        output.push(syn::parse_quote!(
+            crate::pure_circuits::#method(#(#typed_arguments),*)?;
+        ));
+        Ok(Some(output))
+    }
+
     fn amount_source(
         value: &Expr,
         locals: &HashMap<String, syn::Expr>,
@@ -4814,6 +4930,63 @@ fn render_recorded_item(
                 )
             }
             StateAction::Assert { condition, message } => {
+                // A typed public Uint<8> may be widened to Uint<32> for an
+                // equality guard. Keep the checked cast and assertion before
+                // any later public action; no operand may observe ledger or
+                // witness state on this path.
+                if let Expr::Equal { left, right } = condition
+                    && let Expr::UnsignedCast {
+                        max,
+                        value: small_value,
+                    } = left.as_ref()
+                    && max == "4294967295"
+                    && let Expr::Parameter { name: small_name } = small_value.as_ref()
+                    && let Expr::Parameter { name: big_name } = right.as_ref()
+                    && !locals.contains_key(small_name)
+                    && !locals.contains_key(big_name)
+                    && matches!(
+                        parameters.get(small_name.as_str()),
+                        Some((Type::Unsigned { max }, _)) if max == "255"
+                    )
+                    && matches!(
+                        parameters.get(big_name.as_str()),
+                        Some((Type::Unsigned { max }, _)) if max == "4294967295"
+                    )
+                {
+                    let Some(small) = cell_source(
+                        small_value,
+                        &Type::Unsigned { max: "255".into() },
+                        locals,
+                        parameters,
+                    ) else {
+                        return Ok(unavailable_action(action, path));
+                    };
+                    let Some(big) = cell_source(
+                        right,
+                        &Type::Unsigned {
+                            max: "4294967295".into(),
+                        },
+                        locals,
+                        parameters,
+                    ) else {
+                        return Ok(unavailable_action(action, path));
+                    };
+                    let widened = syn::Ident::new(
+                        &format!("__compact_recorded_widened_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    steps.push(syn::parse_quote! {
+                        let #widened: runtime::BoundedUint<4294967295> =
+                            runtime::cast_unsigned::<255, 4294967295>(#small)?;
+                    });
+                    steps.push(syn::parse_quote! {
+                        if !(#widened == #big) {
+                            return Err(runtime::CompactError::AssertionFailed(#message.to_owned()));
+                        }
+                    });
+                    return Ok(RecordingOutcome::Supported(()));
+                }
                 let Some(condition) = boolean_expression(
                     condition,
                     locals,
@@ -5445,7 +5618,9 @@ fn render_recorded_item(
     let organizer_gate = organizer_steps.is_some();
     let opaque_map_operation = closed_opaque_map_operation(circuit, ledger_fields);
     let guarded_pure_steps =
-        closed_guarded_struct_pure_steps(circuit, &parameters, pure_circuits, circuits)?;
+        closed_guarded_struct_pure_steps(circuit, &parameters, pure_circuits, circuits)?.or(
+            closed_guarded_unsigned_product_steps(circuit, &parameters, pure_circuits)?,
+        );
     let guarded_pure_call = guarded_pure_steps.is_some();
     let mut steps = organizer_steps.or(guarded_pure_steps).unwrap_or_default();
     let mut next_temp = 0;

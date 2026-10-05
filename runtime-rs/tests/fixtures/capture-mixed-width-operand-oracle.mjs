@@ -21,6 +21,22 @@ import * as runtime from '../../../runtime/dist/index.js';
 const [contractPath] = process.argv.slice(2);
 if (!contractPath) throw new Error('expected contract/index.js');
 const { Contract, pureCircuits } = await import(pathToFileURL(contractPath).href);
+const queries = [];
+const originalQuery = runtime.QueryContext.prototype.query;
+runtime.QueryContext.prototype.query = function (...args) {
+  const result = originalQuery.call(this, ...args);
+  queries.push({ gasCost: normalize(result.gasCost) });
+  return result;
+};
+function normalize(value) {
+  if (typeof value === 'bigint') return value.toString();
+  if (value instanceof Uint8Array) return { bytesHex: Buffer.from(value).toString('hex') };
+  if (Array.isArray(value)) return value.map(normalize);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, inner]) => [key, normalize(inner)]));
+  }
+  return value;
+}
 const coinPublicKey = { bytes: new Uint8Array(32) };
 const contract = new Contract({});
 const initial = contract.initialState({
@@ -53,6 +69,48 @@ context = contract.circuits.recordMatching(context, 7n, 7n).context;
 initial.currentContractState.data = new runtime.ChargedState(
   context.currentQueryContext.state.state,
 );
+function captureCall(name, args) {
+  const fresh = contract.initialState({
+    initialPrivateState: null,
+    initialZswapLocalState: runtime.emptyZswapLocalState(coinPublicKey),
+  }, 20n, 4n);
+  const freshContext = runtime.createCircuitContext(
+    runtime.dummyContractAddress(), coinPublicKey,
+    fresh.currentContractState.data, fresh.currentPrivateState,
+  );
+  const initialStateHex = Buffer.from(fresh.currentContractState.serialize()).toString('hex');
+  const queryStart = queries.length;
+  try {
+    const output = contract.circuits[name](freshContext, ...args);
+    fresh.currentContractState.data = new runtime.ChargedState(
+      output.context.currentQueryContext.state.state,
+    );
+    return {
+      ok: true,
+      result: normalize(output.result),
+      initialStateHex,
+      afterStateHex: Buffer.from(fresh.currentContractState.serialize()).toString('hex'),
+      queries: queries.slice(queryStart),
+      reportedGas: normalize(output.gasCost),
+      publicTranscript: normalize(output.proofData.publicTranscript),
+      privateTranscriptOutputs: normalize(output.proofData.privateTranscriptOutputs),
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      message: String(error.message),
+      initialStateHex,
+      afterStateHex: Buffer.from(fresh.currentContractState.serialize()).toString('hex'),
+      queryCount: queries.length - queryStart,
+    };
+  }
+}
+const recordedEvidence = {
+  recordPinnedSuccess: captureCall('recordPinned', [4n, 20n]),
+  recordMatchingSuccess: captureCall('recordMatching', [7n, 7n]),
+  recordPinnedFailure: captureCall('recordPinned', [1073741824n, 4294967295n]),
+  recordMatchingFailure: captureCall('recordMatching', [7n, 8n]),
+};
 process.stdout.write(JSON.stringify({
   initialHex,
   stateAfterActionsHex: Buffer.from(initial.currentContractState.serialize()).toString('hex'),
@@ -71,4 +129,5 @@ process.stdout.write(JSON.stringify({
     context, 1073741824n, 4294967295n,
   )),
   recordMatchingFailure: check(() => contract.circuits.recordMatching(context, 7n, 8n)),
+  recordedEvidence,
 }, null, 2) + '\n');

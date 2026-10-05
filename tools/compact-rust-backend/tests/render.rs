@@ -26,6 +26,267 @@ use compact_rust_backend::{
 };
 
 #[test]
+fn recorded_mixed_width_guard_requires_exact_public_widths_and_pure_operands() {
+    let mut contract = Contract {
+        schema_version: SCHEMA_VERSION,
+        type_aliases: vec![],
+        constructor: None,
+        witnesses: vec![],
+        ledger_fields: vec![
+            LedgerField {
+                source: None,
+                id: "count".into(),
+                index: 0,
+                path: vec![],
+                declaration: LedgerFieldKind::Counter,
+            },
+            LedgerField {
+                source: None,
+                id: "stored".into(),
+                index: 1,
+                path: vec![],
+                declaration: LedgerFieldKind::Cell {
+                    ty: Type::Unsigned { max: "255".into() },
+                },
+            },
+        ],
+        circuits: vec![],
+        stateful_circuits: vec![StatefulCircuit {
+            source: None,
+            internal: false,
+            name: "matching".into(),
+            parameters: vec![
+                Parameter {
+                    name: "small".into(),
+                    ty: Type::Unsigned { max: "255".into() },
+                },
+                Parameter {
+                    name: "big".into(),
+                    ty: Type::Unsigned {
+                        max: "4294967295".into(),
+                    },
+                },
+            ],
+            actions: vec![
+                StateAction::Assert {
+                    condition: Expr::Equal {
+                        left: Box::new(Expr::UnsignedCast {
+                            max: "4294967295".into(),
+                            value: Box::new(Expr::Parameter {
+                                name: "small".into(),
+                            }),
+                        }),
+                        right: Box::new(Expr::Parameter { name: "big".into() }),
+                    },
+                    message: "different".into(),
+                },
+                StateAction::CounterIncrement {
+                    field: "count".into(),
+                    index: 0,
+                    amount: CounterAmount::Literal { value: 1 },
+                },
+            ],
+            result: Type::Unit,
+            return_value: StateReturn::Unit,
+        }],
+    };
+    let recorded = |contract: &Contract| {
+        render_with_capabilities(contract)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
+    };
+    assert!(recorded(&contract));
+    assert!(
+        render_with_capabilities(&contract)
+            .unwrap()
+            .source
+            .contains("__compact_recorded_widened_0")
+    );
+
+    contract.stateful_circuits[0].parameters[0].ty = Type::Unsigned {
+        max: "65535".into(),
+    };
+    assert!(!recorded(&contract));
+    contract.stateful_circuits[0].parameters[0].ty = Type::Unsigned { max: "255".into() };
+    let StateAction::Assert { condition, .. } = &mut contract.stateful_circuits[0].actions[0]
+    else {
+        unreachable!()
+    };
+    let Expr::Equal { left, .. } = condition else {
+        unreachable!()
+    };
+    let Expr::UnsignedCast { value, .. } = left.as_mut() else {
+        unreachable!()
+    };
+    **value = Expr::CellRead {
+        field: "stored".into(),
+        index: 1,
+    };
+    assert!(!recorded(&contract));
+}
+
+#[test]
+fn recorded_product_guard_requires_closed_pure_body_and_counter_one() {
+    let uint32 = Type::Unsigned {
+        max: "4294967295".into(),
+    };
+    let product = Type::Unsigned {
+        max: "17179869180".into(),
+    };
+    let param = |name: &str| Expr::Parameter { name: name.into() };
+    let mut contract = Contract {
+        schema_version: SCHEMA_VERSION,
+        type_aliases: vec![],
+        constructor: None,
+        witnesses: vec![],
+        ledger_fields: vec![LedgerField {
+            source: None,
+            id: "count".into(),
+            index: 0,
+            path: vec![],
+            declaration: LedgerFieldKind::Counter,
+        }],
+        circuits: vec![PureCircuit {
+            source: None,
+            internal: false,
+            name: "guard".into(),
+            parameters: vec![
+                Parameter {
+                    name: "q".into(),
+                    ty: uint32.clone(),
+                },
+                Parameter {
+                    name: "y".into(),
+                    ty: uint32.clone(),
+                },
+            ],
+            result: Type::Unit,
+            body: Expr::Sequence {
+                steps: vec![Expr::Assert {
+                    condition: Box::new(Expr::Let {
+                        bindings: vec![LocalBinding {
+                            name: "product".into(),
+                            ty: product.clone(),
+                            value: Expr::UnsignedMultiply {
+                                max: "17179869180".into(),
+                                left: Box::new(Expr::UnsignedCast {
+                                    max: "17179869180".into(),
+                                    value: Box::new(param("q")),
+                                }),
+                                right: Box::new(Expr::UnsignedLiteral {
+                                    value: "4".into(),
+                                    max: "17179869180".into(),
+                                }),
+                            },
+                        }],
+                        body: Box::new(Expr::Compare {
+                            operator: compact_rust_backend::ir::ComparisonOperator::LessEqual,
+                            left: Box::new(param("product")),
+                            right: Box::new(Expr::UnsignedCast {
+                                max: "17179869180".into(),
+                                value: Box::new(param("y")),
+                            }),
+                        }),
+                    }),
+                    message: "product exceeds bound".into(),
+                }],
+                value: Box::new(Expr::Unit),
+            },
+        }],
+        stateful_circuits: vec![StatefulCircuit {
+            source: None,
+            internal: false,
+            name: "record".into(),
+            parameters: vec![
+                Parameter {
+                    name: "q".into(),
+                    ty: uint32.clone(),
+                },
+                Parameter {
+                    name: "y".into(),
+                    ty: uint32.clone(),
+                },
+            ],
+            actions: vec![
+                StateAction::PureCall {
+                    name: "guard".into(),
+                    arguments: vec![
+                        Expr::Coerce {
+                            value: Box::new(param("q")),
+                            ty: uint32.clone(),
+                        },
+                        Expr::Coerce {
+                            value: Box::new(param("y")),
+                            ty: uint32.clone(),
+                        },
+                    ],
+                },
+                StateAction::Let {
+                    bindings: vec![LocalBinding {
+                        name: "one".into(),
+                        ty: Type::Unsigned {
+                            max: "65535".into(),
+                        },
+                        value: Expr::UnsignedLiteral {
+                            value: "1".into(),
+                            max: "65535".into(),
+                        },
+                    }],
+                    action: Box::new(StateAction::CounterIncrement {
+                        field: "count".into(),
+                        index: 0,
+                        amount: CounterAmount::Parameter { name: "one".into() },
+                    }),
+                },
+            ],
+            result: Type::Unit,
+            return_value: StateReturn::Unit,
+        }],
+    };
+    let recorded = |contract: &Contract| {
+        render_with_capabilities(contract)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
+    };
+    assert!(recorded(&contract));
+    let pristine = contract.clone();
+
+    if let Expr::Sequence { steps, .. } = &mut contract.circuits[0].body {
+        steps.push(Expr::Unit);
+    }
+    assert!(!recorded(&contract));
+    contract = pristine.clone();
+    if let Expr::Sequence { steps, .. } = &mut contract.circuits[0].body
+        && let Expr::Assert { condition, .. } = &mut steps[0]
+        && let Expr::Let { bindings, .. } = condition.as_mut()
+        && let Expr::UnsignedMultiply { right, .. } = &mut bindings[0].value
+    {
+        **right = Expr::UnsignedLiteral {
+            value: "5".into(),
+            max: "17179869180".into(),
+        };
+    }
+    assert!(!recorded(&contract));
+    contract = pristine.clone();
+    if let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[1] {
+        bindings[0].value = Expr::UnsignedLiteral {
+            value: "2".into(),
+            max: "65535".into(),
+        };
+    }
+    assert!(!recorded(&contract));
+    contract = pristine;
+    if let StateAction::PureCall { arguments, .. } = &mut contract.stateful_circuits[0].actions[0] {
+        arguments.swap(0, 1);
+    }
+    assert!(!recorded(&contract));
+}
+
+#[test]
 fn recorded_pair_hash_bindings_require_closed_typed_field_literals() {
     let pair = || Expr::Tuple {
         elements: vec![

@@ -1808,6 +1808,7 @@ dependencies = [
  "compact-rust-map-boolean-field-fixture",
  "compact-rust-merkle-path-verify-fixture",
  "compact-rust-merkle-tree-oracle-fixture",
+ "compact-rust-mixed-width-operand-oracle-fixture",
  "compact-rust-nested-map-shape-fixture",
  "compact-rust-nested-stateful-ternary-fixture",
  "compact-rust-nested-witness-call-oracle-fixture",

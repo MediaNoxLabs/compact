@@ -339,19 +339,128 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    /// Circuits with a replayable ordered ledger program.
+    pub mod recorded {
+        use midnight_compact_runtime as runtime;
+        pub fn recordPinned<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::BoundedUint<4294967295>,
+            __compact_param_1: runtime::BoundedUint<4294967295>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_product_arg_0: runtime::BoundedUint<4294967295> =
+                __compact_param_0;
+            let __compact_recorded_product_arg_1: runtime::BoundedUint<4294967295> =
+                __compact_param_1;
+            crate::pure_circuits::assertProductLE(
+                __compact_recorded_product_arg_0,
+                __compact_recorded_product_arg_1,
+            )?;
+            let frame = crate::ledger_slots::mixedOps.record_increment(frame, 1u16)?;
+            Ok(frame.finish(()))
+        }
+        pub fn recordMatching<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::BoundedUint<255>,
+            __compact_param_1: runtime::BoundedUint<4294967295>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_widened_0: runtime::BoundedUint<4294967295> =
+                runtime::cast_unsigned::<255, 4294967295>(__compact_param_0)?;
+            if !(__compact_recorded_widened_0 == __compact_param_1) {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "values must match across widths".to_owned(),
+                ));
+            }
+            let frame = crate::ledger_slots::mixedOps.record_increment(frame, 1u16)?;
+            Ok(frame.finish(()))
+        }
+        /// Typed handle for circuits with a complete recorded trace.
+        pub struct Contract;
+        impl Contract {
+            pub fn recordPinned<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                q: runtime::BoundedUint<4294967295>,
+                y: runtime::BoundedUint<4294967295>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::recordPinned(context, q, y)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn recordPinned_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                q: runtime::BoundedUint<4294967295>,
+                y: runtime::BoundedUint<4294967295>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from((q, y));
+                let recorded = self.recordPinned(observed.circuit_context(private_state), q, y)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "recordPinned",
+                    input,
+                ))
+            }
+            pub fn recordMatching<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                small: runtime::BoundedUint<255>,
+                big: runtime::BoundedUint<4294967295>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::recordMatching(context, small, big)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn recordMatching_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                small: runtime::BoundedUint<255>,
+                big: runtime::BoundedUint<4294967295>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from((small, big));
+                let recorded =
+                    self.recordMatching(observed.circuit_context(private_state), small, big)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "recordMatching",
+                    input,
+                ))
+            }
+        }
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]
         witnesses: W,
+        pub recording: recorded::Contract,
     }
     impl<W> From<W> for Contract<W> {
         fn from(witnesses: W) -> Self {
-            Self { witnesses }
+            Self {
+                witnesses,
+                recording: recorded::Contract,
+            }
         }
     }
     impl Default for Contract<()> {
         fn default() -> Self {
-            Self { witnesses: () }
+            Self {
+                witnesses: (),
+                recording: recorded::Contract,
+            }
         }
     }
     impl<W> Contract<W> {
@@ -370,6 +479,10 @@ pub mod ledger_contract {
             big: runtime::BoundedUint<4294967295>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
             crate::ledger_contract::recordMatching(context, small, big)
+        }
+        /// Access replayable circuit calls for this contract.
+        pub fn recording(&self) -> &recorded::Contract {
+            &self.recording
         }
     }
 }

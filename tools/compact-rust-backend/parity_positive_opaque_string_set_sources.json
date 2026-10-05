@@ -1,0 +1,25 @@
+{
+  "format_version": 1,
+  "suite": "runtime-rs/tests/fixtures/capture-opaque-string-set-oracle.mjs",
+  "purpose": "Original OpaqueString Set source acceptance and proof-required recorded call parity",
+  "source_glob": "examples/rust_backend/opaque_string_set_oracle.compact",
+  "positive_sources": [
+    {
+      "source": "examples/rust_backend/opaque_string_set_oracle.compact",
+      "typescript_capture": "runtime-rs/tests/fixtures/capture-opaque-string-set-oracle.mjs",
+      "typescript_fixture": "runtime-rs/tests/fixtures/opaque-string-set-oracle.json",
+      "rust_fixture": "tests-rust-backend/opaque-string-set-oracle/lib.rs",
+      "rust_test": "tests-rust-backend/opaque-string-set-oracle/tests/opaque_string_set_oracle.rs",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [
+        {"name": "addName", "pure": false, "proof": true},
+        {"name": "hasName", "pure": false, "proof": true}
+      ],
+      "expected_recording_gaps": {},
+      "pure_declarations": 0,
+      "exported_pure_declarations": 0
+    }
+  ],
+  "expected_rejections": []
+}

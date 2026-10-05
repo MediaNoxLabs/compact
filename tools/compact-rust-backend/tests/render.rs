@@ -26,6 +26,46 @@ use compact_rust_backend::{
 };
 
 #[test]
+fn opaque_string_set_recording_requires_closed_typed_operations() {
+    let mut contract: Contract =
+        serde_json::from_str(include_str!("opaque-string-set-schema12-ir.json")).unwrap();
+    contract.schema_version = SCHEMA_VERSION;
+    let statuses = |contract: &Contract| {
+        render_with_capabilities(contract)
+            .unwrap()
+            .capabilities
+            .circuits
+            .into_iter()
+            .map(|capability| (capability.name, capability.recorded))
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(
+        statuses(&contract),
+        vec![("addName".into(), true), ("hasName".into(), true)]
+    );
+
+    let extra_action = contract.stateful_circuits[0].actions[0].clone();
+    contract.stateful_circuits[0].actions.push(extra_action);
+    assert_eq!(
+        statuses(&contract),
+        vec![("addName".into(), false), ("hasName".into(), true)]
+    );
+
+    contract.stateful_circuits[0].actions.truncate(1);
+    let StateReturn::SetMember { value, .. } = &mut contract.stateful_circuits[1].return_value
+    else {
+        unreachable!()
+    };
+    *value = Expr::Default {
+        ty: Type::OpaqueString,
+    };
+    assert_eq!(
+        statuses(&contract),
+        vec![("addName".into(), true), ("hasName".into(), false)]
+    );
+}
+
+#[test]
 fn welcome_organizer_recording_requires_the_closed_witness_hash_guard() {
     let mut contract: Contract =
         serde_json::from_str(include_str!("welcome-organizer-schema12-ir.json")).unwrap();

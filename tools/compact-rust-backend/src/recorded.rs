@@ -337,6 +337,53 @@ fn proved_opaque_set_sequence(circuit: &StatefulCircuit) -> bool {
         .all(|value| matches!(value, Expr::Parameter { name } if name == &parameter.name))
 }
 
+/// The one-operation OpaqueString Set shapes proved by the set oracle. Keep
+/// the field, physical index, and parameter source tied to the typed IR so
+/// general opaque expressions remain outside the recording surface.
+fn closed_opaque_set_operation(
+    circuit: &StatefulCircuit,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+) -> bool {
+    let [parameter] = circuit.parameters.as_slice() else {
+        return false;
+    };
+    if parameter.ty != Type::OpaqueString {
+        return false;
+    }
+    let operation = match (&circuit.actions[..], &circuit.return_value, &circuit.result) {
+        (
+            [
+                StateAction::SetInsert {
+                    field,
+                    index,
+                    value,
+                },
+            ],
+            StateReturn::Unit,
+            Type::Unit,
+        ) => Some((field, index, value)),
+        (
+            [],
+            StateReturn::SetMember {
+                field,
+                index,
+                value,
+            },
+            Type::Boolean,
+        ) => Some((field, index, value)),
+        _ => None,
+    };
+    let Some((field, index, value)) = operation else {
+        return false;
+    };
+    let Some(declaration) = ledger_fields.get(field.as_str()) else {
+        return false;
+    };
+    declaration.index == *index
+        && matches!(&declaration.declaration, LedgerFieldKind::Set { ty } if *ty == Type::OpaqueString)
+        && matches!(value, Expr::Parameter { name } if name == &parameter.name)
+}
+
 /// A closed typed witness → Bytes32 hash → Set authorization followed by a
 /// single Set insertion. The matched callees are inspected transitively so
 /// recording never silently skips an assertion or private output.
@@ -5209,6 +5256,7 @@ fn render_recorded_item(
         .iter()
         .any(|parameter| parameter.ty == Type::OpaqueString)
         && !proved_opaque_set_sequence(circuit)
+        && !closed_opaque_set_operation(circuit, ledger_fields)
         && !organizer_gate
     {
         return Ok(RecordingOutcome::Unsupported(

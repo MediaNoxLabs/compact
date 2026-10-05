@@ -1,0 +1,94 @@
+{
+  "schema_version": 12,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "names",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "set",
+        "ty": {
+          "kind": "opaque_string"
+        }
+      },
+      "source": {
+        "file": "opaque_string_set_oracle.compact",
+        "line": 18,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "addName",
+      "parameters": [
+        {
+          "name": "name",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "set_insert",
+          "field": "names",
+          "index": 0,
+          "value": {
+            "kind": "parameter",
+            "name": "name"
+          }
+        }
+      ],
+      "source": {
+        "file": "opaque_string_set_oracle.compact",
+        "line": 20,
+        "column": 1
+      }
+    },
+    {
+      "name": "hasName",
+      "parameters": [
+        {
+          "name": "name",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        }
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "return_value": {
+        "kind": "set_member",
+        "field": "names",
+        "index": 0,
+        "value": {
+          "kind": "parameter",
+          "name": "name"
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "opaque_string_set_oracle.compact",
+        "line": 24,
+        "column": 1
+      }
+    }
+  ]
+}

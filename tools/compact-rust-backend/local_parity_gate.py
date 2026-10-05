@@ -324,6 +324,12 @@ def main() -> int:
             raise GateError("set MIDNIGHT_LEDGER_TEST_STATIC_DIR to the ledger checkout's "
                             "ledger/static directory before --full; funded qualified-coin "
                             "proofs require the upstream fee funding fixture")
+        if args.full:
+            missing = [tool for tool in ("zkir", "zkir-v3") if shutil.which(tool) is None]
+            if missing:
+                raise GateError("full proof gate requires " + ", ".join(missing)
+                                + " on PATH; use the Nix compiler environment or add "
+                                "the packaged compiler's lib directory before --full")
         selected = select_sources(args.source, args.full)
         head = git_head()
         if args.expect_head and not head.startswith(args.expect_head):

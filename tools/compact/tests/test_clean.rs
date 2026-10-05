@@ -13,57 +13,65 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::common::{COMPACT_VERSION, LATEST_COMPACTC_VERSION, run_command};
+use crate::common::{COMPACT_VERSION, LATEST_COMPACTC_VERSION, ReadOnlyBaseline, run_command};
 use std::env;
 
 mod common;
 
 #[test]
 fn test_compact_clean_nothing_installed() {
+    let mut baseline = ReadOnlyBaseline::new();
     run_command(
         &["clean"],
-        None,
+        Some(baseline.environment()),
         Some("./output/clean/std_default.txt"),
         None,
         &[("[LATEST_COMPACTC_VERSION]", LATEST_COMPACTC_VERSION)],
         None,
     );
+    baseline.assert_unchanged();
 }
 
 #[test]
 fn test_compact_clean_invalid_version() {
+    let mut baseline = ReadOnlyBaseline::new();
     run_command(
         &["clean", "5"],
-        None,
+        Some(baseline.environment()),
         None,
         Some("./output/clean/err_invalid_version.txt"),
         &[],
         Some(2),
     );
+    baseline.assert_unchanged();
 }
 
 #[test]
 fn test_compact_clean_keep_nothing_installed() {
+    let mut baseline = ReadOnlyBaseline::new();
     run_command(
         &["clean", "--keep-current"],
-        None,
+        Some(baseline.environment()),
         Some("./output/clean/std_default.txt"),
         None,
         &[],
         Some(0),
     );
+    baseline.assert_unchanged();
 }
 
 #[test]
 fn test_compact_clean_invalid_param() {
+    let mut baseline = ReadOnlyBaseline::new();
     run_command(
         &["clean", "--bob"],
-        None,
+        Some(baseline.environment()),
         None,
         Some("./output/clean/err_invalid_param.txt"),
-        &[("[USER_DIR]", env::home_dir().unwrap().to_str().unwrap())],
+        &[("[USER_DIR]", baseline.home().to_str().unwrap())],
         Some(2),
     );
+    baseline.assert_unchanged();
 }
 
 #[test]
@@ -92,24 +100,28 @@ fn test_compact_clean_param_h() {
 
 #[test]
 fn test_compact_clean_param_version() {
+    let mut baseline = ReadOnlyBaseline::new();
     run_command(
         &["clean", "--version"],
-        None,
+        Some(baseline.environment()),
         Some("./output/clean/std_default_version.txt"),
         None,
         &[("[COMPACT_VERSION]", COMPACT_VERSION)],
         Some(0),
     );
+    baseline.assert_unchanged();
 }
 
 #[test]
 fn test_compact_clean_param_v() {
+    let mut baseline = ReadOnlyBaseline::new();
     run_command(
         &["clean", "-V"],
-        None,
+        Some(baseline.environment()),
         Some("./output/clean/std_default_version.txt"),
         None,
         &[("[COMPACT_VERSION]", COMPACT_VERSION)],
         Some(0),
     );
+    baseline.assert_unchanged();
 }

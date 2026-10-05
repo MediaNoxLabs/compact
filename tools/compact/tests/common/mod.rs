@@ -81,6 +81,13 @@ pub fn assert_command_output(
     let mut cmd = Command::new(binary);
 
     if let Some(vars) = env {
+        // A private receipt directory must not be bypassed by an inherited
+        // axoupdater working-directory override. Explicit caller input wins.
+        if vars.contains_key("AXOUPDATER_CONFIG_PATH")
+            && !vars.contains_key("AXOUPDATER_CONFIG_WORKING_DIR")
+        {
+            cmd.env_remove("AXOUPDATER_CONFIG_WORKING_DIR");
+        }
         for (k, v) in vars {
             cmd.env(k, v);
         }
@@ -120,6 +127,13 @@ pub fn assert_command_output_sorted(
     let mut cmd = Command::new(binary);
 
     if let Some(vars) = env {
+        // A private receipt directory must not be bypassed by an inherited
+        // axoupdater working-directory override. Explicit caller input wins.
+        if vars.contains_key("AXOUPDATER_CONFIG_PATH")
+            && !vars.contains_key("AXOUPDATER_CONFIG_WORKING_DIR")
+        {
+            cmd.env_remove("AXOUPDATER_CONFIG_WORKING_DIR");
+        }
         for (k, v) in vars {
             cmd.env(k, v);
         }

@@ -1,5 +1,5 @@
 // This file is part of Compact.
-// Copyright (C) 2025 Midnight Foundation
+// Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::io::Write;
 use std::net::TcpListener;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::thread::{self, JoinHandle};
@@ -56,7 +56,7 @@ impl ReadOnlyBaseline {
             "rate_limit_reset": null,
         }))
         .unwrap();
-        for directory in ["home", "cache", "config", "data", "compact"] {
+        for directory in ["home/.compact", "cache", "config", "data", "receipt"] {
             fs::create_dir_all(root.path().join(directory)).unwrap();
         }
         // dirs::cache_dir uses HOME/Library/Caches on macOS and XDG_CACHE_HOME
@@ -121,7 +121,9 @@ impl ReadOnlyBaseline {
             ("XDG_CACHE_HOME", "cache"),
             ("XDG_CONFIG_HOME", "config"),
             ("XDG_DATA_HOME", "data"),
-            ("COMPACT_DIRECTORY", "compact"),
+            ("COMPACT_DIRECTORY", "home/.compact"),
+            ("RECEIPT_HOME", "home"),
+            ("AXOUPDATER_CONFIG_PATH", "receipt"),
         ] {
             env.insert(
                 key.to_string(),
@@ -151,6 +153,10 @@ impl ReadOnlyBaseline {
         env
     }
 
+    pub fn home(&self) -> PathBuf {
+        self.root.path().join("home")
+    }
+
     pub fn assert_unchanged(&self) {
         let age = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -173,9 +179,23 @@ impl ReadOnlyBaseline {
                 "read-only call changed its seeded cache"
             );
         }
+        for directory in ["receipt", "config", "data"] {
+            assert_eq!(
+                fs::read_dir(self.root.path().join(directory))
+                    .unwrap()
+                    .count(),
+                0,
+                "read-only call changed private updater/configuration state"
+            );
+        }
+        Self::assert_no_install_at(&self.home().join(".compact"));
+    }
+
+    // Also check explicit --directory arguments owned by the calling test.
+    pub fn assert_no_install_at(directory: &Path) {
         // check and list --installed may initialize these empty directories,
         // but no selector, receipt, symlink or other installed-state entry.
-        for entry in fs::read_dir(self.root.path().join("compact")).unwrap() {
+        for entry in fs::read_dir(directory).unwrap() {
             let entry = entry.unwrap();
             assert!(
                 ["bin", "versions"]

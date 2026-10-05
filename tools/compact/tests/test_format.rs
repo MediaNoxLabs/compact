@@ -13,36 +13,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::common::run_command;
+use crate::common::{ReadOnlyBaseline, run_command};
 use std::env;
 
 mod common;
 
 #[test]
 fn test_compact_format_no_compiler_installed() {
+    let mut baseline = ReadOnlyBaseline::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
     run_command(
         &["--directory", &format!("{}", temp_path.display()), "format"],
-        None,
+        Some(baseline.environment()),
         None,
         Some("./output/format/err_no_compiler.txt"),
         &[],
         Some(1),
     );
+    baseline.assert_unchanged();
+    ReadOnlyBaseline::assert_no_install_at(temp_path);
 }
 
 #[test]
 fn test_compact_format_invalid_param() {
+    let mut baseline = ReadOnlyBaseline::new();
     run_command(
         &["format", "--bob"],
-        None,
+        Some(baseline.environment()),
         None,
         Some("./output/format/err_invalid_param.txt"),
         &[],
         Some(2),
     );
+    baseline.assert_unchanged();
 }
 
 #[test]
@@ -71,6 +76,7 @@ fn test_compact_format_param_h() {
 
 #[test]
 fn test_compact_format_param_version() {
+    let mut baseline = ReadOnlyBaseline::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
@@ -81,16 +87,19 @@ fn test_compact_format_param_version() {
             "format",
             "--version",
         ],
-        None,
+        Some(baseline.environment()),
         None,
         Some("./output/format/err_no_compiler.txt"),
         &[],
         Some(1),
     );
+    baseline.assert_unchanged();
+    ReadOnlyBaseline::assert_no_install_at(temp_path);
 }
 
 #[test]
 fn test_compact_format_param_v() {
+    let mut baseline = ReadOnlyBaseline::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
@@ -101,16 +110,19 @@ fn test_compact_format_param_v() {
             "format",
             "-V",
         ],
-        None,
+        Some(baseline.environment()),
         None,
         Some("./output/format/err_no_compiler.txt"),
         &[],
         Some(1),
     );
+    baseline.assert_unchanged();
+    ReadOnlyBaseline::assert_no_install_at(temp_path);
 }
 
 #[test]
 fn test_compact_format_param_language_version() {
+    let mut baseline = ReadOnlyBaseline::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
@@ -121,10 +133,12 @@ fn test_compact_format_param_language_version() {
             "format",
             "--language-version",
         ],
-        None,
+        Some(baseline.environment()),
         None,
         Some("./output/format/err_no_compiler.txt"),
         &[],
         Some(1),
     );
+    baseline.assert_unchanged();
+    ReadOnlyBaseline::assert_no_install_at(temp_path);
 }

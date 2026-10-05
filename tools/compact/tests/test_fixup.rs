@@ -13,13 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::common::run_command;
+use crate::common::{ReadOnlyBaseline, run_command};
 use std::env;
 
 mod common;
 
 #[test]
 fn test_compact_fixup_no_compiler_installed() {
+    let mut baseline = ReadOnlyBaseline::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
@@ -30,24 +31,28 @@ fn test_compact_fixup_no_compiler_installed() {
             "fixup",
             "test.compact",
         ],
-        None,
+        Some(baseline.environment()),
         None,
         Some("./output/fixup/err_no_compiler_installed.txt"),
         &[],
         Some(1),
     );
+    baseline.assert_unchanged();
+    ReadOnlyBaseline::assert_no_install_at(temp_path);
 }
 
 #[test]
 fn test_compact_fixup_invalid_param() {
+    let mut baseline = ReadOnlyBaseline::new();
     run_command(
         &["fixup", "--invalid-flag"],
-        None,
+        Some(baseline.environment()),
         None,
         Some("./output/fixup/err_invalid_param.txt"),
         &[],
         Some(2),
     );
+    baseline.assert_unchanged();
 }
 
 #[test]
@@ -82,6 +87,7 @@ fn test_compact_fixup_param_h() {
 
 #[test]
 fn test_compact_fixup_param_version() {
+    let mut baseline = ReadOnlyBaseline::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
@@ -92,16 +98,19 @@ fn test_compact_fixup_param_version() {
             "fixup",
             "--version",
         ],
-        None,
+        Some(baseline.environment()),
         None,
         Some("./output/fixup/err_no_compiler_installed.txt"),
         &[],
         Some(1),
     );
+    baseline.assert_unchanged();
+    ReadOnlyBaseline::assert_no_install_at(temp_path);
 }
 
 #[test]
 fn test_compact_fixup_param_v() {
+    let mut baseline = ReadOnlyBaseline::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
@@ -112,16 +121,19 @@ fn test_compact_fixup_param_v() {
             "fixup",
             "-V",
         ],
-        None,
+        Some(baseline.environment()),
         None,
         Some("./output/fixup/err_no_compiler_installed.txt"),
         &[],
         Some(1),
     );
+    baseline.assert_unchanged();
+    ReadOnlyBaseline::assert_no_install_at(temp_path);
 }
 
 #[test]
 fn test_compact_fixup_param_language_version() {
+    let mut baseline = ReadOnlyBaseline::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
@@ -132,16 +144,19 @@ fn test_compact_fixup_param_language_version() {
             "fixup",
             "--language-version",
         ],
-        None,
+        Some(baseline.environment()),
         None,
         Some("./output/fixup/err_no_compiler_installed.txt"),
         &[],
         Some(1),
     );
+    baseline.assert_unchanged();
+    ReadOnlyBaseline::assert_no_install_at(temp_path);
 }
 
 #[test]
 fn test_compact_fixup_directory_no_compiler() {
+    let mut baseline = ReadOnlyBaseline::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
@@ -152,16 +167,19 @@ fn test_compact_fixup_directory_no_compiler() {
             "fixup",
             ".",
         ],
-        None,
+        Some(baseline.environment()),
         None,
         Some("./output/fixup/err_no_compiler_installed.txt"),
         &[],
         Some(1),
     );
+    baseline.assert_unchanged();
+    ReadOnlyBaseline::assert_no_install_at(temp_path);
 }
 
 #[test]
 fn test_compact_fixup_multiple_files() {
+    let mut baseline = ReadOnlyBaseline::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
@@ -173,16 +191,19 @@ fn test_compact_fixup_multiple_files() {
             "file1.compact",
             "file2.compact",
         ],
-        None,
+        Some(baseline.environment()),
         None,
         Some("./output/fixup/err_no_compiler_installed.txt"),
         &[],
         Some(1),
     );
+    baseline.assert_unchanged();
+    ReadOnlyBaseline::assert_no_install_at(temp_path);
 }
 
 #[test]
 fn test_compact_fixup_no_compiler_with_directory() {
+    let mut baseline = ReadOnlyBaseline::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
@@ -193,16 +214,19 @@ fn test_compact_fixup_no_compiler_with_directory() {
             "fixup",
             "test.compact",
         ],
-        None,
+        Some(baseline.environment()),
         None,
         Some("./output/fixup/err_no_compiler_installed.txt"),
         &[],
         Some(1),
     );
+    baseline.assert_unchanged();
+    ReadOnlyBaseline::assert_no_install_at(temp_path);
 }
 
 #[test]
 fn test_compact_fixup_directory_with_custom_directory() {
+    let mut baseline = ReadOnlyBaseline::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
@@ -213,16 +237,19 @@ fn test_compact_fixup_directory_with_custom_directory() {
             "fixup",
             ".",
         ],
-        None,
+        Some(baseline.environment()),
         None,
         Some("./output/fixup/err_no_compiler_installed.txt"),
         &[],
         Some(1),
     );
+    baseline.assert_unchanged();
+    ReadOnlyBaseline::assert_no_install_at(temp_path);
 }
 
 #[test]
 fn test_compact_fixup_with_invalid_flag() {
+    let mut baseline = ReadOnlyBaseline::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
@@ -233,16 +260,19 @@ fn test_compact_fixup_with_invalid_flag() {
             "fixup",
             "--invalid-flag",
         ],
-        None,
+        Some(baseline.environment()),
         None,
         Some("./output/fixup/err_invalid_param.txt"),
         &[],
         Some(2),
     );
+    baseline.assert_unchanged();
+    ReadOnlyBaseline::assert_no_install_at(temp_path);
 }
 
 #[test]
 fn test_compact_fixup_multiple_files_with_directory() {
+    let mut baseline = ReadOnlyBaseline::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
@@ -254,16 +284,19 @@ fn test_compact_fixup_multiple_files_with_directory() {
             "file1.compact",
             "file2.compact",
         ],
-        None,
+        Some(baseline.environment()),
         None,
         Some("./output/fixup/err_no_compiler_installed.txt"),
         &[],
         Some(1),
     );
+    baseline.assert_unchanged();
+    ReadOnlyBaseline::assert_no_install_at(temp_path);
 }
 
 #[test]
 fn test_compact_fixup_update_uint_ranges_flag() {
+    let mut baseline = ReadOnlyBaseline::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
@@ -275,16 +308,19 @@ fn test_compact_fixup_update_uint_ranges_flag() {
             "--update-Uint-ranges",
             "test.compact",
         ],
-        None,
+        Some(baseline.environment()),
         None,
         Some("./output/fixup/err_no_compiler_installed.txt"),
         &[],
         Some(1),
     );
+    baseline.assert_unchanged();
+    ReadOnlyBaseline::assert_no_install_at(temp_path);
 }
 
 #[test]
 fn test_compact_fixup_check_flag() {
+    let mut baseline = ReadOnlyBaseline::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
@@ -296,16 +332,19 @@ fn test_compact_fixup_check_flag() {
             "--check",
             "test.compact",
         ],
-        None,
+        Some(baseline.environment()),
         None,
         Some("./output/fixup/err_no_compiler_installed.txt"),
         &[],
         Some(1),
     );
+    baseline.assert_unchanged();
+    ReadOnlyBaseline::assert_no_install_at(temp_path);
 }
 
 #[test]
 fn test_compact_fixup_check_short_flag() {
+    let mut baseline = ReadOnlyBaseline::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
@@ -317,16 +356,19 @@ fn test_compact_fixup_check_short_flag() {
             "-c",
             "test.compact",
         ],
-        None,
+        Some(baseline.environment()),
         None,
         Some("./output/fixup/err_no_compiler_installed.txt"),
         &[],
         Some(1),
     );
+    baseline.assert_unchanged();
+    ReadOnlyBaseline::assert_no_install_at(temp_path);
 }
 
 #[test]
 fn test_compact_fixup_verbose_flag() {
+    let mut baseline = ReadOnlyBaseline::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
@@ -338,16 +380,19 @@ fn test_compact_fixup_verbose_flag() {
             "--verbose",
             "test.compact",
         ],
-        None,
+        Some(baseline.environment()),
         None,
         Some("./output/fixup/err_no_compiler_installed.txt"),
         &[],
         Some(1),
     );
+    baseline.assert_unchanged();
+    ReadOnlyBaseline::assert_no_install_at(temp_path);
 }
 
 #[test]
 fn test_compact_fixup_verbose_short_flag() {
+    let mut baseline = ReadOnlyBaseline::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
@@ -359,10 +404,12 @@ fn test_compact_fixup_verbose_short_flag() {
             "-v",
             "test.compact",
         ],
-        None,
+        Some(baseline.environment()),
         None,
         Some("./output/fixup/err_no_compiler_installed.txt"),
         &[],
         Some(1),
     );
+    baseline.assert_unchanged();
+    ReadOnlyBaseline::assert_no_install_at(temp_path);
 }

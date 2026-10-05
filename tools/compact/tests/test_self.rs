@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::common::{COMPACT_VERSION, run_command};
+use crate::common::{COMPACT_VERSION, ReadOnlyBaseline, run_command};
 use std::env;
 
 mod common;
@@ -35,6 +35,7 @@ fn test_compact_self_no_param() {
 
 #[test]
 fn test_compact_self_check() {
+    let mut baseline = ReadOnlyBaseline::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
@@ -45,16 +46,19 @@ fn test_compact_self_check() {
             "self",
             "check",
         ],
-        None,
+        Some(baseline.environment()),
         None,
         Some("./output/self/err_no_releases.txt"),
         &[],
         Some(1),
     );
+    baseline.assert_unchanged();
+    ReadOnlyBaseline::assert_no_install_at(temp_path);
 }
 
 #[test]
 fn test_compact_self_update() {
+    let mut baseline = ReadOnlyBaseline::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
@@ -65,12 +69,14 @@ fn test_compact_self_update() {
             "self",
             "update",
         ],
-        None,
+        Some(baseline.environment()),
         None,
         Some("./output/self/err_no_releases.txt"),
         &[],
         Some(1),
     );
+    baseline.assert_unchanged();
+    ReadOnlyBaseline::assert_no_install_at(temp_path);
 }
 
 #[test]
@@ -95,6 +101,7 @@ fn test_compact_self_help() {
 
 #[test]
 fn test_compact_self_invalid_param() {
+    let mut baseline = ReadOnlyBaseline::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
@@ -105,12 +112,14 @@ fn test_compact_self_invalid_param() {
             "self",
             "jump",
         ],
-        None,
+        Some(baseline.environment()),
         None,
         Some("./output/self/err_invalid_param.txt"),
         &[],
         Some(2),
     );
+    baseline.assert_unchanged();
+    ReadOnlyBaseline::assert_no_install_at(temp_path);
 }
 
 #[test]
@@ -155,6 +164,7 @@ fn test_compact_self_param_h() {
 
 #[test]
 fn test_compact_self_param_version() {
+    let mut baseline = ReadOnlyBaseline::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
@@ -165,16 +175,19 @@ fn test_compact_self_param_version() {
             "self",
             "--version",
         ],
-        None,
+        Some(baseline.environment()),
         Some("./output/self/std_default_version.txt"),
         None,
         &[("[COMPACT_VERSION]", COMPACT_VERSION)],
         Some(0),
     );
+    baseline.assert_unchanged();
+    ReadOnlyBaseline::assert_no_install_at(temp_path);
 }
 
 #[test]
 fn test_compact_self_param_v() {
+    let mut baseline = ReadOnlyBaseline::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
@@ -185,10 +198,12 @@ fn test_compact_self_param_v() {
             "self",
             "-V",
         ],
-        None,
+        Some(baseline.environment()),
         Some("./output/self/std_default_version.txt"),
         None,
         &[("[COMPACT_VERSION]", COMPACT_VERSION)],
         Some(0),
     );
+    baseline.assert_unchanged();
+    ReadOnlyBaseline::assert_no_install_at(temp_path);
 }

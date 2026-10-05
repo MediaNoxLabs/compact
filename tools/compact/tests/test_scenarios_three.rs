@@ -14,18 +14,20 @@
 // limitations under the License.
 
 use crate::common::{
-    LATEST_COMPACTC_VERSION, VERSION_WITH_NO_FORMAT, assert_files_equal, copy_file_to_dir,
-    get_version, run_command,
+    ArchiveFixture, LATEST_COMPACTC_VERSION, VERSION_WITH_NO_FORMAT, assert_files_equal,
+    copy_file_to_dir, get_version, run_archive_command,
 };
 
 mod common;
 
 #[test]
 fn test_sc19_update_to_no_formatter_compactc_format() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -42,7 +44,8 @@ fn test_sc19_update_to_no_formatter_compactc_format() {
         None,
     );
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "format"],
         None,
         None,
@@ -54,10 +57,12 @@ fn test_sc19_update_to_no_formatter_compactc_format() {
 
 #[test]
 fn test_sc20_update_latest_format_pass_non_existing_directory() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "update"],
         None,
         Some("./output/update/std_default.txt"),
@@ -69,7 +74,8 @@ fn test_sc20_update_latest_format_pass_non_existing_directory() {
         None,
     );
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -86,10 +92,12 @@ fn test_sc20_update_latest_format_pass_non_existing_directory() {
 
 #[test]
 fn test_sc21_update_latest_format_pass_some_gibberish() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "update"],
         None,
         Some("./output/update/std_default.txt"),
@@ -101,7 +109,8 @@ fn test_sc21_update_latest_format_pass_some_gibberish() {
         None,
     );
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -120,10 +129,12 @@ fn test_sc21_update_latest_format_pass_some_gibberish() {
 
 #[test]
 fn test_sc22_update_latest_format_pass_invalid_contract() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "update"],
         None,
         Some("./output/update/std_default.txt"),
@@ -139,7 +150,8 @@ fn test_sc22_update_latest_format_pass_invalid_contract() {
     let output_contract = temp_path.join("invalid_contract.compact");
     let output_contract_as_string = output_contract.to_str().unwrap();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -164,10 +176,12 @@ fn test_sc22_update_latest_format_pass_invalid_contract() {
 
 #[test]
 fn test_sc23_update_latest_format_check_pass_invalid_contract() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "update"],
         None,
         Some("./output/update/std_default.txt"),
@@ -183,7 +197,8 @@ fn test_sc23_update_latest_format_check_pass_invalid_contract() {
     let output_contract = temp_path.join("invalid_contract.compact");
     let output_contract_as_string = output_contract.to_str().unwrap();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -209,10 +224,12 @@ fn test_sc23_update_latest_format_check_pass_invalid_contract() {
 
 #[test]
 fn test_sc24_update_latest_format_verbose_pass_invalid_contract() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "update"],
         None,
         Some("./output/update/std_default.txt"),
@@ -228,7 +245,8 @@ fn test_sc24_update_latest_format_verbose_pass_invalid_contract() {
     let output_contract = temp_path.join("invalid_contract.compact");
     let output_contract_as_string = output_contract.to_str().unwrap();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -255,10 +273,12 @@ fn test_sc24_update_latest_format_verbose_pass_invalid_contract() {
 // kinda of a default (can't use . as it will format also test contracts)
 #[test]
 fn test_sc25_update_latest_format_pass_directory_one_file() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "update"],
         None,
         Some("./output/update/std_default.txt"),
@@ -272,7 +292,8 @@ fn test_sc25_update_latest_format_pass_directory_one_file() {
 
     copy_file_to_dir("./contract/formatter/input/example_1.compact", temp_path).unwrap();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -295,10 +316,12 @@ fn test_sc25_update_latest_format_pass_directory_one_file() {
 
 #[test]
 fn test_sc26_update_latest_format_verbose_unformatted_one_file() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "update"],
         None,
         Some("./output/update/std_default.txt"),
@@ -314,7 +337,8 @@ fn test_sc26_update_latest_format_verbose_unformatted_one_file() {
     let output_contract = temp_path.join("example_1.compact");
     let output_contract_as_string = output_contract.to_str().unwrap();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -340,10 +364,12 @@ fn test_sc26_update_latest_format_verbose_unformatted_one_file() {
 
 #[test]
 fn test_sc27_update_latest_format_verbose_already_formatted_one_file() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "update"],
         None,
         Some("./output/update/std_default.txt"),
@@ -359,7 +385,8 @@ fn test_sc27_update_latest_format_verbose_already_formatted_one_file() {
     let output_contract = temp_path.join("example_1.compact");
     let output_contract_as_string = output_contract.to_str().unwrap();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -385,10 +412,12 @@ fn test_sc27_update_latest_format_verbose_already_formatted_one_file() {
 
 #[test]
 fn test_sc28_update_latest_format_check_unformatted_one_file() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "update"],
         None,
         Some("./output/update/std_default.txt"),
@@ -404,7 +433,8 @@ fn test_sc28_update_latest_format_check_unformatted_one_file() {
     let output_contract = temp_path.join("example_1.compact");
     let output_contract_as_string = output_contract.to_str().unwrap();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -427,10 +457,12 @@ fn test_sc28_update_latest_format_check_unformatted_one_file() {
 
 #[test]
 fn test_sc29_update_latest_format_verbose_check_unformatted_one_file() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "update"],
         None,
         Some("./output/update/std_default.txt"),
@@ -446,7 +478,8 @@ fn test_sc29_update_latest_format_verbose_check_unformatted_one_file() {
     let output_contract = temp_path.join("example_2.compact");
     let output_contract_as_string = output_contract.to_str().unwrap();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -470,10 +503,12 @@ fn test_sc29_update_latest_format_verbose_check_unformatted_one_file() {
 
 #[test]
 fn test_sc30_update_latest_format_verbose_compile() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "update"],
         None,
         Some("./output/update/std_default.txt"),
@@ -489,7 +524,8 @@ fn test_sc30_update_latest_format_verbose_compile() {
     let output_contract = temp_path.join("example_1.compact");
     let output_contract_as_string = output_contract.to_str().unwrap();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -512,7 +548,8 @@ fn test_sc30_update_latest_format_verbose_compile() {
         output_contract_as_string,
     );
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),

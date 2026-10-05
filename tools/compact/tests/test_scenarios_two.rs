@@ -14,8 +14,8 @@
 // limitations under the License.
 
 use crate::common::{
-    LATEST_COMPACTC_VERSION, OLDEST_COMPACTC_VERSION, PREVIOUS_COMPACTC_VERSION,
-    VERSION_WITH_NO_FORMAT, assert_path_contains_string, get_version, run_command,
+    ArchiveFixture, LATEST_COMPACTC_VERSION, OLDEST_COMPACTC_VERSION, PREVIOUS_COMPACTC_VERSION,
+    VERSION_WITH_NO_FORMAT, assert_path_contains_string, get_version, run_archive_command,
 };
 
 mod common;
@@ -23,10 +23,12 @@ mod common;
 #[test]
 #[cfg(not(all(target_os = "macos", target_arch = "x86_64")))]
 fn test_sc10_update_two_versions_compile_contract_with_previous() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "update"],
         None,
         Some("./output/update/std_default.txt"),
@@ -38,7 +40,8 @@ fn test_sc10_update_two_versions_compile_contract_with_previous() {
         None,
     );
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -55,7 +58,8 @@ fn test_sc10_update_two_versions_compile_contract_with_previous() {
         None,
     );
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -76,7 +80,8 @@ fn test_sc10_update_two_versions_compile_contract_with_previous() {
     let temp_output_path = temp_output.path();
     let compiler = &format!("+{}", PREVIOUS_COMPACTC_VERSION);
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -99,11 +104,13 @@ fn test_sc10_update_two_versions_compile_contract_with_previous() {
 // compile with specific version before 0.25.0 so there should be no version printed
 #[test]
 fn test_sc10a_update_version_with_run_script_removed() {
+    let mut fixture = ArchiveFixture::new();
     // compi
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -124,7 +131,8 @@ fn test_sc10a_update_version_with_run_script_removed() {
     let temp_output_path = temp_output.path();
     let compiler = "+0.24.0";
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -147,10 +155,12 @@ fn test_sc10a_update_version_with_run_script_removed() {
 #[test]
 #[cfg(not(all(target_os = "macos", target_arch = "aarch64")))]
 fn test_sc11_update_two_versions_compile_contract_with_oldest() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "update"],
         None,
         Some("./output/update/std_default.txt"),
@@ -162,7 +172,8 @@ fn test_sc11_update_two_versions_compile_contract_with_oldest() {
         None,
     );
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -183,7 +194,8 @@ fn test_sc11_update_two_versions_compile_contract_with_oldest() {
     let temp_output_path = temp_output.path();
     let compiler = "+0.22.0";
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -206,10 +218,12 @@ fn test_sc11_update_two_versions_compile_contract_with_oldest() {
 #[test]
 #[cfg(not(all(target_os = "macos", target_arch = "x86_64")))]
 fn test_sc12_update_two_versions_keep_latest_clean_folder_check_list() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -226,7 +240,8 @@ fn test_sc12_update_two_versions_keep_latest_clean_folder_check_list() {
         None,
     );
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "update"],
         None,
         Some("./output/update/std_default.txt"),
@@ -247,7 +262,8 @@ fn test_sc12_update_two_versions_keep_latest_clean_folder_check_list() {
         ],
     );
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -266,7 +282,8 @@ fn test_sc12_update_two_versions_keep_latest_clean_folder_check_list() {
 
     assert_path_contains_string(temp_path, &[LATEST_COMPACTC_VERSION, get_version()]);
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "list"],
         None,
         Some("./output/list/std_latest_selected.txt"),
@@ -283,10 +300,12 @@ fn test_sc12_update_two_versions_keep_latest_clean_folder_check_list() {
 #[test]
 #[cfg(not(all(target_os = "macos", target_arch = "x86_64")))]
 fn test_sc13_update_two_versions_keep_previous_clean_folder_check_list() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "update"],
         None,
         Some("./output/update/std_default.txt"),
@@ -298,7 +317,8 @@ fn test_sc13_update_two_versions_keep_previous_clean_folder_check_list() {
         None,
     );
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -324,7 +344,8 @@ fn test_sc13_update_two_versions_keep_previous_clean_folder_check_list() {
         ],
     );
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -343,7 +364,8 @@ fn test_sc13_update_two_versions_keep_previous_clean_folder_check_list() {
 
     assert_path_contains_string(temp_path, &[PREVIOUS_COMPACTC_VERSION, get_version()]);
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "list"],
         None,
         Some("./output/list/std_previous_selected.txt"),
@@ -360,10 +382,12 @@ fn test_sc13_update_two_versions_keep_previous_clean_folder_check_list() {
 #[test]
 #[cfg(not(all(target_os = "macos")))]
 fn test_sc14_update_three_versions_keep_latest_clean_folder_check_list() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -380,7 +404,8 @@ fn test_sc14_update_three_versions_keep_latest_clean_folder_check_list() {
         None,
     );
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -397,7 +422,8 @@ fn test_sc14_update_three_versions_keep_latest_clean_folder_check_list() {
         None,
     );
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "update"],
         None,
         Some("./output/update/std_default.txt"),
@@ -419,7 +445,8 @@ fn test_sc14_update_three_versions_keep_latest_clean_folder_check_list() {
         ],
     );
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -439,7 +466,8 @@ fn test_sc14_update_three_versions_keep_latest_clean_folder_check_list() {
 
     assert_path_contains_string(temp_path, &[LATEST_COMPACTC_VERSION, get_version()]);
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "list"],
         None,
         Some("./output/list/std_latest_selected.txt"),
@@ -455,10 +483,12 @@ fn test_sc14_update_three_versions_keep_latest_clean_folder_check_list() {
 
 #[test]
 fn test_sc15_update_clean_k_default_clean_list() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "update"],
         None,
         Some("./output/update/std_default.txt"),
@@ -470,7 +500,8 @@ fn test_sc15_update_clean_k_default_clean_list() {
         None,
     );
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -484,7 +515,8 @@ fn test_sc15_update_clean_k_default_clean_list() {
         None,
     );
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "list"],
         None,
         Some("./output/list/std_latest_selected.txt"),
@@ -501,10 +533,12 @@ fn test_sc15_update_clean_k_default_clean_list() {
 
 #[test]
 fn test_sc16_update_list_installed() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "update"],
         None,
         Some("./output/update/std_default.txt"),
@@ -516,7 +550,8 @@ fn test_sc16_update_list_installed() {
         None,
     );
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -534,10 +569,12 @@ fn test_sc16_update_list_installed() {
 #[test]
 #[cfg(not(all(target_os = "macos", target_arch = "x86_64")))]
 fn test_sc17_update_current_update_previous_list_installed() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "update"],
         None,
         Some("./output/update/std_default.txt"),
@@ -549,7 +586,8 @@ fn test_sc17_update_current_update_previous_list_installed() {
         None,
     );
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -566,7 +604,8 @@ fn test_sc17_update_current_update_previous_list_installed() {
         None,
     );
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -586,10 +625,12 @@ fn test_sc17_update_current_update_previous_list_installed() {
 
 #[test]
 fn test_sc18_update_current_no_default_list_installed_compile() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -606,7 +647,8 @@ fn test_sc18_update_current_no_default_list_installed_compile() {
         None,
     );
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -620,7 +662,8 @@ fn test_sc18_update_current_no_default_list_installed_compile() {
         None,
     );
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),

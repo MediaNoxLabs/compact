@@ -19,6 +19,11 @@ use std::process::Command;
 use std::{fs, io};
 
 #[allow(dead_code)]
+mod archive_fixture;
+#[allow(unused_imports)]
+pub use archive_fixture::ArchiveFixture;
+
+#[allow(dead_code)]
 mod read_only_baseline;
 #[allow(unused_imports)]
 pub use read_only_baseline::ReadOnlyBaseline;
@@ -353,4 +358,60 @@ pub fn download_to_temp(version: &str, home_dir: &str, receipt_dir: &str) {
     dbg!(exit_code);
 
     assert_eq!(exit_code, Some(0));
+}
+
+// Keep a single writable fixture alive for the complete installer scenario.
+// Explicit caller environment (notably COMPACT_DIRECTORY) takes precedence.
+// The existing command helper deliberately retains explicit proof parameters.
+#[allow(dead_code)]
+pub fn run_archive_command(
+    fixture: &mut ArchiveFixture,
+    args: &[&str],
+    env: Option<HashMap<String, String>>,
+    expected_stdout: Option<&str>,
+    expected_stderr: Option<&str>,
+    replacements: &[(&str, &str)],
+    expected_exit_code: Option<i32>,
+) {
+    let mut private_env = fixture.environment();
+    if let Some(explicit) = env {
+        private_env.extend(explicit);
+    }
+    run_command(
+        args,
+        Some(private_env),
+        expected_stdout,
+        expected_stderr,
+        replacements,
+        expected_exit_code,
+    );
+    fixture.assert_no_external_requests();
+}
+
+// Keep a single writable fixture alive for the complete installer scenario.
+// Explicit caller environment (notably COMPACT_DIRECTORY) takes precedence.
+// The existing command helper deliberately retains explicit proof parameters.
+#[allow(dead_code)]
+pub fn run_archive_command_sorted(
+    fixture: &mut ArchiveFixture,
+    args: &[&str],
+    env: Option<HashMap<String, String>>,
+    expected_stdout: Option<&str>,
+    expected_stderr: Option<&str>,
+    replacements: &[(&str, &str)],
+    expected_exit_code: Option<i32>,
+) {
+    let mut private_env = fixture.environment();
+    if let Some(explicit) = env {
+        private_env.extend(explicit);
+    }
+    run_command_sorted(
+        args,
+        Some(private_env),
+        expected_stdout,
+        expected_stderr,
+        replacements,
+        expected_exit_code,
+    );
+    fixture.assert_no_external_requests();
 }

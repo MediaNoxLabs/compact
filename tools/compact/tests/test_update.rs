@@ -14,7 +14,8 @@
 // limitations under the License.
 
 use crate::common::{
-    COMPACT_VERSION, LATEST_COMPACTC_VERSION, assert_path_contains_string, get_version, run_command,
+    ArchiveFixture, COMPACT_VERSION, LATEST_COMPACTC_VERSION, assert_path_contains_string,
+    get_version, run_archive_command, run_command,
 };
 use std::collections::HashMap;
 use std::env;
@@ -23,10 +24,12 @@ mod common;
 
 #[test]
 fn test_compact_update_no_param() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "update"],
         None,
         Some("./output/update/std_default.txt"),
@@ -101,10 +104,12 @@ fn test_compact_update_invalid_param_unzip() {
 
 #[test]
 fn test_compact_update_invalid_old_version() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -121,10 +126,12 @@ fn test_compact_update_invalid_old_version() {
 
 #[test]
 fn test_compact_update_invalid_non_existing_version() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -142,10 +149,12 @@ fn test_compact_update_invalid_non_existing_version() {
 #[test]
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
 fn test_compact_update_missing_release_macos_arm() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -163,10 +172,12 @@ fn test_compact_update_missing_release_macos_arm() {
 #[test]
 #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
 fn test_compact_update_missing_release_macos_intel() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -183,10 +194,12 @@ fn test_compact_update_missing_release_macos_intel() {
 
 #[test]
 fn test_compact_update_env_dir() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir_env = tempfile::tempdir().unwrap();
     let temp_path_env = temp_dir_env.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["update", LATEST_COMPACTC_VERSION],
         Some({
             let mut map = HashMap::new();

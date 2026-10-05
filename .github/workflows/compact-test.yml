@@ -110,8 +110,51 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ runner.arch }}-rust-1.99.0-target-
 
+      - name: Set up Python for verified fixture acquisition
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Test fixture acquisition guards
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: python3 -m unittest discover -s tools/compact/tests/fixtures -p 'test_*.py'
+
+      - name: Cache pinned compiler archives and counter parameters
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: |
+            ${{ runner.temp }}/compact-compiler-fixtures
+            ${{ runner.temp }}/compact-counter-parameters
+          key: ${{ runner.os }}-${{ runner.arch }}-installer-fixtures-${{ hashFiles('tools/compact/tests/fixtures/compiler-archives.json', 'tools/compact/tests/fixtures/acquire_parameters.py') }}
+
+      - name: Acquire and verify genuine compiler archives
+        run: |
+          python3 tools/compact/tests/fixtures/acquire_compilers.py \
+            --platform auto --cache "$RUNNER_TEMP/compact-compiler-fixtures" \
+            --receipt "$RUNNER_TEMP/compact-compiler-fixture-provenance.json"
+          printf '%s\n' "COMPACT_TEST_ARCHIVE_CACHE=$RUNNER_TEMP/compact-compiler-fixtures" >> "$GITHUB_ENV"
+
+      - name: Prepare exact historical counter public parameters
+        run: |
+          python3 tools/compact/tests/fixtures/acquire_parameters.py \
+            --platform auto --archive-cache "$COMPACT_TEST_ARCHIVE_CACHE" \
+            --cache "$RUNNER_TEMP/compact-counter-parameters" \
+            --receipt "$RUNNER_TEMP/compact-counter-parameter-provenance.json"
+          printf '%s\n' "MIDNIGHT_PP=$RUNNER_TEMP/compact-counter-parameters" >> "$GITHUB_ENV"
+
       - name: Build
         run: cargo build -p compact --locked
 
       - name: Run tests
         run: cargo nextest run -p compact --locked --no-fail-fast --test-threads=1
+
+      - name: Retain installer fixture provenance
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: installer-fixture-provenance-${{ matrix.os }}-${{ runner.arch }}
+          path: |
+            ${{ runner.temp }}/compact-compiler-fixture-provenance.json
+            ${{ runner.temp }}/compact-counter-parameter-provenance.json
+          if-no-files-found: warn

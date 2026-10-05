@@ -14,18 +14,20 @@
 // limitations under the License.
 
 use crate::common::{
-    LATEST_COMPACTC_VERSION, assert_files_equal, copy_file_to_dir, get_version, run_command,
-    run_command_sorted,
+    ArchiveFixture, LATEST_COMPACTC_VERSION, assert_files_equal, copy_file_to_dir, get_version,
+    run_archive_command, run_archive_command_sorted,
 };
 
 mod common;
 
 #[test]
 fn test_sc31_update_latest_format_one_directory_three_files() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "update"],
         None,
         Some("./output/update/std_default.txt"),
@@ -41,7 +43,8 @@ fn test_sc31_update_latest_format_one_directory_three_files() {
     copy_file_to_dir("./contract/formatter/input/example_2.compact", temp_path).unwrap();
     copy_file_to_dir("./contract/formatter/input/example_3.compact", temp_path).unwrap();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -76,13 +79,15 @@ fn test_sc31_update_latest_format_one_directory_three_files() {
 
 #[test]
 fn test_sc32_update_latest_format_verbose_two_directories_with_one_file_each() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
     let temp_dir_two = tempfile::tempdir().unwrap();
     let temp_path_two = temp_dir_two.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "update"],
         None,
         Some("./output/update/std_default.txt"),
@@ -106,7 +111,8 @@ fn test_sc32_update_latest_format_verbose_two_directories_with_one_file_each() {
     let formated_contract_two = temp_path_two.join("example_2.compact");
     let formated_contract_two_as_string = formated_contract_two.to_str().unwrap();
 
-    run_command_sorted(
+    run_archive_command_sorted(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -140,13 +146,15 @@ fn test_sc32_update_latest_format_verbose_two_directories_with_one_file_each() {
 
 #[test]
 fn test_sc33_update_latest_format_verbose_check_two_files() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
     let temp_dir_two = tempfile::tempdir().unwrap();
     let temp_path_two = temp_dir_two.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "update"],
         None,
         Some("./output/update/std_default.txt"),
@@ -170,7 +178,8 @@ fn test_sc33_update_latest_format_verbose_check_two_files() {
     let formated_contract_two = temp_path_two.join("example_2.compact");
     let formated_contract_two_as_string = formated_contract_two.to_str().unwrap();
 
-    run_command_sorted(
+    run_archive_command_sorted(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -203,10 +212,12 @@ fn test_sc33_update_latest_format_verbose_check_two_files() {
 
 #[test]
 fn test_sc34_update_latest_format_verbose_same_file_twice() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "update"],
         None,
         Some("./output/update/std_default.txt"),
@@ -222,7 +233,8 @@ fn test_sc34_update_latest_format_verbose_same_file_twice() {
     let formated_contract = temp_path.join("example_1.compact");
     let formated_contract_as_string = formated_contract.to_str().unwrap();
 
-    run_command_sorted(
+    run_archive_command_sorted(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -251,13 +263,15 @@ fn test_sc34_update_latest_format_verbose_same_file_twice() {
 
 #[test]
 fn test_sc35_update_latest_format_one_directory_one_file() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
     let temp_dir_two = tempfile::tempdir().unwrap();
     let temp_path_two = temp_dir_two.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "update"],
         None,
         Some("./output/update/std_default.txt"),
@@ -281,7 +295,8 @@ fn test_sc35_update_latest_format_one_directory_one_file() {
     let formated_contract_two = temp_path_two.join("example_2.compact");
     let formated_contract_two_as_string = formated_contract_two.to_str().unwrap();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -309,13 +324,15 @@ fn test_sc35_update_latest_format_one_directory_one_file() {
 
 #[test]
 fn test_sc36_update_latest_format_verbose_two_directories_one_file_each_not_formatted_invalid() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
     let temp_dir_two = tempfile::tempdir().unwrap();
     let temp_path_two = temp_dir_two.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "update"],
         None,
         Some("./output/update/std_default.txt"),
@@ -335,7 +352,8 @@ fn test_sc36_update_latest_format_verbose_two_directories_one_file_each_not_form
     let formated_contract_two = temp_path_two.join("invalid_contract.compact");
     let formated_contract_two_as_string = formated_contract_two.to_str().unwrap();
 
-    run_command_sorted(
+    run_archive_command_sorted(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -369,13 +387,15 @@ fn test_sc36_update_latest_format_verbose_two_directories_one_file_each_not_form
 
 #[test]
 fn test_sc37_update_latest_format_verbose_two_directories_one_file_each_not_formatted_formatted() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
     let temp_dir_two = tempfile::tempdir().unwrap();
     let temp_path_two = temp_dir_two.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "update"],
         None,
         Some("./output/update/std_default.txt"),
@@ -399,7 +419,8 @@ fn test_sc37_update_latest_format_verbose_two_directories_one_file_each_not_form
     let formated_contract_two = temp_path_two.join("example_2.compact");
     let formated_contract_two_as_string = formated_contract_two.to_str().unwrap();
 
-    run_command_sorted(
+    run_archive_command_sorted(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -433,10 +454,12 @@ fn test_sc37_update_latest_format_verbose_two_directories_one_file_each_not_form
 
 #[test]
 fn test_sc38_update_latest_format_verbose_one_directory_three_files() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "update"],
         None,
         Some("./output/update/std_default.txt"),
@@ -460,7 +483,8 @@ fn test_sc38_update_latest_format_verbose_one_directory_three_files() {
     let formated_contract_three = temp_path.join("example_3.compact");
     let formated_contract_three_as_string = formated_contract_three.to_str().unwrap();
 
-    run_command_sorted(
+    run_archive_command_sorted(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),
@@ -500,10 +524,12 @@ fn test_sc38_update_latest_format_verbose_one_directory_three_files() {
 
 #[test]
 fn test_sc39_update_latest_format_check_unformatted_two_files() {
+    let mut fixture = ArchiveFixture::new();
     let temp_dir = tempfile::tempdir().unwrap();
     let temp_path = temp_dir.path();
 
-    run_command(
+    run_archive_command(
+        &mut fixture,
         &["--directory", &format!("{}", temp_path.display()), "update"],
         None,
         Some("./output/update/std_default.txt"),
@@ -523,7 +549,8 @@ fn test_sc39_update_latest_format_check_unformatted_two_files() {
     let output_contract_two = temp_path.join("example_2.compact");
     let output_contract_two_as_string = output_contract_two.to_str().unwrap();
 
-    run_command_sorted(
+    run_archive_command_sorted(
+        &mut fixture,
         &[
             "--directory",
             &format!("{}", temp_path.display()),

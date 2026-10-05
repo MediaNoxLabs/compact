@@ -1114,5 +1114,37 @@ upstream `ContractAddress::custom_shielded_token_type` supplies an additional
 canonical result check. `check_compactc_target.py --micro-dao-token --proof`
 generates only the token circuit's pinned ZKIR keys from the complete original
 source and proves/verifies/ledger-applies its nonempty query under the shared
-unbalanced smoke policy. This is not a funding claim. The other six microDAO
-proof-required exports and all four Coracle exports remain recording gaps.
+unbalanced smoke policy. This is not a funding claim. At this delivery, the other six microDAO proof-required exports and all four
+Coracle exports remained recording gaps; ADR0192 below closes vote_reveal.
+
+
+### Counter-dependent membership helpers (ADR0192)
+
+The unchanged original microDAO now records `vote_reveal`, preserving seven
+ordered queries, five selected witnesses, both ballot outcomes and the exact
+round-dependent reveal nullifier and commitment. Shared declaration-directed
+call resolution separates pure helpers from stateful helpers before profile
+admission; ambiguous declarations, recursion, leaked locals and mismatched types
+are rejected. A bounded membership profile admits action-free Bytes32 helpers
+whose three-Bytes32 persistent hash has exactly one declared Counter read cast
+through Field to Bytes32. Counter provenance remains helper-local. Existing
+Counter/witness profiles are unchanged. ABI48/schema20 and the runtime are unchanged.
+
+Seventeen independent TypeScript scenarios compare native/recorded execution,
+private outputs, selected callbacks, public transcript, state/effects and replay,
+including absent/malformed paths, wrong phase/root/leaf/round, repeated and duplicate
+reveals, and gas failures. `check_compactc_target.py --micro-dao-reveal --proof`
+selectively generates the original circuit's keys. Both ballot outcomes prove,
+verify and apply to the ledger; an applied-state duplicate is rejected. The prior
+state is explicitly seeded with valid commitments, rather than obtained through a
+funded commit lifecycle. Proofs use the shared unbalanced smoke policy. Five
+microDAO proof-required recording gaps and four Coracle gaps remain.
+
+Gas has three distinct measurements. The TypeScript wrapper at
+`runtime/src/circuit-context.ts:206` assigns the last query's cost. For the round-0
+positive ballot this reports read time 170,000,000; the sum of its seven queries
+and both Rust execution modes is 1,360,000,000. The fixture retains `reportedGas`,
+`queryCostSum` and `replayGas` separately. Whole-program replay has its own compute
+cost because query setup/cache behavior differs. This delivery preserves these
+behaviors and does not claim equality between wrapper gas and aggregate gas, or
+invent post-error contexts/costs.

@@ -7969,21 +7969,27 @@ fn render_recorded_item(
             )?)
     };
     if organizer_steps.is_none()
-        && let Some(plan) = typed_plan::lower(circuit, ledger_fields, witnesses, pure_circuits)
-            .or_else(|| kernel_plan::lower(circuit, witnesses))
-            .or_else(|| {
-                typed_plan::lower_context_query(circuit, ledger_fields, witnesses, pure_circuits)
-            })
-            .or_else(|| {
-                typed_plan::lower_composite(
-                    circuit,
-                    ledger_fields,
-                    witnesses,
-                    pure_circuits,
-                    circuits,
-                )
-            })
-            .or_else(|| zswap_plan::lower(circuit, ledger_fields, circuits, witnesses))
+        && let Some(plan) =
+            typed_plan::lower(circuit, ledger_fields, witnesses, pure_circuits, circuits)
+                .or_else(|| kernel_plan::lower(circuit, witnesses))
+                .or_else(|| {
+                    typed_plan::lower_context_query(
+                        circuit,
+                        ledger_fields,
+                        witnesses,
+                        pure_circuits,
+                    )
+                })
+                .or_else(|| {
+                    typed_plan::lower_composite(
+                        circuit,
+                        ledger_fields,
+                        witnesses,
+                        pure_circuits,
+                        circuits,
+                    )
+                })
+                .or_else(|| zswap_plan::lower(circuit, ledger_fields, circuits, witnesses))
     {
         organizer_steps = Some(plan.steps);
         typed_result = Some(plan.result);

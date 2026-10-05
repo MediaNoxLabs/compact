@@ -1,0 +1,1728 @@
+{
+  "schema_version": 20,
+  "type_aliases": [],
+  "ledger_fields": [
+    {
+      "id": "organizer",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "bytes",
+          "length": 32
+        }
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 36,
+        "column": 1
+      }
+    },
+    {
+      "id": "state",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "enum",
+          "name": "LedgerState",
+          "variants": [
+            "setup",
+            "commit",
+            "reveal",
+            "final"
+          ]
+        }
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 37,
+        "column": 1
+      }
+    },
+    {
+      "id": "topic",
+      "index": 2,
+      "path": [
+        2
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "struct",
+          "name": "Maybe",
+          "fields": [
+            {
+              "name": "is_some",
+              "ty": {
+                "kind": "boolean"
+              }
+            },
+            {
+              "name": "value",
+              "ty": {
+                "kind": "opaque_string"
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 38,
+        "column": 1
+      }
+    },
+    {
+      "id": "beneficiary",
+      "index": 3,
+      "path": [
+        3
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "struct",
+          "name": "MaybeCompact1",
+          "fields": [
+            {
+              "name": "is_some",
+              "ty": {
+                "kind": "boolean"
+              }
+            },
+            {
+              "name": "value",
+              "ty": {
+                "kind": "struct",
+                "name": "ZswapCoinPublicKey",
+                "fields": [
+                  {
+                    "name": "bytes",
+                    "ty": {
+                      "kind": "bytes",
+                      "length": 32
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 39,
+        "column": 1
+      }
+    },
+    {
+      "id": "yes",
+      "index": 4,
+      "path": [
+        4
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 40,
+        "column": 1
+      }
+    },
+    {
+      "id": "no",
+      "index": 5,
+      "path": [
+        5
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 41,
+        "column": 1
+      }
+    },
+    {
+      "id": "round",
+      "index": 6,
+      "path": [
+        6
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 42,
+        "column": 1
+      }
+    },
+    {
+      "id": "committed_votes",
+      "index": 7,
+      "path": [
+        7
+      ],
+      "declaration": {
+        "kind": "merkle_tree",
+        "depth": 10,
+        "ty": {
+          "kind": "bytes",
+          "length": 32
+        }
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 43,
+        "column": 1
+      }
+    },
+    {
+      "id": "committed_participants",
+      "index": 8,
+      "path": [
+        8
+      ],
+      "declaration": {
+        "kind": "set",
+        "ty": {
+          "kind": "bytes",
+          "length": 32
+        }
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 44,
+        "column": 1
+      }
+    },
+    {
+      "id": "revealed_participants",
+      "index": 9,
+      "path": [
+        9
+      ],
+      "declaration": {
+        "kind": "set",
+        "ty": {
+          "kind": "bytes",
+          "length": 32
+        }
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 45,
+        "column": 1
+      }
+    },
+    {
+      "id": "pot",
+      "index": 10,
+      "path": [
+        10
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "struct",
+          "name": "QualifiedShieldedCoinInfo",
+          "fields": [
+            {
+              "name": "nonce",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              }
+            },
+            {
+              "name": "color",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              }
+            },
+            {
+              "name": "value",
+              "ty": {
+                "kind": "unsigned",
+                "max": "340282366920938463463374607431768211455"
+              }
+            },
+            {
+              "name": "mt_index",
+              "ty": {
+                "kind": "unsigned",
+                "max": "18446744073709551615"
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 47,
+        "column": 1
+      }
+    },
+    {
+      "id": "pot_has_coin",
+      "index": 11,
+      "path": [
+        11
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "boolean"
+        }
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 48,
+        "column": 1
+      }
+    },
+    {
+      "id": "costs",
+      "index": 12,
+      "path": [
+        12
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "struct",
+          "name": "Costs",
+          "fields": [
+            {
+              "name": "seed_dust",
+              "ty": {
+                "kind": "unsigned",
+                "max": "18446744073709551615"
+              }
+            },
+            {
+              "name": "buy_in_dust",
+              "ty": {
+                "kind": "unsigned",
+                "max": "18446744073709551615"
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 50,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "local_secret_key",
+      "parameters": [],
+      "result": {
+        "kind": "bytes",
+        "length": 32
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 59,
+        "column": 1
+      }
+    },
+    {
+      "name": "local_state",
+      "parameters": [],
+      "result": {
+        "kind": "enum",
+        "name": "LocalState",
+        "variants": [
+          "initial",
+          "committed",
+          "revealed"
+        ]
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 60,
+        "column": 1
+      }
+    },
+    {
+      "name": "local_advance_state",
+      "parameters": [],
+      "result": {
+        "kind": "unit"
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 61,
+        "column": 1
+      }
+    },
+    {
+      "name": "local_record_vote",
+      "parameters": [
+        {
+          "name": "vote",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 62,
+        "column": 1
+      }
+    },
+    {
+      "name": "local_vote_cast",
+      "parameters": [],
+      "result": {
+        "kind": "struct",
+        "name": "MaybeCompact3",
+        "fields": [
+          {
+            "name": "is_some",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "value",
+            "ty": {
+              "kind": "boolean"
+            }
+          }
+        ]
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 63,
+        "column": 1
+      }
+    },
+    {
+      "name": "local_path_of_cm",
+      "parameters": [
+        {
+          "name": "cm",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "MaybeCompact2",
+        "fields": [
+          {
+            "name": "is_some",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "value",
+            "ty": {
+              "kind": "struct",
+              "name": "MerkleTreePath",
+              "fields": [
+                {
+                  "name": "leaf",
+                  "ty": {
+                    "kind": "bytes",
+                    "length": 32
+                  }
+                },
+                {
+                  "name": "path",
+                  "ty": {
+                    "kind": "vector",
+                    "length": 10,
+                    "element": {
+                      "kind": "struct",
+                      "name": "MerkleTreePathEntry",
+                      "fields": [
+                        {
+                          "name": "sibling",
+                          "ty": {
+                            "kind": "struct",
+                            "name": "MerkleTreeDigest",
+                            "fields": [
+                              {
+                                "name": "field",
+                                "ty": {
+                                  "kind": "field"
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "name": "goes_left",
+                          "ty": {
+                            "kind": "boolean"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 64,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+    {
+      "name": "merkleTreePathRoot",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "path",
+          "ty": {
+            "kind": "struct",
+            "name": "MerkleTreePath",
+            "fields": [
+              {
+                "name": "leaf",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "path",
+                "ty": {
+                  "kind": "vector",
+                  "length": 10,
+                  "element": {
+                    "kind": "struct",
+                    "name": "MerkleTreePathEntry",
+                    "fields": [
+                      {
+                        "name": "sibling",
+                        "ty": {
+                          "kind": "struct",
+                          "name": "MerkleTreeDigest",
+                          "fields": [
+                            {
+                              "name": "field",
+                              "ty": {
+                                "kind": "field"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "goes_left",
+                        "ty": {
+                          "kind": "boolean"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "MerkleTreeDigest",
+        "fields": [
+          {
+            "name": "field",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "body": {
+        "kind": "struct_literal",
+        "ty": {
+          "kind": "struct",
+          "name": "MerkleTreeDigest",
+          "fields": [
+            {
+              "name": "field",
+              "ty": {
+                "kind": "field"
+              }
+            }
+          ]
+        },
+        "fields": [
+          {
+            "kind": "vector_fold_call",
+            "name": "merkleTreePathEntryRoot",
+            "initial": {
+              "kind": "degrade_to_transient",
+              "value": {
+                "kind": "persistent_hash",
+                "value": {
+                  "kind": "struct_literal",
+                  "ty": {
+                    "kind": "struct",
+                    "name": "LeafPreimage",
+                    "fields": [
+                      {
+                        "name": "domain_sep",
+                        "ty": {
+                          "kind": "bytes",
+                          "length": 6
+                        }
+                      },
+                      {
+                        "name": "data",
+                        "ty": {
+                          "kind": "bytes",
+                          "length": 32
+                        }
+                      }
+                    ]
+                  },
+                  "fields": [
+                    {
+                      "kind": "bytes_literal",
+                      "bytes": [
+                        109,
+                        100,
+                        110,
+                        58,
+                        108,
+                        104
+                      ]
+                    },
+                    {
+                      "kind": "struct_field",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "path"
+                      },
+                      "field": "leaf",
+                      "index": 0
+                    }
+                  ]
+                }
+              }
+            },
+            "source": {
+              "kind": "struct_field",
+              "value": {
+                "kind": "parameter",
+                "name": "path"
+              },
+              "field": "path",
+              "index": 1
+            },
+            "accumulator": {
+              "kind": "field"
+            },
+            "element": {
+              "kind": "struct",
+              "name": "MerkleTreePathEntry",
+              "fields": [
+                {
+                  "name": "sibling",
+                  "ty": {
+                    "kind": "struct",
+                    "name": "MerkleTreeDigest",
+                    "fields": [
+                      {
+                        "name": "field",
+                        "ty": {
+                          "kind": "field"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "goes_left",
+                  "ty": {
+                    "kind": "boolean"
+                  }
+                }
+              ]
+            },
+            "length": 10
+          }
+        ]
+      },
+      "source": {
+        "file": "standard-library.compact",
+        "line": 67,
+        "column": 1
+      }
+    },
+    {
+      "name": "merkleTreePathEntryRoot",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "recursiveDigest",
+          "ty": {
+            "kind": "field"
+          }
+        },
+        {
+          "name": "entry",
+          "ty": {
+            "kind": "struct",
+            "name": "MerkleTreePathEntry",
+            "fields": [
+              {
+                "name": "sibling",
+                "ty": {
+                  "kind": "struct",
+                  "name": "MerkleTreeDigest",
+                  "fields": [
+                    {
+                      "name": "field",
+                      "ty": {
+                        "kind": "field"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "goes_left",
+                "ty": {
+                  "kind": "boolean"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "body": {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "left",
+            "ty": {
+              "kind": "field"
+            },
+            "value": {
+              "kind": "if",
+              "condition": {
+                "kind": "struct_field",
+                "value": {
+                  "kind": "parameter",
+                  "name": "entry"
+                },
+                "field": "goes_left",
+                "index": 1
+              },
+              "then": {
+                "kind": "coerce",
+                "value": {
+                  "kind": "parameter",
+                  "name": "recursiveDigest"
+                },
+                "ty": {
+                  "kind": "field"
+                }
+              },
+              "otherwise": {
+                "kind": "coerce",
+                "value": {
+                  "kind": "struct_field",
+                  "value": {
+                    "kind": "struct_field",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "entry"
+                    },
+                    "field": "sibling",
+                    "index": 0
+                  },
+                  "field": "field",
+                  "index": 0
+                },
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            }
+          }
+        ],
+        "body": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "right",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "if",
+                "condition": {
+                  "kind": "struct_field",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "entry"
+                  },
+                  "field": "goes_left",
+                  "index": 1
+                },
+                "then": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "struct_field",
+                    "value": {
+                      "kind": "struct_field",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "entry"
+                      },
+                      "field": "sibling",
+                      "index": 0
+                    },
+                    "field": "field",
+                    "index": 0
+                  },
+                  "ty": {
+                    "kind": "field"
+                  }
+                },
+                "otherwise": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "recursiveDigest"
+                  },
+                  "ty": {
+                    "kind": "field"
+                  }
+                }
+              }
+            }
+          ],
+          "body": {
+            "kind": "transient_hash",
+            "value": {
+              "kind": "tuple",
+              "elements": [
+                {
+                  "kind": "parameter",
+                  "name": "left"
+                },
+                {
+                  "kind": "parameter",
+                  "name": "right"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "source": {
+        "file": "standard-library.compact",
+        "line": 83,
+        "column": 1
+      }
+    },
+    {
+      "name": "path_root",
+      "parameters": [
+        {
+          "name": "path",
+          "ty": {
+            "kind": "struct",
+            "name": "MerkleTreePath",
+            "fields": [
+              {
+                "name": "leaf",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "path",
+                "ty": {
+                  "kind": "vector",
+                  "length": 10,
+                  "element": {
+                    "kind": "struct",
+                    "name": "MerkleTreePathEntry",
+                    "fields": [
+                      {
+                        "name": "sibling",
+                        "ty": {
+                          "kind": "struct",
+                          "name": "MerkleTreeDigest",
+                          "fields": [
+                            {
+                              "name": "field",
+                              "ty": {
+                                "kind": "field"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "goes_left",
+                        "ty": {
+                          "kind": "boolean"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "MerkleTreeDigest",
+        "fields": [
+          {
+            "name": "field",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "body": {
+        "kind": "call",
+        "name": "merkleTreePathRoot",
+        "arguments": [
+          {
+            "kind": "parameter",
+            "name": "path"
+          }
+        ]
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 245,
+        "column": 1
+      }
+    }
+  ],
+  "stateful_circuits": [
+    {
+      "name": "vote_reveal",
+      "parameters": [],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "sequence",
+          "actions": [
+            {
+              "kind": "assert",
+              "condition": {
+                "kind": "if",
+                "condition": {
+                  "kind": "equal",
+                  "left": {
+                    "kind": "cell_read",
+                    "field": "state",
+                    "index": 1
+                  },
+                  "right": {
+                    "kind": "enum_variant",
+                    "ty": {
+                      "kind": "enum",
+                      "name": "LedgerState",
+                      "variants": [
+                        "setup",
+                        "commit",
+                        "reveal",
+                        "final"
+                      ]
+                    },
+                    "variant": "reveal"
+                  }
+                },
+                "then": {
+                  "kind": "equal",
+                  "left": {
+                    "kind": "witness_call",
+                    "name": "local_state",
+                    "arguments": []
+                  },
+                  "right": {
+                    "kind": "enum_variant",
+                    "ty": {
+                      "kind": "enum",
+                      "name": "LocalState",
+                      "variants": [
+                        "initial",
+                        "committed",
+                        "revealed"
+                      ]
+                    },
+                    "variant": "committed"
+                  }
+                },
+                "otherwise": {
+                  "kind": "boolean",
+                  "value": false
+                }
+              },
+              "message": "In illegal state for revealing"
+            },
+            {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "sk",
+                  "ty": {
+                    "kind": "bytes",
+                    "length": 32
+                  },
+                  "value": {
+                    "kind": "witness_call",
+                    "name": "local_secret_key",
+                    "arguments": []
+                  }
+                }
+              ],
+              "action": {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "rev_nul",
+                    "ty": {
+                      "kind": "bytes",
+                      "length": 32
+                    },
+                    "value": {
+                      "kind": "call",
+                      "name": "reveal_nullifier",
+                      "arguments": [
+                        {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "parameter",
+                            "name": "sk"
+                          },
+                          "ty": {
+                            "kind": "bytes",
+                            "length": 32
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "sequence",
+                  "actions": [
+                    {
+                      "kind": "assert",
+                      "condition": {
+                        "kind": "if",
+                        "condition": {
+                          "kind": "set_member",
+                          "field": "revealed_participants",
+                          "index": 9,
+                          "value": {
+                            "kind": "parameter",
+                            "name": "rev_nul"
+                          }
+                        },
+                        "then": {
+                          "kind": "boolean",
+                          "value": false
+                        },
+                        "otherwise": {
+                          "kind": "boolean",
+                          "value": true
+                        }
+                      },
+                      "message": "Attempted to double vote"
+                    },
+                    {
+                      "kind": "let",
+                      "bindings": [
+                        {
+                          "name": "vote",
+                          "ty": {
+                            "kind": "struct",
+                            "name": "MaybeCompact3",
+                            "fields": [
+                              {
+                                "name": "is_some",
+                                "ty": {
+                                  "kind": "boolean"
+                                }
+                              },
+                              {
+                                "name": "value",
+                                "ty": {
+                                  "kind": "boolean"
+                                }
+                              }
+                            ]
+                          },
+                          "value": {
+                            "kind": "witness_call",
+                            "name": "local_vote_cast",
+                            "arguments": []
+                          }
+                        }
+                      ],
+                      "action": {
+                        "kind": "sequence",
+                        "actions": [
+                          {
+                            "kind": "assert",
+                            "condition": {
+                              "kind": "struct_field",
+                              "value": {
+                                "kind": "parameter",
+                                "name": "vote"
+                              },
+                              "field": "is_some",
+                              "index": 0
+                            },
+                            "message": "Must have voted to reveal"
+                          },
+                          {
+                            "kind": "let",
+                            "bindings": [
+                              {
+                                "name": "cm",
+                                "ty": {
+                                  "kind": "bytes",
+                                  "length": 32
+                                },
+                                "value": {
+                                  "kind": "call",
+                                  "name": "commit_with_sk",
+                                  "arguments": [
+                                    {
+                                      "kind": "coerce",
+                                      "value": {
+                                        "kind": "if",
+                                        "condition": {
+                                          "kind": "struct_field",
+                                          "value": {
+                                            "kind": "parameter",
+                                            "name": "vote"
+                                          },
+                                          "field": "value",
+                                          "index": 1
+                                        },
+                                        "then": {
+                                          "kind": "bytes_literal",
+                                          "bytes": [
+                                            121,
+                                            101,
+                                            115,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0
+                                          ]
+                                        },
+                                        "otherwise": {
+                                          "kind": "bytes_literal",
+                                          "bytes": [
+                                            110,
+                                            111,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0
+                                          ]
+                                        }
+                                      },
+                                      "ty": {
+                                        "kind": "bytes",
+                                        "length": 32
+                                      }
+                                    },
+                                    {
+                                      "kind": "coerce",
+                                      "value": {
+                                        "kind": "parameter",
+                                        "name": "sk"
+                                      },
+                                      "ty": {
+                                        "kind": "bytes",
+                                        "length": 32
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            ],
+                            "action": {
+                              "kind": "let",
+                              "bindings": [
+                                {
+                                  "name": "path",
+                                  "ty": {
+                                    "kind": "struct",
+                                    "name": "MaybeCompact2",
+                                    "fields": [
+                                      {
+                                        "name": "is_some",
+                                        "ty": {
+                                          "kind": "boolean"
+                                        }
+                                      },
+                                      {
+                                        "name": "value",
+                                        "ty": {
+                                          "kind": "struct",
+                                          "name": "MerkleTreePath",
+                                          "fields": [
+                                            {
+                                              "name": "leaf",
+                                              "ty": {
+                                                "kind": "bytes",
+                                                "length": 32
+                                              }
+                                            },
+                                            {
+                                              "name": "path",
+                                              "ty": {
+                                                "kind": "vector",
+                                                "length": 10,
+                                                "element": {
+                                                  "kind": "struct",
+                                                  "name": "MerkleTreePathEntry",
+                                                  "fields": [
+                                                    {
+                                                      "name": "sibling",
+                                                      "ty": {
+                                                        "kind": "struct",
+                                                        "name": "MerkleTreeDigest",
+                                                        "fields": [
+                                                          {
+                                                            "name": "field",
+                                                            "ty": {
+                                                              "kind": "field"
+                                                            }
+                                                          }
+                                                        ]
+                                                      }
+                                                    },
+                                                    {
+                                                      "name": "goes_left",
+                                                      "ty": {
+                                                        "kind": "boolean"
+                                                      }
+                                                    }
+                                                  ]
+                                                }
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  "value": {
+                                    "kind": "witness_call",
+                                    "name": "local_path_of_cm",
+                                    "arguments": [
+                                      {
+                                        "kind": "coerce",
+                                        "value": {
+                                          "kind": "parameter",
+                                          "name": "cm"
+                                        },
+                                        "ty": {
+                                          "kind": "bytes",
+                                          "length": 32
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ],
+                              "action": {
+                                "kind": "sequence",
+                                "actions": [
+                                  {
+                                    "kind": "assert",
+                                    "condition": {
+                                      "kind": "if",
+                                      "condition": {
+                                        "kind": "if",
+                                        "condition": {
+                                          "kind": "struct_field",
+                                          "value": {
+                                            "kind": "parameter",
+                                            "name": "path"
+                                          },
+                                          "field": "is_some",
+                                          "index": 0
+                                        },
+                                        "then": {
+                                          "kind": "let",
+                                          "bindings": [
+                                            {
+                                              "name": "tmp_201",
+                                              "ty": {
+                                                "kind": "struct",
+                                                "name": "MerkleTreeDigest",
+                                                "fields": [
+                                                  {
+                                                    "name": "field",
+                                                    "ty": {
+                                                      "kind": "field"
+                                                    }
+                                                  }
+                                                ]
+                                              },
+                                              "value": {
+                                                "kind": "call",
+                                                "name": "path_root",
+                                                "arguments": [
+                                                  {
+                                                    "kind": "coerce",
+                                                    "value": {
+                                                      "kind": "struct_field",
+                                                      "value": {
+                                                        "kind": "parameter",
+                                                        "name": "path"
+                                                      },
+                                                      "field": "value",
+                                                      "index": 1
+                                                    },
+                                                    "ty": {
+                                                      "kind": "struct",
+                                                      "name": "MerkleTreePath",
+                                                      "fields": [
+                                                        {
+                                                          "name": "leaf",
+                                                          "ty": {
+                                                            "kind": "bytes",
+                                                            "length": 32
+                                                          }
+                                                        },
+                                                        {
+                                                          "name": "path",
+                                                          "ty": {
+                                                            "kind": "vector",
+                                                            "length": 10,
+                                                            "element": {
+                                                              "kind": "struct",
+                                                              "name": "MerkleTreePathEntry",
+                                                              "fields": [
+                                                                {
+                                                                  "name": "sibling",
+                                                                  "ty": {
+                                                                    "kind": "struct",
+                                                                    "name": "MerkleTreeDigest",
+                                                                    "fields": [
+                                                                      {
+                                                                        "name": "field",
+                                                                        "ty": {
+                                                                          "kind": "field"
+                                                                        }
+                                                                      }
+                                                                    ]
+                                                                  }
+                                                                },
+                                                                {
+                                                                  "name": "goes_left",
+                                                                  "ty": {
+                                                                    "kind": "boolean"
+                                                                  }
+                                                                }
+                                                              ]
+                                                            }
+                                                          }
+                                                        }
+                                                      ]
+                                                    }
+                                                  }
+                                                ]
+                                              }
+                                            }
+                                          ],
+                                          "body": {
+                                            "kind": "merkle_check_root",
+                                            "field": "committed_votes",
+                                            "index": 7,
+                                            "root": {
+                                              "kind": "parameter",
+                                              "name": "tmp_201"
+                                            }
+                                          }
+                                        },
+                                        "otherwise": {
+                                          "kind": "boolean",
+                                          "value": false
+                                        }
+                                      },
+                                      "then": {
+                                        "kind": "equal",
+                                        "left": {
+                                          "kind": "parameter",
+                                          "name": "cm"
+                                        },
+                                        "right": {
+                                          "kind": "struct_field",
+                                          "value": {
+                                            "kind": "struct_field",
+                                            "value": {
+                                              "kind": "parameter",
+                                              "name": "path"
+                                            },
+                                            "field": "value",
+                                            "index": 1
+                                          },
+                                          "field": "leaf",
+                                          "index": 0
+                                        }
+                                      },
+                                      "otherwise": {
+                                        "kind": "boolean",
+                                        "value": false
+                                      }
+                                    },
+                                    "message": "Attempted to reveal incorrectly"
+                                  },
+                                  {
+                                    "kind": "if",
+                                    "condition": {
+                                      "kind": "struct_field",
+                                      "value": {
+                                        "kind": "parameter",
+                                        "name": "vote"
+                                      },
+                                      "field": "value",
+                                      "index": 1
+                                    },
+                                    "then": {
+                                      "kind": "let",
+                                      "bindings": [
+                                        {
+                                          "name": "tmp_202",
+                                          "ty": {
+                                            "kind": "unsigned",
+                                            "max": "65535"
+                                          },
+                                          "value": {
+                                            "kind": "unsigned_literal",
+                                            "value": "1",
+                                            "max": "65535"
+                                          }
+                                        }
+                                      ],
+                                      "action": {
+                                        "kind": "counter_increment",
+                                        "field": "yes",
+                                        "index": 4,
+                                        "amount": {
+                                          "kind": "parameter",
+                                          "name": "tmp_202"
+                                        }
+                                      }
+                                    },
+                                    "otherwise": {
+                                      "kind": "let",
+                                      "bindings": [
+                                        {
+                                          "name": "tmp_203",
+                                          "ty": {
+                                            "kind": "unsigned",
+                                            "max": "65535"
+                                          },
+                                          "value": {
+                                            "kind": "unsigned_literal",
+                                            "value": "1",
+                                            "max": "65535"
+                                          }
+                                        }
+                                      ],
+                                      "action": {
+                                        "kind": "counter_increment",
+                                        "field": "no",
+                                        "index": 5,
+                                        "amount": {
+                                          "kind": "parameter",
+                                          "name": "tmp_203"
+                                        }
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "kind": "set_insert",
+                                    "field": "revealed_participants",
+                                    "index": 9,
+                                    "value": {
+                                      "kind": "parameter",
+                                      "name": "rev_nul"
+                                    }
+                                  },
+                                  {
+                                    "kind": "expression",
+                                    "value": {
+                                      "kind": "witness_call",
+                                      "name": "local_advance_state",
+                                      "arguments": []
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 88,
+        "column": 1
+      }
+    },
+    {
+      "name": "reveal_nullifier",
+      "parameters": [
+        {
+          "name": "sk",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result": {
+        "kind": "bytes",
+        "length": 32
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "persistent_hash",
+          "value": {
+            "kind": "tuple",
+            "elements": [
+              {
+                "kind": "bytes_literal",
+                "bytes": [
+                  108,
+                  97,
+                  114,
+                  101,
+                  115,
+                  58,
+                  117,
+                  100,
+                  97,
+                  111,
+                  58,
+                  114,
+                  118,
+                  45,
+                  110,
+                  117,
+                  108,
+                  58,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "kind": "field_to_bytes32",
+                "value": {
+                  "kind": "field_cast",
+                  "value": {
+                    "kind": "counter_read",
+                    "field": "round",
+                    "index": 6
+                  }
+                }
+              },
+              {
+                "kind": "parameter",
+                "name": "sk"
+              }
+            ]
+          }
+        }
+      },
+      "actions": [],
+      "internal": true,
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 227,
+        "column": 1
+      }
+    },
+    {
+      "name": "commit_with_sk",
+      "parameters": [
+        {
+          "name": "ballot",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "sk",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result": {
+        "kind": "bytes",
+        "length": 32
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "persistent_hash",
+          "value": {
+            "kind": "tuple",
+            "elements": [
+              {
+                "kind": "parameter",
+                "name": "ballot"
+              },
+              {
+                "kind": "field_to_bytes32",
+                "value": {
+                  "kind": "field_cast",
+                  "value": {
+                    "kind": "counter_read",
+                    "field": "round",
+                    "index": 6
+                  }
+                }
+              },
+              {
+                "kind": "parameter",
+                "name": "sk"
+              }
+            ]
+          }
+        }
+      },
+      "actions": [],
+      "internal": true,
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 238,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": null
+}

@@ -66,15 +66,11 @@
         }
       ],
       "expected_recorded_circuits": [
+        "vote_reveal",
         "dao_voting_token"
       ],
       "expected_recording_gaps": {
         "vote_commit": {
-          "code": "unsupported_action",
-          "ir_node": "StateAction::Assert",
-          "path": "actions[0].actions[0]"
-        },
-        "vote_reveal": {
           "code": "unsupported_action",
           "ir_node": "StateAction::Assert",
           "path": "actions[0].actions[0]"

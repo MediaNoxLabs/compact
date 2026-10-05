@@ -1204,6 +1204,7 @@ def main() -> None:
     parser.add_argument("--witness-composition", action="store_true", help="check unrelated witness composition preserves recording")
     parser.add_argument("--stateful-assert", action="store_true", help="check native stateful assertions and complete original micro-dao Cargo admission")
     parser.add_argument("--wide-add", action="store_true", help="check bounded native wide addition and original-source progress")
+    parser.add_argument("--micro-dao-reveal", action="store_true", help="check original microDAO reveal recording; optional selective proof")
     parser.add_argument("--micro-dao-token", action="store_true", help="check original microDAO token recording; optional selective proof")
     parser.add_argument("--stateful-struct", action="store_true", help="check ordered typed native struct construction and its remaining original-source boundary")
     parser.add_argument("--kernel-shielded-effects", action="store_true", help="check typed Kernel recording and optional call/funded-mint proofs")
@@ -1257,9 +1258,9 @@ def main() -> None:
             assert sum(c["proof"] for c in info["circuits"]) == 7
             assert len(report["circuits"]) == 7
             assert all(c["proof_required"] for c in report["circuits"])
-            assert {c["name"] for c in report["circuits"] if c["recorded"]} == {"dao_voting_token"}
+            assert {c["name"] for c in report["circuits"] if c["recorded"]} == {"vote_reveal", "dao_voting_token"}
             run("cargo", "+1.99.0", "check", "--offline", "--manifest-path", str(original / "contract/Cargo.toml"))
-            print("nested stateful assertions admitted; original micro-dao native crate checks, 6 proof-required gaps remain; dao_voting_token recorded")
+            print("nested stateful assertions admitted; original micro-dao native crate checks, 5 proof-required gaps remain; vote_reveal and dao_voting_token recorded")
             return
         if args.wide_add:
             source = ROOT / "examples/rust_backend/wide_add_oracle.compact"
@@ -1279,24 +1280,25 @@ def main() -> None:
             assert (base / "original-dao/contract/lib.rs").is_file()
             print("wide addition admitted; original micro-dao emits native Rust")
             return
-        if args.micro_dao_token:
+        if args.micro_dao_token or args.micro_dao_reveal:
             source = ROOT / "test-center/test-contracts/micro-dao.compact"
-            output = base / "micro-dao-token"
+            selected = "vote_reveal" if args.micro_dao_reveal else "dao_voting_token"
+            output = base / "micro-dao-selected"
             run(compiler, "--target", "rust", "--skip-zk", str(source), str(output))
             info = json.loads((output / "compiler/contract-info.json").read_text())
             report = json.loads((output / "contract/rust-capabilities.json").read_text())
             assert len(info["circuits"]) == 11 and sum(c["proof"] for c in info["circuits"]) == 7
             assert {c["name"] for c in report["circuits"]} == {c["name"] for c in info["circuits"] if c["proof"]}
             for c in report["circuits"]:
-                assert c["proof_required"] and c["recorded"] == (c["name"] == "dao_voting_token")
+                assert c["proof_required"] and c["recorded"] == (c["name"] in {"vote_reveal", "dao_voting_token"})
                 assert c["observed_call"] == c["recorded"]
             strict = subprocess.run([compiler, "--target", "rust", "--rust-require-recording", "--skip-zk", str(source), str(base / "strict-dao")], cwd=ROOT, capture_output=True, text=True)
             assert strict.returncode != 0 and "vote_commit" in strict.stderr
             if args.proof:
                 (output / "keys").mkdir(exist_ok=True)
-                run("zkir", "compile", str(output / "zkir/dao_voting_token.zkir"), str(output / "keys/dao_voting_token.prover"), str(output / "keys/dao_voting_token.verifier"))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--micro-dao-token", str(output))
-            print("original microDAO: dao_voting_token recorded, six proof-required gaps retained")
+                run("zkir", "compile", str(output / f"zkir/{selected}.zkir"), str(output / f"keys/{selected}.prover"), str(output / f"keys/{selected}.verifier"))
+                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--micro-dao-reveal" if args.micro_dao_reveal else "--micro-dao-token", str(output))
+            print("original microDAO: vote_reveal and dao_voting_token recorded, five proof-required gaps retained")
             return
         if args.stateful_struct:
             source = ROOT / "examples/rust_backend/stateful_struct_oracle.compact"
@@ -1666,6 +1668,8 @@ def main() -> None:
             *(["--proof"] if args.proof else []))
         run(sys.executable, str(Path(__file__).resolve()), "--stateful-struct")
         run(sys.executable, str(Path(__file__).resolve()), "--micro-dao-token",
+            *(["--proof"] if args.proof else []))
+        run(sys.executable, str(Path(__file__).resolve()), "--micro-dao-reveal",
             *(["--proof"] if args.proof else []))
         run(sys.executable, str(Path(__file__).resolve()), "--wide-add")
         run(sys.executable, str(Path(__file__).resolve()), "--stateful-assert")

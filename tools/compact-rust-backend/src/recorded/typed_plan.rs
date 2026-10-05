@@ -48,7 +48,14 @@ struct Plan<'a> {
     field_cell_slot: Option<(String, u8)>,
     effectful_field_cells: bool,
     read_only_assertions: bool,
-    composite_circuits: Option<&'a HashMap<&'a str, &'a StatefulCircuit>>,
+    composite_values: bool,
+    counter_hash_helpers: bool,
+    scalar_arguments: bool,
+    scalar_body_depth: usize,
+    scalar_helper_calls: usize,
+    scalar_counter_reads: usize,
+    active_calls: HashSet<String>,
+    stateful_circuits: Option<&'a HashMap<&'a str, &'a StatefulCircuit>>,
     optional_cells: usize,
     opaque_cells: usize,
     historic_roots: usize,
@@ -262,7 +269,7 @@ impl Plan<'_> {
                     steps,
                 )
             }
-            Expr::UnsignedCast { value, max } if self.composite_circuits.is_some() => {
+            Expr::UnsignedCast { value, max } if self.composite_values => {
                 let value = self.expression(value, scope, steps)?;
                 let Type::Unsigned { max: source_max } = value.ty else {
                     return None;
@@ -331,7 +338,9 @@ impl Plan<'_> {
                 let mut else_steps = Vec::new();
                 let otherwise = self.expression(otherwise, scope, &mut else_steps)?;
                 if then.ty != otherwise.ty
-                    || (self.composite_circuits.is_none() && then.ty != Type::Boolean)
+                    || (!self.composite_values
+                        && then.ty != Type::Boolean
+                        && !(self.scalar_arguments && then.ty == (Type::Bytes { length: 32 })))
                 {
                     return None;
                 }
@@ -378,7 +387,7 @@ impl Plan<'_> {
                     value: syn::parse_quote!(#observed),
                 })
             }
-            Expr::Tuple { elements } if self.context_query => {
+            Expr::Tuple { elements } if self.context_query || self.scalar_body_depth > 0 => {
                 let values = elements
                     .iter()
                     .map(|element| self.expression(element, scope, steps))
@@ -409,66 +418,23 @@ impl Plan<'_> {
                     steps,
                 )
             }
-            Expr::Call { name, arguments } if self.context_query => {
-                let callee = *self.pure.get(name.as_str())?;
-                let args = self.arguments(arguments, &callee.parameters, scope, steps)?;
-                let isolated = callee
-                    .parameters
-                    .iter()
-                    .zip(args)
-                    .map(|(parameter, value)| {
-                        (
-                            parameter.name.clone(),
-                            TypedValue {
-                                ty: parameter.ty.clone(),
-                                value,
-                            },
-                        )
+            Expr::PersistentHash { value } if self.scalar_body_depth > 0 => {
+                let value = self.expression(value, scope, steps)?;
+                if value.ty
+                    != (Type::Tuple {
+                        elements: vec![Type::Bytes { length: 32 }; 3],
                     })
-                    .collect();
-                let result = self.expression(&callee.body, &isolated, steps)?;
-                (result.ty == callee.result).then_some(result)
-            }
-            Expr::Call { name, arguments } if self.composite_circuits.is_some() => {
-                let callee = *self.composite_circuits?.get(name.as_str())?;
-                let StateReturn::Expression { value } = &callee.return_value else {
-                    return None;
-                };
-                if !callee.actions.is_empty() {
+                {
                     return None;
                 }
-                // Arguments are fully evaluated in caller order before any callee local exists.
-                let arguments = self.arguments(arguments, &callee.parameters, scope, steps)?;
-                let isolated = callee
-                    .parameters
-                    .iter()
-                    .zip(arguments)
-                    .map(|(parameter, value)| {
-                        (
-                            parameter.name.clone(),
-                            TypedValue {
-                                ty: parameter.ty.clone(),
-                                value,
-                            },
-                        )
-                    })
-                    .collect();
-                let result = self.expression(value, &isolated, steps)?;
-                (result.ty == callee.result).then_some(result)
-            }
-            Expr::Call { name, arguments } => {
-                let callee = *self.pure.get(name.as_str())?;
-                if !self.pure_call(name, &mut HashSet::new()) {
-                    return None;
-                }
-                let args = self.arguments(arguments, &callee.parameters, scope, steps)?;
-                let method = ident(name).ok()?;
+                let value = value.value;
                 self.bind(
-                    syn::parse_quote!(crate::pure_circuits::#method(#(#args),*)?),
-                    callee.result.clone(),
+                    syn::parse_quote!(runtime::persistent_hash(#value)),
+                    Type::Bytes { length: 32 },
                     steps,
                 )
             }
+            Expr::Call { name, arguments } => self.call(name, arguments, scope, steps),
             Expr::CounterLessThan {
                 field,
                 index,
@@ -500,6 +466,9 @@ impl Plan<'_> {
                 let observed = self.fresh();
                 steps.push(syn::parse_quote!(let (frame, #observed) = crate::ledger_slots::#slot.record_read(frame)?;));
                 self.counter_reads += 1;
+                if self.scalar_body_depth > 0 {
+                    self.scalar_counter_reads += 1;
+                }
                 self.bind(syn::parse_quote!(runtime::BoundedUint::<18446744073709551615>::new(#observed as u128)?), Type::Unsigned { max: "18446744073709551615".into() }, steps)
             }
             Expr::FieldCast { value } => {
@@ -650,6 +619,132 @@ impl Plan<'_> {
             }
             _ => None,
         }
+    }
+
+    // Resolve declaration kind first; profile policy then determines whether
+    // its audited body is inlined or a proven-pure generated helper is called.
+    fn call(
+        &mut self,
+        name: &str,
+        arguments: &[Expr],
+        scope: &Scope,
+        steps: &mut Vec<syn::Stmt>,
+    ) -> Option<TypedValue> {
+        let pure = self.pure.get(name).copied();
+        let stateful = self
+            .stateful_circuits
+            .and_then(|map| map.get(name))
+            .copied();
+        match (pure, stateful) {
+            (Some(callee), None) => {
+                if self.composite_values {
+                    return None;
+                } // preserve ADR0187 admission
+                if self.context_query {
+                    self.inline_call(
+                        name,
+                        &callee.parameters,
+                        &callee.result,
+                        &callee.body,
+                        arguments,
+                        scope,
+                        steps,
+                        false,
+                    )
+                } else {
+                    if !self.pure_call(name, &mut HashSet::new()) {
+                        return None;
+                    }
+                    let args = self.arguments(arguments, &callee.parameters, scope, steps)?;
+                    let method = ident(name).ok()?;
+                    self.bind(
+                        syn::parse_quote!(crate::pure_circuits::#method(#(#args),*)?),
+                        callee.result.clone(),
+                        steps,
+                    )
+                }
+            }
+            (None, Some(callee)) => {
+                let StateReturn::Expression { value } = &callee.return_value else {
+                    return None;
+                };
+                if !callee.actions.is_empty() {
+                    return None;
+                }
+                let scalar = self.counter_hash_helpers && scalar_counter_hash(callee, self.ledger);
+                if !self.composite_values && !scalar {
+                    return None;
+                }
+                self.inline_call(
+                    name,
+                    &callee.parameters,
+                    &callee.result,
+                    value,
+                    arguments,
+                    scope,
+                    steps,
+                    scalar,
+                )
+            }
+            _ => None, // absent or ambiguous declaration; never guess a helper kind
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn inline_call(
+        &mut self,
+        name: &str,
+        parameters: &[crate::ir::Parameter],
+        result: &Type,
+        body: &Expr,
+        arguments: &[Expr],
+        scope: &Scope,
+        steps: &mut Vec<syn::Stmt>,
+        scalar: bool,
+    ) -> Option<TypedValue> {
+        if parameters
+            .iter()
+            .map(|p| &p.name)
+            .collect::<HashSet<_>>()
+            .len()
+            != parameters.len()
+        {
+            return None;
+        }
+        // Arguments belong to the caller; even repeated finite calls evaluate
+        // before entering the callee's cycle guard and isolated parameter scope.
+        let old_arguments = self.scalar_arguments;
+        self.scalar_arguments = scalar;
+        let arguments = self.arguments(arguments, parameters, scope, steps);
+        self.scalar_arguments = old_arguments;
+        let arguments = arguments?;
+        if !self.active_calls.insert(name.to_owned()) {
+            return None;
+        }
+        let isolated = parameters
+            .iter()
+            .zip(arguments)
+            .map(|(p, value)| {
+                (
+                    p.name.clone(),
+                    TypedValue {
+                        ty: p.ty.clone(),
+                        value,
+                    },
+                )
+            })
+            .collect();
+        if scalar {
+            self.scalar_body_depth += 1;
+        }
+        let value = self.expression(body, &isolated, steps);
+        if scalar {
+            self.scalar_body_depth -= 1;
+            self.scalar_helper_calls += 1;
+        }
+        self.active_calls.remove(name);
+        let value = value?;
+        (value.ty == *result).then_some(value)
     }
 
     fn arguments(
@@ -1052,6 +1147,58 @@ impl Plan<'_> {
     }
 }
 
+// Bounded scalar helper domain: one canonical Counter query in a three-byte
+// value hash. The matcher checks declared slots/types and never circuit names.
+fn scalar_counter_hash(circuit: &StatefulCircuit, ledger: &HashMap<&str, &LedgerField>) -> bool {
+    let bytes = Type::Bytes { length: 32 };
+    if circuit.result != bytes
+        || !circuit.actions.is_empty()
+        || circuit.parameters.is_empty()
+        || circuit.parameters.len() > 2
+        || circuit.parameters.iter().any(|p| p.ty != bytes)
+        || circuit
+            .parameters
+            .iter()
+            .map(|p| &p.name)
+            .collect::<HashSet<_>>()
+            .len()
+            != circuit.parameters.len()
+    {
+        return false;
+    }
+    let StateReturn::Expression {
+        value: Expr::PersistentHash { value },
+    } = &circuit.return_value
+    else {
+        return false;
+    };
+    let Expr::Tuple { elements } = &**value else {
+        return false;
+    };
+    if elements.len() != 3 {
+        return false;
+    }
+    let mut reads = 0;
+    let valid = elements.iter().all(|element| match element {
+        Expr::BytesLiteral { bytes } => bytes.len() == 32,
+        Expr::Parameter { name } => circuit.parameters.iter().any(|p| &p.name == name),
+        Expr::FieldToBytes32 { value } => {
+            let Expr::FieldCast { value } = &**value else {
+                return false;
+            };
+            let Expr::CounterRead { field, index } = &**value else {
+                return false;
+            };
+            reads += 1;
+            ledger.get(field.as_str()).is_some_and(|slot| {
+                slot.index == *index && slot.declaration == LedgerFieldKind::Counter
+            })
+        }
+        _ => false,
+    });
+    valid && reads == 1
+}
+
 fn optional_string(ty: &Type) -> bool {
     matches!(ty, Type::Struct { fields, .. } if matches!(fields.as_slice(), [present, value] if present.ty == Type::Boolean && value.ty == Type::OpaqueString))
 }
@@ -1208,7 +1355,14 @@ pub(super) fn lower_effectful<'a>(
         field_cell_slot: None,
         effectful_field_cells: true,
         read_only_assertions: false,
-        composite_circuits: None,
+        composite_values: false,
+        counter_hash_helpers: false,
+        scalar_arguments: false,
+        scalar_body_depth: 0,
+        scalar_helper_calls: 0,
+        scalar_counter_reads: 0,
+        active_calls: HashSet::new(),
+        stateful_circuits: None,
         optional_cells: 0,
         opaque_cells: 0,
         historic_roots: 0,
@@ -1409,7 +1563,14 @@ pub(super) fn lower_context_query<'a>(
         field_cell_slot: None,
         effectful_field_cells: false,
         read_only_assertions: false,
-        composite_circuits: None,
+        composite_values: false,
+        counter_hash_helpers: false,
+        scalar_arguments: false,
+        scalar_body_depth: 0,
+        scalar_helper_calls: 0,
+        scalar_counter_reads: 0,
+        active_calls: HashSet::new(),
+        stateful_circuits: None,
         optional_cells: 0,
         opaque_cells: 0,
         historic_roots: 0,
@@ -1555,7 +1716,14 @@ pub(super) fn lower_composite<'a>(
         field_cell_slot: None,
         effectful_field_cells: false,
         read_only_assertions: false,
-        composite_circuits: Some(circuits),
+        composite_values: true,
+        counter_hash_helpers: false,
+        scalar_arguments: false,
+        scalar_body_depth: 0,
+        scalar_helper_calls: 0,
+        scalar_counter_reads: 0,
+        active_calls: HashSet::new(),
+        stateful_circuits: Some(circuits),
         optional_cells: 0,
         opaque_cells: 0,
         historic_roots: 0,
@@ -1595,6 +1763,7 @@ pub(super) fn lower<'a>(
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
     witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
     pure: &'a HashMap<&'a str, &'a PureCircuit>,
+    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
 ) -> Option<TypedPlan> {
     let mut assertions = 0;
     let assertion_entry = circuit.actions.is_empty()
@@ -1683,7 +1852,14 @@ pub(super) fn lower<'a>(
         field_cell_slot: field_cell_slot.clone(),
         effectful_field_cells: false,
         read_only_assertions: assertion_entry,
-        composite_circuits: None,
+        composite_values: false,
+        counter_hash_helpers: circuit.parameters.is_empty() && circuit.result == Type::Unit,
+        scalar_arguments: false,
+        scalar_body_depth: 0,
+        scalar_helper_calls: 0,
+        scalar_counter_reads: 0,
+        active_calls: HashSet::new(),
+        stateful_circuits: Some(circuits),
         optional_cells: 0,
         opaque_cells: 0,
         historic_roots: 0,
@@ -1742,7 +1918,12 @@ pub(super) fn lower<'a>(
         && plan.set_writes > 0
         && plan.cell_writes == 0
         && plan.optional_cells == 0
-        && plan.counter_reads == 0
+        && (plan.counter_reads == 0
+            || (plan.scalar_helper_calls > 0
+                && plan.counter_reads == plan.scalar_counter_reads
+                && plan.scalar_counter_reads == plan.scalar_helper_calls
+                && plan.kernel_self_reads == 0
+                && plan.counter_comparisons == 0))
         && if enum_entry {
             plan.tree_writes > 0 && plan.counter_writes == 0
         } else {
@@ -1829,20 +2010,125 @@ pub(super) fn lower<'a>(
         && plan.counter_comparisons == 0
         && plan.counter_writes == 0
         && plan.optional_cells == 0;
-    (membership
-        || cell_lifecycle
-        || historic_spend
-        || counter_comparison
-        || qualified_set_lifecycle
-        || qualified_cell_replacement
-        || field_cell_root
-        || assertion_entry)
-        .then_some(TypedPlan { steps, result })
+    (if plan.scalar_helper_calls > 0 {
+        membership
+    } else {
+        membership
+            || cell_lifecycle
+            || historic_spend
+            || counter_comparison
+            || qualified_set_lifecycle
+            || qualified_cell_replacement
+            || field_cell_root
+            || assertion_entry
+    })
+    .then_some(TypedPlan { steps, result })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn membership_scalar_helpers_keep_counter_provenance_and_declaration_scope() {
+        fn planned(value: &serde_json::Value) -> Option<TypedPlan> {
+            let c: crate::ir::Contract = serde_json::from_value(value.clone()).unwrap();
+            lower(
+                &c.stateful_circuits[0],
+                &c.ledger_fields.iter().map(|f| (f.id.as_str(), f)).collect(),
+                &c.witnesses.iter().map(|w| (w.name.as_str(), w)).collect(),
+                &c.circuits.iter().map(|p| (p.name.as_str(), p)).collect(),
+                &c.stateful_circuits
+                    .iter()
+                    .map(|s| (s.name.as_str(), s))
+                    .collect(),
+            )
+        }
+        use serde_json::json;
+        let source: serde_json::Value = serde_json::from_str(include_str!(
+            "../../tests/micro-dao-reveal-schema20-ir.json"
+        ))
+        .unwrap();
+        let positive = planned(&source).unwrap();
+        let steps = positive.steps;
+        let tokens = quote::quote!(#(#steps)*).to_string();
+        assert_eq!(tokens.matches("round . record_read").count(), 2);
+        assert_eq!(tokens.matches("runtime :: persistent_hash").count(), 2);
+        assert_eq!(tokens.matches("pure_circuits :: path_root").count(), 1);
+        let renamed = source
+            .to_string()
+            .replace("reveal_nullifier", "membership_key")
+            .replace("commit_with_sk", "membership_commitment");
+        assert!(planned(&serde_json::from_str(&renamed).unwrap()).is_some());
+        let rejected = |path: &str, replacement: serde_json::Value| {
+            let mut changed = source.clone();
+            *changed.pointer_mut(path).unwrap() = replacement;
+            assert!(planned(&changed).is_none(), "accepted mutation at {path}");
+        };
+        rejected("/stateful_circuits/1/result", json!({"kind":"boolean"}));
+        rejected("/stateful_circuits/1/parameters", json!([]));
+        rejected(
+            "/stateful_circuits/1/parameters/0/ty",
+            json!({"kind":"field"}),
+        );
+        rejected(
+            "/stateful_circuits/1/actions",
+            json!([{"kind":"counter_increment","field":"round","index":6,"amount":{"kind":"literal","value":1}}]),
+        );
+        rejected(
+            "/stateful_circuits/1/return_value/value/value/elements/1/value/value/index",
+            json!(5),
+        );
+        rejected(
+            "/stateful_circuits/1/return_value/value/value/elements/1/value/value",
+            json!({"kind":"witness_call","name":"local_secret_key","arguments":[]}),
+        );
+        rejected(
+            "/stateful_circuits/1/return_value/value/value/elements/2",
+            json!({"kind":"parameter","name":"caller_only"}),
+        );
+        rejected(
+            "/stateful_circuits/1/return_value/value/value/elements",
+            json!([]),
+        );
+        rejected(
+            "/stateful_circuits/1/return_value/value",
+            json!({"kind":"call","name":"reveal_nullifier","arguments":[{"kind":"parameter","name":"sk"}]}),
+        );
+        let mut ambiguous = source.clone();
+        ambiguous["circuits"].as_array_mut().unwrap().push(json!({"name":"reveal_nullifier","parameters":[],"result":{"kind":"bytes","length":32},"body":{"kind":"bytes_literal","bytes":vec![0;32]}}));
+        assert!(planned(&ambiguous).is_none());
+        let mut open = source.clone();
+        open["stateful_circuits"][0]["actions"].as_array_mut().unwrap().insert(0,json!({"kind":"let","bindings":[{"name":"unrelated_read","ty":{"kind":"unsigned","max":"18446744073709551615"},"value":{"kind":"counter_read","field":"round","index":6}}],"action":{"kind":"sequence","actions":[]}}));
+        assert!(
+            planned(&open).is_none(),
+            "root Counter read must not acquire helper provenance"
+        );
+        let mut declaration = source.clone();
+        let slot = declaration["ledger_fields"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .find(|f| f["id"] == "round")
+            .unwrap();
+        slot["declaration"] =
+            json!({"kind":"cell","ty":{"kind":"unsigned","max":"18446744073709551615"}});
+        assert!(planned(&declaration).is_none());
+        fn mutate_bytes_branch(value: &mut serde_json::Value) -> bool {
+            if value["kind"] == "if" && value["then"]["kind"] == "bytes_literal" {
+                value["otherwise"] = json!({"kind":"boolean","value":false});
+                return true;
+            }
+            match value {
+                serde_json::Value::Object(m) => m.values_mut().any(mutate_bytes_branch),
+                serde_json::Value::Array(a) => a.iter_mut().any(mutate_bytes_branch),
+                _ => false,
+            }
+        }
+        let mut branch = source.clone();
+        assert!(mutate_bytes_branch(&mut branch["stateful_circuits"][0]));
+        assert!(planned(&branch).is_none());
+    }
 
     #[test]
     fn context_queries_audit_pure_types_scope_cycles_and_effect_order() {
@@ -2112,7 +2398,14 @@ mod tests {
             field_cell_slot: None,
             effectful_field_cells: false,
             read_only_assertions: false,
-            composite_circuits: None,
+            composite_values: false,
+            counter_hash_helpers: false,
+            scalar_arguments: false,
+            scalar_body_depth: 0,
+            scalar_helper_calls: 0,
+            scalar_counter_reads: 0,
+            active_calls: HashSet::new(),
+            stateful_circuits: None,
             optional_cells: 0,
             opaque_cells: 0,
             historic_roots: 0,
@@ -2193,7 +2486,14 @@ mod tests {
             field_cell_slot: None,
             effectful_field_cells: false,
             read_only_assertions: false,
-            composite_circuits: None,
+            composite_values: false,
+            counter_hash_helpers: false,
+            scalar_arguments: false,
+            scalar_body_depth: 0,
+            scalar_helper_calls: 0,
+            scalar_counter_reads: 0,
+            active_calls: HashSet::new(),
+            stateful_circuits: None,
             optional_cells: 0,
             opaque_cells: 0,
             historic_roots: 0,
@@ -2241,6 +2541,7 @@ mod tests {
                 &contract.stateful_circuits[index],
                 &ledger,
                 &witnesses,
+                &HashMap::new(),
                 &HashMap::new(),
             )
             .is_some()
@@ -2340,7 +2641,14 @@ mod tests {
                 .map(|witness| (witness.name.as_str(), witness))
                 .collect();
             let pure = HashMap::new();
-            lower(&contract.stateful_circuits[0], &ledger, &witnesses, &pure).is_some()
+            lower(
+                &contract.stateful_circuits[0],
+                &ledger,
+                &witnesses,
+                &pure,
+                &HashMap::new(),
+            )
+            .is_some()
         }
         let source: serde_json::Value = serde_json::from_str(include_str!(
             "../../tests/root-let-action-return-schema17-ir.json"

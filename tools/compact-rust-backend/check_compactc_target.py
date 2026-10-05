@@ -1118,10 +1118,90 @@ def check_list_shapes_consumer(compiler: str, base: Path) -> None:
     subprocess.run(["cargo", "test", "--quiet"], cwd=consumer, env=environment, check=True)
 
 
+def check_witness_composition(compiler: str, base: Path) -> None:
+    """An unrelated retained witness must not change a supported circuit's APIs."""
+    for label, source, fixture, calls in [
+        ("field", ROOT_LET_ACTION_RETURN_SOURCE, "root-let-action-return-oracle", [
+            "compare!(step, r::Field::from(9_u64));",
+            "compare!(step, r::Field::from(13_u64));",
+        ]),
+        ("counter", ROOT / "examples/rust_backend/counter_less_than_oracle.compact", "counter-less-than-oracle", [
+            "compare!(nested);", "compare!(short_circuit, true);", "compare!(short_circuit, false);",
+            "compare!(compare, r::BoundedUint::new(7).unwrap());",
+            "compare!(compare, r::BoundedUint::new(3).unwrap());",
+            "compare!(checked, r::BoundedUint::new(7).unwrap());",
+            "assert!(c::recorded::checked(composed_context(), r::BoundedUint::new(3).unwrap()).is_err());",
+            "assert!(b::recorded::checked(original_context(), br::BoundedUint::new(3).unwrap()).is_err());",
+        ]),
+    ]:
+        composed_source = base / f"{label}-composed.compact"
+        composed_source.write_text(source.read_text() + "\nwitness unrelated_value(): Field;\nexport circuit unrelated(): Field { return disclose(unrelated_value()); }\n")
+        output = base / f"{label}-generated"
+        run(compiler, "--target", "rust", "--rust-runtime-root", str(ROOT), "--rust-require-recording", "--skip-zk", str(composed_source), str(output))
+        info = json.loads((output / "compiler/contract-info.json").read_text())
+        report = json.loads((output / "contract/rust-capabilities.json").read_text())
+        ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
+        assert [w["name"] for w in ir["witnesses"]] == ["unrelated_value"]
+        assert {c["name"] for c in info["circuits"]} == {c["name"] for c in report["circuits"]}
+        for row in report["circuits"]:
+            metadata = next(c for c in info["circuits"] if c["name"] == row["name"])
+            assert row["proof_required"] == metadata["proof"]
+            if row["name"] == "unrelated":
+                assert not row["proof_required"] and row["recording_status"] == "not_applicable"
+            else:
+                assert row["proof_required"] and row["recorded"] and row["observed_call"]
+        consumer = base / f"{label}-consumer"
+        (consumer / "src").mkdir(parents=True)
+        package = tomllib.loads((output / "contract/Cargo.toml").read_text())["package"]["name"]
+        original = ROOT / "tests-rust-backend" / fixture
+        original_package = tomllib.loads((original / "Cargo.toml").read_text())["package"]["name"]
+        (consumer / "Cargo.toml").write_text(f'''[package]
+name = "witness-composition-{label}"
+version = "0.1.0"
+edition = "2024"
+[workspace]
+[dependencies]
+composed = {{ package = "{package}", path = "{output / 'contract'}" }}
+original = {{ package = "{original_package}", path = "{original}" }}
+serde_json = "1"
+''')
+        rust = r'''#![cfg(test)]
+use composed::{ledger_contract as c, runtime as r};
+use original::{ledger_contract as b, runtime as br};
+fn composed_context() -> r::context::CircuitContext<()> {
+ c::initial_state(r::context::ConstructorContext::new(())).unwrap().into_circuit_context(r::ledger::ContractAddress::default())
+}
+fn original_context() -> br::context::CircuitContext<()> {
+ b::initial_state(br::context::ConstructorContext::new(())).unwrap().into_circuit_context(br::ledger::ContractAddress::default())
+}
+macro_rules! compare { ($name:ident $(,$arg:expr)*) => {{
+ let native = c::$name(composed_context() $(,$arg)*).unwrap();
+ let recorded = c::recorded::$name(composed_context() $(,$arg)*).unwrap();
+ let baseline = b::recorded::$name(original_context() $(,$arg)*).unwrap();
+ assert_eq!(native.result, recorded.execution.result);
+ assert_eq!(native.result, baseline.execution.result);
+ assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+ assert_eq!(native.gas_cost, baseline.execution.gas_cost);
+ assert_eq!(native.context.query.state, recorded.execution.context.query.state);
+ assert_eq!(native.context.query.state, baseline.execution.context.query.state);
+ assert_eq!(native.context.query.effects, baseline.execution.context.query.effects);
+ assert!(recorded.execution.private_transcript_outputs.is_empty());
+ assert_eq!(serde_json::to_value(recorded.public.verify_ops()).unwrap(), serde_json::to_value(baseline.public.verify_ops()).unwrap());
+ let replay = recorded.public.initial().query(recorded.public.verify_ops(),None,&recorded.execution.context.cost_model).unwrap();
+ assert_eq!(replay.context.state, native.context.query.state);
+}}; }
+#[test] fn unrelated_export_does_not_change_recorded_semantics() {
+'''+"\n".join(calls)+"\n}\n"
+        (consumer / "src/lib.rs").write_text(rust)
+        run("cargo", "+1.99.0", "test", "--offline", "--manifest-path", str(consumer / "Cargo.toml"))
+        print(json.dumps({"composition": label, "source_sha256": hashlib.sha256(composed_source.read_bytes()).hexdigest(), "proof_apis": sum(c["proof_required"] for c in report["circuits"]), "retained_unrelated_witness": True}))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--consumer", action="store_true", help="build and run a separate consumer")
     parser.add_argument("--proof", action="store_true", help="generate ZKIR and proving keys")
+    parser.add_argument("--witness-composition", action="store_true", help="check unrelated witness composition preserves recording")
     parser.add_argument("--stateful-assert", action="store_true", help="check native stateful assertions and complete original micro-dao Cargo admission")
     parser.add_argument("--wide-add", action="store_true", help="check bounded native wide addition and original-source progress")
     parser.add_argument("--stateful-struct", action="store_true", help="check ordered typed native struct construction and its remaining original-source boundary")
@@ -1152,6 +1232,9 @@ def main() -> None:
     compiler = os.environ.get("COMPACTC", "compactc")
     with tempfile.TemporaryDirectory(prefix="compactc-target-") as temporary:
         base = Path(temporary)
+        if args.witness_composition:
+            check_witness_composition(compiler, base)
+            return
         if args.stateful_assert:
             source = ROOT / "examples/rust_backend/stateful_assert_oracle.compact"
             output = base / "stateful-assert"
@@ -1544,6 +1627,7 @@ def main() -> None:
         run(sys.executable, str(Path(__file__).resolve()), "--stateful-struct")
         run(sys.executable, str(Path(__file__).resolve()), "--wide-add")
         run(sys.executable, str(Path(__file__).resolve()), "--stateful-assert")
+        run(sys.executable, str(Path(__file__).resolve()), "--witness-composition")
         ts, rust, both, pure = (base / name for name in ("ts", "rust", "both", "pure"))
         run(compiler, "--skip-zk", str(SOURCE), str(ts))
         assert (ts / "contract/index.js").is_file()

@@ -44,6 +44,16 @@ Rust calls do not expose consumed context/gas, so no failed aggregate gas parity
 is claimed. Both APIs pass proof verification and ledger application under the
 shared unbalanced smoke policy. No runtime, IR schema or ABI change is required.
 
+## Recording eligibility and unrelated witnesses
+
+Field root-Let and Counter comparison recording count witness calls used by the
+complete lowered circuit, including both audited branch bodies. An unrelated
+export that retains its own witness declaration no longer removes these APIs.
+The original no-witness domain remains enforced: adding a witness to the
+Field update, Counter threshold or an untaken branch is still rejected by these
+profiles. Source composition checks join compiler proof applicability and compare
+generated native/recorded calls against the unchanged original fixtures.
+
 ## Compile a contract
 
 The packaged `compactc` accepts a repeatable `--target` option. TypeScript is

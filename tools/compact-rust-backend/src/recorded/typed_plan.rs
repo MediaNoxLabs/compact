@@ -33,6 +33,7 @@ struct Plan<'a> {
     witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
     pure: &'a HashMap<&'a str, &'a PureCircuit>,
     next: usize,
+    witness_calls: usize,
     root_observations: usize,
     tree_writes: usize,
     set_writes: usize,
@@ -346,6 +347,7 @@ impl Plan<'_> {
                 }
                 let args = self.arguments(arguments, &declaration.parameters, scope, steps)?;
                 let method = ident(name).ok()?;
+                self.witness_calls += 1;
                 let observed = self.fresh();
                 let ty = rust_type(&declaration.result).ok()?;
                 steps.push(syn::parse_quote! {
@@ -1097,6 +1099,7 @@ pub(super) fn lower_effectful<'a>(
         witnesses,
         pure,
         next: 0,
+        witness_calls: 0,
         root_observations: 0,
         tree_writes: 0,
         set_writes: 0,
@@ -1234,14 +1237,13 @@ pub(super) fn lower<'a>(
     let opaque_entry =
         matches!(circuit.parameters.as_slice(), [parameter] if parameter.ty == Type::OpaqueString);
     let spend_entry = matches!(circuit.parameters.as_slice(), [destination, coin] if matches!(destination.ty, Type::Struct { .. }) && matches!(coin.ty, Type::Struct { .. }));
-    let counter_entry = witnesses.is_empty()
-        && circuit.parameters.iter().all(|parameter| {
-            parameter.ty == Type::Boolean
-                || parameter.ty
-                    == (Type::Unsigned {
-                        max: u64::MAX.to_string(),
-                    })
-        });
+    let counter_entry = circuit.parameters.iter().all(|parameter| {
+        parameter.ty == Type::Boolean
+            || parameter.ty
+                == (Type::Unsigned {
+                    max: u64::MAX.to_string(),
+                })
+    });
     // A root Field read/modify/write may return an independent Field input.
     // Keep this admission structural: one root binding establishes the only
     // eligible Cell slot and the final value names the declared input.
@@ -1258,18 +1260,16 @@ pub(super) fn lower<'a>(
                 value: Expr::Parameter { name },
             },
             [StateAction::Let { bindings, .. }],
-        ) if witnesses.is_empty() && parameter.ty == Type::Field && name == &parameter.name => {
-            match bindings.as_slice() {
-                [
-                    LocalBinding {
-                        name: binding_name,
-                        ty: Type::Field,
-                        value: Expr::CellRead { field, index },
-                    },
-                ] if binding_name != &parameter.name => Some((field.clone(), *index)),
-                _ => None,
-            }
-        }
+        ) if parameter.ty == Type::Field && name == &parameter.name => match bindings.as_slice() {
+            [
+                LocalBinding {
+                    name: binding_name,
+                    ty: Type::Field,
+                    value: Expr::CellRead { field, index },
+                },
+            ] if binding_name != &parameter.name => Some((field.clone(), *index)),
+            _ => None,
+        },
         _ => None,
     };
     if !(circuit.parameters.is_empty()
@@ -1292,6 +1292,7 @@ pub(super) fn lower<'a>(
         witnesses,
         pure,
         next: 0,
+        witness_calls: 0,
         root_observations: 0,
         tree_writes: 0,
         set_writes: 0,
@@ -1393,6 +1394,7 @@ pub(super) fn lower<'a>(
         && plan.opaque_cells > 0
         && plan.cell_writes == plan.opaque_cells;
     let counter_comparison = counter_entry
+        && plan.witness_calls == 0
         && ordinary
         && matches!(circuit.result, Type::Boolean | Type::Unit)
         && plan.counter_comparisons > 0
@@ -1433,6 +1435,7 @@ pub(super) fn lower<'a>(
         && plan.historic_roots == 0
         && plan.historic_writes == 0;
     let field_cell_root = field_cell_slot.is_some()
+        && plan.witness_calls == 0
         && ordinary
         && plan.qualified_set_reads == 0
         && plan.qualified_set_writes == 0
@@ -1472,6 +1475,7 @@ mod tests {
             witnesses: &witnesses,
             pure: &pure,
             next: 0,
+            witness_calls: 0,
             root_observations: 0,
             tree_writes: 0,
             set_writes: 0,
@@ -1549,6 +1553,7 @@ mod tests {
             witnesses: &witnesses,
             pure: &pure,
             next: 0,
+            witness_calls: 0,
             root_observations: 0,
             tree_writes: 0,
             set_writes: 0,
@@ -1589,6 +1594,107 @@ mod tests {
                 expected
             );
         }
+    }
+
+    #[test]
+    fn witness_eligibility_is_local_but_counts_all_audited_branches() {
+        fn admitted(contract: &crate::ir::Contract, index: usize) -> bool {
+            let ledger = contract
+                .ledger_fields
+                .iter()
+                .map(|f| (f.id.as_str(), f))
+                .collect();
+            let witnesses = contract
+                .witnesses
+                .iter()
+                .map(|w| (w.name.as_str(), w))
+                .collect();
+            lower(
+                &contract.stateful_circuits[index],
+                &ledger,
+                &witnesses,
+                &HashMap::new(),
+            )
+            .is_some()
+        }
+        let mut field: serde_json::Value = serde_json::from_str(include_str!(
+            "../../tests/root-let-action-return-schema17-ir.json"
+        ))
+        .unwrap();
+        field["witnesses"] =
+            serde_json::json!([{"name":"unrelated", "parameters":[], "result":{"kind":"field"}}]);
+        assert!(admitted(&serde_json::from_value(field.clone()).unwrap(), 0));
+        field["stateful_circuits"][0]["actions"][0]["action"]["actions"][0]["bindings"][0]["value"]
+            ["right"] =
+            serde_json::json!({"kind":"witness_call", "name":"unrelated", "arguments":[]});
+        let mut field: crate::ir::Contract = serde_json::from_value(field).unwrap();
+        field.schema_version = crate::ir::SCHEMA_VERSION;
+        assert!(!admitted(&field, 0));
+        assert!(
+            !crate::render_with_capabilities(&field)
+                .unwrap()
+                .capabilities
+                .circuits[0]
+                .recorded
+        );
+
+        let mut counters: crate::ir::Contract = serde_json::from_str(include_str!(
+            "../../tests/counter-less-than-schema15-ir.json"
+        ))
+        .unwrap();
+        counters.witnesses.push(WitnessDeclaration {
+            source: None,
+            name: "unused_bool".into(),
+            parameters: vec![],
+            result: Type::Boolean,
+        });
+        for index in 0..counters.stateful_circuits.len() {
+            assert!(admitted(&counters, index));
+        }
+        // A runtime-false branch is still part of the audited circuit domain.
+        let StateReturn::Expression { value } = &mut counters.stateful_circuits[2].return_value
+        else {
+            unreachable!()
+        };
+        let Expr::If {
+            condition,
+            otherwise,
+            ..
+        } = value
+        else {
+            unreachable!()
+        };
+        **condition = Expr::Boolean { value: true };
+        **otherwise = Expr::WitnessCall {
+            name: "unused_bool".into(),
+            arguments: vec![],
+        };
+        assert!(!admitted(&counters, 2));
+        counters.witnesses.push(WitnessDeclaration {
+            source: None,
+            name: "used_threshold".into(),
+            parameters: vec![],
+            result: Type::Unsigned {
+                max: u64::MAX.to_string(),
+            },
+        });
+        let StateReturn::Expression {
+            value: Expr::CounterLessThan { threshold, .. },
+        } = &mut counters.stateful_circuits[0].return_value
+        else {
+            unreachable!()
+        };
+        **threshold = Expr::WitnessCall {
+            name: "used_threshold".into(),
+            arguments: vec![],
+        };
+        assert!(!admitted(&counters, 0));
+        counters.schema_version = crate::ir::SCHEMA_VERSION;
+        let capabilities = crate::render_with_capabilities(&counters)
+            .unwrap()
+            .capabilities;
+        assert!(!capabilities.circuits[0].recorded);
+        assert!(!capabilities.circuits[2].recorded);
     }
 
     #[test]

@@ -163,19 +163,96 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    /// Circuits with a replayable ordered ledger program.
+    pub mod recorded {
+        use midnight_compact_runtime as runtime;
+        pub fn ping<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_static_0: runtime::FixedVector<
+                runtime::BoundedUint<18446744073709551615>,
+                3,
+            > = {
+                let __compact_map_source = {
+                    let __compact_cast_source_0 = (
+                        runtime::BoundedUint::<18446744073709551615>::new(0u128)
+                            .expect("Compact Uint literal fits its maximum"),
+                        runtime::BoundedUint::<0>::new(0u128)
+                            .expect("Compact Uint literal fits its maximum"),
+                        runtime::BoundedUint::<0>::new(0u128)
+                            .expect("Compact Uint literal fits its maximum"),
+                    );
+                    let (__compact_cast_item_0_0, __compact_cast_item_0_1, __compact_cast_item_0_2) =
+                        __compact_cast_source_0;
+                    runtime::FixedVector::new([
+                        __compact_cast_item_0_0,
+                        runtime::cast_unsigned::<0, 18446744073709551615>(__compact_cast_item_0_1)?,
+                        runtime::cast_unsigned::<0, 18446744073709551615>(__compact_cast_item_0_2)?,
+                    ])
+                };
+                let mut __compact_mapped = Vec::with_capacity(3);
+                for x in __compact_map_source.into_array() {
+                    __compact_mapped.push(x);
+                }
+                runtime::FixedVector::new(
+                    __compact_mapped
+                        .try_into()
+                        .expect("Vector map preserves its length"),
+                )
+            };
+            let frame = crate::ledger_slots::c
+                .record_write(frame, (__compact_recorded_static_0).clone())?;
+            Ok(frame.finish(()))
+        }
+        /// Typed handle for circuits with a complete recorded trace.
+        pub struct Contract;
+        impl Contract {
+            pub fn ping<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::ping(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn ping_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.ping(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "ping", input,
+                ))
+            }
+        }
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]
         witnesses: W,
+        pub recording: recorded::Contract,
     }
     impl<W> From<W> for Contract<W> {
         fn from(witnesses: W) -> Self {
-            Self { witnesses }
+            Self {
+                witnesses,
+                recording: recorded::Contract,
+            }
         }
     }
     impl Default for Contract<()> {
         fn default() -> Self {
-            Self { witnesses: () }
+            Self {
+                witnesses: (),
+                recording: recorded::Contract,
+            }
         }
     }
     impl<W> Contract<W> {
@@ -184,6 +261,10 @@ pub mod ledger_contract {
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
             crate::ledger_contract::ping(context)
+        }
+        /// Access replayable circuit calls for this contract.
+        pub fn recording(&self) -> &recorded::Contract {
+            &self.recording
         }
     }
 }

@@ -2433,6 +2433,24 @@ fn render_recorded_item(
                     expression_with_calls(value, parameters, &HashMap::new()).ok()?;
                 (actual == *ty).then_some(rendered)
             }
+            Expr::VectorMap {
+                parameter,
+                source,
+                body,
+                result,
+                length,
+            } if matches!(ty, Type::Vector { element, length: expected }
+                    if **element == *result && parameter.ty == *result && expected == length)
+                && matches!(result, Type::Unsigned { .. })
+                && matches!(body.as_ref(), Expr::Parameter { name } if name == &parameter.name)
+                && matches!(source.as_ref(), Expr::Tuple { elements }
+                        if elements.len() == *length
+                            && elements.iter().all(|value| matches!(value, Expr::UnsignedLiteral { .. }))) =>
+            {
+                let (rendered, actual) =
+                    expression_with_calls(value, parameters, &HashMap::new()).ok()?;
+                (actual == *ty).then_some(rendered)
+            }
             Expr::Vector { .. } if matches!(ty, Type::Vector { .. }) => {
                 let (rendered, actual) =
                     expression_with_calls(value, parameters, &HashMap::new()).ok()?;

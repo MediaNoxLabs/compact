@@ -98,3 +98,6 @@ midnight-storage-core = "=1.1.0"
 rand = "=0.8.5"
 rand_chacha = "=0.3.1"
 futures-executor = "=0.3.32"
+
+compact-rust-map-fn-oracle-fixture = { path = "../../tests-rust-backend/map-fn-oracle", features = ["ledger-transaction"] }
+compact-rust-map-lambda-oracle-fixture = { path = "../../tests-rust-backend/map-lambda-oracle", features = ["ledger-transaction"] }

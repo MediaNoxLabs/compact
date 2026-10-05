@@ -1559,6 +1559,17 @@ def main() -> None:
                 assert (nested_stateful_ternary_proof / "keys" / f"run.{extension}").is_file()
             for extension in ("zkir", "bzkir"):
                 assert (nested_stateful_ternary_proof / "zkir" / f"run.{extension}").is_file()
+            vector_map_proofs = []
+            for stem in ("map_fn_oracle", "map_lambda_oracle"):
+                output = base / f"{stem}-proof"
+                run(compiler, "--target", "rust", "--rust-require-recording",
+                    str(ROOT / "examples/rust_backend" / f"{stem}.compact"), str(output))
+                check_manifest(output)
+                for extension in ("prover", "verifier"):
+                    assert (output / "keys" / f"ping.{extension}").is_file()
+                for extension in ("zkir", "bzkir"):
+                    assert (output / "zkir" / f"ping.{extension}").is_file()
+                vector_map_proofs.append(output)
             let_return_proof = base / "let-return-proof"
             run(compiler, "--target", "rust", str(LET_RETURN_SOURCE), str(let_return_proof))
             check_manifest(let_return_proof)
@@ -1864,6 +1875,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--let-return", str(let_return_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--vector-map", *(str(output) for output in vector_map_proofs),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

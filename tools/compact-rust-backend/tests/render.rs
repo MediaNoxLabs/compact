@@ -8576,3 +8576,87 @@ fn plain_merkle_reset_recording_requires_exact_plain_slot() {
             .recorded
     );
 }
+
+#[test]
+fn identity_vector_map_recording_requires_closed_literals_and_exact_shape() {
+    let element = Type::Unsigned {
+        max: u64::MAX.to_string(),
+    };
+    let vector = Type::Vector {
+        element: Box::new(element.clone()),
+        length: 3,
+    };
+    let literal = || Expr::UnsignedLiteral {
+        value: "0".into(),
+        max: u64::MAX.to_string(),
+    };
+    let mut contract = identity(Type::Unit, Expr::Unit);
+    contract.ledger_fields = vec![LedgerField {
+        source: None,
+        id: "values".into(),
+        index: 0,
+        path: vec![],
+        declaration: LedgerFieldKind::Cell { ty: vector.clone() },
+    }];
+    contract.stateful_circuits = vec![StatefulCircuit {
+        source: None,
+        internal: false,
+        name: "write_map".into(),
+        parameters: vec![],
+        actions: vec![StateAction::Let {
+            bindings: vec![LocalBinding {
+                name: "mapped".into(),
+                ty: vector,
+                value: Expr::VectorMap {
+                    parameter: Parameter {
+                        name: "item".into(),
+                        ty: element.clone(),
+                    },
+                    source: Box::new(Expr::Tuple {
+                        elements: vec![literal(), literal(), literal()],
+                    }),
+                    body: Box::new(Expr::Parameter {
+                        name: "item".into(),
+                    }),
+                    result: element,
+                    length: 3,
+                },
+            }],
+            action: Box::new(StateAction::CellWrite {
+                field: "values".into(),
+                index: 0,
+                value: Expr::Parameter {
+                    name: "mapped".into(),
+                },
+            }),
+        }],
+        result: Type::Unit,
+        return_value: StateReturn::Unit,
+    }];
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].observed_call);
+    let mut nonidentity = contract.clone();
+    let StateAction::Let { bindings, .. } = &mut nonidentity.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    let Expr::VectorMap { body, .. } = &mut bindings[0].value else {
+        unreachable!()
+    };
+    **body = literal();
+    assert!(
+        !render_with_capabilities(&nonidentity)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
+    );
+    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    let Expr::VectorMap { length, .. } = &mut bindings[0].value else {
+        unreachable!()
+    };
+    *length = 2;
+    assert!(render_with_capabilities(&contract).is_err());
+}

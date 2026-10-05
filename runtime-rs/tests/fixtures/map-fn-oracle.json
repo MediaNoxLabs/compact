@@ -14,5 +14,93 @@
       "0",
       "0"
     ]
+  },
+  "ping": {
+    "result": [],
+    "privateOutputs": 0,
+    "gasCost": {
+      "readTime": "85000000",
+      "computeTime": "1233942932",
+      "bytesWritten": "48",
+      "bytesDeleted": "48"
+    },
+    "queries": [
+      {
+        "gasCost": {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "48",
+          "bytesDeleted": "48"
+        },
+        "program": [
+          {
+            "push": {
+              "storage": false,
+              "value": {
+                "tag": "cell",
+                "content": {
+                  "value": [
+                    []
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "push": {
+              "storage": true,
+              "value": {
+                "tag": "cell",
+                "content": {
+                  "value": [
+                    [],
+                    [],
+                    []
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 8
+                      }
+                    },
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 8
+                      }
+                    },
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 8
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "ins": {
+              "cached": false,
+              "n": 1
+            }
+          }
+        ]
+      }
+    ]
   }
 }

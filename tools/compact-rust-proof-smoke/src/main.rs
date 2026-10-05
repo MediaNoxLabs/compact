@@ -55,6 +55,7 @@ mod struct_constructor_cell;
 mod test_center_counter;
 mod test_center_welcome;
 mod unsigned_recording;
+mod vector_map;
 mod witness_assert;
 mod witness_vector_action;
 mod witness_vector_let;
@@ -2139,6 +2140,31 @@ fn main() -> Result<(), Box<dyn Error>> {
             return Err("usage: compact-rust-proof-smoke --merkle-reset <proof-output>".into());
         }
         return merkle_reset::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--vector-map")) {
+        let identity = arguments
+            .next()
+            .ok_or("usage: --vector-map <identity-output> <arithmetic-constructor-output>")?;
+        let arithmetic = arguments
+            .next()
+            .ok_or("usage: --vector-map <identity-output> <arithmetic-constructor-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: --vector-map <identity-output> <arithmetic-constructor-output>".into(),
+            );
+        }
+        let proof = std::thread::Builder::new()
+            .name("vector-map-proof".into())
+            .stack_size(64 * 1024 * 1024)
+            .spawn(move || {
+                vector_map::run(Path::new(&identity), Path::new(&arithmetic))
+                    .map_err(|e| e.to_string())
+            })?;
+        return match proof.join() {
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(error)) => Err(error.into()),
+            Err(_) => Err("vector map proof thread panicked".into()),
+        };
     }
     if first.as_deref() == Some(OsStr::new("--merkle-root")) {
         let root = arguments

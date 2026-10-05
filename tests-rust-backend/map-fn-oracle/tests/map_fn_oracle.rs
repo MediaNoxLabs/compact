@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use compact_rust_map_fn_oracle_fixture::ledger_contract::{initial_state, ping};
+use compact_rust_map_fn_oracle_fixture::ledger_contract::{initial_state, ping, recorded};
 use midnight_compact_runtime::context::ConstructorContext;
 use midnight_compact_runtime::ledger::{self, ContractAddress, DefaultDB, StateValue};
 use midnight_compact_runtime::{BoundedUint, FixedVector};
@@ -65,5 +65,71 @@ fn vector_map_identity_matches_typescript_state() {
     assert_eq!(
         serde_json::to_value(values(&state)).unwrap(),
         reference["afterPing"]["values"]
+    );
+}
+
+#[test]
+fn recorded_identity_map_matches_typescript_and_replays() {
+    let reference: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/map-fn-oracle.json"
+    ))
+    .unwrap();
+    let context = || {
+        initial_state(ConstructorContext::new(()))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default())
+    };
+    let native = ping(context()).unwrap();
+    let recorded = recorded::ping(context()).unwrap();
+    let capture = &reference["ping"];
+    assert_eq!(capture["result"], serde_json::json!([]));
+    assert_eq!(capture["privateOutputs"], 0);
+    assert!(recorded.execution.private_transcript_outputs.is_empty());
+    assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+    assert_eq!(
+        native.context.query.effects,
+        recorded.execution.context.query.effects
+    );
+    assert_eq!(
+        state_hex(native.context.query.state.get_ref().clone()),
+        reference["afterPing"]["stateHex"]
+    );
+    assert_eq!(
+        state_hex(recorded.execution.context.query.state.get_ref().clone()),
+        reference["afterPing"]["stateHex"]
+    );
+    let gas = serde_json::to_value(recorded.execution.gas_cost).unwrap();
+    assert_eq!(capture["queries"].as_array().unwrap().len(), 1);
+    for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+        assert_eq!(
+            gas[key].as_u64().unwrap().to_string(),
+            capture["gasCost"][key].as_str().unwrap()
+        );
+        assert_eq!(
+            capture["gasCost"][key],
+            capture["queries"][0]["gasCost"][key]
+        );
+    }
+    assert_eq!(
+        serde_json::to_value(recorded.public.verify_ops()).unwrap(),
+        capture["queries"][0]["program"]
+    );
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(replay.gas_cost, recorded.execution.gas_cost);
+    assert_eq!(
+        replay.context.effects,
+        recorded.execution.context.query.effects
+    );
+    assert_eq!(
+        state_hex(replay.context.state.get_ref().clone()),
+        reference["afterPing"]["stateHex"]
     );
 }

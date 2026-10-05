@@ -1820,6 +1820,8 @@ dependencies = [
  "compact-rust-let-return-oracle-fixture",
  "compact-rust-list-field-fixture",
  "compact-rust-map-boolean-field-fixture",
+ "compact-rust-map-fn-oracle-fixture",
+ "compact-rust-map-lambda-oracle-fixture",
  "compact-rust-merkle-path-verify-fixture",
  "compact-rust-merkle-tree-oracle-fixture",
  "compact-rust-mixed-width-operand-oracle-fixture",

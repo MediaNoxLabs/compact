@@ -18,16 +18,20 @@ use std::env;
 
 mod common;
 
+use common::ReadOnlyBaseline;
+
 #[test]
 fn test_compact_check_no_param() {
+    let mut baseline = ReadOnlyBaseline::new();
     run_command(
         &["check"],
-        None,
+        Some(baseline.environment()),
         Some("./output/check/std_default.txt"),
         None,
         &[("[LATEST_COMPACTC_VERSION]", LATEST_COMPACTC_VERSION)],
         None,
     );
+    baseline.assert_unchanged();
 }
 
 #[test]

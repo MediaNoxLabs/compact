@@ -19,6 +19,11 @@ use std::process::Command;
 use std::{fs, io};
 
 #[allow(dead_code)]
+mod read_only_baseline;
+#[allow(unused_imports)]
+pub use read_only_baseline::ReadOnlyBaseline;
+
+#[allow(dead_code)]
 pub const COMPACT_VERSION: &str = "0.5.1";
 
 #[allow(dead_code)]
@@ -71,7 +76,7 @@ pub fn assert_command_output(
     expected_stderr: &str,
     expected_exit_code: i32,
 ) {
-    let binary = binary_path.unwrap_or("../../target/debug/compact");
+    let binary = binary_path.unwrap_or(env!("CARGO_BIN_EXE_compact"));
 
     let mut cmd = Command::new(binary);
 
@@ -110,7 +115,7 @@ pub fn assert_command_output_sorted(
     expected_stderr: &str,
     expected_exit_code: i32,
 ) {
-    let binary = binary_path.unwrap_or("../../target/debug/compact");
+    let binary = binary_path.unwrap_or(env!("CARGO_BIN_EXE_compact"));
 
     let mut cmd = Command::new(binary);
 

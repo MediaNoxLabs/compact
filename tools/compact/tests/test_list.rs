@@ -21,11 +21,14 @@ use std::env;
 
 mod common;
 
+use common::ReadOnlyBaseline;
+
 #[test]
 fn test_compact_list_no_param() {
+    let mut baseline = ReadOnlyBaseline::new();
     run_command(
         &["list"],
-        None,
+        Some(baseline.environment()),
         Some("./output/list/std_default.txt"),
         None,
         &[
@@ -35,30 +38,35 @@ fn test_compact_list_no_param() {
         ],
         None,
     );
+    baseline.assert_unchanged();
 }
 
 #[test]
 fn test_compact_list_param_i_nothing_installed() {
+    let mut baseline = ReadOnlyBaseline::new();
     run_command(
         &["list", "-i"],
-        None,
+        Some(baseline.environment()),
         Some("./output/list/std_list_installed.txt"),
         None,
         &[],
         None,
     );
+    baseline.assert_unchanged();
 }
 
 #[test]
 fn test_compact_list_param_installed_nothing_installed() {
+    let mut baseline = ReadOnlyBaseline::new();
     run_command(
         &["list", "--installed"],
-        None,
+        Some(baseline.environment()),
         Some("./output/list/std_list_installed.txt"),
         None,
         &[],
         None,
     );
+    baseline.assert_unchanged();
 }
 
 #[test]

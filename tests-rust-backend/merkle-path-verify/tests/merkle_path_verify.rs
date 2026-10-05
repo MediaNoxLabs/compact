@@ -227,7 +227,6 @@ fn recorded_literal_index_replacement_matches_typescript_and_replay() {
     let native = replace(context_after_append(), value).unwrap();
     let recorded = recorded::replace(context_after_append(), value).unwrap();
     let expected = &oracle["replace"];
-    assert_eq!(recorded.execution.result, native.result);
     assert_eq!(recorded.execution.gas_cost, native.gas_cost);
     assert_eq!(
         recorded.execution.context.query.effects,

@@ -1389,6 +1389,67 @@ pub mod ledger_contract {
             let (frame, _) = __compact_recorded_body_recordWrite(frame, witnesses)?;
             Ok(frame.finish(()))
         }
+        pub fn setRecord<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::OpaqueString,
+            __compact_param_1: crate::types::AssetRecord,
+            __compact_param_2: crate::types::RecordMutation,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_write_key: runtime::OpaqueString = (__compact_param_0).clone();
+            let __compact_recorded_write_value: crate::types::AssetRecord =
+                (__compact_param_1).clone();
+            let __compact_recorded_write_mutation: crate::types::RecordMutation = __compact_param_2;
+            let (frame, _) = __compact_recorded_body_assertWritable(frame)?;
+            if !(__compact_recorded_write_mutation == crate::types::RecordMutation::Insert
+                || __compact_recorded_write_mutation == crate::types::RecordMutation::Update)
+            {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "record mutation must be Insert or Update".to_owned(),
+                ));
+            }
+            crate::pure_circuits::assertRecordClassKnown(__compact_recorded_write_value.clone())?;
+            let frame = if __compact_recorded_write_mutation == crate::types::RecordMutation::Update
+            {
+                let (frame, __compact_recorded_present): (_, bool) =
+                    crate::ledger_slots::records
+                        .record_member(frame, __compact_recorded_write_key.clone())?;
+                if !__compact_recorded_present {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "record does not exist".to_owned(),
+                    ));
+                }
+                crate::ledger_slots::records
+                    .record_remove(frame, __compact_recorded_write_key.clone())?
+            } else {
+                let (frame, __compact_recorded_first_present): (_, bool) =
+                    crate::ledger_slots::records
+                        .record_member(frame, __compact_recorded_write_key.clone())?;
+                if __compact_recorded_first_present {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "record already exists".to_owned(),
+                    ));
+                }
+                let (frame, __compact_recorded_target_present): (_, bool) =
+                    crate::ledger_slots::custodyGrants
+                        .record_member(frame, __compact_recorded_write_key.clone())?;
+                if __compact_recorded_target_present {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "record already exists".to_owned(),
+                    ));
+                }
+                crate::ledger_slots::recordCount.record_increment(frame, 1_u16)?
+            };
+            let frame = crate::ledger_slots::records.record_insert(
+                frame,
+                __compact_recorded_write_key,
+                __compact_recorded_write_value,
+            )?;
+            let (frame, _) = __compact_recorded_body_recordWrite(frame, witnesses)?;
+            Ok(frame.finish(()))
+        }
         pub fn removeRecord<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
@@ -1712,6 +1773,51 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "setCustodian",
+                    input,
+                ))
+            }
+            pub fn setRecord<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                recordId: runtime::OpaqueString,
+                record: crate::types::AssetRecord,
+                mutation: crate::types::RecordMutation,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                setRecord(context, self.witnesses, recordId, record, mutation)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn setRecord_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                recordId: runtime::OpaqueString,
+                record: crate::types::AssetRecord,
+                mutation: crate::types::RecordMutation,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::concat(&[
+                    runtime::fab::AlignedValue::from((recordId).clone()),
+                    runtime::fab::AlignedValue::from((record).clone()),
+                    runtime::fab::AlignedValue::from(mutation),
+                ]);
+                let recorded = self.setRecord(
+                    observed.circuit_context(private_state),
+                    recordId,
+                    record,
+                    mutation,
+                )?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "setRecord",
                     input,
                 ))
             }

@@ -17,7 +17,7 @@ use std::cell::RefCell;
 
 use compact_rust_asset_registry_oracle_fixture::ledger_contract::{
     LedgerView, Witnesses, acceptIfFresh, initial_state, recorded, setCustodian, setCustodyGrant,
-    tag,
+    setRecord, tag,
 };
 use compact_rust_asset_registry_oracle_fixture::ledger_slots;
 use compact_rust_asset_registry_oracle_fixture::types::{
@@ -569,6 +569,211 @@ fn grant_write_oracle() -> Value {
         "../../../runtime-rs/tests/fixtures/asset-custody-grant-write.json"
     ))
     .unwrap()
+}
+
+fn record_write_oracle() -> Value {
+    serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/asset-record-write.json"
+    ))
+    .unwrap()
+}
+
+fn asset_record(revised: bool, invalid_class: bool) -> AssetRecord {
+    AssetRecord {
+        code: FixedBytes::new([if revised { 3 } else { 0 }; 32]),
+        note: runtime::OpaqueString::from(if revised {
+            "更新済み café"
+        } else {
+            "検査資料 🔒"
+        }),
+        provenance: Provenance {
+            facility: FixedBytes::new([if revised { 6 } else { 4 }; 32]),
+            registeredAt: BoundedUint::new(if revised { 101 } else { 91 }).unwrap(),
+        },
+        kind: if invalid_class {
+            AssetClass::Unspecified
+        } else if revised {
+            AssetClass::Container
+        } else {
+            AssetClass::Instrument
+        },
+        quantity: BoundedUint::new(if revised { 9 } else { 5 }).unwrap(),
+    }
+}
+
+#[test]
+fn typed_asset_record_insert_update_match_typescript_native_recorded_and_replay() {
+    let reference = record_write_oracle();
+    let native_witnesses = TrackingWitness::default();
+    let recorded_witnesses = TrackingWitness::default();
+    let native_context = initial("success", &native_witnesses);
+    let recorded_context = initial("success", &recorded_witnesses);
+    let key = runtime::OpaqueString::from("record-α-1");
+    assert_eq!(
+        state_hex(native_context.query.state.get_ref().clone()),
+        reference["insert"]["initialStateHex"]
+    );
+    let native_insert = setRecord(
+        native_context,
+        &native_witnesses,
+        key.clone(),
+        asset_record(false, false),
+        RecordMutation::Insert,
+    )
+    .unwrap();
+    let recorded_insert = recorded::setRecord(
+        recorded_context,
+        &recorded_witnesses,
+        key.clone(),
+        asset_record(false, false),
+        RecordMutation::Insert,
+    )
+    .unwrap();
+    check_success(
+        &native_insert,
+        &recorded_insert,
+        &reference["insert"],
+        "record insert",
+    );
+    assert_eq!(native_witnesses.calls(), ["currentTimestamp"]);
+    assert_eq!(recorded_witnesses.calls(), ["currentTimestamp"]);
+    native_witnesses.clear();
+    recorded_witnesses.clear();
+
+    assert_eq!(
+        state_hex(native_insert.context.query.state.get_ref().clone()),
+        reference["update"]["initialStateHex"]
+    );
+    let native_update = setRecord(
+        native_insert.context,
+        &native_witnesses,
+        key.clone(),
+        asset_record(true, false),
+        RecordMutation::Update,
+    )
+    .unwrap();
+    let recorded_update = recorded::setRecord(
+        recorded_insert.execution.context,
+        &recorded_witnesses,
+        key,
+        asset_record(true, false),
+        RecordMutation::Update,
+    )
+    .unwrap();
+    check_success(
+        &native_update,
+        &recorded_update,
+        &reference["update"],
+        "record update",
+    );
+    assert_eq!(native_witnesses.calls(), ["currentTimestamp"]);
+    assert_eq!(recorded_witnesses.calls(), ["currentTimestamp"]);
+}
+
+#[test]
+fn typed_asset_record_rejects_class_missing_duplicate_invalid_closed_and_frozen() {
+    let reference = record_write_oracle();
+    let key = runtime::OpaqueString::from("record-α-1");
+    for (case, mode, mutation, invalid_class) in [
+        ("invalidClass", "success", RecordMutation::Insert, true),
+        ("missingUpdate", "success", RecordMutation::Update, false),
+        (
+            "invalidMutation",
+            "success",
+            RecordMutation::Unspecified,
+            false,
+        ),
+        ("closed", "closed", RecordMutation::Insert, false),
+        ("frozen", "frozen", RecordMutation::Insert, false),
+    ] {
+        let native_witnesses = TrackingWitness::default();
+        let recorded_witnesses = TrackingWitness::default();
+        let native_context = initial(mode, &native_witnesses);
+        let recorded_context = initial(mode, &recorded_witnesses);
+        assert_eq!(
+            state_hex(native_context.query.state.get_ref().clone()),
+            reference[case]["initialStateHex"]
+        );
+        let native_error = setRecord(
+            native_context,
+            &native_witnesses,
+            key.clone(),
+            asset_record(false, invalid_class),
+            mutation,
+        )
+        .err()
+        .unwrap();
+        let recorded_error = recorded::setRecord(
+            recorded_context,
+            &recorded_witnesses,
+            key.clone(),
+            asset_record(false, invalid_class),
+            mutation,
+        )
+        .err()
+        .unwrap();
+        assert_eq!(native_error, recorded_error, "{case}: Rust guard");
+        assert_eq!(
+            native_error.to_string(),
+            reference[case]["error"],
+            "{case}: TypeScript guard"
+        );
+        assert!(native_witnesses.calls().is_empty());
+        assert!(recorded_witnesses.calls().is_empty());
+        assert_eq!(
+            reference[case]["stateHex"],
+            reference[case]["initialStateHex"]
+        );
+    }
+    let native_witnesses = TrackingWitness::default();
+    let recorded_witnesses = TrackingWitness::default();
+    let native_seed = setRecord(
+        initial("success", &native_witnesses),
+        &native_witnesses,
+        key.clone(),
+        asset_record(false, false),
+        RecordMutation::Insert,
+    )
+    .unwrap();
+    let recorded_seed = setRecord(
+        initial("success", &recorded_witnesses),
+        &recorded_witnesses,
+        key.clone(),
+        asset_record(false, false),
+        RecordMutation::Insert,
+    )
+    .unwrap();
+    assert_eq!(
+        state_hex(native_seed.context.query.state.get_ref().clone()),
+        reference["duplicateInsert"]["initialStateHex"]
+    );
+    native_witnesses.clear();
+    recorded_witnesses.clear();
+    let native_error = setRecord(
+        native_seed.context,
+        &native_witnesses,
+        key.clone(),
+        asset_record(false, false),
+        RecordMutation::Insert,
+    )
+    .err()
+    .unwrap();
+    let recorded_error = recorded::setRecord(
+        recorded_seed.context,
+        &recorded_witnesses,
+        key,
+        asset_record(false, false),
+        RecordMutation::Insert,
+    )
+    .err()
+    .unwrap();
+    assert_eq!(native_error, recorded_error);
+    assert_eq!(
+        native_error.to_string(),
+        reference["duplicateInsert"]["error"]
+    );
+    assert!(native_witnesses.calls().is_empty());
+    assert!(recorded_witnesses.calls().is_empty());
 }
 
 fn custody_grant(revised: bool) -> CustodyGrant {

@@ -9106,3 +9106,74 @@ fn authorized_optional_cell_write_is_structural_and_fails_closed() {
     field.index = 8;
     assert!(render_with_capabilities(&wrong_index).is_err());
 }
+
+#[test]
+fn typed_asset_map_write_requires_class_guard_and_insert_only_count() {
+    let original: serde_json::Value =
+        serde_json::from_str(include_str!("asset-record-write-schema13-ir.json")).unwrap();
+    let recorded = |value: &serde_json::Value| {
+        let contract: Contract = serde_json::from_value(value.clone()).unwrap();
+        let Ok(rendered) = render_with_capabilities(&contract) else {
+            return (false, String::new());
+        };
+        let capability = rendered
+            .capabilities
+            .circuits
+            .iter()
+            .find(|capability| capability.name == "setRecord")
+            .unwrap();
+        (capability.recorded, rendered.source)
+    };
+    let (available, source) = recorded(&original);
+    assert!(available);
+    assert!(source.contains("pub fn setRecord<Private"));
+    assert!(source.contains("record_increment(frame, 1_u16)"));
+    assert!(source.contains("assertRecordClassKnown("));
+    assert!(source.contains("__compact_recorded_write_value.clone()"));
+
+    fn actions(contract: &mut serde_json::Value) -> &mut Vec<serde_json::Value> {
+        contract["stateful_circuits"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .find(|circuit| circuit["name"] == "setRecord")
+            .unwrap()["actions"][0]["action"]["action"]["action"]["actions"]
+            .as_array_mut()
+            .unwrap()
+    }
+    let mut wrong_class_argument = original.clone();
+    actions(&mut wrong_class_argument)[2]["arguments"][0]["value"]["name"] =
+        serde_json::json!("record");
+    assert!(!recorded(&wrong_class_argument).0);
+
+    let mut reordered = original.clone();
+    actions(&mut reordered).swap(2, 3);
+    assert!(!recorded(&reordered).0);
+
+    let mut extra_class_step = original.clone();
+    extra_class_step["circuits"][0]["body"]["steps"]
+        .as_array_mut()
+        .unwrap()
+        .push(original["circuits"][0]["body"]["steps"][0].clone());
+    assert!(!recorded(&extra_class_step).0);
+
+    let mut wrong_counter_amount = original.clone();
+    actions(&mut wrong_counter_amount)[3]["otherwise"]["then"]["actions"][1]["bindings"][0]["value"]
+        ["value"] = serde_json::json!("2");
+    assert!(!recorded(&wrong_counter_amount).0);
+
+    let mut wrong_counter_slot = original.clone();
+    actions(&mut wrong_counter_slot)[3]["otherwise"]["then"]["actions"][1]["action"]["field"] =
+        serde_json::json!("open");
+    assert!(!recorded(&wrong_counter_slot).0);
+
+    let mut wrong_exists_map = original.clone();
+    let helper = wrong_exists_map["stateful_circuits"]
+        .as_array_mut()
+        .unwrap()
+        .iter_mut()
+        .find(|circuit| circuit["name"] == "recordExists")
+        .unwrap();
+    helper["return_value"]["value"]["otherwise"]["field"] = serde_json::json!("records");
+    assert!(!recorded(&wrong_exists_map).0);
+}

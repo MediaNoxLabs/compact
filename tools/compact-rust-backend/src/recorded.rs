@@ -2164,6 +2164,7 @@ fn render_recorded_item(
         circuit: &StatefulCircuit,
         parameters: &HashMap<&str, (&Type, syn::Ident)>,
         ledger_fields: &HashMap<&str, &LedgerField>,
+        pure_circuits: &HashMap<&str, &PureCircuit>,
         circuits: &HashMap<&str, &StatefulCircuit>,
         shared_callees: &HashSet<String>,
     ) -> Result<Option<Vec<syn::Stmt>>, RenderError> {
@@ -2263,6 +2264,17 @@ fn render_recorded_item(
                 condition: mutation_guard,
                 message: mutation_message,
             },
+            remaining @ ..,
+        ] = actions.as_slice()
+        else {
+            return Ok(None);
+        };
+        let (class_guard, write_actions) = match remaining {
+            [StateAction::PureCall { .. }, _, _, _] => (Some(&remaining[0]), &remaining[1..]),
+            [_, _, _] => (None, remaining),
+            _ => return Ok(None),
+        };
+        let [
             StateAction::If {
                 condition: update_condition,
                 then: update,
@@ -2278,9 +2290,67 @@ fn render_recorded_item(
                 name: write,
                 arguments: write_args,
             },
-        ] = actions.as_slice()
+        ] = write_actions
         else {
             return Ok(None);
+        };
+        let class_assert = if let Some(StateAction::PureCall { name, arguments }) = class_guard {
+            let [Expr::Coerce { value, ty }] = arguments.as_slice() else {
+                return Ok(None);
+            };
+            if ty != &value_binding.ty
+                || !matches!(value.as_ref(), Expr::Parameter { name } if name == &value_binding.name)
+            {
+                return Ok(None);
+            }
+            let Some(callee) = pure_circuits.get(name.as_str()) else {
+                return Ok(None);
+            };
+            let [formal] = callee.parameters.as_slice() else {
+                return Ok(None);
+            };
+            let Expr::Sequence { steps, value } = &callee.body else {
+                return Ok(None);
+            };
+            let [Expr::Assert { condition, .. }] = steps.as_slice() else {
+                return Ok(None);
+            };
+            let Expr::NotEqual { left, right } = condition.as_ref() else {
+                return Ok(None);
+            };
+            let Expr::StructField {
+                value: selected,
+                field: selected_field,
+                index: selected_index,
+            } = left.as_ref()
+            else {
+                return Ok(None);
+            };
+            let Expr::EnumVariant {
+                ty: variant_type,
+                variant,
+            } = right.as_ref()
+            else {
+                return Ok(None);
+            };
+            let Type::Struct { fields, .. } = &value_binding.ty else {
+                return Ok(None);
+            };
+            if callee.result != Type::Unit
+                || formal.ty != value_binding.ty
+                || !matches!(value.as_ref(), Expr::Unit)
+                || !matches!(selected.as_ref(), Expr::Parameter { name } if name == &formal.name)
+                || !matches!(fields.get(*selected_index), Some(member)
+                    if member.name == *selected_field && member.ty == *variant_type)
+                || !matches!(variant_type, Type::Enum { variants, .. }
+                    if variants.first().is_some_and(|first| first == variant)
+                        && variant == "Unspecified")
+            {
+                return Ok(None);
+            }
+            Some(ident(name)?)
+        } else {
+            None
         };
         let key_is_bound =
             |expr: &Expr| matches!(expr, Expr::Parameter { name } if name == &key_binding.name);
@@ -2378,10 +2448,27 @@ fn render_recorded_item(
         {
             return Ok(None);
         }
+        let (uniqueness, increment) = match uniqueness.as_ref() {
+            StateAction::Assert { .. } => (uniqueness.as_ref(), None),
+            StateAction::Sequence { actions } => {
+                let [
+                    guard @ StateAction::Assert { .. },
+                    count @ StateAction::Let { .. },
+                ] = actions.as_slice()
+                else {
+                    return Ok(None);
+                };
+                (guard, Some(count))
+            }
+            _ => return Ok(None),
+        };
+        if class_assert.is_some() != increment.is_some() {
+            return Ok(None);
+        }
         let StateAction::Assert {
             condition: absent_guard,
             message: duplicate_message,
-        } = uniqueness.as_ref()
+        } = uniqueness
         else {
             return Ok(None);
         };
@@ -2431,16 +2518,25 @@ fn render_recorded_item(
             || exists.result != Type::Boolean
             || !exists.actions.is_empty()
             || !matches!(first_found.as_ref(), Expr::Boolean { value: true })
-            || map_member(second_member, &exists_parameter.name, ledger_fields)
-                != Some((field.as_str(), *index))
         {
             return Ok(None);
         }
-        let Some((first_field, _)) =
+        let Some((first_field, first_index)) =
             map_member(first_member, &exists_parameter.name, ledger_fields)
         else {
             return Ok(None);
         };
+        let Some((second_field, second_index)) =
+            map_member(second_member, &exists_parameter.name, ledger_fields)
+        else {
+            return Ok(None);
+        };
+        if (first_field, first_index) == (second_field, second_index)
+            || (first_field, first_index) != (field.as_str(), *index)
+                && (second_field, second_index) != (field.as_str(), *index)
+        {
+            return Ok(None);
+        }
         let Some(writable_callee) = circuits.get(writable.as_str()) else {
             return Ok(None);
         };
@@ -2467,6 +2563,48 @@ fn render_recorded_item(
             .expect("checked enum");
         let map = ident(field)?;
         let first_map = ident(first_field)?;
+        let second_map = ident(second_field)?;
+        let insert_increment: syn::Expr =
+            if let Some(StateAction::Let { bindings, action }) = increment {
+                let [
+                    LocalBinding {
+                        name: amount_name,
+                        ty: Type::Unsigned { max },
+                        value:
+                            Expr::UnsignedLiteral {
+                                value,
+                                max: literal_max,
+                            },
+                    },
+                ] = bindings.as_slice()
+                else {
+                    return Ok(None);
+                };
+                let StateAction::CounterIncrement {
+                    field: counter_field,
+                    index: counter_index,
+                    amount: CounterAmount::Parameter { name },
+                } = action.as_ref()
+                else {
+                    return Ok(None);
+                };
+                let Some(counter_slot) = ledger_fields.get(counter_field.as_str()) else {
+                    return Ok(None);
+                };
+                if max != "65535"
+                    || literal_max != max
+                    || value != "1"
+                    || name != amount_name
+                    || counter_slot.index != *counter_index
+                    || counter_slot.declaration != LedgerFieldKind::Counter
+                {
+                    return Ok(None);
+                }
+                let counter = ident(counter_field)?;
+                syn::parse_quote!(crate::ledger_slots::#counter.record_increment(frame, 1_u16)?)
+            } else {
+                syn::parse_quote!(frame)
+            };
         let value_ty = rust_type(&value_binding.ty)?;
         let mutation_ty = rust_type(&mutation_binding.ty)?;
         let writable_helper = helper_ident(writable, circuits)?;
@@ -2481,13 +2619,16 @@ fn render_recorded_item(
         } else {
             steps.push(syn::parse_quote!(let (frame, _) = #writable_helper(frame)?;));
         }
+        steps.extend([syn::parse_quote!(
+            if !(__compact_recorded_write_mutation == #mutation_ty::Insert
+                || __compact_recorded_write_mutation == #mutation_ty::Update) {
+                return Err(runtime::CompactError::AssertionFailed(#mutation_message.to_owned()));
+            }
+        )]);
+        if let Some(class_assert) = class_assert {
+            steps.push(syn::parse_quote!(crate::pure_circuits::#class_assert(__compact_recorded_write_value.clone())?;));
+        }
         steps.extend([
-            syn::parse_quote!(
-                if !(__compact_recorded_write_mutation == #mutation_ty::Insert
-                    || __compact_recorded_write_mutation == #mutation_ty::Update) {
-                    return Err(runtime::CompactError::AssertionFailed(#mutation_message.to_owned()));
-                }
-            ),
             syn::parse_quote!(
                 let frame = if __compact_recorded_write_mutation == #mutation_ty::Update {
                     let (frame, __compact_recorded_present): (_, bool) =
@@ -2503,11 +2644,11 @@ fn render_recorded_item(
                         return Err(runtime::CompactError::AssertionFailed(#duplicate_message.to_owned()));
                     }
                     let (frame, __compact_recorded_target_present): (_, bool) =
-                        crate::ledger_slots::#map.record_member(frame, __compact_recorded_write_key.clone())?;
+                        crate::ledger_slots::#second_map.record_member(frame, __compact_recorded_write_key.clone())?;
                     if __compact_recorded_target_present {
                         return Err(runtime::CompactError::AssertionFailed(#duplicate_message.to_owned()));
                     }
-                    frame
+                    #insert_increment
                 };
             ),
             syn::parse_quote!(
@@ -6904,6 +7045,7 @@ fn render_recorded_item(
         circuit,
         &parameters,
         ledger_fields,
+        pure_circuits,
         circuits,
         shared_callees,
     )?;

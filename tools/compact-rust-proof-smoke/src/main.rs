@@ -29,6 +29,7 @@ mod adt_set_vector;
 mod asset_custody_grant;
 mod asset_freshness;
 mod asset_grant_effective;
+mod asset_record_write;
 mod asset_removal;
 mod asset_stored_record_fresh;
 mod asset_writable;
@@ -1649,6 +1650,17 @@ fn run() -> Result<(), Box<dyn Error>> {
             );
         }
         return asset_custody_grant::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--asset-record-write")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --asset-record-write <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --asset-record-write <proof-output>".into(),
+            );
+        }
+        return asset_record_write::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--asset-removal")) {
         let root = arguments

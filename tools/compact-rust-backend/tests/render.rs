@@ -254,7 +254,7 @@ fn opaque_set_check_in_records_only_typed_parameter_and_unit_witness() {
             .as_ref()
             .unwrap()
             .path,
-        "actions[2]"
+        "actions[2].value.arguments[0]"
     );
 
     contract.stateful_circuits[0].actions[2] = StateAction::SetRemove {

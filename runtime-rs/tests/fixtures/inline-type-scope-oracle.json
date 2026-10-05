@@ -3,5 +3,415 @@
   "scalarStateHex": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a7c001882090ac241410400040100906001aae761377f3b4f1f07d982783b902314b61a9cbe6ccfdfa96559039f07e332ed200104080401040c080104041014030401041008041408040804180403041c00042008010404244d0103049c390101040304010804080801040104011882090ac2414100011403040104100401080104040104010401906001aae761377f3b4f1f07d982783b902314b61a9cbe6ccfdfa96559039f07e332ed20010000201c73657448617368000400082c3000043408010404389003043f80c283dc645a9babe2ce81a4747b83ecadc09f277381c640c54cf0aaa7bb180600003834636865636b41676753636f706508403000044408010404489003043f80f59588ce1e6eef5e79485b3d0f0f42472f57491461de20fd5664444d9a7452d0005854636865636b4e6f436f6c6c6973696f6e53636f706508503000045408010404588c03043e7cd04118121053ecde5fe07a395ebc26c1d62532cd40081c341f34f24cbca80d004440636865636b5363616c617253636f706508603000046408010404688c03043e7c247b1b4ecc7bdcfd80ccb2903758c55480cee9d8cd87eb5d818e07b9e9044540305c30303030303030303030306c3030080208403030303c30303030303030304c7030300802101418302874301003000400",
   "aggStateHex": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a7c0018820708c241410400040100906001d090c73d12fbbcbc78ccbe582114cf38684920e961cb35c495b0145a35433e73200104080401040c080104041014030401041008041408040804180403041c00042008010404244d0103049c3901010403040108040808010401040118820708c2414100011403040104100401080104040104010401906001d090c73d12fbbcbc78ccbe582114cf38684920e961cb35c495b0145a35433e7320010000201c73657448617368000400082c3000043408010404389003043f80c283dc645a9babe2ce81a4747b83ecadc09f277381c640c54cf0aaa7bb180600003834636865636b41676753636f706508403000044408010404489003043f80f59588ce1e6eef5e79485b3d0f0f42472f57491461de20fd5664444d9a7452d0005854636865636b4e6f436f6c6c6973696f6e53636f706508503000045408010404588c03043e7cd04118121053ecde5fe07a395ebc26c1d62532cd40081c341f34f24cbca80d004440636865636b5363616c617253636f706508603000046408010404688c03043e7c247b1b4ecc7bdcfd80ccb2903758c55480cee9d8cd87eb5d818e07b9e9044540305c30303030303030303030306c3030080208403030303c30303030303030304c7030300802101418302874301003000400",
   "noCollisionStateHex": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a7c0018820304c241410400040100906001ae71995c8dc6ad58e031bf776a57daf59b5811ae97179ac5e2091b0268522bba200104080401040c080104041014030401041008041408040804180403041c00042008010404244d0103049c3901010403040108040808010401040118820304c2414100011403040104100401080104040104010401906001ae71995c8dc6ad58e031bf776a57daf59b5811ae97179ac5e2091b0268522bba20010000201c73657448617368000400082c3000043408010404389003043f80c283dc645a9babe2ce81a4747b83ecadc09f277381c640c54cf0aaa7bb180600003834636865636b41676753636f706508403000044408010404489003043f80f59588ce1e6eef5e79485b3d0f0f42472f57491461de20fd5664444d9a7452d0005854636865636b4e6f436f6c6c6973696f6e53636f706508503000045408010404588c03043e7cd04118121053ecde5fe07a395ebc26c1d62532cd40081c341f34f24cbca80d004440636865636b5363616c617253636f706508603000046408010404688c03043e7c247b1b4ecc7bdcfd80ccb2903758c55480cee9d8cd87eb5d818e07b9e9044540305c30303030303030303030306c3030080208403030303c30303030303030304c7030300802101418302874301003000400",
-  "scalarMismatch": "failed assert: scalar helper formal took the caller's vector type"
+  "scalarMismatch": "failed assert: scalar helper formal took the caller's vector type",
+  "nativeQueries": {
+    "scalar": {
+      "result": [],
+      "gasCost": {
+        "readTime": "85000000",
+        "computeTime": "1233942932",
+        "bytesWritten": "156",
+        "bytesDeleted": "156"
+      },
+      "privateOutputs": 0,
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249915363",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "program": [
+            {
+              "dup": {
+                "n": 0
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": false,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          1
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "popeq": {
+                "cached": false,
+                "result": null
+              }
+            }
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1233942932",
+            "bytesWritten": "156",
+            "bytesDeleted": "156"
+          },
+          "program": [
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "push": {
+                "storage": true,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        9
+                      ],
+                      [
+                        10
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      },
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "ins": {
+                "cached": false,
+                "n": 1
+              }
+            }
+          ]
+        }
+      ],
+      "replayGas": {
+        "readTime": "255000000",
+        "computeTime": "1409371826",
+        "bytesWritten": "156",
+        "bytesDeleted": "156"
+      }
+    },
+    "aggregate": {
+      "result": [],
+      "gasCost": {
+        "readTime": "85000000",
+        "computeTime": "1233942932",
+        "bytesWritten": "156",
+        "bytesDeleted": "156"
+      },
+      "privateOutputs": 0,
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249915363",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "program": [
+            {
+              "dup": {
+                "n": 0
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": false,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          1
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "popeq": {
+                "cached": false,
+                "result": null
+              }
+            }
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1233942932",
+            "bytesWritten": "156",
+            "bytesDeleted": "156"
+          },
+          "program": [
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "push": {
+                "storage": true,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        7
+                      ],
+                      [
+                        8
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      },
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "ins": {
+                "cached": false,
+                "n": 1
+              }
+            }
+          ]
+        }
+      ],
+      "replayGas": {
+        "readTime": "255000000",
+        "computeTime": "1409371826",
+        "bytesWritten": "156",
+        "bytesDeleted": "156"
+      }
+    },
+    "noCollision": {
+      "result": [],
+      "gasCost": {
+        "readTime": "85000000",
+        "computeTime": "1233942932",
+        "bytesWritten": "156",
+        "bytesDeleted": "156"
+      },
+      "privateOutputs": 0,
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249915363",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "program": [
+            {
+              "dup": {
+                "n": 0
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": false,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          1
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "popeq": {
+                "cached": false,
+                "result": null
+              }
+            }
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1233942932",
+            "bytesWritten": "156",
+            "bytesDeleted": "156"
+          },
+          "program": [
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "push": {
+                "storage": true,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        3
+                      ],
+                      [
+                        4
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      },
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "ins": {
+                "cached": false,
+                "n": 1
+              }
+            }
+          ]
+        }
+      ],
+      "replayGas": {
+        "readTime": "255000000",
+        "computeTime": "1409371826",
+        "bytesWritten": "156",
+        "bytesDeleted": "156"
+      }
+    }
+  }
 }

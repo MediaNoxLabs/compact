@@ -154,3 +154,136 @@ fn bytes_cell_recording_matches_native_and_replays() {
         state_hex(native.context.query.state.get_ref().clone())
     );
 }
+
+#[test]
+fn recorded_helper_formals_match_typescript_reads_writes_and_replay() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/inline-type-scope-oracle.json"
+    ))
+    .unwrap();
+    fn seeded(hash: FixedBytes<32>) -> CircuitContext<()> {
+        setHash(
+            initial_state(ConstructorContext::new(()))
+                .unwrap()
+                .into_circuit_context(ContractAddress::default()),
+            hash,
+        )
+        .unwrap()
+        .context
+    }
+    let scalar = Field::from(5_u64);
+    let aggregate = FixedVector::new([
+        Field::from(1_u64),
+        Field::from(2_u64),
+        Field::from(3_u64),
+        Field::from(4_u64),
+    ]);
+    let pair = vector2(3, 4);
+    let cases = [
+        (
+            "scalar",
+            "scalarStateHex",
+            checkScalarScope(seeded(persistent_hash(scalar)), vector2(9, 10), scalar).unwrap(),
+            recorded::checkScalarScope(seeded(persistent_hash(scalar)), vector2(9, 10), scalar)
+                .unwrap(),
+        ),
+        (
+            "aggregate",
+            "aggStateHex",
+            checkAggScope(
+                seeded(persistent_hash(aggregate.clone())),
+                vector2(7, 8),
+                aggregate.clone(),
+            )
+            .unwrap(),
+            recorded::checkAggScope(
+                seeded(persistent_hash(aggregate.clone())),
+                vector2(7, 8),
+                aggregate.clone(),
+            )
+            .unwrap(),
+        ),
+        (
+            "noCollision",
+            "noCollisionStateHex",
+            checkNoCollisionScope(seeded(persistent_hash(pair.clone())), pair.clone()).unwrap(),
+            recorded::checkNoCollisionScope(seeded(persistent_hash(pair.clone())), pair).unwrap(),
+        ),
+    ];
+    for (name, state_key, native, recorded) in cases {
+        let capture = &oracle["nativeQueries"][name];
+        assert_eq!(capture["result"], serde_json::json!([]));
+        assert_eq!(capture["privateOutputs"], 0);
+        assert!(recorded.execution.private_transcript_outputs.is_empty());
+        assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+        assert_eq!(
+            native.context.query.effects,
+            recorded.execution.context.query.effects
+        );
+        assert_eq!(
+            state_hex(native.context.query.state.get_ref().clone()),
+            oracle[state_key]
+        );
+        assert_eq!(
+            state_hex(recorded.execution.context.query.state.get_ref().clone()),
+            oracle[state_key]
+        );
+        let gas = serde_json::to_value(recorded.execution.gas_cost).unwrap();
+        let queries = capture["queries"].as_array().unwrap();
+        assert_eq!(queries.len(), 2);
+        for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            let sum: u64 = queries
+                .iter()
+                .map(|query| {
+                    query["gasCost"][key]
+                        .as_str()
+                        .unwrap()
+                        .parse::<u64>()
+                        .unwrap()
+                })
+                .sum();
+            assert_eq!(gas[key].as_u64().unwrap(), sum);
+            assert_eq!(
+                capture["gasCost"][key],
+                queries.last().unwrap()["gasCost"][key]
+            );
+        }
+        let mut program = serde_json::to_value(recorded.public.verify_ops()).unwrap();
+        for operation in program.as_array_mut().unwrap() {
+            if let Some(pop) = operation.get_mut("popeq") {
+                pop["result"] = serde_json::Value::Null;
+            }
+        }
+        let expected: Vec<_> = queries
+            .iter()
+            .flat_map(|query| query["program"].as_array().unwrap().iter().cloned())
+            .collect();
+        assert_eq!(program, serde_json::json!(expected));
+        let replay = recorded
+            .public
+            .initial()
+            .query(
+                recorded.public.verify_ops(),
+                None,
+                &recorded.execution.context.cost_model,
+            )
+            .unwrap();
+        let replay_gas = serde_json::to_value(replay.gas_cost).unwrap();
+        for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            let expected: u64 = capture["replayGas"][key].as_str().unwrap().parse().unwrap();
+            assert_eq!(replay_gas[key], expected, "{name}: replay {key}");
+        }
+        assert_eq!(
+            replay.context.effects,
+            recorded.execution.context.query.effects
+        );
+        assert_eq!(
+            state_hex(replay.context.state.get_ref().clone()),
+            oracle[state_key]
+        );
+    }
+    let wrong = FixedBytes::new([0; 32]);
+    assert!(recorded::checkScalarScope(seeded(wrong), vector2(9, 10), scalar).is_err());
+    assert!(recorded::checkAggScope(seeded(wrong), vector2(7, 8), aggregate).is_err());
+    assert!(recorded::checkNoCollisionScope(seeded(wrong), vector2(3, 4)).is_err());
+}

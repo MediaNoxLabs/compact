@@ -8709,3 +8709,69 @@ fn identity_vector_map_recording_requires_closed_literals_and_exact_shape() {
     *length = 2;
     assert!(render_with_capabilities(&contract).is_err());
 }
+
+#[test]
+fn persistent_hash_helper_recording_preserves_formals_and_rejects_effects() {
+    let mut contract: Contract =
+        serde_json::from_str(include_str!("inline-type-scope-schema12-ir.json")).unwrap();
+    contract.schema_version = SCHEMA_VERSION;
+    let rendered = render_with_capabilities(&contract).unwrap();
+    for circuit in &rendered.capabilities.circuits {
+        assert!(
+            circuit.recorded && circuit.observed_call,
+            "{}",
+            circuit.name
+        );
+    }
+    let mut effectful = contract.clone();
+    effectful
+        .stateful_circuits
+        .iter_mut()
+        .find(|circuit| circuit.name == "scalarHelper")
+        .unwrap()
+        .actions
+        .push(StateAction::CellWrite {
+            field: "hashCell".into(),
+            index: 1,
+            value: Expr::BytesLiteral { bytes: vec![0; 32] },
+        });
+    let rendered = render_with_capabilities(&effectful).unwrap();
+    assert!(
+        !rendered
+            .capabilities
+            .circuits
+            .iter()
+            .find(|circuit| circuit.name == "checkScalarScope")
+            .unwrap()
+            .recorded
+    );
+    let mut wrong_width = contract.clone();
+    wrong_width
+        .stateful_circuits
+        .iter_mut()
+        .find(|circuit| circuit.name == "aggHelper")
+        .unwrap()
+        .parameters[0]
+        .ty = Type::Vector {
+        element: Box::new(Type::Field),
+        length: 2,
+    };
+    assert!(render_with_capabilities(&wrong_width).is_err());
+    let mut wrong_index = contract;
+    let helper = wrong_index
+        .stateful_circuits
+        .iter_mut()
+        .find(|circuit| circuit.name == "scalarHelper")
+        .unwrap();
+    let StateReturn::Expression {
+        value: Expr::Equal { right, .. },
+    } = &mut helper.return_value
+    else {
+        unreachable!()
+    };
+    let Expr::CellRead { index, .. } = right.as_mut() else {
+        unreachable!()
+    };
+    *index = 0;
+    assert!(render_with_capabilities(&wrong_index).is_err());
+}

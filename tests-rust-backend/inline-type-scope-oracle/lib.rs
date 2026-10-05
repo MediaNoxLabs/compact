@@ -273,6 +273,70 @@ pub mod ledger_contract {
             let frame = crate::ledger_slots::hashCell.record_write(frame, __compact_param_0)?;
             Ok(frame.finish(()))
         }
+        pub fn checkScalarScope<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::FixedVector<runtime::Field, 2>,
+            __compact_param_1: runtime::Field,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_hash_arg_0: runtime::Field = __compact_param_1;
+            let __compact_recorded_hash_1: runtime::FixedBytes<32> =
+                runtime::persistent_hash(__compact_recorded_hash_arg_0);
+            let (frame, __compact_recorded_value_2): (_, runtime::FixedBytes<32>) =
+                crate::ledger_slots::hashCell.record_read(frame)?;
+            if !(__compact_recorded_hash_1 == __compact_recorded_value_2) {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "scalar helper formal took the caller's vector type".to_owned(),
+                ));
+            }
+            let frame =
+                crate::ledger_slots::fieldVec.record_write(frame, (__compact_param_0).clone())?;
+            Ok(frame.finish(()))
+        }
+        pub fn checkAggScope<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::FixedVector<runtime::Field, 2>,
+            __compact_param_1: runtime::FixedVector<runtime::Field, 4>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_hash_arg_0: runtime::FixedVector<runtime::Field, 4> =
+                (__compact_param_1).clone();
+            let __compact_recorded_hash_1: runtime::FixedBytes<32> =
+                runtime::persistent_hash(__compact_recorded_hash_arg_0);
+            let (frame, __compact_recorded_value_2): (_, runtime::FixedBytes<32>) =
+                crate::ledger_slots::hashCell.record_read(frame)?;
+            if !(__compact_recorded_hash_1 == __compact_recorded_value_2) {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "aggregate helper formal took the caller's shorter vector type".to_owned(),
+                ));
+            }
+            let frame =
+                crate::ledger_slots::fieldVec.record_write(frame, (__compact_param_0).clone())?;
+            Ok(frame.finish(()))
+        }
+        pub fn checkNoCollisionScope<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::FixedVector<runtime::Field, 2>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_hash_arg_0: runtime::FixedVector<runtime::Field, 2> =
+                (__compact_param_0).clone();
+            let __compact_recorded_hash_1: runtime::FixedBytes<32> =
+                runtime::persistent_hash(__compact_recorded_hash_arg_0);
+            let (frame, __compact_recorded_value_2): (_, runtime::FixedBytes<32>) =
+                crate::ledger_slots::hashCell.record_read(frame)?;
+            if !(__compact_recorded_hash_1 == __compact_recorded_value_2) {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "aggregate helper formal was not recovered".to_owned(),
+                ));
+            }
+            let frame =
+                crate::ledger_slots::fieldVec.record_write(frame, (__compact_param_0).clone())?;
+            Ok(frame.finish(()))
+        }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
         impl Contract {
@@ -298,6 +362,93 @@ pub mod ledger_contract {
                 let recorded = self.setHash(observed.circuit_context(private_state), h)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "setHash", input,
+                ))
+            }
+            pub fn checkScalarScope<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                v: runtime::FixedVector<runtime::Field, 2>,
+                x: runtime::Field,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::checkScalarScope(context, v, x)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn checkScalarScope_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                v: runtime::FixedVector<runtime::Field, 2>,
+                x: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(((v).clone(), x));
+                let recorded =
+                    self.checkScalarScope(observed.circuit_context(private_state), v, x)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "checkScalarScope",
+                    input,
+                ))
+            }
+            pub fn checkAggScope<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                w: runtime::FixedVector<runtime::Field, 2>,
+                z: runtime::FixedVector<runtime::Field, 4>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::checkAggScope(context, w, z)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn checkAggScope_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                w: runtime::FixedVector<runtime::Field, 2>,
+                z: runtime::FixedVector<runtime::Field, 4>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(((w).clone(), (z).clone()));
+                let recorded = self.checkAggScope(observed.circuit_context(private_state), w, z)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "checkAggScope",
+                    input,
+                ))
+            }
+            pub fn checkNoCollisionScope<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                v: runtime::FixedVector<runtime::Field, 2>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::checkNoCollisionScope(context, v)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn checkNoCollisionScope_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                v: runtime::FixedVector<runtime::Field, 2>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from((v).clone());
+                let recorded =
+                    self.checkNoCollisionScope(observed.circuit_context(private_state), v)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "checkNoCollisionScope",
+                    input,
                 ))
             }
         }

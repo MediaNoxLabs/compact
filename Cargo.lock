@@ -1816,6 +1816,7 @@ dependencies = [
  "compact-rust-guarded-assert-arith-oracle-fixture",
  "compact-rust-hmt-default-oracle-fixture",
  "compact-rust-hmt-insert-oracle-fixture",
+ "compact-rust-inline-type-scope-oracle-fixture",
  "compact-rust-internal-pure-call-fixture",
  "compact-rust-let-return-oracle-fixture",
  "compact-rust-list-field-fixture",

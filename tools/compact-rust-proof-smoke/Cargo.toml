@@ -66,6 +66,7 @@ compact-rust-tiny-oracle-fixture = { path = "../../tests-rust-backend/tiny-oracl
 compact-rust-merkle-tree-oracle-fixture = { path = "../../tests-rust-backend/merkle-tree-oracle", features = ["ledger-transaction"] }
 compact-rust-merkle-path-verify-fixture = { path = "../../tests-rust-backend/merkle-path-verify", features = ["ledger-transaction"] }
 compact-rust-hmt-insert-oracle-fixture = { path = "../../tests-rust-backend/hmt-insert-oracle", features = ["ledger-transaction"] }
+compact-rust-inline-type-scope-oracle-fixture = { path = "../../tests-rust-backend/inline-type-scope-oracle", features = ["ledger-transaction"] }
 compact-rust-hmt-default-oracle-fixture = { path = "../../tests-rust-backend/hmt-default-oracle", features = ["ledger-transaction"] }
 compact-rust-vector-key-adt-fixture = { path = "../../tests-rust-backend/vector-key-adt" }
 compact-rust-observed-composite-keys-fixture = { path = "../../tests-rust-backend/observed-composite-keys", features = ["ledger-transaction"] }

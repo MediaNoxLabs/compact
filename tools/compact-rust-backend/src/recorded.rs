@@ -3571,9 +3571,9 @@ fn render_recorded_item(
                         actual: arguments.len(),
                     });
                 }
-                // A closed Field-pair hash is a pure value operation. Keep it
-                // before the declared Cell read in the Boolean helper and let
-                // that read alone contribute to the public VM transcript.
+                // Hash a value at the helper formal type before observing its
+                // comparison Cell. Caller names and shorter vector types must
+                // never change the helper's persistent encoding.
                 let comparison = match result {
                     Expr::Equal { left, right } => Some((left.as_ref(), right.as_ref(), true)),
                     Expr::NotEqual { left, right } => Some((left.as_ref(), right.as_ref(), false)),
@@ -3583,15 +3583,29 @@ fn render_recorded_item(
                     comparison,
                     callee.parameters.as_slice(),
                     arguments.as_slice(),
-                ) && field_pair_type(&parameter.ty)
-                    && let Expr::TransientHash { value: hashed } = left
-                    && matches!(hashed.as_ref(), Expr::Parameter { name } if name == &parameter.name)
+                ) && let Some((hashed, hash_ty, hash_function)) = (match left {
+                    Expr::TransientHash { value } if field_pair_type(&parameter.ty) => {
+                        Some((value, Type::Field, ident("transient_hash")?))
+                    }
+                    Expr::PersistentHash { value }
+                        if callee.internal
+                            && equal
+                            && (parameter.ty == Type::Field
+                                || matches!(&parameter.ty, Type::Vector { element, .. } if **element == Type::Field)) =>
+                    {
+                        Some((value, Type::Bytes { length: 32 }, ident("persistent_hash")?))
+                    }
+                    _ => None,
+                }) && matches!(hashed.as_ref(), Expr::Parameter { name } if name == &parameter.name)
                     && let Expr::CellRead { field, index } = right
                 {
                     let declaration = ledger_fields
                         .get(field.as_str())
                         .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-                    if declaration.declaration == (LedgerFieldKind::Cell { ty: Type::Field })
+                    if declaration.declaration
+                        == (LedgerFieldKind::Cell {
+                            ty: hash_ty.clone(),
+                        })
                         && declaration.index == *index
                     {
                         let Some(argument) =
@@ -3616,12 +3630,13 @@ fn render_recorded_item(
                         );
                         *next_temp += 1;
                         let slot = ident(field)?;
+                        let hash_ty = rust_type(&hash_ty)?;
                         steps.push(syn::parse_quote!(let #arg: #ty = #argument;));
                         steps.push(syn::parse_quote!(
-                            let #hash: runtime::Field = runtime::transient_hash(#arg);
+                            let #hash: #hash_ty = runtime::#hash_function(#arg);
                         ));
                         steps.push(syn::parse_quote!(
-                            let (frame, #observed): (_, runtime::Field) =
+                            let (frame, #observed): (_, #hash_ty) =
                                 crate::ledger_slots::#slot.record_read(frame)?;
                         ));
                         return if equal {

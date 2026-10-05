@@ -63,6 +63,7 @@ NESTED_STATEFUL_TERNARY_SOURCE = ROOT / "examples/rust_backend/nested_stateful_t
 ASSET_REGISTRY_SOURCE = ROOT / "examples/rust_backend/asset_registry_oracle.compact"
 HISTORIC_MERKLE_SOURCE = ROOT / "examples/rust_backend/hmt_insert_oracle.compact"
 HISTORIC_MERKLE_DEFAULT_SOURCE = ROOT / "examples/rust_backend/hmt_default_oracle.compact"
+INLINE_TYPE_SCOPE_SOURCE = ROOT / "examples/rust_backend/inline_type_scope_oracle.compact"
 VECTOR_KEY_SOURCE = ROOT / "examples/rust_backend/vector_key_adt.compact"
 COMPOSITE_KEY_SOURCE = ROOT / "examples/rust_backend/observed_composite_keys.compact"
 CHUNKED_SET_SOURCE = ROOT / "examples/rust_backend/chunked_set_observed.compact"
@@ -1404,6 +1405,27 @@ def main() -> None:
                     assert (list_shapes_proof / "keys" / f"{circuit}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):
                     assert (list_shapes_proof / "zkir" / f"{circuit}.{extension}").is_file()
+            inline_type_scope_proof = base / "inline-type-scope-proof"
+            run(compiler, "--target", "rust", "--rust-require-recording",
+                str(INLINE_TYPE_SCOPE_SOURCE), str(inline_type_scope_proof))
+            check_manifest(inline_type_scope_proof)
+            capabilities = json.loads(
+                (inline_type_scope_proof / "contract/rust-capabilities.json").read_text()
+            )
+            expected_inline = {
+                "setHash", "checkScalarScope", "checkAggScope", "checkNoCollisionScope"
+            }
+            assert {row["name"] for row in capabilities["circuits"]} == expected_inline
+            for circuit in capabilities["circuits"]:
+                assert circuit["proof_required"] and circuit["recorded"] \
+                    and circuit["observed_call"]
+                if circuit["name"] != "setHash":
+                    for extension in ("prover", "verifier"):
+                        assert (inline_type_scope_proof / "keys" /
+                                f"{circuit['name']}.{extension}").is_file()
+                    for extension in ("zkir", "bzkir"):
+                        assert (inline_type_scope_proof / "zkir" /
+                                f"{circuit['name']}.{extension}").is_file()
             merkle_proof = base / "merkle-proof"
             run(compiler, "--target", "rust", "--rust-require-recording", str(MERKLE_SOURCE), str(merkle_proof))
             check_manifest(merkle_proof)
@@ -1776,6 +1798,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--merkle-root", str(merkle_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--inline-type-scope", str(inline_type_scope_proof),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

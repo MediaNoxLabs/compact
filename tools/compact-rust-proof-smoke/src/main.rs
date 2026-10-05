@@ -36,6 +36,7 @@ mod closed_pure_field;
 mod field_pair_hash;
 mod guarded_recording;
 mod impure_field_helper;
+mod inline_type_scope;
 mod let_return;
 mod merkle_hash;
 mod merkle_indexed;
@@ -2188,6 +2189,25 @@ fn run() -> Result<(), Box<dyn Error>> {
             return Err("usage: compact-rust-proof-smoke --merkle-root <proof-output>".into());
         }
         return merkle_root::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--inline-type-scope")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --inline-type-scope <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --inline-type-scope <proof-output>".into(),
+            );
+        }
+        let proof = std::thread::Builder::new()
+            .name("inline-type-scope-proof".into())
+            .stack_size(64 * 1024 * 1024)
+            .spawn(move || inline_type_scope::run(Path::new(&root)).map_err(|e| e.to_string()))?;
+        return match proof.join() {
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(error)) => Err(error.into()),
+            Err(_) => Err("inline type scope proof thread panicked".into()),
+        };
     }
     if first.as_deref() == Some(OsStr::new("--merkle-hash")) {
         let root = arguments

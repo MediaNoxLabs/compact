@@ -9,6 +9,11 @@ on:
 
 permissions: {}
 
+env:
+  RUSTUP_TOOLCHAIN: 1.99.0
+  CARGO_INCREMENTAL: 0
+  PYTHONDONTWRITEBYTECODE: 1
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -31,6 +36,8 @@ jobs:
 
       - name: Setup Rust toolchain for generated consumers
         uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable (branch)
+        with:
+          toolchain: 1.99.0
 
       - name: Setup Python for target gate
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
@@ -84,7 +91,8 @@ jobs:
       - name: Setup Rust toolchain for native backend
         uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable (branch)
         with:
-          components: rustfmt
+          toolchain: 1.99.0
+          components: rustfmt, clippy
 
       - name: Setup Python for Rust backend checks
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
@@ -308,6 +316,17 @@ jobs:
           nix develop .#compiler --command compactc ./test-center/compact/test.compact ./compact-output/
           nix develop .#compiler --command compactc ./examples/tiny.compact ./tiny-output/
 
+      - name: Resolve locked ledger proof fixtures
+        run: |
+          python3 -m unittest discover -s tools/compact-rust-backend -p 'test_*.py'
+          cargo fetch --locked
+          cargo metadata --locked --offline --format-version 1 > "$RUNNER_TEMP/compact-cargo-metadata.json"
+          python3 tools/compact-rust-backend/resolve_ledger_test_static.py --metadata "$RUNNER_TEMP/compact-cargo-metadata.json" --lock Cargo.lock --provenance "$RUNNER_TEMP/ledger-static-provenance.json" --github-env "$GITHUB_ENV"
+
+      - name: Verify consumer toolchain inside Nix
+        run: |
+          nix develop .#compiler --command python3 -c 'import shutil, subprocess; print(shutil.which("cargo")); versions = [subprocess.check_output([tool, "--version"], text=True).strip() for tool in ("cargo", "rustc")]; print(*versions, sep="; "); assert all(version.split()[1] == "1.99.0" for version in versions)'
+
       - name: Check and test native Rust backend
         run: |
           cargo fmt --all -- --check
@@ -317,7 +336,8 @@ jobs:
           nix develop .#compiler --command env COMPACTC=compactc python3 tools/compact-rust-backend/check_fixture_outputs.py
           python3 tools/compact-rust-backend/check_oracle_acceptance.py
           nix develop .#compiler --command env COMPACTC=compactc python3 tools/compact-rust-backend/check_rejections.py
-          cargo test --workspace --exclude compact
+          cargo test --workspace --exclude compact --locked
+          cargo clippy --workspace --exclude compact --all-targets --all-features --locked -- -D warnings
 
       - name: Rehearse Rust runtime packages
         run: |
@@ -334,13 +354,14 @@ jobs:
           name: rust-runtime-packages-${{ github.sha }}
           path: |
             target/rust-runtime-release.json
+            ${{ runner.temp }}/ledger-static-provenance.json
             target/package/midnight-compact-runtime-macros-*.crate
             target/package/midnight-compact-runtime-*.crate
           if-no-files-found: error
 
       - name: Merge report as ZIP
         run: |
-          mv coverage coverage_$(date +"%Y%m%d%H%M%S")
+          mv coverage "coverage_$(date +"%Y%m%d%H%M%S")"
           zip -r compiler-coverage.zip coverage*
 
       - name: Upload Artifact - coverage report

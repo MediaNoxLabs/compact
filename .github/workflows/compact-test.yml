@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - "tools/compact/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
       - ".github/workflows/**"
   workflow_dispatch:
 
@@ -16,6 +18,8 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   CARGO_INCREMENTAL: 0
+  RUSTUP_TOOLCHAIN: 1.99.0
+  CARGO_TARGET_DIR: ${{ github.workspace }}/target
   CARGO_NET_RETRY: 10
   RUST_BACKTRACE: short
   RUSTUP_MAX_RETRIES: 10
@@ -34,6 +38,8 @@ jobs:
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable (branch)
+        with:
+          toolchain: 1.99.0
 
       - name: Install Rust components
         run: rustup component add rustfmt clippy
@@ -45,15 +51,15 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('tools/compact/Cargo.lock') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-rust-1.99.0-cargo-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-
+            ${{ runner.os }}-${{ runner.arch }}-rust-1.99.0-cargo-
 
       - name: Check formatting
         run: cargo fmt --all -- --check
 
       - name: Run Clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
+        run: cargo clippy -p compact --all-targets --all-features --locked -- -D warnings
 
   # Main test matrix
   test:
@@ -79,6 +85,8 @@ jobs:
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable (branch)
+        with:
+          toolchain: 1.99.0
 
       - name: Install nextest
         uses: taiki-e/install-action@5e9ca9f228625a79b1cdac24184900b4ffc542ac # nextest (tag)
@@ -90,20 +98,20 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('tools/compact/Cargo.lock') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-rust-1.99.0-cargo-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-
+            ${{ runner.os }}-${{ runner.arch }}-rust-1.99.0-cargo-
 
       - name: Cache target directory
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
-          path: tools/compact/target
-          key: ${{ runner.os }}-target-${{ hashFiles('tools/compact/Cargo.lock') }}
+          path: ${{ env.CARGO_TARGET_DIR }}
+          key: ${{ runner.os }}-${{ runner.arch }}-rust-1.99.0-target-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-target-
+            ${{ runner.os }}-${{ runner.arch }}-rust-1.99.0-target-
 
       - name: Build
-        run: cargo build
+        run: cargo build -p compact --locked
 
       - name: Run tests
-        run: cargo nextest run --no-fail-fast --test-threads=1
+        run: cargo nextest run -p compact --locked --no-fail-fast --test-threads=1

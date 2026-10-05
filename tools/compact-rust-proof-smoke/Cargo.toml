@@ -136,3 +136,5 @@ compact-rust-test-center-micro-dao-fixture = { path = "../../tests-rust-backend/
 compact-rust-composite-zswap-transfer-oracle-fixture = { path = "../../tests-rust-backend/composite-zswap-transfer-oracle", features = ["ledger-transaction"] }
 
 compact-rust-test-center-coracle-fixture = { path = "../../tests-rust-backend/test-center-coracle", features = ["ledger-transaction"] }
+
+compact-rust-shielded-receive-oracle-fixture = { path = "../../tests-rust-backend/shielded-receive-oracle", features = ["ledger-transaction"] }

@@ -250,6 +250,14 @@
     "visibility": "module_export"
   },
   {
+    "source": "examples/rust_backend/shielded_receive_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "accept",
+    "signature": "export circuit accept(coin: ShieldedCoinInfo): []",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/schnorr_attest_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -263,6 +271,14 @@
     "kind": "circuit",
     "name": "acceptIfFresh",
     "signature": "export circuit acceptIfFresh( policy: FreshnessPolicy, record: AssetRecord, currentTime: Uint<64> ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/shielded_receive_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "accept_renamed",
+    "signature": "export circuit accept_renamed(coin: ShieldedCoinInfo): []",
     "visibility": "export"
   },
   {

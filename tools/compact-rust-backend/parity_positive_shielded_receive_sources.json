@@ -1,0 +1,23 @@
+{
+  "format_version": 1,
+  "suite": "compiler/test.ss",
+  "purpose": "Unchanged standard-library receiveShielded source; exact two exported proof APIs and their recorded capabilities",
+  "source_glob": "examples/rust_backend/shielded_receive_oracle.compact",
+  "positive_sources": [
+    {
+      "source": "examples/rust_backend/shielded_receive_oracle.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [
+        {"name": "accept", "pure": false, "proof": true},
+        {"name": "accept_renamed", "pure": false, "proof": true}
+      ],
+      "expected_capability_circuits": ["accept", "accept_renamed"],
+      "expected_recorded_circuits": ["accept", "accept_renamed"],
+      "pure_declarations": 0,
+      "exported_pure_declarations": 0,
+      "rust_fixture": "tests-rust-backend/shielded-receive-oracle/lib.rs"
+    }
+  ],
+  "expected_rejections": []
+}

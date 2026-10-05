@@ -85,6 +85,7 @@ LET_RETURN_SOURCE = ROOT / "examples/rust_backend/let_return_oracle.compact"
 ROOT_LET_ACTION_RETURN_SOURCE = ROOT / "examples/rust_backend/root_let_action_return_oracle.compact"
 EFFECTFUL_RETURN_SOURCE = ROOT / "examples/rust_backend/effectful_return_oracle.compact"
 CORACLE_SOURCE = ROOT / "test-center/test-contracts/coracle.compact"
+SHIELDED_RECEIVE_SOURCE = ROOT / "examples/rust_backend/shielded_receive_oracle.compact"
 TEST_CENTER_WELCOME_SOURCE = ROOT / "test-center/test-contracts/welcome.compact"
 WITNESS_CELL_SOURCE = ROOT / "examples/rust_backend/witness_cell_write.compact"
 ASSERT_WITNESS_SOURCE = ROOT / "examples/rust_backend/assert_witness.compact"
@@ -1214,6 +1215,7 @@ def main() -> None:
     parser.add_argument("--composite-zswap", action="store_true", help="check composite intent recording and optional original-zero/funded-transfer proofs")
     parser.add_argument("--stateful-struct", action="store_true", help="check ordered composite recording and original micro-dao native admission")
     parser.add_argument("--kernel-shielded-effects", action="store_true", help="check typed Kernel recording and optional call/funded-mint proofs")
+    parser.add_argument("--shielded-receive", action="store_true", help="check standard-library receiveShielded recording and optional exact-offer proof")
     parser.add_argument("--native-zswap-intents", action="store_true", help="check recorded Zswap intent admission and optional strict funded transfer proof")
     parser.add_argument("--qualified-coin-cell", action="store_true",
                         help="check recorded qualified-coin Cell write and offer-backed proof")
@@ -1373,6 +1375,25 @@ def main() -> None:
                 run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                     "--kernel-shielded-effects", str(proof))
             print("typed recorded Kernel effects admitted; unsupported operations refused")
+            return
+        if args.shielded_receive:
+            output = base / "shielded-receive"
+            run(compiler, "--target", "rust", "--rust-require-recording",
+                *([] if args.proof else ["--skip-zk"]),
+                str(SHIELDED_RECEIVE_SOURCE), str(output))
+            ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
+            assert ir["schema_version"] == 20
+            report = json.loads((output / "contract/rust-capabilities.json").read_text())
+            assert {row["name"] for row in report["circuits"]} == {"accept", "accept_renamed"}
+            assert all(row["proof_required"] and row["recorded"] and row["observed_call"]
+                       for row in report["circuits"])
+            rust = (output / "contract/lib.rs").read_text()
+            assert "create_zswap_output" in rust and "CoinReceive" in rust
+            assert "crate::pure_circuits::coinCommitment" in rust
+            if args.proof:
+                run("cargo", "+1.99.0", "run", "--offline", "--quiet", "-p",
+                    "compact-rust-proof-smoke", "--", "--shielded-receive", str(output))
+            print("unchanged receiveShielded wrappers admitted with ordered output and audited claim")
             return
         if args.native_zswap_intents:
             output = base / "native-zswap-intents"
@@ -1694,6 +1715,8 @@ def main() -> None:
         run(sys.executable, str(Path(__file__).resolve()), "--native-zswap-intents",
             *(["--proof"] if args.proof else []))
         run(sys.executable, str(Path(__file__).resolve()), "--kernel-shielded-effects",
+            *(["--proof"] if args.proof else []))
+        run(sys.executable, str(Path(__file__).resolve()), "--shielded-receive",
             *(["--proof"] if args.proof else []))
         run(sys.executable, str(Path(__file__).resolve()), "--stateful-struct")
         run(sys.executable, str(Path(__file__).resolve()), "--composite-zswap",

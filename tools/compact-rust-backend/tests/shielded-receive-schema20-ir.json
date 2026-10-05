@@ -1,0 +1,854 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+    {
+      "name": "right",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "struct",
+            "name": "ContractAddress",
+            "fields": [
+              {
+                "name": "bytes",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Either",
+        "fields": [
+          {
+            "name": "is_left",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "left",
+            "ty": {
+              "kind": "struct",
+              "name": "ZswapCoinPublicKey",
+              "fields": [
+                {
+                  "name": "bytes",
+                  "ty": {
+                    "kind": "bytes",
+                    "length": 32
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "right",
+            "ty": {
+              "kind": "struct",
+              "name": "ContractAddress",
+              "fields": [
+                {
+                  "name": "bytes",
+                  "ty": {
+                    "kind": "bytes",
+                    "length": 32
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "body": {
+        "kind": "struct_literal",
+        "ty": {
+          "kind": "struct",
+          "name": "Either",
+          "fields": [
+            {
+              "name": "is_left",
+              "ty": {
+                "kind": "boolean"
+              }
+            },
+            {
+              "name": "left",
+              "ty": {
+                "kind": "struct",
+                "name": "ZswapCoinPublicKey",
+                "fields": [
+                  {
+                    "name": "bytes",
+                    "ty": {
+                      "kind": "bytes",
+                      "length": 32
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "name": "right",
+              "ty": {
+                "kind": "struct",
+                "name": "ContractAddress",
+                "fields": [
+                  {
+                    "name": "bytes",
+                    "ty": {
+                      "kind": "bytes",
+                      "length": 32
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "fields": [
+          {
+            "kind": "boolean",
+            "value": false
+          },
+          {
+            "kind": "default",
+            "ty": {
+              "kind": "struct",
+              "name": "ZswapCoinPublicKey",
+              "fields": [
+                {
+                  "name": "bytes",
+                  "ty": {
+                    "kind": "bytes",
+                    "length": 32
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "kind": "parameter",
+            "name": "value"
+          }
+        ]
+      },
+      "source": {
+        "file": "standard-library.compact",
+        "line": 42,
+        "column": 1
+      }
+    },
+    {
+      "name": "coinCommitment",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "coin",
+          "ty": {
+            "kind": "struct",
+            "name": "ShieldedCoinInfo",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "color",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "340282366920938463463374607431768211455"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "recipient",
+          "ty": {
+            "kind": "struct",
+            "name": "Either",
+            "fields": [
+              {
+                "name": "is_left",
+                "ty": {
+                  "kind": "boolean"
+                }
+              },
+              {
+                "name": "left",
+                "ty": {
+                  "kind": "struct",
+                  "name": "ZswapCoinPublicKey",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "right",
+                "ty": {
+                  "kind": "struct",
+                  "name": "ContractAddress",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "bytes",
+        "length": 32
+      },
+      "body": {
+        "kind": "persistent_hash",
+        "value": {
+          "kind": "struct_literal",
+          "ty": {
+            "kind": "struct",
+            "name": "CoinPreimage",
+            "fields": [
+              {
+                "name": "domain_sep",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 21
+                }
+              },
+              {
+                "name": "info",
+                "ty": {
+                  "kind": "struct",
+                  "name": "ShieldedCoinInfo",
+                  "fields": [
+                    {
+                      "name": "nonce",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    },
+                    {
+                      "name": "color",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    },
+                    {
+                      "name": "value",
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "340282366920938463463374607431768211455"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "dataType",
+                "ty": {
+                  "kind": "boolean"
+                }
+              },
+              {
+                "name": "data",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              }
+            ]
+          },
+          "fields": [
+            {
+              "kind": "bytes_literal",
+              "bytes": [
+                109,
+                105,
+                100,
+                110,
+                105,
+                103,
+                104,
+                116,
+                58,
+                122,
+                115,
+                119,
+                97,
+                112,
+                45,
+                99,
+                99,
+                91,
+                118,
+                49,
+                93
+              ]
+            },
+            {
+              "kind": "parameter",
+              "name": "coin"
+            },
+            {
+              "kind": "struct_field",
+              "value": {
+                "kind": "parameter",
+                "name": "recipient"
+              },
+              "field": "is_left",
+              "index": 0
+            },
+            {
+              "kind": "if",
+              "condition": {
+                "kind": "struct_field",
+                "value": {
+                  "kind": "parameter",
+                  "name": "recipient"
+                },
+                "field": "is_left",
+                "index": 0
+              },
+              "then": {
+                "kind": "coerce",
+                "value": {
+                  "kind": "struct_field",
+                  "value": {
+                    "kind": "struct_field",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "recipient"
+                    },
+                    "field": "left",
+                    "index": 1
+                  },
+                  "field": "bytes",
+                  "index": 0
+                },
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              "otherwise": {
+                "kind": "coerce",
+                "value": {
+                  "kind": "struct_field",
+                  "value": {
+                    "kind": "struct_field",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "recipient"
+                    },
+                    "field": "right",
+                    "index": 2
+                  },
+                  "field": "bytes",
+                  "index": 0
+                },
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "standard-library.compact",
+        "line": 252,
+        "column": 1
+      }
+    }
+  ],
+  "stateful_circuits": [
+    {
+      "name": "receiveShielded",
+      "parameters": [
+        {
+          "name": "coin",
+          "ty": {
+            "kind": "struct",
+            "name": "ShieldedCoinInfo",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "color",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "340282366920938463463374607431768211455"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "recipient",
+              "ty": {
+                "kind": "struct",
+                "name": "Either",
+                "fields": [
+                  {
+                    "name": "is_left",
+                    "ty": {
+                      "kind": "boolean"
+                    }
+                  },
+                  {
+                    "name": "left",
+                    "ty": {
+                      "kind": "struct",
+                      "name": "ZswapCoinPublicKey",
+                      "fields": [
+                        {
+                          "name": "bytes",
+                          "ty": {
+                            "kind": "bytes",
+                            "length": 32
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "right",
+                    "ty": {
+                      "kind": "struct",
+                      "name": "ContractAddress",
+                      "fields": [
+                        {
+                          "name": "bytes",
+                          "ty": {
+                            "kind": "bytes",
+                            "length": 32
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "value": {
+                "kind": "call",
+                "name": "right",
+                "arguments": [
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "kernel_self",
+                      "ty": {
+                        "kind": "struct",
+                        "name": "ContractAddress",
+                        "fields": [
+                          {
+                            "name": "bytes",
+                            "ty": {
+                              "kind": "bytes",
+                              "length": 32
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "ty": {
+                      "kind": "struct",
+                      "name": "ContractAddress",
+                      "fields": [
+                        {
+                          "name": "bytes",
+                          "ty": {
+                            "kind": "bytes",
+                            "length": 32
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "expression",
+                "value": {
+                  "kind": "create_zswap_output",
+                  "coin": {
+                    "kind": "parameter",
+                    "name": "coin"
+                  },
+                  "recipient": {
+                    "kind": "parameter",
+                    "name": "recipient"
+                  }
+                }
+              },
+              {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "tmp_0",
+                    "ty": {
+                      "kind": "bytes",
+                      "length": 32
+                    },
+                    "value": {
+                      "kind": "call",
+                      "name": "coinCommitment",
+                      "arguments": [
+                        {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "parameter",
+                            "name": "coin"
+                          },
+                          "ty": {
+                            "kind": "struct",
+                            "name": "ShieldedCoinInfo",
+                            "fields": [
+                              {
+                                "name": "nonce",
+                                "ty": {
+                                  "kind": "bytes",
+                                  "length": 32
+                                }
+                              },
+                              {
+                                "name": "color",
+                                "ty": {
+                                  "kind": "bytes",
+                                  "length": 32
+                                }
+                              },
+                              {
+                                "name": "value",
+                                "ty": {
+                                  "kind": "unsigned",
+                                  "max": "340282366920938463463374607431768211455"
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "parameter",
+                            "name": "recipient"
+                          },
+                          "ty": {
+                            "kind": "struct",
+                            "name": "Either",
+                            "fields": [
+                              {
+                                "name": "is_left",
+                                "ty": {
+                                  "kind": "boolean"
+                                }
+                              },
+                              {
+                                "name": "left",
+                                "ty": {
+                                  "kind": "struct",
+                                  "name": "ZswapCoinPublicKey",
+                                  "fields": [
+                                    {
+                                      "name": "bytes",
+                                      "ty": {
+                                        "kind": "bytes",
+                                        "length": 32
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "name": "right",
+                                "ty": {
+                                  "kind": "struct",
+                                  "name": "ContractAddress",
+                                  "fields": [
+                                    {
+                                      "name": "bytes",
+                                      "ty": {
+                                        "kind": "bytes",
+                                        "length": 32
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "expression",
+                  "value": {
+                    "kind": "kernel_claim",
+                    "claim": "coin_receive",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "tmp_0"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "standard-library.compact",
+        "line": 155,
+        "column": 1
+      }
+    },
+    {
+      "name": "accept",
+      "parameters": [
+        {
+          "name": "coin",
+          "ty": {
+            "kind": "struct",
+            "name": "ShieldedCoinInfo",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "color",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "340282366920938463463374607431768211455"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "circuit_call",
+          "name": "receiveShielded",
+          "arguments": [
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "coin"
+              },
+              "ty": {
+                "kind": "struct",
+                "name": "ShieldedCoinInfo",
+                "fields": [
+                  {
+                    "name": "nonce",
+                    "ty": {
+                      "kind": "bytes",
+                      "length": 32
+                    }
+                  },
+                  {
+                    "name": "color",
+                    "ty": {
+                      "kind": "bytes",
+                      "length": 32
+                    }
+                  },
+                  {
+                    "name": "value",
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "340282366920938463463374607431768211455"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "source": {
+        "file": "shielded_receive_oracle.compact",
+        "line": 18,
+        "column": 1
+      }
+    },
+    {
+      "name": "accept_renamed",
+      "parameters": [
+        {
+          "name": "coin",
+          "ty": {
+            "kind": "struct",
+            "name": "ShieldedCoinInfo",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "color",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "340282366920938463463374607431768211455"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "circuit_call",
+          "name": "receiveShielded",
+          "arguments": [
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "coin"
+              },
+              "ty": {
+                "kind": "struct",
+                "name": "ShieldedCoinInfo",
+                "fields": [
+                  {
+                    "name": "nonce",
+                    "ty": {
+                      "kind": "bytes",
+                      "length": 32
+                    }
+                  },
+                  {
+                    "name": "color",
+                    "ty": {
+                      "kind": "bytes",
+                      "length": 32
+                    }
+                  },
+                  {
+                    "name": "value",
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "340282366920938463463374607431768211455"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "source": {
+        "file": "shielded_receive_oracle.compact",
+        "line": 22,
+        "column": 1
+      }
+    }
+  ]
+}

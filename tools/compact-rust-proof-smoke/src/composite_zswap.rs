@@ -66,7 +66,7 @@ pub(super) fn run(original: &Path, transfer_root: &Path) -> Result<(), Box<dyn E
     clippy::too_many_arguments,
     reason = "proof harness binds explicit ledger and artifact inputs"
 )]
-fn apply_bound(
+pub(super) fn apply_bound(
     root: &Path,
     name: &'static str,
     prepared: OfferBoundPreparedCall,

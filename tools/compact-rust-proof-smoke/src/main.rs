@@ -78,6 +78,7 @@ mod qualified_coin_funding;
 mod qualified_coin_set;
 mod root_let_action_return;
 mod schnorr_attestation;
+mod shielded_receive;
 mod stateful_assert;
 mod stateful_pair_hash;
 mod stateful_pure_return;
@@ -1752,6 +1753,15 @@ fn run() -> Result<(), Box<dyn Error>> {
             return Err("unexpected extra arguments".into());
         }
         return zswap_transfer::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--shielded-receive")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --shielded-receive <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err("unexpected shielded receive proof argument".into());
+        }
+        return shielded_receive::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--kernel-shielded-effects")) {
         let root = arguments

@@ -45,6 +45,8 @@ EXTRA_SOURCES = {
         FIXTURES / "adt-set-vector" / "lib.rs",
     ROOT / "examples" / "adt" / "tests" / "list_field.compact":
         FIXTURES / "adt-list-field" / "lib.rs",
+    ROOT / "examples" / "adt" / "tests" / "list_enum.compact":
+        FIXTURES / "adt-list-enum" / "lib.rs",
 }
 
 

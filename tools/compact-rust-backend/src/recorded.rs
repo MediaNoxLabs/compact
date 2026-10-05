@@ -1820,13 +1820,12 @@ fn render_recorded_item(
                         return Ok(None);
                     };
                     if declaration.index != index
-                        || *element != Type::Field
+                        || !matches!(element, Type::Field | Type::Enum { .. })
                         || *ty != list_head_result_type(element, ty)
                     {
                         return Ok(None);
                     }
-                    let Some(expected) = cell_source(expected, &Type::Field, locals, parameters)
-                    else {
+                    let Some(expected) = cell_source(expected, element, locals, parameters) else {
                         return Ok(None);
                     };
                     let slot = ident(field)?;

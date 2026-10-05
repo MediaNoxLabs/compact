@@ -4638,6 +4638,99 @@ fn nested_list_queries_record_in_order_and_reject_wrong_shape() {
 }
 
 #[test]
+fn enum_list_head_value_records_only_with_matching_typed_head() {
+    let names = Type::Enum {
+        name: "Names".into(),
+        variants: vec!["bill".into(), "sally".into()],
+    };
+    let maybe_names = Type::Struct {
+        name: "Maybe".into(),
+        fields: vec![
+            StructField {
+                name: "is_some".into(),
+                ty: Type::Boolean,
+            },
+            StructField {
+                name: "value".into(),
+                ty: names.clone(),
+            },
+        ],
+    };
+    let mut contract = identity(Type::Unit, Expr::Unit);
+    contract.ledger_fields = vec![LedgerField {
+        source: None,
+        id: "items".into(),
+        index: 0,
+        path: vec![],
+        declaration: LedgerFieldKind::List { ty: names.clone() },
+    }];
+    contract.stateful_circuits = vec![StatefulCircuit {
+        source: None,
+        internal: false,
+        name: "test".into(),
+        parameters: vec![],
+        actions: vec![StateAction::Assert {
+            condition: Expr::Equal {
+                left: Box::new(Expr::StructField {
+                    value: Box::new(Expr::ListHead {
+                        field: "items".into(),
+                        index: 0,
+                        ty: maybe_names.clone(),
+                    }),
+                    field: "value".into(),
+                    index: 1,
+                }),
+                right: Box::new(Expr::EnumVariant {
+                    ty: names.clone(),
+                    variant: "bill".into(),
+                }),
+            },
+            message: "head value".into(),
+        }],
+        result: Type::Unit,
+        return_value: StateReturn::Unit,
+    }];
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(
+        rendered
+            .source
+            .contains("record_head::<crate::types::Maybe")
+    );
+
+    let StateAction::Assert { condition, .. } = &mut contract.stateful_circuits[0].actions[0]
+    else {
+        unreachable!()
+    };
+    let Expr::Equal { left, .. } = condition else {
+        unreachable!()
+    };
+    let Expr::StructField { value, .. } = left.as_mut() else {
+        unreachable!()
+    };
+    let Expr::ListHead { ty, .. } = value.as_mut() else {
+        unreachable!()
+    };
+    *ty = Type::Struct {
+        name: "Maybe".into(),
+        fields: vec![
+            StructField {
+                name: "is_some".into(),
+                ty: Type::Boolean,
+            },
+            StructField {
+                name: "value".into(),
+                ty: Type::Field,
+            },
+        ],
+    };
+    assert!(matches!(
+        render(&contract),
+        Err(RenderError::TypeMismatch { .. })
+    ));
+}
+
+#[test]
 fn list_push_front_and_length_validate_declared_types() {
     let mut contract = Contract {
         schema_version: 11,

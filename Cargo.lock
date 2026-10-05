@@ -698,6 +698,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-adt-list-enum-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-adt-list-field-fixture"
 version = "0.1.0"
 dependencies = [
@@ -1739,6 +1752,7 @@ dependencies = [
 name = "compact-rust-proof-smoke"
 version = "0.1.0"
 dependencies = [
+ "compact-rust-adt-list-enum-fixture",
  "compact-rust-adt-list-field-fixture",
  "compact-rust-adt-set-enum-fixture",
  "compact-rust-adt-set-vector-fixture",

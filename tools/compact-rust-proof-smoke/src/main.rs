@@ -38,8 +38,8 @@ mod pure_field_arguments;
 mod stateful_pair_hash;
 mod stateful_pure_return;
 mod test_center_counter;
-mod unsigned_recording;
 mod test_center_welcome;
+mod unsigned_recording;
 mod witness_assert;
 mod witness_vector_let;
 

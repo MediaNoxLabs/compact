@@ -2061,10 +2061,14 @@ pub(crate) fn render_stateful_circuit(
                     statements.push(syn::parse_quote!(let #local_name: #ty = #value;));
                     local_parameters.insert(binding.name.as_str(), (&binding.ty, local_name));
                 }
-                // A root Let wraps both the ordered action body and its
-                // return expression. Nested Lets retain their action-only
-                // scope and cannot leak a local into the circuit return.
-                if circuit.actions.len() == 1 && std::ptr::eq(action, &circuit.actions[0]) {
+                // A final top-level Let wraps the ordered suffix of actions
+                // and the circuit return, even when assertions precede it.
+                // Nested and earlier sibling Lets remain action-local.
+                if circuit
+                    .actions
+                    .last()
+                    .is_some_and(|tail| std::ptr::eq(action, tail))
+                {
                     return_parameters = local_parameters.clone();
                 }
                 pending.push(Pending::RestoreScope);

@@ -128,17 +128,22 @@ compiles with a typed constructor Vector parameter loop and conditional Maybe
 insertion. Its generated crate and empty/one-participant constructor state
 match the checked TypeScript capture on a default Rust test thread. Its three
 proof-required exports remain recording-unavailable at their first assertions;
-constructor acceptance adds no proven call. `bboard` and `coracle` still reject
-nested ledger queries, and `micro-dao` rejects a standard-library expression.
+constructor acceptance adds no proven call. The complete original
+`bboard.compact` source now compiles to native Rust after retaining a typed
+tail-`Let` binding across its ordered writes. Its empty-board rejection and
+Unicode post/take-down cycle match TypeScript in result, serialized state,
+ledger values, witness calls, and summed query gas. `post` and `take_down`
+remain proof-required but recording-unavailable; pure `public_key` requires no
+proof. `coracle` still rejects a nested ledger query, and `micro-dao` rejects
+a standard-library expression.
 The separate `let_return_oracle.compact` source now covers a root circuit
 `let` whose bound Cell read must retain its pre-write value across ordered
 actions and the final return. Its generated Rust crate matches two sequential
 TypeScript calls in result, state, ordered VM transcript, private outputs,
 and four query-meter gas dimensions, and its recorded call proves and applies
 with the pinned ledger-8 tools. This assesses one new proof-required export.
-It does not assess the three `bboard` exports: the original source now advances
-past the nested Cell write but still rejects an independent Field-to-Bytes
-expression at line 44.
+The `bboard` native acceptance is a separate source cohort with explicit
+recording gaps; it adds no proven call.
 The lexical scanner includes `pure circuit` and `export pure circuit`
 declarations, with compiler `contract-info.json` supplying proof applicability
 even when the Rust capability report has no recorded method for a pure circuit.

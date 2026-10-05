@@ -7354,7 +7354,47 @@ fn root_let_preserves_pre_write_value_for_return_but_nested_let_does_not_escape(
     assert!(source.contains("crate::ledger_slots::stored"));
     assert!(source.contains(".write(context"));
 
-    let root_let = contract.stateful_circuits[0].actions.remove(0);
+    // Assertions before the final top-level Let do not shorten the lifetime
+    // of its typed binding. This is the complete bboard take_down shape.
+    contract.stateful_circuits[0].actions.insert(
+        0,
+        StateAction::Assert {
+            condition: Expr::Boolean { value: true },
+            message: "before binding".into(),
+        },
+    );
+    let source = render(&contract).unwrap();
+    assert!(source.contains("let result = __compact_action_local_0"));
+
+    // An earlier sibling Let has ended before the return; neither it nor a
+    // nested Let may leak merely because it has the same binding name.
+    contract.stateful_circuits[0]
+        .actions
+        .push(StateAction::Assert {
+            condition: Expr::Boolean { value: true },
+            message: "after binding".into(),
+        });
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::UnknownParameter("previous".into()))
+    );
+    contract.stateful_circuits[0].actions.pop();
+
+    if let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[1] {
+        bindings[0].ty = Type::Boolean;
+    }
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Boolean,
+            actual: Type::Field,
+        })
+    );
+    if let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[1] {
+        bindings[0].ty = Type::Field;
+    }
+
+    let root_let = contract.stateful_circuits[0].actions.remove(1);
     contract.stateful_circuits[0].actions = vec![StateAction::Sequence {
         actions: vec![root_let],
     }];

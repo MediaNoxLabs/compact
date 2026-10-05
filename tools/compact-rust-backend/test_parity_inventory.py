@@ -280,6 +280,27 @@ metadata.mkdir()
                           if item["kind"] == "circuit" and item["visibility"] == "export"},
                          {item["name"] for item in entry["proof_circuits"]})
 
+    def test_test_center_bboard_native_scope_keeps_recording_gaps_explicit(self):
+        manifest = json.loads(inventory.TEST_CENTER_BBOARD_SOURCE_MANIFEST.read_text())
+        self.assertEqual(source_scope.cohort_membership_failures(manifest), [])
+        self.assertEqual(len(manifest["positive_sources"]), 1)
+        entry = manifest["positive_sources"][0]
+        self.assertEqual(entry["source"], "test-center/test-contracts/bboard.compact")
+        self.assertIn(entry["source"],
+                      (inventory.ROOT / entry["typescript_capture"]).read_text())
+        self.assertEqual(json.loads((inventory.ROOT / entry["typescript_fixture"]).read_text())
+                         ["source"], entry["source"])
+        self.assertIn(Path(entry["typescript_fixture"]).name,
+                      (inventory.ROOT / entry["rust_test"]).read_text())
+        self.assertEqual([(item["name"], item["proof"]) for item in entry["proof_circuits"]],
+                         [("post", True), ("take_down", True), ("public_key", False)])
+        self.assertEqual(set(entry["expected_recording_gaps"]), {"post", "take_down"})
+        self.assertEqual({item["name"] for item in
+                          inventory.parse_source(inventory.ROOT / entry["source"],
+                                                 inventory.ROOT)["declarations"]
+                          if item["kind"] == "circuit" and item["visibility"] == "export"},
+                         {item["name"] for item in entry["proof_circuits"]})
+
     def test_pm19252_positive_scope_is_complete_and_excludes_rejection(self):
         scope = json.loads(inventory.POSITIVE_SOURCE_MANIFEST.read_text())
         positive = scope["positive_sources"]

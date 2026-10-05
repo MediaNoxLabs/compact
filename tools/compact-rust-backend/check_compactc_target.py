@@ -30,6 +30,7 @@ import tomllib
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "examples/rust_backend/counter.compact"
 TEST_CENTER_COUNTER_SOURCE = ROOT / "test-center/test-contracts/counter.compact"
+TEST_CENTER_BBOARD_SOURCE = ROOT / "test-center/test-contracts/bboard.compact"
 PM_19252_SOURCE = ROOT / "examples/bugs/pm-19252/example_ten.compact"
 NATIVE_KEY_VALUE_SOURCE = ROOT / "examples/rust_backend/native_own_public_key_value.compact"
 COUNTER_PARAMETER_SOURCE = ROOT / "examples/rust_backend/counter_parameter.compact"
@@ -1087,6 +1088,8 @@ def main() -> None:
     parser.add_argument("--proof", action="store_true", help="generate ZKIR and proving keys")
     parser.add_argument("--field-to-bytes32", action="store_true",
                         help="run the focused explicit Field-to-Bytes<32> source gate")
+    parser.add_argument("--test-center-bboard", action="store_true",
+                        help="compile the complete bboard source and check its native-only capability boundary")
     args = parser.parse_args()
     # Captured Rust errors are asserted below; runner color settings must not split their text.
     os.environ["CARGO_TERM_COLOR"] = "never"
@@ -1096,6 +1099,41 @@ def main() -> None:
     compiler = os.environ.get("COMPACTC", "compactc")
     with tempfile.TemporaryDirectory(prefix="compactc-target-") as temporary:
         base = Path(temporary)
+        if args.test_center_bboard:
+            output = base / "test-center-bboard"
+            run(compiler, "--target", "rust", "--skip-zk",
+                str(TEST_CENTER_BBOARD_SOURCE), str(output))
+            ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
+            assert ir["schema_version"] == 13
+            assert [row["name"] for row in ir["circuits"]] == ["some", "none", "public_key"]
+            assert [row["name"] for row in ir["stateful_circuits"]] == ["post", "take_down"]
+            taken = ir["stateful_circuits"][1]
+            assert [action["kind"] for action in taken["actions"]] == ["assert", "assert", "let"]
+            tail = taken["actions"][-1]
+            assert [(binding["name"], binding["ty"]["kind"], binding["value"]["kind"])
+                    for binding in tail["bindings"]] == [
+                ("former_msg", "opaque_string", "struct_field")]
+            assert taken["return_value"] == {
+                "kind": "expression", "value": {"kind": "parameter", "name": "former_msg"}}
+            metadata = json.loads((output / "compiler/contract-info.json").read_text())
+            assert [(row["name"], row["pure"], row["proof"])
+                    for row in metadata["circuits"]] == [
+                ("post", False, True), ("take_down", False, True),
+                ("public_key", True, False)]
+            capabilities = json.loads((output / "contract/rust-capabilities.json").read_text())
+            assert [(row["name"], row["proof_required"], row["recorded"], row["observed_call"])
+                    for row in capabilities["circuits"]] == [
+                ("post", True, False, False), ("take_down", True, False, False)]
+            assert all(row["recording_unavailable"] for row in capabilities["circuits"])
+            rejected = subprocess.run(
+                [compiler, "--target", "rust", "--rust-require-recording", "--skip-zk",
+                 str(TEST_CENTER_BBOARD_SOURCE), str(base / "bboard-requires-recording")],
+                cwd=ROOT, capture_output=True, text=True,
+            )
+            assert rejected.returncode != 0
+            assert "post" in rejected.stderr and "take_down" in rejected.stderr
+            print("complete test-center bboard source accepted with native-only proof boundary")
+            return
         if args.field_to_bytes32:
             output = base / "field-to-bytes32"
             command = [compiler, "--target", "rust"]

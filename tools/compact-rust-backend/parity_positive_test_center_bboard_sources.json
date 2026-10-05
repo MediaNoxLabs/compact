@@ -1,0 +1,29 @@
+{
+  "format_version": 1,
+  "suite": "compiler/test.ss",
+  "purpose": "Complete original test-center bboard native acceptance with explicit unrecorded proof-required calls",
+  "source_glob": "test-center/test-contracts/bboard.compact",
+  "positive_sources": [
+    {
+      "source": "test-center/test-contracts/bboard.compact",
+      "typescript_capture": "runtime-rs/tests/fixtures/capture-test-center-bboard.mjs",
+      "typescript_fixture": "runtime-rs/tests/fixtures/test-center-bboard.json",
+      "rust_fixture": "tests-rust-backend/test-center-bboard/lib.rs",
+      "rust_test": "tests-rust-backend/test-center-bboard/tests/test_center_bboard.rs",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [
+        {"name": "post", "pure": false, "proof": true},
+        {"name": "take_down", "pure": false, "proof": true},
+        {"name": "public_key", "pure": true, "proof": false}
+      ],
+      "expected_recording_gaps": {
+        "post": {"code": "unsupported_action", "ir_node": "StateAction::Let", "path": "actions[1]"},
+        "take_down": {"code": "unsupported_action", "ir_node": "StateAction::Assert", "path": "actions[1]"}
+      },
+      "pure_declarations": 0,
+      "exported_pure_declarations": 0
+    }
+  ],
+  "expected_rejections": []
+}

@@ -120,6 +120,108 @@ fn closed_unsigned_ternary_comparison_records_only_matching_literal_arms() {
 }
 
 #[test]
+fn closed_ternary_struct_member_records_only_literal_field_values() {
+    let box_ty = Type::Struct {
+        name: "Box".into(),
+        fields: vec![StructField {
+            name: "f".into(),
+            ty: Type::Field,
+        }],
+    };
+    let uint = Type::Unsigned { max: "2".into() };
+    let arm = |value: &str| Expr::Coerce {
+        value: Box::new(Expr::UnsignedLiteral {
+            value: value.into(),
+            max: "2".into(),
+        }),
+        ty: uint.clone(),
+    };
+    let mut contract = identity(Type::Unit, Expr::Unit);
+    contract.ledger_fields = vec![LedgerField {
+        source: None,
+        id: "out".into(),
+        index: 0,
+        path: vec![],
+        declaration: LedgerFieldKind::Cell { ty: Type::Field },
+    }];
+    contract.stateful_circuits = vec![StatefulCircuit {
+        source: None,
+        internal: false,
+        name: "test".into(),
+        parameters: vec![
+            Parameter {
+                name: "c".into(),
+                ty: Type::Boolean,
+            },
+            Parameter {
+                name: "dynamic".into(),
+                ty: uint.clone(),
+            },
+        ],
+        actions: vec![StateAction::Let {
+            bindings: vec![LocalBinding {
+                name: "box".into(),
+                ty: box_ty.clone(),
+                value: Expr::StructLiteral {
+                    ty: box_ty,
+                    fields: vec![Expr::FieldCast {
+                        value: Box::new(Expr::If {
+                            condition: Box::new(Expr::Parameter { name: "c".into() }),
+                            then: Box::new(arm("1")),
+                            otherwise: Box::new(arm("2")),
+                        }),
+                    }],
+                },
+            }],
+            action: Box::new(StateAction::Let {
+                bindings: vec![LocalBinding {
+                    name: "member".into(),
+                    ty: Type::Field,
+                    value: Expr::StructField {
+                        value: Box::new(Expr::Parameter { name: "box".into() }),
+                        field: "f".into(),
+                        index: 0,
+                    },
+                }],
+                action: Box::new(StateAction::CellWrite {
+                    field: "out".into(),
+                    index: 0,
+                    value: Expr::Parameter {
+                        name: "member".into(),
+                    },
+                }),
+            }),
+        }],
+        result: Type::Unit,
+        return_value: StateReturn::Unit,
+    }];
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.source.contains("__compact_recorded_struct_"));
+
+    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    let Expr::StructLiteral { fields, .. } = &mut bindings[0].value else {
+        unreachable!()
+    };
+    let Expr::FieldCast { value } = &mut fields[0] else {
+        unreachable!()
+    };
+    let Expr::If { then, .. } = value.as_mut() else {
+        unreachable!()
+    };
+    **then = Expr::Coerce {
+        value: Box::new(Expr::Parameter {
+            name: "dynamic".into(),
+        }),
+        ty: uint,
+    };
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(!rendered.capabilities.circuits[0].recorded);
+}
+
+#[test]
 fn native_own_public_key_is_a_private_effect_without_a_user_witness() {
     let contract = Contract {
         schema_version: 11,

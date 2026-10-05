@@ -2572,6 +2572,97 @@ fn render_recorded_item(
                 bindings,
                 action: nested_action,
             } => {
+                // A one-Field struct built from a closed literal ternary can
+                // be retained as a typed Rust value before projecting the
+                // same member in the immediately nested Let. Do not turn an
+                // arbitrary StructLiteral or effectful arm into a pure local.
+                if let [struct_binding] = bindings.as_slice()
+                    && let Type::Struct {
+                        fields: struct_fields,
+                        ..
+                    } = &struct_binding.ty
+                    && let [struct_field] = struct_fields.as_slice()
+                    && struct_field.ty == Type::Field
+                    && let Expr::StructLiteral {
+                        ty: literal_ty,
+                        fields: literal_fields,
+                    } = &struct_binding.value
+                    && literal_ty == &struct_binding.ty
+                    && let [field_value] = literal_fields.as_slice()
+                    && let Expr::FieldCast { value: cast_value } = field_value
+                    && let Expr::If { condition, .. } = cast_value.as_ref()
+                    && cell_source(condition, &Type::Boolean, locals, parameters).is_some()
+                    && let StateAction::Let {
+                        bindings: projected_bindings,
+                        action: projected_action,
+                    } = nested_action.as_ref()
+                    && let [projected_binding] = projected_bindings.as_slice()
+                    && projected_binding.ty == Type::Field
+                    && let Expr::StructField {
+                        value: projected_source,
+                        field: projected_field,
+                        index: 0,
+                    } = &projected_binding.value
+                    && projected_field == &struct_field.name
+                    && matches!(projected_source.as_ref(), Expr::Parameter { name } if name == &struct_binding.name)
+                    && matches!(projected_action.as_ref(), StateAction::CellWrite { value: Expr::Parameter { name }, .. } if name == &projected_binding.name)
+                {
+                    let Some(field_value) = field_expression(
+                        field_value,
+                        locals,
+                        parameters,
+                        ledger_fields,
+                        witnesses,
+                        circuits,
+                        shared_callees,
+                        steps,
+                        next_temp,
+                        visiting,
+                    )?
+                    else {
+                        return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
+                            &literal_fields[0],
+                            format!("{path}.bindings[0].value.fields[0]"),
+                        )));
+                    };
+                    let struct_ty = rust_type(&struct_binding.ty)?;
+                    let member = ident(&struct_field.name)?;
+                    let retained = syn::Ident::new(
+                        &format!("__compact_recorded_struct_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    let projected = syn::Ident::new(
+                        &format!("__compact_recorded_struct_field_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    steps.push(syn::parse_quote! {
+                        let #retained: #struct_ty = #struct_ty { #member: #field_value };
+                    });
+                    steps.push(syn::parse_quote! {
+                        let #projected: runtime::Field = #retained.#member;
+                    });
+                    let mut scoped = locals.clone();
+                    scoped.insert(
+                        projected_binding.name.clone(),
+                        syn::parse_quote!(#projected),
+                    );
+                    return append_steps(
+                        projected_action,
+                        &format!("{path}.action.action"),
+                        &scoped,
+                        parameters,
+                        ledger_fields,
+                        witnesses,
+                        pure_circuits,
+                        circuits,
+                        shared_callees,
+                        steps,
+                        next_temp,
+                        visiting,
+                    );
+                }
                 let mut scoped = locals.clone();
                 for (binding_index, binding) in bindings.iter().enumerate() {
                     if binding.ty

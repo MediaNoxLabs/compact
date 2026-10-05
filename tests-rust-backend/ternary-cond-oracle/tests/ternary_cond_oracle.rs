@@ -15,9 +15,9 @@
 
 use compact_rust_ternary_cond_oracle_fixture::ledger_contract::{
     LedgerView, Witnesses, initial_state, recorded, streamAssertEq, streamCallPure,
-    streamCallWitness, streamCompareEq, streamIncrement, streamWrite, walkerCallPure,
-    walkerCompareEq, walkerConstAnnotated, walkerInlineWrite, walkerStructMember, walkerWrite,
-    witnessArg,
+    streamCallWitness, streamCompareEq, streamIncrement, streamStructMember, streamWrite,
+    walkerCallPure, walkerCompareEq, walkerConstAnnotated, walkerInlineWrite, walkerStructMember,
+    walkerWrite, witnessArg,
 };
 #[path = "../../boolean_observation_assertions.rs"]
 mod boolean_observation_assertions;
@@ -181,6 +181,102 @@ fn recorded_closed_unsigned_ternary_comparisons_match_typescript() {
             "streamFalse" => (
                 streamCompareEq(native_context).unwrap(),
                 recorded::streamCompareEq(recorded_context).unwrap(),
+            ),
+            _ => unreachable!(),
+        };
+        let _: () = native.result;
+        let _: () = recorded.execution.result;
+        assert_eq!(expected["result"], "", "{case}: TypeScript result");
+        assert_eq!(native.gas_cost, recorded.execution.gas_cost, "{case}: gas");
+        assert_eq!(
+            native.context.query.effects, recorded.execution.context.query.effects,
+            "{case}: effects",
+        );
+        assert_eq!(
+            native.context.query.state.get_ref(),
+            recorded.execution.context.query.state.get_ref(),
+            "{case}: state",
+        );
+        assert_eq!(
+            state_hex(recorded.execution.context.query.state.get_ref().clone()),
+            expected["afterStateHex"],
+            "{case}: TypeScript state",
+        );
+        assert_eq!(native.private_transcript_outputs.len(), 0);
+        assert_eq!(recorded.execution.private_transcript_outputs.len(), 0);
+        assert_eq!(expected["privateTranscriptCount"], 0);
+        assert_eq!(
+            ordered_vm_shape(serde_json::to_value(recorded.public.verify_ops()).unwrap()),
+            expected["publicTranscriptShape"],
+            "{case}: ordered VM",
+        );
+        let replay = recorded
+            .public
+            .initial()
+            .query(
+                recorded.public.verify_ops(),
+                None,
+                &recorded.execution.context.cost_model,
+            )
+            .unwrap();
+        assert_eq!(
+            replay.context.state.get_ref(),
+            native.context.query.state.get_ref(),
+            "{case}: replay state",
+        );
+        assert_eq!(replay.context.effects, native.context.query.effects);
+        let actual = serde_json::to_value(native.gas_cost).unwrap();
+        for dimension in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            let expected_gas: u64 = expected["queries"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|query| {
+                    query["gasCost"][dimension]
+                        .as_str()
+                        .unwrap()
+                        .parse::<u64>()
+                        .unwrap()
+                })
+                .sum();
+            assert_eq!(actual[dimension], expected_gas, "{case}: {dimension}");
+            assert_eq!(
+                expected["queries"].as_array().unwrap().last().unwrap()["gasCost"][dimension],
+                expected["reportedGas"][dimension],
+                "{case}: TypeScript reported {dimension}",
+            );
+        }
+    }
+}
+
+#[test]
+fn recorded_closed_ternary_struct_members_match_typescript() {
+    let reference: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/ternary-recorded-struct-member.json"
+    ))
+    .unwrap();
+    for case in ["walkerTrue", "walkerFalse", "streamFalse"] {
+        let expected = &reference[case];
+        let native_initial = initial(true, true, 111);
+        let recorded_initial = initial(true, true, 111);
+        assert_eq!(
+            state_hex(native_initial.ledger_state.get_ref().clone()),
+            expected["initialStateHex"],
+            "{case}: initial state",
+        );
+        let native_context = native_initial.into_circuit_context(ContractAddress::default());
+        let recorded_context = recorded_initial.into_circuit_context(ContractAddress::default());
+        let (native, recorded) = match case {
+            "walkerTrue" | "walkerFalse" => {
+                let condition = case == "walkerTrue";
+                (
+                    walkerStructMember(native_context, condition).unwrap(),
+                    recorded::walkerStructMember(recorded_context, condition).unwrap(),
+                )
+            }
+            "streamFalse" => (
+                streamStructMember(native_context).unwrap(),
+                recorded::streamStructMember(recorded_context).unwrap(),
             ),
             _ => unreachable!(),
         };

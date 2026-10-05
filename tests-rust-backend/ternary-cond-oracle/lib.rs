@@ -1430,6 +1430,24 @@ pub mod ledger_contract {
                 .record_write(frame, __compact_recorded_pure_field_1)?;
             Ok(frame.finish(()))
         }
+        pub fn walkerStructMember<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: bool,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_struct_0: crate::types::Box = crate::types::Box {
+                f: if __compact_param_0 {
+                    runtime::Field::from(1u64)
+                } else {
+                    runtime::Field::from(2u64)
+                },
+            };
+            let __compact_recorded_struct_field_1: runtime::Field = __compact_recorded_struct_0.f;
+            let frame = crate::ledger_slots::fieldCell
+                .record_write(frame, __compact_recorded_struct_field_1)?;
+            Ok(frame.finish(()))
+        }
         pub fn walkerWrite<Private>(
             context: runtime::context::CircuitContext<Private>,
             __compact_param_0: bool,
@@ -1587,6 +1605,25 @@ pub mod ledger_contract {
                 .record_write(frame, __compact_recorded_pure_field_2)?;
             Ok(frame.finish(()))
         }
+        pub fn streamStructMember<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_recorded_bool_0): (_, bool) =
+                crate::ledger_slots::flag.record_read(frame)?;
+            let __compact_recorded_struct_1: crate::types::Box = crate::types::Box {
+                f: if __compact_recorded_bool_0 {
+                    runtime::Field::from(1u64)
+                } else {
+                    runtime::Field::from(2u64)
+                },
+            };
+            let __compact_recorded_struct_field_2: runtime::Field = __compact_recorded_struct_1.f;
+            let frame = crate::ledger_slots::fieldCell
+                .record_write(frame, __compact_recorded_struct_field_2)?;
+            Ok(frame.finish(()))
+        }
         pub fn streamCallWitness<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
@@ -1706,6 +1743,34 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "walkerCallPure",
+                    input,
+                ))
+            }
+            pub fn walkerStructMember<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                c: bool,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::walkerStructMember(context, c)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn walkerStructMember_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                c: bool,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(c);
+                let recorded =
+                    self.walkerStructMember(observed.circuit_context(private_state), c)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "walkerStructMember",
                     input,
                 ))
             }
@@ -1898,6 +1963,31 @@ pub mod ledger_contract {
                     input,
                 ))
             }
+            pub fn streamStructMember<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::streamStructMember(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn streamStructMember_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.streamStructMember(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "streamStructMember",
+                    input,
+                ))
+            }
             pub fn streamConstAnnotated<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
@@ -2009,6 +2099,34 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "walkerCallPure",
+                    input,
+                ))
+            }
+            pub fn walkerStructMember<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                c: bool,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                walkerStructMember(context, c)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn walkerStructMember_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                c: bool,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(c);
+                let recorded =
+                    self.walkerStructMember(observed.circuit_context(private_state), c)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "walkerStructMember",
                     input,
                 ))
             }
@@ -2230,6 +2348,31 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "streamCallPure",
+                    input,
+                ))
+            }
+            pub fn streamStructMember<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                streamStructMember(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn streamStructMember_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.streamStructMember(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "streamStructMember",
                     input,
                 ))
             }

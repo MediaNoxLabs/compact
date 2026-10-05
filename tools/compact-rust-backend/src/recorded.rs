@@ -869,7 +869,8 @@ struct AuthorizedContinuation<'a> {
 /// Shared closed authority prefix. The continuation receives the unconsumed
 /// source actions only after witness/hash/Cell provenance has been checked.
 fn closed_authority_prefix<'a>(
-    circuit: &'a StatefulCircuit,
+    circuit: &StatefulCircuit,
+    source_actions: &'a [StateAction],
     ledger_fields: &HashMap<&str, &LedgerField>,
     witnesses: &HashMap<&str, &WitnessDeclaration>,
     pure_circuits: &HashMap<&str, &PureCircuit>,
@@ -883,7 +884,7 @@ fn closed_authority_prefix<'a>(
             bindings: secret_bindings,
             action,
         },
-    ] = circuit.actions.as_slice()
+    ] = source_actions
     else {
         return Ok(None);
     };
@@ -1046,8 +1047,13 @@ fn closed_authorized_optional_write_steps(
     {
         return Ok(None);
     }
-    let Some(AuthorizedContinuation { actions, mut steps }) =
-        closed_authority_prefix(circuit, ledger_fields, witnesses, pure_circuits)?
+    let Some(AuthorizedContinuation { actions, mut steps }) = closed_authority_prefix(
+        circuit,
+        &circuit.actions,
+        ledger_fields,
+        witnesses,
+        pure_circuits,
+    )?
     else {
         return Ok(None);
     };
@@ -1169,8 +1175,13 @@ fn closed_authorized_enum_advance_steps(
     if !circuit.parameters.is_empty() {
         return Ok(None);
     }
-    let Some(AuthorizedContinuation { actions, mut steps }) =
-        closed_authority_prefix(circuit, ledger_fields, witnesses, pure_circuits)?
+    let Some(AuthorizedContinuation { actions, mut steps }) = closed_authority_prefix(
+        circuit,
+        &circuit.actions,
+        ledger_fields,
+        witnesses,
+        pure_circuits,
+    )?
     else {
         return Ok(None);
     };
@@ -1312,6 +1323,234 @@ fn closed_authorized_enum_advance_steps(
         },
         syn::parse_quote! {
             let frame = crate::ledger_slots::#phase_slot.record_write(frame, __compact_successor)?;
+        },
+    ]);
+    Ok(Some(steps))
+}
+
+/// A negative optional-path witness guard followed by the shared authority
+/// prefix, enum phase assertion and one typed Bytes32 Merkle insertion.
+fn closed_witness_admitted_merkle_insert_steps(
+    circuit: &StatefulCircuit,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure_circuits: &HashMap<&str, &PureCircuit>,
+) -> Result<Option<Vec<syn::Stmt>>, RenderError> {
+    let bytes32 = Type::Bytes { length: 32 };
+    let [parameter] = circuit.parameters.as_slice() else {
+        return Ok(None);
+    };
+    if parameter.ty != bytes32 {
+        return Ok(None);
+    }
+    let [StateAction::Sequence { actions }] = circuit.actions.as_slice() else {
+        return Ok(None);
+    };
+    let [
+        StateAction::Assert {
+            condition:
+                Expr::If {
+                    condition,
+                    then,
+                    otherwise,
+                },
+            message: admission_message,
+        },
+        authority,
+    ] = actions.as_slice()
+    else {
+        return Ok(None);
+    };
+    if !matches!(then.as_ref(), Expr::Boolean { value: false })
+        || !matches!(otherwise.as_ref(), Expr::Boolean { value: true })
+    {
+        return Ok(None);
+    }
+    let Expr::StructField {
+        value,
+        field: presence_member,
+        index: 0,
+    } = condition.as_ref()
+    else {
+        return Ok(None);
+    };
+    let Expr::WitnessCall {
+        name: admission_name,
+        arguments,
+    } = value.as_ref()
+    else {
+        return Ok(None);
+    };
+    let [
+        Expr::Coerce {
+            value: argument,
+            ty: argument_ty,
+        },
+    ] = arguments.as_slice()
+    else {
+        return Ok(None);
+    };
+    if *argument_ty != bytes32
+        || !matches!(argument.as_ref(), Expr::Parameter { name } if name == &parameter.name)
+    {
+        return Ok(None);
+    }
+    let Some(admission) = witnesses.get(admission_name.as_str()) else {
+        return Ok(None);
+    };
+    let [formal] = admission.parameters.as_slice() else {
+        return Ok(None);
+    };
+    if formal.ty != bytes32 {
+        return Ok(None);
+    }
+    let Type::Struct {
+        fields: optional_fields,
+        ..
+    } = &admission.result
+    else {
+        return Ok(None);
+    };
+    let [presence, path] = optional_fields.as_slice() else {
+        return Ok(None);
+    };
+    if presence.name != *presence_member || presence.ty != Type::Boolean {
+        return Ok(None);
+    }
+    let Type::Struct {
+        fields: path_fields,
+        ..
+    } = &path.ty
+    else {
+        return Ok(None);
+    };
+    let [leaf, entries] = path_fields.as_slice() else {
+        return Ok(None);
+    };
+    if leaf.ty != bytes32 {
+        return Ok(None);
+    }
+    let Type::Vector {
+        element,
+        length: depth,
+    } = &entries.ty
+    else {
+        return Ok(None);
+    };
+    let Type::Struct {
+        fields: entry_fields,
+        ..
+    } = element.as_ref()
+    else {
+        return Ok(None);
+    };
+    let [digest, direction] = entry_fields.as_slice() else {
+        return Ok(None);
+    };
+    let Type::Struct {
+        fields: digest_fields,
+        ..
+    } = &digest.ty
+    else {
+        return Ok(None);
+    };
+    if direction.ty != Type::Boolean
+        || !matches!(digest_fields.as_slice(), [field] if field.ty == Type::Field)
+    {
+        return Ok(None);
+    }
+    let Some(AuthorizedContinuation {
+        actions,
+        steps: authority_steps,
+    }) = closed_authority_prefix(
+        circuit,
+        std::slice::from_ref(authority),
+        ledger_fields,
+        witnesses,
+        pure_circuits,
+    )?
+    else {
+        return Ok(None);
+    };
+    let [
+        StateAction::Assert {
+            condition:
+                Expr::Equal {
+                    left: phase_read,
+                    right: phase_value,
+                },
+            message: phase_message,
+        },
+        StateAction::MerkleInsert {
+            field: tree_field,
+            index: tree_index,
+            value: inserted,
+        },
+    ] = actions
+    else {
+        return Ok(None);
+    };
+    let Expr::CellRead {
+        field: phase_field,
+        index: phase_index,
+    } = phase_read.as_ref()
+    else {
+        return Ok(None);
+    };
+    let Expr::EnumVariant { ty: phase_ty, .. } = phase_value.as_ref() else {
+        return Ok(None);
+    };
+    if !matches!(phase_ty, Type::Enum { .. })
+        || !matches!(inserted, Expr::Parameter { name } if name == &parameter.name)
+    {
+        return Ok(None);
+    }
+    if !matches!(ledger_fields.get(phase_field.as_str()), Some(field) if field.index == *phase_index && field.declaration == (LedgerFieldKind::Cell { ty: phase_ty.clone() }))
+    {
+        return Ok(None);
+    }
+    let Some(tree) = ledger_fields.get(tree_field.as_str()) else {
+        return Ok(None);
+    };
+    if tree.index != *tree_index
+        || tree.physical_path().len() != 1
+        || !matches!(&tree.declaration, LedgerFieldKind::MerkleTree { ty, depth: tree_depth } if *ty == bytes32 && usize::from(*tree_depth) == *depth)
+    {
+        return Ok(None);
+    }
+    let admission_method = ident(admission_name)?;
+    let admission_ty = rust_type(&admission.result)?;
+    let presence_member = ident(presence_member)?;
+    let phase_slot = ident(phase_field)?;
+    let phase_type = rust_type(phase_ty)?;
+    let (phase_value, _) = expression_with_calls(phase_value, &HashMap::new(), &HashMap::new())?;
+    let tree_slot = ident(tree_field)?;
+    let mut steps = vec![
+        syn::parse_quote! {
+            let (frame, __compact_admission): (_, #admission_ty) = frame.try_witness_metered(|context, meter| {
+                witnesses.#admission_method(context.witness_context_with(super::LedgerView {
+                    state: context.query.state.get_ref(), meter,
+                }), __compact_param_0)
+            })?;
+        },
+        syn::parse_quote! {
+            if __compact_admission.#presence_member {
+                return Err(runtime::CompactError::AssertionFailed(#admission_message.to_owned()));
+            }
+        },
+    ];
+    steps.extend(authority_steps);
+    steps.extend([
+        syn::parse_quote! {
+            let (frame, __compact_phase): (_, #phase_type) = crate::ledger_slots::#phase_slot.record_read(frame)?;
+        },
+        syn::parse_quote! {
+            if __compact_phase != #phase_value {
+                return Err(runtime::CompactError::AssertionFailed(#phase_message.to_owned()));
+            }
+        },
+        syn::parse_quote! {
+            let frame = crate::ledger_slots::#tree_slot.record_insert(frame, __compact_param_0)?;
         },
     ]);
     Ok(Some(steps))
@@ -7238,6 +7477,12 @@ fn render_recorded_item(
                 pure_circuits,
             )?)
             .or(closed_authorized_enum_advance_steps(
+                circuit,
+                ledger_fields,
+                witnesses,
+                pure_circuits,
+            )?)
+            .or(closed_witness_admitted_merkle_insert_steps(
                 circuit,
                 ledger_fields,
                 witnesses,

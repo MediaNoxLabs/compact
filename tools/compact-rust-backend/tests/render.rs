@@ -9250,3 +9250,94 @@ fn authorized_enum_advance_requires_closed_successor_and_ordered_optional_read()
     field.index = 8;
     assert!(render_with_capabilities(&wrong_index).is_err());
 }
+
+#[test]
+fn witness_admitted_merkle_insert_requires_path_shape_argument_and_order() {
+    let source = include_str!("election-schema13-ir.json");
+    let mut contract: Contract = serde_json::from_str(source).unwrap();
+    contract.schema_version = SCHEMA_VERSION;
+    let available = |contract: &Contract, name: &str| {
+        render_with_capabilities(contract)
+            .unwrap()
+            .capabilities
+            .circuits
+            .iter()
+            .find(|circuit| circuit.name == name)
+            .unwrap()
+            .recorded
+    };
+    assert!(available(&contract, "add_voter"));
+    let renamed = source
+        .replace("add_voter", "admit_member")
+        .replace("eligible_voters", "registry")
+        .replace("private$secret_key", "load_credential")
+        .replace("public_key", "derive_key")
+        .replace("authority", "controller")
+        .replace("PublicState", "Phase")
+        .replace("setup", "draft")
+        .replace("Maybe", "OptionalValue")
+        .replace("is_some", "present");
+    let mut renamed: Contract = serde_json::from_str(&renamed).unwrap();
+    renamed.schema_version = SCHEMA_VERSION;
+    assert!(available(&renamed, "admit_member"));
+    let mut wrong_argument = contract.clone();
+    let circuit = wrong_argument
+        .stateful_circuits
+        .iter_mut()
+        .find(|circuit| circuit.name == "add_voter")
+        .unwrap();
+    let StateAction::Sequence { actions } = &mut circuit.actions[0] else {
+        unreachable!()
+    };
+    let StateAction::Assert {
+        condition: Expr::If { condition, .. },
+        ..
+    } = &mut actions[0]
+    else {
+        unreachable!()
+    };
+    let Expr::StructField { value, .. } = condition.as_mut() else {
+        unreachable!()
+    };
+    let Expr::WitnessCall { arguments, .. } = value.as_mut() else {
+        unreachable!()
+    };
+    arguments[0] = Expr::Coerce {
+        value: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
+        ty: Type::Bytes { length: 32 },
+    };
+    assert!(!available(&wrong_argument, "add_voter"));
+    let mut reordered = contract.clone();
+    let circuit = reordered
+        .stateful_circuits
+        .iter_mut()
+        .find(|circuit| circuit.name == "add_voter")
+        .unwrap();
+    let StateAction::Sequence { actions } = &mut circuit.actions[0] else {
+        unreachable!()
+    };
+    actions.swap(0, 1);
+    assert!(!available(&reordered, "add_voter"));
+    let mut wrong_depth = contract;
+    let field = wrong_depth
+        .ledger_fields
+        .iter_mut()
+        .find(|field| field.id == "eligible_voters")
+        .unwrap();
+    let LedgerFieldKind::MerkleTree { depth, .. } = &mut field.declaration else {
+        unreachable!()
+    };
+    *depth = 9;
+    // Other source path consumers may reject the contract before recording.
+    if let Ok(rendered) = render_with_capabilities(&wrong_depth) {
+        assert!(
+            !rendered
+                .capabilities
+                .circuits
+                .iter()
+                .find(|circuit| circuit.name == "add_voter")
+                .unwrap()
+                .recorded
+        );
+    }
+}

@@ -1065,6 +1065,55 @@ pub mod ledger_contract {
             let frame = crate::ledger_slots::topic.record_write(frame, __compact_optional_value)?;
             Ok(frame.finish(()))
         }
+        pub fn add_voter<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::FixedBytes<32>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_admission): (_, crate::types::MaybeCompact1) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.context_eligible_voters_path_of(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_param_0,
+                    )
+                })?;
+            if __compact_admission.is_some {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Attempted to add a voter twice".to_owned(),
+                ));
+            }
+            let (frame, __compact_authority_secret): (_, runtime::FixedBytes<32>) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.private_secret_key(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            let __compact_authority_hash =
+                crate::pure_circuits::public_key(__compact_authority_secret)?;
+            let (frame, __compact_authority): (_, runtime::FixedBytes<32>) =
+                crate::ledger_slots::authority.record_read(frame)?;
+            if __compact_authority_hash != __compact_authority {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Attempted to add a voter without authorization".to_owned(),
+                ));
+            }
+            let (frame, __compact_phase): (_, crate::types::PublicState) =
+                crate::ledger_slots::state.record_read(frame)?;
+            if __compact_phase != crate::types::PublicState::setup {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Attempted to add a voter after setup phase".to_owned(),
+                ));
+            }
+            let frame =
+                crate::ledger_slots::eligible_voters.record_insert(frame, __compact_param_0)?;
+            Ok(frame.finish(()))
+        }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
         impl Contract {}
@@ -1129,6 +1178,38 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "set_topic",
+                    input,
+                ))
+            }
+            pub fn add_voter<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                pk: runtime::FixedBytes<32>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                add_voter(context, self.witnesses, pk)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn add_voter_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                pk: runtime::FixedBytes<32>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(pk);
+                let recorded = self.add_voter(observed.circuit_context(private_state), pk)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "add_voter",
                     input,
                 ))
             }

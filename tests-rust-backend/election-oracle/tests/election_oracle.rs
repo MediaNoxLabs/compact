@@ -138,6 +138,85 @@ impl Witnesses<u64> for FixedWitness {
     }
 }
 
+#[derive(Default)]
+struct LedgerWitness {
+    calls: std::cell::RefCell<Vec<&'static str>>,
+}
+
+impl Witnesses<u64> for LedgerWitness {
+    fn private_secret_key(
+        &self,
+        context: WitnessContext<'_, u64, LedgerView<'_>>,
+    ) -> (u64, runtime::FixedBytes<32>) {
+        self.calls.borrow_mut().push("secret");
+        (
+            *context.private_state + 1,
+            runtime::FixedBytes::new([7; 32]),
+        )
+    }
+
+    fn private_state(
+        &self,
+        context: WitnessContext<'_, u64, LedgerView<'_>>,
+    ) -> (u64, PrivateState) {
+        (*context.private_state, PrivateState::default())
+    }
+
+    fn private_state_advance(&self, context: WitnessContext<'_, u64, LedgerView<'_>>) -> (u64, ()) {
+        (*context.private_state, ())
+    }
+
+    fn private_vote_record(
+        &self,
+        context: WitnessContext<'_, u64, LedgerView<'_>>,
+        _vote: PermissibleVotes,
+    ) -> (u64, ()) {
+        (*context.private_state, ())
+    }
+
+    fn private_vote(
+        &self,
+        context: WitnessContext<'_, u64, LedgerView<'_>>,
+    ) -> (u64, PermissibleVotes) {
+        (*context.private_state, PermissibleVotes::default())
+    }
+
+    fn context_eligible_voters_path_of(
+        &self,
+        context: WitnessContext<'_, u64, LedgerView<'_>>,
+        key: runtime::FixedBytes<32>,
+    ) -> (u64, MaybeCompact1) {
+        self.calls.borrow_mut().push("path");
+        // The view dereferences to the local ledger8 tree inspection API.
+        // It does not issue a metered VM query, matching the TS snapshot oracle.
+        let path = context
+            .ledger
+            .eligible_voters()
+            .unwrap()
+            .find_path_for_leaf(key);
+        let result = match path {
+            Some(path) => MaybeCompact1 {
+                is_some: true,
+                value:
+                    compact_rust_election_oracle_fixture::types::MerkleTreePath::from_ledger_path(
+                        path,
+                    )
+                    .unwrap(),
+            },
+            None => MaybeCompact1::default(),
+        };
+        (*context.private_state + 1, result)
+    }
+
+    fn context_committed_votes_path_of(
+        &self,
+        context: WitnessContext<'_, u64, LedgerView<'_>>,
+        _key: runtime::FixedBytes<32>,
+    ) -> (u64, MaybeCompact1) {
+        (*context.private_state, MaybeCompact1::default())
+    }
+}
+
 fn state_hex(state: StateValue<DefaultDB>) -> String {
     let mut operations: HashMap<EntryPointBuf, ContractOperation, DefaultDB> = HashMap::new();
     for name in [
@@ -489,5 +568,190 @@ fn recorded_advance_preserves_all_phase_transitions_and_optional_presence() {
             .unwrap()
             .to_string(),
         oracle["absentTopic"]
+    );
+}
+
+#[test]
+fn recorded_add_voter_uses_live_tree_witness_and_preserves_two_private_outputs() {
+    use compact_rust_election_oracle_fixture::ledger_contract::recorded;
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/election-add-voter-oracle.json"
+    ))
+    .unwrap();
+    let initial = |authority| {
+        initial_state(
+            ConstructorContext::new(10_u64),
+            runtime::FixedBytes::new(authority),
+        )
+        .unwrap()
+        .into_circuit_context(ContractAddress::default())
+    };
+    for scenario in oracle["scenarios"].as_array().unwrap() {
+        let value = scenario["value"].as_u64().unwrap() as u8;
+        let seeded = || {
+            let context = initial(AUTHORITY);
+            if value == 9 {
+                add_voter(
+                    context,
+                    &LedgerWitness::default(),
+                    runtime::FixedBytes::new([8; 32]),
+                )
+                .unwrap()
+                .context
+            } else {
+                context
+            }
+        };
+        let native_witness = LedgerWitness::default();
+        let witness = LedgerWitness::default();
+        let native = add_voter(
+            seeded(),
+            &native_witness,
+            runtime::FixedBytes::new([value; 32]),
+        )
+        .unwrap();
+        let recorded =
+            recorded::add_voter(seeded(), &witness, runtime::FixedBytes::new([value; 32])).unwrap();
+        assert_eq!(
+            serde_json::to_value(&*witness.calls.borrow()).unwrap(),
+            scenario["witnessCalls"]
+        );
+        assert_eq!(*native_witness.calls.borrow(), *witness.calls.borrow());
+        assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+        assert_eq!(
+            native.private_transcript_outputs,
+            recorded.execution.private_transcript_outputs
+        );
+        assert_eq!(
+            native.context.query.effects,
+            recorded.execution.context.query.effects
+        );
+        assert_eq!(
+            native.context.query.state.get_ref(),
+            recorded.execution.context.query.state.get_ref()
+        );
+        assert_eq!(
+            recorded.execution.context.private_state,
+            scenario["privateState"].as_u64().unwrap()
+        );
+        assert_eq!(recorded.execution.private_transcript_outputs.len(), 2);
+        assert_eq!(
+            state_hex(recorded.execution.context.query.state.get_ref().clone()),
+            scenario["stateHex"]
+        );
+        for (output, expected) in recorded
+            .execution
+            .private_transcript_outputs
+            .iter()
+            .zip(scenario["privateTranscriptOutputs"].as_array().unwrap())
+        {
+            let atoms: Vec<_> = output.value.0.iter().map(|atom| &atom.0).collect();
+            assert_eq!(serde_json::to_value(atoms).unwrap(), expected["value"]);
+            assert_eq!(
+                serde_json::to_value(&output.alignment).unwrap(),
+                expected["alignment"]
+            );
+        }
+        let gas = serde_json::to_value(recorded.execution.gas_cost).unwrap();
+        let queries = scenario["queries"].as_array().unwrap();
+        assert_eq!(queries.len(), 3);
+        for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            let sum: u64 = queries
+                .iter()
+                .map(|query| {
+                    query["gasCost"][key]
+                        .as_str()
+                        .unwrap()
+                        .parse::<u64>()
+                        .unwrap()
+                })
+                .sum();
+            assert_eq!(gas[key], sum);
+        }
+        let mut program = serde_json::to_value(recorded.public.verify_ops()).unwrap();
+        for operation in program.as_array_mut().unwrap() {
+            if let Some(pop) = operation.get_mut("popeq") {
+                pop["result"] = serde_json::Value::Null;
+            }
+        }
+        let expected: Vec<_> = queries
+            .iter()
+            .flat_map(|query| query["program"].as_array().unwrap().iter().cloned())
+            .collect();
+        assert_eq!(program, serde_json::json!(expected));
+        let replay = recorded
+            .public
+            .initial()
+            .query(
+                recorded.public.verify_ops(),
+                None,
+                &recorded.execution.context.cost_model,
+            )
+            .unwrap();
+        let replay_gas = serde_json::to_value(replay.gas_cost).unwrap();
+        for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            assert_eq!(
+                replay_gas[key],
+                scenario["replayGas"][key]
+                    .as_str()
+                    .unwrap()
+                    .parse::<u64>()
+                    .unwrap()
+            );
+        }
+        assert_eq!(
+            state_hex(replay.context.state.get_ref().clone()),
+            scenario["stateHex"]
+        );
+        assert_eq!(
+            replay.context.effects,
+            recorded.execution.context.query.effects
+        );
+        let witness = LedgerWitness::default();
+        assert_eq!(
+            recorded::add_voter(native.context, &witness, runtime::FixedBytes::new([8; 32]))
+                .err()
+                .unwrap()
+                .to_string(),
+            oracle["duplicate"]["error"]
+        );
+        assert_eq!(
+            serde_json::to_value(&*witness.calls.borrow()).unwrap(),
+            oracle["duplicate"]["witnessCalls"]
+        );
+    }
+    let witness = LedgerWitness::default();
+    assert_eq!(
+        recorded::add_voter(
+            initial([0; 32]),
+            &witness,
+            runtime::FixedBytes::new([8; 32])
+        )
+        .err()
+        .unwrap()
+        .to_string(),
+        oracle["wrongAuthority"]["error"]
+    );
+    assert_eq!(
+        serde_json::to_value(&*witness.calls.borrow()).unwrap(),
+        oracle["wrongAuthority"]["witnessCalls"]
+    );
+    let configured = set_topic(initial(AUTHORITY), &FixedWitness, "ready".into()).unwrap();
+    let advanced = advance(configured.context, &FixedWitness).unwrap();
+    let witness = LedgerWitness::default();
+    assert_eq!(
+        recorded::add_voter(
+            advanced.context,
+            &witness,
+            runtime::FixedBytes::new([8; 32])
+        )
+        .err()
+        .unwrap()
+        .to_string(),
+        oracle["wrongPhase"]["error"]
+    );
+    assert_eq!(
+        serde_json::to_value(&*witness.calls.borrow()).unwrap(),
+        oracle["wrongPhase"]["witnessCalls"]
     );
 }

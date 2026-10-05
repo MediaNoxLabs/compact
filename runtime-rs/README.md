@@ -200,8 +200,9 @@ including the cached Boolean observation and exact ledger gas.
 ABI42 adds native `CellSlot::write_coin` and `CircuitContext::write_qualified_coin_cell`.
 ABI44 adds recorded `CellSlot::record_write_coin` and `RecordingFrame::write_qualified_coin_cell`, sharing the native qualified Cell VM builder. ABI43 is reserved for circuit Zswap intents.
 Qualified Cell writes and Set insertions share allocated commitment validation,
-then obtain the Merkle index through the canonical ledger VM. Recording Cell coin
-writes remains unsupported and is reported explicitly by the compiler.
+then obtain the Merkle index through the canonical ledger VM. Recorded Cell coin
+writes use those same allocation checks and the shared VM builder. Circuit-level
+recording availability still requires the compiler to admit the complete body.
 
 ABI43 adds `CircuitZswapPlan` for ordered native circuit inputs and outputs, separate
 from the upstream wallet local state. `CircuitContext::create_zswap_output` uses a

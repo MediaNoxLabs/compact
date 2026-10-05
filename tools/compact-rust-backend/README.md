@@ -98,6 +98,13 @@ default TypeScript generation, strict Rust generation and an offline generated
 Cargo consumer. A check of the normal Nix package alone does not cover this
 release path. Verify each supported platform separately.
 
+The rust-backend-v2 distribution scope is a dedicated repository branch pinned
+by immutable Nix revision, with matching bundled or shared runtime sources.
+Local archive and external Nix consumer checks rehearse that delivery. Remote
+branch publication and same-revision CI are separate, deferred acceptance
+steps; a local Git revision does not establish a published branch. Crates.io
+publication and a public-registry consumer are outside this v2 scope.
+
 ## Compile a contract
 
 The packaged `compactc` accepts a repeatable `--target` option. TypeScript is
@@ -171,8 +178,9 @@ compiler receipt. The manifest locks glob membership and authoritative proof
 flags. All five sources compile for Rust. The original
 `set_qualified_coin_info` now lowers its typed `insertCoin` through ledger-8's
 transaction commitment index and executes natively; its two proof-required
-exports remain native-only because recording does not yet cover their full
-root `Let` bodies. `set_struct` has no contract circuit. The proof-required
+exports now have recorded and observed-call APIs; the manifest retains no
+recording gaps for that source. `set_struct` has no contract circuit. The
+proof-required
 `set_field.test`, `set_enum.test`, and `set_vector.test` have recorded and
 observed-call APIs. `set_enum` and
 `set_vector` have TypeScript/native/recorded state, gas, VM, and proof
@@ -183,10 +191,10 @@ executing parity for the remaining circuits.
 recipient at nonzero allocated indices against an independent TypeScript
 capture, including Set state, effects, gas, missing commitment rejection and
 wrong Set element alignment. Run `check_compactc_target.py --adt-set-qualified`
-for the unchanged original source's schema-14 and native-only capability gate.
+for the unchanged original source's current capability gate.
 Use `check_fixture_outputs.py --only qualified_coin_set_oracle.compact` for a
-focused generated fixture check. All checked fixtures use the combined ABI-39
-runtime, including audited local helpers and qualified coin insertion.
+focused generated fixture check. Current checked fixtures use schema 20 and
+ABI 49; qualified coin insertion retains the upstream allocation checks.
 The bounded ADT List manifest `parity_positive_adt_list_sources.json` admits
 `examples/adt/tests/list_field.compact::test` after the nested List query
 lowering in ADR-0101/#204. Its generated fixture checks the TypeScript,
@@ -206,15 +214,15 @@ proof-false helper. The full local parity gate runs this cohort check. Original
 `parity_positive_original_election_zerocash_sources.json` now checks the exact
 original `examples/election.compact` and `examples/zerocash.compact` paths.
 Both compile for TypeScript and Rust; the seven exported circuits are
-compiler-proof-required but explicitly recording-unavailable at their first
-typed Assert or Let action. The generated original Zerocash library is
+compiler-proof-required and now have recorded and observed-call APIs, with no
+recording gaps in this source cohort. The generated original Zerocash library is
 byte-identical after formatting to the existing checked oracle fixture. The
 Election oracle fixture has a different constructor because it adds an
 authority parameter; its native TypeScript state test is analogous evidence,
 not a test of the original constructor. The separate original generated crates
-have passed `cargo check`, but source acceptance and crate construction do not
-claim recorded calls or executable parity for the original sources. The full
-local parity gate runs this cohort check.
+have passed `cargo check`. The source cohort checks API availability; executable
+parity and proof/application claims remain tied to their separate behavior and
+proof receipts. The full local parity gate runs this cohort check.
 The original test-center Counter in
 `parity_positive_test_center_counter_sources.json` has one proof-required
 `increment` call. Its public Counter increment followed by a standalone Unit
@@ -225,15 +233,19 @@ applies through ledger-8. The exact original `welcome.compact` source now
 compiles with a typed constructor Vector parameter loop and conditional Maybe
 insertion. Its generated crate and empty/one-participant constructor state
 match the checked TypeScript capture on a default Rust test thread. Its three
-proof-required exports remain recording-unavailable at their first assertions;
-constructor acceptance adds no proven call. The complete original
+proof-required exports now have recorded and observed-call APIs, with no
+recording gaps in the source manifest. The constructor comparison itself adds
+no proven call. The complete original
 `bboard.compact` source now compiles to native Rust after retaining a typed
 tail-`Let` binding across its ordered writes. Its empty-board rejection and
 Unicode post/take-down cycle match TypeScript in result, serialized state,
 ledger values, witness calls, and summed query gas. `post` and `take_down`
 are recorded and observed; pure `public_key` requires no
 proof. Complete original `coracle` and `micro-dao` now compile to native Rust.
-Their recording gaps remain explicit in their positive source manifests.
+Their positive source manifests now admit all four Coracle and all seven
+microDAO proof-required exports with recorded and observed-call APIs. This is
+an availability claim; individual behavior and funded proof receipts retain
+their own seeded-state and path limits.
 The separate `let_return_oracle.compact` source now covers a root circuit
 `let` whose bound Cell read must retain its pre-write value across ordered
 actions and the final return. Its generated Rust crate matches two sequential
@@ -254,11 +266,13 @@ five pure and four proof-required (`start`, `guess`, `concede`, `withdraw`).
 At this source-admission checkpoint the four recording gaps were exact:
 `StateReturn::Effectful` for `start`, `StateReturn::Expression` for the others,
 all at `return_value`. Later original-source slices close these gaps. Both
-`--effectful-return` and `--coracle-root-let` check native acceptance and strict
-recording refusal. The full local gate runs the Coracle source manifest,
+`--effectful-return` and `--coracle-root-let` now check native acceptance and
+strict recording success against the manifest's exact recorded API set. The
+full local gate runs the Coracle source manifest,
 including one offline Rust 1.99 native Cargo check of the emitted crate.
-This establishes source and native crate acceptance; full original-contract
-behavior, recorded proofs and funded transactions remain separate work.
+This establishes source and generated crate acceptance. Original-contract
+behavior, recorded proofs and funded transactions are established only by the
+separate cases and receipts that actually exercise them.
 The lexical scanner includes `pure circuit` and `export pure circuit`
 declarations, with compiler `contract-info.json` supplying proof applicability
 even when the Rust capability report has no recorded method for a pure circuit.
@@ -470,8 +484,10 @@ For the local runtime crate release rehearsal, run
 repository root. It verifies the macro and runtime crate archives, including
 their license files, and compiles each unpacked package. Until the exact macro
 version is published, the runtime check supplies the local macro source through
-a temporary Cargo patch. Publication, remote CI, and an unpatched consumer are
-separate release gates tracked in [issue #106](https://github.com/MediaNoxLabs/compact/issues/106).
+a temporary Cargo patch. This is optional local provenance evidence under
+[issue #106](https://github.com/MediaNoxLabs/compact/issues/106); it does not
+require crates.io publication or a public-registry consumer for v2. The branch
+and pinned Nix distribution scope is described above.
 
 To retain the exact local archives and their inputs for review, pass
 `--manifest target/rust-runtime-release.json`. The manifest records Git commit,
@@ -484,7 +500,7 @@ a signed annotated tag. This gate does not publish crates or prove that an
 unpatched registry consumer can build; the manifest says that the local macro
 patch was used during archive verification. The `midnight` vault's ADR-0013
 records the decision; [issue #114](https://github.com/MediaNoxLabs/compact/issues/114)
-tracks the remaining gates.
+tracks this historical package-rehearsal scope.
 
 After packaging, rehearse separately generated Counter and Boolean Cell
 contracts together against the two exact archives in that manifest:
@@ -502,8 +518,9 @@ generated crates from one external consumer. It checks
 that Cargo resolves exactly one shared runtime and macro as registry-style
 packages from the archive source, including direct dependencies from both
 generated crates. No local path patch is used for the final consumer. Source
-replacement is a local release rehearsal; crates.io publication, a public
-registry consumer, and remote CI remain #106 exit gates.
+replacement is a local release rehearsal. Crates.io publication and a public
+registry consumer are outside v2; dedicated branch publication and same-revision
+remote CI remain separate from the local Nix acceptance evidence.
 
 ## Source model
 
@@ -640,6 +657,15 @@ call through wallet facade 3.0.0. The indexed Counter state advanced from
 hash under finalized head. The [same-head delivery record](https://github.com/MediaNoxLabs/compact/issues/105#issuecomment-5972867741)
 gives the exact source, versions, proof and transaction evidence. This result
 uses a trusted local node and indexer; remote CI and release gates remain open.
+
+ADR217 subsequently passed the separate ABI49 shielded lifecycle at `628d1c03`:
+deploy, confirmed bootstrap, exact wallet-funded receive, contract-owned release,
+wallet recovery and node rejection of the identical finalized transaction. See
+[the current shielded acceptance summary](wallet-live/SHIELDED.md) and
+[lifecycle requirements](wallet-live/SHIELDED-LIFECYCLE.md). The later `d5dd3f2e`
+header-maintenance revision does not change the revision attached to that live
+receipt. This local result does not establish remote CI, other platforms, or
+fresh-transaction spent-input rejection by the live node.
 
 The wallet operations are equivalent to:
 
@@ -1755,9 +1781,9 @@ explicitly distinct. Lazy unselected subtraction paths must succeed.
 The matrix pins source, capture, script and Rust assertion hashes; its checker
 validates case identity and provenance, not semantic coverage inferred from text.
 This test-only tranche adds no proof or ledger claim and changes no compiler,
-runtime, generated crate, ABI49 or schema20. The broader 37-source review remains
-partial. Six call-argument pure exports and three AssetRegistry pure assertion
-exports still have transitive evidence awaiting separate direct-boundary review.
+runtime, generated crate, ABI49 or schema20. ADR220 subsequently completed the
+37-source manual inventory and direct call-argument/AssetRegistry review below.
+The matrix still makes no all-input, all-branch or proof-completeness claim.
 
 ### ADR222 — direct exported recording trace coverage
 
@@ -1775,7 +1801,7 @@ remain unchanged. The capture script pins source/generated/runtime hashes.
 sources and 203 inventory rows (two are constructor-only sources). It records
 direct, transitive and local-reference distinctions, per-dimension limits and
 reviewed source/test/capture hashes. It is not a claim of all-path, proof or
-ledger coverage; remaining sampled-path and trace gaps are listed in
+ledger coverage; resolved named gaps and remaining coverage limits are listed in
 `oracle_behavior_review.md`. The integrity checker requires re-review when
 pinned evidence changes.
 

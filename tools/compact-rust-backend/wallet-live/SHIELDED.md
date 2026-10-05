@@ -1,7 +1,33 @@
-# Shielded live acceptance preparation (ADR217)
+# Shielded live acceptance (ADR217)
 
-Status: offline preparation, **not a live acceptance result**. The existing Counter
-`check.mjs` remains the live baseline. Issue: [#321](https://github.com/MediaNoxLabs/compact/issues/321).
+The local ABI49 lifecycle passed at `628d1c03`: deployment, confirmed bootstrap,
+exact wallet-funded receive, confirmed contract ownership, full release to the
+wallet, recovered value and rejection of the identical finalized transaction.
+The separate Counter `check.mjs` remains the Counter control. Issue:
+[#321](https://github.com/MediaNoxLabs/compact/issues/321).
+
+See [the lifecycle runner and prerequisites](SHIELDED-LIFECYCLE.md) for the
+current checkpoint, builder and orchestration contract. The later `d5dd3f2e`
+header-maintenance revision is distinct from the live receipt's source revision;
+its final local/package gates must retain their own exact-head evidence.
+
+## Accepted local evidence and limits
+
+The private run receipt is
+`target/rust-live-e671db3b-devnet/shielded-run-628d1c03/receipt.json` in the
+acceptance checkout. It retains four confirmed phases, recovered value, exact
+offer fingerprints, source/key/tool provenance and the pinned node profile.
+Private transaction inputs and wallet snapshots remain private.
+
+The replay result is structured node `RpcError` code `1013`, message
+`Transaction Already Imported`, scoped to the identical finalized transaction.
+It does not establish live rejection of a newly constructed transaction that
+reuses spent inputs. Offline spent-input and binding negatives are separate
+evidence. The stack retains node `0.22.3-6f0ef437` / indexer `4.0.1` / node ledger
+constraint `=8.0.2` and codec `8.0.3` as distinct identities; this local success
+does not establish arbitrary cross-version compatibility. Checkpoints are
+trusted local endpoint observations, not authenticated consensus proofs.
+Remote CI, publication and other platform acceptance are not claimed.
 
 `shielded.compact` uses three current generated recording APIs: an explicit
 bootstrap mint, full-value wallet receive, and qualified full-value release. The
@@ -45,8 +71,9 @@ global frontier/history/nullifier information. It cannot be passed off as a full
 ledger state. `requireOfferReconciliation` preserves this failure instead of
 filling missing state. The original full-ledger runtime binder remains unchanged.
 The runtime now provides an explicit observation-based binder (see runtime-rs/README.md).
-The exact live wallet/block checkpoint adapter and orchestration remain pending;
-these helpers alone do not establish an acquired checkpoint.
+The live runner acquires and validates the exact wallet/block checkpoint through
+`checkpoint.mjs`. The helper tests alone do not establish an acquired checkpoint;
+the live receipt records the actual acquisition and confirmed actions.
 
 Private pre-proof handoffs can contain wallet secret material. Use a private
 working directory and exclusive 0600 files; receipts contain only lengths and
@@ -56,10 +83,11 @@ After Rust proving, wallet Dust balancing must preserve serialized
 shielded offers and placement exactly. The helper detects substituted proofs,
 extra inputs/change, and segment moves.
 
-Live orchestration, same-block wallet root/frontier/event validation, actual
-bootstrap/receive/release proofs, confirmed ownership and node replay refusal
-remain required before this lane can claim live acceptance. Services start only
-after the final source checkpoint is frozen.
+The accepted live run includes same-block wallet root/frontier/event validation,
+actual bootstrap/receive/release proofs, confirmed ownership and the exact node
+replay refusal described above. A new run must satisfy those same lifecycle
+requirements; offline checks are not substitutes. Services start only after the
+source checkpoint is frozen and the stack owner releases submission.
 
 ## Bootstrap strict proof consumer
 
@@ -96,5 +124,6 @@ Generated input hashes are saved with the consumer.
 
 The normal full proof gate additionally runs `--observational-receive` and
 `--observational-send` using its already-generated receive/send keys, after the
-existing complete-ledger runs. The latter proves a full send-to-self; live
-release-to-wallet still belongs to the subsequent devnet flow.
+existing complete-ledger runs. The latter proves a full send-to-self. The separate
+live lifecycle above supplies release-to-wallet evidence; that result does not
+change the narrower scope of these offline proof consumers.

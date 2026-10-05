@@ -73,6 +73,7 @@ CONSTRUCTOR_LIST_SOURCE = ROOT / "examples/rust_backend/constructor_list_actions
 RECORDED_ENUM_SOURCE = ROOT / "examples/rust_backend/recorded_enum_cell.compact"
 TINY_SOURCE = ROOT / "examples/rust_backend/tiny_oracle.compact"
 CELL_READ_SOURCE = ROOT / "examples/rust_backend/cell_read.compact"
+LET_RETURN_SOURCE = ROOT / "examples/rust_backend/let_return_oracle.compact"
 WITNESS_CELL_SOURCE = ROOT / "examples/rust_backend/witness_cell_write.compact"
 ASSERT_WITNESS_SOURCE = ROOT / "examples/rust_backend/assert_witness.compact"
 MERKLE_WITNESS_SOURCE = ROOT / "examples/rust_backend/merkle_path_witness.compact"
@@ -1550,6 +1551,20 @@ def main() -> None:
                 assert (nested_stateful_ternary_proof / "keys" / f"run.{extension}").is_file()
             for extension in ("zkir", "bzkir"):
                 assert (nested_stateful_ternary_proof / "zkir" / f"run.{extension}").is_file()
+            let_return_proof = base / "let-return-proof"
+            run(compiler, "--target", "rust", str(LET_RETURN_SOURCE), str(let_return_proof))
+            check_manifest(let_return_proof)
+            capabilities = json.loads(
+                (let_return_proof / "contract/rust-capabilities.json").read_text()
+            )
+            replace_capability = next(row for row in capabilities["circuits"]
+                                      if row["name"] == "replace")
+            assert replace_capability["proof_required"] and replace_capability["recorded"] \
+                and replace_capability["observed_call"]
+            for extension in ("prover", "verifier"):
+                assert (let_return_proof / "keys" / f"replace.{extension}").is_file()
+            for extension in ("zkir", "bzkir"):
+                assert (let_return_proof / "zkir" / f"replace.{extension}").is_file()
             asset_writable_proof = base / "asset-writable-proof"
             run(compiler, "--target", "rust", str(ASSET_REGISTRY_SOURCE),
                 str(asset_writable_proof))
@@ -1823,6 +1838,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--asset-removal", str(asset_writable_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--let-return", str(let_return_proof),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

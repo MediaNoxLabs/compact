@@ -992,6 +992,42 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
+        pub fn advance<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_authority_secret): (_, runtime::FixedBytes<32>) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.private_secret_key(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            let __compact_authority_hash =
+                crate::pure_circuits::public_key(__compact_authority_secret)?;
+            let (frame, __compact_authority): (_, runtime::FixedBytes<32>) =
+                crate::ledger_slots::authority.record_read(frame)?;
+            if __compact_authority_hash != __compact_authority {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Attempted to advance state without authorization".to_owned(),
+                ));
+            }
+            let (frame, __compact_optional): (_, crate::types::Maybe) =
+                crate::ledger_slots::topic.record_read(frame)?;
+            if !__compact_optional.is_some {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Attempted to start election without a topic".to_owned(),
+                ));
+            }
+            let (frame, __compact_phase): (_, crate::types::PublicState) =
+                crate::ledger_slots::state.record_read(frame)?;
+            let __compact_successor: crate::types::PublicState =
+                crate::pure_circuits::successor(__compact_phase)?;
+            let frame = crate::ledger_slots::state.record_write(frame, __compact_successor)?;
+            Ok(frame.finish(()))
+        }
         pub fn set_topic<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
@@ -1037,6 +1073,33 @@ pub mod ledger_contract {
             pub(super) witnesses: &'a W,
         }
         impl<W> BorrowedContract<'_, W> {
+            pub fn advance<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                advance(context, self.witnesses)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn advance_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.advance(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "advance", input,
+                ))
+            }
             pub fn set_topic<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,

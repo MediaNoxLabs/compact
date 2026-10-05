@@ -861,23 +861,21 @@ fn closed_organizer_gate_steps(
     ]))
 }
 
-/// A typed authority witness/hash and enum phase guard before a single optional
-/// opaque Cell write. Every binding and ledger access is checked by provenance;
-/// names carry no semantic meaning in this closed proof-supported shape.
-fn closed_authorized_optional_write_steps(
-    circuit: &StatefulCircuit,
+struct AuthorizedContinuation<'a> {
+    actions: &'a [StateAction],
+    steps: Vec<syn::Stmt>,
+}
+
+/// Shared closed authority prefix. The continuation receives the unconsumed
+/// source actions only after witness/hash/Cell provenance has been checked.
+fn closed_authority_prefix<'a>(
+    circuit: &'a StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,
     witnesses: &HashMap<&str, &WitnessDeclaration>,
     pure_circuits: &HashMap<&str, &PureCircuit>,
-) -> Result<Option<Vec<syn::Stmt>>, RenderError> {
+) -> Result<Option<AuthorizedContinuation<'a>>, RenderError> {
     let bytes32 = Type::Bytes { length: 32 };
-    let [parameter] = circuit.parameters.as_slice() else {
-        return Ok(None);
-    };
-    if parameter.ty != Type::OpaqueString
-        || circuit.result != Type::Unit
-        || circuit.return_value != StateReturn::Unit
-    {
+    if circuit.result != Type::Unit || circuit.return_value != StateReturn::Unit {
         return Ok(None);
     }
     let [
@@ -939,8 +937,10 @@ fn closed_authorized_optional_write_steps(
         || *arg_ty != bytes32
         || !matches!(hash_arg.as_ref(), Expr::Parameter { name } if name == &secret.name)
         || hash_binding.name == secret.name
-        || parameter.name == secret.name
-        || parameter.name == hash_binding.name
+        || circuit
+            .parameters
+            .iter()
+            .any(|parameter| parameter.name == secret.name || parameter.name == hash_binding.name)
     {
         return Ok(None);
     }
@@ -967,6 +967,7 @@ fn closed_authorized_optional_write_steps(
     let StateAction::Sequence { actions } = action.as_ref() else {
         return Ok(None);
     };
+
     let [
         StateAction::Assert {
             condition:
@@ -976,6 +977,81 @@ fn closed_authorized_optional_write_steps(
                 },
             message: authority_message,
         },
+        rest @ ..,
+    ] = actions.as_slice()
+    else {
+        return Ok(None);
+    };
+    if !matches!(authority_value.as_ref(), Expr::Parameter { name } if name == &hash_binding.name) {
+        return Ok(None);
+    }
+    let Expr::CellRead {
+        field: authority_field,
+        index: authority_index,
+    } = authority_read.as_ref()
+    else {
+        return Ok(None);
+    };
+    if !matches!(ledger_fields.get(authority_field.as_str()), Some(declaration)
+        if declaration.index == *authority_index && declaration.declaration == (LedgerFieldKind::Cell { ty: bytes32 }))
+    {
+        return Ok(None);
+    }
+    let witness_method = ident(witness_name)?;
+    let hash_method = ident(hash_name)?;
+    let authority_slot = ident(authority_field)?;
+    let steps = vec![
+        syn::parse_quote! {
+            let (frame, __compact_authority_secret): (_, runtime::FixedBytes<32>) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.#witness_method(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(), meter,
+                    }))
+                })?;
+        },
+        syn::parse_quote! {
+            let __compact_authority_hash = crate::pure_circuits::#hash_method(__compact_authority_secret)?;
+        },
+        syn::parse_quote! {
+            let (frame, __compact_authority): (_, runtime::FixedBytes<32>) =
+                crate::ledger_slots::#authority_slot.record_read(frame)?;
+        },
+        syn::parse_quote! {
+            if __compact_authority_hash != __compact_authority {
+                return Err(runtime::CompactError::AssertionFailed(#authority_message.to_owned()));
+            }
+        },
+    ];
+    Ok(Some(AuthorizedContinuation {
+        actions: rest,
+        steps,
+    }))
+}
+
+/// A typed authority witness/hash and enum phase guard before a single optional
+/// opaque Cell write. Every binding and ledger access is checked by provenance;
+/// names carry no semantic meaning in this closed proof-supported shape.
+fn closed_authorized_optional_write_steps(
+    circuit: &StatefulCircuit,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure_circuits: &HashMap<&str, &PureCircuit>,
+) -> Result<Option<Vec<syn::Stmt>>, RenderError> {
+    let [parameter] = circuit.parameters.as_slice() else {
+        return Ok(None);
+    };
+    if parameter.ty != Type::OpaqueString
+        || circuit.result != Type::Unit
+        || circuit.return_value != StateReturn::Unit
+    {
+        return Ok(None);
+    }
+    let Some(AuthorizedContinuation { actions, mut steps }) =
+        closed_authority_prefix(circuit, ledger_fields, witnesses, pure_circuits)?
+    else {
+        return Ok(None);
+    };
+    let [
         StateAction::Assert {
             condition:
                 Expr::Equal {
@@ -988,17 +1064,7 @@ fn closed_authorized_optional_write_steps(
             bindings: value_bindings,
             action: write,
         },
-    ] = actions.as_slice()
-    else {
-        return Ok(None);
-    };
-    if !matches!(authority_value.as_ref(), Expr::Parameter { name } if name == &hash_binding.name) {
-        return Ok(None);
-    }
-    let Expr::CellRead {
-        field: authority_field,
-        index: authority_index,
-    } = authority_read.as_ref()
+    ] = actions
     else {
         return Ok(None);
     };
@@ -1055,7 +1121,6 @@ fn closed_authorized_optional_write_steps(
         return Ok(None);
     }
     for (field, index, ty) in [
-        (authority_field, authority_index, &bytes32),
         (phase_field, phase_index, phase_ty),
         (write_field, write_index, &value_binding.ty),
     ] {
@@ -1065,9 +1130,6 @@ fn closed_authorized_optional_write_steps(
             return Ok(None);
         }
     }
-    let witness_method = ident(witness_name)?;
-    let hash_method = ident(hash_name)?;
-    let authority_slot = ident(authority_field)?;
     let phase_slot = ident(phase_field)?;
     let write_slot = ident(write_field)?;
     let phase_type = rust_type(phase_ty)?;
@@ -1075,27 +1137,7 @@ fn closed_authorized_optional_write_steps(
     let write_type = rust_type(&value_binding.ty)?;
     let present_member = ident(&present_member.name)?;
     let value_member = ident(&value_member.name)?;
-    Ok(Some(vec![
-        syn::parse_quote! {
-            let (frame, __compact_authority_secret): (_, runtime::FixedBytes<32>) =
-                frame.try_witness_metered(|context, meter| {
-                    witnesses.#witness_method(context.witness_context_with(super::LedgerView {
-                        state: context.query.state.get_ref(), meter,
-                    }))
-                })?;
-        },
-        syn::parse_quote! {
-            let __compact_authority_hash = crate::pure_circuits::#hash_method(__compact_authority_secret)?;
-        },
-        syn::parse_quote! {
-            let (frame, __compact_authority): (_, runtime::FixedBytes<32>) =
-                crate::ledger_slots::#authority_slot.record_read(frame)?;
-        },
-        syn::parse_quote! {
-            if __compact_authority_hash != __compact_authority {
-                return Err(runtime::CompactError::AssertionFailed(#authority_message.to_owned()));
-            }
-        },
+    steps.extend([
         syn::parse_quote! {
             let (frame, __compact_phase): (_, #phase_type) = crate::ledger_slots::#phase_slot.record_read(frame)?;
         },
@@ -1112,7 +1154,167 @@ fn closed_authorized_optional_write_steps(
         syn::parse_quote! {
             let frame = crate::ledger_slots::#write_slot.record_write(frame, __compact_optional_value)?;
         },
-    ]))
+    ]);
+    Ok(Some(steps))
+}
+
+/// Closed optional-presence gate followed by a pure enum decision tree. Calling
+/// the existing pure emitter keeps enum variant semantics in one implementation.
+fn closed_authorized_enum_advance_steps(
+    circuit: &StatefulCircuit,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure_circuits: &HashMap<&str, &PureCircuit>,
+) -> Result<Option<Vec<syn::Stmt>>, RenderError> {
+    if !circuit.parameters.is_empty() {
+        return Ok(None);
+    }
+    let Some(AuthorizedContinuation { actions, mut steps }) =
+        closed_authority_prefix(circuit, ledger_fields, witnesses, pure_circuits)?
+    else {
+        return Ok(None);
+    };
+    let [
+        StateAction::Assert {
+            condition:
+                Expr::StructField {
+                    value: optional_read,
+                    field: member,
+                    index: 0,
+                },
+            message,
+        },
+        StateAction::Let {
+            bindings,
+            action: write,
+        },
+    ] = actions
+    else {
+        return Ok(None);
+    };
+    let Expr::CellRead {
+        field: optional_field,
+        index: optional_index,
+    } = optional_read.as_ref()
+    else {
+        return Ok(None);
+    };
+    let Some(optional) = ledger_fields.get(optional_field.as_str()) else {
+        return Ok(None);
+    };
+    let LedgerFieldKind::Cell {
+        ty: optional_ty @ Type::Struct { fields, .. },
+    } = &optional.declaration
+    else {
+        return Ok(None);
+    };
+    let [presence, payload] = fields.as_slice() else {
+        return Ok(None);
+    };
+    if optional.index != *optional_index
+        || presence.name != *member
+        || presence.ty != Type::Boolean
+        || payload.ty != Type::OpaqueString
+    {
+        return Ok(None);
+    }
+    let [binding] = bindings.as_slice() else {
+        return Ok(None);
+    };
+    if !matches!(&binding.ty, Type::Enum { .. }) {
+        return Ok(None);
+    }
+    let Expr::Call { name, arguments } = &binding.value else {
+        return Ok(None);
+    };
+    let [
+        Expr::Coerce {
+            value: phase_read,
+            ty: argument_ty,
+        },
+    ] = arguments.as_slice()
+    else {
+        return Ok(None);
+    };
+    let Expr::CellRead {
+        field: phase_field,
+        index: phase_index,
+    } = phase_read.as_ref()
+    else {
+        return Ok(None);
+    };
+    let StateAction::CellWrite {
+        field: written_field,
+        index: written_index,
+        value: written,
+    } = write.as_ref()
+    else {
+        return Ok(None);
+    };
+    if written_field != phase_field
+        || written_index != phase_index
+        || argument_ty != &binding.ty
+        || !matches!(written, Expr::Parameter { name } if name == &binding.name)
+        || !matches!(ledger_fields.get(phase_field.as_str()), Some(field) if field.index == *phase_index && field.declaration == (LedgerFieldKind::Cell { ty: binding.ty.clone() }))
+    {
+        return Ok(None);
+    }
+    let Some(successor) = pure_circuits.get(name.as_str()) else {
+        return Ok(None);
+    };
+    let [formal] = successor.parameters.as_slice() else {
+        return Ok(None);
+    };
+    if !successor.internal || successor.result != binding.ty || formal.ty != binding.ty {
+        return Ok(None);
+    }
+    fn enum_tree(value: &Expr, formal: &str, ty: &Type) -> bool {
+        match value {
+            Expr::EnumVariant { ty: result, .. } => result == ty,
+            Expr::Coerce { value, ty: result } => result == ty && enum_tree(value, formal, ty),
+            Expr::If {
+                condition,
+                then,
+                otherwise,
+            } => {
+                matches!(condition.as_ref(), Expr::Equal { left, right }
+                    if matches!(left.as_ref(), Expr::Parameter { name } if name == formal)
+                    && matches!(right.as_ref(), Expr::EnumVariant { ty: variant_ty, .. } if variant_ty == ty))
+                    && enum_tree(then, formal, ty)
+                    && enum_tree(otherwise, formal, ty)
+            }
+            _ => false,
+        }
+    }
+    if !enum_tree(&successor.body, &formal.name, &formal.ty) {
+        return Ok(None);
+    }
+    let optional_slot = ident(optional_field)?;
+    let optional_type = rust_type(optional_ty)?;
+    let presence_member = ident(member)?;
+    let phase_slot = ident(phase_field)?;
+    let phase_type = rust_type(&binding.ty)?;
+    let successor_method = ident(name)?;
+    steps.extend([
+        syn::parse_quote! {
+            let (frame, __compact_optional): (_, #optional_type) = crate::ledger_slots::#optional_slot.record_read(frame)?;
+        },
+        syn::parse_quote! {
+            if !__compact_optional.#presence_member {
+                return Err(runtime::CompactError::AssertionFailed(#message.to_owned()));
+            }
+        },
+        syn::parse_quote! {
+            let (frame, __compact_phase): (_, #phase_type) = crate::ledger_slots::#phase_slot.record_read(frame)?;
+        },
+        syn::parse_quote! {
+            let __compact_successor: #phase_type = crate::pure_circuits::#successor_method(__compact_phase)?;
+        },
+        syn::parse_quote! {
+            let frame = crate::ledger_slots::#phase_slot.record_write(frame, __compact_successor)?;
+        },
+    ]);
+    Ok(Some(steps))
 }
 
 /// A pure Field call may be evaluated while recording only when its whole
@@ -7030,6 +7232,12 @@ fn render_recorded_item(
     let organizer_steps =
         closed_organizer_gate_steps(circuit, ledger_fields, witnesses, pure_circuits, circuits)?
             .or(closed_authorized_optional_write_steps(
+                circuit,
+                ledger_fields,
+                witnesses,
+                pure_circuits,
+            )?)
+            .or(closed_authorized_enum_advance_steps(
                 circuit,
                 ledger_fields,
                 witnesses,

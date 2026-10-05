@@ -145,3 +145,84 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
     println!("election authority/phase guarded Unicode topic proved and applied through ledger-8");
     Ok(())
 }
+
+/// Exercise every source successor branch, including the stable final state.
+pub(super) fn advance(root: &Path) -> Result<(), Box<dyn Error>> {
+    use compact_rust_election_oracle_fixture::types::PublicState;
+    for (step, expected_phase) in [
+        PublicState::commit,
+        PublicState::reveal,
+        PublicState::r#final,
+        PublicState::r#final,
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let initial =
+            contract::initial_state(ConstructorContext::new(10_u64), FixedBytes::new(AUTHORITY))?;
+        let mut seeded = contract::set_topic(
+            initial.into_circuit_context(runtime::ledger::ContractAddress::default()),
+            &FixedWitness,
+            runtime::OpaqueString::from("議題 🗳️"),
+        )?
+        .context;
+        for _ in 0..step {
+            seeded = contract::advance(seeded, &FixedWitness)?.context;
+        }
+        let private = seeded.private_state;
+        let mut rng = StdRng::seed_from_u64(0x158 + step as u64);
+        let deploy = make_deploy(
+            root,
+            "advance",
+            seeded.query.state.get_ref().clone(),
+            &mut rng,
+        )?;
+        let observed = ObservedContractState::new(
+            deploy.address(),
+            deploy.initial_state.clone(),
+            Observation {
+                transaction_hash: [0; 32],
+                block_hash: [0; 32],
+                block_height: 0,
+            },
+        );
+        let native = contract::advance(observed.circuit_context(private), &FixedWitness)?;
+        let recorded =
+            contract::recorded::advance(observed.circuit_context(private), &FixedWitness)?;
+        if native.gas_cost != recorded.execution.gas_cost
+            || native.private_transcript_outputs != recorded.execution.private_transcript_outputs
+            || recorded.execution.private_transcript_outputs.len() != 1
+            || recorded.execution.context.private_state != private + 1
+            || native.context.query.state.get_ref()
+                != recorded.execution.context.query.state.get_ref()
+            || native.context.query.effects != recorded.execution.context.query.effects
+        {
+            return Err("advance recording differs from native execution".into());
+        }
+        let expected_state = native.context.query.state.get_ref().clone();
+        let manual = check_generated_trace(root, "advance", recorded, ())?;
+        let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
+            root.join("keys/advance.verifier"),
+        )?))?;
+        let generated = contract::Contract::from(FixedWitness);
+        let prepared = generated
+            .recording()
+            .advance_call(&observed, private)?
+            .prepare(verifier, Fr::from(0_u64))?;
+        if format!("{manual:?}") != format!("{prepared:?}") {
+            return Err("typed advance call differs from manual recording".into());
+        }
+        check_transaction(root, "advance", deploy, prepared, &mut rng, |applied| {
+            if applied.data.get_ref() != &expected_state {
+                return Err("applied phase state differs from native".into());
+            }
+            let view = contract::PublicStateView::from(applied);
+            if view.state()? != expected_phase || !view.topic()?.is_some {
+                return Err("applied phase or optional topic changed".into());
+            }
+            Ok(())
+        })?;
+        println!("election advance transition {step} proved and applied through ledger-8");
+    }
+    Ok(())
+}

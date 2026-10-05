@@ -1486,12 +1486,13 @@ def main() -> None:
             election_capabilities = json.loads(
                 (election_topic_proof / "contract/rust-capabilities.json").read_text()
             )
-            topic = next(row for row in election_capabilities["circuits"] if row["name"] == "set_topic")
-            assert topic["proof_required"] and topic["recorded"] and topic["observed_call"]
-            for extension in ("prover", "verifier"):
-                assert (election_topic_proof / "keys" / f"set_topic.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (election_topic_proof / "zkir" / f"set_topic.{extension}").is_file()
+            for circuit in ("set_topic", "advance"):
+                row = next(row for row in election_capabilities["circuits"] if row["name"] == circuit)
+                assert row["proof_required"] and row["recorded"] and row["observed_call"]
+                for extension in ("prover", "verifier"):
+                    assert (election_topic_proof / "keys" / f"{circuit}.{extension}").is_file()
+                for extension in ("zkir", "bzkir"):
+                    assert (election_topic_proof / "zkir" / f"{circuit}.{extension}").is_file()
             inline_type_scope_proof = base / "inline-type-scope-proof"
             run(compiler, "--target", "rust", "--rust-require-recording",
                 str(INLINE_TYPE_SCOPE_SOURCE), str(inline_type_scope_proof))
@@ -1902,6 +1903,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--election-topic", str(election_topic_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--election-advance", str(election_topic_proof),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

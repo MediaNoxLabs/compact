@@ -9177,3 +9177,76 @@ fn typed_asset_map_write_requires_class_guard_and_insert_only_count() {
     helper["return_value"]["value"]["otherwise"]["field"] = serde_json::json!("records");
     assert!(!recorded(&wrong_exists_map).0);
 }
+
+#[test]
+fn authorized_enum_advance_requires_closed_successor_and_ordered_optional_read() {
+    let source = include_str!("election-schema13-ir.json");
+    let mut contract: Contract = serde_json::from_str(source).unwrap();
+    contract.schema_version = SCHEMA_VERSION;
+    let available = |contract: &Contract, name: &str| {
+        render_with_capabilities(contract)
+            .unwrap()
+            .capabilities
+            .circuits
+            .iter()
+            .find(|circuit| circuit.name == name)
+            .unwrap()
+            .recorded
+    };
+    assert!(available(&contract, "advance"));
+    let renamed = source
+        .replace("advance", "progress")
+        .replace("successor", "next_phase")
+        .replace("private$secret_key", "load_credential")
+        .replace("public_key", "derive_key")
+        .replace("authority", "controller")
+        .replace("topic", "subject")
+        .replace("PublicState", "Phase")
+        .replace("setup", "draft")
+        .replace("Maybe", "OptionalText")
+        .replace("is_some", "present")
+        .replace("\"sk\"", "\"credential\"")
+        .replace("\"apk\"", "\"digest\"");
+    let mut renamed: Contract = serde_json::from_str(&renamed).unwrap();
+    renamed.schema_version = SCHEMA_VERSION;
+    assert!(available(&renamed, "progress"));
+    let mut guarded_successor = contract.clone();
+    let helper = guarded_successor
+        .circuits
+        .iter_mut()
+        .find(|circuit| circuit.name == "successor")
+        .unwrap();
+    helper.body = Expr::Sequence {
+        steps: vec![Expr::Assert {
+            condition: Box::new(Expr::Boolean { value: true }),
+            message: "extra".into(),
+        }],
+        value: Box::new(helper.body.clone()),
+    };
+    assert!(!available(&guarded_successor, "advance"));
+    let mut reordered = contract.clone();
+    let circuit = reordered
+        .stateful_circuits
+        .iter_mut()
+        .find(|circuit| circuit.name == "advance")
+        .unwrap();
+    let StateAction::Let { action, .. } = &mut circuit.actions[0] else {
+        unreachable!()
+    };
+    let StateAction::Let { action, .. } = action.as_mut() else {
+        unreachable!()
+    };
+    let StateAction::Sequence { actions } = action.as_mut() else {
+        unreachable!()
+    };
+    actions.swap(0, 1);
+    assert!(!available(&reordered, "advance"));
+    let mut wrong_index = contract;
+    let field = wrong_index
+        .ledger_fields
+        .iter_mut()
+        .find(|field| field.id == "topic")
+        .unwrap();
+    field.index = 8;
+    assert!(render_with_capabilities(&wrong_index).is_err());
+}

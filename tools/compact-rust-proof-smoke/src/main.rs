@@ -2247,6 +2247,15 @@ fn run() -> Result<(), Box<dyn Error>> {
         }
         return merkle_root::run(Path::new(&root));
     }
+    if first.as_deref() == Some(OsStr::new("--election-advance")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: --election-advance <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err("usage: --election-advance <proof-output>".into());
+        }
+        return election_topic::advance(Path::new(&root));
+    }
     if first.as_deref() == Some(OsStr::new("--election-topic")) {
         let root = arguments
             .next()

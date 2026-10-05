@@ -21,6 +21,7 @@ import { readFile, mkdir, lstat } from "node:fs/promises";
 import { resolve, join, isAbsolute } from "node:path";
 import { pathToFileURL } from "node:url";
 import { promisify, inspect } from "node:util";
+import { Cause, Runtime } from "effect";
 import {
   normalizeHash,
   hasFinalizedCanonicalBlock,
@@ -36,6 +37,40 @@ import {
 const FORMAT = "compact-shielded-live/v1";
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const jsonBytes = (value) => Buffer.from(`${JSON.stringify(value, null, 2)}\n`);
+// This is the pinned node's identical-transaction rejection, not a generic
+// submission failure. Effect wraps the SDK's standard Error.cause chain.
+export function classifyReplayRejection(error) {
+  const pending = [error];
+  const seen = new Set();
+  for (let visited = 0; pending.length && visited < 16; visited++) {
+    const current = pending.shift();
+    if (current == null || typeof current !== "object" || seen.has(current))
+      continue;
+    seen.add(current);
+    if (
+      current.name === "RpcError" &&
+      current.code === 1013 &&
+      /^1013: Transaction Already Imported(?::|$)/.test(current.message)
+    ) {
+      return {
+        status: "node-rejected-duplicate",
+        rpcCode: 1013,
+        rpcMessage: "Transaction Already Imported",
+        scope: "identical-finalized-transaction",
+      };
+    }
+    if (Runtime.isFiberFailure(current)) {
+      for (const failure of Cause.failures(
+        current[Runtime.FiberFailureCauseId],
+      )) {
+        if (pending.length >= 16) break;
+        pending.push(failure);
+      }
+    }
+    if (current.cause) pending.push(current.cause);
+  }
+  return undefined;
+}
 // Retain actionable transport/checkpoint causes only in the private receipt.
 export function boundedErrorChain(error) {
   const chain = [];
@@ -679,8 +714,7 @@ async function main() {
       throw new Error("node unexpectedly accepted replay");
     } catch (error) {
       if (error.message === "node unexpectedly accepted replay") throw error;
-      // First controlled run captures the precise upstream refusal for review.
-      // No generic "invalid transaction" or transport failure establishes replay.
+      // Keep the actual response private; classify the structured RPC error.
       const rejection = await privateReference(
         join(directory, "replay-rejection.txt"),
         Buffer.from(inspect(error, { depth: 12, colors: false })),
@@ -691,9 +725,12 @@ async function main() {
         rejection,
         status: "unclassified-node-response",
       };
-      throw new Error(
-        "replay response retained; exact node rejection requires review",
-      );
+      const classified = classifyReplayRejection(error);
+      if (!classified)
+        throw new Error(
+          "replay response retained; exact node rejection requires review",
+        );
+      Object.assign(receipt.replay, classified);
     }
     receipt.status = "passed";
     await privateReference(

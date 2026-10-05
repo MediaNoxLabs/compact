@@ -18,9 +18,11 @@ import { test } from "node:test";
 import { mkdtemp, chmod, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { Effect } from "effect";
 import {
   requireIsolatedEndpoints,
   boundedErrorChain,
+  classifyReplayRejection,
   privateReference,
   readReference,
   selectExactCoin,
@@ -29,6 +31,42 @@ import {
   verifyResult,
 } from "./shielded-check.mjs";
 import { shieldedOfferFingerprint } from "./shielded-handoff.mjs";
+
+test("only the pinned structured node duplicate closes the replay gate", async () => {
+  const rpc = (code, message) =>
+    Object.assign(new Error(message), { name: "RpcError", code });
+  let wrapped;
+  try {
+    await Effect.runPromise(
+      Effect.fail(
+        new Error("Transaction submission error", {
+          cause: new Error("Transaction submission failed", {
+            cause: rpc(1013, "1013: Transaction Already Imported: Any { .. }"),
+          }),
+        }),
+      ),
+    );
+  } catch (error) {
+    wrapped = error;
+  }
+  assert.deepEqual(classifyReplayRejection(wrapped), {
+    status: "node-rejected-duplicate",
+    rpcCode: 1013,
+    rpcMessage: "Transaction Already Imported",
+    scope: "identical-finalized-transaction",
+  });
+  for (const error of [
+    new Error("1013: Transaction Already Imported"),
+    rpc(1010, "1013: Transaction Already Imported"),
+    rpc(1013, "1013: Invalid Transaction"),
+    rpc(1013, "untrusted prose: 1013: Transaction Already Imported"),
+    new Error("Timeout waiting for transaction"),
+  ])
+    assert.equal(classifyReplayRejection(error), undefined);
+  const cycle = new Error("cyclic transport error");
+  cycle.cause = cycle;
+  assert.equal(classifyReplayRejection(cycle), undefined);
+});
 
 const selected = {
   coin: { type: "aa", nonce: "bb", value: 42n, mt_index: 7n },

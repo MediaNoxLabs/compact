@@ -55,8 +55,11 @@ starting another run. The script never starts, stops or modifies services.
 8. Resubmit the identical finalized release through the SDK node submission
    service, bypassing its wallet pending cache. Require an actual node refusal;
    a timeout, connection failure or local cache response is not replay evidence.
-   The first controlled run retains an unclassified node response for review and
-   keeps the replay gate incomplete until its exact pinned rejection is established.
+   The pinned classifier accepts only a structured `RpcError` with code `1013`
+   and message `Transaction Already Imported`, through the SDK's Effect/cause
+   wrappers. This proves rejection of the identical finalized transaction.
+   Fresh transactions reusing spent inputs require separate evidence. Unknown
+   errors remain privately retained and leave the gate incomplete.
 
 Only Dust balancing is enabled. The runner checks exact serialized proven
 shielded offer hashes and segment placement before balancing and after final

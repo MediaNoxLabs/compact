@@ -136,6 +136,13 @@ def check(compiler: Path, manifest_path: Path = MANIFEST) -> tuple[dict, list[st
                         if proof is None or capability.get("proof_required") is not proof[1]:
                             failures.append(f"{source.name}.{capability['name']}: Rust proof flag disagrees")
                     by_name = {item["name"]: item for item in report["circuits"]}
+                    for name in expected.get("expected_recorded_circuits", []):
+                        capability = by_name.get(name)
+                        if (capability is None
+                                or capability.get("recording_status") != "available"
+                                or capability.get("recorded") is not True
+                                or capability.get("observed_call") is not True):
+                            failures.append(f"{source.name}.{name}: expected recording unavailable")
                     for name, expected_gap in expected.get("expected_recording_gaps", {}).items():
                         capability = by_name.get(name)
                         if capability is None:

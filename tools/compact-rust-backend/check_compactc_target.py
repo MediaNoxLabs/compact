@@ -1400,7 +1400,8 @@ def main() -> None:
             for name in ("commitSmall", "commitU128", "commitFieldOnly",
                          "pureBodyFieldOnly", "pureBodyVec",
                          "bridgeTupleIntoVec", "bridgeVecIntoTuple",
-                         "pureFromImpure", "impureBare", "impureInIfArm"):
+                         "pureFromImpure", "impureBare", "impureInIfArm",
+                         "inlinedAssert"):
                 capability = next(circuit for circuit in capabilities["circuits"]
                                   if circuit["name"] == name)
                 assert capability["proof_required"] and capability["recorded"] \
@@ -1415,7 +1416,7 @@ def main() -> None:
             for extension in ("zkir", "bzkir"):
                 assert (persistent_commit_proof / "zkir" /
                         f"bridgeTupleIntoVec.{extension}").is_file()
-            for name in ("impureBare", "impureInIfArm"):
+            for name in ("impureBare", "impureInIfArm", "inlinedAssert"):
                 for extension in ("prover", "verifier"):
                     assert (persistent_commit_proof / "keys" /
                             f"{name}.{extension}").is_file()
@@ -1635,6 +1636,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--stateful-pair-hash", str(persistent_commit_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--boolean-pair-assert", str(persistent_commit_proof),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

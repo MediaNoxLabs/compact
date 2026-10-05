@@ -921,6 +921,29 @@ pub mod ledger_contract {
             };
             Ok(frame.finish(()))
         }
+        pub fn inlinedAssert<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_hash_arg_0: runtime::FixedVector<runtime::Field, 2> = {
+                let __compact_cast_source_0 =
+                    (runtime::Field::from(0u128), runtime::Field::from(1u128));
+                let (__compact_cast_item_0_0, __compact_cast_item_0_1) = __compact_cast_source_0;
+                runtime::FixedVector::new([__compact_cast_item_0_0, __compact_cast_item_0_1])
+            };
+            let __compact_recorded_hash_1: runtime::Field =
+                runtime::transient_hash(__compact_recorded_hash_arg_0);
+            let (frame, __compact_recorded_value_2): (_, runtime::Field) =
+                crate::ledger_slots::fieldCell.record_read(frame)?;
+            if !(__compact_recorded_hash_1 != __compact_recorded_value_2) {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "vector hash is not zero".to_owned(),
+                ));
+            }
+            let frame = crate::ledger_slots::asserts.record_increment(frame, 1u16)?;
+            Ok(frame.finish(()))
+        }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
         impl Contract {
@@ -1171,6 +1194,31 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "impureInIfArm",
+                    input,
+                ))
+            }
+            pub fn inlinedAssert<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::inlinedAssert(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn inlinedAssert_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.inlinedAssert(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "inlinedAssert",
                     input,
                 ))
             }
@@ -1457,6 +1505,31 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "impureInIfArm",
+                    input,
+                ))
+            }
+            pub fn inlinedAssert<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                inlinedAssert(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn inlinedAssert_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.inlinedAssert(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "inlinedAssert",
                     input,
                 ))
             }

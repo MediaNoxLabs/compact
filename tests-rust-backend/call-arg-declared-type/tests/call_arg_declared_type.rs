@@ -281,6 +281,42 @@ fn recorded_field_pair_hash_calls_match_typescript_trace_and_gas() {
 }
 
 #[test]
+fn recorded_inlined_boolean_hash_assertion_matches_typescript() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/call-arg-declared-type.json"
+    ))
+    .unwrap();
+    let native_context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let recording_context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let native = inlinedAssert(native_context).unwrap();
+    let recorded =
+        compact_rust_call_arg_declared_type_fixture::ledger_contract::recorded::inlinedAssert(
+            recording_context,
+        )
+        .unwrap();
+    boolean_observation_assertions::assert_ts_trace(
+        "inlinedAssert",
+        &native,
+        &recorded,
+        &oracle["circuits"]["inlinedAssert"]["trace"],
+    );
+    assert_eq!(
+        recorded.execution.context.query.state.get_ref(),
+        native.context.query.state.get_ref(),
+        "recorded assertion state"
+    );
+    assert_eq!(
+        state_hex(recorded.execution.context.query.state.get_ref().clone()),
+        oracle["circuits"]["inlinedAssert"]["stateHex"],
+        "TypeScript assertion state"
+    );
+}
+
+#[test]
 fn recorded_vector_witness_let_matches_typescript_and_advances_private_state_once() {
     let oracle: serde_json::Value = serde_json::from_str(include_str!(
         "../../../runtime-rs/tests/fixtures/call-arg-declared-type.json"

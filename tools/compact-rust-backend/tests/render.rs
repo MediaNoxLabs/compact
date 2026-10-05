@@ -3942,6 +3942,117 @@ fn standalone_unit_witness_is_recorded_only_with_its_exact_signature() {
 }
 
 #[test]
+fn boolean_pair_hash_cell_assertion_records_read_before_counter_write() {
+    let vector = Type::Vector {
+        element: Box::new(Type::Field),
+        length: 2,
+    };
+    let mut contract = Contract {
+        schema_version: 11,
+        type_aliases: vec![],
+        constructor: None,
+        witnesses: vec![],
+        ledger_fields: vec![
+            LedgerField {
+                source: None,
+                id: "value".into(),
+                index: 0,
+                path: vec![],
+                declaration: LedgerFieldKind::Cell { ty: Type::Field },
+            },
+            LedgerField {
+                source: None,
+                id: "asserts".into(),
+                index: 1,
+                path: vec![],
+                declaration: LedgerFieldKind::Counter,
+            },
+        ],
+        circuits: vec![],
+        stateful_circuits: vec![
+            StatefulCircuit {
+                source: None,
+                internal: true,
+                name: "different".into(),
+                parameters: vec![Parameter {
+                    name: "v".into(),
+                    ty: vector,
+                }],
+                result: Type::Boolean,
+                return_value: StateReturn::Expression {
+                    value: Expr::NotEqual {
+                        left: Box::new(Expr::TransientHash {
+                            value: Box::new(Expr::Parameter { name: "v".into() }),
+                        }),
+                        right: Box::new(Expr::CellRead {
+                            field: "value".into(),
+                            index: 0,
+                        }),
+                    },
+                },
+                actions: vec![],
+            },
+            StatefulCircuit {
+                source: None,
+                internal: false,
+                name: "check".into(),
+                parameters: vec![],
+                result: Type::Unit,
+                return_value: StateReturn::Unit,
+                actions: vec![
+                    StateAction::Assert {
+                        condition: Expr::Call {
+                            name: "different".into(),
+                            arguments: vec![Expr::Vector {
+                                element: Type::Field,
+                                elements: vec![
+                                    Expr::FieldLiteral { value: "0".into() },
+                                    Expr::FieldLiteral { value: "1".into() },
+                                ],
+                            }],
+                        },
+                        message: "different".into(),
+                    },
+                    StateAction::CounterIncrement {
+                        field: "asserts".into(),
+                        index: 1,
+                        amount: CounterAmount::Literal { value: 1 },
+                    },
+                ],
+            },
+        ],
+    };
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].observed_call);
+    let source = rendered.source.split("pub mod recorded").nth(1).unwrap();
+    let hash = source.find("runtime::transient_hash(").unwrap();
+    let read = source.find("record_read(frame)").unwrap();
+    let write = source.find("record_increment(frame").unwrap();
+    assert!(hash < read && read < write);
+
+    let StateReturn::Expression { value } = &mut contract.stateful_circuits[0].return_value else {
+        unreachable!();
+    };
+    let Expr::NotEqual { left, .. } = value else {
+        unreachable!()
+    };
+    **left = Expr::TransientHash {
+        value: Box::new(Expr::FieldLiteral { value: "7".into() }),
+    };
+    let rejected = render_with_capabilities(&contract).unwrap();
+    assert!(!rejected.capabilities.circuits[0].recorded);
+    assert_eq!(
+        rejected.capabilities.circuits[0]
+            .recording_unavailable
+            .as_ref()
+            .unwrap()
+            .ir_node,
+        "StateAction::Assert"
+    );
+}
+
+#[test]
 fn recording_gaps_follow_the_first_definite_ir_failure() {
     let mut contract = Contract {
         schema_version: 11,

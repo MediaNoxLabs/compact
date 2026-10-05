@@ -87,6 +87,7 @@ function operationShape(operation) {
     return { kind: 'idx', cached, pushPath, pathLength: path.length };
   }
   if (operation.push) return { kind: 'push', storage: operation.push.storage };
+  if (operation.addi) return { kind: 'addi', immediate: operation.addi.immediate };
   if (operation.ins) return { kind: 'ins', cached: operation.ins.cached, n: operation.ins.n };
   if (operation.rem) return { kind: 'rem', cached: operation.rem.cached };
   if (operation.dup) return { kind: 'dup', n: operation.dup.n };
@@ -139,7 +140,7 @@ for (const name of CIRCUITS) {
   if ([
     'commitSmall', 'commitU128', 'commitFieldOnly', 'pureBodyFieldOnly',
     'pureBodyVec', 'bridgeTupleIntoVec', 'bridgeVecIntoTuple',
-    'pureFromImpure', 'impureBare', 'impureInIfArm',
+    'pureFromImpure', 'impureBare', 'impureInIfArm', 'inlinedAssert',
   ].includes(name)) {
     fixture.circuits[name].trace = {
       publicTranscriptShape: out.proofData.publicTranscript.map(operationShape),

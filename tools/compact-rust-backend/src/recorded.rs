@@ -361,6 +361,11 @@ fn closed_pure_field_call(
     allowed
 }
 
+fn field_pair_type(ty: &Type) -> bool {
+    matches!(ty, Type::Vector { element, length } if **element == Type::Field && *length == 2)
+        || matches!(ty, Type::Tuple { elements } if elements == &[Type::Field, Type::Field])
+}
+
 /// A pure Field helper may be evaluated during recording when its entire
 /// transitive body only constructs and hashes a pair of Fields. Its declared
 /// input is either empty or one typed pair; the caller must separately lower
@@ -370,11 +375,6 @@ fn closed_pure_field_pair_hash_call(
     name: &str,
     pure_circuits: &HashMap<&str, &PureCircuit>,
 ) -> bool {
-    fn field_pair(ty: &Type) -> bool {
-        matches!(ty, Type::Vector { element, length } if **element == Type::Field && *length == 2)
-            || matches!(ty, Type::Tuple { elements } if elements == &[Type::Field, Type::Field])
-    }
-
     fn body_type(
         value: &Expr,
         locals: &HashMap<String, Type>,
@@ -410,7 +410,8 @@ fn closed_pure_field_pair_hash_call(
                 }),
             Expr::Coerce { value, ty } => {
                 let source = body_type(value, locals, pure_circuits, visiting, saw_hash)?;
-                (source == *ty || (field_pair(&source) && field_pair(ty))).then(|| ty.clone())
+                (source == *ty || (field_pair_type(&source) && field_pair_type(ty)))
+                    .then(|| ty.clone())
             }
             Expr::Let { bindings, body } => {
                 let mut scoped = locals.clone();
@@ -458,7 +459,7 @@ fn closed_pure_field_pair_hash_call(
             }
             Expr::TransientHash { value } => {
                 let ty = body_type(value, locals, pure_circuits, visiting, saw_hash)?;
-                if !field_pair(&ty) {
+                if !field_pair_type(&ty) {
                     return None;
                 }
                 *saw_hash = true;
@@ -473,7 +474,7 @@ fn closed_pure_field_pair_hash_call(
     };
     if callee.result != Type::Field
         || !(callee.parameters.is_empty()
-            || (callee.parameters.len() == 1 && field_pair(&callee.parameters[0].ty)))
+            || (callee.parameters.len() == 1 && field_pair_type(&callee.parameters[0].ty)))
     {
         return false;
     }
@@ -1942,6 +1943,66 @@ fn render_recorded_item(
                         expected: callee.parameters.len(),
                         actual: arguments.len(),
                     });
+                }
+                // A closed Field-pair hash is a pure value operation. Keep it
+                // before the declared Cell read in the Boolean helper and let
+                // that read alone contribute to the public VM transcript.
+                let comparison = match result {
+                    Expr::Equal { left, right } => Some((left.as_ref(), right.as_ref(), true)),
+                    Expr::NotEqual { left, right } => Some((left.as_ref(), right.as_ref(), false)),
+                    _ => None,
+                };
+                if let (Some((left, right, equal)), [parameter], [argument]) = (
+                    comparison,
+                    callee.parameters.as_slice(),
+                    arguments.as_slice(),
+                ) && field_pair_type(&parameter.ty)
+                    && let Expr::TransientHash { value: hashed } = left
+                    && matches!(hashed.as_ref(), Expr::Parameter { name } if name == &parameter.name)
+                    && let Expr::CellRead { field, index } = right
+                {
+                    let declaration = ledger_fields
+                        .get(field.as_str())
+                        .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                    if declaration.declaration == (LedgerFieldKind::Cell { ty: Type::Field })
+                        && declaration.index == *index
+                    {
+                        let Some(argument) =
+                            cell_source(argument, &parameter.ty, locals, parameters)
+                        else {
+                            return Ok(None);
+                        };
+                        let arg = syn::Ident::new(
+                            &format!("__compact_recorded_hash_arg_{}", *next_temp),
+                            Span::call_site(),
+                        );
+                        *next_temp += 1;
+                        let ty = rust_type(&parameter.ty)?;
+                        let hash = syn::Ident::new(
+                            &format!("__compact_recorded_hash_{}", *next_temp),
+                            Span::call_site(),
+                        );
+                        *next_temp += 1;
+                        let observed = syn::Ident::new(
+                            &format!("__compact_recorded_value_{}", *next_temp),
+                            Span::call_site(),
+                        );
+                        *next_temp += 1;
+                        let slot = ident(field)?;
+                        steps.push(syn::parse_quote!(let #arg: #ty = #argument;));
+                        steps.push(syn::parse_quote!(
+                            let #hash: runtime::Field = runtime::transient_hash(#arg);
+                        ));
+                        steps.push(syn::parse_quote!(
+                            let (frame, #observed): (_, runtime::Field) =
+                                crate::ledger_slots::#slot.record_read(frame)?;
+                        ));
+                        return if equal {
+                            Ok(Some(syn::parse_quote!(#hash == #observed)))
+                        } else {
+                            Ok(Some(syn::parse_quote!(#hash != #observed)))
+                        };
+                    }
                 }
                 if !visiting.insert(name.clone()) {
                     return Err(RenderError::UnsupportedStatefulCall(name.clone()));

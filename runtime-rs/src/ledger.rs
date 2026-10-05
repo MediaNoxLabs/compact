@@ -251,8 +251,8 @@ pub use merkle::{
 };
 pub(crate) use merkle::{
     historic_merkle_insert_index_default_program, historic_merkle_insert_index_program,
-    historic_merkle_insert_program, merkle_insert_index_default_program,
-    merkle_insert_index_program,
+    historic_merkle_insert_program, merkle_insert_hash_program,
+    merkle_insert_index_default_program, merkle_insert_index_program,
 };
 
 /// The root ledger state for a contract with no public ledger fields.

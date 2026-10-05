@@ -211,6 +211,50 @@ fn recorded_indexed_insertions_match_typescript_and_replay() {
     );
 }
 
+#[test]
+fn recorded_plain_hash_append_matches_typescript_and_replays() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/merkle-tree-oracle.json"
+    ))
+    .unwrap();
+    let at_hash_append = || {
+        let context = initial_state(ConstructorContext::new(()))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default());
+        let context = append(context, bounded::<255>(7)).unwrap().context;
+        let context = place(
+            context,
+            bounded::<255>(9),
+            bounded::<{ u64::MAX as u128 }>(3),
+        )
+        .unwrap()
+        .context;
+        let context = append(context, bounded::<255>(11)).unwrap().context;
+        let context = place(
+            context,
+            bounded::<255>(13),
+            bounded::<{ u64::MAX as u128 }>(1),
+        )
+        .unwrap()
+        .context;
+        let context = place_default(context, bounded::<{ u64::MAX as u128 }>(6))
+            .unwrap()
+            .context;
+        full(context).unwrap().context
+    };
+    let hash = runtime::FixedBytes::new([1; 32]);
+    let native = append_hash(at_hash_append(), hash).unwrap();
+    let recorded = recorded::append_hash(at_hash_append(), hash).unwrap();
+    assert_indexed_recording(
+        "appendHash",
+        "afterAppendHash",
+        8,
+        native,
+        recorded,
+        &oracle,
+    );
+}
+
 fn assert_indexed_recording(
     query: &str,
     state: &str,

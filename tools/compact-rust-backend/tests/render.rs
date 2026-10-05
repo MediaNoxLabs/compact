@@ -2337,6 +2337,83 @@ fn native_merkle_calls_use_declared_typed_slots() {
 }
 
 #[test]
+fn plain_merkle_hash_recording_requires_declared_slot_and_exact_bytes32_source() {
+    let mut contract = identity(Type::Unit, Expr::Unit);
+    contract.ledger_fields = vec![LedgerField {
+        source: None,
+        id: "tree".into(),
+        index: 0,
+        path: vec![],
+        declaration: LedgerFieldKind::MerkleTree {
+            ty: Type::Unsigned { max: "255".into() },
+            depth: 3,
+        },
+    }];
+    contract.stateful_circuits = vec![StatefulCircuit {
+        source: None,
+        internal: false,
+        name: "append_hash".into(),
+        parameters: vec![Parameter {
+            name: "hash".into(),
+            ty: Type::Bytes { length: 32 },
+        }],
+        actions: vec![StateAction::MerkleInsertHash {
+            field: "tree".into(),
+            index: 0,
+            hash: Expr::Parameter {
+                name: "hash".into(),
+            },
+        }],
+        result: Type::Unit,
+        return_value: StateReturn::Unit,
+    }];
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].observed_call);
+    assert!(rendered.source.contains(".record_insert_hash(frame,"));
+
+    if let StateAction::MerkleInsertHash { index, .. } =
+        &mut contract.stateful_circuits[0].actions[0]
+    {
+        *index = 1;
+    }
+    assert!(render_with_capabilities(&contract).is_err());
+
+    if let StateAction::MerkleInsertHash { index, .. } =
+        &mut contract.stateful_circuits[0].actions[0]
+    {
+        *index = 0;
+    }
+    contract.stateful_circuits[0].parameters[0].ty = Type::Bytes { length: 31 };
+    assert!(render_with_capabilities(&contract).is_err());
+    contract.stateful_circuits[0].parameters[0].ty = Type::Bytes { length: 32 };
+    contract.ledger_fields[0].declaration = LedgerFieldKind::HistoricMerkleTree {
+        ty: Type::Unsigned { max: "255".into() },
+        depth: 3,
+    };
+    assert!(render_with_capabilities(&contract).is_err());
+    contract.ledger_fields[0].declaration = LedgerFieldKind::MerkleTree {
+        ty: Type::Unsigned { max: "255".into() },
+        depth: 3,
+    };
+    let StateAction::MerkleInsertHash { hash, .. } = &mut contract.stateful_circuits[0].actions[0]
+    else {
+        unreachable!()
+    };
+    *hash = Expr::If {
+        condition: Box::new(Expr::Boolean { value: true }),
+        then: Box::new(Expr::Parameter {
+            name: "hash".into(),
+        }),
+        otherwise: Box::new(Expr::Parameter {
+            name: "hash".into(),
+        }),
+    };
+    let rejected = render_with_capabilities(&contract).unwrap();
+    assert!(!rejected.capabilities.circuits[0].recorded);
+}
+
+#[test]
 fn indexed_merkle_recording_requires_typed_leaf_and_position_sources() {
     let leaf = Type::Unsigned { max: "255".into() };
     let position = Type::Unsigned {

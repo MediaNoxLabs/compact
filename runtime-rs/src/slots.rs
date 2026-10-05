@@ -320,6 +320,15 @@ impl<T: CellValue, const DEPTH: u8> MerkleSlot<T, DEPTH, false> {
     ) -> Result<RecordingFrame<Private, D>, CompactError> {
         frame.insert_merkle(self.path, value)
     }
+
+    /// Record a plain Merkle `insertHash` using the declared tree path.
+    pub fn record_insert_hash<Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+        hash: crate::FixedBytes<32>,
+    ) -> Result<RecordingFrame<Private, D>, CompactError> {
+        frame.insert_merkle_hash(self.path, hash)
+    }
 }
 
 impl<T: CellValue, const DEPTH: u8> MerkleSlot<T, DEPTH, true> {

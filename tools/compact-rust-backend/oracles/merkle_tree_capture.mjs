@@ -119,7 +119,7 @@ const afterPlace13At1 = snapshot();
 context = capture('placeDefaultAt6', () => contract.circuits.place_default(context, 6n)).context;
 const afterDefaultAt6 = snapshot();
 const fullBeforeCapacity = full();
-context = contract.circuits.append_hash(context, new Uint8Array(32).fill(1)).context;
+context = capture('appendHash', () => contract.circuits.append_hash(context, new Uint8Array(32).fill(1))).context;
 const afterAppendHash = snapshot();
 const fullAtCapacity = full();
 context = contract.circuits.place_hash(context, new Uint8Array(32).fill(2), 1n).context;

@@ -197,6 +197,15 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         self.apply_verify_program(ledger::merkle_insert_program(path, value))
     }
 
+    /// Append an already hashed leaf to a plain Merkle tree and retain its VM program.
+    pub fn insert_merkle_hash(
+        self,
+        path: impl Into<LedgerPath>,
+        hash: crate::FixedBytes<32>,
+    ) -> Result<Self, CompactError> {
+        self.apply_verify_program(ledger::merkle_insert_hash_program(path, hash))
+    }
+
     /// Append to a historic Merkle tree and retain its root-history VM update.
     pub fn insert_historic_merkle<T: CellValue>(
         self,

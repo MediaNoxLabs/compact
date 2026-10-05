@@ -2740,6 +2740,143 @@ pub mod ledger_contract {
                 })?;
             Ok(frame.finish(()))
         }
+        pub fn advance<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_plan_0): (_, runtime::FixedBytes<32>) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.local_secret_key(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            let __compact_plan_1: runtime::FixedBytes<32> = __compact_plan_0;
+            let __compact_plan_2: runtime::FixedBytes<32> = __compact_plan_1;
+            let __compact_plan_3: runtime::FixedBytes<32> =
+                crate::pure_circuits::public_key(__compact_plan_2)?;
+            let __compact_plan_4: runtime::FixedBytes<32> = __compact_plan_3;
+            let (frame, __compact_plan_5): (_, crate::types::LedgerState) =
+                crate::ledger_slots::state.record_read(frame)?;
+            let __compact_plan_6: crate::types::LedgerState = crate::types::LedgerState::setup;
+            let __compact_plan_7: bool = __compact_plan_5 == __compact_plan_6;
+            let (frame, __compact_plan_10): (_, bool) = if __compact_plan_7 {
+                let __compact_plan_8: bool = false;
+                (frame, __compact_plan_8)
+            } else {
+                let __compact_plan_9: bool = true;
+                (frame, __compact_plan_9)
+            };
+            if !__compact_plan_10 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Leave setup phase by setting the topic".to_owned(),
+                ));
+            }
+            let (frame, __compact_plan_11): (_, runtime::FixedBytes<32>) =
+                crate::ledger_slots::organizer.record_read(frame)?;
+            let __compact_plan_12: bool = __compact_plan_4 == __compact_plan_11;
+            if !__compact_plan_12 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Attempted to advance state without authorization".to_owned(),
+                ));
+            }
+            let (frame, __compact_plan_13): (_, crate::types::LedgerState) =
+                crate::ledger_slots::state.record_read(frame)?;
+            let __compact_plan_14: crate::types::LedgerState = crate::types::LedgerState::r#final;
+            let __compact_plan_15: bool = __compact_plan_13 == __compact_plan_14;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform branch frames preserve ordered recording steps"
+            )]
+            let frame = if __compact_plan_15 {
+                let (frame, __compact_plan_16) = crate::ledger_slots::no.record_read(frame)?;
+                let __compact_plan_17: runtime::BoundedUint<18446744073709551615> =
+                    runtime::BoundedUint::<18446744073709551615>::new(__compact_plan_16 as u128)?;
+                let __compact_plan_18: runtime::BoundedUint<18446744073709551616> =
+                    runtime::cast_unsigned::<18446744073709551615, 18446744073709551616>(
+                        __compact_plan_17,
+                    )?;
+                let __compact_plan_19: runtime::BoundedUint<18446744073709551616> =
+                    runtime::BoundedUint::<18446744073709551616>::new(1u128)
+                        .expect("Compact Uint literal fits its maximum");
+                let __compact_plan_20: runtime::BoundedUint<36893488147419103231> =
+                    runtime::add_unsigned::<
+                        18446744073709551616,
+                        18446744073709551616,
+                        36893488147419103231,
+                    >(__compact_plan_18, __compact_plan_19)?;
+                let __compact_plan_21: runtime::BoundedUint<18446744073709551615> =
+                    runtime::cast_unsigned::<36893488147419103231, 18446744073709551615>(
+                        __compact_plan_20,
+                    )?;
+                let __compact_plan_22: runtime::BoundedUint<18446744073709551615> =
+                    __compact_plan_21;
+                let (frame, __compact_plan_23) = crate::ledger_slots::yes
+                    .record_less_than(frame, (__compact_plan_22).value() as u64)?;
+                let __compact_plan_24: bool = __compact_plan_23;
+                if !__compact_plan_24 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "Attempted to advance state when a cash out is expected".to_owned(),
+                    ));
+                }
+                let __compact_plan_25: bool = false;
+                let __compact_plan_26: bool = __compact_plan_25;
+                let __compact_plan_27: crate::types::LedgerState = crate::types::LedgerState::setup;
+                let frame = crate::ledger_slots::state.record_write(frame, __compact_plan_27)?;
+                let __compact_plan_28: crate::types::Maybe =
+                    crate::pure_circuits::__compact_function_none_184()?;
+                let __compact_plan_29: crate::types::Maybe = __compact_plan_28;
+                let frame =
+                    crate::ledger_slots::topic.record_write(frame, (__compact_plan_29).clone())?;
+                let frame = crate::ledger_slots::yes.record_reset(frame)?;
+                let frame = crate::ledger_slots::no.record_reset(frame)?;
+                let __compact_plan_30: crate::types::MaybeCompact1 =
+                    crate::pure_circuits::__compact_function_none_183()?;
+                let __compact_plan_31: crate::types::MaybeCompact1 = __compact_plan_30;
+                let frame = crate::ledger_slots::beneficiary
+                    .record_write(frame, (__compact_plan_31).clone())?;
+                let frame = crate::ledger_slots::committed_votes.record_reset_to_default(frame)?;
+                let frame = crate::ledger_slots::committed_participants.record_reset(frame)?;
+                let frame = crate::ledger_slots::revealed_participants.record_reset(frame)?;
+                let __compact_plan_32: runtime::BoundedUint<65535> =
+                    runtime::BoundedUint::<65535>::new(1u128)
+                        .expect("Compact Uint literal fits its maximum");
+                let __compact_plan_33: runtime::BoundedUint<65535> = __compact_plan_32;
+                let frame = crate::ledger_slots::round
+                    .record_increment(frame, (__compact_plan_33).value() as u16)?;
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform branch frames preserve ordered recording steps"
+                )]
+                let frame = if __compact_plan_26 {
+                    let __compact_plan_34: crate::types::QualifiedShieldedCoinInfo =
+                        <crate::types::QualifiedShieldedCoinInfo as Default>::default();
+                    let __compact_plan_35: crate::types::QualifiedShieldedCoinInfo =
+                        __compact_plan_34;
+                    let frame = crate::ledger_slots::pot
+                        .record_write(frame, (__compact_plan_35).clone())?;
+                    let __compact_plan_36: bool = false;
+                    let frame =
+                        crate::ledger_slots::pot_has_coin.record_write(frame, __compact_plan_36)?;
+                    frame
+                } else {
+                    frame
+                };
+                frame
+            } else {
+                let (frame, __compact_plan_37): (_, crate::types::LedgerState) =
+                    crate::ledger_slots::state.record_read(frame)?;
+                let __compact_plan_38: crate::types::LedgerState = __compact_plan_37;
+                let __compact_plan_39: crate::types::LedgerState =
+                    crate::pure_circuits::successor(__compact_plan_38)?;
+                let __compact_plan_40: crate::types::LedgerState = __compact_plan_39;
+                let frame = crate::ledger_slots::state.record_write(frame, __compact_plan_40)?;
+                frame
+            };
+            Ok(frame.finish(()))
+        }
         pub fn dao_voting_token<Private>(
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<
@@ -2834,6 +2971,33 @@ pub mod ledger_contract {
                     recorded,
                     "vote_reveal",
                     input,
+                ))
+            }
+            pub fn advance<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                advance(context, self.witnesses)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn advance_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.advance(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "advance", input,
                 ))
             }
             pub fn dao_voting_token<Private>(

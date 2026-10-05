@@ -8000,6 +8000,15 @@ fn render_recorded_item(
                     )
                 })
                 .or_else(|| {
+                    typed_plan::lower_phase_reset(
+                        circuit,
+                        ledger_fields,
+                        witnesses,
+                        pure_circuits,
+                        circuits,
+                    )
+                })
+                .or_else(|| {
                     typed_plan::lower_unit_actions(
                         circuit,
                         ledger_fields,

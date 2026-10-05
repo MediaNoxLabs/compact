@@ -1,0 +1,1411 @@
+{
+  "schema_version": 20,
+  "type_aliases": [],
+  "ledger_fields": [
+    {
+      "id": "organizer",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "bytes",
+          "length": 32
+        }
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 36,
+        "column": 1
+      }
+    },
+    {
+      "id": "state",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "enum",
+          "name": "LedgerState",
+          "variants": [
+            "setup",
+            "commit",
+            "reveal",
+            "final"
+          ]
+        }
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 37,
+        "column": 1
+      }
+    },
+    {
+      "id": "topic",
+      "index": 2,
+      "path": [
+        2
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "struct",
+          "name": "Maybe",
+          "fields": [
+            {
+              "name": "is_some",
+              "ty": {
+                "kind": "boolean"
+              }
+            },
+            {
+              "name": "value",
+              "ty": {
+                "kind": "opaque_string"
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 38,
+        "column": 1
+      }
+    },
+    {
+      "id": "beneficiary",
+      "index": 3,
+      "path": [
+        3
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "struct",
+          "name": "MaybeCompact1",
+          "fields": [
+            {
+              "name": "is_some",
+              "ty": {
+                "kind": "boolean"
+              }
+            },
+            {
+              "name": "value",
+              "ty": {
+                "kind": "struct",
+                "name": "ZswapCoinPublicKey",
+                "fields": [
+                  {
+                    "name": "bytes",
+                    "ty": {
+                      "kind": "bytes",
+                      "length": 32
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 39,
+        "column": 1
+      }
+    },
+    {
+      "id": "yes",
+      "index": 4,
+      "path": [
+        4
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 40,
+        "column": 1
+      }
+    },
+    {
+      "id": "no",
+      "index": 5,
+      "path": [
+        5
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 41,
+        "column": 1
+      }
+    },
+    {
+      "id": "round",
+      "index": 6,
+      "path": [
+        6
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 42,
+        "column": 1
+      }
+    },
+    {
+      "id": "committed_votes",
+      "index": 7,
+      "path": [
+        7
+      ],
+      "declaration": {
+        "kind": "merkle_tree",
+        "depth": 10,
+        "ty": {
+          "kind": "bytes",
+          "length": 32
+        }
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 43,
+        "column": 1
+      }
+    },
+    {
+      "id": "committed_participants",
+      "index": 8,
+      "path": [
+        8
+      ],
+      "declaration": {
+        "kind": "set",
+        "ty": {
+          "kind": "bytes",
+          "length": 32
+        }
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 44,
+        "column": 1
+      }
+    },
+    {
+      "id": "revealed_participants",
+      "index": 9,
+      "path": [
+        9
+      ],
+      "declaration": {
+        "kind": "set",
+        "ty": {
+          "kind": "bytes",
+          "length": 32
+        }
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 45,
+        "column": 1
+      }
+    },
+    {
+      "id": "pot",
+      "index": 10,
+      "path": [
+        10
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "struct",
+          "name": "QualifiedShieldedCoinInfo",
+          "fields": [
+            {
+              "name": "nonce",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              }
+            },
+            {
+              "name": "color",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              }
+            },
+            {
+              "name": "value",
+              "ty": {
+                "kind": "unsigned",
+                "max": "340282366920938463463374607431768211455"
+              }
+            },
+            {
+              "name": "mt_index",
+              "ty": {
+                "kind": "unsigned",
+                "max": "18446744073709551615"
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 47,
+        "column": 1
+      }
+    },
+    {
+      "id": "pot_has_coin",
+      "index": 11,
+      "path": [
+        11
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "boolean"
+        }
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 48,
+        "column": 1
+      }
+    },
+    {
+      "id": "costs",
+      "index": 12,
+      "path": [
+        12
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "struct",
+          "name": "Costs",
+          "fields": [
+            {
+              "name": "seed_dust",
+              "ty": {
+                "kind": "unsigned",
+                "max": "18446744073709551615"
+              }
+            },
+            {
+              "name": "buy_in_dust",
+              "ty": {
+                "kind": "unsigned",
+                "max": "18446744073709551615"
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 50,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "local_secret_key",
+      "parameters": [],
+      "result": {
+        "kind": "bytes",
+        "length": 32
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 59,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+    {
+      "name": "__compact_function_none_183",
+      "internal": true,
+      "parameters": [],
+      "result": {
+        "kind": "struct",
+        "name": "MaybeCompact1",
+        "fields": [
+          {
+            "name": "is_some",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "value",
+            "ty": {
+              "kind": "struct",
+              "name": "ZswapCoinPublicKey",
+              "fields": [
+                {
+                  "name": "bytes",
+                  "ty": {
+                    "kind": "bytes",
+                    "length": 32
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "body": {
+        "kind": "struct_literal",
+        "ty": {
+          "kind": "struct",
+          "name": "MaybeCompact1",
+          "fields": [
+            {
+              "name": "is_some",
+              "ty": {
+                "kind": "boolean"
+              }
+            },
+            {
+              "name": "value",
+              "ty": {
+                "kind": "struct",
+                "name": "ZswapCoinPublicKey",
+                "fields": [
+                  {
+                    "name": "bytes",
+                    "ty": {
+                      "kind": "bytes",
+                      "length": 32
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "fields": [
+          {
+            "kind": "boolean",
+            "value": false
+          },
+          {
+            "kind": "default",
+            "ty": {
+              "kind": "struct",
+              "name": "ZswapCoinPublicKey",
+              "fields": [
+                {
+                  "name": "bytes",
+                  "ty": {
+                    "kind": "bytes",
+                    "length": 32
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "source": {
+        "file": "standard-library.compact",
+        "line": 28,
+        "column": 1
+      }
+    },
+    {
+      "name": "__compact_function_none_184",
+      "internal": true,
+      "parameters": [],
+      "result": {
+        "kind": "struct",
+        "name": "Maybe",
+        "fields": [
+          {
+            "name": "is_some",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "value",
+            "ty": {
+              "kind": "opaque_string"
+            }
+          }
+        ]
+      },
+      "body": {
+        "kind": "struct_literal",
+        "ty": {
+          "kind": "struct",
+          "name": "Maybe",
+          "fields": [
+            {
+              "name": "is_some",
+              "ty": {
+                "kind": "boolean"
+              }
+            },
+            {
+              "name": "value",
+              "ty": {
+                "kind": "opaque_string"
+              }
+            }
+          ]
+        },
+        "fields": [
+          {
+            "kind": "boolean",
+            "value": false
+          },
+          {
+            "kind": "default",
+            "ty": {
+              "kind": "opaque_string"
+            }
+          }
+        ]
+      },
+      "source": {
+        "file": "standard-library.compact",
+        "line": 28,
+        "column": 1
+      }
+    },
+    {
+      "name": "successor",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "state",
+          "ty": {
+            "kind": "enum",
+            "name": "LedgerState",
+            "variants": [
+              "setup",
+              "commit",
+              "reveal",
+              "final"
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "enum",
+        "name": "LedgerState",
+        "variants": [
+          "setup",
+          "commit",
+          "reveal",
+          "final"
+        ]
+      },
+      "body": {
+        "kind": "if",
+        "condition": {
+          "kind": "equal",
+          "left": {
+            "kind": "parameter",
+            "name": "state"
+          },
+          "right": {
+            "kind": "enum_variant",
+            "ty": {
+              "kind": "enum",
+              "name": "LedgerState",
+              "variants": [
+                "setup",
+                "commit",
+                "reveal",
+                "final"
+              ]
+            },
+            "variant": "setup"
+          }
+        },
+        "then": {
+          "kind": "coerce",
+          "value": {
+            "kind": "enum_variant",
+            "ty": {
+              "kind": "enum",
+              "name": "LedgerState",
+              "variants": [
+                "setup",
+                "commit",
+                "reveal",
+                "final"
+              ]
+            },
+            "variant": "commit"
+          },
+          "ty": {
+            "kind": "enum",
+            "name": "LedgerState",
+            "variants": [
+              "setup",
+              "commit",
+              "reveal",
+              "final"
+            ]
+          }
+        },
+        "otherwise": {
+          "kind": "coerce",
+          "value": {
+            "kind": "if",
+            "condition": {
+              "kind": "equal",
+              "left": {
+                "kind": "parameter",
+                "name": "state"
+              },
+              "right": {
+                "kind": "enum_variant",
+                "ty": {
+                  "kind": "enum",
+                  "name": "LedgerState",
+                  "variants": [
+                    "setup",
+                    "commit",
+                    "reveal",
+                    "final"
+                  ]
+                },
+                "variant": "commit"
+              }
+            },
+            "then": {
+              "kind": "coerce",
+              "value": {
+                "kind": "enum_variant",
+                "ty": {
+                  "kind": "enum",
+                  "name": "LedgerState",
+                  "variants": [
+                    "setup",
+                    "commit",
+                    "reveal",
+                    "final"
+                  ]
+                },
+                "variant": "reveal"
+              },
+              "ty": {
+                "kind": "enum",
+                "name": "LedgerState",
+                "variants": [
+                  "setup",
+                  "commit",
+                  "reveal",
+                  "final"
+                ]
+              }
+            },
+            "otherwise": {
+              "kind": "coerce",
+              "value": {
+                "kind": "enum_variant",
+                "ty": {
+                  "kind": "enum",
+                  "name": "LedgerState",
+                  "variants": [
+                    "setup",
+                    "commit",
+                    "reveal",
+                    "final"
+                  ]
+                },
+                "variant": "final"
+              },
+              "ty": {
+                "kind": "enum",
+                "name": "LedgerState",
+                "variants": [
+                  "setup",
+                  "commit",
+                  "reveal",
+                  "final"
+                ]
+              }
+            }
+          },
+          "ty": {
+            "kind": "enum",
+            "name": "LedgerState",
+            "variants": [
+              "setup",
+              "commit",
+              "reveal",
+              "final"
+            ]
+          }
+        }
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 128,
+        "column": 1
+      }
+    },
+    {
+      "name": "public_key",
+      "parameters": [
+        {
+          "name": "sk",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result": {
+        "kind": "bytes",
+        "length": 32
+      },
+      "body": {
+        "kind": "persistent_hash",
+        "value": {
+          "kind": "tuple",
+          "elements": [
+            {
+              "kind": "bytes_literal",
+              "bytes": [
+                108,
+                97,
+                114,
+                101,
+                115,
+                58,
+                117,
+                100,
+                97,
+                111,
+                58,
+                112,
+                107,
+                58,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "kind": "parameter",
+              "name": "sk"
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 231,
+        "column": 1
+      }
+    }
+  ],
+  "stateful_circuits": [
+    {
+      "name": "advance",
+      "parameters": [],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "sk",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              },
+              "value": {
+                "kind": "witness_call",
+                "name": "local_secret_key",
+                "arguments": []
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "apk",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                },
+                "value": {
+                  "kind": "call",
+                  "name": "public_key",
+                  "arguments": [
+                    {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "sk"
+                      },
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "action": {
+              "kind": "sequence",
+              "actions": [
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "if",
+                    "condition": {
+                      "kind": "equal",
+                      "left": {
+                        "kind": "cell_read",
+                        "field": "state",
+                        "index": 1
+                      },
+                      "right": {
+                        "kind": "enum_variant",
+                        "ty": {
+                          "kind": "enum",
+                          "name": "LedgerState",
+                          "variants": [
+                            "setup",
+                            "commit",
+                            "reveal",
+                            "final"
+                          ]
+                        },
+                        "variant": "setup"
+                      }
+                    },
+                    "then": {
+                      "kind": "boolean",
+                      "value": false
+                    },
+                    "otherwise": {
+                      "kind": "boolean",
+                      "value": true
+                    }
+                  },
+                  "message": "Leave setup phase by setting the topic"
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "parameter",
+                      "name": "apk"
+                    },
+                    "right": {
+                      "kind": "cell_read",
+                      "field": "organizer",
+                      "index": 0
+                    }
+                  },
+                  "message": "Attempted to advance state without authorization"
+                },
+                {
+                  "kind": "if",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "cell_read",
+                      "field": "state",
+                      "index": 1
+                    },
+                    "right": {
+                      "kind": "enum_variant",
+                      "ty": {
+                        "kind": "enum",
+                        "name": "LedgerState",
+                        "variants": [
+                          "setup",
+                          "commit",
+                          "reveal",
+                          "final"
+                        ]
+                      },
+                      "variant": "final"
+                    }
+                  },
+                  "then": {
+                    "kind": "sequence",
+                    "actions": [
+                      {
+                        "kind": "assert",
+                        "condition": {
+                          "kind": "let",
+                          "bindings": [
+                            {
+                              "name": "tmp_199",
+                              "ty": {
+                                "kind": "unsigned",
+                                "max": "18446744073709551615"
+                              },
+                              "value": {
+                                "kind": "unsigned_cast",
+                                "max": "18446744073709551615",
+                                "value": {
+                                  "kind": "unsigned_add",
+                                  "max": "36893488147419103231",
+                                  "left": {
+                                    "kind": "unsigned_cast",
+                                    "max": "18446744073709551616",
+                                    "value": {
+                                      "kind": "counter_read",
+                                      "field": "no",
+                                      "index": 5
+                                    }
+                                  },
+                                  "right": {
+                                    "kind": "unsigned_literal",
+                                    "value": "1",
+                                    "max": "18446744073709551616"
+                                  }
+                                }
+                              }
+                            }
+                          ],
+                          "body": {
+                            "kind": "counter_less_than",
+                            "field": "yes",
+                            "index": 4,
+                            "threshold": {
+                              "kind": "parameter",
+                              "name": "tmp_199"
+                            }
+                          }
+                        },
+                        "message": "Attempted to advance state when a cash out is expected"
+                      },
+                      {
+                        "kind": "circuit_call",
+                        "name": "reset_state",
+                        "arguments": [
+                          {
+                            "kind": "coerce",
+                            "value": {
+                              "kind": "boolean",
+                              "value": false
+                            },
+                            "ty": {
+                              "kind": "boolean"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "otherwise": {
+                    "kind": "let",
+                    "bindings": [
+                      {
+                        "name": "tmp_200",
+                        "ty": {
+                          "kind": "enum",
+                          "name": "LedgerState",
+                          "variants": [
+                            "setup",
+                            "commit",
+                            "reveal",
+                            "final"
+                          ]
+                        },
+                        "value": {
+                          "kind": "call",
+                          "name": "successor",
+                          "arguments": [
+                            {
+                              "kind": "coerce",
+                              "value": {
+                                "kind": "cell_read",
+                                "field": "state",
+                                "index": 1
+                              },
+                              "ty": {
+                                "kind": "enum",
+                                "name": "LedgerState",
+                                "variants": [
+                                  "setup",
+                                  "commit",
+                                  "reveal",
+                                  "final"
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ],
+                    "action": {
+                      "kind": "cell_write",
+                      "field": "state",
+                      "index": 1,
+                      "value": {
+                        "kind": "parameter",
+                        "name": "tmp_200"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 115,
+        "column": 1
+      }
+    },
+    {
+      "name": "reset_state",
+      "parameters": [
+        {
+          "name": "reset_pot",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "cell_write",
+          "field": "state",
+          "index": 1,
+          "value": {
+            "kind": "enum_variant",
+            "ty": {
+              "kind": "enum",
+              "name": "LedgerState",
+              "variants": [
+                "setup",
+                "commit",
+                "reveal",
+                "final"
+              ]
+            },
+            "variant": "setup"
+          }
+        },
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_189",
+              "ty": {
+                "kind": "struct",
+                "name": "Maybe",
+                "fields": [
+                  {
+                    "name": "is_some",
+                    "ty": {
+                      "kind": "boolean"
+                    }
+                  },
+                  {
+                    "name": "value",
+                    "ty": {
+                      "kind": "opaque_string"
+                    }
+                  }
+                ]
+              },
+              "value": {
+                "kind": "call",
+                "name": "__compact_function_none_184",
+                "arguments": []
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "topic",
+            "index": 2,
+            "value": {
+              "kind": "parameter",
+              "name": "tmp_189"
+            }
+          }
+        },
+        {
+          "kind": "counter_reset",
+          "field": "yes",
+          "index": 4
+        },
+        {
+          "kind": "counter_reset",
+          "field": "no",
+          "index": 5
+        },
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_188",
+              "ty": {
+                "kind": "struct",
+                "name": "MaybeCompact1",
+                "fields": [
+                  {
+                    "name": "is_some",
+                    "ty": {
+                      "kind": "boolean"
+                    }
+                  },
+                  {
+                    "name": "value",
+                    "ty": {
+                      "kind": "struct",
+                      "name": "ZswapCoinPublicKey",
+                      "fields": [
+                        {
+                          "name": "bytes",
+                          "ty": {
+                            "kind": "bytes",
+                            "length": 32
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "value": {
+                "kind": "call",
+                "name": "__compact_function_none_183",
+                "arguments": []
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "beneficiary",
+            "index": 3,
+            "value": {
+              "kind": "parameter",
+              "name": "tmp_188"
+            }
+          }
+        },
+        {
+          "kind": "merkle_reset_to_default",
+          "field": "committed_votes",
+          "index": 7
+        },
+        {
+          "kind": "set_reset",
+          "field": "committed_participants",
+          "index": 8
+        },
+        {
+          "kind": "set_reset",
+          "field": "revealed_participants",
+          "index": 9
+        },
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_186",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "round",
+            "index": 6,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_186"
+            }
+          }
+        },
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "parameter",
+            "name": "reset_pot"
+          },
+          "then": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "tmp_187",
+                    "ty": {
+                      "kind": "struct",
+                      "name": "QualifiedShieldedCoinInfo",
+                      "fields": [
+                        {
+                          "name": "nonce",
+                          "ty": {
+                            "kind": "bytes",
+                            "length": 32
+                          }
+                        },
+                        {
+                          "name": "color",
+                          "ty": {
+                            "kind": "bytes",
+                            "length": 32
+                          }
+                        },
+                        {
+                          "name": "value",
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "340282366920938463463374607431768211455"
+                          }
+                        },
+                        {
+                          "name": "mt_index",
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "18446744073709551615"
+                          }
+                        }
+                      ]
+                    },
+                    "value": {
+                      "kind": "default",
+                      "ty": {
+                        "kind": "struct",
+                        "name": "QualifiedShieldedCoinInfo",
+                        "fields": [
+                          {
+                            "name": "nonce",
+                            "ty": {
+                              "kind": "bytes",
+                              "length": 32
+                            }
+                          },
+                          {
+                            "name": "color",
+                            "ty": {
+                              "kind": "bytes",
+                              "length": 32
+                            }
+                          },
+                          {
+                            "name": "value",
+                            "ty": {
+                              "kind": "unsigned",
+                              "max": "340282366920938463463374607431768211455"
+                            }
+                          },
+                          {
+                            "name": "mt_index",
+                            "ty": {
+                              "kind": "unsigned",
+                              "max": "18446744073709551615"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "cell_write",
+                  "field": "pot",
+                  "index": 10,
+                  "value": {
+                    "kind": "parameter",
+                    "name": "tmp_187"
+                  }
+                }
+              },
+              {
+                "kind": "cell_write",
+                "field": "pot_has_coin",
+                "index": 11,
+                "value": {
+                  "kind": "boolean",
+                  "value": false
+                }
+              }
+            ]
+          },
+          "otherwise": {
+            "kind": "sequence",
+            "actions": []
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "micro-dao.compact",
+        "line": 201,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": {
+    "parameters": [
+      {
+        "name": "organizer_secret_key",
+        "ty": {
+          "kind": "bytes",
+          "length": 32
+        }
+      },
+      {
+        "name": "costs_param",
+        "ty": {
+          "kind": "struct",
+          "name": "Costs",
+          "fields": [
+            {
+              "name": "seed_dust",
+              "ty": {
+                "kind": "unsigned",
+                "max": "18446744073709551615"
+              }
+            },
+            {
+              "name": "buy_in_dust",
+              "ty": {
+                "kind": "unsigned",
+                "max": "18446744073709551615"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "steps": [
+      {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "tmp_185",
+            "ty": {
+              "kind": "bytes",
+              "length": 32
+            },
+            "value": {
+              "kind": "call",
+              "name": "public_key",
+              "arguments": [
+                {
+                  "kind": "parameter",
+                  "name": "organizer_secret_key"
+                }
+              ]
+            }
+          }
+        ],
+        "step": {
+          "kind": "cell_write",
+          "field": "organizer",
+          "index": 0,
+          "value": {
+            "kind": "parameter",
+            "name": "tmp_185"
+          }
+        }
+      },
+      {
+        "kind": "cell_write",
+        "field": "state",
+        "index": 1,
+        "value": {
+          "kind": "enum_variant",
+          "ty": {
+            "kind": "enum",
+            "name": "LedgerState",
+            "variants": [
+              "setup",
+              "commit",
+              "reveal",
+              "final"
+            ]
+          },
+          "variant": "setup"
+        }
+      },
+      {
+        "kind": "cell_write",
+        "field": "costs",
+        "index": 12,
+        "value": {
+          "kind": "parameter",
+          "name": "costs_param"
+        }
+      }
+    ],
+    "source": {
+      "file": "micro-dao.compact",
+      "line": 53,
+      "column": 1
+    }
+  }
+}

@@ -19,6 +19,7 @@
 use super::*;
 use crate::coerce_expression;
 use crate::ir::{KernelClaimKind, ReturnPlan};
+mod phase_reset;
 mod unit_actions;
 
 #[derive(Clone)]
@@ -50,6 +51,7 @@ struct Plan<'a> {
     effectful_field_cells: bool,
     read_only_assertions: bool,
     unit_actions: bool,
+    phase_reset: bool,
     composite_values: bool,
     composite_intents: bool,
     intent_effects: usize,
@@ -210,10 +212,12 @@ impl Plan<'_> {
         steps: &mut Vec<syn::Stmt>,
     ) -> Option<TypedValue> {
         match expression {
-            Expr::Unit if self.read_only_assertions || self.unit_actions => Some(TypedValue {
-                ty: Type::Unit,
-                value: syn::parse_quote!(()),
-            }),
+            Expr::Unit if self.read_only_assertions || self.unit_actions || self.phase_reset => {
+                Some(TypedValue {
+                    ty: Type::Unit,
+                    value: syn::parse_quote!(()),
+                })
+            }
             Expr::Sequence {
                 steps: expressions,
                 value,
@@ -322,13 +326,48 @@ impl Plan<'_> {
                     steps,
                 )
             }
-            Expr::UnsignedCast { value, max } if self.composite_values => {
+            Expr::UnsignedCast { value, max } if self.composite_values || self.phase_reset => {
                 let value = self.expression(value, scope, steps)?;
                 let Type::Unsigned { max: source_max } = value.ty else {
                     return None;
                 };
+                if self.phase_reset
+                    && !matches!(
+                        (source_max.as_str(), max.as_str()),
+                        ("18446744073709551615", phase_reset::WIDENED)
+                            | (phase_reset::SUM, "18446744073709551615")
+                    )
+                {
+                    return None;
+                }
                 let converted = crate::unsigned_cast_syntax(value.value, &source_max, max).ok()?;
                 self.bind(converted, Type::Unsigned { max: max.clone() }, steps)
+            }
+            Expr::UnsignedAdd { max, left, right } if self.phase_reset => {
+                let left = self.expression(left, scope, steps)?;
+                let right = self.expression(right, scope, steps)?;
+                let Type::Unsigned { max: left_max } = left.ty else {
+                    return None;
+                };
+                let Type::Unsigned { max: right_max } = right.ty else {
+                    return None;
+                };
+                if left_max != phase_reset::WIDENED
+                    || right_max != phase_reset::WIDENED
+                    || max != phase_reset::SUM
+                {
+                    return None;
+                }
+                let value = crate::unsigned_arithmetic_syntax(
+                    expression,
+                    left.value,
+                    right.value,
+                    &left_max,
+                    &right_max,
+                    max,
+                )
+                .ok()?;
+                self.bind(value, Type::Unsigned { max: max.clone() }, steps)
             }
             Expr::Coerce { value, ty } => {
                 let value = self.expression(value, scope, steps)?;
@@ -589,6 +628,7 @@ impl Plan<'_> {
                 }
                 if !cell_type(ty)
                     && !(self.unit_actions && unit_actions::value_type(ty))
+                    && !(self.phase_reset && phase_reset::cell_type(ty))
                     && !(self.read_only_assertions && *ty == Type::Boolean)
                     && !(ty == &Type::Field
                         && (self.effectful_field_cells
@@ -739,6 +779,24 @@ impl Plan<'_> {
                 }
             }
             (None, Some(callee)) => {
+                if self.phase_reset {
+                    if !phase_reset::helper_signature(callee)
+                        || !phase_reset::false_arguments(arguments)
+                    {
+                        return None;
+                    }
+                    return self.inline_call(
+                        name,
+                        &callee.parameters,
+                        &callee.result,
+                        &Expr::Unit,
+                        &callee.actions,
+                        arguments,
+                        scope,
+                        steps,
+                        false,
+                    );
+                }
                 if self.unit_actions {
                     if !(self.composite_intents && shielded_unit_signature(callee))
                         && !unit_actions::helper_signature(callee)
@@ -1016,6 +1074,7 @@ impl Plan<'_> {
                 }
                 if !cell_type(ty)
                     && !(self.unit_actions && unit_actions::value_type(ty))
+                    && !(self.phase_reset && phase_reset::cell_type(ty))
                     && !(ty == &Type::Field
                         && (self.effectful_field_cells
                             || self.field_cell_slot.as_ref() == Some(&(field.clone(), *index))))
@@ -1074,6 +1133,30 @@ impl Plan<'_> {
                 )?;));
                 self.qualified_cell_writes += 1;
             }
+            StateAction::CounterReset { field, index } if self.phase_reset => {
+                if self.field(field, *index)?.declaration != LedgerFieldKind::Counter {
+                    return None;
+                }
+                let slot = ident(field).ok()?;
+                steps.push(
+                    syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_reset(frame)?;),
+                );
+                self.counter_writes += 1;
+            }
+            StateAction::MerkleResetToDefault { field, index } if self.phase_reset => {
+                if !matches!(
+                    self.field(field, *index)?.declaration,
+                    LedgerFieldKind::MerkleTree {
+                        depth: 10,
+                        ty: Type::Bytes { length: 32 }
+                    }
+                ) {
+                    return None;
+                }
+                let slot = ident(field).ok()?;
+                steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_reset_to_default(frame)?;));
+                self.tree_writes += 1;
+            }
             StateAction::CounterIncrement {
                 field,
                 index,
@@ -1128,7 +1211,7 @@ impl Plan<'_> {
                 }
             }
             StateAction::CircuitCall { name, arguments }
-                if self.unit_actions && self.composite_intents =>
+                if (self.unit_actions && self.composite_intents) || self.phase_reset =>
             {
                 if self.call(name, arguments, scope, steps)?.ty != Type::Unit {
                     return None;
@@ -1213,14 +1296,20 @@ impl Plan<'_> {
                 let LedgerFieldKind::Set { ty } = &self.field(field, *index)?.declaration else {
                     return None;
                 };
-                if *ty != crate::stateful::qualified_coin_type() {
+                if *ty != crate::stateful::qualified_coin_type()
+                    && !(self.phase_reset && *ty == (Type::Bytes { length: 32 }))
+                {
                     return None;
                 }
                 let slot = ident(field).ok()?;
                 steps.push(
                     syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_reset(frame)?;),
                 );
-                self.qualified_set_writes += 1;
+                if *ty == crate::stateful::qualified_coin_type() {
+                    self.qualified_set_writes += 1;
+                } else {
+                    self.set_writes += 1;
+                }
             }
             StateAction::SetInsertCoin {
                 field,
@@ -1468,6 +1557,7 @@ pub(super) fn lower_effectful<'a>(
         effectful_field_cells: true,
         read_only_assertions: false,
         unit_actions: false,
+        phase_reset: false,
         composite_values: false,
         composite_intents: false,
         intent_effects: 0,
@@ -1680,6 +1770,7 @@ pub(super) fn lower_context_query<'a>(
         effectful_field_cells: false,
         read_only_assertions: false,
         unit_actions: false,
+        phase_reset: false,
         composite_values: false,
         composite_intents: false,
         intent_effects: 0,
@@ -1977,6 +2068,7 @@ pub(super) fn lower_shielded_receive<'a>(
         effectful_field_cells: false,
         read_only_assertions: false,
         unit_actions: true,
+        phase_reset: false,
         composite_values: false,
         composite_intents: true,
         intent_effects: 0,
@@ -2022,6 +2114,16 @@ pub(super) fn lower_shielded_receive<'a>(
             steps,
             result: syn::parse_quote!(()),
         })
+}
+
+pub(super) fn lower_phase_reset<'a>(
+    circuit: &StatefulCircuit,
+    ledger: &'a HashMap<&'a str, &'a LedgerField>,
+    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
+    pure: &'a HashMap<&'a str, &'a PureCircuit>,
+    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
+) -> Option<TypedPlan> {
+    phase_reset::lower(circuit, ledger, witnesses, pure, circuits)
 }
 
 pub(super) fn lower_unit_actions<'a>(
@@ -2075,6 +2177,7 @@ pub(super) fn lower_composite<'a>(
         effectful_field_cells: false,
         read_only_assertions: false,
         unit_actions: false,
+        phase_reset: false,
         composite_values: true,
         composite_intents: intents,
         intent_effects: 0,
@@ -2218,6 +2321,7 @@ pub(super) fn lower<'a>(
         effectful_field_cells: false,
         read_only_assertions: assertion_entry,
         unit_actions: false,
+        phase_reset: false,
         composite_values: false,
         composite_intents: false,
         intent_effects: 0,
@@ -2768,6 +2872,7 @@ mod tests {
             effectful_field_cells: false,
             read_only_assertions: false,
             unit_actions: false,
+            phase_reset: false,
             composite_values: false,
             composite_intents: false,
             intent_effects: 0,
@@ -2860,6 +2965,7 @@ mod tests {
             effectful_field_cells: false,
             read_only_assertions: false,
             unit_actions: false,
+            phase_reset: false,
             composite_values: false,
             composite_intents: false,
             intent_effects: 0,

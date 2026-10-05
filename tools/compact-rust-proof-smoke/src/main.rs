@@ -62,6 +62,9 @@ mod merkle_indexed;
 mod merkle_reset;
 mod merkle_root;
 mod merkle_verify;
+mod micro_dao_advance;
+#[path = "../../../tests-rust-backend/test-center-micro-dao/support/advance.rs"]
+mod micro_dao_advance_support;
 mod micro_dao_reveal;
 #[path = "../../../tests-rust-backend/test-center-micro-dao/support/reveal.rs"]
 mod micro_dao_reveal_support;
@@ -2007,6 +2010,25 @@ fn run() -> Result<(), Box<dyn Error>> {
             Ok(Ok(())) => Ok(()),
             Ok(Err(error)) => Err(error.into()),
             Err(_) => Err("microDAO reveal proof thread panicked".into()),
+        };
+    }
+    if first.as_deref() == Some(OsStr::new("--micro-dao-advance")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --micro-dao-advance <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --micro-dao-advance <proof-output>".into(),
+            );
+        }
+        let proof = std::thread::Builder::new()
+            .name("micro-dao-advance-proof".into())
+            .stack_size(64 * 1024 * 1024)
+            .spawn(move || micro_dao_advance::run(Path::new(&root)).map_err(|e| e.to_string()))?;
+        return match proof.join() {
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(error)) => Err(error.into()),
+            Err(_) => Err("microDAO advance proof thread panicked".into()),
         };
     }
     if first.as_deref() == Some(OsStr::new("--micro-dao-reveal")) {

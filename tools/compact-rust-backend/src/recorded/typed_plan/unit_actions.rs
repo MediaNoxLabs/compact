@@ -190,6 +190,7 @@ pub(super) fn lower<'a>(
         effectful_field_cells: false,
         read_only_assertions: false,
         unit_actions: true,
+        phase_reset: false,
         composite_values: false,
         composite_intents: false,
         intent_effects: 0,

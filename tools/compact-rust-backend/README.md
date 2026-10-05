@@ -1227,3 +1227,50 @@ exports, records one of four proof-required APIs, and retains `start`, `concede`
 and `withdraw` recording gaps. Native final nontrivial Unit expressions use
 `discard_expression` and `result: ()`, preserving all effects while removing an
 unnecessary binding; existing literal Unit output remains unchanged.
+
+
+### Original microDAO advancement and reset recording (ADR194)
+
+The original `test-center/test-contracts/micro-dao.compact` now records `advance`.
+The generated native API remains `contract.advance(context)`. Previously that
+export had no recorded preparation path; it now also provides:
+
+```rust
+let recorded = contract.recording().advance(context)?;
+let prepared = contract.recording()
+    .advance_call(&observed, private_state)?
+    .prepare(verifier, communication_randomness)?;
+```
+
+The shared typed planner keeps the secret witness, organizer/phase assertions,
+Counter threshold, and selected reset helper in one recording frame. The bounded
+phase-reset profile audits the complete internal `reset_state(Boolean)` body,
+including both conditional branches, but admits only the original literal-false
+call. Enum/Maybe/qualified-coin/Boolean Cell writes and Counter/Merkle/Set resets
+reuse existing typed slots. No runtime ABI or schema change is needed.
+
+The exact widened `no + 1` and checked Uint64 conversion are preserved:
+`no == u64::MAX` returns `UnsignedOutOfRange` before `yes.lessThan`; a final reset
+at `round == u64::MAX` returns upstream `ArithmeticOverflow`. The pinned TypeScript
+prefixes contain four and thirteen successful queries respectively. Failed Rust
+calls consume their context, so tests assert the exact failure and witness order
+without claiming a returned partial state. Successful native/recorded/replay cases
+match the full state and transcript; final resets leave pot value, index and flag
+unchanged. TypeScript's reported gas is still its last query cost; Rust cumulative
+gas matches the captured sum.
+
+Twenty original-source scenarios cover authorization, all phases, populated and
+empty resets, threshold limits, overflow, witness errors and gas refusal. Rust's
+`FixedBytes<32>` excludes the malformed dynamic TypeScript witness value; the
+corresponding Rust boundary uses an explicit witness error. Three original
+branch proofs (commit, reveal, final reset) verify independently, reject changed
+bindings and apply under default ledger strictness with separate Night-backed
+Dust fees. Prior DAO states are explicit fixtures; this does not establish a
+funded deposit/vote lifecycle or proof coverage for `reset_state(true)`/`cash_out`.
+
+Run `check_compactc_target.py --micro-dao-advance` for the source capability guard,
+and optionally `--proof` for selective key generation and proof smoke. The proof
+smoke also accepts `--micro-dao-advance <proof-output>` to reuse pinned keys.
+`MIDNIGHT_LEDGER_TEST_STATIC_DIR` must point to the upstream static fixtures for
+Dust fee funding. The source cross-tab retains four original proof gaps:
+`vote_commit`, `set_topic`, `buy_in`, and `cash_out`.

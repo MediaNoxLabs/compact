@@ -281,6 +281,95 @@ fn recorded_nested_uint4_matches_typescript_all_branches_and_replays() {
 }
 
 #[test]
+fn recorded_annotated_uint8_matches_typescript_and_replay() {
+    let reference: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/ternary-recorded-annotated-uint8.json"
+    ))
+    .unwrap();
+    for (case, c) in [("walkerTrue", true), ("walkerFalse", false)] {
+        let expected = &reference[case];
+        let native_initial = initial(true, true, 111);
+        let recorded_initial = initial(true, true, 111);
+        assert_eq!(
+            state_hex(native_initial.ledger_state.get_ref().clone()),
+            expected["initialStateHex"],
+            "{case}: initial state",
+        );
+        let native = walkerConstAnnotated(
+            native_initial.into_circuit_context(ContractAddress::default()),
+            c,
+        )
+        .unwrap();
+        let recorded = recorded::walkerConstAnnotated(
+            recorded_initial.into_circuit_context(ContractAddress::default()),
+            c,
+        )
+        .unwrap();
+        let _: () = native.result;
+        let _: () = recorded.execution.result;
+        assert_eq!(expected["result"], "", "{case}: TypeScript result");
+        assert_eq!(native.gas_cost, recorded.execution.gas_cost, "{case}: gas");
+        assert_eq!(
+            native.context.query.effects, recorded.execution.context.query.effects,
+            "{case}: effects"
+        );
+        assert_eq!(
+            native.context.query.state.get_ref(),
+            recorded.execution.context.query.state.get_ref(),
+            "{case}: state"
+        );
+        assert_eq!(
+            state_hex(recorded.execution.context.query.state.get_ref().clone()),
+            expected["afterStateHex"],
+            "{case}: TypeScript state"
+        );
+        assert!(native.private_transcript_outputs.is_empty());
+        assert!(recorded.execution.private_transcript_outputs.is_empty());
+        assert_eq!(expected["privateTranscriptCount"], 0);
+        assert_eq!(
+            ordered_vm_shape(serde_json::to_value(recorded.public.verify_ops()).unwrap()),
+            expected["publicTranscriptShape"],
+            "{case}: ordered VM",
+        );
+        let replay = recorded
+            .public
+            .initial()
+            .query(
+                recorded.public.verify_ops(),
+                None,
+                &recorded.execution.context.cost_model,
+            )
+            .unwrap();
+        assert_eq!(
+            replay.context.state.get_ref(),
+            native.context.query.state.get_ref()
+        );
+        assert_eq!(replay.context.effects, native.context.query.effects);
+        let actual = serde_json::to_value(native.gas_cost).unwrap();
+        for dimension in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            let expected_gas: u64 = expected["queries"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|query| {
+                    query["gasCost"][dimension]
+                        .as_str()
+                        .unwrap()
+                        .parse::<u64>()
+                        .unwrap()
+                })
+                .sum();
+            assert_eq!(actual[dimension], expected_gas, "{case}: {dimension}");
+            assert_eq!(
+                expected["queries"].as_array().unwrap().last().unwrap()["gasCost"][dimension],
+                expected["reportedGas"][dimension],
+                "{case}: final TypeScript query {dimension}"
+            );
+        }
+    }
+}
+
+#[test]
 fn recorded_closed_curve_arguments_match_typescript_and_replay() {
     let reference: serde_json::Value = serde_json::from_str(include_str!(
         "../../../runtime-rs/tests/fixtures/ternary-recorded-native-arg.json"

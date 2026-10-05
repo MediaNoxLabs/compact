@@ -386,7 +386,8 @@
       "typescript_fixtures": [
         "runtime-rs/tests/fixtures/ternary-cond-oracle.json",
         "runtime-rs/tests/fixtures/ternary-recorded-nested-if.json",
-        "runtime-rs/tests/fixtures/ternary-recorded-native-arg.json"
+        "runtime-rs/tests/fixtures/ternary-recorded-native-arg.json",
+        "runtime-rs/tests/fixtures/ternary-recorded-annotated-uint8.json"
       ]
     },
     {

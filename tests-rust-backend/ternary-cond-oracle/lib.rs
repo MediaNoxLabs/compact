@@ -1396,6 +1396,20 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
+        pub fn walkerConstAnnotated<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: bool,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_annotated_uint8_0: runtime::BoundedUint<255> =
+                runtime::BoundedUint::<255>::new(if __compact_param_0 { 1u128 } else { 2u128 })?;
+            let __compact_recorded_annotated_field_1: runtime::Field =
+                runtime::Field::from(__compact_recorded_annotated_uint8_0.value());
+            let frame = crate::ledger_slots::fieldCell
+                .record_write(frame, __compact_recorded_annotated_field_1)?;
+            Ok(frame.finish(()))
+        }
         pub fn walkerCompareEq<Private>(
             context: runtime::context::CircuitContext<Private>,
             __compact_param_0: bool,
@@ -1773,6 +1787,34 @@ pub mod ledger_contract {
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
         impl Contract {
+            pub fn walkerConstAnnotated<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                c: bool,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::walkerConstAnnotated(context, c)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn walkerConstAnnotated_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                c: bool,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(c);
+                let recorded =
+                    self.walkerConstAnnotated(observed.circuit_context(private_state), c)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "walkerConstAnnotated",
+                    input,
+                ))
+            }
             pub fn walkerCompareEq<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
@@ -2236,6 +2278,34 @@ pub mod ledger_contract {
             pub(super) witnesses: &'a W,
         }
         impl<W> BorrowedContract<'_, W> {
+            pub fn walkerConstAnnotated<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                c: bool,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                walkerConstAnnotated(context, c)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn walkerConstAnnotated_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                c: bool,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(c);
+                let recorded =
+                    self.walkerConstAnnotated(observed.circuit_context(private_state), c)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "walkerConstAnnotated",
+                    input,
+                ))
+            }
             pub fn walkerCompareEq<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,

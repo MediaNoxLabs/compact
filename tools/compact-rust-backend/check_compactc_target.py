@@ -1517,7 +1517,7 @@ def main() -> None:
             capabilities = json.loads(
                 (ternary_cond_proof / "contract/rust-capabilities.json").read_text()
             )
-            for name in ("walkerWrite", "walkerCallPure", "streamCallPure",
+            for name in ("walkerConstAnnotated", "walkerWrite", "walkerCallPure", "streamCallPure",
                          "witnessArg", "streamCallWitness", "streamAssertEq",
                          "walkerNestedIf", "streamNestedIf",
                          "walkerNativeArg", "streamNativeArg"):
@@ -1525,7 +1525,7 @@ def main() -> None:
                                if circuit["name"] == name)
                 assert circuit["proof_required"] and circuit["recorded"] \
                     and circuit["observed_call"]
-            for name in ("walkerWrite", "streamCallPure", "streamCallWitness", "streamAssertEq",
+            for name in ("walkerConstAnnotated", "walkerWrite", "streamCallPure", "streamCallWitness", "streamAssertEq",
                          "walkerNestedIf", "streamNestedIf",
                          "walkerNativeArg", "streamNativeArg"):
                 for extension in ("prover", "verifier"):
@@ -1762,6 +1762,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--nested-uint4", str(ternary_cond_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--annotated-uint8", str(ternary_cond_proof),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

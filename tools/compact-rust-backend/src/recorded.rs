@@ -1526,6 +1526,60 @@ fn render_recorded_item(
         nested.then_some(selected)
     }
 
+    // A Uint<8> annotation widens the compiler's closed Uint<2> literal
+    // ternary. Keep the outer cast and both arm bounds explicit here: the
+    // recorded local may not evaluate an unrecorded operation.
+    fn closed_annotated_uint8_source(
+        value: &Expr,
+        locals: &HashMap<String, syn::Expr>,
+        parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    ) -> Option<syn::Expr> {
+        fn arm(value: &Expr) -> Option<syn::Expr> {
+            let Expr::Coerce {
+                value,
+                ty: Type::Unsigned { max },
+            } = value
+            else {
+                return None;
+            };
+            let Expr::UnsignedLiteral {
+                value: literal,
+                max: literal_max,
+            } = value.as_ref()
+            else {
+                return None;
+            };
+            if max != "2" || literal_max != max {
+                return None;
+            }
+            let literal = literal.parse::<u64>().ok()?;
+            if literal > 2 {
+                return None;
+            }
+            let literal = syn::LitInt::new(&format!("{literal}u128"), Span::call_site());
+            Some(syn::parse_quote!(#literal))
+        }
+
+        let Expr::UnsignedCast { max, value } = value else {
+            return None;
+        };
+        if max != "255" {
+            return None;
+        }
+        let Expr::If {
+            condition,
+            then,
+            otherwise,
+        } = value.as_ref()
+        else {
+            return None;
+        };
+        let condition = cell_source(condition, &Type::Boolean, locals, parameters)?;
+        let then = arm(then)?;
+        let otherwise = arm(otherwise)?;
+        Some(syn::parse_quote!(if #condition { #then } else { #otherwise }))
+    }
+
     // Hash-to-curve is pure, but only admit the compiler's closed two-arm
     // Uint<2> -> Field input. The predicate must already be available as a
     // Boolean parameter or recorded local; neither arm may observe state.
@@ -3325,6 +3379,62 @@ fn render_recorded_item(
                 bindings,
                 action: nested_action,
             } => {
+                if let [unsigned_binding] = bindings.as_slice()
+                    && unsigned_binding.ty == (Type::Unsigned { max: "255".into() })
+                    && let Some(selected) =
+                        closed_annotated_uint8_source(&unsigned_binding.value, locals, parameters)
+                    && let StateAction::Let {
+                        bindings: projected_bindings,
+                        action: projected_action,
+                    } = nested_action.as_ref()
+                    && let [projected_binding] = projected_bindings.as_slice()
+                    && projected_binding.ty == Type::Field
+                    && matches!(
+                        &projected_binding.value,
+                        Expr::FieldCast { value }
+                            if matches!(value.as_ref(), Expr::Parameter { name } if name == &unsigned_binding.name)
+                    )
+                    && matches!(
+                        projected_action.as_ref(),
+                        StateAction::CellWrite { value: Expr::Parameter { name }, .. }
+                            if name == &projected_binding.name
+                    )
+                {
+                    let unsigned = syn::Ident::new(
+                        &format!("__compact_recorded_annotated_uint8_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    let field = syn::Ident::new(
+                        &format!("__compact_recorded_annotated_field_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    steps.push(syn::parse_quote! {
+                        let #unsigned: runtime::BoundedUint<255> =
+                            runtime::BoundedUint::<255>::new(#selected)?;
+                    });
+                    steps.push(syn::parse_quote! {
+                        let #field: runtime::Field = runtime::Field::from(#unsigned.value());
+                    });
+                    let mut scoped = locals.clone();
+                    scoped.insert(unsigned_binding.name.clone(), syn::parse_quote!(#unsigned));
+                    scoped.insert(projected_binding.name.clone(), syn::parse_quote!(#field));
+                    return append_steps(
+                        projected_action,
+                        &format!("{path}.action.action"),
+                        &scoped,
+                        parameters,
+                        ledger_fields,
+                        witnesses,
+                        pure_circuits,
+                        circuits,
+                        shared_callees,
+                        steps,
+                        next_temp,
+                        visiting,
+                    );
+                }
                 if let [point_binding] = bindings.as_slice()
                     && point_binding.ty == Type::JubjubPoint
                     && let Some(argument) =

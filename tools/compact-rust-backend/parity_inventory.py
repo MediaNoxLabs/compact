@@ -63,6 +63,8 @@ SHIELDED_RECEIVE_SOURCE_MANIFEST = Path(__file__).with_name(
     "parity_positive_shielded_receive_sources.json")
 SHIELDED_SEND_SOURCE_MANIFEST = Path(__file__).with_name(
     "parity_positive_shielded_send_sources.json")
+SHIELDED_MERGE_SOURCE_MANIFEST = Path(__file__).with_name(
+    "parity_positive_shielded_merge_sources.json")
 POSITIVE_SOURCE_MANIFESTS = (
     POSITIVE_SOURCE_MANIFEST, ADT_SET_SOURCE_MANIFEST,
     ADT_LIST_SOURCE_MANIFEST, ADT_LIST_VECTOR_FIELD_4_SOURCE_MANIFEST,
@@ -73,7 +75,7 @@ POSITIVE_SOURCE_MANIFESTS = (
     TEST_CENTER_BBOARD_SOURCE_MANIFEST,
     EFFECTFUL_RETURN_SOURCE_MANIFEST, TEST_CENTER_MICRO_DAO_SOURCE_MANIFEST,
     TEST_CENTER_CORACLE_SOURCE_MANIFEST, SHIELDED_RECEIVE_SOURCE_MANIFEST,
-    SHIELDED_SEND_SOURCE_MANIFEST)
+    SHIELDED_SEND_SOURCE_MANIFEST, SHIELDED_MERGE_SOURCE_MANIFEST)
 DEFAULT_BASELINE = Path(__file__).with_name("parity_baseline.json")
 COMPILED_PACKAGE_ROOTS = {
     "examples/rust_backend/digital-passport-credential/src/digital-passport-credential.compact",

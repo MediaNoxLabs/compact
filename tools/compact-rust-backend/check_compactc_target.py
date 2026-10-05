@@ -1222,6 +1222,7 @@ def main() -> None:
     parser.add_argument("--stateful-struct", action="store_true", help="check ordered composite recording and original micro-dao native admission")
     parser.add_argument("--kernel-shielded-effects", action="store_true", help="check typed Kernel recording and optional call/funded-mint proofs")
     parser.add_argument("--shielded-receive", action="store_true", help="check standard-library receiveShielded recording and optional exact-offer proof")
+    parser.add_argument("--shielded-merge", action="store_true", help="check qualified and immediate merge recording and optional strict funded proofs")
     parser.add_argument("--shielded-send", action="store_true", help="check standard-library qualified sendShielded recording and optional strict proof")
     parser.add_argument("--native-zswap-intents", action="store_true", help="check recorded Zswap intent admission and optional strict funded transfer proof")
     parser.add_argument("--qualified-coin-cell", action="store_true",
@@ -1474,6 +1475,19 @@ def main() -> None:
                 run("cargo", "+1.99.0", "run", "--offline", "--quiet", "-p",
                     "compact-rust-proof-smoke", "--", "--wallet-funded-receive", str(output))
             print("unchanged receiveShielded wrappers admitted with ordered output and audited claim")
+            return
+        if args.shielded_merge:
+            output = base / "shielded-merge"
+            source = ROOT / "examples/rust_backend/shielded_merge_oracle.compact"
+            run(compiler, "--target", "rust", "--rust-require-recording",
+                *([] if args.proof else ["--skip-zk"]), str(source), str(output))
+            report = json.loads((output / "contract/rust-capabilities.json").read_text())
+            assert {row["name"] for row in report["circuits"]} == {"merge_qualified", "receive_then_merge"}
+            assert all(row["proof_required"] and row["recorded"] and row["observed_call"] for row in report["circuits"])
+            if args.proof:
+                run("cargo", "+1.99.0", "run", "--offline", "--quiet", "-p",
+                    "compact-rust-proof-smoke", "--", "--shielded-merge", str(output))
+            print("unchanged qualified and immediate merge helpers recorded with checked wide arithmetic")
             return
         if args.shielded_send:
             output = base / "shielded-send"
@@ -1827,6 +1841,8 @@ def main() -> None:
         run(sys.executable, str(Path(__file__).resolve()), "--kernel-shielded-effects",
             *(["--proof"] if args.proof else []))
         run(sys.executable, str(Path(__file__).resolve()), "--shielded-receive",
+            *(["--proof"] if args.proof else []))
+        run(sys.executable, str(Path(__file__).resolve()), "--shielded-merge",
             *(["--proof"] if args.proof else []))
         run(sys.executable, str(Path(__file__).resolve()), "--shielded-send",
             *(["--proof"] if args.proof else []))

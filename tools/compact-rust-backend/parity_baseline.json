@@ -3450,6 +3450,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/shielded_merge_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "merge_qualified",
+    "signature": "export circuit merge_qualified(a: QualifiedShieldedCoinInfo, b: QualifiedShieldedCoinInfo): ShieldedCoinInfo",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/nested_witness_call_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -4695,6 +4703,14 @@
     "kind": "circuit",
     "name": "read_values",
     "signature": "export circuit read_values(): Vector<3, Field>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/shielded_merge_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "receive_then_merge",
+    "signature": "export circuit receive_then_merge(a: QualifiedShieldedCoinInfo, b: ShieldedCoinInfo): ShieldedCoinInfo",
     "visibility": "export"
   },
   {

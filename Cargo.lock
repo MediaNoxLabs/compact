@@ -2036,6 +2036,7 @@ dependencies = [
  "compact-rust-set-boolean-fixture",
  "compact-rust-set-oracle-fixture",
  "compact-rust-set-size-oracle-fixture",
+ "compact-rust-shielded-merge-oracle-fixture",
  "compact-rust-shielded-receive-oracle-fixture",
  "compact-rust-shielded-send-oracle-fixture",
  "compact-rust-stateful-assert-oracle-fixture",

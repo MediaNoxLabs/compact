@@ -1,0 +1,41 @@
+{
+  "format_version": 1,
+  "suite": "tools/compact-rust-backend/check_compactc_target.py --shielded-merge",
+  "purpose": "Unchanged standard-library qualified and immediate merge source; exact two exported proof APIs and recorded capabilities",
+  "source_glob": "examples/rust_backend/shielded_merge_oracle.compact",
+  "positive_sources": [
+    {
+      "source": "examples/rust_backend/shielded_merge_oracle.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [
+        {
+          "name": "merge_qualified",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "receive_then_merge",
+          "pure": false,
+          "proof": true
+        }
+      ],
+      "expected_capability_circuits": [
+        "merge_qualified",
+        "receive_then_merge"
+      ],
+      "expected_recorded_circuits": [
+        "merge_qualified",
+        "receive_then_merge"
+      ],
+      "pure_declarations": 0,
+      "exported_pure_declarations": 0,
+      "rust_fixture": "tests-rust-backend/shielded-merge-oracle/lib.rs",
+      "typescript_capture": "runtime-rs/tests/fixtures/capture-shielded-merge-oracle.mjs",
+      "typescript_fixture": "runtime-rs/tests/fixtures/shielded-merge-oracle.json",
+      "rust_test": "tests-rust-backend/shielded-merge-oracle/tests/shielded_merge.rs",
+      "expected_recording_gaps": {}
+    }
+  ],
+  "expected_rejections": []
+}

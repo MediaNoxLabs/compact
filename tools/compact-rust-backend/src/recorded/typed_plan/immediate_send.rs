@@ -6,13 +6,13 @@
 //! concrete types, lexical scope, argument ordering and same-frame calls.
 use super::*;
 
-fn uncoerced(value: &Expr) -> &Expr {
+pub(super) fn uncoerced(value: &Expr) -> &Expr {
     match value {
         Expr::Coerce { value, .. } => uncoerced(value),
         _ => value,
     }
 }
-fn parameter(value: &Expr, name: &str) -> bool {
+pub(super) fn parameter(value: &Expr, name: &str) -> bool {
     matches!(uncoerced(value), Expr::Parameter { name: actual } if actual == name)
 }
 fn member(value: &Expr, name: &str, field: &str, index: usize) -> bool {
@@ -22,7 +22,7 @@ fn member(value: &Expr, name: &str, field: &str, index: usize) -> bool {
 
 // Qualification of this exact coin into the upstream singleton proof tree.
 // Neither helper names nor a caller-provided index confer transient ownership.
-fn singleton_bridge(callee: &PureCircuit) -> bool {
+pub(super) fn singleton_bridge(callee: &PureCircuit) -> bool {
     let [coin] = callee.parameters.as_slice() else {
         return false;
     };

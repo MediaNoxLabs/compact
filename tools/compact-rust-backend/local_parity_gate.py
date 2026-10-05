@@ -446,6 +446,10 @@ def main() -> int:
                  "--compiler", str(snapshot), "--output", str(directory / "shielded-receive-source-scope.json")],
                 "shielded-receive-source-scope", directory, receipt, env=environment)
             run([sys.executable, str(ROOT / "tools/compact-rust-backend/check_positive_source_scope.py"),
+                 "--manifest", str(ROOT / "tools/compact-rust-backend/parity_positive_shielded_merge_sources.json"),
+                 "--compiler", str(snapshot), "--output", str(directory / "shielded-merge-source-scope.json")],
+                "shielded-merge-source-scope", directory, receipt, env=environment)
+            run([sys.executable, str(ROOT / "tools/compact-rust-backend/check_positive_source_scope.py"),
                  "--manifest", str(ROOT / "tools/compact-rust-backend/parity_positive_field_observation_sources.json"),
                  "--compiler", str(snapshot), "--output", str(directory / "field-observation-source-scope.json")],
                 "field-observation-source-scope", directory, receipt, env=environment)

@@ -22,6 +22,7 @@ use crate::ir::{KernelClaimKind, ReturnPlan};
 mod field_observations;
 mod immediate_send;
 mod phase_reset;
+mod shielded_merge;
 mod shielded_payout;
 mod terminal_returns;
 mod unit_actions;
@@ -45,6 +46,7 @@ enum CompositeDomain {
     ShieldedSend,
     ImmediateShieldedSend,
     ShieldedPayout,
+    ShieldedMerge(shielded_merge::Inputs),
     FieldObservations,
     TerminalReturns,
 }
@@ -53,6 +55,17 @@ impl CompositeDomain {
         matches!(
             self,
             Self::ShieldedSend | Self::ImmediateShieldedSend | Self::ShieldedPayout
+        )
+    }
+
+    fn shielded_helpers(self) -> bool {
+        self.shielded_send() || matches!(self, Self::ShieldedMerge(_))
+    }
+    fn singleton_bridge(self) -> bool {
+        matches!(
+            self,
+            Self::ImmediateShieldedSend
+                | Self::ShieldedMerge(shielded_merge::Inputs::ReceivedRight)
         )
     }
 
@@ -65,6 +78,7 @@ impl CompositeDomain {
                 | Self::ShieldedSend
                 | Self::ImmediateShieldedSend
                 | Self::ShieldedPayout
+                | Self::ShieldedMerge(_)
         )
     }
     fn intents(self) -> bool {
@@ -75,6 +89,7 @@ impl CompositeDomain {
                 | Self::ShieldedSend
                 | Self::ImmediateShieldedSend
                 | Self::ShieldedPayout
+                | Self::ShieldedMerge(_)
         )
     }
 }
@@ -181,7 +196,7 @@ impl Plan<'_> {
     fn pure_value(&self, value: &Expr, visiting: &mut HashSet<String>) -> bool {
         match value {
             Expr::UnsignedLiteral { value, max }
-                if self.composite_domain == CompositeDomain::ImmediateShieldedSend
+                if self.composite_domain.singleton_bridge()
                     && value == "0"
                     && max == &u64::MAX.to_string() =>
             {
@@ -273,7 +288,7 @@ impl Plan<'_> {
                 if self.read_only_assertions
                     || self.unit_actions
                     || self.phase_reset
-                    || self.composite_domain.shielded_send() =>
+                    || self.composite_domain.shielded_helpers() =>
             {
                 Some(TypedValue {
                     ty: Type::Unit,
@@ -285,7 +300,7 @@ impl Plan<'_> {
                 value,
             } if self.read_only_assertions
                 || self.unit_actions
-                || self.composite_domain.shielded_send() =>
+                || self.composite_domain.shielded_helpers() =>
             {
                 for expression in expressions {
                     if self.expression(expression, scope, steps)?.ty != Type::Unit {
@@ -297,7 +312,8 @@ impl Plan<'_> {
             Expr::Assert { condition, message }
                 if self.read_only_assertions
                     || self.unit_actions
-                    || self.composite_domain == CompositeDomain::ShieldedPayout =>
+                    || self.composite_domain == CompositeDomain::ShieldedPayout
+                    || matches!(self.composite_domain, CompositeDomain::ShieldedMerge(_)) =>
             {
                 let condition = self.expression(condition, scope, steps)?;
                 if condition.ty != Type::Boolean {
@@ -413,10 +429,22 @@ impl Plan<'_> {
                 {
                     return None;
                 }
+                if matches!(self.composite_domain, CompositeDomain::ShieldedMerge(_))
+                    && !matches!(
+                        (source_max.as_str(), max.as_str()),
+                        (shielded_merge::INPUT, shielded_merge::WIDENED)
+                            | (shielded_merge::SUM, shielded_merge::INPUT)
+                    )
+                {
+                    return None;
+                }
                 let converted = crate::unsigned_cast_syntax(value.value, &source_max, max).ok()?;
                 self.bind(converted, Type::Unsigned { max: max.clone() }, steps)
             }
-            Expr::UnsignedAdd { max, left, right } if self.phase_reset => {
+            Expr::UnsignedAdd { max, left, right }
+                if self.phase_reset
+                    || matches!(self.composite_domain, CompositeDomain::ShieldedMerge(_)) =>
+            {
                 let left = self.expression(left, scope, steps)?;
                 let right = self.expression(right, scope, steps)?;
                 let Type::Unsigned { max: left_max } = left.ty else {
@@ -425,10 +453,12 @@ impl Plan<'_> {
                 let Type::Unsigned { max: right_max } = right.ty else {
                     return None;
                 };
-                if left_max != phase_reset::WIDENED
-                    || right_max != phase_reset::WIDENED
-                    || max != phase_reset::SUM
-                {
+                let (operand_bound, result_bound) = if self.phase_reset {
+                    (phase_reset::WIDENED, phase_reset::SUM)
+                } else {
+                    (shielded_merge::WIDENED, shielded_merge::SUM)
+                };
+                if left_max != operand_bound || right_max != operand_bound || max != result_bound {
                     return None;
                 }
                 let value = crate::unsigned_arithmetic_syntax(
@@ -601,7 +631,7 @@ impl Plan<'_> {
                 if self.context_query
                     || self.scalar_body_depth > 0
                     || self.unit_actions
-                    || self.composite_domain.shielded_send() =>
+                    || self.composite_domain.shielded_helpers() =>
             {
                 let values = elements
                     .iter()
@@ -665,7 +695,7 @@ impl Plan<'_> {
                     steps,
                 )
             }
-            Expr::DegradeToTransient { value } if self.composite_domain.shielded_send() => {
+            Expr::DegradeToTransient { value } if self.composite_domain.shielded_helpers() => {
                 let value = self.expression(value, scope, steps)?;
                 if value.ty != (Type::Bytes { length: 32 }) {
                     return None;
@@ -677,7 +707,7 @@ impl Plan<'_> {
                     steps,
                 )
             }
-            Expr::TransientHash { value } if self.composite_domain.shielded_send() => {
+            Expr::TransientHash { value } if self.composite_domain.shielded_helpers() => {
                 let value = self.expression(value, scope, steps)?;
                 if value.ty
                     != (Type::Tuple {
@@ -693,7 +723,7 @@ impl Plan<'_> {
                     steps,
                 )
             }
-            Expr::UpgradeFromTransient { value } if self.composite_domain.shielded_send() => {
+            Expr::UpgradeFromTransient { value } if self.composite_domain.shielded_helpers() => {
                 let value = self.expression(value, scope, steps)?;
                 if value.ty != Type::Field {
                     return None;
@@ -918,7 +948,7 @@ impl Plan<'_> {
             .copied();
         match (pure, stateful) {
             (Some(callee), None) => {
-                if self.composite_domain.values() && !self.composite_domain.shielded_send() {
+                if self.composite_domain.values() && !self.composite_domain.shielded_helpers() {
                     return None;
                 } // preserve ADR0187 admission
                 if self.context_query || (self.unit_actions && !self.composite_domain.intents()) {
@@ -947,10 +977,8 @@ impl Plan<'_> {
                 }
             }
             (None, Some(callee)) => {
-                if self.composite_domain.shielded_send() {
-                    if self.composite_domain == CompositeDomain::ImmediateShieldedSend
-                        && shielded_unit_signature(callee)
-                    {
+                if self.composite_domain.shielded_helpers() {
+                    if self.composite_domain.singleton_bridge() && shielded_unit_signature(callee) {
                         return self.inline_call(
                             name,
                             &callee.parameters,
@@ -2423,7 +2451,10 @@ fn shielded_value(
         Expr::WitnessCall { arguments, .. } if domain == CompositeDomain::ShieldedPayout => {
             arguments.iter().all(|value| visit(value, visiting))
         }
-        Expr::Assert { condition, .. } if domain == CompositeDomain::ShieldedPayout => {
+        Expr::Assert { condition, .. }
+            if domain == CompositeDomain::ShieldedPayout
+                || matches!(domain, CompositeDomain::ShieldedMerge(_)) =>
+        {
             visit(condition, visiting)
         }
         Expr::Parameter { .. }
@@ -2448,6 +2479,11 @@ fn shielded_value(
         | Expr::UpgradeFromTransient { value }
         | Expr::CreateZswapInput { coin: value }
         | Expr::KernelClaim { value, .. } => visit(value, visiting),
+        Expr::UnsignedAdd { left, right, .. }
+            if matches!(domain, CompositeDomain::ShieldedMerge(_)) =>
+        {
+            visit(left, visiting) && visit(right, visiting)
+        }
         Expr::CreateZswapOutput { coin, recipient }
         | Expr::Equal {
             left: coin,
@@ -2523,7 +2559,7 @@ fn shielded_plan<'a>(
         field_cell_slot: None,
         effectful_field_cells: false,
         read_only_assertions: false,
-        unit_actions: domain == CompositeDomain::ImmediateShieldedSend,
+        unit_actions: domain.singleton_bridge(),
         phase_reset: false,
         composite_domain: domain,
         intent_effects: 0,
@@ -2615,6 +2651,16 @@ pub(super) fn lower_shielded_send<'a>(
             steps,
             result: result.value,
         })
+}
+
+pub(super) fn lower_shielded_merge<'a>(
+    circuit: &StatefulCircuit,
+    ledger: &'a HashMap<&'a str, &'a LedgerField>,
+    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
+    pure: &'a HashMap<&'a str, &'a PureCircuit>,
+    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
+) -> Option<TypedPlan> {
+    shielded_merge::lower(circuit, ledger, witnesses, pure, circuits)
 }
 
 pub(super) fn lower_shielded_payout<'a>(

@@ -86,6 +86,7 @@ mod qualified_coin_funding;
 mod qualified_coin_set;
 mod root_let_action_return;
 mod schnorr_attestation;
+mod shielded_merge;
 mod shielded_receive;
 mod shielded_send;
 mod stateful_assert;
@@ -1776,6 +1777,15 @@ fn run() -> Result<(), Box<dyn Error>> {
             return Err("unexpected shielded receive proof argument".into());
         }
         return shielded_receive::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--shielded-merge")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --shielded-merge <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err("unexpected shielded merge proof argument".into());
+        }
+        return shielded_merge::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--shielded-send")) {
         let root = arguments

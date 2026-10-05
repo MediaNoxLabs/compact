@@ -1548,3 +1548,19 @@ output orders. All original Cells remain unchanged and the third deposit stays
 unspent. Reapplication rejects an already-present nullifier. A changed public
 phase fails with `Transcript(Execution(ReadMismatch))`: fallible Zswap/contract
 state rolls back while guaranteed Dust and replay bookkeeping persist.
+
+### Qualified and immediate shielded merges (ADR207)
+
+`shielded_merge_oracle.compact` retains unchanged `mergeCoin` and
+`receiveShielded` + `mergeCoinImmediate` standard-library calls. A distinct
+`ShieldedMerge` policy describes historical-pair versus received-right input
+provenance; shared typed planning owns all evaluation, helper scope and
+upstream arithmetic syntax. The widened operand bound is `2 * u128::MAX`,
+the addition result bound is `2^129 - 1`, and checked narrowing retains
+overflow rejection after the color assertion. The singleton qualification
+audit is shared with immediate send. No runtime/ABI change is introduced.
+
+Twenty independent TS/native/recorded/replay cases and two separately
+Dust-funded, default-strict proofs cover this slice. Initial coins are
+explicitly seeded offline. Whole fallible transient funding and original
+application composition remain separate delivery work.

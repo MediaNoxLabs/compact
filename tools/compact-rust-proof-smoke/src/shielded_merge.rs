@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
 //! Qualified merge and receive/immediate merge, with exact upstream input unions.
-//! Prepared independently; register only after recorded APIs are delivered.
+//! Both paths require default-strict validation and separate Dust funding.
 use super::*;
 use compact_rust_shielded_merge_oracle_fixture::{ledger_contract as c, types};
 use midnight_compact_runtime as runtime;
@@ -309,7 +309,7 @@ fn run_case(root: &Path, immediate: bool) -> Result<(), Box<dyn Error>> {
         Err(midnight_zswap::error::TransactionInvalid::NullifierAlreadyPresent(_))
     ));
     println!(
-        "{name}: seeded frontier2, genuine inputs, merged self42, separate Dust, default-strict proof/application and nullifier replay rejection passed"
+        "{name}: seeded frontier 2, genuine inputs, merged self 42, separate Dust, default-strict proof/application and nullifier replay rejection passed"
     );
     Ok(())
 }

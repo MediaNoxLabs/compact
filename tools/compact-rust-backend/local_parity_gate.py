@@ -478,7 +478,9 @@ def main() -> int:
         receipt["working_tree_after"] = dirty_paths()
         receipt["status"] = "passed"
         print(f"local parity {receipt['mode']} passed: {len(selected)} fixtures, "
-              f"{receipt['capability_summary']['recorded']}/{len(circuits)} recorded; "
+              f"{receipt['capability_summary']['recorded']}/"
+              f"{receipt['capability_summary']['proof_eligible']} proof-required recorded, "
+              f"{receipt['capability_summary']['nonproof_native_only']} nonproof native-only; "
               f"receipt {directory / 'receipt.json'}")
         return 0
     except (GateError, OSError, ValueError, KeyError, json.JSONDecodeError,

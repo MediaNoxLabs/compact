@@ -31,6 +31,7 @@ mod asset_writable;
 mod boolean_pair_assert;
 mod closed_pure_field;
 mod field_pair_hash;
+mod guarded_recording;
 mod impure_field_helper;
 mod merkle_indexed;
 mod merkle_verify;
@@ -1558,6 +1559,17 @@ fn main() -> Result<(), Box<dyn Error>> {
             return Err("usage: compact-rust-proof-smoke --adt-set-enum <proof-output>".into());
         }
         return adt_set_enum::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--guarded-recording")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --guarded-recording <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --guarded-recording <proof-output>".into(),
+            );
+        }
+        return guarded_recording::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--asset-freshness")) {
         let root = arguments

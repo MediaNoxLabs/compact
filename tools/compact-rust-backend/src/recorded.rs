@@ -1352,8 +1352,8 @@ fn render_recorded_item(
         args.push(syn::parse_quote!(#rust_name: #arg_ty));
     }
 
-    // The asset freshness call is a pure Unit guard before an already
-    // recordable zero-argument stateful helper. Keep the three typed source
+    // The asset and attestation freshness calls share a pure Unit guard
+    // before one closed stateful continuation. Keep the three typed source
     // arguments and the pure assertion shape closed; the emitted pure Rust
     // function owns its nested struct projection and bounded subtraction.
     fn closed_guarded_struct_pure_steps(
@@ -1373,28 +1373,28 @@ fn render_recorded_item(
         {
             return Ok(None);
         }
-        let [
-            StateAction::PureCall { name, arguments },
-            StateAction::CircuitCall {
-                name: helper_name,
-                arguments: helper_arguments,
-            },
-        ] = circuit.actions.as_slice()
+        let [StateAction::PureCall { name, arguments }, continuation] = circuit.actions.as_slice()
         else {
             return Ok(None);
         };
         let Some(pure) = pure_circuits.get(name.as_str()) else {
             return Ok(None);
         };
-        let Some(helper) = circuits.get(helper_name.as_str()) else {
-            return Ok(None);
+        let closed_continuation = match continuation {
+            StateAction::CircuitCall {
+                name: helper_name,
+                arguments: helper_arguments,
+            } => circuits.get(helper_name.as_str()).is_some_and(|helper| {
+                helper.result == Type::Unit
+                    && helper.return_value == StateReturn::Unit
+                    && helper.parameters.is_empty()
+                    && helper_arguments.is_empty()
+            }),
+            action => closed_counter_one_continuation(action),
         };
         if pure.result != Type::Unit
             || pure.parameters.len() != 3
-            || helper.result != Type::Unit
-            || helper.return_value != StateReturn::Unit
-            || !helper.parameters.is_empty()
-            || !helper_arguments.is_empty()
+            || !closed_continuation
             || arguments.len() != 3
         {
             return Ok(None);

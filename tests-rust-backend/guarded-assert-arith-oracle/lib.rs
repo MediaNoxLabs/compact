@@ -240,19 +240,101 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    /// Circuits with a replayable ordered ledger program.
+    pub mod recorded {
+        use midnight_compact_runtime as runtime;
+        pub fn recordFreshEnough<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: crate::types::VerifierPolicy,
+            __compact_param_1: crate::types::Attestation,
+            __compact_param_2: runtime::BoundedUint<18446744073709551615>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_guard_arg_0: crate::types::VerifierPolicy =
+                (__compact_param_0).clone();
+            let __compact_recorded_guard_arg_1: crate::types::Attestation =
+                (__compact_param_1).clone();
+            let __compact_recorded_guard_arg_2: runtime::BoundedUint<18446744073709551615> =
+                __compact_param_2;
+            crate::pure_circuits::assertFreshEnough(
+                __compact_recorded_guard_arg_0,
+                __compact_recorded_guard_arg_1,
+                __compact_recorded_guard_arg_2,
+            )?;
+            let frame = crate::ledger_slots::accepted.record_increment(frame, 1u16)?;
+            Ok(frame.finish(()))
+        }
+        /// Typed handle for circuits with a complete recorded trace.
+        pub struct Contract;
+        impl Contract {
+            pub fn recordFreshEnough<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                policy: crate::types::VerifierPolicy,
+                attestation: crate::types::Attestation,
+                currentTime: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::recordFreshEnough(
+                    context,
+                    policy,
+                    attestation,
+                    currentTime,
+                )
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn recordFreshEnough_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                policy: crate::types::VerifierPolicy,
+                attestation: crate::types::Attestation,
+                currentTime: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::concat(&[
+                    runtime::fab::AlignedValue::from((policy).clone()),
+                    runtime::fab::AlignedValue::from((attestation).clone()),
+                    runtime::fab::AlignedValue::from(currentTime),
+                ]);
+                let recorded = self.recordFreshEnough(
+                    observed.circuit_context(private_state),
+                    policy,
+                    attestation,
+                    currentTime,
+                )?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "recordFreshEnough",
+                    input,
+                ))
+            }
+        }
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]
         witnesses: W,
+        pub recording: recorded::Contract,
     }
     impl<W> From<W> for Contract<W> {
         fn from(witnesses: W) -> Self {
-            Self { witnesses }
+            Self {
+                witnesses,
+                recording: recorded::Contract,
+            }
         }
     }
     impl Default for Contract<()> {
         fn default() -> Self {
-            Self { witnesses: () }
+            Self {
+                witnesses: (),
+                recording: recorded::Contract,
+            }
         }
     }
     impl<W> Contract<W> {
@@ -264,6 +346,10 @@ pub mod ledger_contract {
             currentTime: runtime::BoundedUint<18446744073709551615>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
             crate::ledger_contract::recordFreshEnough(context, policy, attestation, currentTime)
+        }
+        /// Access replayable circuit calls for this contract.
+        pub fn recording(&self) -> &recorded::Contract {
+            &self.recording
         }
     }
 }

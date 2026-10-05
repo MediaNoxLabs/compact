@@ -14,7 +14,7 @@
 // limitations under the License.
 
 use compact_rust_guarded_assert_arith_oracle_fixture::ledger_contract::{
-    initial_state, recordFreshEnough,
+    initial_state, recordFreshEnough, recorded,
 };
 use compact_rust_guarded_assert_arith_oracle_fixture::pure_circuits::{
     ageGap, assertAgeWithin, assertFreshEnough,
@@ -30,6 +30,7 @@ use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 use runtime::context::ConstructorContext;
 use runtime::ledger::{ContractAddress, DefaultDB, StateValue};
+use serde_json::{Value, json};
 
 fn uint(value: u128) -> runtime::BoundedUint<{ u64::MAX as u128 }> {
     runtime::BoundedUint::new(value).unwrap()
@@ -132,4 +133,147 @@ fn exact_guarded_nested_arithmetic_matches_typescript() {
         &oracle["recordTooOld"],
     );
     assert_eq!(oracle["afterRejectedRecord"], oracle["afterRecordFresh"]);
+}
+
+fn vm_shape(operations: Value) -> Value {
+    Value::Array(
+        operations.as_array().unwrap().iter().map(|operation| {
+            if let Some(kind) = operation.as_str() {
+                return json!({ "kind": kind });
+            }
+            if let Some(index) = operation.get("idx") {
+                return json!({ "kind": "idx", "cached": index["cached"],
+                    "pushPath": index["pushPath"], "pathLength": index["path"].as_array().unwrap().len() });
+            }
+            if let Some(push) = operation.get("push") {
+                return json!({ "kind": "push", "storage": push["storage"] });
+            }
+            if let Some(insert) = operation.get("ins") {
+                return json!({ "kind": "ins", "cached": insert["cached"], "n": insert["n"] });
+            }
+            if let Some(duplicate) = operation.get("dup") {
+                return json!({ "kind": "dup", "n": duplicate["n"] });
+            }
+            if let Some(add) = operation.get("addi") {
+                return json!({ "kind": "addi", "immediate": add["immediate"] });
+            }
+            if let Some(pop) = operation.get("popeq") {
+                return json!({ "kind": "popeq", "cached": pop["cached"] });
+            }
+            panic!("unexpected VM operation: {operation}");
+        }).collect(),
+    )
+}
+
+#[test]
+fn guarded_counter_recording_matches_typescript_success_and_failure() {
+    let oracle: Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/guarded-recording-oracle.json"
+    ))
+    .unwrap();
+    for case in ["fresh", "unchecked_age", "future", "expired"] {
+        let expected = &oracle[case];
+        let initial = initial_state(ConstructorContext::new(())).unwrap();
+        let initial_hex = state_hex(initial.ledger_state.get_ref().clone());
+        assert_eq!(
+            initial_hex, expected["initialStateHex"],
+            "{case}: constructor"
+        );
+        let native_context = initial.into_circuit_context(ContractAddress::default());
+        let initial = initial_state(ConstructorContext::new(())).unwrap();
+        let recorded_context = initial.into_circuit_context(ContractAddress::default());
+        let (enforce, max_age, now) = match case {
+            "fresh" => (true, 20, 110),
+            "unchecked_age" => (false, 0, 130),
+            "future" => (true, 20, 90),
+            "expired" => (true, 20, 130),
+            _ => unreachable!(),
+        };
+        let selected_policy = VerifierPolicy {
+            enforceMaxAge: enforce,
+            maxAge: uint(max_age),
+        };
+        let selected_attestation = attestation(100);
+        let native = recordFreshEnough(
+            native_context,
+            selected_policy.clone(),
+            selected_attestation.clone(),
+            uint(now),
+        );
+        let recorded = recorded::recordFreshEnough(
+            recorded_context,
+            selected_policy,
+            selected_attestation,
+            uint(now),
+        );
+        if case == "future" || case == "expired" {
+            let native_error = native.err().expect("native assertion must fail");
+            let recorded_error = recorded.err().expect("recorded assertion must fail");
+            assert_eq!(native_error, recorded_error, "{case}: Rust errors");
+            assert_eq!(native_error.to_string(), expected["error"]);
+            assert_eq!(expected["stateHex"], expected["initialStateHex"]);
+            assert_eq!(expected["queries"], json!([]));
+            continue;
+        }
+        let native = native.unwrap();
+        let recorded = recorded.unwrap();
+        assert_eq!(expected["result"], json!([]));
+        assert_eq!(native.result, ());
+        assert_eq!(recorded.execution.result, ());
+        assert_eq!(
+            state_hex(native.context.query.state.get_ref().clone()),
+            expected["stateHex"]
+        );
+        assert_eq!(
+            state_hex(recorded.execution.context.query.state.get_ref().clone()),
+            expected["stateHex"]
+        );
+        assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+        let gas = serde_json::to_value(native.gas_cost).unwrap();
+        for dimension in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            let expected_total: u64 = expected["queries"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|query| {
+                    query["gasCost"][dimension]
+                        .as_str()
+                        .unwrap()
+                        .parse::<u64>()
+                        .unwrap()
+                })
+                .sum();
+            assert_eq!(
+                gas[dimension].as_u64().unwrap(),
+                expected_total,
+                "{case}: {dimension}"
+            );
+        }
+        assert!(native.private_transcript_outputs.is_empty());
+        assert!(recorded.execution.private_transcript_outputs.is_empty());
+        assert_eq!(expected["privateTranscriptOutputs"], json!([]));
+        assert_eq!(
+            native.context.query.effects,
+            recorded.execution.context.query.effects
+        );
+        assert_eq!(
+            vm_shape(serde_json::to_value(recorded.public.verify_ops()).unwrap()),
+            expected["publicTranscriptShape"],
+            "{case}: ordered VM"
+        );
+        let replay = recorded
+            .public
+            .initial()
+            .query(
+                recorded.public.verify_ops(),
+                None,
+                &recorded.execution.context.cost_model,
+            )
+            .unwrap();
+        assert_eq!(
+            replay.context.state.get_ref(),
+            native.context.query.state.get_ref()
+        );
+        assert_eq!(replay.context.effects, native.context.query.effects);
+    }
 }

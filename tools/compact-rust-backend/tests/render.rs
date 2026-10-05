@@ -7055,7 +7055,7 @@ fn recorded_pure_assert_call_rejects_extra_pure_steps() {
 }
 
 #[test]
-fn recorded_struct_pure_guard_requires_closed_typed_call_and_zero_arg_helper() {
+fn recorded_struct_pure_guard_requires_closed_typed_call_and_continuation() {
     let policy = Type::Struct {
         name: "Policy".into(),
         fields: vec![StructField {
@@ -7193,7 +7193,7 @@ fn recorded_struct_pure_guard_requires_closed_typed_call_and_zero_arg_helper() {
         steps.push(Expr::Unit);
     }
     assert!(!recorded(&contract));
-    contract = closed;
+    contract = closed.clone();
     contract.stateful_circuits[0].parameters.push(Parameter {
         name: "extra".into(),
         ty: Type::Field,
@@ -7202,6 +7202,59 @@ fn recorded_struct_pure_guard_requires_closed_typed_call_and_zero_arg_helper() {
         &mut contract.stateful_circuits[1].actions[1]
     {
         arguments.push(Expr::FieldLiteral { value: "3".into() });
+    }
+    assert!(!recorded(&contract));
+
+    // The same guard may precede precisely one compiler-emitted Uint<16>
+    // literal-one Let/Counter increment. Different amounts and extra actions
+    // cannot be admitted by this shortcut.
+    contract = closed;
+    contract.ledger_fields.push(LedgerField {
+        source: None,
+        id: "accepted".into(),
+        index: 1,
+        path: vec![],
+        declaration: LedgerFieldKind::Counter,
+    });
+    contract.stateful_circuits[1].actions[1] = StateAction::Let {
+        bindings: vec![LocalBinding {
+            name: "one".into(),
+            ty: Type::Unsigned {
+                max: "65535".into(),
+            },
+            value: Expr::UnsignedLiteral {
+                value: "1".into(),
+                max: "65535".into(),
+            },
+        }],
+        action: Box::new(StateAction::CounterIncrement {
+            field: "accepted".into(),
+            index: 1,
+            amount: CounterAmount::Parameter { name: "one".into() },
+        }),
+    };
+    let counter = contract.clone();
+    assert!(recorded(&counter));
+    if let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[1].actions[1] {
+        bindings[0].value = Expr::UnsignedLiteral {
+            value: "2".into(),
+            max: "65535".into(),
+        };
+    }
+    assert!(!recorded(&contract));
+    contract = counter.clone();
+    contract.stateful_circuits[1]
+        .actions
+        .push(StateAction::CounterReset {
+            field: "accepted".into(),
+            index: 1,
+        });
+    assert!(!recorded(&contract));
+    contract = counter;
+    if let StateAction::PureCall { arguments, .. } = &mut contract.stateful_circuits[1].actions[0] {
+        arguments[1] = Expr::Default {
+            ty: parameters[1].ty.clone(),
+        };
     }
     assert!(!recorded(&contract));
 }

@@ -146,7 +146,8 @@
         "tests-rust-backend/guarded-assert-arith-oracle/tests/guarded_assert_arith_oracle.rs"
       ],
       "typescript_fixtures": [
-        "runtime-rs/tests/fixtures/guarded-assert-arith-oracle.json"
+        "runtime-rs/tests/fixtures/guarded-assert-arith-oracle.json",
+        "runtime-rs/tests/fixtures/guarded-recording-oracle.json"
       ]
     },
     {

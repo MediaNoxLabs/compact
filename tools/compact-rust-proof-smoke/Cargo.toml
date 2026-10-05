@@ -37,6 +37,7 @@ compact-rust-field-cast-uint128-fixture = { path = "../../tests-rust-backend/fie
 compact-rust-widening-arith-oracle-fixture = { path = "../../tests-rust-backend/widening-arith-oracle", features = ["ledger-transaction"] }
 compact-rust-assert-witness-fixture = { path = "../../tests-rust-backend/assert-witness", features = ["ledger-transaction"] }
 compact-rust-asset-registry-oracle-fixture = { path = "../../tests-rust-backend/asset-registry-oracle", features = ["ledger-transaction"] }
+compact-rust-guarded-assert-arith-oracle-fixture = { path = "../../tests-rust-backend/guarded-assert-arith-oracle", features = ["ledger-transaction"] }
 compact-rust-counter-parameter-fixture = { path = "../../tests-rust-backend/counter-parameter", features = ["ledger-transaction"] }
 compact-rust-uints-oracle-fixture = { path = "../../tests-rust-backend/uints-oracle", features = ["ledger-transaction"] }
 compact-rust-wide-uint-oracle-fixture = { path = "../../tests-rust-backend/wide-uint-oracle", features = ["ledger-transaction"] }

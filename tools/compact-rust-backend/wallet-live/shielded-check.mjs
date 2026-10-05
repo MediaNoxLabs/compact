@@ -20,7 +20,7 @@ import { execFile } from "node:child_process";
 import { readFile, mkdir, lstat } from "node:fs/promises";
 import { resolve, join, isAbsolute } from "node:path";
 import { pathToFileURL } from "node:url";
-import { promisify } from "node:util";
+import { promisify, inspect } from "node:util";
 import {
   normalizeHash,
   hasFinalizedCanonicalBlock,
@@ -260,10 +260,12 @@ async function main() {
   } = await import("@midnight-ntwrk/wallet-sdk-unshielded-wallet");
   const { firstValueFrom, filter, timeout } = await import("rxjs");
   const { WebSocket } = await import("ws");
-  const { acquireVerifiedCheckpoint, createIndexerClient, writeCheckpoint } =
-    await import("./checkpoint.mjs");
-  const { scaleBytes, decodeScaleString } =
-    await import("./checkpoint-scale.mjs");
+  const {
+    acquireVerifiedCheckpoint,
+    createIndexerClient,
+    writeCheckpoint,
+    assertNodeProfile,
+  } = await import("./checkpoint.mjs");
   setNetworkId(networkId);
   globalThis.WebSocket = WebSocket;
   const hd = HDWallet.fromSeed(Buffer.from(seedHex, "hex"));
@@ -470,7 +472,7 @@ async function main() {
           addressTaggedBytes: taggedAddress,
           walletEnvelope: envelope,
           walletAppliedEventId: envelope.offset,
-          expectedNodeLedgerConstraint: "=8.0.3",
+          indexerVersion: "4.0.1",
           walletSnapshotBytes: Buffer.from(envelope.state, "hex"),
           networkId,
           ledgerVersion: "8.0.3",
@@ -526,7 +528,8 @@ async function main() {
       bytes,
       "Transaction<Signature,Proof,Binding>",
     );
-    submitted = true; // Once transport begins, never release the reservation on an ambiguous response.
+    submitted = true; // After transport begins, do not add a second explicit reservation rollback.
+    // WalletFacade retains its own public submit/revert error semantics.
     await wallet.submitTransaction(finalized);
     const observed = await confirmed(action, transactionHash);
     const view = await checkpoint(observed);
@@ -538,6 +541,8 @@ async function main() {
       checkpoint: lastCheckpoint,
       metadata: view.metadata,
       artifacts: built.result.artifacts,
+      buildProvenance: built.result.buildProvenance,
+      nodeProfile: built.result.nodeProfile,
     });
     await privateReference(
       join(directory, `${action}-receipt.json`),
@@ -558,22 +563,9 @@ async function main() {
     return selectExactCoin(state.shielded.availableCoins, expected);
   };
   try {
-    const preflightBlock = await rpc("chain_getFinalizedHead", []);
-    const version = decodeScaleString(
-      scaleBytes(
-        await rpc("state_call", [
-          "MidnightRuntimeApi_get_ledger_version",
-          "0x",
-          preflightBlock,
-        ]),
-      ),
-    );
-    assert.equal(
-      version,
-      "=8.0.3",
-      "node ledger constraint differs from pinned acceptance runtime",
-    );
-    receipt.provenance.nodeLedgerConstraint = version;
+    receipt.provenance.nodeProfile = await assertNodeProfile(rpc, {
+      indexerVersion: "4.0.1",
+    });
     const proofDeadline = Date.now() + 300_000;
     while (true) {
       try {
@@ -596,13 +588,16 @@ async function main() {
         funded.unshielded?.availableCoins.filter(
           (row) => row.meta.registeredForDustGeneration === false,
         ) ?? [];
-      assert(coins.length > 0, "wallet requires NIGHT for Dust registration");
-      const recipe = await wallet.registerNightUtxosForDustGeneration(
-        coins,
-        unshieldedKeystore.getPublicKey(),
-        (payload) => unshieldedKeystore.signData(payload),
-      );
-      await wallet.submitTransaction(await wallet.finalizeRecipe(recipe));
+      if (coins.length > 0) {
+        const recipe = await wallet.registerNightUtxosForDustGeneration(
+          coins,
+          unshieldedKeystore.getPublicKey(),
+          (payload) => unshieldedKeystore.signData(payload),
+        );
+        await wallet.submitTransaction(await wallet.finalizeRecipe(recipe));
+      }
+      // A preceding Counter run can already have registered this wallet's NIGHT.
+      // In that case wait for spendable Dust without registering the coins twice.
       await waitState((state) => (state.dust?.balance(new Date()) ?? 0n) > 0n);
     }
     const deploy = await actionRequest("deploy");
@@ -665,17 +660,21 @@ async function main() {
       throw new Error("node unexpectedly accepted replay");
     } catch (error) {
       if (error.message === "node unexpectedly accepted replay") throw error;
-      // An arbitrary transport failure is not evidence of ledger replay rejection.
-      assert(
-        /duplicate|already imported|already in|stale|nullifier|spent|invalid transaction/i.test(
-          String(error),
-        ),
-        "replay failed without a recognized node rejection",
+      // First controlled run captures the precise upstream refusal for review.
+      // No generic "invalid transaction" or transport failure establishes replay.
+      const rejection = await privateReference(
+        join(directory, "replay-rejection.txt"),
+        Buffer.from(inspect(error, { depth: 12, colors: false })),
+        "node-replay-rejection",
       );
       receipt.replay = {
         transactionHash: normalizeHash(released.finalized.transactionHash()),
-        rejection: String(error),
+        rejection,
+        status: "unclassified-node-response",
       };
+      throw new Error(
+        "replay response retained; exact node rejection requires review",
+      );
     }
     receipt.status = "passed";
     await privateReference(

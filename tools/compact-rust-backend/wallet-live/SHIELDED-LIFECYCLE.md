@@ -37,7 +37,10 @@ starting another run. The script never starts, stops or modifies services.
    the exact submitted action in a canonical finalized block.
 3. Acquire an immutable checkpoint from the node, indexer and one exact wallet
    SDK snapshot. The adapter and builder must agree on version, network, block,
-   event, root and frontier. A version mismatch fails closed.
+   event, root and frontier. Preflight uses the adapter's exact reviewed node/
+   indexer profile; unknown combinations fail closed. The candidate local profile
+   preserves actual node ledger `=8.0.2` separately from codec `8.0.3` and does
+   not become live compatibility evidence until all acceptance phases pass.
 4. Bootstrap a fresh token of value 42 to the actual wallet encryption/public
    keys. Confirm the action and recover its exact nonce, type, value, commitment
    and allocated index in the wallet's available coins.
@@ -52,13 +55,16 @@ starting another run. The script never starts, stops or modifies services.
 8. Resubmit the identical finalized release through the SDK node submission
    service, bypassing its wallet pending cache. Require an actual node refusal;
    a timeout, connection failure or local cache response is not replay evidence.
+   The first controlled run retains an unclassified node response for review and
+   keeps the replay gate incomplete until its exact pinned rejection is established.
 
 Only Dust balancing is enabled. The runner checks exact serialized proven
 shielded offer hashes and segment placement before balancing and after final
 binding; any extra fee-side shielded offer is rejected. A failed pre-submit
 accept build returns the reservation using the public wallet API. Once node
-submission begins, an ambiguous response leaves the private evidence for
-inspection rather than manually changing the wallet state.
+submission begins, the runner adds no further reservation rollback: the facade
+retains its public submit/revert error semantics. An ambiguous response leaves
+private evidence for inspection rather than manually changing wallet state.
 
 ## Evidence and limits
 

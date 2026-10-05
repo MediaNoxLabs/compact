@@ -1997,6 +1997,7 @@ dependencies = [
  "compact-rust-ternary-cond-oracle-fixture",
  "compact-rust-test-center-bboard-fixture",
  "compact-rust-test-center-counter-fixture",
+ "compact-rust-test-center-micro-dao-fixture",
  "compact-rust-test-center-welcome-fixture",
  "compact-rust-tiny-oracle-fixture",
  "compact-rust-uints-oracle-fixture",
@@ -2289,6 +2290,21 @@ dependencies = [
  "midnight-onchain-vm",
  "midnight-serialize",
  "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
+name = "compact-rust-test-center-micro-dao-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-base-crypto",
+ "midnight-coin-structure",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde",
  "serde_json",
 ]
 

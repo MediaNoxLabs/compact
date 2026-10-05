@@ -34,6 +34,8 @@ struct Plan<'a> {
     pure: &'a HashMap<&'a str, &'a PureCircuit>,
     next: usize,
     witness_calls: usize,
+    kernel_self_reads: usize,
+    context_query: bool,
     root_observations: usize,
     tree_writes: usize,
     set_writes: usize,
@@ -248,6 +250,7 @@ impl Plan<'_> {
                 )
             }
             Expr::KernelSelf { ty } if *ty == contract_address_type() => {
+                self.kernel_self_reads += 1;
                 let rust_ty = rust_type(ty).ok()?;
                 let observed = self.fresh();
                 steps.push(syn::parse_quote!(let (frame, #observed) = frame.kernel_self()?;));
@@ -374,6 +377,57 @@ impl Plan<'_> {
                     ty: declaration.result.clone(),
                     value: syn::parse_quote!(#observed),
                 })
+            }
+            Expr::Tuple { elements } if self.context_query => {
+                let values = elements
+                    .iter()
+                    .map(|element| self.expression(element, scope, steps))
+                    .collect::<Option<Vec<_>>>()?;
+                let types = values.iter().map(|v| v.ty.clone()).collect();
+                let values: Vec<_> = values.into_iter().map(|v| v.value).collect();
+                self.bind(
+                    syn::parse_quote!((#(#values,)*)),
+                    Type::Tuple { elements: types },
+                    steps,
+                )
+            }
+            Expr::PersistentCommit { value, opening } if self.context_query => {
+                let value = self.expression(value, scope, steps)?;
+                let opening = self.expression(opening, scope, steps)?;
+                if opening.ty != (Type::Bytes { length: 32 })
+                    || value.ty
+                        != (Type::Tuple {
+                            elements: vec![Type::Bytes { length: 32 }; 2],
+                        })
+                {
+                    return None;
+                }
+                let (value, opening) = (value.value, opening.value);
+                self.bind(
+                    syn::parse_quote!(runtime::persistent_commit(#value, #opening)),
+                    Type::Bytes { length: 32 },
+                    steps,
+                )
+            }
+            Expr::Call { name, arguments } if self.context_query => {
+                let callee = *self.pure.get(name.as_str())?;
+                let args = self.arguments(arguments, &callee.parameters, scope, steps)?;
+                let isolated = callee
+                    .parameters
+                    .iter()
+                    .zip(args)
+                    .map(|(parameter, value)| {
+                        (
+                            parameter.name.clone(),
+                            TypedValue {
+                                ty: parameter.ty.clone(),
+                                value,
+                            },
+                        )
+                    })
+                    .collect();
+                let result = self.expression(&callee.body, &isolated, steps)?;
+                (result.ty == callee.result).then_some(result)
             }
             Expr::Call { name, arguments } if self.composite_circuits.is_some() => {
                 let callee = *self.composite_circuits?.get(name.as_str())?;
@@ -1140,6 +1194,8 @@ pub(super) fn lower_effectful<'a>(
         pure,
         next: 0,
         witness_calls: 0,
+        kernel_self_reads: 0,
+        context_query: false,
         root_observations: 0,
         tree_writes: 0,
         set_writes: 0,
@@ -1253,6 +1309,122 @@ fn assertion_value(
 fn assertion_type(ty: &Type) -> bool {
     matches!(ty, Type::Unit | Type::Boolean)
         || matches!(ty, Type::Unsigned { max } if max == "255" || max == "18446744073709551615")
+}
+
+// The context query profile is intentionally independent of ledger-slot and
+// composite-return admission. Pure callees are audited before typed inlining.
+fn context_query_type(ty: &Type) -> bool {
+    *ty == (Type::Bytes { length: 32 }) || *ty == contract_address_type()
+}
+fn context_query_value(
+    value: &Expr,
+    pure: &HashMap<&str, &PureCircuit>,
+    visiting: &mut HashSet<String>,
+    allow_context: bool,
+) -> bool {
+    match value {
+        Expr::Parameter { .. } => true,
+        Expr::BytesLiteral { bytes } => bytes.len() == 32,
+        Expr::KernelSelf { ty } => allow_context && *ty == contract_address_type(),
+        Expr::StructField { value, .. } => {
+            context_query_value(value, pure, visiting, allow_context)
+        }
+        Expr::Coerce { value, ty } => {
+            context_query_type(ty) && context_query_value(value, pure, visiting, allow_context)
+        }
+        Expr::Tuple { elements } => elements
+            .iter()
+            .all(|v| context_query_value(v, pure, visiting, allow_context)),
+        Expr::PersistentCommit { value, opening } => {
+            context_query_value(value, pure, visiting, allow_context)
+                && context_query_value(opening, pure, visiting, allow_context)
+        }
+        Expr::Let { bindings, body } => {
+            bindings.iter().all(|b| {
+                context_query_type(&b.ty)
+                    && context_query_value(&b.value, pure, visiting, allow_context)
+            }) && context_query_value(body, pure, visiting, allow_context)
+        }
+        Expr::Call { name, arguments } => {
+            if !arguments
+                .iter()
+                .all(|a| context_query_value(a, pure, visiting, allow_context))
+                || !visiting.insert(name.clone())
+            {
+                return false;
+            }
+            let valid = pure.get(name.as_str()).is_some_and(|callee| {
+                callee.result == (Type::Bytes { length: 32 })
+                    && callee
+                        .parameters
+                        .iter()
+                        .map(|p| &p.name)
+                        .collect::<HashSet<_>>()
+                        .len()
+                        == callee.parameters.len()
+                    && callee.parameters.iter().all(|p| context_query_type(&p.ty))
+                    && context_query_value(&callee.body, pure, visiting, false)
+            });
+            visiting.remove(name);
+            valid
+        }
+        _ => false,
+    }
+}
+pub(super) fn lower_context_query<'a>(
+    circuit: &StatefulCircuit,
+    ledger: &'a HashMap<&'a str, &'a LedgerField>,
+    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
+    pure: &'a HashMap<&'a str, &'a PureCircuit>,
+) -> Option<TypedPlan> {
+    if !circuit.parameters.is_empty()
+        || !circuit.actions.is_empty()
+        || circuit.result != (Type::Bytes { length: 32 })
+    {
+        return None;
+    }
+    let StateReturn::Expression { value } = &circuit.return_value else {
+        return None;
+    };
+    if !context_query_value(value, pure, &mut HashSet::new(), true) {
+        return None;
+    }
+    let mut plan = Plan {
+        ledger,
+        witnesses,
+        pure,
+        next: 0,
+        witness_calls: 0,
+        kernel_self_reads: 0,
+        context_query: true,
+        root_observations: 0,
+        tree_writes: 0,
+        set_writes: 0,
+        counter_writes: 0,
+        counter_reads: 0,
+        counter_comparisons: 0,
+        cell_reads: 0,
+        cell_writes: 0,
+        field_cell_writes: 0,
+        field_cell_slot: None,
+        effectful_field_cells: false,
+        read_only_assertions: false,
+        composite_circuits: None,
+        optional_cells: 0,
+        opaque_cells: 0,
+        historic_roots: 0,
+        historic_writes: 0,
+        qualified_set_reads: 0,
+        qualified_set_writes: 0,
+        qualified_cell_writes: 0,
+    };
+    let mut steps = Vec::new();
+    let result = plan.expression(value, &Scope::new(), &mut steps)?;
+    (result.ty == circuit.result && plan.kernel_self_reads > 0 && plan.witness_calls == 0)
+        .then_some(TypedPlan {
+            steps,
+            result: result.value,
+        })
 }
 
 fn composite_type(ty: &Type) -> bool {
@@ -1369,6 +1541,8 @@ pub(super) fn lower_composite<'a>(
         pure,
         next: 0,
         witness_calls: 0,
+        kernel_self_reads: 0,
+        context_query: false,
         root_observations: 0,
         tree_writes: 0,
         set_writes: 0,
@@ -1495,6 +1669,8 @@ pub(super) fn lower<'a>(
         pure,
         next: 0,
         witness_calls: 0,
+        kernel_self_reads: 0,
+        context_query: false,
         root_observations: 0,
         tree_writes: 0,
         set_writes: 0,
@@ -1669,6 +1845,113 @@ mod tests {
     use super::*;
 
     #[test]
+    fn context_queries_audit_pure_types_scope_cycles_and_effect_order() {
+        fn planned(value: &serde_json::Value) -> Option<TypedPlan> {
+            let c: crate::ir::Contract = serde_json::from_value(value.clone()).unwrap();
+            lower_context_query(
+                &c.stateful_circuits[0],
+                &HashMap::new(),
+                &c.witnesses.iter().map(|w| (w.name.as_str(), w)).collect(),
+                &c.circuits.iter().map(|c| (c.name.as_str(), c)).collect(),
+            )
+        }
+        let source: serde_json::Value =
+            serde_json::from_str(include_str!("../../tests/token-query-schema20-ir.json")).unwrap();
+        let positive = planned(&source).unwrap();
+        let steps = positive.steps;
+        let tokens = quote::quote!(#(#steps)*).to_string();
+        assert_eq!(tokens.matches("kernel_self").count(), 1);
+        assert_eq!(tokens.matches("persistent_commit").count(), 1);
+        assert!(tokens.find("100u8").unwrap() < tokens.find("kernel_self").unwrap());
+        assert!(tokens.find("kernel_self").unwrap() < tokens.find("persistent_commit").unwrap());
+        // Renaming is metadata, and the original unrelated witnesses stay retained.
+        assert!(!source["witnesses"].as_array().unwrap().is_empty());
+        let renamed = source
+            .to_string()
+            .replace("tokenType", "derive_resource")
+            .replace("dao_voting_token", "resource_id");
+        assert!(planned(&serde_json::from_str(&renamed).unwrap()).is_some());
+        let rejected = |path: &str, replacement: serde_json::Value| {
+            let mut changed = source.clone();
+            *changed.pointer_mut(path).unwrap() = replacement;
+            assert!(planned(&changed).is_none(), "accepted mutation at {path}");
+        };
+        use serde_json::json;
+        rejected("/circuits/0/body/opening/bytes", json!([1, 2]));
+        rejected("/circuits/0/body/value/elements", json!([]));
+        rejected("/circuits/0/parameters/1/name", json!("domain_sep"));
+        rejected(
+            "/stateful_circuits/0/return_value/value/arguments/1/value/ty",
+            json!({"kind":"bytes","length":32}),
+        );
+        rejected(
+            "/circuits/0/body",
+            json!({"kind":"create_zswap_output","coin":{"kind":"parameter","name":"domain_sep"},"recipient":{"kind":"parameter","name":"contractAddress"}}),
+        );
+        rejected("/circuits/0/result", json!({"kind":"boolean"}));
+        rejected(
+            "/circuits/0/parameters/0/ty",
+            json!({"kind":"struct","name":"ContractAddress","fields":[{"name":"bytes","ty":{"kind":"bytes","length":32}}]}),
+        );
+        rejected("/circuits/0/parameters", json!([]));
+        rejected("/circuits/0/body/value/elements/1/field", json!("wrong"));
+        rejected("/circuits/0/body/value/elements/1/index", json!(1));
+        rejected(
+            "/circuits/0/body",
+            json!({"kind":"call","name":"tokenType","arguments":[]}),
+        );
+        rejected(
+            "/circuits/0/body",
+            json!({"kind":"parameter","name":"caller_only"}),
+        );
+        rejected(
+            "/circuits/0/body",
+            json!({"kind":"witness_call","name":"local_secret_key","arguments":[]}),
+        );
+        rejected(
+            "/circuits/0/body",
+            json!({"kind":"cell_read","field":"organizer","index":0}),
+        );
+        rejected(
+            "/circuits/0/body",
+            source["stateful_circuits"][0]["return_value"]["value"]["arguments"][1]["value"]
+                .clone(),
+        );
+        rejected(
+            "/stateful_circuits/0/parameters",
+            json!([{"name":"extra","ty":{"kind":"bytes","length":32}}]),
+        );
+        rejected(
+            "/stateful_circuits/0/actions",
+            json!([{"kind":"cell_write","field":"organizer","index":0,"value":{"kind":"bytes_literal","bytes":vec![0;32]}}]),
+        );
+        rejected(
+            "/stateful_circuits/0/return_value/value",
+            json!({"kind":"bytes_literal","bytes":vec![0;32]}),
+        );
+        // Caller locals cannot leak into the callee. Both caller arguments still
+        // evaluate once in order, including a query whose result is discarded.
+        let mut ordered = source.clone();
+        let address = source["circuits"][0]["parameters"][1]["ty"].clone();
+        let root = &mut ordered["stateful_circuits"][0]["return_value"]["value"];
+        let first = root["arguments"][0].clone();
+        root["arguments"][0] = json!({"kind":"let","bindings":[{"name":"caller_only","ty":address.clone(),"value":{"kind":"kernel_self","ty":address}}],"body":first});
+        let p = planned(&ordered).unwrap();
+        let steps = p.steps;
+        let tokens = quote::quote!(#(#steps)*).to_string();
+        let positions: Vec<_> = tokens
+            .match_indices("kernel_self")
+            .map(|(n, _)| n)
+            .collect();
+        assert_eq!(positions.len(), 2);
+        assert!(positions[0] < tokens.find("100u8").unwrap());
+        assert!(tokens.find("100u8").unwrap() < positions[1]);
+        assert!(positions[1] < tokens.find("persistent_commit").unwrap());
+        ordered["circuits"][0]["body"] = json!({"kind":"parameter","name":"caller_only"});
+        assert!(planned(&ordered).is_none());
+    }
+
+    #[test]
     fn composite_helpers_are_typed_scoped_acyclic_and_evaluate_arguments_once() {
         fn planned(contract: &crate::ir::Contract, index: usize) -> Option<TypedPlan> {
             let ledger = contract
@@ -1815,6 +2098,8 @@ mod tests {
             pure: &pure,
             next: 0,
             witness_calls: 0,
+            kernel_self_reads: 0,
+            context_query: false,
             root_observations: 0,
             tree_writes: 0,
             set_writes: 0,
@@ -1894,6 +2179,8 @@ mod tests {
             pure: &pure,
             next: 0,
             witness_calls: 0,
+            kernel_self_reads: 0,
+            context_query: false,
             root_observations: 0,
             tree_writes: 0,
             set_writes: 0,

@@ -1091,3 +1091,25 @@ spent-nullifier replay rejection. A wrong Kernel claim rejects the exact upstrea
 effects check; balancing is disabled only for that negative. No wallet/network or
 finality claim is made. Composite-return `planned` and broader offer composition
 remain separate work. Funded smoke requires `MIDNIGHT_LEDGER_TEST_STATIC_DIR`.
+
+### Context-derived token query recording (ADR0190)
+
+The unchanged `test-center/test-contracts/micro-dao.compact` now records
+`dao_voting_token`: a metered `Kernel.self` query followed by typed pure token
+helper evaluation using the upstream ledger persistent commitment. A separate
+bounded profile admits action-free, parameter-free Bytes32 results, exact
+Bytes32/ContractAddress helper signatures, checked lexical bindings/projections,
+and a pair-of-Bytes32 commitment with a Bytes32 opening. Helper calls are
+acyclic, argument evaluation happens once in caller order, and callee scope is
+isolated. Witnesses, public-slot reads/writes, Zswap intents and arbitrary helper
+forms remain outside this profile. ABI47/schema20 and the runtime are unchanged.
+
+The original source fixture retains all eleven exports and all six unrelated
+witness declarations. Independent TypeScript captures at three addresses compare
+the token, full VM transcript, gas, state/effects, private outputs and replay;
+upstream `ContractAddress::custom_shielded_token_type` supplies an additional
+canonical result check. `check_compactc_target.py --micro-dao-token --proof`
+generates only the token circuit's pinned ZKIR keys from the complete original
+source and proves/verifies/ledger-applies its nonempty query under the shared
+unbalanced smoke policy. This is not a funding claim. The other six microDAO
+proof-required exports and all four Coracle exports remain recording gaps.

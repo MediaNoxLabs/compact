@@ -1370,14 +1370,19 @@ pub(crate) fn render_state_expression(
                     actual: else_ty,
                 });
             }
+            // A block already evaluates to Unit without an explicit `()` tail.
+            // Remove only that syntax; effectful Unit-valued expressions remain.
+            let then_value = (!matches!(&then_value, syn::Expr::Tuple(t) if t.elems.is_empty()))
+                .then_some(then_value);
+            let else_value = (!matches!(&else_value, syn::Expr::Tuple(t) if t.elems.is_empty()))
+                .then_some(else_value);
+            let otherwise = (!else_statements.is_empty() || else_value.is_some())
+                .then(|| quote::quote!(else { #(#else_statements)* #else_value }));
             Ok((
                 syn::parse_quote!(if #condition {
                     #(#then_statements)*
                     #then_value
-                } else {
-                    #(#else_statements)*
-                    #else_value
-                }),
+                } #otherwise),
                 then_ty,
                 condition_effect || then_effect || else_effect,
             ))

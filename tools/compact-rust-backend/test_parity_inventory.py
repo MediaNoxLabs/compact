@@ -340,9 +340,9 @@ metadata.mkdir()
         self.assertRegex(suite, r"example_fourteen\.compact(?:(?!const filePath)[\s\S])*?toBeFailure")
 
     def test_original_coracle_and_micro_dao_have_exact_registered_cohorts(self):
-        for manifest_path, exports, proof_count in [
-            (inventory.TEST_CENTER_CORACLE_SOURCE_MANIFEST, 9, 4),
-            (inventory.TEST_CENTER_MICRO_DAO_SOURCE_MANIFEST, 11, 7),
+        for manifest_path, exports, proof_count, recorded in [
+            (inventory.TEST_CENTER_CORACLE_SOURCE_MANIFEST, 9, 4, []),
+            (inventory.TEST_CENTER_MICRO_DAO_SOURCE_MANIFEST, 11, 7, ["dao_voting_token"]),
         ]:
             with self.subTest(manifest=manifest_path.name):
                 self.assertIn(manifest_path, inventory.POSITIVE_SOURCE_MANIFESTS)
@@ -357,8 +357,8 @@ metadata.mkdir()
                 self.assertEqual(len(names), exports)
                 proof_names = {item["name"] for item in entry["proof_circuits"] if item["proof"]}
                 self.assertEqual(len(proof_names), proof_count)
-                self.assertEqual(set(entry["expected_recording_gaps"]), proof_names)
-                self.assertEqual(entry["expected_recorded_circuits"], [])
+                self.assertEqual(set(entry["expected_recording_gaps"]), proof_names - set(recorded))
+                self.assertEqual(entry["expected_recorded_circuits"], recorded)
 
     def test_checked_baseline_roundtrip_and_known_bad_drift(self):
         current = inventory.baseline_rows(inventory.make_inventory(inventory.ROOT, [], None)["rows"])

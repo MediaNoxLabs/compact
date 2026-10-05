@@ -65,7 +65,9 @@
           "proof": false
         }
       ],
-      "expected_recorded_circuits": [],
+      "expected_recorded_circuits": [
+        "dao_voting_token"
+      ],
       "expected_recording_gaps": {
         "vote_commit": {
           "code": "unsupported_action",
@@ -96,15 +98,11 @@
           "code": "unsupported_return",
           "ir_node": "StateReturn::Expression",
           "path": "return_value"
-        },
-        "dao_voting_token": {
-          "code": "unsupported_return",
-          "ir_node": "StateReturn::Expression",
-          "path": "return_value"
         }
       },
       "pure_declarations": 0,
-      "exported_pure_declarations": 0
+      "exported_pure_declarations": 0,
+      "rust_fixture": "tests-rust-backend/test-center-micro-dao/lib.rs"
     }
   ],
   "expected_rejections": []

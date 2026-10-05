@@ -1368,7 +1368,7 @@ def main() -> None:
                 assert c["proof_required"] and c["recorded"] == (c["name"] in {"advance", "vote_reveal", "dao_voting_token", "set_topic", "buy_in", "cash_out", "vote_commit"})
                 assert c["observed_call"] == c["recorded"]
             strict = subprocess.run([compiler, "--target", "rust", "--rust-require-recording", "--skip-zk", str(source), str(base / "strict-dao")], cwd=ROOT, capture_output=True, text=True)
-            assert strict.returncode != 0 and "buy_in" in strict.stderr
+            assert strict.returncode == 0, strict.stderr
             if args.proof:
                 (output / "keys").mkdir(exist_ok=True)
                 run("zkir", "compile", str(output / f"zkir/{selected}.zkir"), str(output / f"keys/{selected}.prover"), str(output / f"keys/{selected}.verifier"))

@@ -774,6 +774,18 @@ pub(crate) fn merkle_insert_hash_program<D: DB>(
     )
 }
 
+/// Build native historic `insertHash`'s verifying program, including root history.
+pub(crate) fn historic_merkle_insert_hash_program<D: DB>(
+    path: impl Into<LedgerPath>,
+    hash: FixedBytes<32>,
+) -> Vec<Op<ResultModeVerify, D>> {
+    merkle_insert_hashed_program(
+        path.into(),
+        aligned_cell_value(hash),
+        MerkleHistory::Historic,
+    )
+}
+
 /// Build the native historic append program, including its root-history update.
 pub(crate) fn historic_merkle_insert_program<T: CellValue, D: DB>(
     path: impl Into<LedgerPath>,

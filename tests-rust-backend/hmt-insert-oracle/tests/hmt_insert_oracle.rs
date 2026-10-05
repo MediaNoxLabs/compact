@@ -191,6 +191,99 @@ fn recorded_historic_append_preserves_root_history_and_replays() {
 }
 
 #[test]
+fn recorded_historic_hash_append_preserves_typescript_history_and_replays() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/hmt-insert-oracle.json"
+    ))
+    .unwrap();
+    let at_hash_append = || {
+        let context = initial_state(ConstructorContext::new(()))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default());
+        let context = append(context, bounded::<255>(7)).unwrap().context;
+        let context = place(
+            context,
+            bounded::<255>(9),
+            bounded::<{ u64::MAX as u128 }>(3),
+        )
+        .unwrap()
+        .context;
+        let context = append(context, bounded::<255>(11)).unwrap().context;
+        let context = place(
+            context,
+            bounded::<255>(13),
+            bounded::<{ u64::MAX as u128 }>(1),
+        )
+        .unwrap()
+        .context;
+        let context = forget_history(context).unwrap().context;
+        full(context).unwrap().context
+    };
+    let hash = runtime::FixedBytes::new([1; 32]);
+    let native = append_hash(at_hash_append(), hash).unwrap();
+    let recorded = recorded::append_hash(at_hash_append(), hash).unwrap();
+    assert_eq!(recorded.execution.result, ());
+    assert_eq!(recorded.execution.gas_cost, native.gas_cost);
+    assert_eq!(
+        recorded.execution.context.query.effects,
+        native.context.query.effects
+    );
+    assert!(recorded.execution.private_transcript_outputs.is_empty());
+    assert_state(
+        recorded.execution.context.query.state.get_ref(),
+        &oracle,
+        "afterAppendHash",
+        6,
+    );
+    assert_history(
+        recorded.execution.context.query.state.get_ref(),
+        &oracle,
+        "historyAfterAppendHash",
+    );
+    assert_eq!(
+        state_hex(native.context.query.state.get_ref().clone()),
+        state_hex(recorded.execution.context.query.state.get_ref().clone())
+    );
+    assert_native_query_gas("appendHash", &recorded.execution.gas_cost, &oracle);
+    assert_eq!(
+        oracle["nativeQueries"]["appendHash"]["result"],
+        serde_json::json!([])
+    );
+    assert_eq!(oracle["nativeQueries"]["appendHash"]["privateOutputs"], 0);
+    let queries = oracle["nativeQueries"]["appendHash"]["queries"]
+        .as_array()
+        .unwrap();
+    assert_eq!(queries.len(), 1);
+    assert_eq!(
+        serde_json::to_value(recorded.public.verify_ops()).unwrap(),
+        queries[0]["program"]
+    );
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(replay.gas_cost, recorded.execution.gas_cost);
+    assert_eq!(
+        replay.context.effects,
+        recorded.execution.context.query.effects
+    );
+    assert_eq!(
+        state_hex(replay.context.state.get_ref().clone()),
+        state_hex(recorded.execution.context.query.state.get_ref().clone())
+    );
+    assert_history(
+        replay.context.state.get_ref(),
+        &oracle,
+        "historyAfterAppendHash",
+    );
+}
+
+#[test]
 fn recorded_historic_indexed_insertion_matches_typescript_and_replays() {
     let oracle: serde_json::Value = serde_json::from_str(include_str!(
         "../../../runtime-rs/tests/fixtures/hmt-insert-oracle.json"

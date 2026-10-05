@@ -130,3 +130,65 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
     println!("plain Merkle insertHashIndex proved and applied through ledger-8");
     Ok(())
 }
+
+pub(super) fn run_historic(root: &Path) -> Result<(), Box<dyn Error>> {
+    let circuit = "append_hash";
+    let hash = FixedBytes::new([1; 32]);
+    let mut rng = StdRng::seed_from_u64(0x0142_4849_5354);
+    let initial = historic_merkle_contract::initial_state(ConstructorContext::new(()))?;
+    let deploy = make_deploy(
+        root,
+        circuit,
+        initial.ledger_state.get_ref().clone(),
+        &mut rng,
+    )?;
+    let observed = ObservedContractState::new(
+        deploy.address(),
+        deploy.initial_state.clone(),
+        Observation {
+            transaction_hash: [0; 32],
+            block_hash: [0; 32],
+            block_height: 0,
+        },
+    );
+    let expected = historic_merkle_contract::append_hash(observed.circuit_context(()), hash)?;
+    let recorded =
+        historic_merkle_contract::recorded::append_hash(observed.circuit_context(()), hash)?;
+    if !recorded.execution.private_transcript_outputs.is_empty()
+        || recorded.execution.context.query.state.get_ref()
+            != expected.context.query.state.get_ref()
+    {
+        return Err("recorded historic hash append differs from native execution".into());
+    }
+    let manual = check_generated_trace(root, circuit, recorded, hash)?;
+    let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
+        root.join("keys/append_hash.verifier"),
+    )?))?;
+    let typed = historic_merkle_contract::recorded::Contract
+        .append_hash_call(&observed, (), hash)?
+        .prepare(verifier, Fr::from(0u64))?;
+    if format!("{manual:?}") != format!("{typed:?}") {
+        return Err("historic hash observed call differs from recorded prototype".into());
+    }
+    let expected_state = expected.context.query.state.get_ref().clone();
+    let expected_history = historic_merkle_tree_view_at_path(&expected_state, &[0])?.history()?;
+    check_transaction(root, circuit, deploy, typed, &mut rng, |contract| {
+        let state = contract.data.get_ref();
+        if state != &expected_state {
+            return Err("proven historic hash append differs from native ledger state".into());
+        }
+        let tree = historic_merkle_tree_view_at_path(state, &[0])?;
+        let generated = historic_merkle_contract::PublicStateView::from(contract).t()?;
+        if tree.first_free()?.value() != 1
+            || generated.first_free()? != tree.first_free()?
+            || generated.root() != tree.root()
+            || tree.history()? != expected_history
+            || generated.history()? != expected_history
+        {
+            return Err("proven historic hash append changed root history unexpectedly".into());
+        }
+        Ok(())
+    })?;
+    println!("historic Merkle insertHash proved and applied through ledger-8");
+    Ok(())
+}

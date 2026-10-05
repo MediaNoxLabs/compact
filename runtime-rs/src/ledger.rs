@@ -250,8 +250,9 @@ pub use merkle::{
     metered_historic_merkle_tree_view_at_path, metered_merkle_tree_view_at_path,
 };
 pub(crate) use merkle::{
-    historic_merkle_insert_index_default_program, historic_merkle_insert_index_program,
-    historic_merkle_insert_program, merkle_insert_hash_index_program, merkle_insert_hash_program,
+    historic_merkle_insert_hash_program, historic_merkle_insert_index_default_program,
+    historic_merkle_insert_index_program, historic_merkle_insert_program,
+    merkle_insert_hash_index_program, merkle_insert_hash_program,
     merkle_insert_index_default_program, merkle_insert_index_program,
 };
 

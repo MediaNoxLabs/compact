@@ -263,6 +263,15 @@ pub mod ledger_contract {
             )?;
             Ok(frame.finish(()))
         }
+        pub fn append_hash<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::FixedBytes<32>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame = crate::ledger_slots::t.record_insert_hash(frame, __compact_param_0)?;
+            Ok(frame.finish(()))
+        }
         pub fn full<Private>(
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
@@ -322,6 +331,33 @@ pub mod ledger_contract {
                 let recorded = self.place(observed.circuit_context(private_state), value, index)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "place", input,
+                ))
+            }
+            pub fn append_hash<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                hash: runtime::FixedBytes<32>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::append_hash(context, hash)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn append_hash_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                hash: runtime::FixedBytes<32>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(hash);
+                let recorded = self.append_hash(observed.circuit_context(private_state), hash)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "append_hash",
+                    input,
                 ))
             }
             pub fn full<Private>(

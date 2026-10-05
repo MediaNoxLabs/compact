@@ -5622,6 +5622,28 @@ fn render_recorded_item(
                 ));
                 Ok(RecordingOutcome::Supported(()))
             }
+            StateAction::HistoricMerkleInsertHash { field, index, hash } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                if !matches!(
+                    declaration.declaration,
+                    LedgerFieldKind::HistoricMerkleTree { .. }
+                ) || declaration.index != *index
+                    || declaration.physical_path().len() != 1
+                {
+                    return Ok(unavailable_action(action, path));
+                }
+                let Some(hash) = cell_source(hash, &Type::Bytes { length: 32 }, locals, parameters)
+                else {
+                    return Ok(unavailable_action(action, path));
+                };
+                let slot = ident(field)?;
+                steps.push(syn::parse_quote!(
+                    let frame = crate::ledger_slots::#slot.record_insert_hash(frame, #hash)?;
+                ));
+                Ok(RecordingOutcome::Supported(()))
+            }
             StateAction::MerkleInsertHashIndex {
                 field,
                 index,

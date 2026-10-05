@@ -215,6 +215,15 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         self.apply_verify_program(ledger::historic_merkle_insert_program(path, value))
     }
 
+    /// Append an already hashed leaf and retain the historic root-map update.
+    pub fn insert_historic_merkle_hash(
+        self,
+        path: impl Into<LedgerPath>,
+        hash: crate::FixedBytes<32>,
+    ) -> Result<Self, CompactError> {
+        self.apply_verify_program(ledger::historic_merkle_insert_hash_program(path, hash))
+    }
+
     /// Insert a typed leaf at a declared index, retaining the ledger-8 VM program.
     pub fn insert_merkle_index<T: CellValue>(
         self,

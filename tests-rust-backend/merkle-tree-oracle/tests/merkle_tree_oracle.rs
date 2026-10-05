@@ -92,6 +92,85 @@ fn current_root(state: &StateValue<DefaultDB>) -> MerkleTreeDigest {
     MerkleTreeDigest { field: root.0 }
 }
 
+#[test]
+fn recorded_direct_root_checks_match_typescript_and_replay_both_outcomes() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/merkle-tree-oracle.json"
+    ))
+    .unwrap();
+    for (label, expected) in [
+        ("knownCurrentAfterAppend", true),
+        ("knownInitialAfterAppend", false),
+    ] {
+        let context = || {
+            append(
+                initial_state(ConstructorContext::new(()))
+                    .unwrap()
+                    .into_circuit_context(ContractAddress::default()),
+                bounded::<255>(7),
+            )
+            .unwrap()
+            .context
+        };
+        let root = if expected {
+            current_root(context().query.state.get_ref())
+        } else {
+            current_root(
+                initial_state(ConstructorContext::new(()))
+                    .unwrap()
+                    .ledger_state
+                    .get_ref(),
+            )
+        };
+        let native = known(context(), root.clone()).unwrap();
+        let recorded = recorded::known(context(), root).unwrap();
+        let capture = &oracle["nativeQueries"][label];
+        assert_eq!(native.result, expected);
+        assert_eq!(recorded.execution.result, expected);
+        assert_eq!(capture["result"], expected);
+        assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+        assert_eq!(
+            native.context.query.effects,
+            recorded.execution.context.query.effects
+        );
+        assert_native_query_gas(label, &recorded.execution.gas_cost, &oracle);
+        assert!(recorded.execution.private_transcript_outputs.is_empty());
+        assert_eq!(capture["privateOutputs"], 0);
+        assert_eq!(
+            state_hex(native.context.query.state.get_ref().clone()),
+            oracle["afterAppend7"]
+        );
+        assert_eq!(
+            state_hex(recorded.execution.context.query.state.get_ref().clone()),
+            oracle["afterAppend7"]
+        );
+        assert_eq!(capture["queries"].as_array().unwrap().len(), 1);
+        let mut program = serde_json::to_value(recorded.public.verify_ops()).unwrap();
+        assert_eq!(program.as_array().unwrap().len(), 7);
+        assert!(!program[6]["popeq"]["result"].is_null());
+        program[6]["popeq"]["result"] = serde_json::Value::Null;
+        assert_eq!(program, capture["queries"][0]["program"]);
+        let replay = recorded
+            .public
+            .initial()
+            .query(
+                recorded.public.verify_ops(),
+                None,
+                &recorded.execution.context.cost_model,
+            )
+            .unwrap();
+        assert_eq!(replay.gas_cost, recorded.execution.gas_cost);
+        assert_eq!(
+            replay.context.effects,
+            recorded.execution.context.query.effects
+        );
+        assert_eq!(
+            state_hex(replay.context.state.get_ref().clone()),
+            oracle["afterAppend7"]
+        );
+    }
+}
+
 fn assert_state(
     state: &StateValue<DefaultDB>,
     oracle: &serde_json::Value,

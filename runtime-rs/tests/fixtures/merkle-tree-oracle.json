@@ -545,6 +545,269 @@
         }
       ]
     },
+    "knownCurrentAfterAppend": {
+      "result": true,
+      "privateOutputs": 0,
+      "reportedGas": {
+        "readTime": "340000000",
+        "computeTime": "1425433517",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1425433517",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "root",
+            "push",
+            "eq",
+            "popeq"
+          ],
+          "program": [
+            {
+              "dup": {
+                "n": 0
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": false,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        []
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": false,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        []
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            "root",
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        170,
+                        92,
+                        216,
+                        116,
+                        203,
+                        214,
+                        33,
+                        26,
+                        195,
+                        155,
+                        157,
+                        18,
+                        22,
+                        93,
+                        41,
+                        187,
+                        104,
+                        159,
+                        50,
+                        137,
+                        232,
+                        33,
+                        185,
+                        136,
+                        209,
+                        109,
+                        193,
+                        238,
+                        72,
+                        78,
+                        67,
+                        4
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "eq",
+            {
+              "popeq": {
+                "cached": true,
+                "result": null
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "knownInitialAfterAppend": {
+      "result": false,
+      "privateOutputs": 0,
+      "reportedGas": {
+        "readTime": "340000000",
+        "computeTime": "1425433517",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1425433517",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "root",
+            "push",
+            "eq",
+            "popeq"
+          ],
+          "program": [
+            {
+              "dup": {
+                "n": 0
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": false,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        []
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": false,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        []
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            "root",
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "eq",
+            {
+              "popeq": {
+                "cached": true,
+                "result": null
+              }
+            }
+          ]
+        }
+      ]
+    },
     "place9At3": {
       "result": [],
       "privateOutputs": 0,

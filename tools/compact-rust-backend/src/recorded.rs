@@ -6412,6 +6412,46 @@ fn render_recorded_item(
                 syn::parse_quote!(observed),
             )
         }
+        StateReturn::MerkleCheckRoot { field, index, root }
+            if circuit.result == Type::Boolean && circuit.actions.is_empty() =>
+        {
+            let declaration = ledger_fields
+                .get(field.as_str())
+                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            let Expr::Parameter { name } = root else {
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                    &circuit.return_value,
+                )));
+            };
+            let Some((root_ty, _)) = parameters.get(name.as_str()) else {
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                    &circuit.return_value,
+                )));
+            };
+            if declaration.index != *index
+                || !matches!(declaration.declaration, LedgerFieldKind::MerkleTree { .. })
+                || !matches!(root_ty, Type::Struct { name, fields }
+                    if name == "MerkleTreeDigest" && fields.len() == 1
+                        && fields[0].name == "field" && fields[0].ty == Type::Field)
+            {
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                    &circuit.return_value,
+                )));
+            }
+            let Some(root) = cell_source(root, root_ty, &HashMap::new(), &parameters) else {
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                    &circuit.return_value,
+                )));
+            };
+            let slot = ident(field)?;
+            (
+                vec![syn::parse_quote!(
+                    let (frame, observed): (_, bool) =
+                        crate::ledger_slots::#slot.record_check_root(frame, #root)?;
+                )],
+                syn::parse_quote!(observed),
+            )
+        }
         StateReturn::MerkleIsFull { field, index }
         | StateReturn::HistoricMerkleIsFull { field, index }
             if circuit.result == Type::Boolean && circuit.actions.is_empty() =>

@@ -26,6 +26,112 @@ use compact_rust_backend::{
 };
 
 #[test]
+fn direct_plain_merkle_root_recording_requires_exact_digest_and_slot() {
+    let digest = Type::Struct {
+        name: "MerkleTreeDigest".into(),
+        fields: vec![StructField {
+            name: "field".into(),
+            ty: Type::Field,
+        }],
+    };
+    let mut contract = identity(Type::Unit, Expr::Unit);
+    contract.ledger_fields = vec![LedgerField {
+        source: None,
+        id: "tree".into(),
+        index: 0,
+        path: vec![],
+        declaration: LedgerFieldKind::MerkleTree {
+            depth: 3,
+            ty: Type::Boolean,
+        },
+    }];
+    contract.stateful_circuits = vec![StatefulCircuit {
+        source: None,
+        name: "known".into(),
+        internal: false,
+        parameters: vec![Parameter {
+            name: "root".into(),
+            ty: digest.clone(),
+        }],
+        actions: vec![],
+        result: Type::Boolean,
+        return_value: StateReturn::MerkleCheckRoot {
+            field: "tree".into(),
+            index: 0,
+            root: Expr::Parameter {
+                name: "root".into(),
+            },
+        },
+    }];
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].observed_call);
+
+    let mut computed = contract.clone();
+    let StateReturn::MerkleCheckRoot { root, .. } = &mut computed.stateful_circuits[0].return_value
+    else {
+        unreachable!()
+    };
+    *root = Expr::Default { ty: digest.clone() };
+    assert!(
+        !render_with_capabilities(&computed)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
+    );
+
+    let mut effectful = contract.clone();
+    effectful.stateful_circuits[0]
+        .actions
+        .push(StateAction::MerkleInsert {
+            field: "tree".into(),
+            index: 0,
+            value: Expr::Boolean { value: true },
+        });
+    assert!(
+        !render_with_capabilities(&effectful)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
+    );
+
+    let mut wrong_slot = contract.clone();
+    let StateReturn::MerkleCheckRoot { index, .. } =
+        &mut wrong_slot.stateful_circuits[0].return_value
+    else {
+        unreachable!()
+    };
+    *index = 1;
+    assert!(render(&wrong_slot).is_err());
+
+    let mut historic = contract.clone();
+    historic.ledger_fields[0].declaration = LedgerFieldKind::HistoricMerkleTree {
+        depth: 3,
+        ty: Type::Boolean,
+    };
+    historic.stateful_circuits[0].return_value = StateReturn::HistoricMerkleCheckRoot {
+        field: "tree".into(),
+        index: 0,
+        root: Expr::Parameter {
+            name: "root".into(),
+        },
+    };
+    assert!(
+        !render_with_capabilities(&historic)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
+    );
+
+    contract.stateful_circuits[0].parameters[0].ty = Type::Field;
+    let rejected = render_with_capabilities(&contract);
+    assert!(rejected.is_err() || !rejected.unwrap().capabilities.circuits[0].recorded);
+}
+
+#[test]
 fn recorded_mixed_width_guard_requires_exact_public_widths_and_pure_operands() {
     let mut contract = Contract {
         schema_version: SCHEMA_VERSION,

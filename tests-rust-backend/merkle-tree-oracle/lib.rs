@@ -304,6 +304,16 @@ pub mod ledger_contract {
             let (frame, observed): (_, bool) = crate::ledger_slots::t.record_is_full(frame)?;
             Ok(frame.finish(observed))
         }
+        pub fn known<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: crate::types::MerkleTreeDigest,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, observed): (_, bool) =
+                crate::ledger_slots::t.record_check_root(frame, (__compact_param_0).clone())?;
+            Ok(frame.finish(observed))
+        }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
         impl Contract {
@@ -464,6 +474,32 @@ pub mod ledger_contract {
                 let recorded = self.full(observed.circuit_context(private_state))?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "full", input,
+                ))
+            }
+            pub fn known<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                root: crate::types::MerkleTreeDigest,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, bool>,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::known(context, root)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn known_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                root: crate::types::MerkleTreeDigest,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, bool>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from((root).clone());
+                let recorded = self.known(observed.circuit_context(private_state), root)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "known", input,
                 ))
             }
         }

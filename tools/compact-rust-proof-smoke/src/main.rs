@@ -36,6 +36,7 @@ mod guarded_recording;
 mod impure_field_helper;
 mod merkle_hash;
 mod merkle_indexed;
+mod merkle_root;
 mod merkle_verify;
 mod mixed_width_recording;
 mod opaque_string_map;
@@ -2086,6 +2087,15 @@ fn main() -> Result<(), Box<dyn Error>> {
             );
         }
         return merkle_verify::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--merkle-root")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --merkle-root <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err("usage: compact-rust-proof-smoke --merkle-root <proof-output>".into());
+        }
+        return merkle_root::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--merkle-hash")) {
         let root = arguments

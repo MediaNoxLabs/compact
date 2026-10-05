@@ -1981,6 +1981,7 @@ dependencies = [
  "compact-rust-qualified-coin-cell-oracle-fixture",
  "compact-rust-qualified-coin-set-oracle-fixture",
  "compact-rust-recorded-enum-cell-fixture",
+ "compact-rust-root-let-action-return-oracle-fixture",
  "compact-rust-schnorr-attest-oracle-fixture",
  "compact-rust-set-boolean-fixture",
  "compact-rust-set-oracle-fixture",

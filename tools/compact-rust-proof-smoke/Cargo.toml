@@ -121,3 +121,5 @@ compact-rust-election-oracle-fixture = { path = "../../tests-rust-backend/electi
 compact-rust-zerocash-oracle-fixture = { path = "../../tests-rust-backend/zerocash-oracle", features = ["ledger-transaction"] }
 
 compact-rust-test-center-bboard-fixture = { path = "../../tests-rust-backend/test-center-bboard", features = ["ledger-transaction"] }
+
+compact-rust-root-let-action-return-oracle-fixture = { path = "../../tests-rust-backend/root-let-action-return-oracle", features = ["ledger-transaction"] }

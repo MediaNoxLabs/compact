@@ -1,0 +1,116 @@
+{
+  "schema_version": 17,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "stored",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "root_let_action_return_oracle.compact",
+        "line": 18,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "step",
+      "parameters": [
+        {
+          "name": "echo",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "parameter",
+          "name": "echo"
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "before",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "cell_read",
+                "field": "stored",
+                "index": 0
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "after",
+                    "ty": {
+                      "kind": "field"
+                    },
+                    "value": {
+                      "kind": "add",
+                      "left": {
+                        "kind": "parameter",
+                        "name": "before"
+                      },
+                      "right": {
+                        "kind": "field_literal",
+                        "value": "1"
+                      }
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "sequence",
+                  "actions": [
+                    {
+                      "kind": "cell_write",
+                      "field": "stored",
+                      "index": 0,
+                      "value": {
+                        "kind": "parameter",
+                        "name": "after"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "root_let_action_return_oracle.compact",
+        "line": 20,
+        "column": 1
+      }
+    }
+  ]
+}

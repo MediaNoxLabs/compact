@@ -1330,7 +1330,7 @@ def main() -> None:
             return
         if args.coracle_root_let:
             oracle = base / "root-let-action-return"
-            run(compiler, "--target", "rust", "--skip-zk",
+            run(compiler, "--target", "rust", "--rust-require-recording", "--skip-zk",
                 str(ROOT_LET_ACTION_RETURN_SOURCE), str(oracle))
             ir = json.loads((oracle / "contract/compact-rust-ir.json").read_text())
             assert ir["schema_version"] == 20
@@ -1351,12 +1351,8 @@ def main() -> None:
                 "cell_write", "stored", {"kind": "parameter", "name": "after"})
             caps = json.loads((oracle / "contract/rust-capabilities.json").read_text())
             assert [(row["name"], row["proof_required"], row["recorded"], row["observed_call"])
-                    for row in caps["circuits"]] == [("step", True, False, False)]
-            strict = subprocess.run(
-                [compiler, "--target", "rust", "--rust-require-recording", "--skip-zk",
-                 str(ROOT_LET_ACTION_RETURN_SOURCE), str(base / "strict")],
-                cwd=ROOT, capture_output=True, text=True)
-            assert strict.returncode != 0 and "step" in strict.stderr
+                    for row in caps["circuits"]] == [("step", True, True, True)]
+            assert "pub mod recorded" in (oracle / "contract/lib.rs").read_text()
             # An assert-only root Let remains in its established expression
             # form; extracting it as an action would regress the welcome
             # source's three recorded and observed exports.
@@ -1377,6 +1373,12 @@ def main() -> None:
             assert complete.returncode != 0
             assert "coracle.compact line 316" in complete.stderr
             assert "stateful expression requires stateful evaluation" in complete.stderr
+            if args.proof:
+                proof = base / "root-let-action-return-proof"
+                run(compiler, "--target", "rust", "--rust-require-recording",
+                    str(ROOT_LET_ACTION_RETURN_SOURCE), str(proof))
+                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                    "--root-let-action-return", str(proof))
             print("root Let actions retained; complete Coracle remains unassessed at the line316 stateful expression")
             return
         if args.adt_set_qualified:
@@ -1708,6 +1710,11 @@ def main() -> None:
                 assert (cell_proof / "keys" / f"set_flag.{extension}").is_file()
             for extension in ("zkir", "bzkir"):
                 assert (cell_proof / "zkir" / f"set_flag.{extension}").is_file()
+            root_let_proof = base / "root-let-action-return-proof"
+            run(compiler, "--target", "rust", "--rust-require-recording",
+                str(ROOT_LET_ACTION_RETURN_SOURCE), str(root_let_proof))
+            run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--root-let-action-return", str(root_let_proof))
             counter_less_than_proof = base / "counter-less-than-proof"
             run(compiler, "--target", "rust", "--rust-require-recording",
                 str(ROOT / "examples/rust_backend/counter_less_than_oracle.compact"), str(counter_less_than_proof))

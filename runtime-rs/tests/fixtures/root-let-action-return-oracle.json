@@ -21,6 +21,12 @@
       "bytesWritten": "36",
       "bytesDeleted": "36"
     },
+    "replayGas": {
+      "readTime": "255000000",
+      "computeTime": "1409371316",
+      "bytesWritten": "36",
+      "bytesDeleted": "36"
+    },
     "queries": [
       {
         "gasCost": {
@@ -81,6 +87,107 @@
         "n": 1
       }
     ],
+    "publicTranscript": [
+      {
+        "dup": {
+          "n": 0
+        }
+      },
+      {
+        "idx": {
+          "cached": false,
+          "pushPath": false,
+          "path": [
+            {
+              "tag": "value",
+              "value": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "popeq": {
+          "cached": false,
+          "result": {
+            "value": [
+              []
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "push": {
+          "storage": false,
+          "value": {
+            "tag": "cell",
+            "content": {
+              "value": [
+                []
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 1
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "push": {
+          "storage": true,
+          "value": {
+            "tag": "cell",
+            "content": {
+              "value": [
+                [
+                  1
+                ]
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "field"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ins": {
+          "cached": false,
+          "n": 1
+        }
+      }
+    ],
     "privateTranscriptCount": 0
   },
   "second": {
@@ -101,6 +208,12 @@
     "reportedGas": {
       "readTime": "85000000",
       "computeTime": "1233942932",
+      "bytesWritten": "36",
+      "bytesDeleted": "36"
+    },
+    "replayGas": {
+      "readTime": "255000000",
+      "computeTime": "1409371316",
       "bytesWritten": "36",
       "bytesDeleted": "36"
     },
@@ -164,6 +277,109 @@
         "kind": "ins",
         "cached": false,
         "n": 1
+      }
+    ],
+    "publicTranscript": [
+      {
+        "dup": {
+          "n": 0
+        }
+      },
+      {
+        "idx": {
+          "cached": false,
+          "pushPath": false,
+          "path": [
+            {
+              "tag": "value",
+              "value": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "popeq": {
+          "cached": false,
+          "result": {
+            "value": [
+              [
+                1
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "push": {
+          "storage": false,
+          "value": {
+            "tag": "cell",
+            "content": {
+              "value": [
+                []
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 1
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "push": {
+          "storage": true,
+          "value": {
+            "tag": "cell",
+            "content": {
+              "value": [
+                [
+                  2
+                ]
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "field"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ins": {
+          "cached": false,
+          "n": 1
+        }
       }
     ],
     "privateTranscriptCount": 0

@@ -14,7 +14,7 @@
 // limitations under the License.
 
 use compact_rust_root_let_action_return_oracle_fixture::ledger_contract::{
-    PublicStateView, initial_state, step,
+    Contract, PublicStateView, initial_state, step,
 };
 use midnight_compact_runtime as runtime;
 use midnight_onchain_state::state::{
@@ -106,5 +106,107 @@ fn root_let_action_runs_once_and_returns_independent_parameter() {
             );
         }
         context = result.context;
+    }
+}
+
+#[test]
+fn root_let_recording_matches_typescript_native_and_replay_across_two_calls() {
+    let expected = oracle();
+    let initial = initial_state(ConstructorContext::new(())).unwrap();
+    let mut native_context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let mut recorded_context = initial.into_circuit_context(ContractAddress::default());
+    for (name, echo) in [("first", 9_u64), ("second", 13)] {
+        let reference = &expected[name];
+        let native = step(native_context, Field::from(echo)).unwrap();
+        let recorded = Contract::default()
+            .recording
+            .step(recorded_context, Field::from(echo))
+            .unwrap();
+        assert_eq!(native.result, Field::from(echo), "{name}: native return");
+        assert_eq!(
+            recorded.execution.result, native.result,
+            "{name}: recorded return"
+        );
+        assert_eq!(
+            native.gas_cost, recorded.execution.gas_cost,
+            "{name}: full gas"
+        );
+        assert_eq!(
+            native.context.query.effects, recorded.execution.context.query.effects,
+            "{name}: ledger effects"
+        );
+        assert_eq!(
+            native.context.query.state.get_ref(),
+            recorded.execution.context.query.state.get_ref(),
+            "{name}: ledger state"
+        );
+        assert_eq!(
+            state_hex(recorded.execution.context.query.state.get_ref().clone()),
+            reference["afterStateHex"],
+            "{name}: serialized state"
+        );
+        assert_eq!(
+            serde_json::to_value(&recorded.execution.context.query.effects).unwrap(),
+            reference["effects"],
+            "{name}: TS ledger effects"
+        );
+        assert_eq!(native.private_transcript_outputs.len(), 0);
+        assert_eq!(recorded.execution.private_transcript_outputs.len(), 0);
+        assert_eq!(reference["privateTranscriptCount"], 0);
+        assert_eq!(
+            serde_json::to_value(recorded.public.verify_ops()).unwrap(),
+            reference["publicTranscript"],
+            "{name}: exact recorded program"
+        );
+        let replay = recorded
+            .public
+            .initial()
+            .query(
+                recorded.public.verify_ops(),
+                None,
+                &recorded.execution.context.cost_model,
+            )
+            .unwrap();
+        assert_eq!(
+            replay.context.state.get_ref(),
+            recorded.execution.context.query.state.get_ref(),
+            "{name}: replay state"
+        );
+        assert_eq!(
+            replay.context.effects, native.context.query.effects,
+            "{name}: replay effects"
+        );
+        let replay_gas = serde_json::to_value(replay.gas_cost).unwrap();
+        for dimension in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            let ts_replay: u64 = reference["replayGas"][dimension]
+                .as_str()
+                .unwrap()
+                .parse()
+                .unwrap();
+            assert_eq!(
+                replay_gas[dimension], ts_replay,
+                "{name}: TS replay gas {dimension}"
+            );
+        }
+        let gas = serde_json::to_value(native.gas_cost).unwrap();
+        for dimension in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            let ts_total: u64 = reference["queries"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|query| {
+                    query["gasCost"][dimension]
+                        .as_str()
+                        .unwrap()
+                        .parse::<u64>()
+                        .unwrap()
+                })
+                .sum();
+            assert_eq!(gas[dimension], ts_total, "{name}: TS query gas {dimension}");
+        }
+        native_context = native.context;
+        recorded_context = recorded.execution.context;
     }
 }

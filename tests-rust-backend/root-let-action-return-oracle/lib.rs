@@ -26,8 +26,9 @@ pub mod pure_circuits {
 #[allow(non_upper_case_globals)]
 pub mod ledger_slots {
     use midnight_compact_runtime as runtime;
-    pub const stored: runtime::slots::CellSlot<runtime::Field> =
-        runtime::slots::CellSlot::new(&[0u8]);
+    pub const stored: runtime::slots::CellSlot<runtime::Field> = runtime::slots::CellSlot::new(
+        &[0u8],
+    );
 }
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
@@ -51,8 +52,7 @@ pub mod ledger_contract {
         }
     }
     impl<'a, S: runtime::public_state::PublicStateSource> From<&'a S>
-        for PublicStateView<'a, S::Database>
-    {
+    for PublicStateView<'a, S::Database> {
         fn from(source: &'a S) -> Self {
             Self {
                 state: source.public_state(),
@@ -65,20 +65,21 @@ pub mod ledger_contract {
     pub fn initial_state<Private>(
         __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
-        let state = runtime::ledger::contract_state(vec![runtime::ledger::constructor_cell::<
-            runtime::Field,
-            runtime::ledger::DefaultDB,
-        >(Default::default())]);
-        Ok(runtime::context::ConstructorResult::new(
-            __compact_context,
-            state,
-        ))
+        let state = runtime::ledger::contract_state(
+            vec![
+                runtime::ledger::constructor_cell:: < runtime::Field,
+                runtime::ledger::DefaultDB > (Default::default())
+            ],
+        );
+        Ok(runtime::context::ConstructorResult::new(__compact_context, state))
     }
     pub fn step<Private>(
         context: runtime::context::CircuitContext<Private>,
         __compact_param_0: runtime::Field,
-    ) -> Result<runtime::context::CircuitResult<Private, runtime::Field>, runtime::CompactError>
-    {
+    ) -> Result<
+        runtime::context::CircuitResult<Private, runtime::Field>,
+        runtime::CompactError,
+    > {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
         let mut context = context;
@@ -88,7 +89,8 @@ pub mod ledger_contract {
         let __compact_action_local_0: runtime::Field = __compact_query_0.result;
         let __compact_value_1 = __compact_action_local_0;
         let __compact_value_2 = runtime::Field::from(1u128);
-        let __compact_action_local_1: runtime::Field = __compact_value_1 + __compact_value_2;
+        let __compact_action_local_1: runtime::Field = __compact_value_1
+            + __compact_value_2;
         let step = crate::ledger_slots::stored.write(context, __compact_action_local_1)?;
         let context = step.context;
         total_cost += step.gas_cost;
@@ -100,19 +102,83 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    /// Circuits with a replayable ordered ledger program.
+    pub mod recorded {
+        use midnight_compact_runtime as runtime;
+        pub fn step<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::Field,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_plan_0): (_, runtime::Field) = crate::ledger_slots::stored
+                .record_read(frame)?;
+            let __compact_plan_1: runtime::Field = __compact_plan_0;
+            let __compact_plan_2: runtime::Field = runtime::Field::from(1u128);
+            let __compact_plan_3: runtime::Field = __compact_plan_1 + __compact_plan_2;
+            let __compact_plan_4: runtime::Field = __compact_plan_3;
+            let frame = crate::ledger_slots::stored
+                .record_write(frame, __compact_plan_4)?;
+            Ok(frame.finish(__compact_param_0))
+        }
+        /// Typed handle for circuits with a complete recorded trace.
+        pub struct Contract;
+        impl Contract {
+            pub fn step<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                echo: runtime::Field,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::step(context, echo)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn step_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                echo: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(echo);
+                let recorded = self.step(observed.circuit_context(private_state), echo)?;
+                Ok(
+                    runtime::transaction::RecordedCall::new(
+                        observed,
+                        recorded,
+                        "step",
+                        input,
+                    ),
+                )
+            }
+        }
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]
         witnesses: W,
+        pub recording: recorded::Contract,
     }
     impl<W> From<W> for Contract<W> {
         fn from(witnesses: W) -> Self {
-            Self { witnesses }
+            Self {
+                witnesses,
+                recording: recorded::Contract,
+            }
         }
     }
     impl Default for Contract<()> {
         fn default() -> Self {
-            Self { witnesses: () }
+            Self {
+                witnesses: (),
+                recording: recorded::Contract,
+            }
         }
     }
     impl<W> Contract<W> {
@@ -120,9 +186,15 @@ pub mod ledger_contract {
             &self,
             context: runtime::context::CircuitContext<Private>,
             echo: runtime::Field,
-        ) -> Result<runtime::context::CircuitResult<Private, runtime::Field>, runtime::CompactError>
-        {
+        ) -> Result<
+            runtime::context::CircuitResult<Private, runtime::Field>,
+            runtime::CompactError,
+        > {
             crate::ledger_contract::step(context, echo)
+        }
+        /// Access replayable circuit calls for this contract.
+        pub fn recording(&self) -> &recorded::Contract {
+            &self.recording
         }
     }
 }

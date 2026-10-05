@@ -29,9 +29,11 @@ const gas = (cost) => Object.fromEntries(
   Object.entries(cost).map(([key, value]) => [key, value.toString()]),
 );
 const queries = [];
+const programs = [];
 const originalQuery = runtime.QueryContext.prototype.query;
 runtime.QueryContext.prototype.query = function (...args) {
   const result = originalQuery.call(this, ...args);
+  programs.push(args[0]);
   queries.push({
     gasCost: gas(result.gasCost),
     opTags: args[0].map((operation) =>
@@ -63,11 +65,18 @@ const initial = contract.initialState({
 const initialStateHex = stateHex(initial.currentContractState);
 function call(echo) {
   const queryStart = queries.length;
+  const programStart = programs.length;
   const context = runtime.createCircuitContext(
     runtime.dummyContractAddress(), coinPublicKey,
     initial.currentContractState.data, initial.currentPrivateState,
   );
   const output = contract.circuits.step(context, echo);
+  const replayContext = runtime.createCircuitContext(
+    runtime.dummyContractAddress(), coinPublicKey,
+    initial.currentContractState.data, initial.currentPrivateState,
+  );
+  const replay = originalQuery.call(replayContext.currentQueryContext,
+    programs.slice(programStart).flat(), replayContext.costModel);
   initial.currentContractState.data = new runtime.ChargedState(
     output.context.currentQueryContext.state.state,
   );
@@ -76,8 +85,10 @@ function call(echo) {
     afterStateHex: stateHex(initial.currentContractState),
     effects: output.context.currentQueryContext.effects,
     reportedGas: gas(output.gasCost),
+    replayGas: gas(replay.gasCost),
     queries: queries.slice(queryStart),
     publicTranscriptShape: output.proofData.publicTranscript.map(shape),
+    publicTranscript: output.proofData.publicTranscript,
     privateTranscriptCount: output.proofData.privateTranscriptOutputs.length,
   };
 }
@@ -85,4 +96,4 @@ process.stdout.write(JSON.stringify({
   initialStateHex,
   first: call(9n),
   second: call(13n),
-}, null, 2) + '\n');
+}, (_, value) => value instanceof Uint8Array ? Array.from(value) : typeof value === 'bigint' ? value.toString() : value, 2) + '\n');

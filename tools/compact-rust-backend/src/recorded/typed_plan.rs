@@ -38,7 +38,10 @@ struct Plan<'a> {
     counter_writes: usize,
     counter_reads: usize,
     counter_comparisons: usize,
+    cell_reads: usize,
     cell_writes: usize,
+    field_cell_writes: usize,
+    field_cell_slot: Option<(String, u8)>,
     optional_cells: usize,
     opaque_cells: usize,
     historic_roots: usize,
@@ -176,6 +179,7 @@ impl Plan<'_> {
             Expr::Boolean { .. }
             | Expr::BytesLiteral { .. }
             | Expr::EnumVariant { .. }
+            | Expr::FieldLiteral { .. }
             | Expr::UnsignedLiteral { .. } => {
                 let (value, ty) =
                     expression_with_calls(expression, &HashMap::new(), &HashMap::new()).ok()?;
@@ -256,6 +260,15 @@ impl Plan<'_> {
                 }
                 let (left, right) = (left.value, right.value);
                 self.bind(syn::parse_quote!(#left == #right), Type::Boolean, steps)
+            }
+            Expr::Add { left, right } if self.field_cell_slot.is_some() => {
+                let left = self.expression(left, scope, steps)?;
+                let right = self.expression(right, scope, steps)?;
+                if left.ty != Type::Field || right.ty != Type::Field {
+                    return None;
+                }
+                let (left, right) = (left.value, right.value);
+                self.bind(syn::parse_quote!(#left + #right), Type::Field, steps)
             }
             Expr::If {
                 condition,
@@ -391,10 +404,14 @@ impl Plan<'_> {
                 let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
                     return None;
                 };
-                if !cell_type(ty) {
+                if !cell_type(ty)
+                    && !(ty == &Type::Field
+                        && self.field_cell_slot.as_ref() == Some(&(field.clone(), *index)))
+                {
                     return None;
                 }
                 let ty = ty.clone();
+                self.cell_reads += 1;
                 if optional_string(&ty) {
                     self.optional_cells += 1;
                 }
@@ -601,7 +618,10 @@ impl Plan<'_> {
                 let LedgerFieldKind::Cell { ty } = &self.field(field, *index)?.declaration else {
                     return None;
                 };
-                if !cell_type(ty) {
+                if !cell_type(ty)
+                    && !(ty == &Type::Field
+                        && self.field_cell_slot.as_ref() == Some(&(field.clone(), *index)))
+                {
                     return None;
                 }
                 let ty = ty.clone();
@@ -613,6 +633,9 @@ impl Plan<'_> {
                 let slot = ident(field).ok()?;
                 steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_write(frame, #value)?;));
                 self.cell_writes += 1;
+                if ty == Type::Field {
+                    self.field_cell_writes += 1;
+                }
                 if ty == Type::OpaqueBytes {
                     self.opaque_cells += 1;
                 }
@@ -876,15 +899,46 @@ pub(super) fn lower<'a>(
                         max: u64::MAX.to_string(),
                     })
         });
+    // A root Field read/modify/write may return an independent Field input.
+    // Keep this admission structural: one root binding establishes the only
+    // eligible Cell slot and the final value names the declared input.
+    let field_cell_slot = match (
+        circuit.parameters.as_slice(),
+        &circuit.result,
+        &circuit.return_value,
+        circuit.actions.as_slice(),
+    ) {
+        (
+            [parameter],
+            Type::Field,
+            StateReturn::Expression {
+                value: Expr::Parameter { name },
+            },
+            [StateAction::Let { bindings, .. }],
+        ) if witnesses.is_empty() && parameter.ty == Type::Field && name == &parameter.name => {
+            match bindings.as_slice() {
+                [
+                    LocalBinding {
+                        name: binding_name,
+                        ty: Type::Field,
+                        value: Expr::CellRead { field, index },
+                    },
+                ] if binding_name != &parameter.name => Some((field.clone(), *index)),
+                _ => None,
+            }
+        }
+        _ => None,
+    };
     if !(circuit.parameters.is_empty()
         || enum_entry
         || opaque_entry
         || spend_entry
-        || counter_entry)
-        || !matches!(
+        || counter_entry
+        || field_cell_slot.is_some())
+        || (!matches!(
             circuit.result,
             Type::Unit | Type::OpaqueString | Type::Boolean
-        )
+        ) && field_cell_slot.is_none())
     {
         return None;
     }
@@ -899,7 +953,10 @@ pub(super) fn lower<'a>(
         counter_writes: 0,
         counter_reads: 0,
         counter_comparisons: 0,
+        cell_reads: 0,
         cell_writes: 0,
+        field_cell_writes: 0,
+        field_cell_slot: field_cell_slot.clone(),
         optional_cells: 0,
         opaque_cells: 0,
         historic_roots: 0,
@@ -1028,12 +1085,28 @@ pub(super) fn lower<'a>(
         && plan.cell_writes == 0
         && plan.historic_roots == 0
         && plan.historic_writes == 0;
+    let field_cell_root = field_cell_slot.is_some()
+        && ordinary
+        && plan.qualified_set_reads == 0
+        && plan.qualified_set_writes == 0
+        && plan.qualified_cell_writes == 0
+        && plan.cell_reads == 1
+        && plan.cell_writes == 1
+        && plan.field_cell_writes == 1
+        && plan.root_observations == 0
+        && plan.tree_writes == 0
+        && plan.set_writes == 0
+        && plan.counter_reads == 0
+        && plan.counter_comparisons == 0
+        && plan.counter_writes == 0
+        && plan.optional_cells == 0;
     (membership
         || cell_lifecycle
         || historic_spend
         || counter_comparison
         || qualified_set_lifecycle
-        || qualified_cell_replacement)
+        || qualified_cell_replacement
+        || field_cell_root)
         .then_some(TypedPlan { steps, result })
 }
 
@@ -1057,7 +1130,10 @@ mod tests {
             counter_writes: 0,
             counter_reads: 0,
             counter_comparisons: 0,
+            cell_reads: 0,
             cell_writes: 0,
+            field_cell_writes: 0,
+            field_cell_slot: None,
             optional_cells: 0,
             opaque_cells: 0,
             historic_roots: 0,
@@ -1129,7 +1205,10 @@ mod tests {
             counter_writes: 0,
             counter_reads: 0,
             counter_comparisons: 0,
+            cell_reads: 0,
             cell_writes: 0,
+            field_cell_writes: 0,
+            field_cell_slot: None,
             optional_cells: 0,
             opaque_cells: 0,
             historic_roots: 0,
@@ -1158,5 +1237,71 @@ mod tests {
                 expected
             );
         }
+    }
+
+    #[test]
+    fn field_cell_root_let_keeps_typed_scope_and_rejects_extra_effects() {
+        fn admitted(value: &serde_json::Value) -> bool {
+            let contract: crate::ir::Contract = serde_json::from_value(value.clone()).unwrap();
+            let ledger = contract
+                .ledger_fields
+                .iter()
+                .map(|field| (field.id.as_str(), field))
+                .collect();
+            let witnesses = contract
+                .witnesses
+                .iter()
+                .map(|witness| (witness.name.as_str(), witness))
+                .collect();
+            let pure = HashMap::new();
+            lower(&contract.stateful_circuits[0], &ledger, &witnesses, &pure).is_some()
+        }
+        let source: serde_json::Value = serde_json::from_str(include_str!(
+            "../../tests/root-let-action-return-schema17-ir.json"
+        ))
+        .unwrap();
+        assert!(admitted(&source));
+
+        let mut wrong_type = source.clone();
+        wrong_type["stateful_circuits"][0]["actions"][0]["bindings"][0]["ty"]["kind"] =
+            "boolean".into();
+        assert!(!admitted(&wrong_type));
+
+        let mut wrong_index = source.clone();
+        wrong_index["stateful_circuits"][0]["actions"][0]["bindings"][0]["value"]["index"] =
+            1.into();
+        assert!(!admitted(&wrong_index));
+
+        let mut wrong_return = source.clone();
+        wrong_return["stateful_circuits"][0]["return_value"]["value"]["name"] = "before".into();
+        assert!(!admitted(&wrong_return));
+
+        let mut shadowed_return = source.clone();
+        shadowed_return["stateful_circuits"][0]["actions"][0]["bindings"][0]["name"] =
+            "echo".into();
+        assert!(!admitted(&shadowed_return));
+
+        let mut extra_read = source.clone();
+        extra_read["stateful_circuits"][0]["actions"][0]["action"]["actions"]
+            .as_array_mut()
+            .unwrap()
+            .push(serde_json::json!({"kind":"let", "bindings":[{
+                "name":"other", "ty":{"kind":"field"},
+                "value":{"kind":"cell_read", "field":"stored", "index":0}
+            }], "action":{"kind":"sequence", "actions":[]}}));
+        assert!(!admitted(&extra_read));
+
+        let mut leaked_local = source.clone();
+        leaked_local["stateful_circuits"][0]["actions"][0]["action"]["actions"]
+            .as_array_mut()
+            .unwrap()
+            .push(serde_json::json!({"kind":"cell_write", "field":"stored",
+                "index":0, "value":{"kind":"parameter", "name":"after"}}));
+        assert!(!admitted(&leaked_local));
+
+        let mut wrong_write_slot = source;
+        wrong_write_slot["stateful_circuits"][0]["actions"][0]["action"]["actions"][0]["action"]
+            ["actions"][0]["index"] = 1.into();
+        assert!(!admitted(&wrong_write_slot));
     }
 }

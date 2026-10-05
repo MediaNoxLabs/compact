@@ -1210,6 +1210,7 @@ def main() -> None:
     parser.add_argument("--witness-composition", action="store_true", help="check unrelated witness composition preserves recording")
     parser.add_argument("--stateful-assert", action="store_true", help="check native stateful assertions and complete original micro-dao Cargo admission")
     parser.add_argument("--wide-add", action="store_true", help="check bounded native wide addition and original-source progress")
+    parser.add_argument("--terminal-lexical-return", action="store_true", help="check terminal lexical recorded returns and optional four strict Dust proofs")
     parser.add_argument("--micro-dao-advance", action="store_true", help="check original microDAO advance recording; optional strict Dust proof")
     parser.add_argument("--micro-dao-reveal", action="store_true", help="check original microDAO reveal recording; optional selective proof")
     parser.add_argument("--micro-dao-token", action="store_true", help="check original microDAO token recording; optional selective proof")
@@ -1290,6 +1291,24 @@ def main() -> None:
             assert original.returncode == 0, original.stderr
             assert (base / "original-dao/contract/lib.rs").is_file()
             print("wide addition admitted; original micro-dao emits native Rust")
+            return
+        if args.terminal_lexical_return:
+            source = ROOT / "examples/rust_backend/terminal_lexical_return_oracle.compact"
+            output = base / "terminal-lexical-return"
+            run(compiler, "--target", "rust", "--rust-require-recording", "--skip-zk", str(source), str(output))
+            info = json.loads((output / "compiler/contract-info.json").read_text())
+            report = json.loads((output / "contract/rust-capabilities.json").read_text())
+            names = {"two", "three", "echo", "nested", "observed"}
+            assert {c["name"] for c in info["circuits"] if c["proof"]} == names
+            assert {c["name"] for c in report["circuits"]} == names
+            assert all(c["proof_required"] and c["recorded"] and c["observed_call"] for c in report["circuits"])
+            run("cargo", "+1.99.0", "check", "--offline", "--manifest-path", str(output / "contract/Cargo.toml"))
+            if args.proof:
+                (output / "keys").mkdir(exist_ok=True)
+                for name in ["two", "three", "nested", "observed"]:
+                    run("zkir", "compile", str(output / f"zkir/{name}.zkir"), str(output / f"keys/{name}.prover"), str(output / f"keys/{name}.verifier"))
+                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--terminal-lexical-return", str(output))
+            print("terminal lexical returns: five proof-required recorded APIs; four new strict Dust proof cases when requested")
             return
         if args.micro_dao_token or args.micro_dao_reveal or args.micro_dao_advance:
             source = ROOT / "test-center/test-contracts/micro-dao.compact"
@@ -1748,6 +1767,8 @@ def main() -> None:
         run(sys.executable, str(Path(__file__).resolve()), "--micro-dao-token",
             *(["--proof"] if args.proof else []))
         run(sys.executable, str(Path(__file__).resolve()), "--micro-dao-reveal",
+            *(["--proof"] if args.proof else []))
+        run(sys.executable, str(Path(__file__).resolve()), "--terminal-lexical-return",
             *(["--proof"] if args.proof else []))
         run(sys.executable, str(Path(__file__).resolve()), "--micro-dao-advance",
             *(["--proof"] if args.proof else []))

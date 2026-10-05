@@ -10256,9 +10256,9 @@ fn typed_cell_lifecycle_retains_only_final_root_scope_and_audits_helpers() {
         .push(StateAction::Sequence {
             actions: vec![action],
         });
-    // A terminal Sequence preserves the native lexical continuation. The
-    // separately bounded recording profile is deliberately unchanged.
-    assert_eq!(available(&nested), [true, false]);
+    // The shared continuation adapter preserves the same terminal lexical
+    // scope as native lowering, without changing this profile's effects.
+    assert_eq!(available(&nested), [true, true]);
     let mut earlier = contract.clone();
     earlier.stateful_circuits[1]
         .actions
@@ -11309,25 +11309,15 @@ fn composite_intents_require_public_queries_and_exact_typed_effect_operands() {
 }
 
 #[test]
-fn terminal_lexical_source_retains_all_native_exports_and_honest_recording_gaps() {
+fn terminal_lexical_source_records_extracted_returns_but_preserves_explicit_scopes() {
     let mut contract: Contract =
         serde_json::from_str(include_str!("terminal-lexical-return-schema20-ir.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
     let output = render_with_capabilities(&contract).unwrap();
     assert_eq!(output.capabilities.circuits.len(), 5);
     for capability in &output.capabilities.circuits {
-        assert_eq!(
-            capability.recorded,
-            capability.name == "echo",
-            "{}",
-            capability.name
-        );
-        assert_eq!(
-            capability.observed_call,
-            capability.name == "echo",
-            "{}",
-            capability.name
-        );
+        assert!(capability.recorded, "{}", capability.name);
+        assert!(capability.observed_call, "{}", capability.name);
     }
     for name in ["two", "three", "echo", "observed", "nested"] {
         assert!(output.source.contains(&format!("pub fn {name}<")));

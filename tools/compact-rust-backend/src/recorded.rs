@@ -8000,6 +8000,15 @@ fn render_recorded_item(
                     )
                 })
                 .or_else(|| {
+                    typed_plan::lower_terminal_returns(
+                        circuit,
+                        ledger_fields,
+                        witnesses,
+                        pure_circuits,
+                        circuits,
+                    )
+                })
+                .or_else(|| {
                     typed_plan::lower_phase_reset(
                         circuit,
                         ledger_fields,
@@ -9147,6 +9156,16 @@ pub(crate) fn render_borrowed_recorded_contract_method(
         args.push(syn::parse_quote!(#arg: #ty));
         call_args.push(arg);
     }
+    // Compare emitted identifiers: Compact `$` normalization and Rust raw
+    // identifiers can make distinct source spellings shadow the circuit name.
+    let spelling = |id: &syn::Ident| id.to_string().trim_start_matches("r#").to_owned();
+    let callee: syn::Expr = if spelling(&name) == "context"
+        || call_args.iter().any(|arg| spelling(arg) == spelling(&name))
+    {
+        syn::parse_quote!(crate::ledger_contract::recorded::#name)
+    } else {
+        syn::parse_quote!(#name)
+    };
     let result = rust_type(&circuit.result)?;
     let method = if uses_witness {
         syn::parse_quote! {
@@ -9156,7 +9175,7 @@ pub(crate) fn render_borrowed_recorded_contract_method(
                 #(#args),*
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, #result>, runtime::CompactError>
             where W: super::TryWitnesses<Private> {
-                #name(context, self.witnesses, #(#call_args),*)
+                #callee(context, self.witnesses, #(#call_args),*)
             }
         }
     } else {
@@ -9166,7 +9185,7 @@ pub(crate) fn render_borrowed_recorded_contract_method(
                 context: runtime::context::CircuitContext<Private>,
                 #(#args),*
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, #result>, runtime::CompactError> {
-                #name(context, #(#call_args),*)
+                #callee(context, #(#call_args),*)
             }
         }
     };

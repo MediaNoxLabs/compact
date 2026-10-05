@@ -21,6 +21,7 @@ use crate::coerce_expression;
 use crate::ir::{KernelClaimKind, ReturnPlan};
 mod field_observations;
 mod phase_reset;
+mod terminal_returns;
 mod unit_actions;
 
 #[derive(Clone)]
@@ -40,6 +41,7 @@ enum CompositeDomain {
     Intents,
     ShieldedReceive,
     FieldObservations,
+    TerminalReturns,
 }
 impl CompositeDomain {
     fn values(self) -> bool {
@@ -801,6 +803,25 @@ impl Plan<'_> {
                 }
             }
             (None, Some(callee)) => {
+                if self.composite_domain == CompositeDomain::TerminalReturns {
+                    let StateReturn::Expression { value } = &callee.return_value else {
+                        return None;
+                    };
+                    if callee.result != Type::Field {
+                        return None;
+                    }
+                    return self.inline_call(
+                        name,
+                        &callee.parameters,
+                        &callee.result,
+                        value,
+                        &callee.actions,
+                        arguments,
+                        scope,
+                        steps,
+                        false,
+                    );
+                }
                 if self.phase_reset {
                     if !phase_reset::helper_signature(callee)
                         || !phase_reset::false_arguments(arguments)
@@ -920,12 +941,16 @@ impl Plan<'_> {
         if scalar {
             self.scalar_body_depth += 1;
         }
-        let value = (|| {
-            for action in actions {
-                self.action(action, &isolated, steps)?;
-            }
-            self.expression(body, &isolated, steps)
-        })();
+        let value = if self.composite_domain == CompositeDomain::TerminalReturns {
+            self.return_plan(&terminal_returns::adapt(actions, body), &isolated, steps)
+        } else {
+            (|| {
+                for action in actions {
+                    self.action(action, &isolated, steps)?;
+                }
+                self.expression(body, &isolated, steps)
+            })()
+        };
         if scalar {
             self.scalar_body_depth -= 1;
             self.scalar_helper_calls += 1;
@@ -2146,6 +2171,16 @@ pub(super) fn lower_shielded_receive<'a>(
         })
 }
 
+pub(super) fn lower_terminal_returns<'a>(
+    circuit: &StatefulCircuit,
+    ledger: &'a HashMap<&'a str, &'a LedgerField>,
+    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
+    pure: &'a HashMap<&'a str, &'a PureCircuit>,
+    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
+) -> Option<TypedPlan> {
+    terminal_returns::lower(circuit, ledger, witnesses, pure, circuits)
+}
+
 pub(super) fn lower_phase_reset<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -2390,24 +2425,20 @@ pub(super) fn lower<'a>(
             )
         })
         .collect();
-    let mut return_scope = scope.clone();
     let mut steps = Vec::new();
-    for (index, action) in circuit.actions.iter().enumerate() {
-        // Only bindings belonging to the final top-level Let enclose the return.
-        // Nested or earlier sibling Lets cannot escape their action scope.
-        if index + 1 == circuit.actions.len()
-            && let StateAction::Let { bindings, action } = action
-        {
-            return_scope = plan.bindings(bindings, &scope, &mut steps)?;
-            plan.action(action, &return_scope, &mut steps)?;
-        } else {
-            plan.action(action, &scope, &mut steps)?;
-        }
-    }
     let result = match &circuit.return_value {
-        StateReturn::Unit if circuit.result == Type::Unit => syn::parse_quote!(()),
+        StateReturn::Unit if circuit.result == Type::Unit => {
+            for action in &circuit.actions {
+                plan.action(action, &scope, &mut steps)?;
+            }
+            syn::parse_quote!(())
+        }
         StateReturn::Expression { value } => {
-            let result = plan.expression(value, &return_scope, &mut steps)?;
+            let result = plan.return_plan(
+                &terminal_returns::adapt(&circuit.actions, value),
+                &scope,
+                &mut steps,
+            )?;
             if result.ty != circuit.result {
                 return None;
             }
@@ -3074,13 +3105,17 @@ mod tests {
         let mut field: crate::ir::Contract = serde_json::from_value(field).unwrap();
         field.schema_version = crate::ir::SCHEMA_VERSION;
         assert!(!admitted(&field, 0));
-        assert!(
-            !crate::render_with_capabilities(&field)
-                .unwrap()
-                .capabilities
-                .circuits[0]
-                .recorded
-        );
+        // The legacy profile still rejects witnesses; the terminal-return
+        // domain now admits this fully typed zero-argument Field witness.
+        let rendered = crate::render_with_capabilities(&field).unwrap();
+        assert!(rendered.capabilities.circuits[0].recorded);
+        let source: String = rendered
+            .source
+            .chars()
+            .filter(|c| !c.is_whitespace())
+            .collect();
+        assert!(source.contains("frame.try_witness_metered"));
+        assert!(source.contains("witnesses.unrelated("));
 
         let mut counters: crate::ir::Contract = serde_json::from_str(include_str!(
             "../../tests/counter-less-than-schema15-ir.json"

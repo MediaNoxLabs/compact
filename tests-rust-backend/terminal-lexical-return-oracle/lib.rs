@@ -255,6 +255,41 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
+        pub fn two<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_plan_0): (_, runtime::Field) =
+                crate::ledger_slots::stored.record_read(frame)?;
+            let __compact_plan_1: runtime::Field = __compact_plan_0;
+            let __compact_plan_2: runtime::Field = runtime::Field::from(1u128);
+            let __compact_plan_3: runtime::Field = __compact_plan_1 + __compact_plan_2;
+            let __compact_plan_4: runtime::Field = __compact_plan_3;
+            let frame = crate::ledger_slots::stored.record_write(frame, __compact_plan_4)?;
+            Ok(frame.finish(__compact_plan_4))
+        }
+        pub fn three<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_plan_0): (_, runtime::Field) =
+                crate::ledger_slots::stored.record_read(frame)?;
+            let __compact_plan_1: runtime::Field = __compact_plan_0;
+            let __compact_plan_2: runtime::Field = runtime::Field::from(1u128);
+            let __compact_plan_3: runtime::Field = __compact_plan_1 + __compact_plan_2;
+            let __compact_plan_4: runtime::Field = __compact_plan_3;
+            let __compact_plan_5: runtime::Field = runtime::Field::from(2u128);
+            let __compact_plan_6: runtime::Field = __compact_plan_4 + __compact_plan_5;
+            let __compact_plan_7: runtime::Field = __compact_plan_6;
+            let frame = crate::ledger_slots::stored.record_write(frame, __compact_plan_7)?;
+            Ok(frame.finish(__compact_plan_7))
+        }
         pub fn echo<Private>(
             context: runtime::context::CircuitContext<Private>,
             __compact_param_0: runtime::Field,
@@ -272,9 +307,114 @@ pub mod ledger_contract {
             let frame = crate::ledger_slots::stored.record_write(frame, __compact_plan_4)?;
             Ok(frame.finish(__compact_param_0))
         }
+        pub fn observed<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: bool,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_plan_0): (_, runtime::Field) =
+                crate::ledger_slots::stored.record_read(frame)?;
+            let __compact_plan_1: runtime::Field = __compact_plan_0;
+            let __compact_plan_2: runtime::Field = __compact_plan_1;
+            let (frame, __compact_plan_3): (_, runtime::Field) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.next_value(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_plan_2,
+                    )
+                })?;
+            let __compact_plan_4: runtime::Field = __compact_plan_3;
+            let (frame, __compact_plan_7): (_, bool) = if __compact_param_0 {
+                let __compact_plan_5: bool = false;
+                (frame, __compact_plan_5)
+            } else {
+                let __compact_plan_6: bool = true;
+                (frame, __compact_plan_6)
+            };
+            if !__compact_plan_7 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "rejected after witness".to_owned(),
+                ));
+            }
+            let __compact_plan_8: runtime::Field = __compact_plan_1 + __compact_plan_4;
+            let __compact_plan_9: runtime::Field = __compact_plan_8;
+            let frame = crate::ledger_slots::stored.record_write(frame, __compact_plan_9)?;
+            Ok(frame.finish(__compact_plan_9))
+        }
+        pub fn nested<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_plan_0): (_, runtime::Field) =
+                crate::ledger_slots::stored.record_read(frame)?;
+            let __compact_plan_1: runtime::Field = __compact_plan_0;
+            let __compact_plan_2: runtime::Field = runtime::Field::from(1u128);
+            let __compact_plan_3: runtime::Field = __compact_plan_1 + __compact_plan_2;
+            let __compact_plan_4: runtime::Field = __compact_plan_3;
+            let frame = crate::ledger_slots::stored.record_write(frame, __compact_plan_4)?;
+            Ok(frame.finish(__compact_plan_4))
+        }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
         impl Contract {
+            pub fn two<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::two(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn two_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.two(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "two", input,
+                ))
+            }
+            pub fn three<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::three(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn three_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.three(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "three", input,
+                ))
+            }
             pub fn echo<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
@@ -299,6 +439,166 @@ pub mod ledger_contract {
                 let recorded = self.echo(observed.circuit_context(private_state), echo)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "echo", input,
+                ))
+            }
+            pub fn nested<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::nested(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn nested_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.nested(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "nested", input,
+                ))
+            }
+        }
+        /// A recording handle with access to the contract's witnesses.
+        pub struct BorrowedContract<'a, W> {
+            pub(super) witnesses: &'a W,
+        }
+        impl<W> BorrowedContract<'_, W> {
+            pub fn two<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                two(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn two_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.two(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "two", input,
+                ))
+            }
+            pub fn three<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                three(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn three_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.three(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "three", input,
+                ))
+            }
+            pub fn echo<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                echo: runtime::Field,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::echo(context, echo)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn echo_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                echo: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(echo);
+                let recorded = self.echo(observed.circuit_context(private_state), echo)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "echo", input,
+                ))
+            }
+            pub fn observed<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                reject: bool,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                observed(context, self.witnesses, reject)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn observed_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                reject: bool,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, runtime::Field>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(reject);
+                let recorded = self.observed(observed.circuit_context(private_state), reject)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "observed", input,
+                ))
+            }
+            pub fn nested<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                nested(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn nested_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.nested(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "nested", input,
                 ))
             }
         }
@@ -365,9 +665,11 @@ pub mod ledger_contract {
         {
             crate::ledger_contract::nested(context)
         }
-        /// Access replayable circuit calls for this contract.
-        pub fn recording(&self) -> &recorded::Contract {
-            &self.recording
+        /// Borrow the contract's witnesses for a replayable circuit call.
+        pub fn recording(&self) -> recorded::BorrowedContract<'_, W> {
+            recorded::BorrowedContract {
+                witnesses: &self.witnesses,
+            }
         }
     }
 }

@@ -1308,3 +1308,49 @@ admission; add `--proof` for selective proof/application checks. Existing keys c
 be reused with `compact-rust-proof-smoke --field-observation <proof-output>`.
 Set `MIDNIGHT_LEDGER_TEST_STATIC_DIR` to the pinned upstream static fixtures for
 the Night-backed Dust funding helper.
+
+### Terminal lexical return recording (ADR202)
+
+The existing terminal-return fixture now records all five exports. Previously
+`two`, `three`, `nested`, and `observed` had native methods but no recorded call
+preparation; `echo` was the recorded control. The witnessed handle now supports:
+
+```rust
+let recorded = contract.recording().two(context)?;
+let after = recorded.execution.result;
+let call = contract.recording().observed_call(&observed, private_state, false)?;
+let prepared = call.prepare(verifier, communication_randomness)?;
+```
+
+A structural adapter attaches extracted return expressions only to the terminal
+Sequence/Let continuation. The shared typed planner evaluates that ReturnPlan;
+it retains earlier sibling, branch, and caller/helper scope isolation. Existing
+explicit ReturnPlans retain their own scopes. The bounded new domain audits one
+Field Cell, Field/Boolean values, Field witnesses, assertions, and acyclic typed
+Field-returning actionful helpers. It requires read and write effects, audits
+unused bindings and both branches, and excludes other ADTs, Kernel and Zswap
+operations. No source identity, exact operation count, runtime, ABI48 or schema20
+change is needed. Equivalent terminal nesting also works in already admitted
+profiles without changing their value/effect domains.
+
+Recording the witnessed export exposed a generated borrowed facade collision:
+`echo(context, echo)` resolved to its argument. Calls shadowed by an emitted
+parameter identifier or the fixed `context` local now use
+`crate::ledger_contract::recorded::<name>(...)`; normalization and raw Rust
+identifiers are covered too. Other facade output remains unchanged.
+
+All 13 original TypeScript/native scenarios also check recorded results, complete
+state/effects, gas, witness order, private output and successful replay. Rejection
+after the witness and zero gas before it remain failures; failed Rust calls
+consume their context and do not expose partial state. Four original-key proofs
+(`two`, `three`, `nested`, `observed`) verify the returned Field, reject changed
+bindings, and apply under default ledger strictness using separate Night-backed
+Dust. Prior Cell state is explicitly seeded by native calls, not a proved prior
+transaction history. The original `echo` behavior and `let_return_oracle` remain
+controls; the latter's generated read now uses the shared planner.
+
+Run `check_compactc_target.py --terminal-lexical-return` for the compiler
+contract-info cross-tab and generated Cargo check; add `--proof` for four strict
+proof cases. Reuse keys with `compact-rust-proof-smoke --terminal-lexical-return
+<proof-output>` and set `MIDNIGHT_LEDGER_TEST_STATIC_DIR` to the upstream static
+fixtures for Dust funding.

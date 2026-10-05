@@ -7,31 +7,11 @@ use midnight_onchain_state::state::{
     ContractMaintenanceAuthority, ContractOperation, ContractState, EntryPointBuf,
 };
 use midnight_storage::storage::HashMap;
-use runtime::context::{ConstructorContext, WitnessContext};
+#[path = "../support/terminal.rs"]
+mod support;
 use serde_json::{Value, json};
-use std::cell::RefCell;
+use support::Witnesses;
 
-struct Witnesses {
-    delta: u64,
-    seed: u64,
-    trace: RefCell<Vec<Value>>,
-}
-impl c::Witnesses<Vec<String>> for Witnesses {
-    fn next_value(
-        &self,
-        ctx: WitnessContext<'_, Vec<String>, c::LedgerView<'_>>,
-        seed: runtime::Field,
-    ) -> (Vec<String>, runtime::Field) {
-        assert_eq!(seed, runtime::Field::from(self.seed));
-        let seed = self.seed.to_string();
-        self.trace
-            .borrow_mut()
-            .push(json!({"seed":seed,"prior":ctx.private_state}));
-        let mut private = ctx.private_state.clone();
-        private.push(seed);
-        (private, runtime::Field::from(self.delta))
-    }
-}
 fn state_hex(state: runtime::ledger::StateValue<runtime::ledger::DefaultDB>) -> String {
     let operations = ["two", "three", "echo", "observed", "nested"]
         .into_iter()
@@ -54,17 +34,11 @@ fn terminal_bindings_match_typescript_results_state_gas_and_private_order() {
     .unwrap();
     assert_eq!(rows.as_array().unwrap().len(), 13);
     for row in rows.as_array().unwrap() {
-        let w = Witnesses {
-            seed: row["seed"].as_u64().unwrap(),
-            delta: row["delta"].as_u64().unwrap(),
-            trace: RefCell::new(vec![]),
-        };
-        let mut ctx = c::initial_state(ConstructorContext::new(Vec::<String>::new()))
-            .unwrap()
-            .into_circuit_context(runtime::ledger::ContractAddress::default());
-        for _ in 0..row["seed"].as_u64().unwrap() {
-            ctx = c::echo(ctx, runtime::Field::from(0)).unwrap().context;
-        }
+        let w = Witnesses::new(
+            row["seed"].as_u64().unwrap(),
+            row["delta"].as_u64().unwrap(),
+        );
+        let mut ctx = support::seeded(row["seed"].as_u64().unwrap());
         assert_eq!(state_hex(ctx.query.state.get_ref().clone()), row["before"]);
         if row["zeroGas"] == true {
             ctx.gas_limit = Some(Default::default());
@@ -77,6 +51,46 @@ fn terminal_bindings_match_typescript_results_state_gas_and_private_order() {
             "observed" => c::observed(ctx, &w, row["reject"].as_bool().unwrap()),
             _ => unreachable!(),
         };
+        let wr = Witnesses::new(
+            row["seed"].as_u64().unwrap(),
+            row["delta"].as_u64().unwrap(),
+        );
+        let mut ctx = support::seeded(row["seed"].as_u64().unwrap());
+        if row["zeroGas"] == true {
+            ctx.gas_limit = Some(Default::default());
+        }
+        let recorded = match row["name"].as_str().unwrap() {
+            "two" => c::recorded::two(ctx),
+            "three" => c::recorded::three(ctx),
+            "echo" => c::recorded::echo(ctx, runtime::Field::from(91)),
+            "nested" => c::recorded::nested(ctx),
+            "observed" => c::recorded::observed(ctx, &wr, row["reject"].as_bool().unwrap()),
+            _ => unreachable!(),
+        };
+        assert_eq!(*w.trace.borrow(), *wr.trace.borrow());
+        match (&result, &recorded) {
+            (Err(n), Err(r)) => assert_eq!(n, r),
+            (Ok(n), Ok(r)) => {
+                assert_eq!(n.result, r.execution.result);
+                assert_eq!(n.context.query.state, r.execution.context.query.state);
+                assert_eq!(n.context.query.effects, r.execution.context.query.effects);
+                assert_eq!(n.context.private_state, r.execution.context.private_state);
+                assert_eq!(
+                    n.private_transcript_outputs,
+                    r.execution.private_transcript_outputs
+                );
+                assert_eq!(n.gas_cost, r.execution.gas_cost);
+                assert_eq!(json!(r.public.verify_ops()), row["publicTranscript"]);
+                let replay = r
+                    .public
+                    .initial()
+                    .query(r.public.verify_ops(), None, &r.execution.context.cost_model)
+                    .unwrap();
+                assert_eq!(replay.context.state, r.execution.context.query.state);
+                assert_eq!(replay.context.effects, r.execution.context.query.effects);
+            }
+            _ => panic!("native/recorded mismatch: {row}"),
+        }
         assert_eq!(json!(*w.trace.borrow()), row["trace"]);
         if let Some(error) = row.get("error") {
             let err = match result {

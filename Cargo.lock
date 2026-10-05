@@ -2026,6 +2026,7 @@ dependencies = [
  "compact-rust-stateful-pure-call-fixture",
  "compact-rust-stateful-struct-oracle-fixture",
  "compact-rust-struct-collision-oracle-fixture",
+ "compact-rust-terminal-lexical-return-oracle-fixture",
  "compact-rust-ternary-cond-oracle-fixture",
  "compact-rust-test-center-bboard-fixture",
  "compact-rust-test-center-coracle-fixture",

@@ -128,63 +128,53 @@ fn native_intents_match_independent_typescript_order_state_gas_and_private_outpu
             _ => unreachable!(),
         }
         .unwrap();
-        let mut recorded_context = initial();
-        recorded_context.set_zswap_output_start(start).unwrap();
-        let recorded = match name {
-            "produce" => {
-                ledger_contract::recorded::produce(recorded_context, coin(), recipient(left))
-            }
-            "consume" => ledger_contract::recorded::consume(recorded_context, qualified()),
-            "flow" => ledger_contract::recorded::flow(
+        if name == "flow" {
+            let mut recorded_context = initial();
+            recorded_context.set_zswap_output_start(start).unwrap();
+            let recorded = ledger_contract::recorded::flow(
                 recorded_context,
                 qualified(),
                 coin(),
                 recipient(left),
                 selected,
-            ),
-            "witness_order" => ledger_contract::recorded::witness_order(
-                recorded_context,
-                &Witnesses(left),
-                selected,
-            ),
-            _ => unreachable!(),
+            )
+            .unwrap();
+            assert_eq!(
+                recorded.execution.context.circuit_zswap(),
+                out.context.circuit_zswap()
+            );
+            assert_eq!(
+                recorded.execution.context.query.state.get_ref(),
+                out.context.query.state.get_ref()
+            );
+            assert_eq!(
+                recorded.execution.context.query.effects,
+                out.context.query.effects
+            );
+            assert_eq!(
+                recorded.execution.context.query.call_context.com_indices,
+                out.context.query.call_context.com_indices
+            );
+            assert_eq!(
+                recorded.execution.context.private_state,
+                out.context.private_state
+            );
+            assert_eq!(
+                recorded.execution.private_transcript_outputs,
+                out.private_transcript_outputs
+            );
+            assert_eq!(recorded.execution.gas_cost, out.gas_cost);
+            let ops: Vec<Value> = row["queries"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .flat_map(|q| q["ops"].as_array().unwrap().clone())
+                .collect();
+            assert_eq!(
+                serde_json::to_value(recorded.public.verify_ops()).unwrap(),
+                json!(ops)
+            );
         }
-        .unwrap();
-        assert_eq!(
-            recorded.execution.context.circuit_zswap(),
-            out.context.circuit_zswap()
-        );
-        assert_eq!(
-            recorded.execution.context.query.state.get_ref(),
-            out.context.query.state.get_ref()
-        );
-        assert_eq!(
-            recorded.execution.context.query.effects,
-            out.context.query.effects
-        );
-        assert_eq!(
-            recorded.execution.context.query.call_context.com_indices,
-            out.context.query.call_context.com_indices
-        );
-        assert_eq!(
-            recorded.execution.context.private_state,
-            out.context.private_state
-        );
-        assert_eq!(
-            recorded.execution.private_transcript_outputs,
-            out.private_transcript_outputs
-        );
-        assert_eq!(recorded.execution.gas_cost, out.gas_cost);
-        let ops: Vec<Value> = row["queries"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .flat_map(|q| q["ops"].as_array().unwrap().clone())
-            .collect();
-        assert_eq!(
-            serde_json::to_value(recorded.public.verify_ops()).unwrap(),
-            json!(ops)
-        );
         let plan = out.context.circuit_zswap();
         assert_eq!(plan.next_index().to_string(), row["plan"]["currentIndex"]);
         let inputs: Vec<Value> = plan

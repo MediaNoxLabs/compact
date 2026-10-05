@@ -10580,18 +10580,43 @@ fn native_zswap_intents_validate_types_and_record_bounded_unit_helpers() {
         serde_json::from_str(include_str!("native-zswap-intents-schema18-ir.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
     let rendered = render_with_capabilities(&contract).unwrap();
-    for name in ["produce", "consume", "flow", "witness_order"] {
+    for name in ["produce", "consume", "flow", "witness_order", "read_coin"] {
         let circuit = rendered
             .capabilities
             .circuits
             .iter()
             .find(|c| c.name == name)
             .unwrap();
-        assert!(circuit.recorded && circuit.observed_call);
+        let proof_required = matches!(name, "flow" | "read_coin");
+        assert_eq!(circuit.recorded, proof_required, "{name}");
+        assert_eq!(circuit.observed_call, proof_required, "{name}");
     }
     assert!(rendered.source.contains(".create_zswap_output("));
     assert!(rendered.source.contains(".create_zswap_input("));
     assert!(!rendered.source.contains(".call_local("));
+    // Removing the only public query leaves input/output intents, including
+    // the inlined pair helper, but cannot make a proof API by itself.
+    let mut intent_only = contract.clone();
+    let flow = intent_only
+        .stateful_circuits
+        .iter_mut()
+        .find(|c| c.name == "flow")
+        .unwrap();
+    let StateAction::If { then, .. } = &mut flow.actions[1] else {
+        panic!("expected branch")
+    };
+    let StateAction::Sequence { actions } = then.as_mut() else {
+        panic!("expected sequence")
+    };
+    actions.retain(|action| !matches!(action, StateAction::CellWriteCoin { .. }));
+    let native_only = render_with_capabilities(&intent_only).unwrap();
+    let flow = native_only
+        .capabilities
+        .circuits
+        .iter()
+        .find(|c| c.name == "flow")
+        .unwrap();
+    assert!(!flow.recorded && !flow.observed_call);
     for mode in 0..3 {
         let mut wrong = contract.clone();
         let name = if mode == 0 { "consume" } else { "produce" };

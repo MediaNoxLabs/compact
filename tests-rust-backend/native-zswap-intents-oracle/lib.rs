@@ -426,43 +426,6 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
-        pub fn produce<Private>(
-            context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: crate::types::ShieldedCoinInfo,
-            __compact_param_1: crate::types::Either,
-        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
-        {
-            let frame = runtime::recording::RecordingFrame::new(context);
-            let frame = frame.create_zswap_output(
-                runtime::ledger::coin_info_from_compact(
-                    __compact_param_0.nonce,
-                    __compact_param_0.color,
-                    __compact_param_0.value.value(),
-                ),
-                runtime::ledger::coin_recipient_from_compact(
-                    __compact_param_1.is_left,
-                    __compact_param_1.left.bytes,
-                    __compact_param_1.right.bytes,
-                ),
-            )?;
-            Ok(frame.finish(()))
-        }
-        pub fn consume<Private>(
-            context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: crate::types::QualifiedShieldedCoinInfo,
-        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
-        {
-            let frame = runtime::recording::RecordingFrame::new(context);
-            let frame = frame.create_zswap_input(
-                runtime::ledger::coin_info_from_compact(
-                    __compact_param_0.nonce,
-                    __compact_param_0.color,
-                    __compact_param_0.value.value(),
-                )
-                .qualify(__compact_param_0.mt_index.value() as u64),
-            );
-            Ok(frame.finish(()))
-        }
         pub fn flow<Private>(
             context: runtime::context::CircuitContext<Private>,
             __compact_param_0: crate::types::QualifiedShieldedCoinInfo,
@@ -530,50 +493,6 @@ pub mod ledger_contract {
             };
             Ok(frame.finish(()))
         }
-        pub fn witness_order<Private, W: super::TryWitnesses<Private>>(
-            context: runtime::context::CircuitContext<Private>,
-            witnesses: &W,
-            __compact_param_0: bool,
-        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
-        {
-            let frame = runtime::recording::RecordingFrame::new(context);
-            #[allow(
-                clippy::let_and_return,
-                reason = "branch frames preserve Kernel effect order"
-            )]
-            let frame = if __compact_param_0 {
-                let (frame, __compact_zswap_0): (_, crate::types::ShieldedCoinInfo) = frame
-                    .try_witness_metered(|context, meter| {
-                        witnesses.next_coin(context.witness_context_with(super::LedgerView {
-                            state: context.query.state.get_ref(),
-                            meter,
-                        }))
-                    })?;
-                let (frame, __compact_zswap_1): (_, crate::types::Either) = frame
-                    .try_witness_metered(|context, meter| {
-                        witnesses.next_recipient(context.witness_context_with(super::LedgerView {
-                            state: context.query.state.get_ref(),
-                            meter,
-                        }))
-                    })?;
-                let frame = frame.create_zswap_output(
-                    runtime::ledger::coin_info_from_compact(
-                        __compact_zswap_0.nonce,
-                        __compact_zswap_0.color,
-                        __compact_zswap_0.value.value(),
-                    ),
-                    runtime::ledger::coin_recipient_from_compact(
-                        __compact_zswap_1.is_left,
-                        __compact_zswap_1.left.bytes,
-                        __compact_zswap_1.right.bytes,
-                    ),
-                )?;
-                frame
-            } else {
-                frame
-            };
-            Ok(frame.finish(()))
-        }
         pub fn read_coin<Private>(
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<
@@ -591,57 +510,6 @@ pub mod ledger_contract {
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
         impl Contract {
-            pub fn produce<Private>(
-                &self,
-                context: runtime::context::CircuitContext<Private>,
-                coin: crate::types::ShieldedCoinInfo,
-                recipient: crate::types::Either,
-            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
-            {
-                crate::ledger_contract::recorded::produce(context, coin, recipient)
-            }
-            #[cfg(feature = "ledger-transaction")]
-            pub fn produce_call<'observed, Private>(
-                &self,
-                observed: &'observed runtime::transaction::ObservedContractState,
-                private_state: Private,
-                coin: crate::types::ShieldedCoinInfo,
-                recipient: crate::types::Either,
-            ) -> Result<
-                runtime::transaction::RecordedCall<'observed, Private, ()>,
-                runtime::CompactError,
-            > {
-                let input = runtime::fab::AlignedValue::from(((coin).clone(), (recipient).clone()));
-                let recorded =
-                    self.produce(observed.circuit_context(private_state), coin, recipient)?;
-                Ok(runtime::transaction::RecordedCall::new(
-                    observed, recorded, "produce", input,
-                ))
-            }
-            pub fn consume<Private>(
-                &self,
-                context: runtime::context::CircuitContext<Private>,
-                coin: crate::types::QualifiedShieldedCoinInfo,
-            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
-            {
-                crate::ledger_contract::recorded::consume(context, coin)
-            }
-            #[cfg(feature = "ledger-transaction")]
-            pub fn consume_call<'observed, Private>(
-                &self,
-                observed: &'observed runtime::transaction::ObservedContractState,
-                private_state: Private,
-                coin: crate::types::QualifiedShieldedCoinInfo,
-            ) -> Result<
-                runtime::transaction::RecordedCall<'observed, Private, ()>,
-                runtime::CompactError,
-            > {
-                let input = runtime::fab::AlignedValue::from((coin).clone());
-                let recorded = self.consume(observed.circuit_context(private_state), coin)?;
-                Ok(runtime::transaction::RecordedCall::new(
-                    observed, recorded, "consume", input,
-                ))
-            }
             pub fn flow<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
@@ -700,171 +568,6 @@ pub mod ledger_contract {
                 runtime::CompactError,
             > {
                 crate::ledger_contract::recorded::read_coin(context)
-            }
-            #[cfg(feature = "ledger-transaction")]
-            pub fn read_coin_call<'observed, Private>(
-                &self,
-                observed: &'observed runtime::transaction::ObservedContractState,
-                private_state: Private,
-            ) -> Result<
-                runtime::transaction::RecordedCall<
-                    'observed,
-                    Private,
-                    crate::types::QualifiedShieldedCoinInfo,
-                >,
-                runtime::CompactError,
-            > {
-                let input = runtime::fab::AlignedValue::from(());
-                let recorded = self.read_coin(observed.circuit_context(private_state))?;
-                Ok(runtime::transaction::RecordedCall::new(
-                    observed,
-                    recorded,
-                    "read_coin",
-                    input,
-                ))
-            }
-        }
-        /// A recording handle with access to the contract's witnesses.
-        pub struct BorrowedContract<'a, W> {
-            pub(super) witnesses: &'a W,
-        }
-        impl<W> BorrowedContract<'_, W> {
-            pub fn produce<Private>(
-                &self,
-                context: runtime::context::CircuitContext<Private>,
-                coin: crate::types::ShieldedCoinInfo,
-                recipient: crate::types::Either,
-            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
-            {
-                produce(context, coin, recipient)
-            }
-            #[cfg(feature = "ledger-transaction")]
-            pub fn produce_call<'observed, Private>(
-                &self,
-                observed: &'observed runtime::transaction::ObservedContractState,
-                private_state: Private,
-                coin: crate::types::ShieldedCoinInfo,
-                recipient: crate::types::Either,
-            ) -> Result<
-                runtime::transaction::RecordedCall<'observed, Private, ()>,
-                runtime::CompactError,
-            > {
-                let input = runtime::fab::AlignedValue::from(((coin).clone(), (recipient).clone()));
-                let recorded =
-                    self.produce(observed.circuit_context(private_state), coin, recipient)?;
-                Ok(runtime::transaction::RecordedCall::new(
-                    observed, recorded, "produce", input,
-                ))
-            }
-            pub fn consume<Private>(
-                &self,
-                context: runtime::context::CircuitContext<Private>,
-                coin: crate::types::QualifiedShieldedCoinInfo,
-            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
-            {
-                consume(context, coin)
-            }
-            #[cfg(feature = "ledger-transaction")]
-            pub fn consume_call<'observed, Private>(
-                &self,
-                observed: &'observed runtime::transaction::ObservedContractState,
-                private_state: Private,
-                coin: crate::types::QualifiedShieldedCoinInfo,
-            ) -> Result<
-                runtime::transaction::RecordedCall<'observed, Private, ()>,
-                runtime::CompactError,
-            > {
-                let input = runtime::fab::AlignedValue::from((coin).clone());
-                let recorded = self.consume(observed.circuit_context(private_state), coin)?;
-                Ok(runtime::transaction::RecordedCall::new(
-                    observed, recorded, "consume", input,
-                ))
-            }
-            pub fn flow<Private>(
-                &self,
-                context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: crate::types::QualifiedShieldedCoinInfo,
-                coin: crate::types::ShieldedCoinInfo,
-                recipient: crate::types::Either,
-                selected: bool,
-            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
-            {
-                flow(context, __compact_param_0, coin, recipient, selected)
-            }
-            #[cfg(feature = "ledger-transaction")]
-            pub fn flow_call<'observed, Private>(
-                &self,
-                observed: &'observed runtime::transaction::ObservedContractState,
-                private_state: Private,
-                __compact_param_0: crate::types::QualifiedShieldedCoinInfo,
-                coin: crate::types::ShieldedCoinInfo,
-                recipient: crate::types::Either,
-                selected: bool,
-            ) -> Result<
-                runtime::transaction::RecordedCall<'observed, Private, ()>,
-                runtime::CompactError,
-            > {
-                let input = runtime::fab::AlignedValue::concat(&[
-                    runtime::fab::AlignedValue::from((__compact_param_0).clone()),
-                    runtime::fab::AlignedValue::from((coin).clone()),
-                    runtime::fab::AlignedValue::from((recipient).clone()),
-                    runtime::fab::AlignedValue::from(selected),
-                ]);
-                let recorded = self.flow(
-                    observed.circuit_context(private_state),
-                    __compact_param_0,
-                    coin,
-                    recipient,
-                    selected,
-                )?;
-                Ok(runtime::transaction::RecordedCall::new(
-                    observed, recorded, "flow", input,
-                ))
-            }
-            pub fn witness_order<Private>(
-                &self,
-                context: runtime::context::CircuitContext<Private>,
-                selected: bool,
-            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
-            where
-                W: super::TryWitnesses<Private>,
-            {
-                witness_order(context, self.witnesses, selected)
-            }
-            #[cfg(feature = "ledger-transaction")]
-            pub fn witness_order_call<'observed, Private>(
-                &self,
-                observed: &'observed runtime::transaction::ObservedContractState,
-                private_state: Private,
-                selected: bool,
-            ) -> Result<
-                runtime::transaction::RecordedCall<'observed, Private, ()>,
-                runtime::CompactError,
-            >
-            where
-                W: super::TryWitnesses<Private>,
-            {
-                let input = runtime::fab::AlignedValue::from(selected);
-                let recorded =
-                    self.witness_order(observed.circuit_context(private_state), selected)?;
-                Ok(runtime::transaction::RecordedCall::new(
-                    observed,
-                    recorded,
-                    "witness_order",
-                    input,
-                ))
-            }
-            pub fn read_coin<Private>(
-                &self,
-                context: runtime::context::CircuitContext<Private>,
-            ) -> Result<
-                runtime::recording::RecordedCircuitResult<
-                    Private,
-                    crate::types::QualifiedShieldedCoinInfo,
-                >,
-                runtime::CompactError,
-            > {
-                read_coin(context)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn read_coin_call<'observed, Private>(
@@ -957,11 +660,9 @@ pub mod ledger_contract {
         > {
             crate::ledger_contract::read_coin(context)
         }
-        /// Borrow the contract's witnesses for a replayable circuit call.
-        pub fn recording(&self) -> recorded::BorrowedContract<'_, W> {
-            recorded::BorrowedContract {
-                witnesses: &self.witnesses,
-            }
+        /// Access replayable circuit calls for this contract.
+        pub fn recording(&self) -> &recorded::Contract {
+            &self.recording
         }
     }
 }

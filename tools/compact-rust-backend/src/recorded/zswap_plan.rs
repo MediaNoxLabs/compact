@@ -29,6 +29,7 @@ struct ZswapPlan<'a> {
     witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
     next: usize,
     effects: usize,
+    public_queries: usize,
     fields: &'a HashMap<&'a str, &'a LedgerField>,
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
     active: HashSet<String>,
@@ -116,6 +117,7 @@ impl ZswapPlan<'_> {
                 self.effects += 1;
             }
             Expr::KernelClaim { claim, value } => {
+                self.public_queries += 1;
                 let value = self.value(value, scope, steps)?;
                 if value.ty != (Type::Bytes { length: 32 }) {
                     return None;
@@ -135,6 +137,7 @@ impl ZswapPlan<'_> {
                 });
             }
             Expr::KernelMintShielded { domain, amount } => {
+                self.public_queries += 1;
                 // Materialize domain before evaluating amount's witness.
                 let domain = self.value(domain, scope, steps)?;
                 if domain.ty != (Type::Bytes { length: 32 }) {
@@ -173,6 +176,7 @@ impl ZswapPlan<'_> {
                 coin,
                 recipient,
             } => {
+                self.public_queries += 1;
                 let declaration = *self.fields.get(field.as_str())?;
                 if declaration.index != *index {
                     return None;
@@ -323,6 +327,7 @@ pub(super) fn lower<'a>(
         witnesses,
         next: 0,
         effects: 0,
+        public_queries: 0,
         fields,
         circuits,
         active: HashSet::from([circuit.name.clone()]),
@@ -336,7 +341,10 @@ pub(super) fn lower<'a>(
         StateReturn::Expression { value } => plan.effect(value, &scope, &mut steps)?,
         _ => return None,
     }
-    (plan.effects > 0).then_some(typed_plan::TypedPlan {
+    // Intent-only exports have no public query and are not proof-required.
+    // A query in either branch admits the circuit; an empty selected branch
+    // still reaches the existing EmptyTranscript preparation boundary.
+    (plan.effects > 0 && plan.public_queries > 0).then_some(typed_plan::TypedPlan {
         steps,
         result: syn::parse_quote!(()),
     })

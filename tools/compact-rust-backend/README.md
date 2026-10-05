@@ -1076,8 +1076,11 @@ The original `flow(true)` deliberately creates two identical output intents, the
 writes the last provisional index. At start7, native/TS recording retains cursor9
 and qualified index8. Pinned ledger-v8 8.0.3 rejects duplicate offer merge; a
 normalized singleton actually allocates index7/cursor8. Neither indices nor
-intents are rewritten. The original has nine-case execution/recording parity and
-exact bound/unbound/duplicate rejection evidence. Its false branch retains
+intents are rewritten. The original retains nine-case native execution parity; its three `flow` cases
+also have recorded parity and exact bound/unbound/duplicate rejection evidence.
+Compiler contract-info marks `produce`, `consume` and `witness_order` nonproof: they
+remain native-only. Recording requires a structurally present public query, such
+as the Cell write in `flow`; `read_coin` remains proof-required and recorded. Its false branch retains
 `EmptyTranscript` and has no call-proof claim.
 
 The separate `zswap_transfer_oracle` uses one distinct output with explicit Kernel

@@ -220,8 +220,9 @@ def check_proof_capabilities(compactc: str, directory: Path) -> list[str]:
     source.write_text(
         "import CompactStandardLibrary;\n"
         "export ledger value: Field;\n"
-        "export pure circuit square(x: Field): Field { return x * x; }\n"
-        "export circuit write(input: Field): [] { value = disclose(square(input)); }\n"
+        "pure circuit sumVec(v: Vector<2, Field>): Field { "
+        "return transientHash<Vector<2, Field>>(v); }\n"
+        "export circuit write(input: Vector<2, Field>): [] { value = disclose(sumVec(input)); }\n"
     )
     output = directory / "pure-call-output"
 

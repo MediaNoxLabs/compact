@@ -1389,6 +1389,39 @@ pub mod ledger_contract {
             let (frame, _) = __compact_recorded_body_recordWrite(frame, witnesses)?;
             Ok(frame.finish(()))
         }
+        pub fn removeRecord<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::OpaqueString,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_opaque_key_0: runtime::OpaqueString =
+                (__compact_param_0).clone();
+            let (frame, _) = __compact_recorded_body_assertWritable(frame)?;
+            let (frame, __compact_recorded_member_1): (_, bool) = crate::ledger_slots::records
+                .record_member(frame, (__compact_recorded_opaque_key_0).clone())?;
+            if !(__compact_recorded_member_1) {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "record does not exist".to_owned(),
+                ));
+            }
+            let __compact_recorded_key_2 = (__compact_recorded_opaque_key_0).clone();
+            let (frame, __compact_recorded_member_3): (_, bool) =
+                crate::ledger_slots::watchList.record_member(frame, __compact_recorded_key_2)?;
+            let __compact_recorded_conditional_bool_4: bool = !(__compact_recorded_member_3);
+            if !(__compact_recorded_conditional_bool_4) {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "record is still watched".to_owned(),
+                ));
+            }
+            let frame = crate::ledger_slots::records
+                .record_remove(frame, (__compact_recorded_opaque_key_0).clone())?;
+            let frame = crate::ledger_slots::retiredKeys
+                .record_insert(frame, (__compact_recorded_opaque_key_0).clone())?;
+            let (frame, _) = __compact_recorded_body_recordWrite(frame, witnesses)?;
+            Ok(frame.finish(()))
+        }
         pub fn tag<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
@@ -1480,6 +1513,39 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "setCustodian",
+                    input,
+                ))
+            }
+            pub fn removeRecord<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                recordId: runtime::OpaqueString,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                removeRecord(context, self.witnesses, recordId)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn removeRecord_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                recordId: runtime::OpaqueString,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from((recordId).clone());
+                let recorded =
+                    self.removeRecord(observed.circuit_context(private_state), recordId)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "removeRecord",
                     input,
                 ))
             }

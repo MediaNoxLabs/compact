@@ -1,0 +1,1535 @@
+{
+  "preRemoveHex": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a95010008030404000401000c40200104080401040c0801040021018260019d34c9b9cc9b65010a692175688fbe7d0c83b2f9f0f06cfe786be4a760b9db12600111a9c750946c5c776cf9c8761b36efde1169edcc29d1c6d7b95582dc9672b04bc24141041404010418080104002101826001e223c59d8cefb9e52f762202ef75ee50ee02a32c49a609dc2cf7edc6af1627306001c6bd7b7db5697aab8a50b8a0e5591aef3250b5f73ca00abc52d80c8d79185032c24141042004010424080104000400402c10101c282c2c2c2c2c2c2c2c2c2c2c0802100804300804140434040300505161737365742d72656769737472793a76332001043c0401044008010400184400f153650804480401044c080104001443805101080454040104580801040008010104600401046408010400084001046c040104700801040008010804780401047c08010400244761737365742d3140004086404040400140c620014020010801080488040108848c000490080104049490030440808a9d85b8bc30200d96d403d3bc097d8267c791c3ec8e4506bfefada9d142546504980402049c080104042c040204a4080104402c4450505c8068748080a0a8a8a8a82c080238080cac08043c04b0040304b408010404b81403040104100838bc08040804c0040304c40004c808010404ccd9010304e2c501c3ec8e4506bfefada9d142546504010801040401000801244761737365742d31400001040104014086404040400140c6200140200108010800010801040401040204010400000108010404010402040104000001080104040104020401040000010801040401040204010400000104000004d015020304ff0102400f1536508000108010404010401040114438051010800010801040401040104010801080001080104040104010401080101000108010404010401040108400100010801040401040104010801080001080104040104010401080108000108010404010402040190030440808a9d85b8bc30200d96d403d3bc097d8267c791004d415020304ff01020001040000010400000104000001040000010400000104000001140304010410040108010404010403040108043c0801040104010c4020010001080238400104000001080104040104010401505161737365742d72656769737472793a763320010001080104040104010401184400f15365080001080104040104010401184004d815020304ff0102b36efde1169edcc29d1c6d7b95582dc9672b04bc2414100010801040401040104012101826001e223c59d8cefb9e52f762202ef75ee50ee02a32c49a609dc2cf7edc6af1627306001c6bd7b7db5697aab8a50b8a0e5591aef3250b5f73ca00abc52d80c8d79185032c241410001040000010400000104000001040000010400004dc15020304ff0102010403040108040808010403040108041408010401040108030400010802104001040000010801040401040104010c40200100010801040401040104010c402001000108010404010401040121018260019d34c9b9cc9b65010a692175688fbe7d0c83b2f9f0f06cfe786be4a760b9db12600111a9c750946c5c776cf9c87610003430736574437573746f6469616e08e42c0004e808010404ec9003043f80bcc9c0b262ddde0851100379df2d93a40812fa1b9c492bd652ab178aa16ee9600028247365745265636f726408f42c0004f808010404fc9003043f80a2c0f63e29a9003abdf0ba70b57d49b11190bd9bee20a36a4a9fd8761b3e0c8000100c7461670805012c00040901080104040d018c03043e7c4ff4aa58de47ee2bfdd4f0ea994106981afa7ac45e3d33e43ce6ee73b9400e00403c736574437573746f64794772616e740815012c00041901080104041d018c03043e7cb1e09435b43827e24952a9c22f6882a244135f92dae823a3fa7b6dddf5c663402c2c11012c2c2c2c2c2c2c2c21012c2c2c2c080208001814636c6f73650829012c00042d010801040431019003043f801a9379a4ea5ff79c1127e267225479fdebf1dd8e89e93b7486befac40e3fe2200054506173736572744772616e744566666563746976650839012c00043d010801040441018c03043e7c616d554fac36afa73ebd2d2e9491a392ede2ca8ce68c7fababe093cc865bd900605c61737365727453746f7265645265636f726446726573680849012c00044d010801040451018c03043e7cfd7d49eca0febca608d017b7c62b1fe2d13f840f4750968ad8c3e3aaef3c82402c2c2c2c2c45012c2c2c2c2c2c2c2c2c550108020800383461636365707449664672657368085d012c000461010801040465019003043f8059997f78bbeaa07fe742376cd310d10f0ec98789e750423e5af027fc7afcded00024207365745761746368086d012c000471010801040475019003043f809a30bfc53bcbde6be3031d712f3dc3bc922261f598ce691fdd7f611fef52e5f000343072656d6f76655265636f7264087d012c000481010801040485019003043f808693ca6db85bfbd921c1c895034ff8c2132ff0375479b021f2fd9b6de916bfa040f001012c2c25012c2c35012c2c5901690179012c2c890108022814c02ce08d012c1003000400",
+  "remove": {
+    "result": [],
+    "stateHex": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a99010008030404000401000c40200104080401040c0801040021018260019d34c9b9cc9b65010a692175688fbe7d0c83b2f9f0f06cfe786be4a760b9db12600111a9c750946c5c776cf9c8761b36efde1169edcc29d1c6d7b95582dc9672b04bc24141041404010418080104002101826001e223c59d8cefb9e52f762202ef75ee50ee02a32c49a609dc2cf7edc6af1627306001c6bd7b7db5697aab8a50b8a0e5591aef3250b5f73ca00abc52d80c8d79185032c24141042004010424080104000400402c10101c282c2c2c2c2c2c2c2c2c2c2c0802100804300804140434040300505161737365742d72656769737472793a76332001043c0401044008010400184400f153650804480401044c080104001443805101080454040104580801040008010804600401046408010400080101046c040104700801040008400104780401047c0801040008020804840401048808010400244761737365742d314008902c000494080104049890030440808a9d85b8bc30200d96d403d3bc097d8267c791c3ec8e4506bfefada9d1425465049c040204a0080104042c040204a8080104402c4450505c6874808c8cacaca4acac2c080238080cb008043c04b4040304b808010404bc1403040104100838c008040804c4040304c80004cc08010404d08d010304bc7901040190030440808a9d85b8bc30200d96d403d3bc097d8267c791c3ec8e4506bfefada9d142546504010801040401000801244761737365742d3140000104000001080104040104020401040000010801040401040204010400000104000004d415020304ff0102400f15365080001080104040104010401144380510108000108010404010401040108010800010801040401040104010801010001080104040104010401084001000108010404010401040108020800010801040401040104010802080001080104040104020401040000010801040401040204010400000108010404010402004d815020304ff01020001040000010400000104000001040000010400000104000001140304010410040108010404010403040108043c0801040104010c4020010001080238400104000001080104040104010401505161737365742d72656769737472793a763320010001080104040104010401184400f15365080001080104040104010401184004dc15020304ff0102b36efde1169edcc29d1c6d7b95582dc9672b04bc2414100010801040401040104012101826001e223c59d8cefb9e52f762202ef75ee50ee02a32c49a609dc2cf7edc6af1627306001c6bd7b7db5697aab8a50b8a0e5591aef3250b5f73ca00abc52d80c8d79185032c241410001040000010400000104000001040000010400004e015020304ff0102010403040108040808010403040108041408010401040108030400010802104001040000010801040401040104010c40200100010801040401040104010c402001000108010404010401040121018260019d34c9b9cc9b65010a692175688fbe7d0c83b2f9f0f06cfe786be4a760b9db12600111a9c750946c5c776cf9c87610003430736574437573746f6469616e08e82c0004ec08010404f09003043f80bcc9c0b262ddde0851100379df2d93a40812fa1b9c492bd652ab178aa16ee9600028247365745265636f726408f82c0004fc0801040401019003043f80a2c0f63e29a9003abdf0ba70b57d49b11190bd9bee20a36a4a9fd8761b3e0c8000100c7461670809012c00040d010801040411018c03043e7c4ff4aa58de47ee2bfdd4f0ea994106981afa7ac45e3d33e43ce6ee73b9400e00403c736574437573746f64794772616e740819012c00041d010801040421018c03043e7cb1e09435b43827e24952a9c22f6882a244135f92dae823a3fa7b6dddf5c663402c2c15012c2c2c2c2c2c2c2c25012c2c2c2c080208001814636c6f7365082d012c000431010801040435019003043f801a9379a4ea5ff79c1127e267225479fdebf1dd8e89e93b7486befac40e3fe2200054506173736572744772616e74456666656374697665083d012c000441010801040445018c03043e7c616d554fac36afa73ebd2d2e9491a392ede2ca8ce68c7fababe093cc865bd900605c61737365727453746f7265645265636f72644672657368084d012c000451010801040455018c03043e7cfd7d49eca0febca608d017b7c62b1fe2d13f840f4750968ad8c3e3aaef3c82402c2c2c2c2c49012c2c2c2c2c2c2c2c2c5901080208003834616363657074496646726573680861012c000465010801040469019003043f8059997f78bbeaa07fe742376cd310d10f0ec98789e750423e5af027fc7afcded000242073657457617463680871012c000475010801040479019003043f809a30bfc53bcbde6be3031d712f3dc3bc922261f598ce691fdd7f611fef52e5f000343072656d6f76655265636f72640881012c000485010801040489019003043f808693ca6db85bfbd921c1c895034ff8c2132ff0375479b021f2fd9b6de916bfa040f405012c2c29012c2c39012c2c5d016d017d012c2c8d0108022814c42ce491012c1003000400",
+    "reportedGas": {
+      "readTime": "255000000",
+      "computeTime": "1350732306",
+      "bytesWritten": "0",
+      "bytesDeleted": "0"
+    },
+    "queries": [
+      {
+        "gasCost": {
+          "readTime": "340000000",
+          "computeTime": "1423414095",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        "program": [
+          {
+            "dup": {
+              "n": 0
+            }
+          },
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": false,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      [
+                        1
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      [
+                        6
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "popeq": {
+              "cached": false
+            }
+          }
+        ]
+      },
+      {
+        "gasCost": {
+          "readTime": "340000000",
+          "computeTime": "1423414095",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        "program": [
+          {
+            "dup": {
+              "n": 0
+            }
+          },
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": false,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      [
+                        1
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      [
+                        7
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "popeq": {
+              "cached": false
+            }
+          }
+        ]
+      },
+      {
+        "gasCost": {
+          "readTime": "340000000",
+          "computeTime": "1425847573",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        "program": [
+          {
+            "dup": {
+              "n": 0
+            }
+          },
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": false,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      [
+                        1
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      [
+                        10
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "push": {
+              "storage": false,
+              "value": {
+                "tag": "cell",
+                "content": {
+                  "value": [
+                    [
+                      97,
+                      115,
+                      115,
+                      101,
+                      116,
+                      45,
+                      49
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "compress"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "member",
+          {
+            "popeq": {
+              "cached": true
+            }
+          }
+        ]
+      },
+      {
+        "gasCost": {
+          "readTime": "340000000",
+          "computeTime": "1425847573",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        "program": [
+          {
+            "dup": {
+              "n": 0
+            }
+          },
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": false,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      [
+                        1
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      [
+                        13
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "push": {
+              "storage": false,
+              "value": {
+                "tag": "cell",
+                "content": {
+                  "value": [
+                    [
+                      97,
+                      115,
+                      115,
+                      101,
+                      116,
+                      45,
+                      49
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "compress"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "member",
+          {
+            "popeq": {
+              "cached": true
+            }
+          }
+        ]
+      },
+      {
+        "gasCost": {
+          "readTime": "340000000",
+          "computeTime": "1508041900",
+          "bytesWritten": "1090",
+          "bytesDeleted": "1246"
+        },
+        "program": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      [
+                        1
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      [
+                        10
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "push": {
+              "storage": false,
+              "value": {
+                "tag": "cell",
+                "content": {
+                  "value": [
+                    [
+                      97,
+                      115,
+                      115,
+                      101,
+                      116,
+                      45,
+                      49
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "compress"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "rem": {
+              "cached": false
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 2
+            }
+          }
+        ]
+      },
+      {
+        "gasCost": {
+          "readTime": "340000000",
+          "computeTime": "1517570608",
+          "bytesWritten": "1208",
+          "bytesDeleted": "1090"
+        },
+        "program": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      [
+                        1
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      [
+                        12
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "push": {
+              "storage": false,
+              "value": {
+                "tag": "cell",
+                "content": {
+                  "value": [
+                    [
+                      97,
+                      115,
+                      115,
+                      101,
+                      116,
+                      45,
+                      49
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "compress"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "push": {
+              "storage": true,
+              "value": {
+                "tag": "null"
+              }
+            }
+          },
+          {
+            "ins": {
+              "cached": false,
+              "n": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 2
+            }
+          }
+        ]
+      },
+      {
+        "gasCost": {
+          "readTime": "340000000",
+          "computeTime": "1505965923",
+          "bytesWritten": "1208",
+          "bytesDeleted": "1208"
+        },
+        "program": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      [
+                        1
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      [
+                        9
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 2
+            }
+          }
+        ]
+      },
+      {
+        "gasCost": {
+          "readTime": "340000000",
+          "computeTime": "1505965923",
+          "bytesWritten": "1208",
+          "bytesDeleted": "1208"
+        },
+        "program": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      [
+                        1
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      [
+                        8
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 2
+            }
+          }
+        ]
+      },
+      {
+        "gasCost": {
+          "readTime": "255000000",
+          "computeTime": "1350732306",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        "program": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      [
+                        1
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "push": {
+              "storage": false,
+              "value": {
+                "tag": "cell",
+                "content": {
+                  "value": [
+                    [
+                      3
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "push": {
+              "storage": true,
+              "value": {
+                "tag": "cell",
+                "content": {
+                  "value": [
+                    [
+                      0,
+                      241,
+                      83,
+                      101
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 8
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "ins": {
+              "cached": false,
+              "n": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ]
+      }
+    ],
+    "publicTranscript": [
+      {
+        "dup": {
+          "n": 0
+        }
+      },
+      {
+        "idx": {
+          "cached": false,
+          "pushPath": false,
+          "path": [
+            {
+              "tag": "value",
+              "value": {
+                "value": [
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "tag": "value",
+              "value": {
+                "value": [
+                  [
+                    6
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "popeq": {
+          "cached": false,
+          "result": {
+            "value": [
+              [
+                1
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "bytes",
+                  "length": 1
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "dup": {
+          "n": 0
+        }
+      },
+      {
+        "idx": {
+          "cached": false,
+          "pushPath": false,
+          "path": [
+            {
+              "tag": "value",
+              "value": {
+                "value": [
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "tag": "value",
+              "value": {
+                "value": [
+                  [
+                    7
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "popeq": {
+          "cached": false,
+          "result": {
+            "value": [
+              []
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "bytes",
+                  "length": 1
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "dup": {
+          "n": 0
+        }
+      },
+      {
+        "idx": {
+          "cached": false,
+          "pushPath": false,
+          "path": [
+            {
+              "tag": "value",
+              "value": {
+                "value": [
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "tag": "value",
+              "value": {
+                "value": [
+                  [
+                    10
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "push": {
+          "storage": false,
+          "value": {
+            "tag": "cell",
+            "content": {
+              "value": [
+                [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  45,
+                  49
+                ]
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "compress"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "member",
+      {
+        "popeq": {
+          "cached": true,
+          "result": {
+            "value": [
+              [
+                1
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "bytes",
+                  "length": 1
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "dup": {
+          "n": 0
+        }
+      },
+      {
+        "idx": {
+          "cached": false,
+          "pushPath": false,
+          "path": [
+            {
+              "tag": "value",
+              "value": {
+                "value": [
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "tag": "value",
+              "value": {
+                "value": [
+                  [
+                    13
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "push": {
+          "storage": false,
+          "value": {
+            "tag": "cell",
+            "content": {
+              "value": [
+                [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  45,
+                  49
+                ]
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "compress"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "member",
+      {
+        "popeq": {
+          "cached": true,
+          "result": {
+            "value": [
+              []
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "bytes",
+                  "length": 1
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "idx": {
+          "cached": false,
+          "pushPath": true,
+          "path": [
+            {
+              "tag": "value",
+              "value": {
+                "value": [
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "tag": "value",
+              "value": {
+                "value": [
+                  [
+                    10
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "push": {
+          "storage": false,
+          "value": {
+            "tag": "cell",
+            "content": {
+              "value": [
+                [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  45,
+                  49
+                ]
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "compress"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "rem": {
+          "cached": false
+        }
+      },
+      {
+        "ins": {
+          "cached": true,
+          "n": 2
+        }
+      },
+      {
+        "idx": {
+          "cached": false,
+          "pushPath": true,
+          "path": [
+            {
+              "tag": "value",
+              "value": {
+                "value": [
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "tag": "value",
+              "value": {
+                "value": [
+                  [
+                    12
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "push": {
+          "storage": false,
+          "value": {
+            "tag": "cell",
+            "content": {
+              "value": [
+                [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  45,
+                  49
+                ]
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "compress"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "push": {
+          "storage": true,
+          "value": {
+            "tag": "null"
+          }
+        }
+      },
+      {
+        "ins": {
+          "cached": false,
+          "n": 1
+        }
+      },
+      {
+        "ins": {
+          "cached": true,
+          "n": 2
+        }
+      },
+      {
+        "idx": {
+          "cached": false,
+          "pushPath": true,
+          "path": [
+            {
+              "tag": "value",
+              "value": {
+                "value": [
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "tag": "value",
+              "value": {
+                "value": [
+                  [
+                    9
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "addi": {
+          "immediate": 1
+        }
+      },
+      {
+        "ins": {
+          "cached": true,
+          "n": 2
+        }
+      },
+      {
+        "idx": {
+          "cached": false,
+          "pushPath": true,
+          "path": [
+            {
+              "tag": "value",
+              "value": {
+                "value": [
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "tag": "value",
+              "value": {
+                "value": [
+                  [
+                    8
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "addi": {
+          "immediate": 1
+        }
+      },
+      {
+        "ins": {
+          "cached": true,
+          "n": 2
+        }
+      },
+      {
+        "idx": {
+          "cached": false,
+          "pushPath": true,
+          "path": [
+            {
+              "tag": "value",
+              "value": {
+                "value": [
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "push": {
+          "storage": false,
+          "value": {
+            "tag": "cell",
+            "content": {
+              "value": [
+                [
+                  3
+                ]
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 1
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "push": {
+          "storage": true,
+          "value": {
+            "tag": "cell",
+            "content": {
+              "value": [
+                [
+                  0,
+                  241,
+                  83,
+                  101
+                ]
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 8
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ins": {
+          "cached": false,
+          "n": 1
+        }
+      },
+      {
+        "ins": {
+          "cached": true,
+          "n": 1
+        }
+      }
+    ],
+    "privateTranscriptOutputs": [
+      {
+        "value": [
+          [
+            0,
+            241,
+            83,
+            101
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 8
+            }
+          }
+        ]
+      }
+    ],
+    "privateState": null
+  },
+  "replayGas": {
+    "readTime": "2975000000",
+    "computeTime": "4293824345",
+    "bytesWritten": "1208",
+    "bytesDeleted": "1246"
+  },
+  "missingError": "failed assert: record does not exist",
+  "watchedError": "failed assert: record is still watched"
+}

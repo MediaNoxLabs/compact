@@ -481,6 +481,120 @@ fn closed_opaque_map_operation(
     }
 }
 
+/// The asset removal path keeps a disclosed OpaqueString key scoped across
+/// ordered guards and mutations. Only this exact shape has an oracle and a
+/// ledger proof; unrelated OpaqueString Lets remain unavailable.
+fn closed_opaque_asset_removal(
+    circuit: &StatefulCircuit,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+) -> bool {
+    let [parameter] = circuit.parameters.as_slice() else {
+        return false;
+    };
+    if parameter.ty != Type::OpaqueString
+        || circuit.result != Type::Unit
+        || circuit.return_value != StateReturn::Unit
+    {
+        return false;
+    }
+    let [StateAction::Let { bindings, action }] = circuit.actions.as_slice() else {
+        return false;
+    };
+    let [binding] = bindings.as_slice() else {
+        return false;
+    };
+    if binding.ty != Type::OpaqueString
+        || !matches!(&binding.value, Expr::Parameter { name } if name == &parameter.name)
+    {
+        return false;
+    }
+    let StateAction::Sequence { actions } = action.as_ref() else {
+        return false;
+    };
+    let [
+        StateAction::CircuitCall {
+            name: writable,
+            arguments: writable_args,
+        },
+        StateAction::Assert {
+            condition:
+                Expr::MapMember {
+                    field: records_member,
+                    index: records_member_index,
+                    key: member_key,
+                },
+            ..
+        },
+        StateAction::Assert {
+            condition:
+                Expr::If {
+                    condition: watched,
+                    then: unguarded,
+                    otherwise: guarded,
+                },
+            ..
+        },
+        StateAction::MapRemove {
+            field: records_remove,
+            index: records_remove_index,
+            key: removed_key,
+        },
+        StateAction::SetInsert {
+            field: retired,
+            index: retired_index,
+            value: retired_key,
+        },
+        StateAction::CircuitCall {
+            name: write,
+            arguments: write_args,
+        },
+    ] = actions.as_slice()
+    else {
+        return false;
+    };
+    let Expr::SetMember {
+        field: watch_field,
+        index: watch_index,
+        value: watched_key,
+    } = watched.as_ref()
+    else {
+        return false;
+    };
+    let key_is_bound =
+        |value: &Expr| matches!(value, Expr::Parameter { name } if name == &binding.name);
+    if writable != "assertWritable"
+        || !writable_args.is_empty()
+        || write != "recordWrite"
+        || !write_args.is_empty()
+        || records_member != "records"
+        || records_remove != records_member
+        || records_member_index != records_remove_index
+        || watch_field != "watchList"
+        || retired != "retiredKeys"
+        || !matches!(unguarded.as_ref(), Expr::Boolean { value: false })
+        || !matches!(guarded.as_ref(), Expr::Boolean { value: true })
+        || ![
+            member_key.as_ref(),
+            watched_key.as_ref(),
+            removed_key,
+            retired_key,
+        ]
+        .into_iter()
+        .all(key_is_bound)
+    {
+        return false;
+    }
+    matches!(ledger_fields.get(records_member.as_str()), Some(field)
+        if field.index == *records_member_index
+            && matches!(&field.declaration, LedgerFieldKind::Map { key: Type::OpaqueString, .. }))
+        && matches!(ledger_fields.get(watch_field.as_str()), Some(field)
+            if field.index == *watch_index
+                && matches!(&field.declaration, LedgerFieldKind::Set { ty: Type::OpaqueString }))
+        && matches!(ledger_fields.get(retired.as_str()), Some(field)
+            if field.index == *retired_index
+                && matches!(&field.declaration, LedgerFieldKind::Set { ty: Type::OpaqueString }))
+}
+
 /// A closed typed witness → Bytes32 hash → Set authorization followed by a
 /// single Set insertion. The matched callees are inspected transitively so
 /// recording never silently skips an assertion or private output.
@@ -4240,6 +4354,23 @@ fn render_recorded_item(
                 }
                 let mut scoped = locals.clone();
                 for (binding_index, binding) in bindings.iter().enumerate() {
+                    if binding.ty == Type::OpaqueString
+                        && let Expr::Parameter { name } = &binding.value
+                        && parameters
+                            .get(name.as_str())
+                            .is_some_and(|(ty, _)| *ty == &Type::OpaqueString)
+                        && let Some(value) =
+                            cell_source(&binding.value, &binding.ty, &scoped, parameters)
+                    {
+                        let local = syn::Ident::new(
+                            &format!("__compact_recorded_opaque_key_{}", *next_temp),
+                            Span::call_site(),
+                        );
+                        *next_temp += 1;
+                        steps.push(syn::parse_quote!(let #local: runtime::OpaqueString = #value;));
+                        scoped.insert(binding.name.clone(), syn::parse_quote!(#local));
+                        continue;
+                    }
                     let hash = match (&binding.ty, &binding.value) {
                         (Type::Bytes { length: 32 }, Expr::PersistentHash { value }) => {
                             Some((value.as_ref(), true))
@@ -5637,6 +5768,7 @@ fn render_recorded_item(
         closed_organizer_gate_steps(circuit, ledger_fields, witnesses, pure_circuits, circuits)?;
     let organizer_gate = organizer_steps.is_some();
     let opaque_map_operation = closed_opaque_map_operation(circuit, ledger_fields);
+    let opaque_asset_removal = closed_opaque_asset_removal(circuit, ledger_fields);
     let guarded_pure_steps =
         closed_guarded_struct_pure_steps(circuit, &parameters, pure_circuits, circuits)?.or(
             closed_guarded_unsigned_product_steps(circuit, &parameters, pure_circuits)?,
@@ -6391,6 +6523,7 @@ fn render_recorded_item(
         && !proved_opaque_set_sequence(circuit)
         && !closed_opaque_set_operation(circuit, ledger_fields)
         && opaque_map_operation.is_none()
+        && !opaque_asset_removal
         && !organizer_gate
     {
         return Ok(RecordingOutcome::Unsupported(

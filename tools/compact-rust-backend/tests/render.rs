@@ -459,6 +459,61 @@ fn opaque_string_map_recording_requires_closed_field_lookup_sequence() {
 }
 
 #[test]
+fn asset_removal_recording_requires_scoped_opaque_key_and_exact_order() {
+    let mut contract: Contract =
+        serde_json::from_str(include_str!("asset-removal-schema12-ir.json")).unwrap();
+    contract.schema_version = SCHEMA_VERSION;
+    let recorded = |contract: &Contract| {
+        let rendered = render_with_capabilities(contract).unwrap();
+        let capability = rendered
+            .capabilities
+            .circuits
+            .iter()
+            .find(|capability| capability.name == "removeRecord")
+            .unwrap();
+        (capability.recorded, rendered.source)
+    };
+    let (available, source) = recorded(&contract);
+    assert!(available);
+    assert!(source.contains("pub fn removeRecord<Private"));
+    assert!(source.contains("record_remove(frame"));
+
+    let mut swapped = contract.clone();
+    let circuit = swapped
+        .stateful_circuits
+        .iter_mut()
+        .find(|circuit| circuit.name == "removeRecord")
+        .unwrap();
+    let StateAction::Let { action, .. } = &mut circuit.actions[0] else {
+        unreachable!()
+    };
+    let StateAction::Sequence { actions } = action.as_mut() else {
+        unreachable!()
+    };
+    actions.swap(3, 4);
+    assert!(!recorded(&swapped).0, "mutation order is part of the gate");
+
+    let circuit = contract
+        .stateful_circuits
+        .iter_mut()
+        .find(|circuit| circuit.name == "removeRecord")
+        .unwrap();
+    let StateAction::Let { action, .. } = &mut circuit.actions[0] else {
+        unreachable!()
+    };
+    let StateAction::Sequence { actions } = action.as_mut() else {
+        unreachable!()
+    };
+    let StateAction::MapRemove { key, .. } = &mut actions[3] else {
+        unreachable!()
+    };
+    *key = Expr::Parameter {
+        name: "recordId".into(),
+    };
+    assert!(!recorded(&contract).0, "Map removal must use the bound key");
+}
+
+#[test]
 fn opaque_string_set_recording_requires_closed_typed_operations() {
     let mut contract: Contract =
         serde_json::from_str(include_str!("opaque-string-set-schema12-ir.json")).unwrap();

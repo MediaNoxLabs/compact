@@ -20,7 +20,7 @@ use compact_rust_asset_registry_oracle_fixture::ledger_contract as asset;
 use compact_rust_asset_registry_oracle_fixture::types::ContractAddress as Holder;
 use midnight_compact_runtime as runtime;
 
-struct AssetWitness;
+pub(super) struct AssetWitness;
 
 impl asset::Witnesses<u64> for AssetWitness {
     fn localOperatorKey(

@@ -107,6 +107,31 @@ fn assert_snapshot(state: &StateValue<DefaultDB>, oracle: &serde_json::Value, in
 
 struct Stub;
 
+struct ParityStub;
+
+impl Witnesses<()> for ParityStub {
+    fn localOperatorKey(
+        &self,
+        _: WitnessContext<'_, (), LedgerView<'_>>,
+    ) -> ((), runtime::JubjubPoint) {
+        ((), runtime::hash_to_curve(runtime::Field::from(1_u64)))
+    }
+
+    fn localAuditorKey(
+        &self,
+        _: WitnessContext<'_, (), LedgerView<'_>>,
+    ) -> ((), runtime::JubjubPoint) {
+        ((), runtime::hash_to_curve(runtime::Field::from(2_u64)))
+    }
+
+    fn currentTimestamp(
+        &self,
+        _: WitnessContext<'_, (), LedgerView<'_>>,
+    ) -> ((), runtime::BoundedUint<{ u64::MAX as u128 }>) {
+        ((), runtime::BoundedUint::new(1_700_000_000).unwrap())
+    }
+}
+
 impl Witnesses<()> for Stub {
     fn localOperatorKey(
         &self,
@@ -226,4 +251,163 @@ fn chunked_collections_and_counters_execute_through_the_asset_registry() {
             .unwrap()
             .member(key)
     );
+}
+
+fn context_with_record() -> runtime::context::CircuitContext<()> {
+    let initial = initial_state(ConstructorContext::new(()), &ParityStub).unwrap();
+    let key = runtime::OpaqueString::from("asset-1");
+    let record = AssetRecord {
+        kind: AssetClass::Instrument,
+        ..Default::default()
+    };
+    setRecord(
+        initial.into_circuit_context(ContractAddress::default()),
+        &ParityStub,
+        key,
+        record,
+        RecordMutation::Insert,
+    )
+    .unwrap()
+    .context
+}
+
+#[test]
+fn recorded_asset_removal_matches_typescript_native_and_replay() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/asset-remove-record.json"
+    ))
+    .unwrap();
+    let expected = &oracle["remove"];
+    let key = runtime::OpaqueString::from("asset-1");
+    let native_context = context_with_record();
+    let recorded_context = context_with_record();
+    assert_eq!(
+        state_hex(native_context.query.state.get_ref().clone()),
+        oracle["preRemoveHex"]
+    );
+    let native = removeRecord(native_context, &ParityStub, key.clone()).unwrap();
+    let recorded = recorded::removeRecord(recorded_context, &ParityStub, key).unwrap();
+    assert_eq!(expected["result"], serde_json::json!([]));
+    let _: () = native.result;
+    let _: () = recorded.execution.result;
+    assert_eq!(recorded.execution.gas_cost, native.gas_cost);
+    for output in [&native, &recorded.execution] {
+        assert_eq!(
+            state_hex(output.context.query.state.get_ref().clone()),
+            expected["stateHex"]
+        );
+        let gas = serde_json::to_value(output.gas_cost).unwrap();
+        for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            let amount: u64 = expected["queries"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|query| {
+                    query["gasCost"][key]
+                        .as_str()
+                        .unwrap()
+                        .parse::<u64>()
+                        .unwrap()
+                })
+                .sum();
+            assert_eq!(gas[key], amount, "{key}");
+        }
+        assert_eq!(output.private_transcript_outputs.len(), 1);
+        let transcript = &output.private_transcript_outputs[0];
+        let atoms = transcript
+            .value
+            .0
+            .iter()
+            .map(|atom| &atom.0)
+            .collect::<Vec<_>>();
+        assert_eq!(
+            serde_json::to_value(atoms).unwrap(),
+            expected["privateTranscriptOutputs"][0]["value"]
+        );
+        assert_eq!(
+            serde_json::to_value(&transcript.alignment).unwrap(),
+            expected["privateTranscriptOutputs"][0]["alignment"]
+        );
+    }
+    assert_eq!(
+        recorded.execution.context.query.effects,
+        native.context.query.effects
+    );
+    let _: () = recorded.execution.context.private_state;
+    assert!(expected["privateState"].is_null());
+
+    let mut program = serde_json::to_value(recorded.public.verify_ops()).unwrap();
+    let expected_program = expected["queries"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .flat_map(|query| query["program"].as_array().unwrap().iter().cloned())
+        .collect::<Vec<_>>();
+    assert_eq!(program.as_array().unwrap().len(), expected_program.len());
+    for operation in program.as_array_mut().unwrap() {
+        if let Some(popeq) = operation.get_mut("popeq") {
+            popeq.as_object_mut().unwrap().remove("result");
+        }
+    }
+    for (index, (actual, expected_op)) in program
+        .as_array()
+        .unwrap()
+        .iter()
+        .zip(&expected_program)
+        .enumerate()
+    {
+        assert_eq!(actual, expected_op, "operation {index}");
+    }
+
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(replay.context.effects, native.context.query.effects);
+    assert_eq!(
+        state_hex(replay.context.state.get_ref().clone()),
+        expected["stateHex"]
+    );
+    let replay_gas = serde_json::to_value(replay.gas_cost).unwrap();
+    for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+        let expected_gas: u64 = oracle["replayGas"][key].as_str().unwrap().parse().unwrap();
+        assert_eq!(replay_gas[key], expected_gas, "replay {key}");
+    }
+}
+
+#[test]
+fn recorded_asset_removal_rejects_missing_and_watched_records() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/asset-remove-record.json"
+    ))
+    .unwrap();
+    let initial = initial_state(ConstructorContext::new(()), &ParityStub).unwrap();
+    let missing = recorded::removeRecord(
+        initial.into_circuit_context(ContractAddress::default()),
+        &ParityStub,
+        runtime::OpaqueString::from("missing"),
+    )
+    .err()
+    .unwrap();
+    assert_eq!(missing.to_string(), oracle["missingError"]);
+    let watched = setWatch(
+        context_with_record(),
+        &ParityStub,
+        runtime::OpaqueString::from("asset-1"),
+        ListMutation::Add,
+    )
+    .unwrap();
+    let watched = recorded::removeRecord(
+        watched.context,
+        &ParityStub,
+        runtime::OpaqueString::from("asset-1"),
+    )
+    .err()
+    .unwrap();
+    assert_eq!(watched.to_string(), oracle["watchedError"]);
 }

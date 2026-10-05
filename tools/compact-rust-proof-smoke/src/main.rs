@@ -27,6 +27,7 @@ mod adt_list_vector_field_4;
 mod adt_set_enum;
 mod adt_set_vector;
 mod asset_freshness;
+mod asset_removal;
 mod asset_writable;
 mod boolean_pair_assert;
 mod closed_pure_field;
@@ -1612,6 +1613,15 @@ fn main() -> Result<(), Box<dyn Error>> {
             return Err("usage: compact-rust-proof-smoke --asset-writable <proof-output>".into());
         }
         return asset_writable::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--asset-removal")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --asset-removal <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err("usage: compact-rust-proof-smoke --asset-removal <proof-output>".into());
+        }
+        return asset_removal::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--adt-set-vector")) {
         let root = arguments

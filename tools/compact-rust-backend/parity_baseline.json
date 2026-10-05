@@ -4394,6 +4394,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/zswap_transfer_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_coin",
+    "signature": "export circuit read_coin(): QualifiedShieldedCoinInfo",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/constructor_counter_actions.compact",
     "module_path": [],
     "kind": "circuit",
@@ -6135,6 +6143,14 @@
     "kind": "circuit",
     "name": "test_ShieldedCoinInfo",
     "signature": "export circuit test_ShieldedCoinInfo(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/zswap_transfer_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "transfer",
+    "signature": "export circuit transfer(input: QualifiedShieldedCoinInfo, coin: ShieldedCoinInfo, recipient: Either<ZswapCoinPublicKey, ContractAddress>, nullifier: Bytes<32>, commitment: Bytes<32>): []",
     "visibility": "export"
   },
   {

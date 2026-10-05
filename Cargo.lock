@@ -1970,6 +1970,7 @@ dependencies = [
  "compact-rust-merkle-path-verify-fixture",
  "compact-rust-merkle-tree-oracle-fixture",
  "compact-rust-mixed-width-operand-oracle-fixture",
+ "compact-rust-native-zswap-intents-oracle-fixture",
  "compact-rust-nested-map-shape-fixture",
  "compact-rust-nested-stateful-ternary-fixture",
  "compact-rust-nested-witness-call-oracle-fixture",
@@ -2006,6 +2007,7 @@ dependencies = [
  "compact-rust-witness-list-shapes-fixture",
  "compact-rust-witness-vector-action-fixture",
  "compact-rust-zerocash-oracle-fixture",
+ "compact-rust-zswap-transfer-oracle-fixture",
  "futures-executor",
  "hex",
  "midnight-base-crypto",
@@ -2654,6 +2656,21 @@ dependencies = [
  "midnight-onchain-state",
  "midnight-serialize",
  "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
+name = "compact-rust-zswap-transfer-oracle-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-base-crypto",
+ "midnight-coin-structure",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde",
  "serde_json",
 ]
 

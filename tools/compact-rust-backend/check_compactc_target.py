@@ -1206,7 +1206,7 @@ def main() -> None:
     parser.add_argument("--wide-add", action="store_true", help="check bounded native wide addition and original-source progress")
     parser.add_argument("--stateful-struct", action="store_true", help="check ordered typed native struct construction and its remaining original-source boundary")
     parser.add_argument("--kernel-shielded-effects", action="store_true", help="check typed Kernel recording and optional call/funded-mint proofs")
-    parser.add_argument("--native-zswap-intents", action="store_true", help="check native Zswap intent admission and explicit recording refusal")
+    parser.add_argument("--native-zswap-intents", action="store_true", help="check recorded Zswap intent admission and optional strict funded transfer proof")
     parser.add_argument("--qualified-coin-cell", action="store_true",
                         help="check recorded qualified-coin Cell write and offer-backed proof")
     parser.add_argument("--counter-less-than", action="store_true",
@@ -1266,7 +1266,7 @@ def main() -> None:
             generated = (output / "contract/lib.rs").read_text()
             assert "runtime::add_wide_unsigned" in generated
             assert "runtime::narrow_wide_uint" in generated
-            assert "RUST_RUNTIME_ABI == 47" in generated
+            assert "RUST_RUNTIME_ABI == 48" in generated
             report = json.loads((output / "contract/rust-capabilities.json").read_text())
             assert len(report["circuits"]) == 1
             row = report["circuits"][0]
@@ -1341,13 +1341,19 @@ def main() -> None:
             assert '"create_zswap_input"' in encoded and '"create_zswap_output"' in encoded
             report = json.loads((output / "contract/rust-capabilities.json").read_text())
             assert [(row["name"], row["recorded"], row["observed_call"], row["proof_required"]) for row in report["circuits"]] == [
-                ("produce", False, False, False), ("consume", False, False, False),
-                ("flow", False, False, True), ("witness_order", False, False, False),
+                ("produce", True, True, False), ("consume", True, True, False),
+                ("flow", True, True, True), ("witness_order", True, True, False),
                 ("read_coin", True, True, True)]
-            rejected = subprocess.run([compiler, "--target", "rust", "--rust-require-recording", "--skip-zk", str(source), str(base / "requires-recording")], cwd=ROOT, capture_output=True, text=True)
-            assert rejected.returncode != 0 and "flow" in rejected.stderr
-            assert not (base / "requires-recording/contract/lib.rs").exists()
-            print("native Zswap intent admission and explicit recording refusal passed")
+            run(compiler, "--target", "rust", "--rust-require-recording", "--skip-zk", str(source), str(base / "requires-recording"))
+            transfer_source = ROOT / "examples/rust_backend/zswap_transfer_oracle.compact"
+            transfer = base / "zswap-transfer"
+            run(compiler, "--target", "rust", "--rust-require-recording", *([] if args.proof else ["--skip-zk"]), str(transfer_source), str(transfer))
+            transfer_report = json.loads((transfer / "contract/rust-capabilities.json").read_text())
+            assert [(row["name"], row["recorded"], row["observed_call"], row["proof_required"]) for row in transfer_report["circuits"]] == [
+                ("transfer", True, True, True), ("read_coin", True, True, True)]
+            if args.proof:
+                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--zswap-transfer", str(transfer))
+            print("recorded Zswap intents and exact offer-bound transfer admitted; original duplicate flow remains rejection evidence")
             return
         if args.effectful_return:
             output = base / "effectful-return"
@@ -1633,7 +1639,8 @@ def main() -> None:
             return
         run(sys.executable, str(Path(__file__).resolve()), "--qualified-coin-cell",
             *(["--proof"] if args.proof else []))
-        run(sys.executable, str(Path(__file__).resolve()), "--native-zswap-intents")
+        run(sys.executable, str(Path(__file__).resolve()), "--native-zswap-intents",
+            *(["--proof"] if args.proof else []))
         run(sys.executable, str(Path(__file__).resolve()), "--kernel-shielded-effects",
             *(["--proof"] if args.proof else []))
         run(sys.executable, str(Path(__file__).resolve()), "--stateful-struct")

@@ -20,6 +20,7 @@
 //! its corresponding verifying VM instruction.
 
 mod kernel;
+mod zswap;
 
 use midnight_base_crypto::cost_model::RunningCost;
 use midnight_base_crypto::fab::AlignedValue;
@@ -32,11 +33,19 @@ use crate::ledger::{self, CellValue, DB, DefaultDB, LedgerPath, QueryContext};
 
 /// The starting ledger context and the ordered VM program for one circuit.
 pub struct PublicTrace<D: DB = DefaultDB> {
+    initial_intents: crate::CircuitZswapPlan,
+    final_intents: crate::CircuitZswapPlan,
     initial: QueryContext<D>,
     verify_ops: Vec<Op<ResultModeVerify, D>>,
 }
 
 impl<D: DB> PublicTrace<D> {
+    pub fn initial_intents(&self) -> &crate::CircuitZswapPlan {
+        &self.initial_intents
+    }
+    pub fn final_intents(&self) -> &crate::CircuitZswapPlan {
+        &self.final_intents
+    }
     pub fn initial(&self) -> &QueryContext<D> {
         &self.initial
     }
@@ -60,6 +69,7 @@ pub struct RecordedCircuitResult<Private, Output, D: DB = DefaultDB> {
 /// Records the VM instructions while executing a small supported circuit.
 pub struct RecordingFrame<Private, D: DB = DefaultDB> {
     context: CircuitContext<Private, D>,
+    initial_intents: crate::CircuitZswapPlan,
     initial: QueryContext<D>,
     verify_ops: Vec<Op<ResultModeVerify, D>>,
     private_outputs: Vec<AlignedValue>,
@@ -69,8 +79,10 @@ pub struct RecordingFrame<Private, D: DB = DefaultDB> {
 impl<Private, D: DB> RecordingFrame<Private, D> {
     pub fn new(context: CircuitContext<Private, D>) -> Self {
         let initial = context.query.clone();
+        let initial_intents = context.circuit_zswap().clone();
         Self {
             context,
+            initial_intents,
             initial,
             verify_ops: Vec::new(),
             private_outputs: Vec::new(),
@@ -850,6 +862,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
     }
 
     pub fn finish<Output>(self, output: Output) -> RecordedCircuitResult<Private, Output, D> {
+        let final_intents = self.context.circuit_zswap().clone();
         RecordedCircuitResult {
             execution: CircuitResult {
                 context: self.context,
@@ -858,6 +871,8 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
                 private_transcript_outputs: self.private_outputs,
             },
             public: PublicTrace {
+                initial_intents: self.initial_intents,
+                final_intents,
                 initial: self.initial,
                 verify_ops: self.verify_ops,
             },

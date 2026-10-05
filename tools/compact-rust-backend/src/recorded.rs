@@ -18,6 +18,7 @@
 
 mod kernel_plan;
 mod typed_plan;
+mod zswap_plan;
 
 use proc_macro2::Span;
 use serde::Serialize;
@@ -7979,6 +7980,7 @@ fn render_recorded_item(
                     circuits,
                 )
             })
+            .or_else(|| zswap_plan::lower(circuit, ledger_fields, circuits, witnesses))
     {
         organizer_steps = Some(plan.steps);
         typed_result = Some(plan.result);

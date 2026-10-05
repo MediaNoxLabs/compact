@@ -57,7 +57,7 @@ pub mod fab {
 }
 
 /// Increment when generated Rust and the runtime's public contract change.
-pub const RUST_RUNTIME_ABI: u32 = 47;
+pub const RUST_RUNTIME_ABI: u32 = 48;
 /// The ledger line selected by this Compact branch's `flake.nix`.
 pub const LEDGER_VERSION: &str = "ledger-8.0.3";
 
@@ -82,6 +82,7 @@ pub enum CompactError {
     InvalidJubjubPoint,
     MissingCoinPublicKey,
     ZswapAllocationLocked,
+    ZswapOfferOutputMismatch,
     ZswapCursorAlreadyUsed,
     ZswapCursorOverflow,
     UnsignedOutOfRange { value: u128, max: u128 },
@@ -98,6 +99,10 @@ impl std::fmt::Display for CompactError {
             Self::InvalidUnsignedValue => write!(f, "invalid Compact unsigned value"),
             Self::InvalidJubjubScalar => write!(f, "invalid Jubjub scalar"),
             Self::InvalidJubjubPoint => write!(f, "invalid Jubjub point"),
+            Self::ZswapOfferOutputMismatch => write!(
+                f,
+                "Zswap output intent differs from authoritative offer allocation"
+            ),
             Self::ZswapAllocationLocked => write!(
                 f,
                 "provisional Zswap allocation is unavailable for an observed or offer-backed context"

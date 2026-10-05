@@ -17,9 +17,22 @@
 
 use crate::ledger::{CoinInfo, CoinRecipient, QualifiedCoinInfo};
 
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub(crate) enum Allocation {
+    #[default]
+    Provisional,
+    #[cfg(feature = "ledger-transaction")]
+    Locked,
+    #[cfg(feature = "ledger-transaction")]
+    OfferBound {
+        start: u64,
+        outputs: Vec<(crate::ledger::CoinCommitment, u64)>,
+    },
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CircuitZswapOutput {
-    /// Provisional execution index; no claim of ledger allocation.
+    /// Provisional in native mode; exact upstream allocation in offer-bound mode.
     pub provisional_index: u64,
     pub coin: CoinInfo,
     pub recipient: CoinRecipient,
@@ -32,10 +45,14 @@ pub struct CircuitZswapPlan {
     pub(crate) next_index: u64,
     pub(crate) inputs: Vec<QualifiedCoinInfo>,
     pub(crate) outputs: Vec<CircuitZswapOutput>,
-    pub(crate) allocation_locked: bool,
+    pub(crate) allocation: Allocation,
 }
 
 impl CircuitZswapPlan {
+    pub fn is_empty(&self) -> bool {
+        self.inputs.is_empty() && self.outputs.is_empty()
+    }
+
     pub fn next_index(&self) -> u64 {
         self.next_index
     }
@@ -46,7 +63,7 @@ impl CircuitZswapPlan {
         &self.outputs
     }
     pub fn allocation_locked(&self) -> bool {
-        self.allocation_locked
+        self.allocation != Allocation::Provisional
     }
 }
 

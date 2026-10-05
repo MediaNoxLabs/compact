@@ -85,6 +85,7 @@ mod witness_vector_action;
 mod witness_vector_let;
 mod zerocash_mint;
 mod zerocash_spend;
+mod zswap_transfer;
 
 use std::env;
 use std::error::Error;
@@ -1734,6 +1735,15 @@ fn run() -> Result<(), Box<dyn Error>> {
             );
         }
         return asset_stored_record_fresh::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--zswap-transfer")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --zswap-transfer <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err("unexpected extra arguments".into());
+        }
+        return zswap_transfer::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--kernel-shielded-effects")) {
         let root = arguments

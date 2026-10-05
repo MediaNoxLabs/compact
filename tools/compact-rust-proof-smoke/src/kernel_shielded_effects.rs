@@ -175,7 +175,7 @@ fn prove_case(root: &Path, name: &'static str, selected: bool) -> Result<(), Box
     Ok(())
 }
 
-fn prove_and_verify_call(
+pub(super) fn prove_and_verify_call(
     root: &Path,
     name: &'static str,
     call: &ContractCallPrototype<DefaultDB>,

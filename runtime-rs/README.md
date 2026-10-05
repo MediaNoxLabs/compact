@@ -7,7 +7,12 @@ queries. Generated code checks `RUST_RUNTIME_ABI` at compile time. A generated
 crate bundles matching runtime sources by default or points to one shared
 source root when compiled with `--rust-runtime-root`.
 
-The current runtime ABI is 47. It adds bounded recorded Kernel claim/mint
+The current runtime ABI is 48. It adds recorded native Zswap intent methods,
+sealed intent traces and exact authoritative offer reconciliation. Ordinary
+observations stay allocation-locked; extra wallet inputs/change and transients
+remain outside the bounded intent scope. Empty intent plans retain legacy
+offer-backed preparation.
+ABI 47 adds bounded recorded Kernel claim/mint
 methods that reuse the native canonical programs and common recording executor.
 ABI 46 adds checked native wide unsigned addition; ABI 45 adds native Kernel
 shielded effects; ABI 44 adds recorded qualified-coin Cell writes.

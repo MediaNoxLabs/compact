@@ -468,7 +468,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
 
     /// Configure a provisional native output cursor before producing outputs.
     pub fn set_zswap_output_start(&mut self, index: u64) -> Result<(), CompactError> {
-        if self.circuit_zswap.allocation_locked {
+        if self.circuit_zswap.allocation_locked() {
             return Err(CompactError::ZswapAllocationLocked);
         }
         if !self.circuit_zswap.outputs.is_empty() {
@@ -478,9 +478,9 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         Ok(())
     }
 
-    #[cfg(feature = "ledger-transaction")]
+    #[cfg(all(test, feature = "ledger-transaction"))]
     pub(crate) fn lock_zswap_allocation(mut self) -> Self {
-        self.circuit_zswap.allocation_locked = true;
+        self.circuit_zswap.allocation = crate::zswap::Allocation::Locked;
         self
     }
 
@@ -489,26 +489,47 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         self.circuit_zswap.inputs.push(coin);
     }
 
-    /// Produce a provisional native intent and execution index, never a ledger allocation.
+    /// Append an output intent with a provisional native index or an exact offer-bound index.
+    /// Ordinary observations remain locked; authoritative commitment maps are never modified.
     pub fn create_zswap_output(
         &mut self,
         coin: ledger::CoinInfo,
         recipient: ledger::CoinRecipient,
     ) -> Result<(), CompactError> {
-        if self.circuit_zswap.allocation_locked {
-            return Err(CompactError::ZswapAllocationLocked);
+        use crate::zswap::Allocation;
+        let commitment = coin.commitment(&recipient);
+        match &self.circuit_zswap.allocation {
+            #[cfg(feature = "ledger-transaction")]
+            Allocation::Locked => return Err(CompactError::ZswapAllocationLocked),
+            #[cfg(feature = "ledger-transaction")]
+            Allocation::OfferBound { outputs, .. } => {
+                if outputs.get(self.circuit_zswap.outputs.len())
+                    != Some(&(commitment, self.circuit_zswap.next_index))
+                    || self
+                        .query
+                        .call_context
+                        .com_indices
+                        .get(&commitment)
+                        .copied()
+                        != Some(self.circuit_zswap.next_index)
+                {
+                    return Err(CompactError::ZswapOfferOutputMismatch);
+                }
+            }
+            Allocation::Provisional => (),
         }
         let next = self
             .circuit_zswap
             .next_index
             .checked_add(1)
             .ok_or(CompactError::ZswapCursorOverflow)?;
-        let commitment = coin.commitment(&recipient);
-        self.query.call_context.com_indices = self
-            .query
-            .call_context
-            .com_indices
-            .insert(commitment, self.circuit_zswap.next_index);
+        if self.circuit_zswap.allocation == Allocation::Provisional {
+            self.query.call_context.com_indices = self
+                .query
+                .call_context
+                .com_indices
+                .insert(commitment, self.circuit_zswap.next_index);
+        }
         self.circuit_zswap.next_index = next;
         self.circuit_zswap.outputs.push(crate::CircuitZswapOutput {
             provisional_index: next - 1,

@@ -2824,7 +2824,7 @@ fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
     let source = render(&contract).unwrap();
     assert!(source.contains("CompactCellValue, CompactEnum"));
     assert!(source.contains("pub enum Choice"));
-    assert!(source.contains("RUST_RUNTIME_ABI == 47"));
+    assert!(source.contains("RUST_RUNTIME_ABI == 48"));
     assert!(!source.contains("impl FieldRepr for Choice"));
     assert!(!source.contains("impl BinaryHashRepr for Choice"));
     assert!(!source.contains("impl FromFieldRepr for Choice"));
@@ -10575,7 +10575,7 @@ fn qualified_cell_coin_write_is_typed_and_recordable() {
 }
 
 #[test]
-fn native_zswap_intents_validate_types_and_remain_outside_recording() {
+fn native_zswap_intents_validate_types_and_record_bounded_unit_helpers() {
     let mut contract: Contract =
         serde_json::from_str(include_str!("native-zswap-intents-schema18-ir.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
@@ -10587,7 +10587,7 @@ fn native_zswap_intents_validate_types_and_remain_outside_recording() {
             .iter()
             .find(|c| c.name == name)
             .unwrap();
-        assert!(!circuit.recorded && !circuit.observed_call);
+        assert!(circuit.recorded && circuit.observed_call);
     }
     assert!(rendered.source.contains(".create_zswap_output("));
     assert!(rendered.source.contains(".create_zswap_input("));
@@ -11073,4 +11073,53 @@ fn assertion_recording_rejects_nonunit_steps_wrong_slots_and_extra_effects() {
     let mut witness_result = source;
     witness_result["witnesses"][0]["result"] = serde_json::json!({"kind":"field"});
     assert!(render(&parse(witness_result)).is_err());
+}
+
+#[test]
+fn zswap_recording_does_not_adopt_query_helpers_or_escaped_bindings() {
+    let mut contract: Contract =
+        serde_json::from_str(include_str!("native-zswap-intents-schema18-ir.json")).unwrap();
+    contract.schema_version = SCHEMA_VERSION;
+    let pair = contract
+        .stateful_circuits
+        .iter_mut()
+        .find(|c| c.name == "pair")
+        .unwrap();
+    pair.actions.push(StateAction::Expression {
+        value: Expr::KernelSelf {
+            ty: Type::Struct {
+                name: "ContractAddress".into(),
+                fields: vec![compact_rust_backend::ir::StructField {
+                    name: "bytes".into(),
+                    ty: Type::Bytes { length: 32 },
+                }],
+            },
+        },
+    });
+    let rendered = render_with_capabilities(&contract).unwrap();
+    let flow = rendered
+        .capabilities
+        .circuits
+        .iter()
+        .find(|c| c.name == "flow")
+        .unwrap();
+    assert!(!flow.recorded && !flow.observed_call);
+    assert!(!rendered.source.contains(".call_local("));
+    let pair = contract
+        .stateful_circuits
+        .iter_mut()
+        .find(|c| c.name == "pair")
+        .unwrap();
+    pair.actions.pop();
+    pair.actions.push(StateAction::Expression {
+        value: Expr::CreateZswapOutput {
+            coin: Box::new(Expr::Parameter {
+                name: "escaped".into(),
+            }),
+            recipient: Box::new(Expr::Parameter {
+                name: "recipient".into(),
+            }),
+        },
+    });
+    assert!(render_with_capabilities(&contract).is_err());
 }

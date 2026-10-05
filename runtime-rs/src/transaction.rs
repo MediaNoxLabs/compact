@@ -63,6 +63,7 @@ pub struct ObservedContractState<D: DB = DefaultDB> {
     contract: ContractState<D>,
     observation: Observation,
     com_indices: Map<Commitment, u64>,
+    allocation: crate::zswap::Allocation,
 }
 
 impl<D: DB> ObservedContractState<D> {
@@ -76,6 +77,7 @@ impl<D: DB> ObservedContractState<D> {
             contract,
             observation,
             com_indices: Map::new(),
+            allocation: crate::zswap::Allocation::Locked,
         }
     }
 
@@ -95,7 +97,11 @@ impl<D: DB> ObservedContractState<D> {
         let mut context =
             CircuitContext::from_contract_state(private_state, self.address, &self.contract);
         context.query.call_context.com_indices = self.com_indices.clone();
-        context.lock_zswap_allocation()
+        context.circuit_zswap.allocation = self.allocation.clone();
+        if let crate::zswap::Allocation::OfferBound { start, .. } = &self.allocation {
+            context.circuit_zswap.next_index = *start;
+        }
+        context
     }
 }
 
@@ -104,6 +110,7 @@ impl<D: DB> ObservedContractState<D> {
 pub struct OfferBackedObservedState<D: DB = DefaultDB> {
     observed: ObservedContractState<D>,
     offer: Offer<ProofPreimage, D>,
+    zswap: midnight_zswap::ledger::State<D>,
 }
 
 impl<D: DB> OfferBackedObservedState<D> {
@@ -125,8 +132,25 @@ impl<D: DB> OfferBackedObservedState<D> {
         let (_, indices) = ledger.zswap.try_apply(&offer, None).map_err(|error| {
             crate::CompactError::InvalidLedgerCell(format!("offer rejected: {error:?}"))
         })?;
+        observed.allocation = crate::zswap::Allocation::OfferBound {
+            start: ledger.zswap.first_free,
+            outputs: offer
+                .outputs
+                .iter_deref()
+                .map(|out| {
+                    (
+                        out.coin_com,
+                        *indices.get(&out.coin_com).expect("applied output index"),
+                    )
+                })
+                .collect(),
+        };
         observed.com_indices = indices;
-        Ok(Self { observed, offer })
+        Ok(Self {
+            observed,
+            offer,
+            zswap: (*ledger.zswap).clone(),
+        })
     }
 
     pub fn observed(&self) -> &ObservedContractState<D> {
@@ -145,12 +169,111 @@ impl<D: DB> OfferBackedObservedState<D> {
         {
             return Err(ObservedCallError::OfferMismatch);
         }
-        let prepared = call.prepare(verifier, communication_commitment_rand)?;
+        // Empty plans preserve pre-existing offer-only calls. Nonempty plans are exact.
+        if call.recorded.public.verify_ops().is_empty() {
+            return call
+                .prepare_inner(verifier, communication_commitment_rand, true)
+                .map(|call| OfferBoundPreparedCall {
+                    call,
+                    offer: self.offer.clone(),
+                });
+        }
+        self.reconcile(&call.recorded)
+            .map_err(ObservedCallError::ZswapIntent)?;
+        let prepared = call.prepare_inner(verifier, communication_commitment_rand, true)?;
         Ok(OfferBoundPreparedCall {
             call: prepared,
             offer: self.offer.clone(),
         })
     }
+    fn reconcile<Private, Output>(
+        &self,
+        recorded: &RecordedCircuitResult<Private, Output, D>,
+    ) -> Result<(), ZswapIntentError> {
+        use crate::ledger::{CoinInfo, CoinRecipient};
+        use midnight_coin_structure::transfer::SenderEvidence;
+        let context = &recorded.execution.context;
+        let plan = context.circuit_zswap();
+        if !recorded.public.initial_intents().is_empty()
+            || recorded.public.final_intents() != plan
+            || context.query.address != self.observed.address
+            || context.query.call_context.com_indices != self.observed.com_indices
+            || plan.allocation != self.observed.allocation
+        {
+            return Err(ZswapIntentError::AllocationMismatch);
+        }
+        if plan.is_empty() {
+            return Ok(());
+        }
+        if !self.offer.transient.is_empty() {
+            return Err(ZswapIntentError::TransientsUnsupported);
+        }
+        if plan.outputs().len() != self.offer.outputs.len() {
+            return Err(ZswapIntentError::OutputMismatch);
+        }
+        let expected_end = self
+            .zswap
+            .first_free
+            .checked_add(plan.outputs().len() as u64)
+            .ok_or(ZswapIntentError::AllocationMismatch)?;
+        if plan.next_index() != expected_end {
+            return Err(ZswapIntentError::AllocationMismatch);
+        }
+        for (intent, output) in plan.outputs().iter().zip(self.offer.outputs.iter_deref()) {
+            let commitment = intent.coin.commitment(&intent.recipient);
+            if commitment != output.coin_com
+                || self.observed.com_indices.get(&commitment).copied()
+                    != Some(intent.provisional_index)
+            {
+                return Err(ZswapIntentError::OutputMismatch);
+            }
+        }
+        if plan.inputs().len() != self.offer.inputs.len() {
+            return Err(ZswapIntentError::InputMismatch);
+        }
+        let mut matched = std::collections::HashSet::new();
+        for coin in plan.inputs() {
+            let info = CoinInfo::from(coin);
+            let commitment = info.commitment(&CoinRecipient::Contract(self.observed.address));
+            if coin.mt_index >= self.zswap.first_free
+                || self
+                    .zswap
+                    .coin_coms
+                    .index(coin.mt_index)
+                    .is_none_or(|(hash, owner)| {
+                        hash != commitment.0
+                            || owner
+                                .as_ref()
+                                .is_none_or(|owner| **owner != self.observed.address)
+                    })
+            {
+                return Err(ZswapIntentError::InputIndexMismatch);
+            }
+            let nullifier = info.nullifier(&SenderEvidence::Contract(self.observed.address));
+            if !matched.insert(nullifier)
+                || !self.offer.inputs.iter_deref().any(|input| {
+                    input.nullifier == nullifier
+                        && input
+                            .contract_address
+                            .as_ref()
+                            .is_some_and(|owner| **owner == self.observed.address)
+                })
+            {
+                return Err(ZswapIntentError::InputMismatch);
+            }
+        }
+        Ok(())
+    }
+}
+
+/// Exact intent/offer reconciliation failures; no wallet normalization is performed.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ZswapIntentError {
+    AllocationMismatch,
+    OutputMismatch,
+    InputMismatch,
+    InputIndexMismatch,
+    TransientsUnsupported,
 }
 
 /// A prepared call and the same validated offer from its observed context.
@@ -160,6 +283,10 @@ pub struct OfferBoundPreparedCall<D: DB = DefaultDB> {
 }
 
 impl<D: DB> OfferBoundPreparedCall<D> {
+    /// Inspect the prepared prototype without detaching it from its retained offer.
+    pub fn prototype(&self) -> &ContractCallPrototype<D> {
+        &self.call
+    }
     pub fn into_transaction<R: Rng + CryptoRng + ?Sized>(
         self,
         rng: &mut R,
@@ -244,6 +371,7 @@ pub enum ObservedCallError {
     AddressMismatch,
     StateMismatch,
     OfferMismatch,
+    ZswapIntent(ZswapIntentError),
     MissingOperation(String),
     VerifierMismatch(String),
     Prepare(PrepareCallError),
@@ -257,6 +385,9 @@ impl fmt::Display for ObservedCallError {
             }
             Self::StateMismatch => {
                 formatter.write_str("recorded call initial state differs from observation")
+            }
+            Self::ZswapIntent(reason) => {
+                write!(formatter, "Zswap intent/offer mismatch: {reason:?}")
             }
             Self::OfferMismatch => {
                 formatter.write_str("recorded call is not bound to this observed offer")
@@ -283,6 +414,15 @@ impl<'a, Private, Output: Into<AlignedValue>, D: DB> RecordedCall<'a, Private, O
         verifier: VerifierKey,
         communication_commitment_rand: Fr,
     ) -> Result<ContractCallPrototype<D>, ObservedCallError> {
+        self.prepare_inner(verifier, communication_commitment_rand, false)
+    }
+
+    fn prepare_inner(
+        self,
+        verifier: VerifierKey,
+        communication_commitment_rand: Fr,
+        offer_bound: bool,
+    ) -> Result<ContractCallPrototype<D>, ObservedCallError> {
         let initial = self.recorded.public.initial();
         if initial.address != self.observed.address {
             return Err(ObservedCallError::AddressMismatch);
@@ -301,7 +441,7 @@ impl<'a, Private, Output: Into<AlignedValue>, D: DB> RecordedCall<'a, Private, O
                 self.entry_point.to_owned(),
             ));
         }
-        prepare_call(
+        prepare_call_inner(
             self.recorded,
             CallSpec::new(
                 self.entry_point,
@@ -309,6 +449,7 @@ impl<'a, Private, Output: Into<AlignedValue>, D: DB> RecordedCall<'a, Private, O
                 self.input,
                 communication_commitment_rand,
             ),
+            offer_bound,
         )
         .map_err(ObservedCallError::Prepare)
     }
@@ -354,6 +495,8 @@ pub enum PrepareCallError {
     ReplayStateMismatch,
     Partition(String),
     EmptyTranscript,
+    UnboundZswapIntents,
+    ZswapPlanMismatch,
     PartitionEffectsMismatch,
 }
 
@@ -370,6 +513,11 @@ impl fmt::Display for PrepareCallError {
             Self::Partition(reason) => {
                 write!(formatter, "recorded call partition failed: {reason}")
             }
+            Self::ZswapPlanMismatch => {
+                formatter.write_str("recorded Zswap plan differs from sealed intent trace")
+            }
+            Self::UnboundZswapIntents => formatter
+                .write_str("Zswap intent-bearing calls require exact offer-backed preparation"),
             Self::EmptyTranscript => formatter.write_str("recorded call has no ledger transcript"),
             Self::PartitionEffectsMismatch => {
                 formatter.write_str("partitioned call effects differ from replay")
@@ -390,8 +538,24 @@ pub fn prepare_call<Private, Output, D: DB>(
 where
     Output: Into<AlignedValue>,
 {
+    prepare_call_inner(recorded, spec, false)
+}
+
+fn prepare_call_inner<Private, Output: Into<AlignedValue>, D: DB>(
+    recorded: RecordedCircuitResult<Private, Output, D>,
+    spec: CallSpec,
+    offer_bound: bool,
+) -> Result<ContractCallPrototype<D>, PrepareCallError> {
     if recorded.public.verify_ops().is_empty() {
         return Err(PrepareCallError::EmptyTranscript);
+    }
+    if recorded.public.final_intents() != recorded.execution.context.circuit_zswap()
+        || !recorded.public.initial_intents().is_empty()
+    {
+        return Err(PrepareCallError::ZswapPlanMismatch);
+    }
+    if !offer_bound && !recorded.public.final_intents().is_empty() {
+        return Err(PrepareCallError::UnboundZswapIntents);
     }
     let replay = recorded
         .public
@@ -443,3 +607,7 @@ where
         key_location: spec.key_location,
     })
 }
+
+#[cfg(test)]
+#[path = "transaction/zswap_tests.rs"]
+mod zswap_tests;

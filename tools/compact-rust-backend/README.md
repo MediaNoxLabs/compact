@@ -369,7 +369,7 @@ Compact spelling without warning in consumer builds.
 |---|---|---|
 | Compact compiler | Toolchain 0.31.133, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
 | Rust IR | Schema 20, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Schema 20 adds typed Kernel mint/claim effects. Schema 19 adds single-owner typed effectful return plans. Schema 18 adds typed native circuit Zswap intents. Schema 16 adds native qualified-coin Cell writes. Schema 15 adds typed Counter less-than queries. Schema 14 adds typed qualified-coin Set insertion. Schema 13 adds an explicit typed Field-to-Bytes32 expression and nested Counter read; the cast uses midnight-zk's canonical 32-byte little-endian Field representation. Ledger, circuit, witness, constructor, and exported alias declarations carry optional Compact source locations for diagnostics. |
-| Generated code and Rust runtime | ABI 47 | Generated modules assert the ABI at Rust compile time. ABI 47 adds bounded recorded Kernel effects using canonical upstream programs. ABI 46 adds checked native wide unsigned addition. ABI 45 adds native Kernel shielded effects through upstream VM queries. ABI 44 adds recorded qualified-coin Cell writes through the shared native VM builder. ABI 43 adds typed circuit Zswap intents and locked observed allocation. ABI 42 adds native qualified-coin Cell writes; ABI 41 adds typed Counter less-than queries; ABI 40 adds recorded qualified-coin Set insertion, metered `kernel.self()`, and offer-backed observed calls. ABI 39 adds qualified-coin Set insertion using ledger coin and recipient types and the allocated commitment index. ABI 38 adds audited local-helper adoption for private witnesses, gas, and transcript while checking the public and Zswap context. ABI 37 adds a caller coin key for native `ownPublicKey()` and its private output; ABI 36 adds recorded plain Merkle root checks through typed slots; ABI 35 adds recorded Counter reset through typed slots; ABI 34 adds recorded direct plain/historic Merkle fullness reads; ABI 33 adds typed local plain/historic Merkle views with checked depth; ABI 32 adds List views; ABI 31 adds cell-valued Map views; ABI 30 adds Set views; ABI 29 adds Cell/Counter views; ABI 25–28 add physical List paths, chunked Map and Cell calls, and Cell-read scalar returns; ABI 21–24 add typed multi-argument observed calls and composite/chunked Set calls. The [runtime guide](../../runtime-rs/README.md) records earlier ABI changes. |
+| Generated code and Rust runtime | ABI 48 | Generated modules assert the ABI at Rust compile time. ABI 48 adds exact offer-bound native intent recording and sealed intent reconciliation. ABI 47 adds bounded recorded Kernel effects using canonical upstream programs. ABI 46 adds checked native wide unsigned addition. ABI 45 adds native Kernel shielded effects through upstream VM queries. ABI 44 adds recorded qualified-coin Cell writes through the shared native VM builder. ABI 43 adds typed circuit Zswap intents and locked observed allocation. ABI 42 adds native qualified-coin Cell writes; ABI 41 adds typed Counter less-than queries; ABI 40 adds recorded qualified-coin Set insertion, metered `kernel.self()`, and offer-backed observed calls. ABI 39 adds qualified-coin Set insertion using ledger coin and recipient types and the allocated commitment index. ABI 38 adds audited local-helper adoption for private witnesses, gas, and transcript while checking the public and Zswap context. ABI 37 adds a caller coin key for native `ownPublicKey()` and its private output; ABI 36 adds recorded plain Merkle root checks through typed slots; ABI 35 adds recorded Counter reset through typed slots; ABI 34 adds recorded direct plain/historic Merkle fullness reads; ABI 33 adds typed local plain/historic Merkle views with checked depth; ABI 32 adds List views; ABI 31 adds cell-valued Map views; ABI 30 adds Set views; ABI 29 adds Cell/Counter views; ABI 25–28 add physical List paths, chunked Map and Cell calls, and Cell-read scalar returns; ABI 21–24 add typed multi-argument observed calls and composite/chunked Set calls. The [runtime guide](../../runtime-rs/README.md) records earlier ABI changes. |
 | Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |
 
 `--runtime-version` reports the TypeScript runtime version; the Rust runtime
@@ -898,11 +898,11 @@ ledger offer, funding, or authoritative Merkle allocation.
 
 Native contexts default to cursor0 and can set a start before their first output.
 The cursor is bounded by u64; overflow rejects before any map or intent change.
-This deliberately restricts the TypeScript bigint cursor domain. Observed and
-offer-backed contexts irreversibly lock provisional allocation and reject both
-cursor changes and native output creation. Authoritative allocation maps must
-remain untouched. Input intents and cursor/output changes are included in the
-`RecordingFrame::call_local` audit; this slice does not add native intent recording.
+This deliberately restricts the TypeScript bigint cursor domain. Ordinary observed
+contexts lock allocation; ADR0188 permits outputs only against exact authoritative
+offer indices. Both reject external cursor changes. Authoritative maps remain
+unchanged. Input intents and cursor/output changes stay outside the
+`RecordingFrame::call_local` audit's allowed effects.
 Constructor/result transitions retain the intent log and lock; provisional output
 indices travel with the log and reconstruct its native map after a transition.
 ConstructorResult does not retain arbitrary call-context or offer allocation maps;
@@ -910,11 +910,10 @@ this guarantee concerns only the provisional indices in the intent log.
 
 The independent TS fixture covers zero/nonzero cursors, duplicate commitments,
 left/right recipients, branch selection, witness order/private state, exact private
-outputs, gas/state/effects, and qualified Cell writes after native outputs. Native
-exports report their recording boundary; only the fixture's Cell read is recorded.
-The unchanged micro-dao source advances to an unsupported standard-library ledger
-query path and remains unassessed. Check `check_compactc_target.py
---native-zswap-intents` for source admission and strict-recording refusal.
+outputs, gas/state/effects, and qualified Cell writes after native outputs. ADR0188
+adds recorded APIs for the bounded Unit intent exports. Check
+`check_compactc_target.py --native-zswap-intents` for source admission and strict
+recording; `--proof` also runs the distinct-output funded transfer below.
 
 
 ### Native Kernel shielded effects (ADR0177)
@@ -1027,3 +1026,43 @@ those negative cases to isolate claim validation. Matching claim offer compositi
 network submission and finality are outside this evidence. Run the source gate
 with `--kernel-shielded-effects --proof`; funded mint needs
 `MIDNIGHT_LEDGER_TEST_STATIC_DIR` pointing to the pinned ledger's `ledger/static`.
+
+### Exact offer-bound Zswap intent recording (ADR0188)
+
+ABI48 adds typed frame input/output methods and an isolated Unit recording planner
+for ordered Sequence/Let/If, exact coin/recipient operands, typed zero-argument
+witnesses, qualified Cell writes, Kernel effects and bounded inlined Unit helpers.
+Schema20 is unchanged. Every native intent retains its existing empty aligned
+private transcript entry; no public VM operation or gas is invented. PublicTrace
+seals initial/final intent plans so replacing mutable execution context cannot
+bypass preparation checks.
+
+Private allocation state distinguishes provisional native execution, locked
+ordinary observations and authoritative offer-backed execution. Nonempty intent
+plans require exactly the offer's contract-owned inputs and normalized ordered
+outputs/actual indices. Reconciliation checks input index, stored commitment and
+owner through the upstream tree, derives contract nullifiers upstream, and checks
+final cursor/map against the initial binding. Extra wallet inputs, trailing change
+outputs and transients are rejected. Empty intent plans preserve existing funded
+Set/Cell and Kernel mint behavior. Generic unbound preparation rejects nonempty
+plans, after the existing `EmptyTranscript` boundary.
+
+The original `flow(true)` deliberately creates two identical output intents, then
+writes the last provisional index. At start7, native/TS recording retains cursor9
+and qualified index8. Pinned ledger-v8 8.0.3 rejects duplicate offer merge; a
+normalized singleton actually allocates index7/cursor8. Neither indices nor
+intents are rewritten. The original has nine-case execution/recording parity and
+exact bound/unbound/duplicate rejection evidence. Its false branch retains
+`EmptyTranscript` and has no call-proof claim.
+
+The separate `zswap_transfer_oracle` uses one distinct output with explicit Kernel
+nullifier/spend claims and a qualified Cell write. Two TS cases match native and
+recorded state/effects, ordered private/public transcripts, intents and query-sum
+gas. A 4480-byte call proof verifies independently and rejects changed binding.
+An explicit offline contract-owned genesis input funds output42 of the same token;
+Night-backed Dust pays fees separately. Unchanged default strictness and ledger
+application pass, including actual output index/commitment, stored coin and exact
+spent-nullifier replay rejection. A wrong Kernel claim rejects the exact upstream
+effects check; balancing is disabled only for that negative. No wallet/network or
+finality claim is made. Composite-return `planned` and broader offer composition
+remain separate work. Funded smoke requires `MIDNIGHT_LEDGER_TEST_STATIC_DIR`.

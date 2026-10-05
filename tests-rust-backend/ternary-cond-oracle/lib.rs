@@ -532,19 +532,20 @@ pub mod ledger_contract {
             } else {
                 runtime::Field::from(0u128)
             };
-            let __compact_constructor_local_2: crate::types::Box = crate::types::Box {
-                f: runtime::Field::from(
-                    (if __compact_constructor_param_0 {
-                        runtime::BoundedUint::<2>::new(1u128)
-                            .expect("Compact Uint literal fits its maximum")
-                    } else {
-                        runtime::BoundedUint::<2>::new(2u128)
-                            .expect("Compact Uint literal fits its maximum")
-                    })
-                    .value(),
-                ),
+            let __compact_struct_member_2: runtime::Field = runtime::Field::from(
+                (if __compact_constructor_param_0 {
+                    runtime::BoundedUint::<2>::new(1u128)
+                        .expect("Compact Uint literal fits its maximum")
+                } else {
+                    runtime::BoundedUint::<2>::new(2u128)
+                        .expect("Compact Uint literal fits its maximum")
+                })
+                .value(),
+            );
+            let __compact_constructor_local_3: crate::types::Box = crate::types::Box {
+                f: __compact_struct_member_2,
             };
-            let __compact_constructor_local_3: runtime::BoundedUint<4> =
+            let __compact_constructor_local_4: runtime::BoundedUint<4> =
                 if __compact_constructor_param_0 {
                     runtime::cast_unsigned::<2, 4>(if __compact_constructor_param_1 {
                         runtime::BoundedUint::<2>::new(1u128)
@@ -562,7 +563,7 @@ pub mod ledger_contract {
                             .expect("Compact Uint literal fits its maximum")
                     }
                 };
-            let __compact_constructor_local_4: runtime::JubjubPoint =
+            let __compact_constructor_local_5: runtime::JubjubPoint =
                 runtime::hash_to_curve(runtime::Field::from(
                     (if __compact_constructor_param_0 {
                         runtime::BoundedUint::<4>::new(3u128)
@@ -573,7 +574,7 @@ pub mod ledger_contract {
                     })
                     .value(),
                 ));
-            let __compact_call_argument_5 = runtime::Field::from(
+            let __compact_call_argument_6 = runtime::Field::from(
                 (if __compact_constructor_param_0 {
                     runtime::BoundedUint::<8>::new(7u128)
                         .expect("Compact Uint literal fits its maximum")
@@ -583,11 +584,11 @@ pub mod ledger_contract {
                 })
                 .value(),
             );
-            let __compact_constructor_local_6: runtime::Field =
-                crate::pure_circuits::idf(__compact_call_argument_5)?;
-            let __compact_value_7 = runtime::BoundedUint::<1>::new(0u128)
+            let __compact_constructor_local_7: runtime::Field =
+                crate::pure_circuits::idf(__compact_call_argument_6)?;
+            let __compact_value_8 = runtime::BoundedUint::<1>::new(0u128)
                 .expect("Compact Uint literal fits its maximum");
-            let __compact_constructor_local_8: bool = __compact_value_7
+            let __compact_constructor_local_9: bool = __compact_value_8
                 == if __compact_constructor_param_0 {
                     runtime::BoundedUint::<1>::new(1u128)
                         .expect("Compact Uint literal fits its maximum")
@@ -595,25 +596,25 @@ pub mod ledger_contract {
                     runtime::BoundedUint::<1>::new(0u128)
                         .expect("Compact Uint literal fits its maximum")
                 };
-            let __compact_value_9 = __compact_constructor_param_2;
-            if !(__compact_value_9 == __compact_constructor_param_2) {
+            let __compact_value_10 = __compact_constructor_param_2;
+            if !(__compact_value_10 == __compact_constructor_param_2) {
                 return Err(runtime::CompactError::AssertionFailed(
                     "ctor ternary assert".to_owned(),
                 ));
             }
-            let __compact_value_10 = __compact_constructor_local_1;
-            let __compact_value_11 = (__compact_constructor_local_2.clone()).f;
-            let __compact_value_12 = __compact_value_10 + __compact_value_11;
-            let __compact_value_13 = runtime::Field::from((__compact_constructor_local_3).value());
-            let __compact_value_14 = __compact_value_12 + __compact_value_13;
-            let __compact_value_15 = runtime::jubjub_point_x(__compact_constructor_local_4);
-            let __compact_value_16 = __compact_value_14 + __compact_value_15;
-            let __compact_value_17 = runtime::Field::from((__compact_constructor_local_0).value());
-            let __compact_value_18 = __compact_value_16 + __compact_value_17;
-            let __compact_value_19 = __compact_constructor_local_6;
-            let __compact_value_20 = __compact_value_18 + __compact_value_19;
-            let __compact_value_21 = runtime::Field::from(
-                (if __compact_constructor_local_8 {
+            let __compact_value_11 = __compact_constructor_local_1;
+            let __compact_value_12 = (__compact_constructor_local_3.clone()).f;
+            let __compact_value_13 = __compact_value_11 + __compact_value_12;
+            let __compact_value_14 = runtime::Field::from((__compact_constructor_local_4).value());
+            let __compact_value_15 = __compact_value_13 + __compact_value_14;
+            let __compact_value_16 = runtime::jubjub_point_x(__compact_constructor_local_5);
+            let __compact_value_17 = __compact_value_15 + __compact_value_16;
+            let __compact_value_18 = runtime::Field::from((__compact_constructor_local_0).value());
+            let __compact_value_19 = __compact_value_17 + __compact_value_18;
+            let __compact_value_20 = __compact_constructor_local_7;
+            let __compact_value_21 = __compact_value_19 + __compact_value_20;
+            let __compact_value_22 = runtime::Field::from(
+                (if __compact_constructor_local_9 {
                     runtime::BoundedUint::<1>::new(1u128)
                         .expect("Compact Uint literal fits its maximum")
                 } else {
@@ -622,11 +623,11 @@ pub mod ledger_contract {
                 })
                 .value(),
             );
-            let __compact_constructor_local_22: runtime::Field =
-                __compact_value_20 + __compact_value_21;
-            let step = context.write_cell(1, __compact_constructor_local_22)?;
+            let __compact_constructor_local_23: runtime::Field =
+                __compact_value_21 + __compact_value_22;
+            let step = context.write_cell(1, __compact_constructor_local_23)?;
             context = step.context;
-            let __compact_constructor_local_23: runtime::BoundedUint<18446744073709551615> =
+            let __compact_constructor_local_24: runtime::BoundedUint<18446744073709551615> =
                 runtime::cast_unsigned::<20, 18446744073709551615>(
                     if __compact_constructor_param_0 {
                         runtime::BoundedUint::<20>::new(10u128)
@@ -636,9 +637,9 @@ pub mod ledger_contract {
                             .expect("Compact Uint literal fits its maximum")
                     },
                 )?;
-            let step = context.write_cell(2, __compact_constructor_local_23)?;
+            let step = context.write_cell(2, __compact_constructor_local_24)?;
             context = step.context;
-            let __compact_constructor_local_24: runtime::FixedVector<runtime::Field, 2> =
+            let __compact_constructor_local_25: runtime::FixedVector<runtime::Field, 2> =
                 runtime::FixedVector::new([
                     if __compact_constructor_param_0 {
                         runtime::Field::from(
@@ -659,7 +660,7 @@ pub mod ledger_contract {
                         runtime::Field::from(4u128)
                     },
                 ]);
-            let step = context.write_cell(3, (__compact_constructor_local_24.clone()).clone())?;
+            let step = context.write_cell(3, (__compact_constructor_local_25.clone()).clone())?;
             context = step.context;
             let _ = total_cost;
             Ok(context.into_constructor_result())
@@ -759,17 +760,18 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
+        let __compact_struct_member_0: runtime::Field = runtime::Field::from(
+            (if __compact_param_0 {
+                runtime::BoundedUint::<2>::new(1u128)
+                    .expect("Compact Uint literal fits its maximum")
+            } else {
+                runtime::BoundedUint::<2>::new(2u128)
+                    .expect("Compact Uint literal fits its maximum")
+            })
+            .value(),
+        );
         let __compact_action_local_0: crate::types::Box = crate::types::Box {
-            f: runtime::Field::from(
-                (if __compact_param_0 {
-                    runtime::BoundedUint::<2>::new(1u128)
-                        .expect("Compact Uint literal fits its maximum")
-                } else {
-                    runtime::BoundedUint::<2>::new(2u128)
-                        .expect("Compact Uint literal fits its maximum")
-                })
-                .value(),
-            ),
+            f: __compact_struct_member_0,
         };
         let __compact_action_local_1: runtime::Field = (__compact_action_local_0.clone()).f;
         let step = crate::ledger_slots::fieldCell.write(context, __compact_action_local_1)?;
@@ -1204,17 +1206,18 @@ pub mod ledger_contract {
         context = __compact_query_0.context;
         total_cost += __compact_query_0.gas_cost;
         let __compact_action_local_0: bool = __compact_query_0.result;
+        let __compact_struct_member_1: runtime::Field = runtime::Field::from(
+            (if __compact_action_local_0 {
+                runtime::BoundedUint::<2>::new(1u128)
+                    .expect("Compact Uint literal fits its maximum")
+            } else {
+                runtime::BoundedUint::<2>::new(2u128)
+                    .expect("Compact Uint literal fits its maximum")
+            })
+            .value(),
+        );
         let __compact_action_local_1: crate::types::Box = crate::types::Box {
-            f: runtime::Field::from(
-                (if __compact_action_local_0 {
-                    runtime::BoundedUint::<2>::new(1u128)
-                        .expect("Compact Uint literal fits its maximum")
-                } else {
-                    runtime::BoundedUint::<2>::new(2u128)
-                        .expect("Compact Uint literal fits its maximum")
-                })
-                .value(),
-            ),
+            f: __compact_struct_member_1,
         };
         let __compact_action_local_2: runtime::Field = (__compact_action_local_1.clone()).f;
         let step = crate::ledger_slots::fieldCell.write(context, __compact_action_local_2)?;

@@ -901,9 +901,11 @@ pub mod ledger_contract {
                 "Attempted to set topic after setup phase".to_owned(),
             ));
         }
+        let __compact_struct_member_6: bool = true;
+        let __compact_struct_member_7: runtime::OpaqueString = __compact_param_0.clone();
         let __compact_action_local_2: crate::types::Maybe = crate::types::Maybe {
-            is_some: true,
-            value: __compact_param_0.clone(),
+            is_some: __compact_struct_member_6,
+            value: __compact_struct_member_7,
         };
         let step = crate::ledger_slots::topic.write(context, __compact_action_local_2.clone())?;
         let context = step.context;

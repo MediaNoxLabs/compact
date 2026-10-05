@@ -262,13 +262,21 @@ pub mod ledger_contract {
         let __compact_action_local_1: runtime::JubjubPoint =
             (__compact_action_local_0.clone()).announcement;
         let __compact_action_local_2: runtime::Field = (__compact_action_local_0.clone()).response;
+        let __compact_struct_member_0: runtime::Field =
+            runtime::jubjub_point_x(__compact_action_local_1);
+        let __compact_struct_member_1: runtime::Field =
+            runtime::jubjub_point_y(__compact_action_local_1);
+        let __compact_struct_member_2: runtime::Field = runtime::jubjub_point_x(__compact_param_2);
+        let __compact_struct_member_3: runtime::Field = runtime::jubjub_point_y(__compact_param_2);
+        let __compact_struct_member_4: runtime::FixedVector<runtime::Field, 4> =
+            __compact_param_0.clone();
         let __compact_action_local_3: runtime::Field =
             runtime::transient_hash(crate::types::SchnorrHashInput {
-                ann_x: runtime::jubjub_point_x(__compact_action_local_1),
-                ann_y: runtime::jubjub_point_y(__compact_action_local_1),
-                pk_x: runtime::jubjub_point_x(__compact_param_2),
-                pk_y: runtime::jubjub_point_y(__compact_param_2),
-                msg: __compact_param_0.clone(),
+                ann_x: __compact_struct_member_0,
+                ann_y: __compact_struct_member_1,
+                pk_x: __compact_struct_member_2,
+                pk_y: __compact_struct_member_3,
+                msg: __compact_struct_member_4,
             });
         let __compact_action_local_4: runtime::Field = runtime::Field::from_le_bytes(&[
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
@@ -276,33 +284,33 @@ pub mod ledger_contract {
         ])
         .expect("validated Compact Field literal");
         let mut context = context;
-        let __compact_argument_0 = __compact_action_local_3;
-        let __compact_witness_meter_1 = runtime::context::WitnessReadMeter::new(&context);
-        let (__compact_next_private_1, __compact_witness_1) = witnesses.getSchnorrReduction(
+        let __compact_argument_5 = __compact_action_local_3;
+        let __compact_witness_meter_6 = runtime::context::WitnessReadMeter::new(&context);
+        let (__compact_next_private_6, __compact_witness_6) = witnesses.getSchnorrReduction(
             context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
-                meter: &__compact_witness_meter_1,
+                meter: &__compact_witness_meter_6,
             }),
-            __compact_argument_0,
+            __compact_argument_5,
         )?;
-        total_cost += __compact_witness_meter_1.gas_cost();
-        context.private_state = __compact_next_private_1;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_1));
+        total_cost += __compact_witness_meter_6.gas_cost();
+        context.private_state = __compact_next_private_6;
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_6));
         let __compact_action_local_5: (
             runtime::BoundedUint<127>,
             runtime::WideUint<
                 1329227995784915872903807060280344575u128,
                 340282366920938463463374607431768211455u128,
             >,
-        ) = __compact_witness_1;
+        ) = __compact_witness_6;
         let __compact_action_local_6: runtime::BoundedUint<127> = (__compact_action_local_5).0;
         let __compact_action_local_7: runtime::WideUint<
             1329227995784915872903807060280344575u128,
             340282366920938463463374607431768211455u128,
         > = (__compact_action_local_5).1;
-        let __compact_expression_local_2: runtime::BoundedUint<127> = __compact_action_local_6;
-        let __compact_value_3 = __compact_expression_local_2;
-        if !(__compact_value_3.value()
+        let __compact_expression_local_7: runtime::BoundedUint<127> = __compact_action_local_6;
+        let __compact_value_8 = __compact_expression_local_7;
+        if !(__compact_value_8.value()
             < runtime::BoundedUint::<127>::new(116u128)
                 .expect("Compact Uint literal fits its maximum")
                 .value())
@@ -311,12 +319,12 @@ pub mod ledger_contract {
                 "Schnorr quotient out of range".to_owned(),
             ));
         }
-        let __compact_value_4 = runtime::Field::from((__compact_action_local_6).value());
-        let __compact_value_5 = __compact_action_local_4;
-        let __compact_value_6 = __compact_value_4 * __compact_value_5;
-        let __compact_value_7 = (__compact_action_local_7).as_field();
-        let __compact_value_8 = __compact_value_6 + __compact_value_7;
-        if !(__compact_value_8 == __compact_action_local_3) {
+        let __compact_value_9 = runtime::Field::from((__compact_action_local_6).value());
+        let __compact_value_10 = __compact_action_local_4;
+        let __compact_value_11 = __compact_value_9 * __compact_value_10;
+        let __compact_value_12 = (__compact_action_local_7).as_field();
+        let __compact_value_13 = __compact_value_11 + __compact_value_12;
+        if !(__compact_value_13 == __compact_action_local_3) {
             return Err(runtime::CompactError::AssertionFailed(
                 "Invalid challenge reduction".to_owned(),
             ));
@@ -324,16 +332,16 @@ pub mod ledger_contract {
         let __compact_action_local_8: runtime::Field = (__compact_action_local_7).as_field();
         let __compact_action_local_9: runtime::JubjubPoint =
             runtime::ec_mul_generator(__compact_action_local_2)?;
-        let __compact_value_9 = __compact_action_local_1;
-        let __compact_value_10 = __compact_param_2;
+        let __compact_value_14 = __compact_action_local_1;
+        let __compact_value_15 = __compact_param_2;
         let __compact_action_local_10: runtime::JubjubPoint = runtime::ec_add(
-            __compact_value_9,
-            runtime::ec_mul(__compact_value_10, __compact_action_local_8)?,
+            __compact_value_14,
+            runtime::ec_mul(__compact_value_15, __compact_action_local_8)?,
         );
-        let __compact_value_11 = __compact_param_2;
-        if !(if __compact_value_11 != <runtime::JubjubPoint as Default>::default() {
-            let __compact_value_12 = __compact_action_local_1;
-            __compact_value_12 != <runtime::JubjubPoint as Default>::default()
+        let __compact_value_16 = __compact_param_2;
+        if !(if __compact_value_16 != <runtime::JubjubPoint as Default>::default() {
+            let __compact_value_17 = __compact_action_local_1;
+            __compact_value_17 != <runtime::JubjubPoint as Default>::default()
         } else {
             false
         }) {
@@ -341,10 +349,10 @@ pub mod ledger_contract {
                 "Schnorr verification requires a non-identity key and announcement".to_owned(),
             ));
         }
-        let __compact_value_13 = runtime::jubjub_point_x(__compact_action_local_9);
-        if !(if __compact_value_13 == runtime::jubjub_point_x(__compact_action_local_10) {
-            let __compact_value_14 = runtime::jubjub_point_y(__compact_action_local_9);
-            __compact_value_14 == runtime::jubjub_point_y(__compact_action_local_10)
+        let __compact_value_18 = runtime::jubjub_point_x(__compact_action_local_9);
+        if !(if __compact_value_18 == runtime::jubjub_point_x(__compact_action_local_10) {
+            let __compact_value_19 = runtime::jubjub_point_y(__compact_action_local_9);
+            __compact_value_19 == runtime::jubjub_point_y(__compact_action_local_10)
         } else {
             false
         }) {

@@ -172,58 +172,68 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
+        let __compact_struct_member_0: runtime::FixedBytes<32> = runtime::FixedBytes::new([
+            110u8, 111u8, 110u8, 99u8, 101u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+        ]);
+        let __compact_struct_member_1: runtime::FixedBytes<32> = runtime::FixedBytes::new([
+            99u8, 111u8, 108u8, 111u8, 114u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+        ]);
+        let __compact_struct_member_2: runtime::BoundedUint<
+            340282366920938463463374607431768211455,
+        > = runtime::BoundedUint::<340282366920938463463374607431768211455>::new(1u128)
+            .expect("Compact Uint literal fits its maximum");
+        let __compact_struct_member_3: runtime::BoundedUint<18446744073709551615> =
+            runtime::BoundedUint::<18446744073709551615>::new(0u128)
+                .expect("Compact Uint literal fits its maximum");
         let __compact_action_local_0: crate::types::QualifiedShieldedCoinInfo =
             crate::types::QualifiedShieldedCoinInfo {
-                nonce: runtime::FixedBytes::new([
-                    110u8, 111u8, 110u8, 99u8, 101u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-                    0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-                    0u8, 0u8,
-                ]),
-                color: runtime::FixedBytes::new([
-                    99u8, 111u8, 108u8, 111u8, 114u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-                    0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-                    0u8, 0u8,
-                ]),
-                value: runtime::BoundedUint::<340282366920938463463374607431768211455>::new(1u128)
-                    .expect("Compact Uint literal fits its maximum"),
-                mt_index: runtime::BoundedUint::<18446744073709551615>::new(0u128)
-                    .expect("Compact Uint literal fits its maximum"),
+                nonce: __compact_struct_member_0,
+                color: __compact_struct_member_1,
+                value: __compact_struct_member_2,
+                mt_index: __compact_struct_member_3,
             };
+        let __compact_struct_member_4: runtime::FixedBytes<32> = runtime::FixedBytes::new([
+            110u8, 111u8, 110u8, 99u8, 101u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+        ]);
+        let __compact_struct_member_5: runtime::FixedBytes<32> = runtime::FixedBytes::new([
+            99u8, 111u8, 108u8, 111u8, 114u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+        ]);
+        let __compact_struct_member_6: runtime::BoundedUint<
+            340282366920938463463374607431768211455,
+        > = runtime::BoundedUint::<340282366920938463463374607431768211455>::new(2u128)
+            .expect("Compact Uint literal fits its maximum");
+        let __compact_struct_member_7: runtime::BoundedUint<18446744073709551615> =
+            runtime::BoundedUint::<18446744073709551615>::new(0u128)
+                .expect("Compact Uint literal fits its maximum");
         let __compact_action_local_1: crate::types::QualifiedShieldedCoinInfo =
             crate::types::QualifiedShieldedCoinInfo {
-                nonce: runtime::FixedBytes::new([
-                    110u8, 111u8, 110u8, 99u8, 101u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-                    0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-                    0u8, 0u8,
-                ]),
-                color: runtime::FixedBytes::new([
-                    99u8, 111u8, 108u8, 111u8, 114u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-                    0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-                    0u8, 0u8,
-                ]),
-                value: runtime::BoundedUint::<340282366920938463463374607431768211455>::new(2u128)
-                    .expect("Compact Uint literal fits its maximum"),
-                mt_index: runtime::BoundedUint::<18446744073709551615>::new(0u128)
-                    .expect("Compact Uint literal fits its maximum"),
+                nonce: __compact_struct_member_4,
+                color: __compact_struct_member_5,
+                value: __compact_struct_member_6,
+                mt_index: __compact_struct_member_7,
             };
         let mut context = context;
-        let __compact_query_0 = crate::ledger_slots::c.is_empty(context)?;
-        context = __compact_query_0.context;
-        total_cost += __compact_query_0.gas_cost;
-        let __compact_value_1 = __compact_query_0.result;
-        if !(__compact_value_1 == true) {
+        let __compact_query_8 = crate::ledger_slots::c.is_empty(context)?;
+        context = __compact_query_8.context;
+        total_cost += __compact_query_8.gas_cost;
+        let __compact_value_9 = __compact_query_8.result;
+        if !(__compact_value_9 == true) {
             return Err(runtime::CompactError::AssertionFailed(
                 "Structure should be empty".to_owned(),
             ));
         }
         let mut context = context;
-        let __compact_query_2 = crate::ledger_slots::c.size(context)?;
-        context = __compact_query_2.context;
-        total_cost += __compact_query_2.gas_cost;
-        let __compact_value_3 =
-            runtime::BoundedUint::<18446744073709551615>::new(__compact_query_2.result as u128)
+        let __compact_query_10 = crate::ledger_slots::c.size(context)?;
+        context = __compact_query_10.context;
+        total_cost += __compact_query_10.gas_cost;
+        let __compact_value_11 =
+            runtime::BoundedUint::<18446744073709551615>::new(__compact_query_10.result as u128)
                 .expect("ledger Set size fits Uint<64>");
-        if !(__compact_value_3
+        if !(__compact_value_11
             == runtime::BoundedUint::<18446744073709551615>::new(0u128)
                 .expect("Compact Uint literal fits its maximum"))
         {
@@ -232,64 +242,6 @@ pub mod ledger_contract {
             ));
         }
         let step = crate::ledger_slots::c.insert(context, __compact_action_local_0.clone())?;
-        let context = step.context;
-        total_cost += step.gas_cost;
-        let mut context = context;
-        let __compact_query_4 = crate::ledger_slots::c.size(context)?;
-        context = __compact_query_4.context;
-        total_cost += __compact_query_4.gas_cost;
-        let __compact_value_5 =
-            runtime::BoundedUint::<18446744073709551615>::new(__compact_query_4.result as u128)
-                .expect("ledger Set size fits Uint<64>");
-        if !(__compact_value_5
-            == runtime::BoundedUint::<18446744073709551615>::new(1u128)
-                .expect("Compact Uint literal fits its maximum"))
-        {
-            return Err(runtime::CompactError::AssertionFailed(
-                "Size should be 1".to_owned(),
-            ));
-        }
-        let mut context = context;
-        let __compact_query_6 =
-            crate::ledger_slots::c.member(context, (__compact_action_local_0.clone()).clone())?;
-        context = __compact_query_6.context;
-        total_cost += __compact_query_6.gas_cost;
-        let __compact_value_7 = __compact_query_6.result;
-        if !(__compact_value_7 == true) {
-            return Err(runtime::CompactError::AssertionFailed(
-                "Key qcoin should be member".to_owned(),
-            ));
-        }
-        let step = crate::ledger_slots::c.insert(context, __compact_action_local_1.clone())?;
-        let context = step.context;
-        total_cost += step.gas_cost;
-        let mut context = context;
-        let __compact_query_8 = crate::ledger_slots::c.size(context)?;
-        context = __compact_query_8.context;
-        total_cost += __compact_query_8.gas_cost;
-        let __compact_value_9 =
-            runtime::BoundedUint::<18446744073709551615>::new(__compact_query_8.result as u128)
-                .expect("ledger Set size fits Uint<64>");
-        if !(__compact_value_9
-            == runtime::BoundedUint::<18446744073709551615>::new(2u128)
-                .expect("Compact Uint literal fits its maximum"))
-        {
-            return Err(runtime::CompactError::AssertionFailed(
-                "Size should be 2".to_owned(),
-            ));
-        }
-        let mut context = context;
-        let __compact_query_10 =
-            crate::ledger_slots::c.member(context, (__compact_action_local_1.clone()).clone())?;
-        context = __compact_query_10.context;
-        total_cost += __compact_query_10.gas_cost;
-        let __compact_value_11 = __compact_query_10.result;
-        if !(__compact_value_11 == true) {
-            return Err(runtime::CompactError::AssertionFailed(
-                "Key qcoin2 should be member".to_owned(),
-            ));
-        }
-        let step = crate::ledger_slots::c.remove(context, __compact_action_local_0.clone())?;
         let context = step.context;
         total_cost += step.gas_cost;
         let mut context = context;
@@ -309,221 +261,16 @@ pub mod ledger_contract {
         }
         let mut context = context;
         let __compact_query_14 =
-            crate::ledger_slots::c.member(context, (__compact_action_local_1.clone()).clone())?;
+            crate::ledger_slots::c.member(context, (__compact_action_local_0.clone()).clone())?;
         context = __compact_query_14.context;
         total_cost += __compact_query_14.gas_cost;
         let __compact_value_15 = __compact_query_14.result;
         if !(__compact_value_15 == true) {
             return Err(runtime::CompactError::AssertionFailed(
-                "Key 1 should be member".to_owned(),
+                "Key qcoin should be member".to_owned(),
             ));
         }
-        let step = crate::ledger_slots::c.reset(context)?;
-        let context = step.context;
-        total_cost += step.gas_cost;
-        let mut context = context;
-        let __compact_query_16 = crate::ledger_slots::c.size(context)?;
-        context = __compact_query_16.context;
-        total_cost += __compact_query_16.gas_cost;
-        let __compact_value_17 =
-            runtime::BoundedUint::<18446744073709551615>::new(__compact_query_16.result as u128)
-                .expect("ledger Set size fits Uint<64>");
-        if !(__compact_value_17
-            == runtime::BoundedUint::<18446744073709551615>::new(0u128)
-                .expect("Compact Uint literal fits its maximum"))
-        {
-            return Err(runtime::CompactError::AssertionFailed(
-                "Size should be 0".to_owned(),
-            ));
-        }
-        let mut context = context;
-        let __compact_query_18 = crate::ledger_slots::c.is_empty(context)?;
-        context = __compact_query_18.context;
-        total_cost += __compact_query_18.gas_cost;
-        let __compact_value_19 = __compact_query_18.result;
-        if !(__compact_value_19 == true) {
-            return Err(runtime::CompactError::AssertionFailed(
-                "Structure should be empty".to_owned(),
-            ));
-        }
-        let result = ();
-        Ok(runtime::context::CircuitResult {
-            context,
-            result,
-            gas_cost: total_cost,
-            private_transcript_outputs,
-        })
-    }
-    pub fn test_ShieldedCoinInfo<Private>(
-        context: runtime::context::CircuitContext<Private>,
-    ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-        let mut total_cost = runtime::context::RunningCost::default();
-        let private_transcript_outputs = Vec::new();
-        let __compact_action_local_0: crate::types::ShieldedCoinInfo =
-            crate::types::ShieldedCoinInfo {
-                nonce: runtime::FixedBytes::new([
-                    110u8, 111u8, 110u8, 99u8, 101u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-                    0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-                    0u8, 0u8,
-                ]),
-                color: runtime::FixedBytes::new([
-                    99u8, 111u8, 108u8, 111u8, 114u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-                    0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-                    0u8, 0u8,
-                ]),
-                value: runtime::BoundedUint::<340282366920938463463374607431768211455>::new(1u128)
-                    .expect("Compact Uint literal fits its maximum"),
-            };
-        let __compact_action_local_1: crate::types::ShieldedCoinInfo =
-            crate::types::ShieldedCoinInfo {
-                nonce: runtime::FixedBytes::new([
-                    110u8, 111u8, 110u8, 99u8, 101u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-                    0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-                    0u8, 0u8,
-                ]),
-                color: runtime::FixedBytes::new([
-                    99u8, 111u8, 108u8, 111u8, 114u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-                    0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-                    0u8, 0u8,
-                ]),
-                value: runtime::BoundedUint::<340282366920938463463374607431768211455>::new(2u128)
-                    .expect("Compact Uint literal fits its maximum"),
-            };
-        let __compact_action_local_2: crate::types::QualifiedShieldedCoinInfo =
-            crate::types::QualifiedShieldedCoinInfo {
-                nonce: runtime::FixedBytes::new([
-                    110u8, 111u8, 110u8, 99u8, 101u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-                    0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-                    0u8, 0u8,
-                ]),
-                color: runtime::FixedBytes::new([
-                    99u8, 111u8, 108u8, 111u8, 114u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-                    0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-                    0u8, 0u8,
-                ]),
-                value: runtime::BoundedUint::<340282366920938463463374607431768211455>::new(1u128)
-                    .expect("Compact Uint literal fits its maximum"),
-                mt_index: runtime::BoundedUint::<18446744073709551615>::new(0u128)
-                    .expect("Compact Uint literal fits its maximum"),
-            };
-        let __compact_action_local_3: crate::types::QualifiedShieldedCoinInfo =
-            crate::types::QualifiedShieldedCoinInfo {
-                nonce: runtime::FixedBytes::new([
-                    110u8, 111u8, 110u8, 99u8, 101u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-                    0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-                    0u8, 0u8,
-                ]),
-                color: runtime::FixedBytes::new([
-                    99u8, 111u8, 108u8, 111u8, 114u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-                    0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-                    0u8, 0u8,
-                ]),
-                value: runtime::BoundedUint::<340282366920938463463374607431768211455>::new(2u128)
-                    .expect("Compact Uint literal fits its maximum"),
-                mt_index: runtime::BoundedUint::<18446744073709551615>::new(0u128)
-                    .expect("Compact Uint literal fits its maximum"),
-            };
-        let mut context = context;
-        let __compact_query_0 = crate::ledger_slots::c.is_empty(context)?;
-        context = __compact_query_0.context;
-        total_cost += __compact_query_0.gas_cost;
-        let __compact_value_1 = __compact_query_0.result;
-        if !(__compact_value_1 == true) {
-            return Err(runtime::CompactError::AssertionFailed(
-                "Structure should be empty".to_owned(),
-            ));
-        }
-        let mut context = context;
-        let __compact_query_2 = crate::ledger_slots::c.size(context)?;
-        context = __compact_query_2.context;
-        total_cost += __compact_query_2.gas_cost;
-        let __compact_value_3 =
-            runtime::BoundedUint::<18446744073709551615>::new(__compact_query_2.result as u128)
-                .expect("ledger Set size fits Uint<64>");
-        if !(__compact_value_3
-            == runtime::BoundedUint::<18446744073709551615>::new(0u128)
-                .expect("Compact Uint literal fits its maximum"))
-        {
-            return Err(runtime::CompactError::AssertionFailed(
-                "Size should be 0".to_owned(),
-            ));
-        }
-        let mut context = context;
-        let __compact_query_4 = context.kernel_self()?;
-        context = __compact_query_4.context;
-        total_cost += __compact_query_4.gas_cost;
-        let __compact_call_argument_5 = crate::types::ContractAddress {
-            bytes: runtime::ledger::contract_address_bytes(&__compact_query_4.result),
-        };
-        let __compact_action_local_4: crate::types::Either =
-            crate::pure_circuits::right(__compact_call_argument_5)?;
-        let __compact_coin_6 = __compact_action_local_0.clone();
-        let __compact_recipient_7 = __compact_action_local_4.clone();
-        let step = crate::ledger_slots::c.insert_coin(
-            context,
-            runtime::ledger::coin_info_from_compact(
-                __compact_coin_6.nonce,
-                __compact_coin_6.color,
-                __compact_coin_6.value.value(),
-            ),
-            runtime::ledger::coin_recipient_from_compact(
-                __compact_recipient_7.is_left,
-                __compact_recipient_7.left.bytes,
-                __compact_recipient_7.right.bytes,
-            ),
-        )?;
-        let context = step.context;
-        total_cost += step.gas_cost;
-        let mut context = context;
-        let __compact_query_8 = crate::ledger_slots::c.size(context)?;
-        context = __compact_query_8.context;
-        total_cost += __compact_query_8.gas_cost;
-        let __compact_value_9 =
-            runtime::BoundedUint::<18446744073709551615>::new(__compact_query_8.result as u128)
-                .expect("ledger Set size fits Uint<64>");
-        if !(__compact_value_9
-            == runtime::BoundedUint::<18446744073709551615>::new(1u128)
-                .expect("Compact Uint literal fits its maximum"))
-        {
-            return Err(runtime::CompactError::AssertionFailed(
-                "Size should be 1".to_owned(),
-            ));
-        }
-        let mut context = context;
-        let __compact_query_10 =
-            crate::ledger_slots::c.member(context, (__compact_action_local_2.clone()).clone())?;
-        context = __compact_query_10.context;
-        total_cost += __compact_query_10.gas_cost;
-        let __compact_value_11 = __compact_query_10.result;
-        if !(__compact_value_11 == true) {
-            return Err(runtime::CompactError::AssertionFailed(
-                "Key coin should be member".to_owned(),
-            ));
-        }
-        let mut context = context;
-        let __compact_query_12 = context.kernel_self()?;
-        context = __compact_query_12.context;
-        total_cost += __compact_query_12.gas_cost;
-        let __compact_call_argument_13 = crate::types::ContractAddress {
-            bytes: runtime::ledger::contract_address_bytes(&__compact_query_12.result),
-        };
-        let __compact_action_local_5: crate::types::Either =
-            crate::pure_circuits::right(__compact_call_argument_13)?;
-        let __compact_coin_14 = __compact_action_local_1.clone();
-        let __compact_recipient_15 = __compact_action_local_5.clone();
-        let step = crate::ledger_slots::c.insert_coin(
-            context,
-            runtime::ledger::coin_info_from_compact(
-                __compact_coin_14.nonce,
-                __compact_coin_14.color,
-                __compact_coin_14.value.value(),
-            ),
-            runtime::ledger::coin_recipient_from_compact(
-                __compact_recipient_15.is_left,
-                __compact_recipient_15.left.bytes,
-                __compact_recipient_15.right.bytes,
-            ),
-        )?;
+        let step = crate::ledger_slots::c.insert(context, __compact_action_local_1.clone())?;
         let context = step.context;
         total_cost += step.gas_cost;
         let mut context = context;
@@ -543,16 +290,16 @@ pub mod ledger_contract {
         }
         let mut context = context;
         let __compact_query_18 =
-            crate::ledger_slots::c.member(context, (__compact_action_local_3.clone()).clone())?;
+            crate::ledger_slots::c.member(context, (__compact_action_local_1.clone()).clone())?;
         context = __compact_query_18.context;
         total_cost += __compact_query_18.gas_cost;
         let __compact_value_19 = __compact_query_18.result;
         if !(__compact_value_19 == true) {
             return Err(runtime::CompactError::AssertionFailed(
-                "Key coin2 should be member".to_owned(),
+                "Key qcoin2 should be member".to_owned(),
             ));
         }
-        let step = crate::ledger_slots::c.remove(context, __compact_action_local_2.clone())?;
+        let step = crate::ledger_slots::c.remove(context, __compact_action_local_0.clone())?;
         let context = step.context;
         total_cost += step.gas_cost;
         let mut context = context;
@@ -572,13 +319,13 @@ pub mod ledger_contract {
         }
         let mut context = context;
         let __compact_query_22 =
-            crate::ledger_slots::c.member(context, (__compact_action_local_3.clone()).clone())?;
+            crate::ledger_slots::c.member(context, (__compact_action_local_1.clone()).clone())?;
         context = __compact_query_22.context;
         total_cost += __compact_query_22.gas_cost;
         let __compact_value_23 = __compact_query_22.result;
         if !(__compact_value_23 == true) {
             return Err(runtime::CompactError::AssertionFailed(
-                "Key coin2 should be member".to_owned(),
+                "Key 1 should be member".to_owned(),
             ));
         }
         let step = crate::ledger_slots::c.reset(context)?;
@@ -605,6 +352,285 @@ pub mod ledger_contract {
         total_cost += __compact_query_26.gas_cost;
         let __compact_value_27 = __compact_query_26.result;
         if !(__compact_value_27 == true) {
+            return Err(runtime::CompactError::AssertionFailed(
+                "Structure should be empty".to_owned(),
+            ));
+        }
+        let result = ();
+        Ok(runtime::context::CircuitResult {
+            context,
+            result,
+            gas_cost: total_cost,
+            private_transcript_outputs,
+        })
+    }
+    pub fn test_ShieldedCoinInfo<Private>(
+        context: runtime::context::CircuitContext<Private>,
+    ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
+        let mut total_cost = runtime::context::RunningCost::default();
+        let private_transcript_outputs = Vec::new();
+        let __compact_struct_member_0: runtime::FixedBytes<32> = runtime::FixedBytes::new([
+            110u8, 111u8, 110u8, 99u8, 101u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+        ]);
+        let __compact_struct_member_1: runtime::FixedBytes<32> = runtime::FixedBytes::new([
+            99u8, 111u8, 108u8, 111u8, 114u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+        ]);
+        let __compact_struct_member_2: runtime::BoundedUint<
+            340282366920938463463374607431768211455,
+        > = runtime::BoundedUint::<340282366920938463463374607431768211455>::new(1u128)
+            .expect("Compact Uint literal fits its maximum");
+        let __compact_action_local_0: crate::types::ShieldedCoinInfo =
+            crate::types::ShieldedCoinInfo {
+                nonce: __compact_struct_member_0,
+                color: __compact_struct_member_1,
+                value: __compact_struct_member_2,
+            };
+        let __compact_struct_member_3: runtime::FixedBytes<32> = runtime::FixedBytes::new([
+            110u8, 111u8, 110u8, 99u8, 101u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+        ]);
+        let __compact_struct_member_4: runtime::FixedBytes<32> = runtime::FixedBytes::new([
+            99u8, 111u8, 108u8, 111u8, 114u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+        ]);
+        let __compact_struct_member_5: runtime::BoundedUint<
+            340282366920938463463374607431768211455,
+        > = runtime::BoundedUint::<340282366920938463463374607431768211455>::new(2u128)
+            .expect("Compact Uint literal fits its maximum");
+        let __compact_action_local_1: crate::types::ShieldedCoinInfo =
+            crate::types::ShieldedCoinInfo {
+                nonce: __compact_struct_member_3,
+                color: __compact_struct_member_4,
+                value: __compact_struct_member_5,
+            };
+        let __compact_struct_member_6: runtime::FixedBytes<32> = runtime::FixedBytes::new([
+            110u8, 111u8, 110u8, 99u8, 101u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+        ]);
+        let __compact_struct_member_7: runtime::FixedBytes<32> = runtime::FixedBytes::new([
+            99u8, 111u8, 108u8, 111u8, 114u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+        ]);
+        let __compact_struct_member_8: runtime::BoundedUint<
+            340282366920938463463374607431768211455,
+        > = runtime::BoundedUint::<340282366920938463463374607431768211455>::new(1u128)
+            .expect("Compact Uint literal fits its maximum");
+        let __compact_struct_member_9: runtime::BoundedUint<18446744073709551615> =
+            runtime::BoundedUint::<18446744073709551615>::new(0u128)
+                .expect("Compact Uint literal fits its maximum");
+        let __compact_action_local_2: crate::types::QualifiedShieldedCoinInfo =
+            crate::types::QualifiedShieldedCoinInfo {
+                nonce: __compact_struct_member_6,
+                color: __compact_struct_member_7,
+                value: __compact_struct_member_8,
+                mt_index: __compact_struct_member_9,
+            };
+        let __compact_struct_member_10: runtime::FixedBytes<32> = runtime::FixedBytes::new([
+            110u8, 111u8, 110u8, 99u8, 101u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+        ]);
+        let __compact_struct_member_11: runtime::FixedBytes<32> = runtime::FixedBytes::new([
+            99u8, 111u8, 108u8, 111u8, 114u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+        ]);
+        let __compact_struct_member_12: runtime::BoundedUint<
+            340282366920938463463374607431768211455,
+        > = runtime::BoundedUint::<340282366920938463463374607431768211455>::new(2u128)
+            .expect("Compact Uint literal fits its maximum");
+        let __compact_struct_member_13: runtime::BoundedUint<18446744073709551615> =
+            runtime::BoundedUint::<18446744073709551615>::new(0u128)
+                .expect("Compact Uint literal fits its maximum");
+        let __compact_action_local_3: crate::types::QualifiedShieldedCoinInfo =
+            crate::types::QualifiedShieldedCoinInfo {
+                nonce: __compact_struct_member_10,
+                color: __compact_struct_member_11,
+                value: __compact_struct_member_12,
+                mt_index: __compact_struct_member_13,
+            };
+        let mut context = context;
+        let __compact_query_14 = crate::ledger_slots::c.is_empty(context)?;
+        context = __compact_query_14.context;
+        total_cost += __compact_query_14.gas_cost;
+        let __compact_value_15 = __compact_query_14.result;
+        if !(__compact_value_15 == true) {
+            return Err(runtime::CompactError::AssertionFailed(
+                "Structure should be empty".to_owned(),
+            ));
+        }
+        let mut context = context;
+        let __compact_query_16 = crate::ledger_slots::c.size(context)?;
+        context = __compact_query_16.context;
+        total_cost += __compact_query_16.gas_cost;
+        let __compact_value_17 =
+            runtime::BoundedUint::<18446744073709551615>::new(__compact_query_16.result as u128)
+                .expect("ledger Set size fits Uint<64>");
+        if !(__compact_value_17
+            == runtime::BoundedUint::<18446744073709551615>::new(0u128)
+                .expect("Compact Uint literal fits its maximum"))
+        {
+            return Err(runtime::CompactError::AssertionFailed(
+                "Size should be 0".to_owned(),
+            ));
+        }
+        let mut context = context;
+        let __compact_query_18 = context.kernel_self()?;
+        context = __compact_query_18.context;
+        total_cost += __compact_query_18.gas_cost;
+        let __compact_call_argument_19 = crate::types::ContractAddress {
+            bytes: runtime::ledger::contract_address_bytes(&__compact_query_18.result),
+        };
+        let __compact_action_local_4: crate::types::Either =
+            crate::pure_circuits::right(__compact_call_argument_19)?;
+        let __compact_coin_20 = __compact_action_local_0.clone();
+        let __compact_recipient_21 = __compact_action_local_4.clone();
+        let step = crate::ledger_slots::c.insert_coin(
+            context,
+            runtime::ledger::coin_info_from_compact(
+                __compact_coin_20.nonce,
+                __compact_coin_20.color,
+                __compact_coin_20.value.value(),
+            ),
+            runtime::ledger::coin_recipient_from_compact(
+                __compact_recipient_21.is_left,
+                __compact_recipient_21.left.bytes,
+                __compact_recipient_21.right.bytes,
+            ),
+        )?;
+        let context = step.context;
+        total_cost += step.gas_cost;
+        let mut context = context;
+        let __compact_query_22 = crate::ledger_slots::c.size(context)?;
+        context = __compact_query_22.context;
+        total_cost += __compact_query_22.gas_cost;
+        let __compact_value_23 =
+            runtime::BoundedUint::<18446744073709551615>::new(__compact_query_22.result as u128)
+                .expect("ledger Set size fits Uint<64>");
+        if !(__compact_value_23
+            == runtime::BoundedUint::<18446744073709551615>::new(1u128)
+                .expect("Compact Uint literal fits its maximum"))
+        {
+            return Err(runtime::CompactError::AssertionFailed(
+                "Size should be 1".to_owned(),
+            ));
+        }
+        let mut context = context;
+        let __compact_query_24 =
+            crate::ledger_slots::c.member(context, (__compact_action_local_2.clone()).clone())?;
+        context = __compact_query_24.context;
+        total_cost += __compact_query_24.gas_cost;
+        let __compact_value_25 = __compact_query_24.result;
+        if !(__compact_value_25 == true) {
+            return Err(runtime::CompactError::AssertionFailed(
+                "Key coin should be member".to_owned(),
+            ));
+        }
+        let mut context = context;
+        let __compact_query_26 = context.kernel_self()?;
+        context = __compact_query_26.context;
+        total_cost += __compact_query_26.gas_cost;
+        let __compact_call_argument_27 = crate::types::ContractAddress {
+            bytes: runtime::ledger::contract_address_bytes(&__compact_query_26.result),
+        };
+        let __compact_action_local_5: crate::types::Either =
+            crate::pure_circuits::right(__compact_call_argument_27)?;
+        let __compact_coin_28 = __compact_action_local_1.clone();
+        let __compact_recipient_29 = __compact_action_local_5.clone();
+        let step = crate::ledger_slots::c.insert_coin(
+            context,
+            runtime::ledger::coin_info_from_compact(
+                __compact_coin_28.nonce,
+                __compact_coin_28.color,
+                __compact_coin_28.value.value(),
+            ),
+            runtime::ledger::coin_recipient_from_compact(
+                __compact_recipient_29.is_left,
+                __compact_recipient_29.left.bytes,
+                __compact_recipient_29.right.bytes,
+            ),
+        )?;
+        let context = step.context;
+        total_cost += step.gas_cost;
+        let mut context = context;
+        let __compact_query_30 = crate::ledger_slots::c.size(context)?;
+        context = __compact_query_30.context;
+        total_cost += __compact_query_30.gas_cost;
+        let __compact_value_31 =
+            runtime::BoundedUint::<18446744073709551615>::new(__compact_query_30.result as u128)
+                .expect("ledger Set size fits Uint<64>");
+        if !(__compact_value_31
+            == runtime::BoundedUint::<18446744073709551615>::new(2u128)
+                .expect("Compact Uint literal fits its maximum"))
+        {
+            return Err(runtime::CompactError::AssertionFailed(
+                "Size should be 2".to_owned(),
+            ));
+        }
+        let mut context = context;
+        let __compact_query_32 =
+            crate::ledger_slots::c.member(context, (__compact_action_local_3.clone()).clone())?;
+        context = __compact_query_32.context;
+        total_cost += __compact_query_32.gas_cost;
+        let __compact_value_33 = __compact_query_32.result;
+        if !(__compact_value_33 == true) {
+            return Err(runtime::CompactError::AssertionFailed(
+                "Key coin2 should be member".to_owned(),
+            ));
+        }
+        let step = crate::ledger_slots::c.remove(context, __compact_action_local_2.clone())?;
+        let context = step.context;
+        total_cost += step.gas_cost;
+        let mut context = context;
+        let __compact_query_34 = crate::ledger_slots::c.size(context)?;
+        context = __compact_query_34.context;
+        total_cost += __compact_query_34.gas_cost;
+        let __compact_value_35 =
+            runtime::BoundedUint::<18446744073709551615>::new(__compact_query_34.result as u128)
+                .expect("ledger Set size fits Uint<64>");
+        if !(__compact_value_35
+            == runtime::BoundedUint::<18446744073709551615>::new(1u128)
+                .expect("Compact Uint literal fits its maximum"))
+        {
+            return Err(runtime::CompactError::AssertionFailed(
+                "Size should be 1".to_owned(),
+            ));
+        }
+        let mut context = context;
+        let __compact_query_36 =
+            crate::ledger_slots::c.member(context, (__compact_action_local_3.clone()).clone())?;
+        context = __compact_query_36.context;
+        total_cost += __compact_query_36.gas_cost;
+        let __compact_value_37 = __compact_query_36.result;
+        if !(__compact_value_37 == true) {
+            return Err(runtime::CompactError::AssertionFailed(
+                "Key coin2 should be member".to_owned(),
+            ));
+        }
+        let step = crate::ledger_slots::c.reset(context)?;
+        let context = step.context;
+        total_cost += step.gas_cost;
+        let mut context = context;
+        let __compact_query_38 = crate::ledger_slots::c.size(context)?;
+        context = __compact_query_38.context;
+        total_cost += __compact_query_38.gas_cost;
+        let __compact_value_39 =
+            runtime::BoundedUint::<18446744073709551615>::new(__compact_query_38.result as u128)
+                .expect("ledger Set size fits Uint<64>");
+        if !(__compact_value_39
+            == runtime::BoundedUint::<18446744073709551615>::new(0u128)
+                .expect("Compact Uint literal fits its maximum"))
+        {
+            return Err(runtime::CompactError::AssertionFailed(
+                "Size should be 0".to_owned(),
+            ));
+        }
+        let mut context = context;
+        let __compact_query_40 = crate::ledger_slots::c.is_empty(context)?;
+        context = __compact_query_40.context;
+        total_cost += __compact_query_40.gas_cost;
+        let __compact_value_41 = __compact_query_40.result;
+        if !(__compact_value_41 == true) {
             return Err(runtime::CompactError::AssertionFailed(
                 "Structure should be empty".to_owned(),
             ));

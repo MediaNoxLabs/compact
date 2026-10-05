@@ -14,12 +14,10 @@
         {"name": "set_topic", "pure": false, "proof": true},
         {"name": "add_voter", "pure": false, "proof": true}
       ],
-      "expected_recorded_circuits": ["set_topic"],
+      "expected_recorded_circuits": ["set_topic", "advance", "add_voter"],
       "expected_recording_gaps": {
         "vote$commit": {"code": "unsupported_action", "ir_node": "StateAction::Assert", "path": "actions[0].actions[0]"},
-        "vote$reveal": {"code": "unsupported_action", "ir_node": "StateAction::Assert", "path": "actions[0].actions[0]"},
-        "advance": {"code": "unsupported_action", "ir_node": "StateAction::Assert", "path": "actions[0].action.action.actions[1]"},
-        "add_voter": {"code": "unsupported_action", "ir_node": "StateAction::Assert", "path": "actions[0].actions[0]"}
+        "vote$reveal": {"code": "unsupported_action", "ir_node": "StateAction::Assert", "path": "actions[0].actions[0]"}
       },
       "pure_declarations": 0,
       "exported_pure_declarations": 0

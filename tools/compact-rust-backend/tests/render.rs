@@ -3678,6 +3678,50 @@ fn recording_gaps_follow_the_first_definite_ir_failure() {
 }
 
 #[test]
+fn conditional_recording_rejects_an_unsupported_unselected_branch() {
+    let contract = Contract {
+        schema_version: 11,
+        type_aliases: vec![],
+        constructor: None,
+        witnesses: vec![],
+        ledger_fields: vec![LedgerField {
+            source: None,
+            id: "round".into(),
+            index: 0,
+            path: vec![],
+            declaration: LedgerFieldKind::Counter,
+        }],
+        circuits: vec![],
+        stateful_circuits: vec![StatefulCircuit {
+            source: None,
+            internal: false,
+            name: "run".into(),
+            parameters: vec![],
+            result: Type::Unit,
+            return_value: StateReturn::Unit,
+            actions: vec![StateAction::If {
+                condition: Expr::Boolean { value: true },
+                then: Box::new(StateAction::CounterReset {
+                    field: "round".into(),
+                    index: 0,
+                }),
+                otherwise: Box::new(StateAction::Expression {
+                    value: Expr::Boolean { value: false },
+                }),
+            }],
+        }],
+    };
+    let report = render_with_capabilities(&contract).unwrap().capabilities;
+    let capability = &report.circuits[0];
+    assert!(!capability.recorded);
+    assert!(!capability.observed_call);
+    let gap = capability.recording_unavailable.as_ref().unwrap();
+    assert_eq!(gap.code.as_str(), "unsupported_action");
+    assert_eq!(gap.ir_node, "StateAction::Expression");
+    assert_eq!(gap.path, "actions[0].otherwise");
+}
+
+#[test]
 fn recording_gaps_include_unsupported_type_and_called_callee_path() {
     let unsupported_cell_type = Type::OpaqueString;
     let mut contract = Contract {

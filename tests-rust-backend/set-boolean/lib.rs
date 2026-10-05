@@ -350,6 +350,35 @@ pub mod ledger_contract {
             let frame = crate::ledger_slots::fields.record_reset(frame)?;
             Ok(frame.finish(()))
         }
+        pub fn choose<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: bool,
+            __compact_param_1: bool,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_branch_1: bool = __compact_param_1;
+            #[allow(clippy::let_and_return)]
+            let frame = if __compact_recorded_branch_1 {
+                let __compact_recorded_branch_0: bool = __compact_param_0;
+                #[allow(clippy::let_and_return)]
+                let frame = if __compact_recorded_branch_0 {
+                    let frame = crate::ledger_slots::seen.record_insert(frame, true)?;
+                    frame
+                } else {
+                    let frame = crate::ledger_slots::seen.record_insert(frame, false)?;
+                    frame
+                };
+                frame
+            } else {
+                let frame = crate::ledger_slots::seen.record_remove(frame, __compact_param_0)?;
+                frame
+            };
+            let __compact_recorded_key_2 = __compact_param_0;
+            let (frame, __compact_recorded_member_3): (_, bool) =
+                crate::ledger_slots::seen.record_member(frame, __compact_recorded_key_2)?;
+            Ok(frame.finish(__compact_recorded_member_3))
+        }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
         impl Contract {
@@ -568,6 +597,35 @@ pub mod ledger_contract {
                     recorded,
                     "reset_fields",
                     input,
+                ))
+            }
+            pub fn choose<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                value: bool,
+                insert: bool,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, bool>,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::choose(context, value, insert)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn choose_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                value: bool,
+                insert: bool,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, bool>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from((value, insert));
+                let recorded =
+                    self.choose(observed.circuit_context(private_state), value, insert)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "choose", input,
                 ))
             }
         }

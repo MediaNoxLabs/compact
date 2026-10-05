@@ -1990,6 +1990,82 @@ fn render_recorded_item(
                 }
                 Ok(RecordingOutcome::Supported(()))
             }
+            StateAction::If {
+                condition,
+                then,
+                otherwise,
+            } => {
+                let mut condition_steps = Vec::new();
+                let Some(condition) = boolean_expression(
+                    condition,
+                    locals,
+                    parameters,
+                    ledger_fields,
+                    witnesses,
+                    circuits,
+                    &mut condition_steps,
+                    next_temp,
+                    visiting,
+                )?
+                else {
+                    return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
+                        condition,
+                        format!("{path}.condition"),
+                    )));
+                };
+                let mut then_steps = Vec::new();
+                if let RecordingOutcome::Unsupported(gap) = append_steps(
+                    then,
+                    &format!("{path}.then"),
+                    locals,
+                    parameters,
+                    ledger_fields,
+                    witnesses,
+                    pure_circuits,
+                    circuits,
+                    shared_callees,
+                    &mut then_steps,
+                    next_temp,
+                    visiting,
+                )? {
+                    return Ok(RecordingOutcome::Unsupported(gap));
+                }
+                let mut otherwise_steps = Vec::new();
+                if let RecordingOutcome::Unsupported(gap) = append_steps(
+                    otherwise,
+                    &format!("{path}.otherwise"),
+                    locals,
+                    parameters,
+                    ledger_fields,
+                    witnesses,
+                    pure_circuits,
+                    circuits,
+                    shared_callees,
+                    &mut otherwise_steps,
+                    next_temp,
+                    visiting,
+                )? {
+                    return Ok(RecordingOutcome::Unsupported(gap));
+                }
+                let selected = syn::Ident::new(
+                    &format!("__compact_recorded_branch_{}", *next_temp),
+                    Span::call_site(),
+                );
+                *next_temp += 1;
+                steps.extend(condition_steps);
+                steps.push(syn::parse_quote!(let #selected: bool = #condition;));
+                steps.push(syn::parse_quote!(
+                    #[allow(clippy::let_and_return)]
+                    let frame = if #selected {
+                        #(#then_steps)*
+                        frame
+                    } else {
+                        #(#otherwise_steps)*
+                        frame
+                    };
+                ));
+                Ok(RecordingOutcome::Supported(()))
+            }
             whole @ StateAction::Let {
                 bindings,
                 action: nested_action,

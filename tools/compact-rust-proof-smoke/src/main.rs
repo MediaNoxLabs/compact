@@ -875,9 +875,80 @@ fn check_conditional_assert_eq_proof(root: &Path) -> Result<(), Box<dyn Error>> 
     Ok(())
 }
 
+fn check_conditional_set_proof(root: &Path) -> Result<(), Box<dyn Error>> {
+    let circuit = "choose";
+    let mut rng = StdRng::seed_from_u64(0x0103_4348_4f4f_5345);
+    for (name, value, insert, seed_true) in [
+        ("insertTrue", true, true, false),
+        ("removeTrue", true, false, true),
+        ("insertFalse", false, true, false),
+    ] {
+        let initial = set_contract::initial_state(ConstructorContext::new(()))?;
+        let state = if seed_true {
+            set_contract::add(initial.into_circuit_context(Default::default()), true)?
+                .context
+                .query
+                .state
+                .get_ref()
+                .clone()
+        } else {
+            initial.ledger_state.get_ref().clone()
+        };
+        let deploy = make_deploy(root, circuit, state, &mut rng)?;
+        let observed = ObservedContractState::new(
+            deploy.address(),
+            deploy.initial_state.clone(),
+            Observation {
+                transaction_hash: [0; 32],
+                block_hash: [0; 32],
+                block_height: 0,
+            },
+        );
+        let recorded = set_contract::recorded::choose(observed.circuit_context(()), value, insert)?;
+        if recorded.execution.result != insert {
+            return Err(format!("{name}: wrong recorded membership result").into());
+        }
+        let expected_state = recorded.execution.context.query.state.get_ref().clone();
+        let manual = check_generated_trace(root, circuit, recorded, (value, insert))?;
+        let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
+            root.join("keys/choose.verifier"),
+        )?))?;
+        let call = set_contract::Contract::default()
+            .recording
+            .choose_call(&observed, (), value, insert)?
+            .prepare(verifier, Fr::from(0_u64))?;
+        if format!("{manual:?}") != format!("{call:?}") {
+            return Err(
+                format!("{name}: typed observed call differs from manual prototype").into(),
+            );
+        }
+        check_transaction(root, circuit, deploy, call, &mut rng, |state| {
+            let data = state.data.get_ref();
+            if data != &expected_state {
+                return Err(format!("{name}: proof changed unexpected ledger state").into());
+            }
+            if set_view_at_path::<bool, _>(data, &[0])?.member(value) != insert {
+                return Err(format!("{name}: proven Set membership differs from branch").into());
+            }
+            Ok(())
+        })?;
+    }
+    println!("choose three branches proved and applied through ledger-8");
+    Ok(())
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let mut arguments = env::args_os().skip(1);
     let first = arguments.next();
+    if first.as_deref() == Some(OsStr::new("--conditional-set")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --conditional-set <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err("usage: compact-rust-proof-smoke --conditional-set <proof-output>".into());
+        }
+        return check_conditional_set_proof(Path::new(&root));
+    }
     if first.as_deref() == Some(OsStr::new("--adt-set-enum")) {
         let root = arguments
             .next()

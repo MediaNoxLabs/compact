@@ -1309,7 +1309,7 @@ def main() -> None:
             check_manifest(set_proof)
             for circuit in (
                 "add", "contains", "remove", "seen_size", "seen_is_empty",
-                "add_field", "contains_field", "reset_fields",
+                "add_field", "contains_field", "reset_fields", "choose",
             ):
                 for extension in ("prover", "verifier"):
                     assert (set_proof / "keys" / f"{circuit}.{extension}").is_file()
@@ -1606,6 +1606,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--conditional-assert-eq", str(ternary_cond_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--conditional-set", str(set_proof),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

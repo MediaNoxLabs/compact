@@ -35,7 +35,7 @@ compact-rust-wide-uint-oracle-fixture = { path = "../../tests-rust-backend/wide-
 compact-rust-cell-boolean-fixture = { path = "../../tests-rust-backend/cell-boolean" }
 compact-rust-cell-struct-fixture = { path = "../../tests-rust-backend/cell-struct", features = ["ledger-transaction"] }
 compact-rust-cell-read-fixture = { path = "../../tests-rust-backend/cell-read" }
-compact-rust-set-boolean-fixture = { path = "../../tests-rust-backend/set-boolean" }
+compact-rust-set-boolean-fixture = { path = "../../tests-rust-backend/set-boolean", features = ["ledger-transaction"] }
 compact-rust-set-oracle-fixture = { path = "../../tests-rust-backend/set-oracle" }
 compact-rust-set-size-oracle-fixture = { path = "../../tests-rust-backend/set-size-oracle", features = ["ledger-transaction"] }
 compact-rust-adt-set-enum-fixture = { path = "../../tests-rust-backend/adt-set-enum", features = ["ledger-transaction"] }

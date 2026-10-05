@@ -22,7 +22,7 @@
 
 use serde::{Deserialize, Serialize};
 
-pub const SCHEMA_VERSION: u32 = 13;
+pub const SCHEMA_VERSION: u32 = 14;
 
 /// A Compact source position, independent of the compiler checkout path.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -366,6 +366,12 @@ pub enum StateAction {
         field: String,
         index: u8,
         value: Expr,
+    },
+    SetInsertCoin {
+        field: String,
+        index: u8,
+        coin: Expr,
+        recipient: Expr,
     },
     SetRemove {
         field: String,

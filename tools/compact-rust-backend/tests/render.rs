@@ -1011,10 +1011,12 @@ fn identity(result: Type, body: Expr) -> Contract {
 #[test]
 fn recorded_distinct_struct_constructor_calls_require_exact_projection_and_closed_body() {
     let fixture = || -> Contract {
-        serde_json::from_str(include_str!(
+        let mut contract: Contract = serde_json::from_str(include_str!(
             "../fixtures/recorded-struct-constructor-cells.json"
         ))
-        .unwrap()
+        .unwrap();
+        contract.schema_version = SCHEMA_VERSION;
+        contract
     };
     let contract = fixture();
     let rendered = render_with_capabilities(&contract).unwrap();
@@ -1083,6 +1085,7 @@ fn recorded_nested_uint64_projection_rejects_other_widths_and_effects() {
         "../fixtures/recorded-nested-uint64-cell-counter.json"
     ))
     .unwrap();
+    contract.schema_version = SCHEMA_VERSION;
     let rendered = render_with_capabilities(&contract).unwrap();
     assert!(rendered.capabilities.circuits[0].recorded);
     assert!(
@@ -1172,6 +1175,7 @@ fn recorded_conditional_field_pair_rejects_unrecorded_predicates_and_arms() {
         "../fixtures/recorded-closed-conditional-field-pair.json"
     ))
     .unwrap();
+    contract.schema_version = SCHEMA_VERSION;
     let rendered = render_with_capabilities(&contract).unwrap();
     assert!(rendered.capabilities.circuits[0].recorded);
     assert!(
@@ -1234,6 +1238,7 @@ fn recorded_annotated_uint8_rejects_unrecorded_predicates_and_arms() {
         "../fixtures/recorded-annotated-uint8-conditional.json"
     ))
     .unwrap();
+    contract.schema_version = SCHEMA_VERSION;
     let rendered = render_with_capabilities(&contract).unwrap();
     assert!(rendered.capabilities.circuits[0].recorded);
     assert!(
@@ -1303,6 +1308,7 @@ fn recorded_closed_curve_argument_rejects_effectful_predicates_and_arms() {
         "../fixtures/recorded-closed-curve-argument.json"
     ))
     .unwrap();
+    contract.schema_version = SCHEMA_VERSION;
     let rendered = render_with_capabilities(&contract).unwrap();
     assert!(rendered.capabilities.circuits[0].recorded);
     assert!(rendered.source.contains("runtime::hash_to_curve"));
@@ -1659,6 +1665,7 @@ fn opaque_set_check_in_records_only_typed_parameter_and_unit_witness() {
 fn recorded_nested_uint4_accepts_only_closed_typed_arms() {
     let mut contract: Contract =
         serde_json::from_str(include_str!("../fixtures/recorded-nested-uint4.json")).unwrap();
+    contract.schema_version = SCHEMA_VERSION;
     let rendered = render_with_capabilities(&contract).unwrap();
     assert!(rendered.capabilities.circuits[0].recorded);
     assert!(rendered.source.contains("BoundedUint::<4>::new"));
@@ -2570,7 +2577,7 @@ fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
     let source = render(&contract).unwrap();
     assert!(source.contains("CompactCellValue, CompactEnum"));
     assert!(source.contains("pub enum Choice"));
-    assert!(source.contains("RUST_RUNTIME_ABI == 38"));
+    assert!(source.contains("RUST_RUNTIME_ABI == 39"));
     assert!(!source.contains("impl FieldRepr for Choice"));
     assert!(!source.contains("impl BinaryHashRepr for Choice"));
     assert!(!source.contains("impl FromFieldRepr for Choice"));
@@ -4917,18 +4924,167 @@ fn emits_a_pure_field_circuit_as_parseable_rust() {
 
 #[test]
 fn cell_and_counter_declarations_emit_typed_slots() {
-    let cell: Contract = serde_json::from_str(include_str!("../fixtures/cell_boolean.json"))
+    let mut cell: Contract = serde_json::from_str(include_str!("../fixtures/cell_boolean.json"))
         .expect("Cell fixture parses");
+    cell.schema_version = SCHEMA_VERSION;
     let source = render(&cell).unwrap();
     assert!(source.contains("pub mod ledger_slots"));
     assert!(source.contains("pub const flag: runtime::slots::CellSlot<bool>"));
     assert!(source.contains("&[0u8]"));
 
-    let counter: Contract = serde_json::from_str(include_str!("../fixtures/counter.json"))
+    let mut counter: Contract = serde_json::from_str(include_str!("../fixtures/counter.json"))
         .expect("Counter fixture parses");
+    counter.schema_version = SCHEMA_VERSION;
     let source = render(&counter).unwrap();
     assert!(source.contains("pub const round: runtime::slots::CounterSlot"));
     assert!(source.contains("&[0u8]"));
+}
+
+#[test]
+fn qualified_set_coin_insert_requires_exact_typed_slot_and_operands() {
+    let bytes = Type::Bytes { length: 32 };
+    let uint128 = Type::Unsigned {
+        max: u128::MAX.to_string(),
+    };
+    let uint64 = Type::Unsigned {
+        max: u64::MAX.to_string(),
+    };
+    let coin_fields = vec![
+        StructField {
+            name: "nonce".into(),
+            ty: bytes.clone(),
+        },
+        StructField {
+            name: "color".into(),
+            ty: bytes.clone(),
+        },
+        StructField {
+            name: "value".into(),
+            ty: uint128,
+        },
+    ];
+    let coin = Type::Struct {
+        name: "ShieldedCoinInfo".into(),
+        fields: coin_fields.clone(),
+    };
+    let mut qualified_fields = coin_fields;
+    qualified_fields.push(StructField {
+        name: "mt_index".into(),
+        ty: uint64,
+    });
+    let qualified = Type::Struct {
+        name: "QualifiedShieldedCoinInfo".into(),
+        fields: qualified_fields,
+    };
+    let recipient = Type::Struct {
+        name: "Either".into(),
+        fields: vec![
+            StructField {
+                name: "is_left".into(),
+                ty: Type::Boolean,
+            },
+            StructField {
+                name: "left".into(),
+                ty: Type::Struct {
+                    name: "ZswapCoinPublicKey".into(),
+                    fields: vec![StructField {
+                        name: "bytes".into(),
+                        ty: bytes.clone(),
+                    }],
+                },
+            },
+            StructField {
+                name: "right".into(),
+                ty: Type::Struct {
+                    name: "ContractAddress".into(),
+                    fields: vec![StructField {
+                        name: "bytes".into(),
+                        ty: bytes,
+                    }],
+                },
+            },
+        ],
+    };
+    let mut contract = identity(Type::Unit, Expr::Unit);
+    contract.ledger_fields.push(LedgerField {
+        source: None,
+        id: "coins".into(),
+        index: 0,
+        path: vec![],
+        declaration: LedgerFieldKind::Set { ty: qualified },
+    });
+    contract.stateful_circuits.push(StatefulCircuit {
+        source: None,
+        name: "insert_coin".into(),
+        internal: false,
+        parameters: vec![
+            Parameter {
+                name: "coin".into(),
+                ty: coin.clone(),
+            },
+            Parameter {
+                name: "recipient".into(),
+                ty: recipient.clone(),
+            },
+        ],
+        actions: vec![StateAction::SetInsertCoin {
+            field: "coins".into(),
+            index: 0,
+            coin: Expr::Parameter {
+                name: "coin".into(),
+            },
+            recipient: Expr::Parameter {
+                name: "recipient".into(),
+            },
+        }],
+        result: Type::Unit,
+        return_value: StateReturn::Unit,
+    });
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.source.contains(".insert_coin("));
+    assert!(!rendered.capabilities.circuits[0].recorded);
+
+    let mut wrong_coin = contract.clone();
+    wrong_coin.stateful_circuits[0].parameters[0].ty = Type::Field;
+    assert!(matches!(
+        render(&wrong_coin),
+        Err(RenderError::TypeMismatch { .. })
+    ));
+    let mut wrong_recipient = contract.clone();
+    wrong_recipient.stateful_circuits[0].parameters[1].ty = Type::Field;
+    assert!(matches!(
+        render(&wrong_recipient),
+        Err(RenderError::TypeMismatch { .. })
+    ));
+    let mut wrong_slot = contract.clone();
+    wrong_slot.ledger_fields[0].declaration = LedgerFieldKind::Set { ty: coin };
+    assert!(render(&wrong_slot).is_err());
+    let mut wrong_index = contract.clone();
+    wrong_index.stateful_circuits[0].actions[0] = StateAction::SetInsertCoin {
+        field: "coins".into(),
+        index: 1,
+        coin: Expr::Parameter {
+            name: "coin".into(),
+        },
+        recipient: Expr::Parameter {
+            name: "recipient".into(),
+        },
+    };
+    assert!(render(&wrong_index).is_err());
+    let mut unknown_binding = contract.clone();
+    if let StateAction::SetInsertCoin { coin, .. } =
+        &mut unknown_binding.stateful_circuits[0].actions[0]
+    {
+        *coin = Expr::Parameter {
+            name: "escaped".into(),
+        };
+    }
+    assert!(matches!(
+        render(&unknown_binding),
+        Err(RenderError::UnknownParameter(_))
+    ));
+    contract.schema_version = 13;
+    assert_eq!(render(&contract), Err(RenderError::SchemaVersion(13)));
 }
 
 #[test]
@@ -5009,6 +5165,8 @@ fn rejects_bad_schema_and_unknown_references() {
     assert_eq!(render(&contract), Err(RenderError::SchemaVersion(11)));
     contract.schema_version = 12;
     assert_eq!(render(&contract), Err(RenderError::SchemaVersion(12)));
+    contract.schema_version = 13;
+    assert_eq!(render(&contract), Err(RenderError::SchemaVersion(13)));
     contract.schema_version = SCHEMA_VERSION;
     contract.circuits[0].body = Expr::Parameter {
         name: "missing".into(),

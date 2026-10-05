@@ -29,6 +29,79 @@ use crate::{
     unsigned_cast_syntax, unsigned_maximum,
 };
 
+fn qualified_coin_type() -> Type {
+    let bytes = Type::Bytes { length: 32 };
+    Type::Struct {
+        name: "QualifiedShieldedCoinInfo".into(),
+        fields: vec![
+            StructField {
+                name: "nonce".into(),
+                ty: bytes.clone(),
+            },
+            StructField {
+                name: "color".into(),
+                ty: bytes,
+            },
+            StructField {
+                name: "value".into(),
+                ty: Type::Unsigned {
+                    max: u128::MAX.to_string(),
+                },
+            },
+            StructField {
+                name: "mt_index".into(),
+                ty: Type::Unsigned {
+                    max: u64::MAX.to_string(),
+                },
+            },
+        ],
+    }
+}
+
+fn shielded_coin_type() -> Type {
+    let Type::Struct { name, mut fields } = qualified_coin_type() else {
+        unreachable!()
+    };
+    fields.pop();
+    Type::Struct {
+        name: name.replace("Qualified", ""),
+        fields,
+    }
+}
+
+fn shielded_recipient_type() -> Type {
+    let bytes = Type::Bytes { length: 32 };
+    Type::Struct {
+        name: "Either".into(),
+        fields: vec![
+            StructField {
+                name: "is_left".into(),
+                ty: Type::Boolean,
+            },
+            StructField {
+                name: "left".into(),
+                ty: Type::Struct {
+                    name: "ZswapCoinPublicKey".into(),
+                    fields: vec![StructField {
+                        name: "bytes".into(),
+                        ty: bytes.clone(),
+                    }],
+                },
+            },
+            StructField {
+                name: "right".into(),
+                ty: Type::Struct {
+                    name: "ContractAddress".into(),
+                    fields: vec![StructField {
+                        name: "bytes".into(),
+                        ty: bytes,
+                    }],
+                },
+            },
+        ],
+    }
+}
+
 #[expect(
     clippy::too_many_arguments,
     reason = "state expression lowering threads typed declarations and ordered query effects explicitly"
@@ -1464,6 +1537,9 @@ fn action_calls_named(action: &StateAction, name: &str) -> bool {
         StateAction::MapInsert { key, value, .. } => {
             expression_calls_named(key, name) || expression_calls_named(value, name)
         }
+        StateAction::SetInsertCoin {
+            coin, recipient, ..
+        } => expression_calls_named(coin, name) || expression_calls_named(recipient, name),
         StateAction::MerkleInsertIndex {
             value, position, ..
         }
@@ -1579,6 +1655,12 @@ fn action_emits_native_private_output(action: &StateAction) -> bool {
         StateAction::Assert { condition, .. } => expression_contains_native_witness(condition),
         StateAction::MapInsert { key, value, .. } => {
             expression_contains_native_witness(key) || expression_contains_native_witness(value)
+        }
+        StateAction::SetInsertCoin {
+            coin, recipient, ..
+        } => {
+            expression_contains_native_witness(coin)
+                || expression_contains_native_witness(recipient)
         }
         StateAction::MerkleInsertIndex {
             value, position, ..
@@ -1872,6 +1954,9 @@ fn action_contains_witness(action: &StateAction) -> bool {
         StateAction::MapInsert { key, value, .. } => {
             expression_contains_witness(key) || expression_contains_witness(value)
         }
+        StateAction::SetInsertCoin {
+            coin, recipient, ..
+        } => expression_contains_witness(coin) || expression_contains_witness(recipient),
         StateAction::MerkleInsertIndex {
             value, position, ..
         }
@@ -2495,6 +2580,98 @@ pub(crate) fn render_stateful_circuit(
                 statements.push(syn::parse_quote! {
                     total_cost += step.gas_cost;
                 });
+            }
+            StateAction::SetInsertCoin {
+                field,
+                index,
+                coin,
+                recipient,
+            } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let expected = qualified_coin_type();
+                if declaration.declaration
+                    != (LedgerFieldKind::Set {
+                        ty: expected.clone(),
+                    })
+                    || declaration.index != *index
+                {
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                }
+                let mut operands = Vec::new();
+                let mut query_effect = false;
+                let (coin_value, coin_ty, coin_witness) = render_state_expression(
+                    coin,
+                    &parameters,
+                    witnesses,
+                    &mut operands,
+                    &mut next_temp,
+                    circuits,
+                    stateful_circuits,
+                    ledger_fields,
+                    &mut query_effect,
+                )?;
+                let expected_coin = shielded_coin_type();
+                if coin_ty != expected_coin {
+                    return Err(RenderError::TypeMismatch {
+                        expected: expected_coin,
+                        actual: coin_ty,
+                    });
+                }
+                let coin_name =
+                    syn::Ident::new(&format!("__compact_coin_{}", next_temp), Span::call_site());
+                next_temp += 1;
+                operands.push(syn::parse_quote!(let #coin_name = #coin_value;));
+                let (recipient_value, recipient_ty, recipient_witness) = render_state_expression(
+                    recipient,
+                    &parameters,
+                    witnesses,
+                    &mut operands,
+                    &mut next_temp,
+                    circuits,
+                    stateful_circuits,
+                    ledger_fields,
+                    &mut query_effect,
+                )?;
+                let expected_recipient = shielded_recipient_type();
+                if recipient_ty != expected_recipient {
+                    return Err(RenderError::TypeMismatch {
+                        expected: expected_recipient,
+                        actual: recipient_ty,
+                    });
+                }
+                let recipient_name = syn::Ident::new(
+                    &format!("__compact_recipient_{}", next_temp),
+                    Span::call_site(),
+                );
+                next_temp += 1;
+                operands.push(syn::parse_quote!(let #recipient_name = #recipient_value;));
+                if coin_witness || recipient_witness {
+                    uses_witness = true;
+                }
+                if coin_witness || recipient_witness || query_effect {
+                    statements.push(syn::parse_quote!(let mut context = context;));
+                }
+                statements.extend(operands);
+                let slot = ident(&declaration.id)?;
+                statements.push(syn::parse_quote! {
+                    let step = crate::ledger_slots::#slot.insert_coin(
+                        context,
+                        runtime::ledger::coin_info_from_compact(
+                            #coin_name.nonce,
+                            #coin_name.color,
+                            #coin_name.value.value(),
+                        ),
+                        runtime::ledger::coin_recipient_from_compact(
+                            #recipient_name.is_left,
+                            #recipient_name.left.bytes,
+                            #recipient_name.right.bytes,
+                        ),
+                    )?;
+                });
+                statements.push(syn::parse_quote!(let context = step.context;));
+                statements.push(syn::parse_quote!(total_cost += step.gas_cost;));
             }
             StateAction::SetReset { field, index } => {
                 let declaration = ledger_fields

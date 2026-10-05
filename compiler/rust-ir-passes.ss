@@ -1024,6 +1024,14 @@
                          (cons "index" (car path-elt*))
                          (cons "value" (typed-expression-ir (car expr*) (car adt-arg*) src)))]
                 [(and (eq? adt-name 'Set)
+                      (eq? ledger-op 'insertCoin)
+                      (= (length expr*) 2))
+                 (object (cons "kind" "set_insert_coin")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "coin" (typed-expression-ir (car expr*) (car type*) src))
+                         (cons "recipient" (typed-expression-ir (cadr expr*) (cadr type*) src)))]
+                [(and (eq? adt-name 'Set)
                       (eq? ledger-op 'remove)
                       (= (length expr*) 1))
                  (object (cons "kind" "set_remove")
@@ -2112,7 +2120,7 @@
            (source-errorf src "Rust backend found multiple constructors"))
          (print-json
            (get-target-port 'rust.ir.json)
-           (append (object (cons "schema_version" 13)
+           (append (object (cons "schema_version" 14)
                    (cons "type_aliases"
                          (list->vector (fold-right type-alias-ir '() pelt*)))
                    (cons "ledger_fields"

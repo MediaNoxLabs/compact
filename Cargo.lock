@@ -1960,6 +1960,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-qualified-coin-set-oracle-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-base-crypto",
+ "midnight-coin-structure",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-recorded-enum-cell-fixture"
 version = "0.1.0"
 dependencies = [

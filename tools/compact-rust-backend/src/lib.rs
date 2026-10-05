@@ -7,7 +7,7 @@ pub use recorded::{RecordingGap, RecordingGapCode};
 mod stateful;
 mod witness;
 
-const RUNTIME_ABI_VERSION: u32 = 38;
+const RUNTIME_ABI_VERSION: u32 = 39;
 pub const RUST_CAPABILITY_SCHEMA_VERSION: u32 = 3;
 
 const GENERATED_HEADER: &str = r#"// This file is part of Compact.
@@ -874,6 +874,12 @@ fn collect_action_types(
         | StateAction::HistoricMerkleInsert { value, .. }
         | StateAction::HistoricMerkleInsertHash { hash: value, .. } => {
             collect_expression_types(value, structs, enums)?;
+        }
+        StateAction::SetInsertCoin {
+            coin, recipient, ..
+        } => {
+            collect_expression_types(coin, structs, enums)?;
+            collect_expression_types(recipient, structs, enums)?;
         }
         StateAction::MerkleInsertIndex {
             value, position, ..

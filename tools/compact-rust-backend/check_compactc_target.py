@@ -31,6 +31,8 @@ ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "examples/rust_backend/counter.compact"
 TEST_CENTER_COUNTER_SOURCE = ROOT / "test-center/test-contracts/counter.compact"
 TEST_CENTER_BBOARD_SOURCE = ROOT / "test-center/test-contracts/bboard.compact"
+ADT_SET_QUALIFIED_SOURCE = ROOT / "examples/adt/tests/set_qualified_coin_info.compact"
+QUALIFIED_COIN_ORACLE_SOURCE = ROOT / "examples/rust_backend/qualified_coin_set_oracle.compact"
 PM_19252_SOURCE = ROOT / "examples/bugs/pm-19252/example_ten.compact"
 NATIVE_KEY_VALUE_SOURCE = ROOT / "examples/rust_backend/native_own_public_key_value.compact"
 COUNTER_PARAMETER_SOURCE = ROOT / "examples/rust_backend/counter_parameter.compact"
@@ -1092,6 +1094,8 @@ def main() -> None:
                         help="run the focused explicit Field-to-Bytes<32> source gate")
     parser.add_argument("--test-center-bboard", action="store_true",
                         help="compile the complete bboard source and check recorded/observed parity")
+    parser.add_argument("--adt-set-qualified", action="store_true",
+                        help="compile the original qualified Set source and check typed coin insertion capability")
     args = parser.parse_args()
     # Captured Rust errors are asserted below; runner color settings must not split their text.
     os.environ["CARGO_TERM_COLOR"] = "never"
@@ -1101,6 +1105,50 @@ def main() -> None:
     compiler = os.environ.get("COMPACTC", "compactc")
     with tempfile.TemporaryDirectory(prefix="compactc-target-") as temporary:
         base = Path(temporary)
+        if args.adt_set_qualified:
+            output = base / "adt-set-qualified"
+            run(compiler, "--target", "rust", "--skip-zk",
+                str(ADT_SET_QUALIFIED_SOURCE), str(output))
+            ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
+            assert ir["schema_version"] == 14
+            def has_coin_insert(value):
+                if isinstance(value, dict):
+                    return value.get("kind") == "set_insert_coin" or any(
+                        has_coin_insert(part) for part in value.values())
+                if isinstance(value, list):
+                    return any(has_coin_insert(part) for part in value)
+                return False
+            assert has_coin_insert(ir["stateful_circuits"][1])
+            metadata = json.loads((output / "compiler/contract-info.json").read_text())
+            assert [(row["name"], row["pure"], row["proof"])
+                    for row in metadata["circuits"]] == [
+                ("test_QualifiedShieldedCoinInfo", False, True),
+                ("test_ShieldedCoinInfo", False, True),
+            ]
+            capabilities = json.loads((output / "contract/rust-capabilities.json").read_text())
+            assert [(row["name"], row["proof_required"], row["recorded"], row["observed_call"])
+                    for row in capabilities["circuits"]] == [
+                ("test_QualifiedShieldedCoinInfo", True, False, False),
+                ("test_ShieldedCoinInfo", True, False, False),
+            ]
+            assert all(row["recording_unavailable"] for row in capabilities["circuits"])
+            rejected = subprocess.run(
+                [compiler, "--target", "rust", "--rust-require-recording", "--skip-zk",
+                 str(ADT_SET_QUALIFIED_SOURCE), str(base / "qualified-requires-recording")],
+                cwd=ROOT, capture_output=True, text=True,
+            )
+            assert rejected.returncode != 0
+            assert "test_QualifiedShieldedCoinInfo" in rejected.stderr
+            assert "test_ShieldedCoinInfo" in rejected.stderr
+            oracle = base / "qualified-oracle"
+            run(compiler, "--target", "rust", "--skip-zk",
+                str(QUALIFIED_COIN_ORACLE_SOURCE), str(oracle))
+            oracle_capabilities = json.loads((oracle / "contract/rust-capabilities.json").read_text())
+            assert [(row["name"], row["recorded"], row["observed_call"])
+                    for row in oracle_capabilities["circuits"]] == [
+                ("insert_coin", False, False), ("contains", True, True)]
+            print("complete ADT qualified Set source accepted with native-only coin insertion")
+            return
         if args.test_center_bboard:
             output = base / "test-center-bboard"
             command = [compiler, "--target", "rust", "--rust-require-recording"]
@@ -1108,7 +1156,7 @@ def main() -> None:
                 command.append("--skip-zk")
             run(*command, str(TEST_CENTER_BBOARD_SOURCE), str(output))
             ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 13
+            assert ir["schema_version"] == 14
             assert [row["name"] for row in ir["circuits"]] == ["some", "none", "public_key"]
             assert [row["name"] for row in ir["stateful_circuits"]] == ["post", "take_down"]
             taken = ir["stateful_circuits"][1]
@@ -1142,7 +1190,7 @@ def main() -> None:
                 command.append("--skip-zk")
             run(*command, str(FIELD_TO_BYTES32_SOURCE), str(output))
             ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 13
+            assert ir["schema_version"] == 14
             assert [(row["name"], row["body"]["kind"])
                     for row in ir["circuits"]] == [("encode", "field_to_bytes32")]
             assert [(row["name"], row["return_value"]["value"]["kind"])
@@ -1183,7 +1231,7 @@ def main() -> None:
         assert all(c["proof_required"] is True and c["recording_status"] == "available"
                    for c in capabilities["circuits"])
         rust_ir = json.loads((rust / "contract/compact-rust-ir.json").read_text())
-        assert rust_ir["schema_version"] == 13
+        assert rust_ir["schema_version"] == 14
         native_output = base / "native-own-public-key"
         run(compiler, "--target", "rust", "--skip-zk", str(PM_19252_SOURCE), str(native_output))
         native_contract = native_output / "contract"
@@ -1211,7 +1259,7 @@ def main() -> None:
             str(native_value_output))
         native_value_contract = native_value_output / "contract"
         native_value_ir = json.loads((native_value_contract / "compact-rust-ir.json").read_text())
-        assert native_value_ir["schema_version"] == 13
+        assert native_value_ir["schema_version"] == 14
         assert native_value_ir["witnesses"] == []
         assert [(c["name"], c["return_value"]["value"]["kind"])
                 for c in native_value_ir["stateful_circuits"]] == [
@@ -1246,7 +1294,7 @@ def main() -> None:
             output = base / f"source-{name}"
             run(compiler, "--target", "rust", "--skip-zk", str(source), str(output))
             emitted = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert emitted["schema_version"] == 13
+            assert emitted["schema_version"] == 14
             owners = emitted[key]
             if isinstance(owners, dict):
                 owners = [owners]

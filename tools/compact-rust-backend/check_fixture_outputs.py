@@ -73,6 +73,8 @@ def run(command: list[str], *, cwd: Path = ROOT) -> subprocess.CompletedProcess[
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--update", action="store_true", help="write fresh generated fixtures")
+    parser.add_argument("--only", action="append", default=[],
+                        help="check one source basename (repeatable) for a focused gate")
     args = parser.parse_args()
 
     compiler = os.environ.get("COMPACTC")
@@ -90,6 +92,13 @@ def main() -> int:
         for source in SOURCES.glob("*.compact")
     ]
     source_fixtures.extend(EXTRA_SOURCES.items())
+    if args.only:
+        selected = set(args.only)
+        source_fixtures = [(source, fixture) for source, fixture in source_fixtures
+                           if source.name in selected]
+        missing = selected - {source.name for source, _ in source_fixtures}
+        if missing:
+            raise SystemExit(f"unknown fixture source basename(s): {sorted(missing)}")
     for source, fixture in sorted(source_fixtures):
         if not fixture.exists():
             failures.append(f"{source.name}: missing {fixture.relative_to(ROOT)}")

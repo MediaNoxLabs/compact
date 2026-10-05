@@ -35,8 +35,7 @@
     {
       "source": "examples/adt/tests/set_qualified_coin_info.compact",
       "expected_ts": "success",
-      "expected_rust": "rejection",
-      "rust_diagnostic_contains": "Rust backend does not yet support this ledger operation",
+      "expected_rust": "success",
       "proof_circuits": [
         {
           "name": "test_QualifiedShieldedCoinInfo",
@@ -50,7 +49,19 @@
         }
       ],
       "pure_declarations": 0,
-      "exported_pure_declarations": 0
+      "exported_pure_declarations": 0,
+      "expected_recording_gaps": {
+        "test_QualifiedShieldedCoinInfo": {
+          "code": "unsupported_action",
+          "ir_node": "StateAction::Let",
+          "path": "actions[0]"
+        },
+        "test_ShieldedCoinInfo": {
+          "code": "unsupported_action",
+          "ir_node": "StateAction::Let",
+          "path": "actions[0]"
+        }
+      }
     },
     {
       "source": "examples/adt/tests/set_struct.compact",

@@ -634,6 +634,31 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         })
     }
 
+    /// Insert a coin into a qualified Set using the transaction's allocated
+    /// commitment index and the exact ledger-8 insertion VM operation.
+    pub fn insert_qualified_coin_set<T: CellValue>(
+        mut self,
+        path: impl Into<ledger::LedgerPath>,
+        coin: ledger::CoinInfo,
+        recipient: ledger::CoinRecipient,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        let result = ledger::insert_qualified_coin_set::<T, D>(
+            &self.query,
+            path,
+            coin,
+            recipient,
+            self.gas_limit,
+            &self.cost_model,
+        )?;
+        self.query = result.context;
+        Ok(CircuitResult {
+            context: self,
+            result: (),
+            gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
+        })
+    }
+
     pub fn member_set<T: CellValue>(
         mut self,
         path: impl Into<ledger::LedgerPath>,

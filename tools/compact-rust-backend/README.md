@@ -81,14 +81,25 @@ acceptance suite. Run `check_positive_source_scope.py --manifest
 tools/compact-rust-backend/parity_positive_adt_set_sources.json --compiler
 /path/to/immutable/compactc --output /tmp/adt-set-scope.json` for its separate
 compiler receipt. The manifest locks glob membership and authoritative proof
-flags. Four of the five sources compile for Rust; `set_qualified_coin_info`
-still rejects at a separate nested ledger operation, and `set_struct` has no
-contract circuit. The proof-required `set_field.test`, `set_enum.test`, and
-`set_vector.test` have recorded and observed-call APIs. `set_enum` and
+flags. All five sources compile for Rust. The original
+`set_qualified_coin_info` now lowers its typed `insertCoin` through ledger-8's
+transaction commitment index and executes natively; its two proof-required
+exports remain native-only because recording does not yet cover their full
+root `Let` bodies. `set_struct` has no contract circuit. The proof-required
+`set_field.test`, `set_enum.test`, and `set_vector.test` have recorded and
+observed-call APIs. `set_enum` and
 `set_vector` have TypeScript/native/recorded state, gas, VM, and proof
 application coverage through generated fixtures. The cohort is tracked in
 #188, #190, #196, and #201; source acceptance alone does not establish
 executing parity for the remaining circuits.
+`qualified_coin_set_oracle.compact` separately checks a contract and a user
+recipient at nonzero allocated indices against an independent TypeScript
+capture, including Set state, effects, gas, missing commitment rejection and
+wrong Set element alignment. Run `check_compactc_target.py --adt-set-qualified`
+for the unchanged original source's schema-14 and native-only capability gate.
+Use `check_fixture_outputs.py --only qualified_coin_set_oracle.compact` for a
+focused generated fixture check. Existing checked fixtures require a combined
+ABI-39 refresh when this slice is integrated with the preceding ABI-38 change.
 The bounded ADT List manifest `parity_positive_adt_list_sources.json` admits
 `examples/adt/tests/list_field.compact::test` after the nested List query
 lowering in ADR-0101/#204. Its generated fixture checks the TypeScript,

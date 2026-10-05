@@ -185,8 +185,8 @@ metadata.mkdir()
         entries = manifest["positive_sources"]
         self.assertEqual(len(entries), 5)
         self.assertEqual(source_scope.cohort_membership_failures(manifest), [])
-        self.assertEqual({entry["expected_rust"] for entry in entries}, {"success", "rejection"})
-        self.assertEqual(sum(entry["expected_rust"] == "success" for entry in entries), 4)
+        self.assertEqual({entry["expected_rust"] for entry in entries}, {"success"})
+        self.assertEqual(sum(entry["expected_rust"] == "success" for entry in entries), 5)
         self.assertEqual(sum(len(entry["proof_circuits"]) for entry in entries), 5)
         self.assertTrue(all(circuit == {"name": circuit["name"], "pure": False, "proof": True}
                             for entry in entries for circuit in entry["proof_circuits"]))

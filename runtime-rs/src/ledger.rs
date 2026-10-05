@@ -18,7 +18,13 @@
 //! Keep these as the ledger's types. Compact-specific behavior belongs in
 //! small, tested functions around them, not duplicate state structures.
 
+pub use midnight_base_crypto::hash::HashOutput;
+pub use midnight_coin_structure::coin::{
+    Info as CoinInfo, Nonce as CoinNonce, PublicKey as CoinPublicKey,
+    QualifiedInfo as QualifiedCoinInfo, ShieldedTokenType,
+};
 pub use midnight_coin_structure::contract::ContractAddress;
+pub use midnight_coin_structure::transfer::Recipient as CoinRecipient;
 pub use midnight_onchain_runtime::context::QueryContext;
 pub use midnight_onchain_runtime::context::QueryResults;
 pub use midnight_onchain_runtime::error::TranscriptRejected;
@@ -76,6 +82,32 @@ pub trait CellValue: Aligned + Into<Value> + Sized {
 /// Expose the ledger address bytes for Compact's stdlib ContractAddress struct.
 pub fn contract_address_bytes(address: &ContractAddress) -> FixedBytes<32> {
     FixedBytes(address.0.0)
+}
+
+/// Convert the Compact stdlib coin fields to the ledger-8 coin primitive.
+pub fn coin_info_from_compact(
+    nonce: FixedBytes<32>,
+    color: FixedBytes<32>,
+    value: u128,
+) -> CoinInfo {
+    CoinInfo {
+        nonce: CoinNonce(HashOutput(nonce.0)),
+        type_: ShieldedTokenType(HashOutput(color.0)),
+        value,
+    }
+}
+
+/// Convert the Compact stdlib Either recipient to the ledger-8 primitive.
+pub fn coin_recipient_from_compact(
+    is_left: bool,
+    user_key: FixedBytes<32>,
+    contract_address: FixedBytes<32>,
+) -> CoinRecipient {
+    if is_left {
+        CoinRecipient::User(CoinPublicKey(HashOutput(user_key.0)))
+    } else {
+        CoinRecipient::Contract(ContractAddress(HashOutput(contract_address.0)))
+    }
 }
 
 macro_rules! primitive_cell_value {
@@ -221,12 +253,12 @@ pub use cell::{
 };
 pub use collections::{
     ListView, MapView, MeteredListView, MeteredMapView, MeteredSetView, SetView, constructor_list,
-    constructor_map, constructor_set, head_list, insert_map, insert_set, is_empty_list,
-    is_empty_map, is_empty_set, length_list, list_view, list_view_at_path, lookup_map, map_view,
-    map_view_at_path, member_map, member_set, metered_list_view, metered_list_view_at_path,
-    metered_map_view_at_path, metered_set_view_at_path, pop_front_list, push_front_list,
-    remove_map, remove_set, reset_list, reset_map, reset_set, set_view, set_view_at_path, size_map,
-    size_set,
+    constructor_map, constructor_set, head_list, insert_map, insert_qualified_coin_set, insert_set,
+    is_empty_list, is_empty_map, is_empty_set, length_list, list_view, list_view_at_path,
+    lookup_map, map_view, map_view_at_path, member_map, member_set, metered_list_view,
+    metered_list_view_at_path, metered_map_view_at_path, metered_set_view_at_path, pop_front_list,
+    push_front_list, remove_map, remove_set, reset_list, reset_map, reset_set, set_view,
+    set_view_at_path, size_map, size_set,
 };
 pub(crate) use collections::{
     list_head_program, list_is_empty_program, list_length_program, list_pop_front_program,

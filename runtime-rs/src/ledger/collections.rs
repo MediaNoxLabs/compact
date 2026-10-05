@@ -23,7 +23,9 @@ use super::{
 use crate::BoundedUint;
 use crate::context::WitnessReadMeter;
 use midnight_base_crypto::cost_model::RunningCost;
-use midnight_base_crypto::fab::AlignedValue;
+use midnight_base_crypto::fab::{Aligned, AlignedValue};
+use midnight_coin_structure::coin::{Info as CoinInfo, QualifiedInfo as QualifiedCoinInfo};
+use midnight_coin_structure::transfer::Recipient;
 use midnight_onchain_vm::cost_model::CostModel;
 use midnight_onchain_vm::ops::{Key, Op};
 use midnight_onchain_vm::result_mode::{ResultMode, ResultModeGather, ResultModeVerify};
@@ -759,6 +761,72 @@ pub fn insert_set<T: CellValue, D: DB>(
     let path = path.as_slice();
     let program = set_insert_program(path, value);
     context.query(&program, gas_limit, cost_model)
+}
+
+/// Execute ledger-8's Set<QualifiedShieldedCoinInfo>.insertCoin program.
+/// The commitment must have an index allocated by this transaction. The VM
+/// concatenates the input coin with that index before inserting the Set key.
+pub fn insert_qualified_coin_set<T: CellValue, D: DB>(
+    context: &QueryContext<D>,
+    path: impl Into<LedgerPath>,
+    coin: CoinInfo,
+    recipient: Recipient,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, CompactError> {
+    if T::alignment() != QualifiedCoinInfo::alignment() {
+        return Err(CompactError::InvalidLedgerCell(
+            "Set element alignment is not QualifiedShieldedCoinInfo".into(),
+        ));
+    }
+    let commitment = coin.commitment(&recipient);
+    if context.call_context.com_indices.get(&commitment).is_none() {
+        return Err(CompactError::InvalidLedgerCell(
+            "Coin commitment not found. Check the coin has been received (or call 'createZswapOutput')".into(),
+        ));
+    }
+    let path = path.into();
+    let program = vec![
+        Op::Idx {
+            cached: false,
+            push_path: true,
+            path: path_keys(path.as_slice()).into(),
+        },
+        Op::Dup { n: 4 },
+        Op::Push {
+            storage: false,
+            value: StateValue::from(AlignedValue::from(commitment)),
+        },
+        Op::Idx {
+            cached: true,
+            push_path: false,
+            path: vec![Key::Value(AlignedValue::from(1u8)), Key::Stack].into(),
+        },
+        Op::Push {
+            storage: false,
+            value: StateValue::from(AlignedValue::from(coin)),
+        },
+        Op::Swap { n: 0 },
+        Op::Concat {
+            cached: true,
+            n: 91,
+        },
+        Op::Push {
+            storage: true,
+            value: StateValue::Null,
+        },
+        Op::Ins {
+            cached: false,
+            n: 1,
+        },
+        Op::Ins {
+            cached: true,
+            n: path.as_slice().len() as u8,
+        },
+    ];
+    context
+        .query(&program, gas_limit, cost_model)
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))
 }
 
 /// Test membership through a gather query and decode the ledger's Boolean Cell.

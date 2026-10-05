@@ -1,0 +1,151 @@
+{
+  "right7": {
+    "index": 7,
+    "allocate": true,
+    "initialStateHex": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a4400040004000402040408010404080403040c00041008010404145403042244010403040108010404010402040104000000302c696e736572745f636f696e081c0000042008010404249003043f809cb6200cb0da09c3e6f98a4d8f60a45be139aa7912ce0335feae23533ba41b60002420636f6e7461696e73082c0000043008010404349003043f80efe8ecafcd1c9f89398bfb7d3922424259dede7ad9c779ec492c3fc1a9d172d04028000000000000380000000000000000080208140800183c001003000400",
+    "afterStateHex": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a54005c84456e6f6e636545636f6c6f72412a07c4200120011008000400080004000408080104040c90030440808b22f97919b76e5b3d44ecd5acbdb5c4fe7c55aa93a8bac9592e6129112b0aec04100402041408010404180403041c00042008010404247d010304b46901010403040108010404010402040190030440808b22f97919b76e5b3d44ecd5acbdb5c4fe7c55aa93a8bac9592e6129112b0aec040108010404010008015c84456e6f6e636545636f6c6f72412a07c4200120011008000104000000302c696e736572745f636f696e082c0400043008010404349003043f809cb6200cb0da09c3e6f98a4d8f60a45be139aa7912ce0335feae23533ba41b60002420636f6e7461696e73083c0400044008010404449003043f80efe8ecafcd1c9f89398bfb7d3922424259dede7ad9c779ec492c3fc1a9d172d04038040404040404480404040404040404080208141804284c041003000400",
+    "effects": {
+      "claimedNullifiers": [],
+      "claimedShieldedReceives": [],
+      "claimedShieldedSpends": [],
+      "claimedContractCalls": [],
+      "shieldedMints": {},
+      "unshieldedMints": {},
+      "unshieldedInputs": {},
+      "unshieldedOutputs": {},
+      "claimedUnshieldedSpends": {}
+    },
+    "insertedResult": "",
+    "member": true,
+    "insertGas": {
+      "readTime": "170000000",
+      "computeTime": "1348383394",
+      "bytesWritten": "180",
+      "bytesDeleted": "34"
+    },
+    "memberGas": {
+      "readTime": "170000000",
+      "computeTime": "1252365075",
+      "bytesWritten": "0",
+      "bytesDeleted": "0"
+    },
+    "insertQueries": [
+      {
+        "opTags": [
+          "idx",
+          "dup",
+          "push",
+          "idx",
+          "push",
+          "swap",
+          "concat",
+          "push",
+          "ins",
+          "ins"
+        ],
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1348383394",
+          "bytesWritten": "180",
+          "bytesDeleted": "34"
+        }
+      }
+    ],
+    "memberQueries": [
+      {
+        "opTags": [
+          "dup",
+          "idx",
+          "push",
+          "member",
+          "popeq"
+        ],
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1252365075",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      }
+    ],
+    "privateTranscriptCount": 0
+  },
+  "left11": {
+    "index": 11,
+    "allocate": true,
+    "initialStateHex": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a4400040004000402040408010404080403040c00041008010404145403042244010403040108010404010402040104000000302c696e736572745f636f696e081c0000042008010404249003043f809cb6200cb0da09c3e6f98a4d8f60a45be139aa7912ce0335feae23533ba41b60002420636f6e7461696e73082c0000043008010404349003043f80efe8ecafcd1c9f89398bfb7d3922424259dede7ad9c779ec492c3fc1a9d172d04028000000000000380000000000000000080208140800183c001003000400",
+    "afterStateHex": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a54005c84456e6f6e636545636f6c6f72412a0bc4200120011008000400080004000408080104040c9003044080db39606409c63cc43925a3f31b05b27289e949bd3aaeea62660cd3a3059d12d204100402041408010404180403041c00042008010404247d010304b4690101040304010801040401040204019003044080db39606409c63cc43925a3f31b05b27289e949bd3aaeea62660cd3a3059d12d2040108010404010008015c84456e6f6e636545636f6c6f72412a0bc4200120011008000104000000302c696e736572745f636f696e082c0400043008010404349003043f809cb6200cb0da09c3e6f98a4d8f60a45be139aa7912ce0335feae23533ba41b60002420636f6e7461696e73083c0400044008010404449003043f80efe8ecafcd1c9f89398bfb7d3922424259dede7ad9c779ec492c3fc1a9d172d04038040404040404480404040404040404080208141804284c041003000400",
+    "effects": {
+      "claimedNullifiers": [],
+      "claimedShieldedReceives": [],
+      "claimedShieldedSpends": [],
+      "claimedContractCalls": [],
+      "shieldedMints": {},
+      "unshieldedMints": {},
+      "unshieldedInputs": {},
+      "unshieldedOutputs": {},
+      "claimedUnshieldedSpends": {}
+    },
+    "insertedResult": "",
+    "member": true,
+    "insertGas": {
+      "readTime": "170000000",
+      "computeTime": "1348383394",
+      "bytesWritten": "180",
+      "bytesDeleted": "34"
+    },
+    "memberGas": {
+      "readTime": "170000000",
+      "computeTime": "1252365075",
+      "bytesWritten": "0",
+      "bytesDeleted": "0"
+    },
+    "insertQueries": [
+      {
+        "opTags": [
+          "idx",
+          "dup",
+          "push",
+          "idx",
+          "push",
+          "swap",
+          "concat",
+          "push",
+          "ins",
+          "ins"
+        ],
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1348383394",
+          "bytesWritten": "180",
+          "bytesDeleted": "34"
+        }
+      }
+    ],
+    "memberQueries": [
+      {
+        "opTags": [
+          "dup",
+          "idx",
+          "push",
+          "member",
+          "popeq"
+        ],
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1252365075",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      }
+    ],
+    "privateTranscriptCount": 0
+  },
+  "missing": {
+    "index": 7,
+    "allocate": false,
+    "initialStateHex": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a4400040004000402040408010404080403040c00041008010404145403042244010403040108010404010402040104000000302c696e736572745f636f696e081c0000042008010404249003043f809cb6200cb0da09c3e6f98a4d8f60a45be139aa7912ce0335feae23533ba41b60002420636f6e7461696e73082c0000043008010404349003043f80efe8ecafcd1c9f89398bfb7d3922424259dede7ad9c779ec492c3fc1a9d172d04028000000000000380000000000000000080208140800183c001003000400",
+    "error": "CompactError: qualified_coin_set_oracle.compact line 24 char 3: Coin commitment not found. Check the coin has been received (or call 'createZswapOutput')",
+    "queries": []
+  }
+}

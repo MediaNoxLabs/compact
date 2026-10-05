@@ -1834,6 +1834,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/qualified_coin_set_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "contains",
+    "signature": "export circuit contains(coin: QualifiedShieldedCoinInfo): Boolean",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/set_boolean.compact",
     "module_path": [],
     "kind": "circuit",
@@ -2872,6 +2880,14 @@
     "name": "innerValue2",
     "signature": "circuit innerValue2(first: Field, second: Field): Field",
     "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/qualified_coin_set_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "insert_coin",
+    "signature": "export circuit insert_coin( coin: ShieldedCoinInfo, recipient: Either<ZswapCoinPublicKey, ContractAddress> ): []",
+    "visibility": "export"
   },
   {
     "source": "examples/rust_backend/chunked_set_observed.compact",

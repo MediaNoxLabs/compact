@@ -624,6 +624,17 @@ impl<T: CellValue> SetSlot<T> {
         context.insert_set(self.path, value)
     }
 
+    /// Qualified coin insertion looks up the allocated Merkle index in the
+    /// call context, then inserts through the ledger's dedicated VM program.
+    pub fn insert_coin<Private, D: DB>(
+        self,
+        context: CircuitContext<Private, D>,
+        coin: crate::ledger::CoinInfo,
+        recipient: crate::ledger::CoinRecipient,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        context.insert_qualified_coin_set::<T>(self.path, coin, recipient)
+    }
+
     pub fn remove<Private, D: DB>(
         self,
         context: CircuitContext<Private, D>,

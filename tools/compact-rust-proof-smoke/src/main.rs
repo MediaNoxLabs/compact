@@ -1484,6 +1484,20 @@ fn check_conditional_set_proof(root: &Path) -> Result<(), Box<dyn Error>> {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
+    // Ledger proof construction can exceed the macOS main-thread stack.
+    // Give every selector the same explicit budget, including direct paths.
+    let proof = std::thread::Builder::new()
+        .name("compact-proof-smoke".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(|| run().map_err(|error| error.to_string()))?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("proof-smoke dispatcher panicked".into()),
+    }
+}
+
+fn run() -> Result<(), Box<dyn Error>> {
     let mut arguments = env::args_os().skip(1);
     let first = arguments.next();
     if first.as_deref() == Some(OsStr::new("--mixed-width-recording")) {

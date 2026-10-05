@@ -18,8 +18,8 @@ use super::*;
 
 impl<Private, D: DB> RecordingFrame<Private, D> {
     pub fn create_zswap_input(mut self, coin: ledger::QualifiedCoinInfo) -> Self {
-        self.context.create_zswap_input(coin);
-        self.private_outputs.push(().into());
+        self.state.context.create_zswap_input(coin);
+        self.state.private_outputs.push(().into());
         self
     }
 
@@ -28,8 +28,8 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         coin: ledger::CoinInfo,
         recipient: ledger::CoinRecipient,
     ) -> Result<Self, CompactError> {
-        self.context.create_zswap_output(coin, recipient)?;
-        self.private_outputs.push(().into());
+        self.state.context.create_zswap_output(coin, recipient)?;
+        self.state.private_outputs.push(().into());
         Ok(self)
     }
 }

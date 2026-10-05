@@ -238,3 +238,38 @@ the recorded initial/final identity through the public context. A key-only
 recording succeeds but preparation still returns `EmptyTranscript`; a missing
 key returns the existing native error. The key is a private transcript value,
 not a VM query or wallet ownership proof.
+
+### Recording-frame storage and debug stack use (ADR210)
+
+`RecordingFrame` keeps its private state in one owned box. Consuming generated
+steps move the pointer while retaining that allocation; `context()`, all frame
+methods, recorded results and public trace accessors keep their existing types
+and semantics. ABI49/schema20 are unchanged. No shared or interior mutable core
+is introduced, and `call_local` keeps all its existing context checks.
+
+On the measured arm64 Rust 1.99 debug build, the original Coracle withdraw frame
+shrinks from 5,880 to 8 bytes, and the generated function's static stack reservation
+falls from 2,068,064 to 76,352 bytes. Red and blue calls previously aborted on
+normal/default and explicit 2 MiB workers; both now pass, as do all 27 original
+TypeScript/native/recorded scenarios without their previous 8 MiB wrapper.
+
+The tradeoff is one allocation/deallocation of 5,880 bytes per recording for the
+measured Private type. Construction/finish, local-helper success/error, witness
+error and both complete withdrawals show exactly that delta, with no per-leaf
+box churn. The constructor itself grows from 8,016 to 13,952 stack bytes; finish
+changes from 12,656 to 12,672. These figures are specific debug measurements, not a
+universal stack bound or a release-performance claim. Caller-owned large Private
+values and the separate compiler/IR structural-test stack limit remain distinct.
+
+The isolated test harness also provides opt-in measurement output:
+
+```sh
+COMPACT_STACK_CASE=metrics cargo test -p compact-rust-test-center-coracle-fixture \
+  --test recording_stack -- --exact stack_child --nocapture
+```
+
+Its allocator instrumentation is confined to the test executable. Fixture setup
+is outside counting, so report before/after deltas rather than interpreting
+absolute freed bytes as a leak or net-allocation measure. Normal tests spawn
+isolated default and explicit 2 MiB child workers so a future stack overflow is
+reported as a failing child process.

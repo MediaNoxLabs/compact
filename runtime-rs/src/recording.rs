@@ -80,6 +80,12 @@ pub struct RecordedCircuitResult<Private, Output, D: DB = DefaultDB> {
 
 /// Records the VM instructions while executing a small supported circuit.
 pub struct RecordingFrame<Private, D: DB = DefaultDB> {
+    // Consuming generated steps move one retained allocation, not the complete
+    // query/context aggregate. This storage is private and never shared.
+    state: Box<RecordingState<Private, D>>,
+}
+
+struct RecordingState<Private, D: DB> {
     context: CircuitContext<Private, D>,
     initial_coin_public_key: Option<[u8; 32]>,
     initial_intents: crate::CircuitZswapPlan,
@@ -95,34 +101,36 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         let initial_intents = context.circuit_zswap().clone();
         let initial_coin_public_key = context.own_coin_public_key().ok();
         Self {
-            context,
-            initial_coin_public_key,
-            initial_intents,
-            initial,
-            verify_ops: Vec::new(),
-            private_outputs: Vec::new(),
-            observed_gas: RunningCost::ZERO,
+            state: Box::new(RecordingState {
+                context,
+                initial_coin_public_key,
+                initial_intents,
+                initial,
+                verify_ops: Vec::new(),
+                private_outputs: Vec::new(),
+                observed_gas: RunningCost::ZERO,
+            }),
         }
     }
 
     pub fn context(&self) -> &CircuitContext<Private, D> {
-        &self.context
+        &self.state.context
     }
 
     /// Read the configured execution coin key and record the native witness output.
     /// This contributes neither a public query nor gas or private-state changes.
     pub fn own_coin_public_key(mut self) -> Result<(Self, [u8; 32]), CompactError> {
-        let key = self.context.own_coin_public_key()?;
-        self.private_outputs.push(AlignedValue::from(key));
+        let key = self.state.context.own_coin_public_key()?;
+        self.state.private_outputs.push(AlignedValue::from(key));
         Ok((self, key))
     }
 
     /// Observe kernel.self() and retain the exact VM address read.
     pub fn kernel_self(mut self) -> Result<(Self, ledger::ContractAddress), CompactError> {
         let result = ledger::query_kernel_self(
-            &self.context.query,
-            self.context.gas_limit,
-            &self.context.cost_model,
+            &self.state.context.query,
+            self.state.context.gas_limit,
+            &self.state.context.cost_model,
         )?;
         let Some(GatherEvent::Read(observed)) = result.events.last() else {
             return Err(CompactError::InvalidLedgerCell(
@@ -130,10 +138,10 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
             ));
         };
         let program = ledger::kernel_self_program::<ResultModeVerify, D>(observed.clone());
-        self.context.query = result.context;
-        self.observed_gas += result.gas_cost;
-        self.verify_ops.extend(program);
-        let address = self.context.query.address;
+        self.state.context.query = result.context;
+        self.state.observed_gas += result.gas_cost;
+        self.state.verify_ops.extend(program);
+        let address = self.state.context.query.address;
         Ok((self, address))
     }
 
@@ -145,9 +153,11 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         AlignedValue: From<T>,
         F: FnOnce(&CircuitContext<Private, D>) -> (Private, T),
     {
-        let (next_private, value) = call(&self.context);
-        self.context.private_state = next_private;
-        self.private_outputs.push(AlignedValue::from(value.clone()));
+        let (next_private, value) = call(&self.state.context);
+        self.state.context.private_state = next_private;
+        self.state
+            .private_outputs
+            .push(AlignedValue::from(value.clone()));
         (self, value)
     }
 
@@ -158,11 +168,13 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         AlignedValue: From<T>,
         F: FnOnce(&CircuitContext<Private, D>, &WitnessReadMeter<'_, D>) -> (Private, T),
     {
-        let meter = WitnessReadMeter::new(&self.context);
-        let (next_private, value) = call(&self.context, &meter);
-        self.observed_gas += meter.gas_cost();
-        self.context.private_state = next_private;
-        self.private_outputs.push(AlignedValue::from(value.clone()));
+        let meter = WitnessReadMeter::new(&self.state.context);
+        let (next_private, value) = call(&self.state.context, &meter);
+        self.state.observed_gas += meter.gas_cost();
+        self.state.context.private_state = next_private;
+        self.state
+            .private_outputs
+            .push(AlignedValue::from(value.clone()));
         (self, value)
     }
 
@@ -176,11 +188,13 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
             &WitnessReadMeter<'_, D>,
         ) -> Result<(Private, T), CompactError>,
     {
-        let meter = WitnessReadMeter::new(&self.context);
-        let (next_private, value) = call(&self.context, &meter)?;
-        self.observed_gas += meter.gas_cost();
-        self.context.private_state = next_private;
-        self.private_outputs.push(AlignedValue::from(value.clone()));
+        let meter = WitnessReadMeter::new(&self.state.context);
+        let (next_private, value) = call(&self.state.context, &meter)?;
+        self.state.observed_gas += meter.gas_cost();
+        self.state.context.private_state = next_private;
+        self.state
+            .private_outputs
+            .push(AlignedValue::from(value.clone()));
         Ok((self, value))
     }
 
@@ -196,13 +210,13 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
             CircuitContext<Private, D>,
         ) -> Result<CircuitResult<Private, Output, D>, CompactError>,
     {
-        let prior_query = self.context.query.clone();
-        let prior_zswap = self.context.zswap_state.clone();
-        let prior_circuit_zswap = self.context.circuit_zswap.clone();
-        let prior_coin_key = self.context.own_coin_public_key().ok();
-        let prior_cost_model = self.context.cost_model.clone();
-        let prior_gas_limit = self.context.gas_limit;
-        let result = call(self.context)?;
+        let prior_query = self.state.context.query.clone();
+        let prior_zswap = self.state.context.zswap_state.clone();
+        let prior_circuit_zswap = self.state.context.circuit_zswap.clone();
+        let prior_coin_key = self.state.context.own_coin_public_key().ok();
+        let prior_cost_model = self.state.context.cost_model.clone();
+        let prior_gas_limit = self.state.context.gas_limit;
+        let result = call(self.state.context)?;
         let next = &result.context;
         let before_call = &prior_query.call_context;
         let after_call = &next.query.call_context;
@@ -231,9 +245,10 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
                 "local helper changed public or Zswap execution context".into(),
             ));
         }
-        self.context = result.context;
-        self.observed_gas += result.gas_cost;
-        self.private_outputs
+        self.state.context = result.context;
+        self.state.observed_gas += result.gas_cost;
+        self.state
+            .private_outputs
             .extend(result.private_transcript_outputs);
         Ok((self, result.result))
     }
@@ -257,7 +272,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
     ) -> Result<Self, CompactError> {
         let path = path.into();
         let program = ledger::qualified_coin_cell_write_program_for_context::<T, D>(
-            &self.context.query,
+            &self.state.context.query,
             path.as_slice(),
             coin,
             recipient,
@@ -297,13 +312,18 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         program: Vec<Op<ResultModeVerify, D>>,
     ) -> Result<Self, CompactError> {
         let result = self
+            .state
             .context
             .query
-            .query(&program, self.context.gas_limit, &self.context.cost_model)
+            .query(
+                &program,
+                self.state.context.gas_limit,
+                &self.state.context.cost_model,
+            )
             .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
-        self.context.query = result.context;
-        self.observed_gas += result.gas_cost;
-        self.verify_ops.extend(program);
+        self.state.context.query = result.context;
+        self.state.observed_gas += result.gas_cost;
+        self.state.verify_ops.extend(program);
         Ok(self)
     }
 
@@ -325,7 +345,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
     ) -> Result<Self, CompactError> {
         let path = path.into();
         let program = ledger::qualified_coin_set_insert_program::<T, D>(
-            &self.context.query,
+            &self.state.context.query,
             path.as_slice(),
             coin,
             recipient,
@@ -501,19 +521,19 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
     ) -> Result<(Self, bool), CompactError> {
         let (result, full) = if historic {
             ledger::historic_is_full(
-                &self.context.query,
+                &self.state.context.query,
                 path.as_slice(),
                 depth,
-                self.context.gas_limit,
-                &self.context.cost_model,
+                self.state.context.gas_limit,
+                &self.state.context.cost_model,
             )?
         } else {
             ledger::merkle_is_full(
-                &self.context.query,
+                &self.state.context.query,
                 path.as_slice(),
                 depth,
-                self.context.gas_limit,
-                &self.context.cost_model,
+                self.state.context.gas_limit,
+                &self.state.context.cost_model,
             )?
         };
         let Some(GatherEvent::Read(observed)) = result.events.last() else {
@@ -523,9 +543,9 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         };
         let program =
             ledger::is_full_program::<ResultModeVerify, D>(path, depth, observed.clone())?;
-        self.context.query = result.context;
-        self.observed_gas += result.gas_cost;
-        self.verify_ops.extend(program);
+        self.state.context.query = result.context;
+        self.state.observed_gas += result.gas_cost;
+        self.state.verify_ops.extend(program);
         Ok((self, full))
     }
 
@@ -538,11 +558,11 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
     ) -> Result<(Self, bool), CompactError> {
         let path = path.into();
         let (result, known) = ledger::merkle_check_root(
-            &self.context.query,
+            &self.state.context.query,
             path.as_slice(),
             root.clone(),
-            self.context.gas_limit,
-            &self.context.cost_model,
+            self.state.context.gas_limit,
+            &self.state.context.cost_model,
         )?;
         let Some(GatherEvent::Read(observed)) = result.events.last() else {
             return Err(CompactError::InvalidLedgerCell(
@@ -550,9 +570,9 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
             ));
         };
         let program = ledger::merkle_check_root_verify_program(path, root, observed.clone());
-        self.context.query = result.context;
-        self.observed_gas += result.gas_cost;
-        self.verify_ops.extend(program);
+        self.state.context.query = result.context;
+        self.state.observed_gas += result.gas_cost;
+        self.state.verify_ops.extend(program);
         Ok((self, known))
     }
 
@@ -564,11 +584,11 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
     ) -> Result<(Self, bool), CompactError> {
         let path = path.into();
         let (result, known) = ledger::historic_check_root(
-            &self.context.query,
+            &self.state.context.query,
             path.as_slice(),
             root.clone(),
-            self.context.gas_limit,
-            &self.context.cost_model,
+            self.state.context.gas_limit,
+            &self.state.context.cost_model,
         )?;
         let Some(GatherEvent::Read(observed)) = result.events.last() else {
             return Err(CompactError::InvalidLedgerCell(
@@ -576,9 +596,9 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
             ));
         };
         let program = ledger::historic_check_root_verify_program(path, root, observed.clone());
-        self.context.query = result.context;
-        self.observed_gas += result.gas_cost;
-        self.verify_ops.extend(program);
+        self.state.context.query = result.context;
+        self.state.observed_gas += result.gas_cost;
+        self.state.verify_ops.extend(program);
         Ok((self, known))
     }
 
@@ -603,11 +623,11 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
     ) -> Result<(Self, bool), CompactError> {
         let path = path.into();
         let (result, member) = ledger::member_set(
-            &self.context.query,
+            &self.state.context.query,
             path.as_slice(),
             value.clone(),
-            self.context.gas_limit,
-            &self.context.cost_model,
+            self.state.context.gas_limit,
+            &self.state.context.cost_model,
         )?;
         let Some(GatherEvent::Read(observed)) = result.events.last() else {
             return Err(CompactError::InvalidLedgerCell(
@@ -615,19 +635,19 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
             ));
         };
         let program = ledger::set_member_program(path.as_slice(), value, observed.clone());
-        self.context.query = result.context;
-        self.observed_gas += result.gas_cost;
-        self.verify_ops.extend(program);
+        self.state.context.query = result.context;
+        self.state.observed_gas += result.gas_cost;
+        self.state.verify_ops.extend(program);
         Ok((self, member))
     }
 
     pub fn size_set(mut self, path: impl Into<LedgerPath>) -> Result<(Self, u64), CompactError> {
         let path = path.into();
         let (result, size) = ledger::size_set(
-            &self.context.query,
+            &self.state.context.query,
             path.as_slice(),
-            self.context.gas_limit,
-            &self.context.cost_model,
+            self.state.context.gas_limit,
+            &self.state.context.cost_model,
         )?;
         let Some(GatherEvent::Read(observed)) = result.events.last() else {
             return Err(CompactError::InvalidLedgerCell(
@@ -635,9 +655,9 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
             ));
         };
         let program = ledger::set_size_program(path.as_slice(), observed.clone());
-        self.context.query = result.context;
-        self.observed_gas += result.gas_cost;
-        self.verify_ops.extend(program);
+        self.state.context.query = result.context;
+        self.state.observed_gas += result.gas_cost;
+        self.state.verify_ops.extend(program);
         Ok((self, size))
     }
 
@@ -647,10 +667,10 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
     ) -> Result<(Self, bool), CompactError> {
         let path = path.into();
         let (result, empty) = ledger::is_empty_set(
-            &self.context.query,
+            &self.state.context.query,
             path.as_slice(),
-            self.context.gas_limit,
-            &self.context.cost_model,
+            self.state.context.gas_limit,
+            &self.state.context.cost_model,
         )?;
         let Some(GatherEvent::Read(observed)) = result.events.last() else {
             return Err(CompactError::InvalidLedgerCell(
@@ -658,9 +678,9 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
             ));
         };
         let program = ledger::set_is_empty_program(path.as_slice(), observed.clone());
-        self.context.query = result.context;
-        self.observed_gas += result.gas_cost;
-        self.verify_ops.extend(program);
+        self.state.context.query = result.context;
+        self.state.observed_gas += result.gas_cost;
+        self.state.verify_ops.extend(program);
         Ok((self, empty))
     }
 
@@ -701,11 +721,11 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
     ) -> Result<(Self, V), CompactError> {
         let path = path.into();
         let (result, value) = ledger::lookup_map::<K, V, D>(
-            &self.context.query,
+            &self.state.context.query,
             path.as_slice(),
             key.clone(),
-            self.context.gas_limit,
-            &self.context.cost_model,
+            self.state.context.gas_limit,
+            &self.state.context.cost_model,
         )?;
         let Some(GatherEvent::Read(observed)) = result.events.last() else {
             return Err(CompactError::InvalidLedgerCell(
@@ -713,9 +733,9 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
             ));
         };
         let program = ledger::map_lookup_program(path.as_slice(), key, observed.clone());
-        self.context.query = result.context;
-        self.observed_gas += result.gas_cost;
-        self.verify_ops.extend(program);
+        self.state.context.query = result.context;
+        self.state.observed_gas += result.gas_cost;
+        self.state.verify_ops.extend(program);
         Ok((self, value))
     }
 
@@ -746,10 +766,10 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
     pub fn length_list(mut self, path: impl Into<LedgerPath>) -> Result<(Self, u64), CompactError> {
         let path = path.into();
         let (result, length) = ledger::length_list(
-            &self.context.query,
+            &self.state.context.query,
             path.as_slice(),
-            self.context.gas_limit,
-            &self.context.cost_model,
+            self.state.context.gas_limit,
+            &self.state.context.cost_model,
         )?;
         let Some(GatherEvent::Read(observed)) = result.events.last() else {
             return Err(CompactError::InvalidLedgerCell(
@@ -757,9 +777,9 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
             ));
         };
         let program = ledger::list_length_program(path.as_slice(), observed.clone());
-        self.context.query = result.context;
-        self.observed_gas += result.gas_cost;
-        self.verify_ops.extend(program);
+        self.state.context.query = result.context;
+        self.state.observed_gas += result.gas_cost;
+        self.state.verify_ops.extend(program);
         Ok((self, length))
     }
 
@@ -769,10 +789,10 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
     ) -> Result<(Self, bool), CompactError> {
         let path = path.into();
         let (result, empty) = ledger::is_empty_list(
-            &self.context.query,
+            &self.state.context.query,
             path.as_slice(),
-            self.context.gas_limit,
-            &self.context.cost_model,
+            self.state.context.gas_limit,
+            &self.state.context.cost_model,
         )?;
         let Some(GatherEvent::Read(observed)) = result.events.last() else {
             return Err(CompactError::InvalidLedgerCell(
@@ -780,9 +800,9 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
             ));
         };
         let program = ledger::list_is_empty_program(path.as_slice(), observed.clone());
-        self.context.query = result.context;
-        self.observed_gas += result.gas_cost;
-        self.verify_ops.extend(program);
+        self.state.context.query = result.context;
+        self.state.observed_gas += result.gas_cost;
+        self.state.verify_ops.extend(program);
         Ok((self, empty))
     }
 
@@ -792,10 +812,10 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
     ) -> Result<(Self, M), CompactError> {
         let path = path.into();
         let (result, head) = ledger::head_list::<T, M, D>(
-            &self.context.query,
+            &self.state.context.query,
             path.as_slice(),
-            self.context.gas_limit,
-            &self.context.cost_model,
+            self.state.context.gas_limit,
+            &self.state.context.cost_model,
         )?;
         let Some(GatherEvent::Read(observed)) = result.events.last() else {
             return Err(CompactError::InvalidLedgerCell(
@@ -804,9 +824,9 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         };
         let program =
             ledger::list_head_program::<T, ResultModeVerify, D>(path.as_slice(), observed.clone());
-        self.context.query = result.context;
-        self.observed_gas += result.gas_cost;
-        self.verify_ops.extend(program);
+        self.state.context.query = result.context;
+        self.state.observed_gas += result.gas_cost;
+        self.state.verify_ops.extend(program);
         Ok((self, head))
     }
 
@@ -816,10 +836,10 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
     ) -> Result<(Self, T), CompactError> {
         let path = path.into();
         let (result, value) = ledger::query_cell_at_path::<T, D>(
-            &self.context.query,
+            &self.state.context.query,
             path.as_slice(),
-            self.context.gas_limit,
-            &self.context.cost_model,
+            self.state.context.gas_limit,
+            &self.state.context.cost_model,
         )?;
         let Some(GatherEvent::Read(observed)) = result.events.last() else {
             return Err(CompactError::InvalidLedgerCell(
@@ -829,9 +849,9 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         // Preserve the actual ledger FAB value. Re-encoding `value` could
         // change its alignment and make the verification transcript invalid.
         let program = ledger::cell_read_program(path.as_slice(), observed.clone());
-        self.context.query = result.context;
-        self.observed_gas += result.gas_cost;
-        self.verify_ops.extend(program);
+        self.state.context.query = result.context;
+        self.state.observed_gas += result.gas_cost;
+        self.state.verify_ops.extend(program);
         Ok((self, value))
     }
 
@@ -842,11 +862,11 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
     ) -> Result<(Self, bool), CompactError> {
         let path = path.into();
         let (result, value) = ledger::query_counter_less_than(
-            &self.context.query,
+            &self.state.context.query,
             path.as_slice(),
             threshold,
-            self.context.gas_limit,
-            &self.context.cost_model,
+            self.state.context.gas_limit,
+            &self.state.context.cost_model,
         )?;
         let Some(GatherEvent::Read(observed)) = result.events.last() else {
             return Err(CompactError::InvalidLedgerCell(
@@ -855,9 +875,9 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         };
         let program =
             ledger::counter_less_than_program(path.as_slice(), threshold, observed.clone());
-        self.context.query = result.context;
-        self.observed_gas += result.gas_cost;
-        self.verify_ops.extend(program);
+        self.state.context.query = result.context;
+        self.state.observed_gas += result.gas_cost;
+        self.state.verify_ops.extend(program);
         Ok((self, value))
     }
 
@@ -867,10 +887,10 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
     ) -> Result<(Self, u64), CompactError> {
         let path = path.into();
         let (result, value) = ledger::query_counter_at_path(
-            &self.context.query,
+            &self.state.context.query,
             path.as_slice(),
-            self.context.gas_limit,
-            &self.context.cost_model,
+            self.state.context.gas_limit,
+            &self.state.context.cost_model,
         )?;
         let Some(GatherEvent::Read(observed)) = result.events.last() else {
             return Err(CompactError::InvalidLedgerCell(
@@ -878,29 +898,29 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
             ));
         };
         let program = ledger::counter_read_program(path.as_slice(), observed.clone());
-        self.context.query = result.context;
-        self.observed_gas += result.gas_cost;
-        self.verify_ops.extend(program);
+        self.state.context.query = result.context;
+        self.state.observed_gas += result.gas_cost;
+        self.state.verify_ops.extend(program);
         Ok((self, value))
     }
 
     pub fn finish<Output>(self, output: Output) -> RecordedCircuitResult<Private, Output, D> {
-        let final_intents = self.context.circuit_zswap().clone();
-        let final_coin_public_key = self.context.own_coin_public_key().ok();
+        let final_intents = self.state.context.circuit_zswap().clone();
+        let final_coin_public_key = self.state.context.own_coin_public_key().ok();
         RecordedCircuitResult {
             execution: CircuitResult {
-                context: self.context,
+                context: self.state.context,
                 result: output,
-                gas_cost: self.observed_gas,
-                private_transcript_outputs: self.private_outputs,
+                gas_cost: self.state.observed_gas,
+                private_transcript_outputs: self.state.private_outputs,
             },
             public: PublicTrace {
-                initial_coin_public_key: self.initial_coin_public_key,
+                initial_coin_public_key: self.state.initial_coin_public_key,
                 final_coin_public_key,
-                initial_intents: self.initial_intents,
+                initial_intents: self.state.initial_intents,
                 final_intents,
-                initial: self.initial,
-                verify_ops: self.verify_ops,
+                initial: self.state.initial,
+                verify_ops: self.state.verify_ops,
             },
         }
     }

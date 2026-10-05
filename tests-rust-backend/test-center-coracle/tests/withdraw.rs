@@ -134,14 +134,7 @@ fn check(out: CircuitResult<Private, types::WithdrawnCoins>, row: &Value) {
 }
 #[test]
 fn original_withdraw_native_recorded_matches_independent_ts() {
-    // The debug build of the original two-send closure needs more than the
-    // default test worker stack; production proof smokes already use 64 MiB.
-    std::thread::Builder::new()
-        .stack_size(8 * 1024 * 1024)
-        .spawn(withdraw_parity)
-        .unwrap()
-        .join()
-        .unwrap();
+    withdraw_parity();
 }
 fn withdraw_parity() {
     let rows: Value = serde_json::from_str(include_str!(

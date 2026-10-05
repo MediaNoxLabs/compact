@@ -50,6 +50,7 @@ mod field_to_bytes32;
 mod guarded_recording;
 mod impure_field_helper;
 mod inline_type_scope;
+mod kernel_shielded_effects;
 mod let_return;
 mod literal_bytes_field;
 mod merkle_hash;
@@ -1732,6 +1733,15 @@ fn run() -> Result<(), Box<dyn Error>> {
             );
         }
         return asset_stored_record_fresh::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--kernel-shielded-effects")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --kernel-shielded-effects <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err("unexpected kernel proof argument".into());
+        }
+        return kernel_shielded_effects::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--qualified-coin-set")) {
         let root = arguments

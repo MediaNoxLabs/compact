@@ -399,3 +399,4 @@ pub fn empty_query_context() -> QueryContext<DefaultDB> {
 
 mod kernel;
 pub use kernel::{KernelClaim, query_kernel_claim, query_kernel_mint_shielded};
+pub(crate) use kernel::{kernel_claim_program, kernel_mint_shielded_program};

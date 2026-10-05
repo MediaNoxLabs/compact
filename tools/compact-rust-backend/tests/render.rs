@@ -2824,7 +2824,7 @@ fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
     let source = render(&contract).unwrap();
     assert!(source.contains("CompactCellValue, CompactEnum"));
     assert!(source.contains("pub enum Choice"));
-    assert!(source.contains("RUST_RUNTIME_ABI == 46"));
+    assert!(source.contains("RUST_RUNTIME_ABI == 47"));
     assert!(!source.contains("impl FieldRepr for Choice"));
     assert!(!source.contains("impl BinaryHashRepr for Choice"));
     assert!(!source.contains("impl FromFieldRepr for Choice"));
@@ -10654,8 +10654,8 @@ fn kernel_effects_have_typed_arguments_and_no_fictional_ledger_slots() {
     assert_eq!(contract.ledger_fields[0].id, "marker");
     let rendered = render_with_capabilities(&contract).unwrap();
     for c in &rendered.capabilities.circuits {
-        assert_eq!(c.recorded, c.name == "read_state");
-        assert_eq!(c.observed_call, c.name == "read_state");
+        assert!(c.recorded, "{}", c.name);
+        assert!(c.observed_call, "{}", c.name);
     }
     assert!(rendered.source.contains(".kernel_mint_shielded("));
     assert!(rendered.source.contains(".kernel_claim_zswap_nullifier("));
@@ -10716,6 +10716,80 @@ fn kernel_effects_have_typed_arguments_and_no_fictional_ledger_slots() {
     ] {
         assert!(serde_json::from_str::<Expr>(bad).is_err());
     }
+}
+
+#[test]
+fn kernel_recording_rejects_public_slot_composition_and_escaped_scopes() {
+    let mut contract: Contract =
+        serde_json::from_str(include_str!("kernel-shielded-effects-schema20-ir.json")).unwrap();
+    contract.schema_version = SCHEMA_VERSION;
+    let mut combined = contract.clone();
+    let mint = combined
+        .stateful_circuits
+        .iter_mut()
+        .find(|c| c.name == "mint")
+        .unwrap();
+    mint.actions.push(StateAction::CellWrite {
+        field: "marker".into(),
+        index: 0,
+        value: Expr::FieldLiteral { value: "1".into() },
+    });
+    let rendered = render_with_capabilities(&combined).unwrap();
+    let mint = rendered
+        .capabilities
+        .circuits
+        .iter()
+        .find(|c| c.name == "mint")
+        .unwrap();
+    assert!(!mint.recorded && !mint.observed_call);
+
+    let mut escaped = contract.clone();
+    let circuit = escaped
+        .stateful_circuits
+        .iter_mut()
+        .find(|c| c.name == "witness_order")
+        .unwrap();
+    circuit.actions.push(StateAction::Expression {
+        value: Expr::KernelClaim {
+            claim: compact_rust_backend::ir::KernelClaimKind::CoinSpend,
+            value: Box::new(Expr::Parameter {
+                name: "tmp_1".into(),
+            }),
+        },
+    });
+    assert!(
+        render_with_capabilities(&escaped).is_err(),
+        "nested Let binding escaped its Kernel action"
+    );
+
+    let mut invalid_branch = contract.clone();
+    let circuit = invalid_branch
+        .stateful_circuits
+        .iter_mut()
+        .find(|c| c.name == "selected")
+        .unwrap();
+    let StateAction::If { condition, .. } = &mut circuit.actions[0] else {
+        panic!()
+    };
+    *condition = Expr::Parameter {
+        name: "value".into(),
+    };
+    assert!(
+        render_with_capabilities(&invalid_branch).is_err(),
+        "Bytes32 used as Boolean branch condition"
+    );
+
+    let mut invalid_witness = contract.clone();
+    invalid_witness
+        .witnesses
+        .iter_mut()
+        .find(|w| w.name == "next_amount")
+        .unwrap()
+        .result = Type::Field;
+    assert!(
+        render_with_capabilities(&invalid_witness).is_err(),
+        "Field witness used as Uint64 mint amount"
+    );
 }
 
 #[test]

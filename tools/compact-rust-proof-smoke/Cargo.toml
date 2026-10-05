@@ -22,6 +22,7 @@ publish = false
 description = "Ledger-8 proof compatibility gate for Rust Compact output"
 
 [dependencies]
+compact-rust-kernel-shielded-effects-oracle-fixture = { path = "../../tests-rust-backend/kernel-shielded-effects-oracle", features = ["ledger-transaction"] }
 compact-rust-pm-19252-unused-read-seven-fixture = { path = "../../tests-rust-backend/pm-19252-unused-read-seven", features = ["ledger-transaction"] }
 compact-rust-pm-19252-unused-read-eight-a-fixture = { path = "../../tests-rust-backend/pm-19252-unused-read-eight-a", features = ["ledger-transaction"] }
 compact-rust-pm-19252-unused-read-eight-b-fixture = { path = "../../tests-rust-backend/pm-19252-unused-read-eight-b", features = ["ledger-transaction"] }

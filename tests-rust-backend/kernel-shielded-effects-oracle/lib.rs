@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 46);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 47);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -32,7 +32,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 46);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 47);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -331,6 +331,148 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
+        pub fn mint<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::FixedBytes<32>,
+            __compact_param_1: runtime::BoundedUint<18446744073709551615>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame = frame.kernel_mint_shielded(
+                runtime::ledger::HashOutput((__compact_param_0).into_array()),
+                (__compact_param_1).value() as u64,
+            )?;
+            Ok(frame.finish(()))
+        }
+        pub fn nullifier<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::FixedBytes<32>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame = frame.kernel_claim(runtime::ledger::KernelClaim::Nullifier(
+                runtime::ledger::CoinNullifier(runtime::ledger::HashOutput(
+                    (__compact_param_0).into_array(),
+                )),
+            ))?;
+            Ok(frame.finish(()))
+        }
+        pub fn spend<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::FixedBytes<32>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame = frame.kernel_claim(runtime::ledger::KernelClaim::CoinSpend(
+                runtime::ledger::CoinCommitment(runtime::ledger::HashOutput(
+                    (__compact_param_0).into_array(),
+                )),
+            ))?;
+            Ok(frame.finish(()))
+        }
+        pub fn claim_receive<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::FixedBytes<32>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame = frame.kernel_claim(runtime::ledger::KernelClaim::CoinReceive(
+                runtime::ledger::CoinCommitment(runtime::ledger::HashOutput(
+                    (__compact_param_0).into_array(),
+                )),
+            ))?;
+            Ok(frame.finish(()))
+        }
+        pub fn batch<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::FixedBytes<32>,
+            __compact_param_1: runtime::FixedBytes<32>,
+            __compact_param_2: runtime::BoundedUint<18446744073709551615>,
+            __compact_param_3: runtime::BoundedUint<18446744073709551615>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame = frame.kernel_mint_shielded(
+                runtime::ledger::HashOutput((__compact_param_0).into_array()),
+                (__compact_param_2).value() as u64,
+            )?;
+            let frame = frame.kernel_mint_shielded(
+                runtime::ledger::HashOutput((__compact_param_1).into_array()),
+                (__compact_param_3).value() as u64,
+            )?;
+            let frame = frame.kernel_claim(runtime::ledger::KernelClaim::Nullifier(
+                runtime::ledger::CoinNullifier(runtime::ledger::HashOutput(
+                    (__compact_param_0).into_array(),
+                )),
+            ))?;
+            let frame = frame.kernel_claim(runtime::ledger::KernelClaim::Nullifier(
+                runtime::ledger::CoinNullifier(runtime::ledger::HashOutput(
+                    (__compact_param_0).into_array(),
+                )),
+            ))?;
+            let frame = frame.kernel_claim(runtime::ledger::KernelClaim::CoinSpend(
+                runtime::ledger::CoinCommitment(runtime::ledger::HashOutput(
+                    (__compact_param_0).into_array(),
+                )),
+            ))?;
+            let frame = frame.kernel_claim(runtime::ledger::KernelClaim::CoinReceive(
+                runtime::ledger::CoinCommitment(runtime::ledger::HashOutput(
+                    (__compact_param_1).into_array(),
+                )),
+            ))?;
+            Ok(frame.finish(()))
+        }
+        pub fn selected<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: bool,
+            __compact_param_1: runtime::FixedBytes<32>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            #[allow(
+                clippy::let_and_return,
+                reason = "branch frames preserve Kernel effect order"
+            )]
+            let frame = if __compact_param_0 {
+                let frame = frame.kernel_claim(runtime::ledger::KernelClaim::CoinSpend(
+                    runtime::ledger::CoinCommitment(runtime::ledger::HashOutput(
+                        (__compact_param_1).into_array(),
+                    )),
+                ))?;
+                frame
+            } else {
+                frame
+            };
+            Ok(frame.finish(()))
+        }
+        pub fn witness_order<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_kernel_0): (_, runtime::FixedBytes<32>) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.next_domain(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            let __compact_kernel_1: runtime::FixedBytes<32> = __compact_kernel_0;
+            let (frame, __compact_kernel_2): (_, runtime::BoundedUint<18446744073709551615>) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.next_amount(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            let __compact_kernel_3: runtime::BoundedUint<18446744073709551615> = __compact_kernel_2;
+            let frame = frame.kernel_mint_shielded(
+                runtime::ledger::HashOutput((__compact_kernel_1).into_array()),
+                (__compact_kernel_3).value() as u64,
+            )?;
+            Ok(frame.finish(()))
+        }
         pub fn read_state<Private>(
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<
@@ -345,6 +487,175 @@ pub mod ledger_contract {
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
         impl Contract {
+            pub fn mint<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                domain: runtime::FixedBytes<32>,
+                amount: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::mint(context, domain, amount)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn mint_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                domain: runtime::FixedBytes<32>,
+                amount: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from((domain, amount));
+                let recorded =
+                    self.mint(observed.circuit_context(private_state), domain, amount)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "mint", input,
+                ))
+            }
+            pub fn nullifier<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                value: runtime::FixedBytes<32>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::nullifier(context, value)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn nullifier_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                value: runtime::FixedBytes<32>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(value);
+                let recorded = self.nullifier(observed.circuit_context(private_state), value)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "nullifier",
+                    input,
+                ))
+            }
+            pub fn spend<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                value: runtime::FixedBytes<32>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::spend(context, value)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn spend_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                value: runtime::FixedBytes<32>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(value);
+                let recorded = self.spend(observed.circuit_context(private_state), value)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "spend", input,
+                ))
+            }
+            pub fn claim_receive<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                value: runtime::FixedBytes<32>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::claim_receive(context, value)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn claim_receive_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                value: runtime::FixedBytes<32>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(value);
+                let recorded =
+                    self.claim_receive(observed.circuit_context(private_state), value)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "claim_receive",
+                    input,
+                ))
+            }
+            pub fn batch<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                first: runtime::FixedBytes<32>,
+                second: runtime::FixedBytes<32>,
+                a: runtime::BoundedUint<18446744073709551615>,
+                b: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::batch(context, first, second, a, b)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn batch_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                first: runtime::FixedBytes<32>,
+                second: runtime::FixedBytes<32>,
+                a: runtime::BoundedUint<18446744073709551615>,
+                b: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::concat(&[
+                    runtime::fab::AlignedValue::from(first),
+                    runtime::fab::AlignedValue::from(second),
+                    runtime::fab::AlignedValue::from(a),
+                    runtime::fab::AlignedValue::from(b),
+                ]);
+                let recorded =
+                    self.batch(observed.circuit_context(private_state), first, second, a, b)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "batch", input,
+                ))
+            }
+            pub fn selected<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                flag: bool,
+                value: runtime::FixedBytes<32>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::selected(context, flag, value)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn selected_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                flag: bool,
+                value: runtime::FixedBytes<32>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from((flag, value));
+                let recorded =
+                    self.selected(observed.circuit_context(private_state), flag, value)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "selected", input,
+                ))
+            }
             pub fn read_state<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
@@ -353,6 +664,238 @@ pub mod ledger_contract {
                 runtime::CompactError,
             > {
                 crate::ledger_contract::recorded::read_state(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn read_state_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.read_state(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "read_state",
+                    input,
+                ))
+            }
+        }
+        /// A recording handle with access to the contract's witnesses.
+        pub struct BorrowedContract<'a, W> {
+            pub(super) witnesses: &'a W,
+        }
+        impl<W> BorrowedContract<'_, W> {
+            pub fn mint<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                domain: runtime::FixedBytes<32>,
+                amount: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                mint(context, domain, amount)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn mint_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                domain: runtime::FixedBytes<32>,
+                amount: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from((domain, amount));
+                let recorded =
+                    self.mint(observed.circuit_context(private_state), domain, amount)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "mint", input,
+                ))
+            }
+            pub fn nullifier<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                value: runtime::FixedBytes<32>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                nullifier(context, value)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn nullifier_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                value: runtime::FixedBytes<32>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(value);
+                let recorded = self.nullifier(observed.circuit_context(private_state), value)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "nullifier",
+                    input,
+                ))
+            }
+            pub fn spend<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                value: runtime::FixedBytes<32>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                spend(context, value)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn spend_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                value: runtime::FixedBytes<32>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(value);
+                let recorded = self.spend(observed.circuit_context(private_state), value)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "spend", input,
+                ))
+            }
+            pub fn claim_receive<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                value: runtime::FixedBytes<32>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                claim_receive(context, value)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn claim_receive_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                value: runtime::FixedBytes<32>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(value);
+                let recorded =
+                    self.claim_receive(observed.circuit_context(private_state), value)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "claim_receive",
+                    input,
+                ))
+            }
+            pub fn batch<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                first: runtime::FixedBytes<32>,
+                second: runtime::FixedBytes<32>,
+                a: runtime::BoundedUint<18446744073709551615>,
+                b: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                batch(context, first, second, a, b)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn batch_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                first: runtime::FixedBytes<32>,
+                second: runtime::FixedBytes<32>,
+                a: runtime::BoundedUint<18446744073709551615>,
+                b: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::concat(&[
+                    runtime::fab::AlignedValue::from(first),
+                    runtime::fab::AlignedValue::from(second),
+                    runtime::fab::AlignedValue::from(a),
+                    runtime::fab::AlignedValue::from(b),
+                ]);
+                let recorded =
+                    self.batch(observed.circuit_context(private_state), first, second, a, b)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "batch", input,
+                ))
+            }
+            pub fn selected<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                flag: bool,
+                value: runtime::FixedBytes<32>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                selected(context, flag, value)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn selected_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                flag: bool,
+                value: runtime::FixedBytes<32>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from((flag, value));
+                let recorded =
+                    self.selected(observed.circuit_context(private_state), flag, value)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "selected", input,
+                ))
+            }
+            pub fn witness_order<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                witness_order(context, self.witnesses)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn witness_order_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.witness_order(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "witness_order",
+                    input,
+                ))
+            }
+            pub fn read_state<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                read_state(context)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn read_state_call<'observed, Private>(
@@ -460,9 +1003,11 @@ pub mod ledger_contract {
         {
             crate::ledger_contract::read_state(context)
         }
-        /// Access replayable circuit calls for this contract.
-        pub fn recording(&self) -> &recorded::Contract {
-            &self.recording
+        /// Borrow the contract's witnesses for a replayable circuit call.
+        pub fn recording(&self) -> recorded::BorrowedContract<'_, W> {
+            recorded::BorrowedContract {
+                witnesses: &self.witnesses,
+            }
         }
     }
 }

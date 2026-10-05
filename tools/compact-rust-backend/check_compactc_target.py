@@ -1205,7 +1205,7 @@ def main() -> None:
     parser.add_argument("--stateful-assert", action="store_true", help="check native stateful assertions and complete original micro-dao Cargo admission")
     parser.add_argument("--wide-add", action="store_true", help="check bounded native wide addition and original-source progress")
     parser.add_argument("--stateful-struct", action="store_true", help="check ordered typed native struct construction and its remaining original-source boundary")
-    parser.add_argument("--kernel-shielded-effects", action="store_true", help="check typed native Kernel admission and recording boundary")
+    parser.add_argument("--kernel-shielded-effects", action="store_true", help="check typed Kernel recording and optional call/funded-mint proofs")
     parser.add_argument("--native-zswap-intents", action="store_true", help="check native Zswap intent admission and explicit recording refusal")
     parser.add_argument("--qualified-coin-cell", action="store_true",
                         help="check recorded qualified-coin Cell write and offer-backed proof")
@@ -1266,7 +1266,7 @@ def main() -> None:
             generated = (output / "contract/lib.rs").read_text()
             assert "runtime::add_wide_unsigned" in generated
             assert "runtime::narrow_wide_uint" in generated
-            assert "RUST_RUNTIME_ABI == 46" in generated
+            assert "RUST_RUNTIME_ABI == 47" in generated
             report = json.loads((output / "contract/rust-capabilities.json").read_text())
             assert len(report["circuits"]) == 1
             row = report["circuits"][0]
@@ -1308,17 +1308,21 @@ def main() -> None:
             report = json.loads((output / "contract/rust-capabilities.json").read_text())
             assert len(report["circuits"]) == 8
             for row in report["circuits"]:
-                assert row["recorded"] == (row["name"] == "read_state")
-                assert row["observed_call"] == (row["name"] == "read_state")
+                assert row["recorded"] and row["observed_call"]
                 assert row["proof_required"]
             rejected = subprocess.run([compiler, "--target", "rust", "--rust-require-recording", "--skip-zk", str(source), str(base / "requires-recording")], cwd=ROOT, capture_output=True, text=True)
-            assert rejected.returncode != 0 and "mint" in rejected.stderr
-            assert not (base / "requires-recording/contract/lib.rs").exists()
+            assert rejected.returncode == 0, rejected.stderr
+            assert (base / "requires-recording/contract/lib.rs").exists()
             unsupported = base / "unsupported-kernel.compact"
             unsupported.write_text("import CompactStandardLibrary; export circuit check(): [] { return kernel.checkpoint(); }\n")
             rejected = subprocess.run([compiler, "--target", "rust", "--skip-zk", str(unsupported), str(base / "unsupported-kernel")], cwd=ROOT, capture_output=True, text=True)
             assert rejected.returncode != 0 and "Kernel operation checkpoint" in rejected.stderr
-            print("typed native Kernel effects admitted; unsupported operations and recording refused")
+            if args.proof:
+                proof = base / "kernel-shielded-effects-proof"
+                run(compiler, "--target", "rust", "--rust-require-recording", str(source), str(proof))
+                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                    "--kernel-shielded-effects", str(proof))
+            print("typed recorded Kernel effects admitted; unsupported operations refused")
             return
         if args.native_zswap_intents:
             output = base / "native-zswap-intents"
@@ -1623,7 +1627,8 @@ def main() -> None:
         run(sys.executable, str(Path(__file__).resolve()), "--qualified-coin-cell",
             *(["--proof"] if args.proof else []))
         run(sys.executable, str(Path(__file__).resolve()), "--native-zswap-intents")
-        run(sys.executable, str(Path(__file__).resolve()), "--kernel-shielded-effects")
+        run(sys.executable, str(Path(__file__).resolve()), "--kernel-shielded-effects",
+            *(["--proof"] if args.proof else []))
         run(sys.executable, str(Path(__file__).resolve()), "--stateful-struct")
         run(sys.executable, str(Path(__file__).resolve()), "--wide-add")
         run(sys.executable, str(Path(__file__).resolve()), "--stateful-assert")

@@ -350,7 +350,7 @@ Compact spelling without warning in consumer builds.
 |---|---|---|
 | Compact compiler | Toolchain 0.31.133, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
 | Rust IR | Schema 20, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Schema 20 adds typed Kernel mint/claim effects. Schema 19 adds single-owner typed effectful return plans. Schema 18 adds typed native circuit Zswap intents. Schema 16 adds native qualified-coin Cell writes. Schema 15 adds typed Counter less-than queries. Schema 14 adds typed qualified-coin Set insertion. Schema 13 adds an explicit typed Field-to-Bytes32 expression and nested Counter read; the cast uses midnight-zk's canonical 32-byte little-endian Field representation. Ledger, circuit, witness, constructor, and exported alias declarations carry optional Compact source locations for diagnostics. |
-| Generated code and Rust runtime | ABI 46 | Generated modules assert the ABI at Rust compile time. ABI 46 adds checked native wide unsigned addition. ABI 45 adds native Kernel shielded effects through upstream VM queries. ABI 44 adds recorded qualified-coin Cell writes through the shared native VM builder. ABI 43 adds typed circuit Zswap intents and locked observed allocation. ABI 42 adds native qualified-coin Cell writes; ABI 41 adds typed Counter less-than queries; ABI 40 adds recorded qualified-coin Set insertion, metered `kernel.self()`, and offer-backed observed calls. ABI 39 adds qualified-coin Set insertion using ledger coin and recipient types and the allocated commitment index. ABI 38 adds audited local-helper adoption for private witnesses, gas, and transcript while checking the public and Zswap context. ABI 37 adds a caller coin key for native `ownPublicKey()` and its private output; ABI 36 adds recorded plain Merkle root checks through typed slots; ABI 35 adds recorded Counter reset through typed slots; ABI 34 adds recorded direct plain/historic Merkle fullness reads; ABI 33 adds typed local plain/historic Merkle views with checked depth; ABI 32 adds List views; ABI 31 adds cell-valued Map views; ABI 30 adds Set views; ABI 29 adds Cell/Counter views; ABI 25–28 add physical List paths, chunked Map and Cell calls, and Cell-read scalar returns; ABI 21–24 add typed multi-argument observed calls and composite/chunked Set calls. The [runtime guide](../../runtime-rs/README.md) records earlier ABI changes. |
+| Generated code and Rust runtime | ABI 47 | Generated modules assert the ABI at Rust compile time. ABI 47 adds bounded recorded Kernel effects using canonical upstream programs. ABI 46 adds checked native wide unsigned addition. ABI 45 adds native Kernel shielded effects through upstream VM queries. ABI 44 adds recorded qualified-coin Cell writes through the shared native VM builder. ABI 43 adds typed circuit Zswap intents and locked observed allocation. ABI 42 adds native qualified-coin Cell writes; ABI 41 adds typed Counter less-than queries; ABI 40 adds recorded qualified-coin Set insertion, metered `kernel.self()`, and offer-backed observed calls. ABI 39 adds qualified-coin Set insertion using ledger coin and recipient types and the allocated commitment index. ABI 38 adds audited local-helper adoption for private witnesses, gas, and transcript while checking the public and Zswap context. ABI 37 adds a caller coin key for native `ownPublicKey()` and its private output; ABI 36 adds recorded plain Merkle root checks through typed slots; ABI 35 adds recorded Counter reset through typed slots; ABI 34 adds recorded direct plain/historic Merkle fullness reads; ABI 33 adds typed local plain/historic Merkle views with checked depth; ABI 32 adds List views; ABI 31 adds cell-valued Map views; ABI 30 adds Set views; ABI 29 adds Cell/Counter views; ABI 25–28 add physical List paths, chunked Map and Cell calls, and Cell-read scalar returns; ABI 21–24 add typed multi-argument observed calls and composite/chunked Set calls. The [runtime guide](../../runtime-rs/README.md) records earlier ABI changes. |
 | Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |
 
 `--runtime-version` reports the TypeScript runtime version; the Rust runtime
@@ -914,7 +914,8 @@ serializes its JavaScript Maps explicitly, retains reported aggregate gas separa
 and compares Rust gas to the sum of observed queries. TS batch reported aggregate
 gas currently contains only the final query cost. Native Kernel operations emit no
 synthetic private witness outputs; actual witness outputs keep source order.
-Recording and transaction funding/claim satisfaction remain separate work.
+ADR0184 adds bounded recording and a matched mint transaction below. General
+matching-offer claim composition remains separate native Zswap integration work.
 
 ### Ordered stateful struct construction (ADR0179)
 
@@ -977,3 +978,33 @@ gaps in `parity_positive_test_center_micro_dao_sources.json`. This is native sou
 admission, not full contract behavioral, funded-transaction or proof coverage.
 `check_compactc_target.py --stateful-assert` checks the generated original crate;
 the full local gate also checks its exact source cohort and recording gaps.
+
+### Recorded Kernel shielded effects (ADR0184)
+
+ABI47 records the seven Kernel proof APIs through typed `RecordingFrame` methods
+that reuse the canonical native programs and common query/gas recording path.
+Schema20 is unchanged. The separate planner admits Unit Kernel effects in ordered
+Sequence/Let/If forms with exact Bytes32, Uint64 and Boolean operands and typed
+zero-argument witnesses. Public-slot composition, native Zswap intents, helper
+composition, escaped bindings and malformed operand types remain rejected.
+
+All twelve independent TS cases compare native and recorded effects, ordered
+public programs, private witness order and gas. Replay preserves the original
+query boundaries for gas comparison: combining queries changes upstream cache
+costs even when final effects agree. Duplicate claims and overflow preserve the
+upstream behavior. Seven nonempty API shapes prove and independently verify with
+ZKIR2.1.0, including binding-tamper rejection. `selected(false)` has no ledger
+queries and explicitly refuses observed preparation with `EmptyTranscript`; it is
+covered by execution parity, not a call proof. Pinned ledger-v8 8.0.3 JavaScript
+partitioning returns two absent sections, its builder retains the call, and ledger
+validation rejects `CallHasEmptyTranscripts`. No empty-call acceptance is claimed.
+
+The proof smoke also applies mint42 with the actual custom-token output offer and
+Night-backed Dust fee funding using unchanged default strictness. This is offline
+ledger application, with the actual output commitment/index checked. Arbitrary
+fixture nullifier/spend/receive claims prove cryptographically but fail exact
+upstream effects checks with unmatched offers; balancing is disabled only for
+those negative cases to isolate claim validation. Matching claim offer composition,
+network submission and finality are outside this evidence. Run the source gate
+with `--kernel-shielded-effects --proof`; funded mint needs
+`MIDNIGHT_LEDGER_TEST_STATIC_DIR` pointing to the pinned ledger's `ledger/static`.

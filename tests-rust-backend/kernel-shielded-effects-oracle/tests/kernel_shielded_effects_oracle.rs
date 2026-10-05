@@ -106,7 +106,38 @@ fn kernel_effects_match_independent_typescript_and_keep_gas_reporting_distinct()
             "witness_order" => ledger_contract::witness_order(ctx, &Witnesses),
             _ => unreachable!(),
         };
+        let recorded = match row["name"].as_str().unwrap() {
+            "mint" => ledger_contract::recorded::mint(initial(), fixed(&args[0]), amount(&args[1])),
+            "nullifier" => ledger_contract::recorded::nullifier(initial(), fixed(&args[0])),
+            "spend" => ledger_contract::recorded::spend(initial(), fixed(&args[0])),
+            "claim_receive" => ledger_contract::recorded::claim_receive(initial(), fixed(&args[0])),
+            "batch" => ledger_contract::recorded::batch(
+                initial(),
+                fixed(&args[0]),
+                fixed(&args[1]),
+                amount(&args[2]),
+                amount(&args[3]),
+            ),
+            "selected" => ledger_contract::recorded::selected(
+                initial(),
+                args[0].as_bool().unwrap(),
+                fixed(&args[1]),
+            ),
+            "witness_order" => ledger_contract::recorded::witness_order(initial(), &Witnesses),
+            _ => unreachable!(),
+        };
         if row["label"] == "overflow" {
+            let recorded_error = recorded.err().unwrap();
+            assert!(matches!(
+                recorded_error,
+                runtime::CompactError::LedgerQueryRejected(_)
+            ));
+            assert!(
+                recorded_error
+                    .to_string()
+                    .to_lowercase()
+                    .contains("overflow")
+            );
             let error = result.err().unwrap();
             assert!(matches!(
                 error,
@@ -123,6 +154,72 @@ fn kernel_effects_match_independent_typescript_and_keep_gas_reporting_distinct()
             continue;
         }
         let out = result.unwrap();
+        let recorded = recorded.unwrap();
+        assert_eq!(
+            recorded.execution.context.query.state,
+            out.context.query.state
+        );
+        assert_eq!(
+            recorded.execution.context.query.effects,
+            out.context.query.effects
+        );
+        assert_eq!(
+            recorded.execution.context.private_state,
+            out.context.private_state
+        );
+        assert_eq!(
+            recorded.execution.private_transcript_outputs,
+            out.private_transcript_outputs
+        );
+        assert_eq!(recorded.execution.gas_cost, out.gas_cost);
+        let ops: Vec<Value> = row["queries"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .flat_map(|query| query["ops"].as_array().unwrap().iter().cloned())
+            .collect();
+        assert_eq!(
+            json!(recorded.public.verify_ops()),
+            json!(ops),
+            "{}",
+            row["label"]
+        );
+        let replay = recorded
+            .public
+            .initial()
+            .query(
+                recorded.public.verify_ops(),
+                None,
+                &recorded.execution.context.cost_model,
+            )
+            .unwrap();
+        assert_eq!(replay.context.state, out.context.query.state);
+        assert_eq!(replay.context.effects, out.context.query.effects);
+        // A combined VM query shares its internal cost/cache frame. Replay
+        // each captured query boundary to compare native/TS query-sum gas.
+        let mut segmented = recorded.public.initial().clone();
+        let mut replay_gas = midnight_base_crypto::cost_model::RunningCost::ZERO;
+        let mut offset = 0;
+        for query in row["queries"].as_array().unwrap() {
+            let count = query["ops"].as_array().unwrap().len();
+            let step = segmented
+                .query(
+                    &recorded.public.verify_ops()[offset..offset + count],
+                    None,
+                    &recorded.execution.context.cost_model,
+                )
+                .unwrap();
+            segmented = step.context;
+            replay_gas += step.gas_cost;
+            offset += count;
+        }
+        assert_eq!(segmented.state, replay.context.state);
+        assert_eq!(segmented.effects, replay.context.effects);
+        assert_eq!(replay_gas, out.gas_cost, "{}", row["label"]);
+        if row["name"] == "batch" {
+            assert_ne!(replay.gas_cost, replay_gas);
+        }
+
         assert_eq!(
             state_hex(out.context.query.state.get_ref().clone()),
             row["after"]

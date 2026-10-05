@@ -1960,6 +1960,7 @@ dependencies = [
  "compact-rust-hmt-insert-oracle-fixture",
  "compact-rust-inline-type-scope-oracle-fixture",
  "compact-rust-internal-pure-call-fixture",
+ "compact-rust-kernel-shielded-effects-oracle-fixture",
  "compact-rust-let-return-oracle-fixture",
  "compact-rust-list-field-fixture",
  "compact-rust-literal-bytes-field-oracle-fixture",

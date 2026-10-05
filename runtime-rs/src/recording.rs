@@ -19,6 +19,8 @@
 //! not claim a transaction-ready trace until every operation they use records
 //! its corresponding verifying VM instruction.
 
+mod kernel;
+
 use midnight_base_crypto::cost_model::RunningCost;
 use midnight_base_crypto::fab::AlignedValue;
 use midnight_onchain_vm::ops::Op;

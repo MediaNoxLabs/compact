@@ -16,6 +16,7 @@
 //! Emit complete replayable traces from supported typed stateful IR.
 //! Unsupported effect shapes have no generated recorded entry point.
 
+mod kernel_plan;
 mod typed_plan;
 
 use proc_macro2::Span;
@@ -7968,6 +7969,7 @@ fn render_recorded_item(
     };
     if organizer_steps.is_none()
         && let Some(plan) = typed_plan::lower(circuit, ledger_fields, witnesses, pure_circuits)
+            .or_else(|| kernel_plan::lower(circuit, witnesses))
     {
         organizer_steps = Some(plan.steps);
         typed_result = Some(plan.result);

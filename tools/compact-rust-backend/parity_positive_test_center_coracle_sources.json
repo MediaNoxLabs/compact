@@ -64,17 +64,13 @@
       ],
       "expected_recorded_circuits": [
         "guess",
+        "concede",
         "withdraw"
       ],
       "expected_recording_gaps": {
         "start": {
           "code": "unsupported_return",
           "ir_node": "StateReturn::Effectful",
-          "path": "return_value"
-        },
-        "concede": {
-          "code": "unsupported_return",
-          "ir_node": "StateReturn::Expression",
           "path": "return_value"
         }
       },

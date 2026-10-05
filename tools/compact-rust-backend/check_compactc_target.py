@@ -1238,6 +1238,7 @@ def main() -> None:
     parser.add_argument("--adt-set-qualified", action="store_true",
                         help="compile the original qualified Set source and check typed coin insertion capability")
     parser.add_argument("--coracle-withdraw", action="store_true", help="check original Coracle withdraw recording; optional strict funded proof")
+    parser.add_argument("--coracle-concede", action="store_true", help="check original Coracle concede recording; optional strict funded proof")
     parser.add_argument("--coracle-guess", action="store_true", help="check original Coracle guess recording; optional selective proof")
     parser.add_argument("--coracle-root-let", action="store_true",
                         help="check root Let action extraction and complete Coracle native acceptance")
@@ -1650,6 +1651,15 @@ def main() -> None:
                 run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                     "--literal-bytes-field", str(output))
             return
+        if args.coracle_concede:
+            check_coracle_source(compiler, base)
+            output = base / "coracle"
+            if args.proof:
+                (output / "keys").mkdir(exist_ok=True)
+                run("zkir", "compile", str(output / "zkir/concede.zkir"), str(output / "keys/concede.prover"), str(output / "keys/concede.verifier"))
+                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--coracle-concede", str(output))
+            print("original Coracle concede recorded; start remains the sole proof-required recording gap")
+            return
         if args.coracle_withdraw:
             check_coracle_source(compiler, base)
             output = base / "coracle"
@@ -1657,7 +1667,7 @@ def main() -> None:
                 (output / "keys").mkdir(exist_ok=True)
                 run("zkir", "compile", str(output / "zkir/withdraw.zkir"), str(output / "keys/withdraw.prover"), str(output / "keys/withdraw.verifier"))
                 run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--coracle-withdraw", str(output))
-            print("original Coracle withdraw recorded; 2 proof-required recording gaps retained")
+            print("original Coracle withdraw recorded; start remains the sole proof-required recording gap")
             return
         if args.coracle_guess:
             check_coracle_source(compiler, base)
@@ -1666,7 +1676,7 @@ def main() -> None:
                 (output / "keys").mkdir(exist_ok=True)
                 run("zkir", "compile", str(output / "zkir/guess.zkir"), str(output / "keys/guess.prover"), str(output / "keys/guess.verifier"))
                 run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--coracle-guess", str(output))
-            print("original Coracle guess and withdraw recorded; 2 proof-required recording gaps retained")
+            print("original Coracle guess, concede and withdraw recorded; start remains the sole proof-required recording gap")
             return
         if args.coracle_root_let:
             oracle = base / "root-let-action-return"
@@ -1864,6 +1874,8 @@ def main() -> None:
         run(sys.executable, str(Path(__file__).resolve()), "--micro-dao-advance",
             *(["--proof"] if args.proof else []))
         run(sys.executable, str(Path(__file__).resolve()), "--coracle-guess",
+            *(["--proof"] if args.proof else []))
+        run(sys.executable, str(Path(__file__).resolve()), "--coracle-concede",
             *(["--proof"] if args.proof else []))
         run(sys.executable, str(Path(__file__).resolve()), "--coracle-withdraw",
             *(["--proof"] if args.proof else []))

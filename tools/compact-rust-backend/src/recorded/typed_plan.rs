@@ -46,6 +46,7 @@ enum CompositeDomain {
     ShieldedSend,
     ImmediateShieldedSend,
     ShieldedPayout,
+    ActionfulShieldedPayout,
     ShieldedMerge(shielded_merge::Inputs),
     FieldObservations,
     TerminalReturns,
@@ -54,7 +55,10 @@ impl CompositeDomain {
     fn shielded_send(self) -> bool {
         matches!(
             self,
-            Self::ShieldedSend | Self::ImmediateShieldedSend | Self::ShieldedPayout
+            Self::ShieldedSend
+                | Self::ImmediateShieldedSend
+                | Self::ShieldedPayout
+                | Self::ActionfulShieldedPayout
         )
     }
 
@@ -78,6 +82,7 @@ impl CompositeDomain {
                 | Self::ShieldedSend
                 | Self::ImmediateShieldedSend
                 | Self::ShieldedPayout
+                | Self::ActionfulShieldedPayout
                 | Self::ShieldedMerge(_)
         )
     }
@@ -89,6 +94,7 @@ impl CompositeDomain {
                 | Self::ShieldedSend
                 | Self::ImmediateShieldedSend
                 | Self::ShieldedPayout
+                | Self::ActionfulShieldedPayout
                 | Self::ShieldedMerge(_)
         )
     }
@@ -227,6 +233,9 @@ impl Plan<'_> {
             Expr::Equal { left, right } => {
                 self.pure_value(left, visiting) && self.pure_value(right, visiting)
             }
+            Expr::TransientCommit { value, opening } => {
+                self.pure_value(value, visiting) && self.pure_value(opening, visiting)
+            }
             Expr::If {
                 condition,
                 then,
@@ -312,7 +321,10 @@ impl Plan<'_> {
             Expr::Assert { condition, message }
                 if self.read_only_assertions
                     || self.unit_actions
-                    || self.composite_domain == CompositeDomain::ShieldedPayout
+                    || matches!(
+                        self.composite_domain,
+                        CompositeDomain::ShieldedPayout | CompositeDomain::ActionfulShieldedPayout
+                    )
                     || matches!(self.composite_domain, CompositeDomain::ShieldedMerge(_)) =>
             {
                 let condition = self.expression(condition, scope, steps)?;
@@ -589,6 +601,11 @@ impl Plan<'_> {
                 {
                     return None;
                 }
+                if self.composite_domain == CompositeDomain::ActionfulShieldedPayout
+                    && !shielded_payout::witness_type(&declaration.result)
+                {
+                    return None;
+                }
                 if arguments.len() != declaration.parameters.len()
                     || !(matches!(declaration.result, Type::Unit | Type::OpaqueBytes)
                         || recordable_cell_type(&declaration.result))
@@ -614,7 +631,11 @@ impl Plan<'_> {
             }
             Expr::NativeWitnessCall {
                 builtin: builtin @ crate::ir::NativeWitnessBuiltin::OwnPublicKey,
-            } if self.composite_domain == CompositeDomain::ShieldedPayout => {
+            } if matches!(
+                self.composite_domain,
+                CompositeDomain::ShieldedPayout | CompositeDomain::ActionfulShieldedPayout
+            ) =>
+            {
                 let ty = builtin.result_type();
                 let rust_ty = rust_type(&ty).ok()?;
                 let observed = self.fresh();
@@ -815,6 +836,11 @@ impl Plan<'_> {
                 {
                     return None;
                 }
+                if self.composite_domain == CompositeDomain::ActionfulShieldedPayout
+                    && !shielded_payout::actionful_cell_type(ty)
+                {
+                    return None;
+                }
                 if self.effectful_field_cells && *ty != Type::Field {
                     return None;
                 }
@@ -824,6 +850,8 @@ impl Plan<'_> {
                 if !cell_type(ty)
                     && !(self.composite_domain == CompositeDomain::ShieldedPayout
                         && shielded_payout::cell_type(ty))
+                    && !(self.composite_domain == CompositeDomain::ActionfulShieldedPayout
+                        && shielded_payout::actionful_cell_type(ty))
                     && !(self.unit_actions && unit_actions::value_type(ty))
                     && !(self.phase_reset && phase_reset::cell_type(ty))
                     && !(self.read_only_assertions && *ty == Type::Boolean)
@@ -994,7 +1022,10 @@ impl Plan<'_> {
                     let StateReturn::Expression { value } = &callee.return_value else {
                         return None;
                     };
-                    if !callee.actions.is_empty() {
+                    if !callee.actions.is_empty()
+                        && !(self.composite_domain == CompositeDomain::ActionfulShieldedPayout
+                            && shielded_payout::action_shape(&callee.actions, self.pure) == Some(1))
+                    {
                         return None;
                     }
                     return self.inline_call(
@@ -1002,7 +1033,7 @@ impl Plan<'_> {
                         &callee.parameters,
                         &callee.result,
                         value,
-                        &[],
+                        &callee.actions,
                         arguments,
                         scope,
                         steps,
@@ -1147,7 +1178,10 @@ impl Plan<'_> {
         if scalar {
             self.scalar_body_depth += 1;
         }
-        let value = if self.composite_domain == CompositeDomain::TerminalReturns {
+        let value = if self.composite_domain == CompositeDomain::TerminalReturns
+            || (self.composite_domain == CompositeDomain::ActionfulShieldedPayout
+                && !actions.is_empty())
+        {
             self.return_plan(&terminal_returns::adapt(actions, body), &isolated, steps)
         } else {
             (|| {
@@ -2444,16 +2478,26 @@ fn shielded_value(
     };
     match value {
         Expr::CellRead { .. } | Expr::NativeWitnessCall { .. }
-            if domain == CompositeDomain::ShieldedPayout =>
+            if matches!(
+                domain,
+                CompositeDomain::ShieldedPayout | CompositeDomain::ActionfulShieldedPayout
+            ) =>
         {
             true
         }
-        Expr::WitnessCall { arguments, .. } if domain == CompositeDomain::ShieldedPayout => {
+        Expr::WitnessCall { arguments, .. }
+            if matches!(
+                domain,
+                CompositeDomain::ShieldedPayout | CompositeDomain::ActionfulShieldedPayout
+            ) =>
+        {
             arguments.iter().all(|value| visit(value, visiting))
         }
         Expr::Assert { condition, .. }
-            if domain == CompositeDomain::ShieldedPayout
-                || matches!(domain, CompositeDomain::ShieldedMerge(_)) =>
+            if matches!(
+                domain,
+                CompositeDomain::ShieldedPayout | CompositeDomain::ActionfulShieldedPayout
+            ) || matches!(domain, CompositeDomain::ShieldedMerge(_)) =>
         {
             visit(condition, visiting)
         }
@@ -2521,7 +2565,13 @@ fn shielded_value(
             let StateReturn::Expression { value } = &callee.return_value else {
                 return false;
             };
-            if !callee.actions.is_empty() || !visiting.insert(name.clone()) {
+            if !callee.actions.is_empty()
+                && !(domain == CompositeDomain::ActionfulShieldedPayout
+                    && shielded_payout::action_shape(&callee.actions, pure) == Some(1))
+            {
+                return false;
+            }
+            if !visiting.insert(name.clone()) {
                 return false;
             }
             let valid = visit(value, visiting);

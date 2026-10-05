@@ -1564,3 +1564,22 @@ Twenty independent TS/native/recorded/replay cases and two separately
 Dust-funded, default-strict proofs cover this slice. Initial coins are
 explicitly seeded offline. Whole fallible transient funding and original
 application composition remain separate delivery work.
+
+### Original Coracle concede (ADR209)
+
+The unchanged original `concede` export now has a recorded/observed Rust API.
+The actionful payout profile is separate from ADR206's readonly payout profile:
+every selected path must execute exactly one audited helper that writes the
+winner enum before reading and sending the selected deposit. A second helper,
+an unwritten branch, unsupported action, hidden effect or malformed witness
+refuses recording. The existing typed Plan keeps the two branches and their
+local scopes in source order; no new IR schema or runtime API is required.
+
+Twenty-seven independent corrected-TypeScript/native cases cover four successful
+and 23 rejecting calls. Successful recorded/replay rows compare exact state,
+effects, return value, VM program and query order, private outputs, gas and
+offer intents. Both original red and blue calls independently prove and apply
+with a single contract-owned input and user output in the guaranteed segment,
+default strict offer binding and separate NIGHT-backed Dust. Binding mutation
+and spent-nullifier replay reject. Fixtures start from an explicitly seeded
+prior game; `start` remains the original Coracle recording gap.

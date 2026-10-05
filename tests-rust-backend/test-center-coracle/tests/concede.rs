@@ -180,9 +180,18 @@ fn original_concede_native_matches_corrected_ts_on_seeded_game() {
     for row in fixture["rows"].as_array().unwrap() {
         let witness = Witness::new(row);
         let result = c::concede(context(row), &witness);
+        let recorded_witness = Witness::new(row);
+        let recorded = c::recorded::concede(context(row), &recorded_witness);
         if row.get("error").is_some() {
             let error = result.err().unwrap().to_string();
+            assert_eq!(
+                recorded.err().unwrap().to_string(),
+                error,
+                "{}",
+                row["name"]
+            );
             assert_eq!(witness.calls(), row["witnessCalls"], "{}", row["name"]);
+            assert_eq!(recorded_witness.calls(), row["witnessCalls"]);
             if row["options"]["missingKey"] == true {
                 assert!(
                     error.contains("coin public key"),
@@ -201,6 +210,51 @@ fn original_concede_native_matches_corrected_ts_on_seeded_game() {
             continue;
         }
         let out = result.unwrap();
+        let recorded = recorded.unwrap();
+        assert_eq!(recorded_witness.calls(), row["witnessCalls"]);
+        assert_eq!(recorded.execution.result, out.result);
+        assert_eq!(
+            recorded.execution.context.query.state,
+            out.context.query.state
+        );
+        assert_eq!(
+            recorded.execution.context.query.effects,
+            out.context.query.effects
+        );
+        assert_eq!(
+            recorded.execution.context.circuit_zswap(),
+            out.context.circuit_zswap()
+        );
+        assert_eq!(
+            recorded.execution.context.query.call_context.com_indices,
+            out.context.query.call_context.com_indices
+        );
+        assert_eq!(
+            recorded.execution.private_transcript_outputs,
+            out.private_transcript_outputs
+        );
+        assert_eq!(recorded.execution.gas_cost, out.gas_cost);
+        assert_eq!(json!(recorded.public.verify_ops()), row["publicTranscript"]);
+        let replay = recorded
+            .public
+            .initial()
+            .query(
+                recorded.public.verify_ops(),
+                None,
+                &recorded.execution.context.cost_model,
+            )
+            .unwrap();
+        assert_eq!(replay.context.state, out.context.query.state);
+        assert_eq!(replay.context.effects, out.context.query.effects);
+        for dimension in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            assert_eq!(
+                json!(replay.gas_cost)[dimension]
+                    .as_u64()
+                    .unwrap()
+                    .to_string(),
+                row["replayGas"][dimension]
+            );
+        }
         assert_eq!(
             state_hex(out.context.query.state.get_ref().clone()),
             row["after"],

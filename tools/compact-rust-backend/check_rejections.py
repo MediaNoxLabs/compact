@@ -336,11 +336,9 @@ def check_proof_capabilities(compactc: str, directory: Path) -> list[str]:
                 for item in report["circuits"]] != [("checked_value", False, "not_applicable")]:
             failures.append("proof-false checked_value has wrong schema-3 applicability")
     merkle = ROOT / "examples/rust_backend/merkle_path_verify.compact"
-    rejected = compile_source(merkle, directory / "merkle-proof-aware", True)
-    if (rejected.returncode == 0
-            or 'exported circuit "replace"' not in rejected.stderr
-            or 'exported circuit "verify"' in rejected.stderr):
-        failures.append(f"Merkle strict recording did not isolate replace:\n{rejected.stderr}")
+    accepted = compile_source(merkle, directory / "merkle-proof-aware", True)
+    if accepted.returncode:
+        failures.append(f"Merkle strict recording rejected supported circuits:\n{accepted.stderr}")
     emitted = compile_source(merkle, directory / "merkle-proof-report", False)
     if emitted.returncode:
         failures.append(f"Merkle proof capability report failed:\n{emitted.stderr}")
@@ -348,7 +346,7 @@ def check_proof_capabilities(compactc: str, directory: Path) -> list[str]:
         report = json.loads((directory / "merkle-proof-report/contract/rust-capabilities.json").read_text())
         statuses = {item["name"]: (item["proof_required"], item["recording_status"])
                     for item in report["circuits"]}
-        if statuses.get("verify") != (True, "available") or statuses.get("replace") != (True, "unavailable"):
+        if statuses != {name: (True, "available") for name in ("append", "replace", "verify")}:
             failures.append(f"Merkle proof capability statuses are wrong: {statuses}")
     witness_assert = ROOT / "examples/rust_backend/assert_witness.compact"
     accepted = compile_source(witness_assert, directory / "assert-proof-aware", True)

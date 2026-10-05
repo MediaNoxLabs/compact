@@ -57,6 +57,8 @@ function run(name, selected) {
   const out = c.circuits[name](ctx, ...args);
   const state = r.ContractState.deserialize(init.currentContractState.serialize());
   state.data = new r.ChargedState(out.context.currentQueryContext.state.state);
+  const replay = r.createCircuitContext(addr,key,init.currentContractState.data,[]);
+  const replayGas = out.proofData ? gas(original.call(replay.currentQueryContext, queries.flatMap(q=>q.ops), replay.costModel).gasCost) : null;
   return {
     name, selected, args, before,
     after: Buffer.from(state.serialize()).toString('hex'),
@@ -67,7 +69,8 @@ function run(name, selected) {
     privateOutputs: out.proofData?.privateTranscriptOutputs ?? [],
     output: out.proofData?.output ?? null,
     plan: out.context.currentZswapLocalState,
-    queries: [...queries], gas: gas(out.gasCost),
+    queries: [...queries], gas: gas(out.gasCost), replayGas,
+    publicTranscript: out.proofData?.publicTranscript ?? null,
   };
 }
 const rows = [

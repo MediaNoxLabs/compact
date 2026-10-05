@@ -46,6 +46,7 @@ struct Plan<'a> {
     field_cell_slot: Option<(String, u8)>,
     effectful_field_cells: bool,
     read_only_assertions: bool,
+    composite_circuits: Option<&'a HashMap<&'a str, &'a StatefulCircuit>>,
     optional_cells: usize,
     opaque_cells: usize,
     historic_roots: usize,
@@ -258,6 +259,14 @@ impl Plan<'_> {
                     steps,
                 )
             }
+            Expr::UnsignedCast { value, max } if self.composite_circuits.is_some() => {
+                let value = self.expression(value, scope, steps)?;
+                let Type::Unsigned { max: source_max } = value.ty else {
+                    return None;
+                };
+                let converted = crate::unsigned_cast_syntax(value.value, &source_max, max).ok()?;
+                self.bind(converted, Type::Unsigned { max: max.clone() }, steps)
+            }
             Expr::Coerce { value, ty } => {
                 let value = self.expression(value, scope, steps)?;
                 let converted = coerce_expression(value.value, &value.ty, ty, 0).ok()?;
@@ -318,13 +327,17 @@ impl Plan<'_> {
                 let then = self.expression(then, scope, &mut then_steps)?;
                 let mut else_steps = Vec::new();
                 let otherwise = self.expression(otherwise, scope, &mut else_steps)?;
-                if then.ty != Type::Boolean || otherwise.ty != Type::Boolean {
+                if then.ty != otherwise.ty
+                    || (self.composite_circuits.is_none() && then.ty != Type::Boolean)
+                {
                     return None;
                 }
+                let result_ty = then.ty.clone();
+                let rust_ty = rust_type(&result_ty).ok()?;
                 let name = self.fresh();
                 let (condition, then, otherwise) = (condition.value, then.value, otherwise.value);
                 steps.push(syn::parse_quote! {
-                    let (frame, #name): (_, bool) = if #condition {
+                    let (frame, #name): (_, #rust_ty) = if #condition {
                         #(#then_steps)*
                         (frame, #then)
                     } else {
@@ -333,7 +346,7 @@ impl Plan<'_> {
                     };
                 });
                 Some(TypedValue {
-                    ty: Type::Boolean,
+                    ty: result_ty,
                     value: syn::parse_quote!(#name),
                 })
             }
@@ -361,6 +374,33 @@ impl Plan<'_> {
                     ty: declaration.result.clone(),
                     value: syn::parse_quote!(#observed),
                 })
+            }
+            Expr::Call { name, arguments } if self.composite_circuits.is_some() => {
+                let callee = *self.composite_circuits?.get(name.as_str())?;
+                let StateReturn::Expression { value } = &callee.return_value else {
+                    return None;
+                };
+                if !callee.actions.is_empty() {
+                    return None;
+                }
+                // Arguments are fully evaluated in caller order before any callee local exists.
+                let arguments = self.arguments(arguments, &callee.parameters, scope, steps)?;
+                let isolated = callee
+                    .parameters
+                    .iter()
+                    .zip(arguments)
+                    .map(|(parameter, value)| {
+                        (
+                            parameter.name.clone(),
+                            TypedValue {
+                                ty: parameter.ty.clone(),
+                                value,
+                            },
+                        )
+                    })
+                    .collect();
+                let result = self.expression(value, &isolated, steps)?;
+                (result.ty == callee.result).then_some(result)
             }
             Expr::Call { name, arguments } => {
                 let callee = *self.pure.get(name.as_str())?;
@@ -1112,6 +1152,7 @@ pub(super) fn lower_effectful<'a>(
         field_cell_slot: None,
         effectful_field_cells: true,
         read_only_assertions: false,
+        composite_circuits: None,
         optional_cells: 0,
         opaque_cells: 0,
         historic_roots: 0,
@@ -1214,6 +1255,167 @@ fn assertion_type(ty: &Type) -> bool {
         || matches!(ty, Type::Unsigned { max } if max == "255" || max == "18446744073709551615")
 }
 
+fn composite_type(ty: &Type) -> bool {
+    match ty {
+        Type::Boolean | Type::Bytes { length: 32 } => true,
+        Type::Unsigned { max } => matches!(
+            crate::unsigned_maximum(max),
+            Ok(crate::UnsignedMaximum::Small(_))
+        ),
+        Type::Struct { fields, .. } => {
+            !fields.is_empty() && fields.iter().all(|field| composite_type(&field.ty))
+        }
+        _ => false,
+    }
+}
+fn composite_value(
+    value: &Expr,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+    visiting: &mut HashSet<String>,
+) -> bool {
+    match value {
+        Expr::Parameter { .. } | Expr::Boolean { .. } => true,
+        Expr::UnsignedLiteral { max, .. } => composite_type(&Type::Unsigned { max: max.clone() }),
+        Expr::KernelSelf { ty } => *ty == contract_address_type(),
+        Expr::Default {
+            ty: ty @ Type::Struct { .. },
+        } => composite_type(ty),
+        Expr::StructLiteral { ty, fields } => {
+            composite_type(ty)
+                && fields
+                    .iter()
+                    .all(|field| composite_value(field, witnesses, circuits, visiting))
+        }
+        Expr::Coerce { value, ty } => {
+            composite_type(ty) && composite_value(value, witnesses, circuits, visiting)
+        }
+        Expr::UnsignedCast { value, max } => {
+            composite_type(&Type::Unsigned { max: max.clone() })
+                && composite_value(value, witnesses, circuits, visiting)
+        }
+        Expr::If {
+            condition,
+            then,
+            otherwise,
+        } => [condition, then, otherwise]
+            .iter()
+            .all(|v| composite_value(v, witnesses, circuits, visiting)),
+        Expr::Let { bindings, body } => {
+            bindings.iter().all(|binding| {
+                composite_type(&binding.ty)
+                    && composite_value(&binding.value, witnesses, circuits, visiting)
+            }) && composite_value(body, witnesses, circuits, visiting)
+        }
+        Expr::WitnessCall { name, arguments } => witnesses.get(name.as_str()).is_some_and(|w| {
+            w.result
+                == (Type::Unsigned {
+                    max: u64::MAX.to_string(),
+                })
+                && w.parameters
+                    .iter()
+                    .all(|p| p.ty == (Type::Unsigned { max: "255".into() }))
+                && arguments
+                    .iter()
+                    .all(|a| composite_value(a, witnesses, circuits, visiting))
+        }),
+        Expr::Call { name, arguments } => {
+            if !arguments
+                .iter()
+                .all(|a| composite_value(a, witnesses, circuits, visiting))
+                || !visiting.insert(name.clone())
+            {
+                return false;
+            }
+            let valid = circuits
+                .get(name.as_str())
+                .is_some_and(|callee| composite_circuit(callee, witnesses, circuits, visiting));
+            visiting.remove(name);
+            valid
+        }
+        _ => false,
+    }
+}
+fn composite_circuit(
+    circuit: &StatefulCircuit,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+    visiting: &mut HashSet<String>,
+) -> bool {
+    circuit.actions.is_empty()
+        && matches!(circuit.result, Type::Struct { .. })
+        && composite_type(&circuit.result)
+        && circuit.parameters.iter().all(|p| p.ty == Type::Boolean)
+        && matches!(&circuit.return_value, StateReturn::Expression { value } if composite_value(value,witnesses,circuits,visiting))
+}
+pub(super) fn lower_composite<'a>(
+    circuit: &StatefulCircuit,
+    ledger: &'a HashMap<&'a str, &'a LedgerField>,
+    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
+    pure: &'a HashMap<&'a str, &'a PureCircuit>,
+    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
+) -> Option<TypedPlan> {
+    if !composite_circuit(
+        circuit,
+        witnesses,
+        circuits,
+        &mut HashSet::from([circuit.name.clone()]),
+    ) {
+        return None;
+    }
+    let mut plan = Plan {
+        ledger,
+        witnesses,
+        pure,
+        next: 0,
+        witness_calls: 0,
+        root_observations: 0,
+        tree_writes: 0,
+        set_writes: 0,
+        counter_writes: 0,
+        counter_reads: 0,
+        counter_comparisons: 0,
+        cell_reads: 0,
+        cell_writes: 0,
+        field_cell_writes: 0,
+        field_cell_slot: None,
+        effectful_field_cells: false,
+        read_only_assertions: false,
+        composite_circuits: Some(circuits),
+        optional_cells: 0,
+        opaque_cells: 0,
+        historic_roots: 0,
+        historic_writes: 0,
+        qualified_set_reads: 0,
+        qualified_set_writes: 0,
+        qualified_cell_writes: 0,
+    };
+    let scope = circuit
+        .parameters
+        .iter()
+        .enumerate()
+        .map(|(index, p)| {
+            let name = syn::Ident::new(&format!("__compact_param_{index}"), Span::call_site());
+            (
+                p.name.clone(),
+                TypedValue {
+                    ty: p.ty.clone(),
+                    value: syn::parse_quote!(#name),
+                },
+            )
+        })
+        .collect();
+    let StateReturn::Expression { value } = &circuit.return_value else {
+        return None;
+    };
+    let mut steps = Vec::new();
+    let result = plan.expression(value, &scope, &mut steps)?;
+    (result.ty == circuit.result).then_some(TypedPlan {
+        steps,
+        result: result.value,
+    })
+}
+
 pub(super) fn lower<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -1305,6 +1507,7 @@ pub(super) fn lower<'a>(
         field_cell_slot: field_cell_slot.clone(),
         effectful_field_cells: false,
         read_only_assertions: assertion_entry,
+        composite_circuits: None,
         optional_cells: 0,
         opaque_cells: 0,
         historic_roots: 0,
@@ -1466,6 +1669,142 @@ mod tests {
     use super::*;
 
     #[test]
+    fn composite_helpers_are_typed_scoped_acyclic_and_evaluate_arguments_once() {
+        fn planned(contract: &crate::ir::Contract, index: usize) -> Option<TypedPlan> {
+            let ledger = contract
+                .ledger_fields
+                .iter()
+                .map(|f| (f.id.as_str(), f))
+                .collect();
+            let witnesses = contract
+                .witnesses
+                .iter()
+                .map(|w| (w.name.as_str(), w))
+                .collect();
+            let circuits = contract
+                .stateful_circuits
+                .iter()
+                .map(|c| (c.name.as_str(), c))
+                .collect();
+            lower_composite(
+                &contract.stateful_circuits[index],
+                &ledger,
+                &witnesses,
+                &HashMap::new(),
+                &circuits,
+            )
+        }
+        let source: crate::ir::Contract =
+            serde_json::from_str(include_str!("../../tests/stateful-struct-schema20-ir.json"))
+                .unwrap();
+        for index in 0..3 {
+            assert!(planned(&source, index).is_some());
+        }
+        assert!(planned(&source, 3).is_none());
+        let mut extra_effect = source.clone();
+        extra_effect.stateful_circuits[0]
+            .actions
+            .push(StateAction::CellWrite {
+                field: "marker".into(),
+                index: 0,
+                value: Expr::FieldLiteral { value: "1".into() },
+            });
+        assert!(planned(&extra_effect, 2).is_none());
+        let mut cycle = source.clone();
+        cycle.stateful_circuits[0].return_value = StateReturn::Expression {
+            value: Expr::Call {
+                name: "snapshot".into(),
+                arguments: vec![Expr::Boolean { value: true }],
+            },
+        };
+        assert!(planned(&cycle, 0).is_none());
+        assert!(planned(&cycle, 2).is_none());
+        let mut wrong_signature = source.clone();
+        wrong_signature.stateful_circuits[0].parameters.clear();
+        assert!(planned(&wrong_signature, 2).is_none());
+        let mut wrong_result = source.clone();
+        wrong_result.stateful_circuits[0].result = contract_address_type();
+        assert!(planned(&wrong_result, 2).is_none());
+        let mut mismatched_branch = source.clone();
+        let StateReturn::Expression {
+            value: Expr::If { otherwise, .. },
+        } = &mut mismatched_branch.stateful_circuits[0].return_value
+        else {
+            unreachable!()
+        };
+        **otherwise = Expr::Default {
+            ty: contract_address_type(),
+        };
+        assert!(planned(&mismatched_branch, 0).is_none());
+        let mut leakage = source.clone();
+        let caller_value = match leakage.stateful_circuits[2].return_value.clone() {
+            StateReturn::Expression { value } => value,
+            _ => unreachable!(),
+        };
+        let snapshot_type = leakage.stateful_circuits[0].result.clone();
+        leakage.stateful_circuits[2].return_value = StateReturn::Expression {
+            value: Expr::Let {
+                bindings: vec![LocalBinding {
+                    name: "caller_only".into(),
+                    ty: snapshot_type.clone(),
+                    value: Expr::Default { ty: snapshot_type },
+                }],
+                body: Box::new(caller_value),
+            },
+        };
+        leakage.stateful_circuits[0].return_value = StateReturn::Expression {
+            value: Expr::Parameter {
+                name: "caller_only".into(),
+            },
+        };
+        assert!(planned(&leakage, 2).is_none());
+
+        let mut ordered = source;
+        ordered.stateful_circuits[0]
+            .parameters
+            .push(crate::ir::Parameter {
+                name: "unused_second".into(),
+                ty: Type::Boolean,
+            });
+        let StateReturn::Expression {
+            value: Expr::StructLiteral { fields, .. },
+        } = &mut ordered.stateful_circuits[2].return_value
+        else {
+            unreachable!()
+        };
+        let Expr::Call { arguments, .. } = &mut fields[0] else {
+            unreachable!()
+        };
+        *arguments = [71, 72]
+            .into_iter()
+            .map(|tag| Expr::Let {
+                bindings: vec![LocalBinding {
+                    name: "caller_argument".into(),
+                    ty: Type::Unsigned {
+                        max: u64::MAX.to_string(),
+                    },
+                    value: Expr::WitnessCall {
+                        name: "next_value".into(),
+                        arguments: vec![Expr::UnsignedLiteral {
+                            max: "255".into(),
+                            value: tag.to_string(),
+                        }],
+                    },
+                }],
+                body: Box::new(Expr::Boolean { value: true }),
+            })
+            .collect();
+        let plan = planned(&ordered, 2).unwrap();
+        let steps = plan.steps;
+        let tokens = quote::quote!(#(#steps)*).to_string();
+        assert_eq!(tokens.matches("71u128").count(), 1);
+        assert_eq!(tokens.matches("72u128").count(), 1);
+        assert_eq!(tokens.matches("next_value").count(), 5);
+        assert!(tokens.find("71u128").unwrap() < tokens.find("72u128").unwrap());
+        assert!(tokens.find("72u128").unwrap() < tokens.find("(1u128)").unwrap());
+    }
+
+    #[test]
     fn local_coercion_uses_its_actual_type_before_a_helper_boundary() {
         let ledger = HashMap::new();
         let witnesses = HashMap::new();
@@ -1488,6 +1827,7 @@ mod tests {
             field_cell_slot: None,
             effectful_field_cells: false,
             read_only_assertions: false,
+            composite_circuits: None,
             optional_cells: 0,
             opaque_cells: 0,
             historic_roots: 0,
@@ -1566,6 +1906,7 @@ mod tests {
             field_cell_slot: None,
             effectful_field_cells: false,
             read_only_assertions: false,
+            composite_circuits: None,
             optional_cells: 0,
             opaque_cells: 0,
             historic_roots: 0,

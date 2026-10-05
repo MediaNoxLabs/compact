@@ -54,6 +54,25 @@ Field update, Counter threshold or an untaken branch is still rejected by these
 profiles. Source composition checks join compiler proof applicability and compare
 generated native/recorded calls against the unchanged original fixtures.
 
+## Typed composite return recording
+
+A bounded struct-result profile records ordered typed members, small unsigned
+casts, declared unsigned witnesses, defaults and canonical `Kernel.self` queries.
+Matching composite conditional branches return their frame and value together.
+Expression-only local helpers are audited transitively and lowered into the same
+frame: arguments evaluate once in caller order, callee scopes are isolated, and
+cycles, signature mismatches and unsupported effects are rejected. No native
+helper bridge is used to hide public VM reads.
+
+The unchanged struct oracle records `snapshot`, `reverse` and `nested`, with
+TypeScript/native/recorded output, private sequence, program and gas parity.
+Named source fields use the compiler's normalized declared-member order. All
+three nonempty paths prove and ledger-apply under the existing unbalanced smoke
+policy. `snapshot(false)` preserves zero operations and rejects preparation with
+`EmptyTranscript`, matching the pinned ledger boundary. The `planned` Zswap
+output intent remains a separate recording gap. Runtime ABI47/schema20 stay
+unchanged by this slice.
+
 ## Compile a contract
 
 The packaged `compactc` accepts a repeatable `--target` option. TypeScript is

@@ -10793,7 +10793,7 @@ fn kernel_recording_rejects_public_slot_composition_and_escaped_scopes() {
 }
 
 #[test]
-fn stateful_structs_validate_member_types_and_keep_effectful_members_native_only() {
+fn stateful_structs_validate_member_types_and_keep_zswap_members_native_only() {
     let mut contract: Contract =
         serde_json::from_str(include_str!("stateful-struct-schema20-ir.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
@@ -10805,7 +10805,7 @@ fn stateful_structs_validate_member_types_and_keep_effectful_members_native_only
             .capabilities
             .circuits
             .iter()
-            .all(|c| !c.recorded && !c.observed_call)
+            .all(|c| c.recorded == (c.name != "planned") && c.observed_call == c.recorded)
     );
     for mode in 0..4 {
         let mut wrong = contract.clone();

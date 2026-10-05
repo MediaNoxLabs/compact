@@ -1289,8 +1289,15 @@ def main() -> None:
             report = json.loads((output / "contract/rust-capabilities.json").read_text())
             assert len(report["circuits"]) == 4
             for row in report["circuits"]:
-                assert not row["recorded"] and not row["observed_call"]
+                assert row["recorded"] == (row["name"] != "planned")
+                assert row["observed_call"] == row["recorded"]
                 assert row["proof_required"]
+            strict = subprocess.run([compiler, "--target", "rust", "--rust-require-recording", "--skip-zk", str(source), str(base / "strict-struct")], cwd=ROOT, capture_output=True,text=True)
+            assert strict.returncode != 0 and "planned" in strict.stderr
+            if args.proof:
+                proof = base / "stateful-struct-proof"
+                run(compiler,"--target","rust",str(source),str(proof))
+                run("cargo","run","--quiet","-p","compact-rust-proof-smoke","--","--stateful-struct",str(proof))
             original = subprocess.run([compiler, "--target", "rust", "--skip-zk", str(ROOT / "test-center/test-contracts/micro-dao.compact"), str(base / "original-dao")], cwd=ROOT, capture_output=True, text=True)
             assert original.returncode == 0, original.stderr
             assert (base / "original-dao/contract/lib.rs").is_file()
@@ -1842,6 +1849,9 @@ def main() -> None:
                 str(ROOT_LET_ACTION_RETURN_SOURCE), str(root_let_proof))
             run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--root-let-action-return", str(root_let_proof))
+            struct_proof = base / "stateful-struct-proof"
+            run(compiler,"--target","rust",str(ROOT / "examples/rust_backend/stateful_struct_oracle.compact"),str(struct_proof))
+            run("cargo","run","--quiet","-p","compact-rust-proof-smoke","--","--stateful-struct",str(struct_proof))
             assertion_proof = base / "stateful-assert-proof"
             run(compiler, "--target", "rust", "--rust-require-recording",
                 str(ROOT / "examples/rust_backend/stateful_assert_oracle.compact"), str(assertion_proof))

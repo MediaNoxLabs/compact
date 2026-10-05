@@ -128,3 +128,4 @@ compact-rust-test-center-bboard-fixture = { path = "../../tests-rust-backend/tes
 compact-rust-root-let-action-return-oracle-fixture = { path = "../../tests-rust-backend/root-let-action-return-oracle", features = ["ledger-transaction"] }
 compact-rust-effectful-return-oracle-fixture = { path = "../../tests-rust-backend/effectful-return-oracle", features = ["ledger-transaction"] }
 compact-rust-stateful-assert-oracle-fixture = { path = "../../tests-rust-backend/stateful-assert-oracle", features = ["ledger-transaction"] }
+compact-rust-stateful-struct-oracle-fixture = { path = "../../tests-rust-backend/stateful-struct-oracle", features = ["ledger-transaction"] }

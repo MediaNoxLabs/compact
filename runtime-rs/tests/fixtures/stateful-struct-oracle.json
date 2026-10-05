@@ -225,7 +225,66 @@
       "computeTime": "1080730348",
       "bytesWritten": "0",
       "bytesDeleted": "0"
-    }
+    },
+    "replayGas": {
+      "readTime": "0",
+      "computeTime": "1080730348",
+      "bytesWritten": "0",
+      "bytesDeleted": "0"
+    },
+    "publicTranscript": [
+      {
+        "dup": {
+          "n": 2
+        }
+      },
+      {
+        "idx": {
+          "cached": true,
+          "pushPath": false,
+          "path": [
+            {
+              "tag": "value",
+              "value": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "popeq": {
+          "cached": true,
+          "result": {
+            "value": [
+              [
+                9
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "bytes",
+                  "length": 32
+                }
+              }
+            ]
+          }
+        }
+      }
+    ]
   },
   {
     "name": "snapshot",
@@ -365,7 +424,14 @@
       "computeTime": "0",
       "bytesWritten": "0",
       "bytesDeleted": "0"
-    }
+    },
+    "replayGas": {
+      "readTime": "0",
+      "computeTime": "1074486469",
+      "bytesWritten": "0",
+      "bytesDeleted": "0"
+    },
+    "publicTranscript": []
   },
   {
     "name": "reverse",
@@ -590,7 +656,66 @@
       "computeTime": "1080730348",
       "bytesWritten": "0",
       "bytesDeleted": "0"
-    }
+    },
+    "replayGas": {
+      "readTime": "0",
+      "computeTime": "1080730348",
+      "bytesWritten": "0",
+      "bytesDeleted": "0"
+    },
+    "publicTranscript": [
+      {
+        "dup": {
+          "n": 2
+        }
+      },
+      {
+        "idx": {
+          "cached": true,
+          "pushPath": false,
+          "path": [
+            {
+              "tag": "value",
+              "value": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "popeq": {
+          "cached": true,
+          "result": {
+            "value": [
+              [
+                9
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "bytes",
+                  "length": 32
+                }
+              }
+            ]
+          }
+        }
+      }
+    ]
   },
   {
     "name": "nested",
@@ -845,7 +970,66 @@
       "computeTime": "1080730348",
       "bytesWritten": "0",
       "bytesDeleted": "0"
-    }
+    },
+    "replayGas": {
+      "readTime": "0",
+      "computeTime": "1080730348",
+      "bytesWritten": "0",
+      "bytesDeleted": "0"
+    },
+    "publicTranscript": [
+      {
+        "dup": {
+          "n": 2
+        }
+      },
+      {
+        "idx": {
+          "cached": true,
+          "pushPath": false,
+          "path": [
+            {
+              "tag": "value",
+              "value": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "popeq": {
+          "cached": true,
+          "result": {
+            "value": [
+              [
+                9
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "bytes",
+                  "length": 32
+                }
+              }
+            ]
+          }
+        }
+      }
+    ]
   },
   {
     "name": "planned",
@@ -1371,7 +1555,66 @@
       "computeTime": "1080730348",
       "bytesWritten": "0",
       "bytesDeleted": "0"
-    }
+    },
+    "replayGas": {
+      "readTime": "0",
+      "computeTime": "1080730348",
+      "bytesWritten": "0",
+      "bytesDeleted": "0"
+    },
+    "publicTranscript": [
+      {
+        "dup": {
+          "n": 2
+        }
+      },
+      {
+        "idx": {
+          "cached": true,
+          "pushPath": false,
+          "path": [
+            {
+              "tag": "value",
+              "value": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "popeq": {
+          "cached": true,
+          "result": {
+            "value": [
+              [
+                9
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "bytes",
+                  "length": 32
+                }
+              }
+            ]
+          }
+        }
+      }
+    ]
   },
   {
     "name": "pure_snapshot",
@@ -1477,6 +1720,8 @@
       "outputs": []
     },
     "queries": [],
-    "gas": null
+    "gas": null,
+    "replayGas": null,
+    "publicTranscript": null
   }
 ]

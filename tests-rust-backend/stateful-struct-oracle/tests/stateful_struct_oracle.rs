@@ -163,3 +163,69 @@ fn ordered_struct_members_match_independent_typescript() {
         }
     }
 }
+
+fn check_recorded<T: Clone + Into<AlignedValue>>(
+    recorded: runtime::recording::RecordedCircuitResult<Vec<u8>, T>,
+    result: Value,
+    row: &Value,
+) {
+    assert_eq!(json!(recorded.public.verify_ops()), row["publicTranscript"]);
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(replay.context.state, recorded.execution.context.query.state);
+    assert_eq!(
+        replay.context.effects,
+        recorded.execution.context.query.effects
+    );
+    for dim in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+        assert_eq!(
+            json!(replay.gas_cost)[dim].as_u64().unwrap().to_string(),
+            row["replayGas"][dim]
+        );
+    }
+    if row["name"] == "snapshot" && row["selected"] == false {
+        assert!(recorded.public.verify_ops().is_empty());
+        assert!(recorded.execution.private_transcript_outputs.is_empty());
+    }
+    check(recorded.execution, result, row);
+}
+#[test]
+fn composite_recording_matches_ts_members_calls_and_empty_branch() {
+    let rows: Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/stateful-struct-oracle.json"
+    ))
+    .unwrap();
+    for row in rows.as_array().unwrap() {
+        let mut ctx = c::initial_state(ConstructorContext::new(vec![]))
+            .unwrap()
+            .into_circuit_context(ContractAddress(HashOutput(bytes(9))));
+        ctx.set_zswap_output_start(7).unwrap();
+        match row["name"].as_str().unwrap() {
+            "snapshot" => {
+                let out =
+                    c::recorded::snapshot(ctx, &Witnesses, row["selected"].as_bool().unwrap())
+                        .unwrap();
+                let v = snapshot(&out.execution.result);
+                check_recorded(out, v, row);
+            }
+            "reverse" => {
+                let out = c::recorded::reverse(ctx, &Witnesses).unwrap();
+                let v = snapshot(&out.execution.result);
+                check_recorded(out, v, row);
+            }
+            "nested" => {
+                let out = c::recorded::nested(ctx, &Witnesses).unwrap();
+                let v = json!({"head":snapshot(&out.execution.result.head),"tail":out.execution.result.tail.value().to_string()});
+                check_recorded(out, v, row);
+            }
+            _ => {}
+        }
+    }
+}

@@ -1991,6 +1991,7 @@ dependencies = [
  "compact-rust-stateful-assert-oracle-fixture",
  "compact-rust-stateful-circuit-call-fixture",
  "compact-rust-stateful-pure-call-fixture",
+ "compact-rust-stateful-struct-oracle-fixture",
  "compact-rust-struct-collision-oracle-fixture",
  "compact-rust-ternary-cond-oracle-fixture",
  "compact-rust-test-center-bboard-fixture",

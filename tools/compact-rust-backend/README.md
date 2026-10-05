@@ -687,3 +687,26 @@ packaged consumer and proof checks that invoke plain `cargo`. The receipt
 records `rust_toolchain`. This avoids rebuilding the shared target with the
 machine default after workspace checks use 1.99.0; machine settings are not
 changed. Run separate explicit toolchain checks for MSRV coverage.
+
+### Checked literal Bytes-to-Field casts (ADR0168)
+
+The Rust frontend normalizes byte-string literals and closed literal byte vectors
+cast to `Field` into the existing `field_literal` IR. Decoding is little-endian;
+values must be canonical (`0..=MAX_FIELD`), with no modular reduction. This adds
+no IR schema or runtime ABI. Dynamic bytes/vectors and non-Field targets remain
+explicit source gaps. `Bytes<0>` retains the language type-checking rejection.
+Out-of-range closed constants fail Rust compilation; TypeScript accepts those
+sources and rejects the cast when evaluated. This difference in failure timing
+is deliberate and covered by the source gate.
+
+`check_compactc_target.py --literal-bytes-field` checks canonical boundaries and
+six rejection cases; add `--proof` for the recorded snapshot proof and ledger
+application. The TS runtime must be built under `runtime`, or supplied via
+`COMPACT_TS_RUNTIME_DIR`. The TS oracle stores its reported gas and individual
+query costs; Rust total gas is compared against the query sum. A native direct
+literal stateful return still has the existing recorded-return capability gap.
+
+The original unchanged `test-center/test-contracts/micro-dao.compact` now passes
+its standard-library nonce-domain casts. Its next diagnosed source gap is nested
+`Counter.read` at line 192 (`no.lessThan(yes)`); shielded coin operations and
+`pot.writeCoin` remain separate admission work. This is not full DAO parity.

@@ -23,6 +23,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import tomllib
 
@@ -1090,6 +1091,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--consumer", action="store_true", help="build and run a separate consumer")
     parser.add_argument("--proof", action="store_true", help="generate ZKIR and proving keys")
+    parser.add_argument("--literal-bytes-field", action="store_true",
+                        help="check canonical literal Bytes-to-Field normalization and refusals")
     parser.add_argument("--field-to-bytes32", action="store_true",
                         help="run the focused explicit Field-to-Bytes<32> source gate")
     parser.add_argument("--test-center-bboard", action="store_true",
@@ -1105,6 +1108,15 @@ def main() -> None:
     compiler = os.environ.get("COMPACTC", "compactc")
     with tempfile.TemporaryDirectory(prefix="compactc-target-") as temporary:
         base = Path(temporary)
+        if args.literal_bytes_field:
+            run(sys.executable, str(ROOT / "tools/compact-rust-backend/check_literal_bytes_field.py"))
+            if args.proof:
+                output = base / "literal-bytes-field"
+                run(compiler, "--target", "rust", "--rust-require-recording",
+                    str(ROOT / "examples/rust_backend/literal_bytes_field_oracle.compact"), str(output))
+                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                    "--literal-bytes-field", str(output))
+            return
         if args.adt_set_qualified:
             output = base / "adt-set-qualified"
             run(compiler, "--target", "rust", "--skip-zk",
@@ -1419,6 +1431,12 @@ def main() -> None:
                 assert (cell_proof / "keys" / f"set_flag.{extension}").is_file()
             for extension in ("zkir", "bzkir"):
                 assert (cell_proof / "zkir" / f"set_flag.{extension}").is_file()
+            literal_bytes_field_proof = base / "literal-bytes-field-proof"
+            run(compiler, "--target", "rust", "--rust-require-recording",
+                str(ROOT / "examples/rust_backend/literal_bytes_field_oracle.compact"),
+                str(literal_bytes_field_proof))
+            run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--literal-bytes-field", str(literal_bytes_field_proof))
             cell_read_proof = base / "cell-read-proof"
             run(compiler, "--target", "rust", str(CELL_READ_SOURCE), str(cell_read_proof))
             check_manifest(cell_read_proof)

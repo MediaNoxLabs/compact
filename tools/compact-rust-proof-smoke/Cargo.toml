@@ -35,6 +35,7 @@ compact-rust-opaque-string-map-query-oracle-fixture = { path = "../../tests-rust
 compact-rust-call-arg-declared-type-fixture = { path = "../../tests-rust-backend/call-arg-declared-type", features = ["ledger-transaction"] }
 compact-rust-let-return-oracle-fixture = { path = "../../tests-rust-backend/let-return-oracle", features = ["ledger-transaction"] }
 compact-rust-field-to-bytes32-oracle-fixture = { path = "../../tests-rust-backend/field-to-bytes32-oracle", features = ["ledger-transaction"] }
+compact-rust-literal-bytes-field-oracle-fixture = { path = "../../tests-rust-backend/literal-bytes-field-oracle", features = ["ledger-transaction"] }
 compact-rust-struct-collision-oracle-fixture = { path = "../../tests-rust-backend/struct-collision-oracle", features = ["ledger-transaction"] }
 compact-rust-witness-vector-action-fixture = { path = "../../tests-rust-backend/witness-vector-action", features = ["ledger-transaction"] }
 compact-rust-internal-pure-call-fixture = { path = "../../tests-rust-backend/internal-pure-call", features = ["ledger-transaction"] }

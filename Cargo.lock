@@ -1489,6 +1489,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-literal-bytes-field-oracle-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-base-crypto",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "num-bigint",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-literal-coercion-oracle-fixture"
 version = "0.1.0"
 dependencies = [
@@ -1876,6 +1890,7 @@ dependencies = [
  "compact-rust-internal-pure-call-fixture",
  "compact-rust-let-return-oracle-fixture",
  "compact-rust-list-field-fixture",
+ "compact-rust-literal-bytes-field-oracle-fixture",
  "compact-rust-map-boolean-field-fixture",
  "compact-rust-map-fn-oracle-fixture",
  "compact-rust-map-lambda-oracle-fixture",

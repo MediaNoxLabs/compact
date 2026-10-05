@@ -1242,6 +1242,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/literal_bytes_field_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "boundary",
+    "signature": "export pure circuit boundary(): Field",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/call_arg_declared_type.compact",
     "module_path": [],
     "kind": "circuit",
@@ -2039,6 +2047,22 @@
     "kind": "circuit",
     "name": "documentNumberNullCommitment",
     "signature": "export pure circuit documentNumberNullCommitment(): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_bytes_field_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "domain",
+    "signature": "export pure circuit domain(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_bytes_field_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "domain_two",
+    "signature": "export pure circuit domain_two(): Field",
     "visibility": "export"
   },
   {
@@ -3175,6 +3199,14 @@
     "kind": "circuit",
     "name": "literalAboveU64",
     "signature": "export pure circuit literalAboveU64(c: Boolean): Uint<128>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_bytes_field_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "little_endian",
+    "signature": "export pure circuit little_endian(): Field",
     "visibility": "export"
   },
   {
@@ -5170,6 +5202,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/literal_bytes_field_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "snapshot",
+    "signature": "export circuit snapshot(): Field",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/literal_coercion_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -6378,6 +6418,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/literal_bytes_field_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "zero",
+    "signature": "export pure circuit zero(): Field",
+    "visibility": "export"
+  },
+  {
     "source": "test-center/test-contracts/coracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -6587,6 +6635,14 @@
   },
   {
     "source": "examples/rust_backend/kernel_self_oracle.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/literal_bytes_field_oracle.compact",
     "module_path": [],
     "kind": "constructor",
     "name": "constructor",

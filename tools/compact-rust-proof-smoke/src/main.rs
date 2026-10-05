@@ -48,6 +48,7 @@ mod guarded_recording;
 mod impure_field_helper;
 mod inline_type_scope;
 mod let_return;
+mod literal_bytes_field;
 mod merkle_hash;
 mod merkle_indexed;
 mod merkle_reset;
@@ -1889,6 +1890,25 @@ fn run() -> Result<(), Box<dyn Error>> {
             Ok(Ok(())) => Ok(()),
             Ok(Err(error)) => Err(error.into()),
             Err(_) => Err("Field-to-Bytes32 proof thread panicked".into()),
+        };
+    }
+    if first.as_deref() == Some(OsStr::new("--literal-bytes-field")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --literal-bytes-field <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --literal-bytes-field <proof-output>".into(),
+            );
+        }
+        let proof = std::thread::Builder::new()
+            .name("literal-bytes-field-proof".into())
+            .stack_size(64 * 1024 * 1024)
+            .spawn(move || literal_bytes_field::run(Path::new(&root)).map_err(|e| e.to_string()))?;
+        return match proof.join() {
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(error)) => Err(error.into()),
+            Err(_) => Err("literal Bytes-to-Field proof thread panicked".into()),
         };
     }
     if first.as_deref() == Some(OsStr::new("--pair-hash-cell")) {

@@ -321,6 +321,8 @@ def main() -> int:
                 "workspace-format", directory, receipt, env=environment)
             run([sys.executable, str(ROOT / "tools/compact-rust-backend/check_rejections.py")],
                 "compiler-rejections", directory, receipt, env=environment)
+            run([sys.executable, str(ROOT / "tools/compact-rust-backend/check_literal_bytes_field.py")],
+                "literal-bytes-field", directory, receipt, env=environment)
             run([sys.executable, str(ROOT / "tools/compact-rust-backend/check_oracle_acceptance.py")],
                 "oracle-acceptance", directory, receipt, env=environment)
             run([sys.executable, str(ROOT / "tools/compact-rust-backend/check_positive_source_scope.py"),

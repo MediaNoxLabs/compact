@@ -1,0 +1,25 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import CompactStandardLibrary;
+
+export ledger value: Field;
+constructor() { value = "AB" as Field; }
+export pure circuit little_endian(): Field { return "AB" as Field; }
+export pure circuit zero(): Field { return ([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] as Bytes<32>) as Field; }
+export pure circuit domain(): Field { return "midnight:kernel:nonce_evolve" as Field; }
+export pure circuit domain_two(): Field { return "midnight:kernel:nonce_evolve/2" as Field; }
+export pure circuit boundary(): Field { return ([0, 0, 0, 0, 255, 255, 255, 255, 254, 91, 254, 255, 2, 164, 189, 83, 5, 216, 161, 9, 8, 216, 57, 51, 72, 125, 157, 41, 83, 167, 237, 115] as Bytes<32>) as Field; }
+export circuit snapshot(): Field { assert(value == "AB" as Field, "constructor cast"); return value; }

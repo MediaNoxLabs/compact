@@ -215,6 +215,48 @@
                        [else #f]))]
                [else #f])))
 
+      ;; Compact's Bytes-to-Field cast is little-endian and range checked;
+      ;; it does not reduce an out-of-range integer modulo the field prime.
+      ;; Keep this normalization closed over literal data, without evaluating
+      ;; variables, calls, or effects at compile time.
+      (define (literal-bytes-field-ir type len expr src)
+        (define (literal-byte arg)
+          (nanopass-case (Lnodisclose Tuple-Argument) arg
+            [(single ,src^ ,expr^)
+             (nanopass-case (Lnodisclose Expression) expr^
+               [(quote ,src^^ ,datum)
+                (if (and (integer? datum) (exact? datum) (<= 0 datum 255))
+                    datum
+                    (source-errorf src^^ "Rust Bytes-to-Field vector requires literal bytes"))]
+               [else (source-errorf src^ "Rust Bytes-to-Field cast requires literal bytes")])]
+            [else (source-errorf src "Rust Bytes-to-Field cast does not support vector spreads")]))
+        (nanopass-case (Lnodisclose Type) type
+          [(tfield ,src^) (void)]
+          [else (source-errorf src "Rust backend supports literal Bytes-to-Field casts only")])
+        (let ([bytes
+                (nanopass-case (Lnodisclose Expression) expr
+                  [(quote ,src^ ,datum)
+                   (if (bytevector? datum) datum
+                       (source-errorf src^ "Rust Bytes-to-Field cast requires literal bytes"))]
+                  [(vector->bytes ,src^ ,len^ ,expr^)
+                   (unless (= len len^)
+                     (source-errorf src^ "Rust Bytes-to-Field literal length mismatch"))
+                   (nanopass-case (Lnodisclose Expression) expr^
+                     [(tuple ,src^^ ,tuple-arg* ...)
+                      (u8-list->bytevector (map literal-byte tuple-arg*))]
+                     [else (source-errorf src^ "Rust Bytes-to-Field cast requires a literal byte vector")])]
+                  [else (source-errorf src "Rust Bytes-to-Field cast requires literal bytes")])])
+          (unless (= len (bytevector-length bytes))
+            (source-errorf src "Rust Bytes-to-Field literal length mismatch"))
+          (let ([value
+                  (let loop ([index (- len 1)] [value 0])
+                    (if (< index 0) value
+                        (loop (- index 1) (+ (* value 256) (bytevector-u8-ref bytes index)))))])
+            (unless (field? value)
+              (source-errorf src "Bytes-to-Field literal exceeds maximum value ~a of Field type" (max-field)))
+            (object (cons "kind" "field_literal")
+                    (cons "value" (number->string value))))))
+
       (define (expression-ir expr owner-src)
         (nanopass-case (Lnodisclose Expression) expr
           [(return ,src ,expr) (expression-ir expr owner-src)]
@@ -303,6 +345,8 @@
              [(ttuple ,src^ ,type* ...)
               (typed-expression-ir expr type src)]
              [else (source-errorf src "Rust backend does not yet support this cast")])]
+          [(cast-from-bytes ,src ,type ,len ,expr)
+           (literal-bytes-field-ir type len expr src)]
           [(field->bytes ,src ,len ,expr)
            (unless (= len 32)
              (source-errorf src "Rust backend supports Field-to-Bytes<32> casts only"))
@@ -1463,6 +1507,8 @@
                           (cons "max" (number->string nat))
                           (cons "value" (stateful-expression-ir expr src witness-ids))))]
              [else (expression-ir value-expr owner-src)])]
+          [(cast-from-bytes ,src ,type ,len ,expr)
+           (literal-bytes-field-ir type len expr src)]
           [(field->bytes ,src ,len ,expr)
            (unless (= len 32)
              (source-errorf src "Rust backend supports Field-to-Bytes<32> casts only"))
@@ -1619,6 +1665,9 @@
           [(safe-cast ,src ,type ,type^ ,expr)
            (object (cons "kind" "expression")
                    (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
+          [(cast-from-bytes ,src ,type ,len ,expr)
+           (object (cons "kind" "expression")
+                   (cons "value" (literal-bytes-field-ir type len expr src)))]
           [(field->bytes ,src ,len ,expr)
            (object (cons "kind" "expression")
                    (cons "value" (stateful-expression-ir return-expr src witness-ids)))]

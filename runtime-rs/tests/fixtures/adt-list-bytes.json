@@ -1,0 +1,1101 @@
+{
+  "initialStateHex": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a4800040004000801040008400804080401040c080104400004100000000000000000000000000008020808001408040c04180403041c080104042004030424000428080104042cbd010304d4a901010403040108010404010403040108040c080104000001080208400104000001080104040104000001080104040104010401084008000104000001040000010400000104000001040000010400000104000001040000010400000104000001040000010400000104000000141074657374083400000438080104043c90030440804fc9002e37697d724adf12a2e51734539ba45b1dae65ed835e29819610b17a601420003040001003000400",
+  "afterStateHex": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a4800040004000801040008400804080401040c080104400004100000000000000000000000000008020808001408040c04180403041c080104042004030424000428080104042cbd010304d4a901010403040108010404010403040108040c080104000001080208400104000001080104040104000001080104040104010401084008000104000001040000010400000104000001040000010400000104000001040000010400000104000001040000010400000104000000141074657374083400000438080104043c90030440804fc9002e37697d724adf12a2e51734539ba45b1dae65ed835e29819610b17a601420003040001003000400",
+  "result": "",
+  "reportedGas": {
+    "readTime": "85000000",
+    "computeTime": "1234450028",
+    "bytesWritten": "212",
+    "bytesDeleted": "412"
+  },
+  "publicTranscriptShape": [
+    {
+      "kind": "dup",
+      "n": 0
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": false,
+      "pathLength": 1
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": false,
+      "pathLength": 1
+    },
+    {
+      "kind": "type"
+    },
+    {
+      "kind": "push",
+      "storage": false
+    },
+    {
+      "kind": "eq"
+    },
+    {
+      "kind": "popeq",
+      "cached": true,
+      "resultAtoms": [
+        [
+          1
+        ]
+      ]
+    },
+    {
+      "kind": "dup",
+      "n": 0
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": false,
+      "pathLength": 1
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": false,
+      "pathLength": 1
+    },
+    {
+      "kind": "popeq",
+      "cached": true,
+      "resultAtoms": [
+        []
+      ]
+    },
+    {
+      "kind": "dup",
+      "n": 0
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": false,
+      "pathLength": 1
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": false,
+      "pathLength": 1
+    },
+    {
+      "kind": "dup",
+      "n": 0
+    },
+    {
+      "kind": "type"
+    },
+    {
+      "kind": "push",
+      "storage": false
+    },
+    {
+      "kind": "eq"
+    },
+    {
+      "kind": "branch",
+      "skip": 4
+    },
+    {
+      "kind": "push",
+      "storage": false
+    },
+    {
+      "kind": "swap",
+      "n": 0
+    },
+    {
+      "kind": "concat",
+      "cached": false,
+      "n": 135
+    },
+    {
+      "kind": "jmp",
+      "skip": 2
+    },
+    {
+      "kind": "pop"
+    },
+    {
+      "kind": "push",
+      "storage": false
+    },
+    {
+      "kind": "popeq",
+      "cached": true,
+      "resultAtoms": [
+        [],
+        []
+      ]
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": true,
+      "pathLength": 1
+    },
+    {
+      "kind": "dup",
+      "n": 0
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": false,
+      "pathLength": 1
+    },
+    {
+      "kind": "addi",
+      "immediate": 1
+    },
+    {
+      "kind": "push",
+      "storage": true
+    },
+    {
+      "kind": "swap",
+      "n": 0
+    },
+    {
+      "kind": "push",
+      "storage": false
+    },
+    {
+      "kind": "swap",
+      "n": 0
+    },
+    {
+      "kind": "ins",
+      "cached": true,
+      "n": 1
+    },
+    {
+      "kind": "swap",
+      "n": 0
+    },
+    {
+      "kind": "push",
+      "storage": false
+    },
+    {
+      "kind": "swap",
+      "n": 0
+    },
+    {
+      "kind": "ins",
+      "cached": true,
+      "n": 2
+    },
+    {
+      "kind": "dup",
+      "n": 0
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": false,
+      "pathLength": 1
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": false,
+      "pathLength": 1
+    },
+    {
+      "kind": "popeq",
+      "cached": true,
+      "resultAtoms": [
+        [
+          1
+        ]
+      ]
+    },
+    {
+      "kind": "dup",
+      "n": 0
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": false,
+      "pathLength": 1
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": false,
+      "pathLength": 1
+    },
+    {
+      "kind": "dup",
+      "n": 0
+    },
+    {
+      "kind": "type"
+    },
+    {
+      "kind": "push",
+      "storage": false
+    },
+    {
+      "kind": "eq"
+    },
+    {
+      "kind": "branch",
+      "skip": 4
+    },
+    {
+      "kind": "push",
+      "storage": false
+    },
+    {
+      "kind": "swap",
+      "n": 0
+    },
+    {
+      "kind": "concat",
+      "cached": false,
+      "n": 135
+    },
+    {
+      "kind": "jmp",
+      "skip": 2
+    },
+    {
+      "kind": "pop"
+    },
+    {
+      "kind": "push",
+      "storage": false
+    },
+    {
+      "kind": "popeq",
+      "cached": true,
+      "resultAtoms": [
+        [
+          1
+        ],
+        [
+          48
+        ]
+      ]
+    },
+    {
+      "kind": "dup",
+      "n": 0
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": false,
+      "pathLength": 1
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": false,
+      "pathLength": 1
+    },
+    {
+      "kind": "dup",
+      "n": 0
+    },
+    {
+      "kind": "type"
+    },
+    {
+      "kind": "push",
+      "storage": false
+    },
+    {
+      "kind": "eq"
+    },
+    {
+      "kind": "branch",
+      "skip": 4
+    },
+    {
+      "kind": "push",
+      "storage": false
+    },
+    {
+      "kind": "swap",
+      "n": 0
+    },
+    {
+      "kind": "concat",
+      "cached": false,
+      "n": 135
+    },
+    {
+      "kind": "jmp",
+      "skip": 2
+    },
+    {
+      "kind": "pop"
+    },
+    {
+      "kind": "push",
+      "storage": false
+    },
+    {
+      "kind": "popeq",
+      "cached": true,
+      "resultAtoms": [
+        [
+          1
+        ],
+        [
+          48
+        ]
+      ]
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": true,
+      "pathLength": 1
+    },
+    {
+      "kind": "dup",
+      "n": 0
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": false,
+      "pathLength": 1
+    },
+    {
+      "kind": "addi",
+      "immediate": 1
+    },
+    {
+      "kind": "push",
+      "storage": true
+    },
+    {
+      "kind": "swap",
+      "n": 0
+    },
+    {
+      "kind": "push",
+      "storage": false
+    },
+    {
+      "kind": "swap",
+      "n": 0
+    },
+    {
+      "kind": "ins",
+      "cached": true,
+      "n": 1
+    },
+    {
+      "kind": "swap",
+      "n": 0
+    },
+    {
+      "kind": "push",
+      "storage": false
+    },
+    {
+      "kind": "swap",
+      "n": 0
+    },
+    {
+      "kind": "ins",
+      "cached": true,
+      "n": 2
+    },
+    {
+      "kind": "dup",
+      "n": 0
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": false,
+      "pathLength": 1
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": false,
+      "pathLength": 1
+    },
+    {
+      "kind": "popeq",
+      "cached": true,
+      "resultAtoms": [
+        [
+          2
+        ]
+      ]
+    },
+    {
+      "kind": "dup",
+      "n": 0
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": false,
+      "pathLength": 1
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": false,
+      "pathLength": 1
+    },
+    {
+      "kind": "dup",
+      "n": 0
+    },
+    {
+      "kind": "type"
+    },
+    {
+      "kind": "push",
+      "storage": false
+    },
+    {
+      "kind": "eq"
+    },
+    {
+      "kind": "branch",
+      "skip": 4
+    },
+    {
+      "kind": "push",
+      "storage": false
+    },
+    {
+      "kind": "swap",
+      "n": 0
+    },
+    {
+      "kind": "concat",
+      "cached": false,
+      "n": 135
+    },
+    {
+      "kind": "jmp",
+      "skip": 2
+    },
+    {
+      "kind": "pop"
+    },
+    {
+      "kind": "push",
+      "storage": false
+    },
+    {
+      "kind": "popeq",
+      "cached": true,
+      "resultAtoms": [
+        [
+          1
+        ],
+        [
+          49
+        ]
+      ]
+    },
+    {
+      "kind": "dup",
+      "n": 0
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": false,
+      "pathLength": 1
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": false,
+      "pathLength": 1
+    },
+    {
+      "kind": "dup",
+      "n": 0
+    },
+    {
+      "kind": "type"
+    },
+    {
+      "kind": "push",
+      "storage": false
+    },
+    {
+      "kind": "eq"
+    },
+    {
+      "kind": "branch",
+      "skip": 4
+    },
+    {
+      "kind": "push",
+      "storage": false
+    },
+    {
+      "kind": "swap",
+      "n": 0
+    },
+    {
+      "kind": "concat",
+      "cached": false,
+      "n": 135
+    },
+    {
+      "kind": "jmp",
+      "skip": 2
+    },
+    {
+      "kind": "pop"
+    },
+    {
+      "kind": "push",
+      "storage": false
+    },
+    {
+      "kind": "popeq",
+      "cached": true,
+      "resultAtoms": [
+        [
+          1
+        ],
+        [
+          49
+        ]
+      ]
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": true,
+      "pathLength": 1
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": false,
+      "pathLength": 1
+    },
+    {
+      "kind": "ins",
+      "cached": true,
+      "n": 1
+    },
+    {
+      "kind": "dup",
+      "n": 0
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": false,
+      "pathLength": 1
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": false,
+      "pathLength": 1
+    },
+    {
+      "kind": "popeq",
+      "cached": true,
+      "resultAtoms": [
+        [
+          1
+        ]
+      ]
+    },
+    {
+      "kind": "dup",
+      "n": 0
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": false,
+      "pathLength": 1
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": false,
+      "pathLength": 1
+    },
+    {
+      "kind": "dup",
+      "n": 0
+    },
+    {
+      "kind": "type"
+    },
+    {
+      "kind": "push",
+      "storage": false
+    },
+    {
+      "kind": "eq"
+    },
+    {
+      "kind": "branch",
+      "skip": 4
+    },
+    {
+      "kind": "push",
+      "storage": false
+    },
+    {
+      "kind": "swap",
+      "n": 0
+    },
+    {
+      "kind": "concat",
+      "cached": false,
+      "n": 135
+    },
+    {
+      "kind": "jmp",
+      "skip": 2
+    },
+    {
+      "kind": "pop"
+    },
+    {
+      "kind": "push",
+      "storage": false
+    },
+    {
+      "kind": "popeq",
+      "cached": true,
+      "resultAtoms": [
+        [
+          1
+        ],
+        [
+          48
+        ]
+      ]
+    },
+    {
+      "kind": "dup",
+      "n": 0
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": false,
+      "pathLength": 1
+    },
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": false,
+      "pathLength": 1
+    },
+    {
+      "kind": "dup",
+      "n": 0
+    },
+    {
+      "kind": "type"
+    },
+    {
+      "kind": "push",
+      "storage": false
+    },
+    {
+      "kind": "eq"
+    },
+    {
+      "kind": "branch",
+      "skip": 4
+    },
+    {
+      "kind": "push",
+      "storage": false
+    },
+    {
+      "kind": "swap",
+      "n": 0
+    },
+    {
+      "kind": "concat",
+      "cached": false,
+      "n": 135
+    },
+    {
+      "kind": "jmp",
+      "skip": 2
+    },
+    {
+      "kind": "pop"
+    },
+    {
+      "kind": "push",
+      "storage": false
+    },
+    {
+      "kind": "popeq",
+      "cached": true,
+      "resultAtoms": [
+        [
+          1
+        ],
+        [
+          48
+        ]
+      ]
+    },
+    {
+      "kind": "push",
+      "storage": false
+    },
+    {
+      "kind": "push",
+      "storage": true
+    },
+    {
+      "kind": "ins",
+      "cached": false,
+      "n": 1
+    }
+  ],
+  "privateTranscriptCount": 0,
+  "queries": [
+    {
+      "gasCost": {
+        "readTime": "340000000",
+        "computeTime": "1425303631",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "opTags": [
+        "dup",
+        "idx",
+        "idx",
+        "type",
+        "push",
+        "eq",
+        "popeq"
+      ]
+    },
+    {
+      "gasCost": {
+        "readTime": "340000000",
+        "computeTime": "1423414095",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "opTags": [
+        "dup",
+        "idx",
+        "idx",
+        "popeq"
+      ]
+    },
+    {
+      "gasCost": {
+        "readTime": "340000000",
+        "computeTime": "1427972946",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "opTags": [
+        "dup",
+        "idx",
+        "idx",
+        "dup",
+        "type",
+        "push",
+        "eq",
+        "branch",
+        "push",
+        "swap",
+        "concat",
+        "jmp",
+        "pop",
+        "push",
+        "popeq"
+      ]
+    },
+    {
+      "gasCost": {
+        "readTime": "340000000",
+        "computeTime": "1520600092",
+        "bytesWritten": "412",
+        "bytesDeleted": "212"
+      },
+      "opTags": [
+        "idx",
+        "dup",
+        "idx",
+        "addi",
+        "push",
+        "swap",
+        "push",
+        "swap",
+        "ins",
+        "swap",
+        "push",
+        "swap",
+        "ins"
+      ]
+    },
+    {
+      "gasCost": {
+        "readTime": "340000000",
+        "computeTime": "1423414095",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "opTags": [
+        "dup",
+        "idx",
+        "idx",
+        "popeq"
+      ]
+    },
+    {
+      "gasCost": {
+        "readTime": "340000000",
+        "computeTime": "1429924706",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "opTags": [
+        "dup",
+        "idx",
+        "idx",
+        "dup",
+        "type",
+        "push",
+        "eq",
+        "branch",
+        "push",
+        "swap",
+        "concat",
+        "jmp",
+        "pop",
+        "push",
+        "popeq"
+      ]
+    },
+    {
+      "gasCost": {
+        "readTime": "340000000",
+        "computeTime": "1429924706",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "opTags": [
+        "dup",
+        "idx",
+        "idx",
+        "dup",
+        "type",
+        "push",
+        "eq",
+        "branch",
+        "push",
+        "swap",
+        "concat",
+        "jmp",
+        "pop",
+        "push",
+        "popeq"
+      ]
+    },
+    {
+      "gasCost": {
+        "readTime": "340000000",
+        "computeTime": "1520600092",
+        "bytesWritten": "612",
+        "bytesDeleted": "412"
+      },
+      "opTags": [
+        "idx",
+        "dup",
+        "idx",
+        "addi",
+        "push",
+        "swap",
+        "push",
+        "swap",
+        "ins",
+        "swap",
+        "push",
+        "swap",
+        "ins"
+      ]
+    },
+    {
+      "gasCost": {
+        "readTime": "340000000",
+        "computeTime": "1423414095",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "opTags": [
+        "dup",
+        "idx",
+        "idx",
+        "popeq"
+      ]
+    },
+    {
+      "gasCost": {
+        "readTime": "340000000",
+        "computeTime": "1429924706",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "opTags": [
+        "dup",
+        "idx",
+        "idx",
+        "dup",
+        "type",
+        "push",
+        "eq",
+        "branch",
+        "push",
+        "swap",
+        "concat",
+        "jmp",
+        "pop",
+        "push",
+        "popeq"
+      ]
+    },
+    {
+      "gasCost": {
+        "readTime": "340000000",
+        "computeTime": "1429924706",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "opTags": [
+        "dup",
+        "idx",
+        "idx",
+        "dup",
+        "type",
+        "push",
+        "eq",
+        "branch",
+        "push",
+        "swap",
+        "concat",
+        "jmp",
+        "pop",
+        "push",
+        "popeq"
+      ]
+    },
+    {
+      "gasCost": {
+        "readTime": "340000000",
+        "computeTime": "1496164351",
+        "bytesWritten": "412",
+        "bytesDeleted": "612"
+      },
+      "opTags": [
+        "idx",
+        "idx",
+        "ins"
+      ]
+    },
+    {
+      "gasCost": {
+        "readTime": "340000000",
+        "computeTime": "1423414095",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "opTags": [
+        "dup",
+        "idx",
+        "idx",
+        "popeq"
+      ]
+    },
+    {
+      "gasCost": {
+        "readTime": "340000000",
+        "computeTime": "1429924706",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "opTags": [
+        "dup",
+        "idx",
+        "idx",
+        "dup",
+        "type",
+        "push",
+        "eq",
+        "branch",
+        "push",
+        "swap",
+        "concat",
+        "jmp",
+        "pop",
+        "push",
+        "popeq"
+      ]
+    },
+    {
+      "gasCost": {
+        "readTime": "340000000",
+        "computeTime": "1429924706",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "opTags": [
+        "dup",
+        "idx",
+        "idx",
+        "dup",
+        "type",
+        "push",
+        "eq",
+        "branch",
+        "push",
+        "swap",
+        "concat",
+        "jmp",
+        "pop",
+        "push",
+        "popeq"
+      ]
+    },
+    {
+      "gasCost": {
+        "readTime": "85000000",
+        "computeTime": "1234450028",
+        "bytesWritten": "212",
+        "bytesDeleted": "412"
+      },
+      "opTags": [
+        "push",
+        "push",
+        "ins"
+      ]
+    }
+  ]
+}

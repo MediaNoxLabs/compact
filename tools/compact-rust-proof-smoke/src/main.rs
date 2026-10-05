@@ -20,6 +20,7 @@
 //! commitment uses the value-field encoding from ledger-8's Intent::add_call.
 //! Deployment combines the generated constructor state with the emitted key.
 
+mod adt_list_bytes;
 mod adt_list_enum;
 mod adt_list_field;
 mod adt_list_vector_field_4;
@@ -1003,6 +1004,15 @@ fn main() -> Result<(), Box<dyn Error>> {
             );
         }
         return adt_list_vector_field_4::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--adt-list-bytes")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --adt-list-bytes <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err("usage: compact-rust-proof-smoke --adt-list-bytes <proof-output>".into());
+        }
+        return adt_list_bytes::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--adt-list-enum")) {
         let root = arguments

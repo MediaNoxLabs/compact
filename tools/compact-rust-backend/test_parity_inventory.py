@@ -152,6 +152,20 @@ metadata.mkdir()
                    for path in inventory.source_paths(inventory.ROOT)}
         self.assertTrue({entry["source"] for entry in entries} <= scanned)
 
+    def test_adt_list_bytes_source_is_checked(self):
+        manifest = json.loads(inventory.ADT_LIST_BYTES_SOURCE_MANIFEST.read_text())
+        self.assertEqual(source_scope.cohort_membership_failures(manifest), [])
+        self.assertEqual(len(manifest["positive_sources"]), 1)
+        entry = manifest["positive_sources"][0]
+        self.assertEqual(entry["source"], "examples/adt/tests/list_bytes.compact")
+        self.assertEqual((entry["expected_ts"], entry["expected_rust"]),
+                         ("success", "success"))
+        self.assertEqual(entry["proof_circuits"],
+                         [{"name": "test", "pure": False, "proof": True}])
+        scanned = {path.relative_to(inventory.ROOT).as_posix()
+                   for path in inventory.source_paths(inventory.ROOT)}
+        self.assertIn(entry["source"], scanned)
+
     def test_adt_list_vector_field_four_source_is_checked(self):
         manifest = json.loads(inventory.ADT_LIST_VECTOR_FIELD_4_SOURCE_MANIFEST.read_text())
         self.assertEqual(source_scope.cohort_membership_failures(manifest), [])

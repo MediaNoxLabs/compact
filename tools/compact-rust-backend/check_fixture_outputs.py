@@ -51,6 +51,8 @@ EXTRA_SOURCES = {
         FIXTURES / "test-center-counter" / "lib.rs",
     ROOT / "examples" / "adt" / "tests" / "list_vector_field_4.compact":
         FIXTURES / "adt-list-vector-field-4" / "lib.rs",
+    ROOT / "examples" / "adt" / "tests" / "list_bytes.compact":
+        FIXTURES / "adt-list-bytes" / "lib.rs",
 }
 
 

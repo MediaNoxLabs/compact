@@ -979,6 +979,16 @@ fn render_recorded_item(
                     expression_with_calls(value, parameters, &HashMap::new()).ok()?;
                 (actual == *ty).then_some(rendered)
             }
+            Expr::BytesLiteral { bytes }
+                if *ty
+                    == (Type::Bytes {
+                        length: bytes.len(),
+                    }) =>
+            {
+                let (rendered, actual) =
+                    expression_with_calls(value, parameters, &HashMap::new()).ok()?;
+                (actual == *ty).then_some(rendered)
+            }
             Expr::Vector { .. } if matches!(ty, Type::Vector { .. }) => {
                 let (rendered, actual) =
                     expression_with_calls(value, parameters, &HashMap::new()).ok()?;
@@ -1829,7 +1839,7 @@ fn render_recorded_item(
                         return Ok(None);
                     };
                     let comparable_element = match element {
-                        Type::Field | Type::Enum { .. } => true,
+                        Type::Field | Type::Enum { .. } | Type::Bytes { .. } => true,
                         Type::Vector { element, .. } => **element == Type::Field,
                         _ => false,
                     };
@@ -2763,6 +2773,22 @@ fn render_recorded_item(
                             let #value: #value_ty = crate::pure_circuits::#method(#(#args),*)?;
                         });
                         scoped.insert(binding.name.clone(), syn::parse_quote!(#value));
+                    } else if matches!(binding.ty, Type::Bytes { .. })
+                        && matches!(binding.value, Expr::BytesLiteral { .. })
+                    {
+                        let Some(value) =
+                            cell_source(&binding.value, &binding.ty, &scoped, parameters)
+                        else {
+                            return Ok(unavailable_action(whole, path));
+                        };
+                        let value_ty = rust_type(&binding.ty)?;
+                        let local = syn::Ident::new(
+                            &format!("__compact_recorded_bytes_{}", *next_temp),
+                            Span::call_site(),
+                        );
+                        *next_temp += 1;
+                        steps.push(syn::parse_quote!(let #local: #value_ty = #value;));
+                        scoped.insert(binding.name.clone(), syn::parse_quote!(#local));
                     } else if matches!(binding.ty, Type::Bytes { .. }) {
                         let Some(value) =
                             cell_source(&binding.value, &binding.ty, &scoped, parameters)

@@ -5009,6 +5009,99 @@ fn field_vector_list_head_value_records_without_admitting_other_vector_elements(
 }
 
 #[test]
+fn literal_bytes_list_head_records_only_with_exact_length_and_excludes_opaque() {
+    fn contract_for(element: Type, value: Expr) -> Contract {
+        let maybe = Type::Struct {
+            name: "Maybe".into(),
+            fields: vec![
+                StructField {
+                    name: "is_some".into(),
+                    ty: Type::Boolean,
+                },
+                StructField {
+                    name: "value".into(),
+                    ty: element.clone(),
+                },
+            ],
+        };
+        let mut contract = identity(Type::Unit, Expr::Unit);
+        contract.ledger_fields = vec![LedgerField {
+            source: None,
+            id: "items".into(),
+            index: 0,
+            path: vec![],
+            declaration: LedgerFieldKind::List {
+                ty: element.clone(),
+            },
+        }];
+        contract.stateful_circuits = vec![StatefulCircuit {
+            source: None,
+            internal: false,
+            name: "test".into(),
+            parameters: vec![],
+            actions: vec![StateAction::Let {
+                bindings: vec![LocalBinding {
+                    name: "expected".into(),
+                    ty: element.clone(),
+                    value,
+                }],
+                action: Box::new(StateAction::Assert {
+                    condition: Expr::Equal {
+                        left: Box::new(Expr::StructField {
+                            value: Box::new(Expr::ListHead {
+                                field: "items".into(),
+                                index: 0,
+                                ty: maybe,
+                            }),
+                            field: "value".into(),
+                            index: 1,
+                        }),
+                        right: Box::new(Expr::Parameter {
+                            name: "expected".into(),
+                        }),
+                    },
+                    message: "head bytes".into(),
+                }),
+            }],
+            result: Type::Unit,
+            return_value: StateReturn::Unit,
+        }];
+        contract
+    }
+
+    let bytes = Type::Bytes { length: 4 };
+    let literal = Expr::BytesLiteral {
+        bytes: vec![1, 2, 3, 4],
+    };
+    let positive = render_with_capabilities(&contract_for(bytes.clone(), literal)).unwrap();
+    assert!(positive.capabilities.circuits[0].recorded);
+    assert!(positive.source.contains("__compact_recorded_bytes_"));
+    assert!(
+        positive
+            .source
+            .contains("record_head::<crate::types::Maybe")
+    );
+
+    let wrong_length = contract_for(
+        bytes,
+        Expr::BytesLiteral {
+            bytes: vec![1, 2, 3],
+        },
+    );
+    assert!(matches!(
+        render(&wrong_length),
+        Err(RenderError::TypeMismatch { .. })
+    ));
+
+    let opaque = Type::OpaqueString;
+    let unsupported =
+        render_with_capabilities(&contract_for(opaque.clone(), Expr::Default { ty: opaque }))
+            .unwrap();
+    assert!(!unsupported.capabilities.circuits[0].recorded);
+    assert!(!unsupported.capabilities.circuits[0].observed_call);
+}
+
+#[test]
 fn list_push_front_and_length_validate_declared_types() {
     let mut contract = Contract {
         schema_version: 11,

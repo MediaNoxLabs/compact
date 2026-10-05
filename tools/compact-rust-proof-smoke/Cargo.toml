@@ -42,6 +42,7 @@ compact-rust-set-size-oracle-fixture = { path = "../../tests-rust-backend/set-si
 compact-rust-adt-set-enum-fixture = { path = "../../tests-rust-backend/adt-set-enum", features = ["ledger-transaction"] }
 compact-rust-adt-set-vector-fixture = { path = "../../tests-rust-backend/adt-set-vector", features = ["ledger-transaction"] }
 compact-rust-adt-list-vector-field-4-fixture = { path = "../../tests-rust-backend/adt-list-vector-field-4", features = ["ledger-transaction"] }
+compact-rust-adt-list-bytes-fixture = { path = "../../tests-rust-backend/adt-list-bytes", features = ["ledger-transaction"] }
 compact-rust-adt-list-enum-fixture = { path = "../../tests-rust-backend/adt-list-enum", features = ["ledger-transaction"] }
 compact-rust-adt-list-field-fixture = { path = "../../tests-rust-backend/adt-list-field", features = ["ledger-transaction"] }
 compact-rust-map-boolean-field-fixture = { path = "../../tests-rust-backend/map-boolean-field", features = ["ledger-transaction"] }

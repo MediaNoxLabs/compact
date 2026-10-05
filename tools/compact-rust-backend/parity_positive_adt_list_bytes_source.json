@@ -1,0 +1,23 @@
+{
+  "format_version": 1,
+  "suite": "tests-e2e/src/tests/compiler/compiler.adt.e2e.test.ts",
+  "purpose": "Bounded List<Bytes<128>> TypeScript-positive ADT source with executing Rust parity and source proof",
+  "source_glob": "examples/adt/tests/list_bytes.compact",
+  "positive_sources": [
+    {
+      "source": "examples/adt/tests/list_bytes.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [
+        {
+          "name": "test",
+          "pure": false,
+          "proof": true
+        }
+      ],
+      "pure_declarations": 0,
+      "exported_pure_declarations": 0
+    }
+  ],
+  "expected_rejections": []
+}

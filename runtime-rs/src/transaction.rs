@@ -40,7 +40,7 @@ use midnight_transient_crypto::commitment::PedersenRandomness;
 use midnight_transient_crypto::curve::Fr;
 pub use midnight_transient_crypto::proofs::VerifierKey;
 use midnight_transient_crypto::proofs::{KeyLocation, ProofPreimage};
-use midnight_zswap::Offer;
+use midnight_zswap::{Input, Offer};
 use rand::{CryptoRng, Rng};
 
 use crate::context::CircuitContext;
@@ -111,13 +111,79 @@ pub struct OfferBackedObservedState<D: DB = DefaultDB> {
     observed: ObservedContractState<D>,
     offer: Offer<ProofPreimage, D>,
     zswap: midnight_zswap::ledger::State<D>,
+    wallet_funding: Option<WalletFundingInputs<D>>,
+}
+
+/// Caller-selected upstream wallet inputs to admit alongside recorded
+/// contract-owned input intents. This selection is not proof of key ownership:
+/// the retained input proofs and final ledger validation establish validity.
+pub struct WalletFundingInputs<D: DB = DefaultDB> {
+    inputs: Vec<Input<ProofPreimage, D>>,
+}
+
+impl<D: DB> WalletFundingInputs<D> {
+    /// Carry the exact inputs returned by upstream wallet spending. No offer
+    /// input is inferred as wallet funding merely because its owner is absent.
+    pub fn from_inputs(inputs: Vec<Input<ProofPreimage, D>>) -> Result<Self, ZswapIntentError> {
+        if inputs.is_empty() {
+            return Err(ZswapIntentError::WalletFundingMismatch);
+        }
+        let mut nullifiers = std::collections::HashSet::new();
+        for input in &inputs {
+            if input.contract_address.is_some() {
+                return Err(ZswapIntentError::WalletFundingOwner);
+            }
+            if !nullifiers.insert(input.nullifier) {
+                return Err(ZswapIntentError::WalletFundingDuplicate);
+            }
+        }
+        Ok(Self { inputs })
+    }
+
+    fn validate_offer(&self, offer: &Offer<ProofPreimage, D>) -> Result<(), ZswapIntentError> {
+        let mut offer_nullifiers = std::collections::HashSet::new();
+        for input in offer.inputs.iter_deref() {
+            if !offer_nullifiers.insert(input.nullifier) {
+                return Err(ZswapIntentError::WalletFundingDuplicate);
+            }
+        }
+        for funded in &self.inputs {
+            if !offer.inputs.iter_deref().any(|input| input == funded) {
+                return Err(ZswapIntentError::WalletFundingMismatch);
+            }
+        }
+        Ok(())
+    }
 }
 
 impl<D: DB> OfferBackedObservedState<D> {
     pub fn new(
+        observed: ObservedContractState<D>,
+        ledger: &LedgerState<D>,
+        offer: Offer<ProofPreimage, D>,
+    ) -> Result<Self, crate::CompactError> {
+        Self::new_inner(observed, ledger, offer, None)
+    }
+
+    /// Bind a complete offer and an explicit selection of wallet-owned inputs.
+    /// The selection must match retained upstream `Input` values exactly.
+    pub fn with_wallet_funding(
+        observed: ObservedContractState<D>,
+        ledger: &LedgerState<D>,
+        offer: Offer<ProofPreimage, D>,
+        funding: WalletFundingInputs<D>,
+    ) -> Result<Self, crate::CompactError> {
+        funding.validate_offer(&offer).map_err(|error| {
+            crate::CompactError::InvalidLedgerCell(format!("wallet funding rejected: {error:?}"))
+        })?;
+        Self::new_inner(observed, ledger, offer, Some(funding))
+    }
+
+    fn new_inner(
         mut observed: ObservedContractState<D>,
         ledger: &LedgerState<D>,
         offer: Offer<ProofPreimage, D>,
+        wallet_funding: Option<WalletFundingInputs<D>>,
     ) -> Result<Self, crate::CompactError> {
         let Some(ledger_contract) = ledger.contract.get(&observed.address) else {
             return Err(crate::CompactError::InvalidLedgerCell(
@@ -150,6 +216,7 @@ impl<D: DB> OfferBackedObservedState<D> {
             observed,
             offer,
             zswap: (*ledger.zswap).clone(),
+            wallet_funding,
         })
     }
 
@@ -169,8 +236,9 @@ impl<D: DB> OfferBackedObservedState<D> {
         {
             return Err(ObservedCallError::OfferMismatch);
         }
-        // Empty plans preserve pre-existing offer-only calls. Nonempty plans are exact.
-        if call.recorded.public.verify_ops().is_empty() {
+        // Empty plans preserve pre-existing offer-only calls only in the
+        // default exact policy. Funded mode must bind actual circuit intents.
+        if self.wallet_funding.is_none() && call.recorded.public.verify_ops().is_empty() {
             return call
                 .prepare_inner(verifier, communication_commitment_rand, true)
                 .map(|call| OfferBoundPreparedCall {
@@ -203,7 +271,11 @@ impl<D: DB> OfferBackedObservedState<D> {
             return Err(ZswapIntentError::AllocationMismatch);
         }
         if plan.is_empty() {
-            return Ok(());
+            return if self.wallet_funding.is_some() {
+                Err(ZswapIntentError::WalletFundingEmptyPlan)
+            } else {
+                Ok(())
+            };
         }
         if !self.offer.transient.is_empty() {
             return Err(ZswapIntentError::TransientsUnsupported);
@@ -228,7 +300,11 @@ impl<D: DB> OfferBackedObservedState<D> {
                 return Err(ZswapIntentError::OutputMismatch);
             }
         }
-        if plan.inputs().len() != self.offer.inputs.len() {
+        let wallet_funding = self
+            .wallet_funding
+            .as_ref()
+            .map_or(&[][..], |funding| &funding.inputs);
+        if plan.inputs().len() + wallet_funding.len() != self.offer.inputs.len() {
             return Err(ZswapIntentError::InputMismatch);
         }
         let mut matched = std::collections::HashSet::new();
@@ -262,6 +338,23 @@ impl<D: DB> OfferBackedObservedState<D> {
                 return Err(ZswapIntentError::InputMismatch);
             }
         }
+        for input in wallet_funding {
+            if input.contract_address.is_some() || !matched.insert(input.nullifier) {
+                return Err(ZswapIntentError::WalletFundingMismatch);
+            }
+        }
+        let mut offer_nullifiers = std::collections::HashSet::new();
+        for input in self.offer.inputs.iter_deref() {
+            if !offer_nullifiers.insert(input.nullifier) {
+                return Err(ZswapIntentError::WalletFundingDuplicate);
+            }
+            if !matched.contains(&input.nullifier) {
+                return Err(ZswapIntentError::InputMismatch);
+            }
+        }
+        if matched.len() != offer_nullifiers.len() {
+            return Err(ZswapIntentError::InputMismatch);
+        }
         Ok(())
     }
 }
@@ -274,6 +367,10 @@ pub enum ZswapIntentError {
     InputMismatch,
     InputIndexMismatch,
     TransientsUnsupported,
+    WalletFundingOwner,
+    WalletFundingDuplicate,
+    WalletFundingMismatch,
+    WalletFundingEmptyPlan,
 }
 
 /// A prepared call and the same validated offer from its observed context.

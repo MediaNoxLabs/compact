@@ -20,7 +20,7 @@ use midnight_compact_runtime as runtime;
 use midnight_zswap::{Offer, Output};
 use runtime::transaction::{OfferBackedObservedState, ZswapIntentError};
 
-fn observed(
+pub(super) fn observed(
     address: runtime::ledger::ContractAddress,
     state: ContractState<DefaultDB>,
 ) -> ObservedContractState {
@@ -34,7 +34,7 @@ fn observed(
         },
     )
 }
-fn coin(nonce: u8, value: u128) -> types::ShieldedCoinInfo {
+pub(super) fn coin(nonce: u8, value: u128) -> types::ShieldedCoinInfo {
     let mut bytes = [0; 32];
     bytes[0] = nonce;
     types::ShieldedCoinInfo {

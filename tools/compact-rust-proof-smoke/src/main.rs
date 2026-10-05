@@ -92,6 +92,7 @@ mod test_center_welcome;
 mod unsigned_recording;
 mod unused_field_reads;
 mod vector_map;
+mod wallet_funded_receive;
 mod witness_assert;
 mod witness_vector_action;
 mod witness_vector_let;
@@ -1765,6 +1766,15 @@ fn run() -> Result<(), Box<dyn Error>> {
             return Err("unexpected shielded receive proof argument".into());
         }
         return shielded_receive::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--wallet-funded-receive")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --wallet-funded-receive <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err("unexpected wallet-funded receive proof argument".into());
+        }
+        return wallet_funded_receive::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--kernel-shielded-effects")) {
         let root = arguments

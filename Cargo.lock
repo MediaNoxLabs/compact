@@ -2003,6 +2003,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-root-let-action-return-oracle-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-base-crypto",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-schnorr-attest-oracle-fixture"
 version = "0.1.0"
 dependencies = [

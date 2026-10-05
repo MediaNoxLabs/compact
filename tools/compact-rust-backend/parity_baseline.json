@@ -5250,6 +5250,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/root_let_action_return_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "step",
+    "signature": "export circuit step(echo: Field): Field",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/call_arg_declared_type.compact",
     "module_path": [],
     "kind": "circuit",

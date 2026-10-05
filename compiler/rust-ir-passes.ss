@@ -1214,10 +1214,31 @@
                            [(,var-name ,type) (eq? (id-sym var-name) returned)]))
                        local*))))
 
+      (define (stateful-body-has-cell-write? value-expr)
+        (nanopass-case (Lnodisclose Expression) value-expr
+          [(return ,src ,expr) (stateful-body-has-cell-write? expr)]
+          [(let* ,src ([,local* ,expr*] ...) ,expr)
+           (stateful-body-has-cell-write? expr)]
+          [(seq ,src ,expr* ... ,expr)
+           (or (exists stateful-body-has-cell-write? expr*)
+               (stateful-body-has-cell-write? expr))]
+          [(if ,src ,expr0 ,expr1 ,expr2)
+           (or (stateful-body-has-cell-write? expr1)
+               (stateful-body-has-cell-write? expr2))]
+          [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
+           (nanopass-case (Lnodisclose ADT-Op) adt-op
+             [(,ledger-op ,op-class (,adt-name (,adt-formal* ,adt-arg*) ...) ((,var-name* ,type*) ...) ,type ,vm-code)
+              (and (eq? adt-name '__compact_Cell) (eq? ledger-op 'write))])]
+          [else #f]))
+
+      (define (let-scope-needs-action? local* body)
+        (or (let-return-uses-binding? local* body)
+            (stateful-body-has-cell-write? body)))
+
       (define (stateful-body-has-actions? value-expr)
         (nanopass-case (Lnodisclose Expression) value-expr
           [(let* ,src ([,local* ,expr*] ...) ,expr)
-           (and (let-return-uses-binding? local* expr)
+           (and (let-scope-needs-action? local* expr)
                 (stateful-body-has-actions? expr))]
           [(seq ,src ,expr* ... ,expr)
            (if (checked-unsigned-subtraction? expr* expr)
@@ -1228,7 +1249,7 @@
       (define (stateful-body-ir expr src environment witness-ids)
         (nanopass-case (Lnodisclose Expression) expr
           [(let* ,src1 ([,local* ,expr*] ...) ,expr)
-           (if (and (let-return-uses-binding? local* expr)
+           (if (and (let-scope-needs-action? local* expr)
                     (stateful-body-has-actions? expr))
                (let ([environment^
                        (fold-left
@@ -1614,7 +1635,7 @@
           [(return ,src ,expr) (stateful-return-ir expr src witness-ids)]
           [(seq ,src ,expr* ... ,expr) (stateful-return-ir expr src witness-ids)]
           [(let* ,src ([,local* ,expr*] ...) ,expr)
-           (if (and (let-return-uses-binding? local* expr)
+           (if (and (let-scope-needs-action? local* expr)
                     (stateful-body-has-actions? expr))
                (stateful-return-ir expr src witness-ids)
                (object (cons "kind" "expression")

@@ -82,6 +82,9 @@ RECORDED_ENUM_SOURCE = ROOT / "examples/rust_backend/recorded_enum_cell.compact"
 TINY_SOURCE = ROOT / "examples/rust_backend/tiny_oracle.compact"
 CELL_READ_SOURCE = ROOT / "examples/rust_backend/cell_read.compact"
 LET_RETURN_SOURCE = ROOT / "examples/rust_backend/let_return_oracle.compact"
+ROOT_LET_ACTION_RETURN_SOURCE = ROOT / "examples/rust_backend/root_let_action_return_oracle.compact"
+CORACLE_SOURCE = ROOT / "test-center/test-contracts/coracle.compact"
+TEST_CENTER_WELCOME_SOURCE = ROOT / "test-center/test-contracts/welcome.compact"
 WITNESS_CELL_SOURCE = ROOT / "examples/rust_backend/witness_cell_write.compact"
 ASSERT_WITNESS_SOURCE = ROOT / "examples/rust_backend/assert_witness.compact"
 MERKLE_WITNESS_SOURCE = ROOT / "examples/rust_backend/merkle_path_witness.compact"
@@ -1099,6 +1102,8 @@ def main() -> None:
                         help="compile the complete bboard source and check recorded/observed parity")
     parser.add_argument("--adt-set-qualified", action="store_true",
                         help="compile the original qualified Set source and check typed coin insertion capability")
+    parser.add_argument("--coracle-root-let", action="store_true",
+                        help="check root Let action extraction and the next complete Coracle blocker")
     args = parser.parse_args()
     # Captured Rust errors are asserted below; runner color settings must not split their text.
     os.environ["CARGO_TERM_COLOR"] = "never"
@@ -1116,6 +1121,57 @@ def main() -> None:
                     str(ROOT / "examples/rust_backend/literal_bytes_field_oracle.compact"), str(output))
                 run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                     "--literal-bytes-field", str(output))
+            return
+        if args.coracle_root_let:
+            oracle = base / "root-let-action-return"
+            run(compiler, "--target", "rust", "--skip-zk",
+                str(ROOT_LET_ACTION_RETURN_SOURCE), str(oracle))
+            ir = json.loads((oracle / "contract/compact-rust-ir.json").read_text())
+            assert ir["schema_version"] == 14
+            circuit, = ir["stateful_circuits"]
+            assert circuit["name"] == "step"
+            assert circuit["return_value"] == {
+                "kind": "expression", "value": {"kind": "parameter", "name": "echo"}}
+            outer, = circuit["actions"]
+            assert outer["kind"] == "let"
+            assert [(row["name"], row["value"]["kind"])
+                    for row in outer["bindings"]] == [("before", "cell_read")]
+            inner, = outer["action"]["actions"]
+            assert inner["kind"] == "let"
+            assert [(row["name"], row["value"]["kind"])
+                    for row in inner["bindings"]] == [("after", "add")]
+            write, = inner["action"]["actions"]
+            assert (write["kind"], write["field"], write["value"]) == (
+                "cell_write", "stored", {"kind": "parameter", "name": "after"})
+            caps = json.loads((oracle / "contract/rust-capabilities.json").read_text())
+            assert [(row["name"], row["proof_required"], row["recorded"], row["observed_call"])
+                    for row in caps["circuits"]] == [("step", True, False, False)]
+            strict = subprocess.run(
+                [compiler, "--target", "rust", "--rust-require-recording", "--skip-zk",
+                 str(ROOT_LET_ACTION_RETURN_SOURCE), str(base / "strict")],
+                cwd=ROOT, capture_output=True, text=True)
+            assert strict.returncode != 0 and "step" in strict.stderr
+            # An assert-only root Let remains in its established expression
+            # form; extracting it as an action would regress the welcome
+            # source's three recorded and observed exports.
+            welcome = base / "welcome"
+            run(compiler, "--target", "rust", "--rust-require-recording", "--skip-zk",
+                str(TEST_CENTER_WELCOME_SOURCE), str(welcome))
+            welcome_caps = json.loads((welcome / "contract/rust-capabilities.json").read_text())
+            assert [(row["name"], row["recorded"], row["observed_call"])
+                    for row in welcome_caps["circuits"]] == [
+                ("add_participant", True, True),
+                ("add_organizer", True, True),
+                ("check_in", True, True),
+            ]
+            complete = subprocess.run(
+                [compiler, "--target", "rust", "--skip-zk",
+                 str(CORACLE_SOURCE), str(base / "coracle")],
+                cwd=ROOT, capture_output=True, text=True)
+            assert complete.returncode != 0
+            assert "coracle.compact line 191 char 5" in complete.stderr
+            assert "nested ledger query: __compact_Cell.write" in complete.stderr
+            print("root Let actions retained; complete Coracle remains unassessed at branch write")
             return
         if args.adt_set_qualified:
             output = base / "adt-set-qualified"

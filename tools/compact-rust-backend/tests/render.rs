@@ -7560,6 +7560,45 @@ fn root_let_preserves_pre_write_value_for_return_but_nested_let_does_not_escape(
         render(&contract),
         Err(RenderError::UnknownParameter("previous".into()))
     );
+
+    // A nested binding may shadow the root name for its own action, but the
+    // final return still denotes the outer value whose scope reaches it.
+    contract.stateful_circuits[0].actions = vec![StateAction::Let {
+        bindings: vec![LocalBinding {
+            name: "previous".into(),
+            ty: Type::Field,
+            value: Expr::CellRead {
+                field: "stored".into(),
+                index: 0,
+            },
+        }],
+        action: Box::new(StateAction::Sequence {
+            actions: vec![
+                StateAction::Let {
+                    bindings: vec![LocalBinding {
+                        name: "previous".into(),
+                        ty: Type::Boolean,
+                        value: Expr::Boolean { value: true },
+                    }],
+                    action: Box::new(StateAction::Expression {
+                        value: Expr::Parameter {
+                            name: "previous".into(),
+                        },
+                    }),
+                },
+                StateAction::CellWrite {
+                    field: "stored".into(),
+                    index: 0,
+                    value: Expr::Parameter {
+                        name: "previous".into(),
+                    },
+                },
+            ],
+        }),
+    }];
+    let source = render(&contract).unwrap();
+    assert!(source.contains("let __compact_action_local_1: bool = true"));
+    assert!(source.contains("let result = __compact_action_local_0"));
 }
 
 #[test]

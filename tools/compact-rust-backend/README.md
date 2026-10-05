@@ -144,17 +144,26 @@ constructor acceptance adds no proven call. The complete original
 tail-`Let` binding across its ordered writes. Its empty-board rejection and
 Unicode post/take-down cycle match TypeScript in result, serialized state,
 ledger values, witness calls, and summed query gas. `post` and `take_down`
-remain proof-required but recording-unavailable; pure `public_key` requires no
-proof. `coracle` still rejects a nested ledger query, and `micro-dao` rejects
-a standard-library expression.
+are recorded and observed; pure `public_key` requires no
+proof. `coracle` still rejects a value-returning branch with ledger writes at
+its `start` circuit line 191, leaving its nine exports unassessed. `micro-dao`
+rejects a standard-library expression.
 The separate `let_return_oracle.compact` source now covers a root circuit
 `let` whose bound Cell read must retain its pre-write value across ordered
 actions and the final return. Its generated Rust crate matches two sequential
 TypeScript calls in result, state, ordered VM transcript, private outputs,
 and four query-meter gas dimensions, and its recorded call proves and applies
 with the pinned ledger-8 tools. This assesses one new proof-required export.
-The `bboard` native acceptance is a separate source cohort with explicit
-recording gaps; it adds no proven call.
+The `bboard` source cohort tracks its recorded exports explicitly.
+The `root_let_action_return_oracle.compact` source covers the complementary
+root-Let shape: local bindings feed a Cell read/write action, while the final
+return is independent of those bindings. Scheme now extracts the ordered
+actions from this lexical frame using the existing schema-14 `Let` action.
+Two sequential TypeScript and native calls agree on result, serialized state,
+ledger effects, one read and one write per call, and the summed four-dimension
+query gas. Its export is native-only because recorded lowering does not yet
+support this return expression. Coracle advances past its first root-Let
+failure but remains rejected at a separate effectful branch return.
 The lexical scanner includes `pure circuit` and `export pure circuit`
 declarations, with compiler `contract-info.json` supplying proof applicability
 even when the Rust capability report has no recorded method for a pure circuit.

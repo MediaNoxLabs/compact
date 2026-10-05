@@ -280,7 +280,7 @@ metadata.mkdir()
                           if item["kind"] == "circuit" and item["visibility"] == "export"},
                          {item["name"] for item in entry["proof_circuits"]})
 
-    def test_test_center_bboard_native_scope_keeps_recording_gaps_explicit(self):
+    def test_test_center_bboard_scope_tracks_recorded_exports(self):
         manifest = json.loads(inventory.TEST_CENTER_BBOARD_SOURCE_MANIFEST.read_text())
         self.assertEqual(source_scope.cohort_membership_failures(manifest), [])
         self.assertEqual(len(manifest["positive_sources"]), 1)

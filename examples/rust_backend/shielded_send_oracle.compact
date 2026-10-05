@@ -1,0 +1,44 @@
+import CompactStandardLibrary;
+
+export circuit send_to_self(
+  input: QualifiedShieldedCoinInfo,
+  value: Uint<128>
+): ShieldedSendResult {
+  return sendShielded(
+    disclose(input),
+    right<ZswapCoinPublicKey, ContractAddress>(kernel.self()),
+    disclose(value)
+  );
+}
+
+export circuit send_to_user(
+  input: QualifiedShieldedCoinInfo,
+  publicKey: ZswapCoinPublicKey,
+  value: Uint<128>
+): ShieldedSendResult {
+  return sendShielded(
+    disclose(input),
+    left<ZswapCoinPublicKey, ContractAddress>(disclose(publicKey)),
+    disclose(value)
+  );
+}
+
+export circuit send_to_contract(
+  input: QualifiedShieldedCoinInfo,
+  address: ContractAddress,
+  value: Uint<128>
+): ShieldedSendResult {
+  return sendShielded(
+    disclose(input),
+    right<ZswapCoinPublicKey, ContractAddress>(disclose(address)),
+    disclose(value)
+  );
+}
+
+export circuit send_forward(
+  input: QualifiedShieldedCoinInfo,
+  recipient: Either<ZswapCoinPublicKey, ContractAddress>,
+  value: Uint<128>
+): ShieldedSendResult {
+  return sendShielded(disclose(input), disclose(recipient), disclose(value));
+}

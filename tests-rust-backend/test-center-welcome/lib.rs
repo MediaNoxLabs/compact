@@ -358,6 +358,72 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
+        pub fn add_participant<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::OpaqueString,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_recorded_maybe_sk): (_, crate::types::MaybeCompact1) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.local_sk(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            if !__compact_recorded_maybe_sk.is_some {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "No secret key found".to_owned(),
+                ));
+            }
+            let __compact_recorded_organizer_pk: runtime::FixedBytes<32> =
+                crate::pure_circuits::public_key(__compact_recorded_maybe_sk.value)?;
+            let (frame, __compact_recorded_is_organizer): (_, bool) =
+                crate::ledger_slots::organizer_pks
+                    .record_member(frame, __compact_recorded_organizer_pk)?;
+            if !__compact_recorded_is_organizer {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Not an organizer".to_owned(),
+                ));
+            }
+            let frame = crate::ledger_slots::eligible_participants
+                .record_insert(frame, (__compact_param_0).clone())?;
+            Ok(frame.finish(()))
+        }
+        pub fn add_organizer<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::FixedBytes<32>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_recorded_maybe_sk): (_, crate::types::MaybeCompact1) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.local_sk(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            if !__compact_recorded_maybe_sk.is_some {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "No secret key found".to_owned(),
+                ));
+            }
+            let __compact_recorded_organizer_pk: runtime::FixedBytes<32> =
+                crate::pure_circuits::public_key(__compact_recorded_maybe_sk.value)?;
+            let (frame, __compact_recorded_is_organizer): (_, bool) =
+                crate::ledger_slots::organizer_pks
+                    .record_member(frame, __compact_recorded_organizer_pk)?;
+            if !__compact_recorded_is_organizer {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Not an organizer".to_owned(),
+                ));
+            }
+            let frame =
+                crate::ledger_slots::organizer_pks.record_insert(frame, __compact_param_0)?;
+            Ok(frame.finish(()))
+        }
         pub fn check_in<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
@@ -395,6 +461,72 @@ pub mod ledger_contract {
             pub(super) witnesses: &'a W,
         }
         impl<W> BorrowedContract<'_, W> {
+            pub fn add_participant<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                participant: runtime::OpaqueString,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                add_participant(context, self.witnesses, participant)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn add_participant_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                participant: runtime::OpaqueString,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from((participant).clone());
+                let recorded =
+                    self.add_participant(observed.circuit_context(private_state), participant)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "add_participant",
+                    input,
+                ))
+            }
+            pub fn add_organizer<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                organizer_pk: runtime::FixedBytes<32>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                add_organizer(context, self.witnesses, organizer_pk)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn add_organizer_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                organizer_pk: runtime::FixedBytes<32>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(organizer_pk);
+                let recorded =
+                    self.add_organizer(observed.circuit_context(private_state), organizer_pk)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "add_organizer",
+                    input,
+                ))
+            }
             pub fn check_in<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,

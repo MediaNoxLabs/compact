@@ -5,7 +5,7 @@
 // this file except in compliance with the License. You may obtain a copy of the
 // License at http://www.apache.org/licenses/LICENSE-2.0
 
-//! Prove the original Welcome source's one supported check-in path.
+//! Prove the original Welcome source's recorded check-in and organizer paths.
 
 use super::*;
 use compact_rust_test_center_welcome_fixture::ledger_contract as contract;
@@ -108,5 +108,94 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
         Ok(())
     })?;
     println!("original Welcome check_in proof verified and applied through ledger-8");
+
+    for circuit in ["add_participant", "add_organizer"] {
+        let participants = FixedVector::new(std::array::from_fn(|index| Maybe {
+            is_some: index == 7,
+            value: OpaqueString::from(if index == 7 { "alice" } else { "" }),
+        }));
+        let initial = contract::initial_state(
+            ConstructorContext::new(7_u64),
+            &CheckInWitness,
+            participants,
+        )?;
+        let deploy = make_deploy(
+            root,
+            circuit,
+            initial.ledger_state.get_ref().clone(),
+            &mut rng,
+        )?;
+        let observed = ObservedContractState::new(
+            deploy.address(),
+            deploy.initial_state.clone(),
+            Observation {
+                transaction_hash: [0; 32],
+                block_hash: [0; 32],
+                block_height: 0,
+            },
+        );
+        let generated = contract::Contract::from(CheckInWitness);
+        let (recorded, input) = if circuit == "add_participant" {
+            (
+                generated
+                    .recording()
+                    .add_participant(observed.circuit_context(7_u64), OpaqueString::from("bob"))?,
+                AlignedValue::from(OpaqueString::from("bob")),
+            )
+        } else {
+            (
+                generated
+                    .recording()
+                    .add_organizer(observed.circuit_context(7_u64), FixedBytes::new([7; 32]))?,
+                AlignedValue::from(FixedBytes::new([7; 32])),
+            )
+        };
+        if recorded.execution.context.private_state != 7
+            || recorded.execution.private_transcript_outputs.len() != 1
+            || recorded.public.verify_ops().len() != 10
+        {
+            return Err(format!("{circuit} changed ordered public/private effects").into());
+        }
+        let expected_state = recorded.execution.context.query.state.get_ref().clone();
+        let manual = check_generated_trace(root, circuit, recorded, input)?;
+        let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
+            root.join(format!("keys/{circuit}.verifier")),
+        )?))?;
+        let typed = if circuit == "add_participant" {
+            generated
+                .recording()
+                .add_participant_call(&observed, 7_u64, OpaqueString::from("bob"))?
+                .prepare(verifier, Fr::from(0_u64))?
+        } else {
+            generated
+                .recording()
+                .add_organizer_call(&observed, 7_u64, FixedBytes::new([7; 32]))?
+                .prepare(verifier, Fr::from(0_u64))?
+        };
+        if format!("{manual:?}") != format!("{typed:?}") {
+            return Err(
+                format!("{circuit} typed observed call differs from direct recording").into(),
+            );
+        }
+        check_transaction(root, circuit, deploy, typed, &mut rng, |state| {
+            let data = state.data.get_ref();
+            if data != &expected_state {
+                return Err(format!("proven {circuit} changed unexpected ledger state").into());
+            }
+            if circuit == "add_participant" {
+                if !set_view_at_path::<OpaqueString, _>(data, &[1])?
+                    .member(OpaqueString::from("bob"))
+                {
+                    return Err("proven add_participant did not insert bob".into());
+                }
+            } else if !set_view_at_path::<FixedBytes<32>, _>(data, &[0])?
+                .member(FixedBytes::new([7; 32]))
+            {
+                return Err("proven add_organizer did not insert the key".into());
+            }
+            Ok(())
+        })?;
+        println!("original Welcome {circuit} proof verified and applied through ledger-8");
+    }
     Ok(())
 }

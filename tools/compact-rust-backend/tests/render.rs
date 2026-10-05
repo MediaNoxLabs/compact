@@ -18,12 +18,114 @@ use std::process::{Command, Stdio};
 
 use compact_rust_backend::ir::{
     Constructor, ConstructorStep, Contract, CounterAmount, Expr, LedgerField, LedgerFieldKind,
-    LocalBinding, NativeWitnessBuiltin, Parameter, PureCircuit, SourceLocation, StateAction,
-    StateReturn, StatefulCircuit, StructField, Type, TypeAlias, WitnessDeclaration,
+    LocalBinding, NativeWitnessBuiltin, Parameter, PureCircuit, SCHEMA_VERSION, SourceLocation,
+    StateAction, StateReturn, StatefulCircuit, StructField, Type, TypeAlias, WitnessDeclaration,
 };
 use compact_rust_backend::{
     RenderError, render, render_with_capabilities, render_with_proof_capabilities,
 };
+
+#[test]
+fn welcome_organizer_recording_requires_the_closed_witness_hash_guard() {
+    let mut contract: Contract =
+        serde_json::from_str(include_str!("welcome-organizer-schema12-ir.json")).unwrap();
+    contract.schema_version = SCHEMA_VERSION;
+    let statuses = |contract: &Contract| {
+        let rendered = render_with_capabilities(contract).unwrap();
+        rendered
+            .capabilities
+            .circuits
+            .into_iter()
+            .map(|capability| {
+                (
+                    capability.name,
+                    capability.recorded,
+                    capability.recording_unavailable.map(|gap| gap.path),
+                )
+            })
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(
+        statuses(&contract),
+        vec![
+            ("add_participant".to_owned(), true, None),
+            ("add_organizer".to_owned(), true, None),
+            ("check_in".to_owned(), true, None),
+        ]
+    );
+
+    let hash = contract
+        .circuits
+        .iter_mut()
+        .find(|circuit| circuit.name == "public_key")
+        .unwrap();
+    hash.body = Expr::Parameter { name: "sk".into() };
+    assert_eq!(
+        statuses(&contract),
+        vec![
+            (
+                "add_participant".to_owned(),
+                false,
+                Some("actions[0]".to_owned())
+            ),
+            (
+                "add_organizer".to_owned(),
+                false,
+                Some("actions[0]".to_owned())
+            ),
+            ("check_in".to_owned(), true, None),
+        ]
+    );
+
+    let hash = contract
+        .circuits
+        .iter_mut()
+        .find(|circuit| circuit.name == "public_key")
+        .unwrap();
+    let original: Contract =
+        serde_json::from_str(include_str!("welcome-organizer-schema12-ir.json")).unwrap();
+    hash.body = original
+        .circuits
+        .iter()
+        .find(|circuit| circuit.name == "public_key")
+        .unwrap()
+        .body
+        .clone();
+    let helper = contract
+        .stateful_circuits
+        .iter_mut()
+        .find(|circuit| circuit.name == "local_sk_or_error")
+        .unwrap();
+    let StateReturn::Expression {
+        value: Expr::Let { body, .. },
+    } = &mut helper.return_value
+    else {
+        unreachable!()
+    };
+    let Expr::Sequence { steps, .. } = body.as_mut() else {
+        unreachable!()
+    };
+    steps.push(Expr::Assert {
+        condition: Box::new(Expr::Boolean { value: true }),
+        message: "extra assertion".into(),
+    });
+    assert_eq!(
+        statuses(&contract),
+        vec![
+            (
+                "add_participant".to_owned(),
+                false,
+                Some("actions[0]".to_owned())
+            ),
+            (
+                "add_organizer".to_owned(),
+                false,
+                Some("actions[0]".to_owned())
+            ),
+            ("check_in".to_owned(), true, None),
+        ]
+    );
+}
 
 fn identity(result: Type, body: Expr) -> Contract {
     Contract {

@@ -37,10 +37,14 @@ runtime.QueryContext.prototype.query = function (...args) {
 
 const witnessCalls = [];
 const checkInWitnessCalls = [];
+let localSkMode = 'zero';
 const contract = new Contract({
   local_sk: ({ privateState }) => {
     witnessCalls.push(privateState);
-    return [privateState, { is_some: true, value: new Uint8Array(32) }];
+    return [privateState, {
+      is_some: localSkMode !== 'missing',
+      value: new Uint8Array(32).fill(localSkMode === 'other' ? 1 : 0),
+    }];
   },
   set_local_id: ({ privateState }, participant) => {
     checkInWitnessCalls.push({ privateState, participant });
@@ -111,7 +115,50 @@ function captureCheckIn(initial, participant) {
     };
   }
 }
+function captureOrganizerCall(initial, name, argument, mode) {
+  const context = runtime.createCircuitContext(
+    runtime.dummyContractAddress(), coinPublicKey,
+    initial.currentContractState.data, initial.currentPrivateState,
+  );
+  const before = stateHex(initial.currentContractState);
+  const queryStart = queries.length;
+  const witnessStart = witnessCalls.length;
+  localSkMode = mode;
+  try {
+    const output = contract.circuits[name](context, argument);
+    return {
+      success: true, name, mode,
+      argument: typeof argument === 'string' ? argument : Array.from(argument),
+      initialStateHex: before,
+      afterStateHex: stateAfter(initial, output.context.currentQueryContext.state.state),
+      privateState: output.context.currentPrivateState,
+      result: output.result,
+      gasCost: Object.fromEntries(Object.entries(output.gasCost).map(([key, value]) => [key, value.toString()])),
+      publicTranscriptShape: output.proofData.publicTranscript.map(shape),
+      privateTranscriptOutputs: output.proofData.privateTranscriptOutputs.map(({ value, alignment }) => ({
+        valueAtoms: value.map((atom) => Array.from(atom)), alignment,
+      })),
+      queries: queries.slice(queryStart),
+      witnessCalls: witnessCalls.slice(witnessStart),
+    };
+  } catch (error) {
+    return {
+      success: false, name, mode,
+      argument: typeof argument === 'string' ? argument : Array.from(argument),
+      initialStateHex: before,
+      afterStateHex: stateAfter(initial, context.currentQueryContext.state.state),
+      privateState: context.currentPrivateState,
+      error: error.message,
+      compactError: error.constructor.name === 'CompactError',
+      queries: queries.slice(queryStart),
+      witnessCalls: witnessCalls.slice(witnessStart),
+    };
+  } finally {
+    localSkMode = 'zero';
+  }
+}
 const cases = [];
+let organizerCalls;
 for (const present of [false, true]) {
   queries.length = 0;
   witnessCalls.length = 0;
@@ -124,12 +171,23 @@ for (const present of [false, true]) {
     initialZswapLocalState: runtime.emptyZswapLocalState(coinPublicKey),
   }, participants);
   const constructorQueries = queries.map((query) => structuredClone(query));
+  const constructorWitnessCalls = [...witnessCalls];
   const view = ledger(initial.currentContractState.data);
+  if (present) {
+    organizerCalls = {
+      participantSuccess: captureOrganizerCall(initial, 'add_participant', 'bob', 'zero'),
+      organizerSuccess: captureOrganizerCall(initial, 'add_organizer', new Uint8Array(32).fill(7), 'zero'),
+      participantMissingKey: captureOrganizerCall(initial, 'add_participant', 'bob', 'missing'),
+      participantNotOrganizer: captureOrganizerCall(initial, 'add_participant', 'bob', 'other'),
+      organizerMissingKey: captureOrganizerCall(initial, 'add_organizer', new Uint8Array(32).fill(7), 'missing'),
+      organizerNotOrganizer: captureOrganizerCall(initial, 'add_organizer', new Uint8Array(32).fill(7), 'other'),
+    };
+  }
   cases.push({
     present,
     stateHex: Buffer.from(initial.currentContractState.serialize()).toString('hex'),
     privateState: initial.currentPrivateState,
-    witnessCalls: [...witnessCalls],
+    witnessCalls: constructorWitnessCalls,
     eligibleAlice: view.eligible_participants.member('alice'),
     eligibleSize: view.eligible_participants.size().toString(),
     organizerSize: view.organizer_pks.size().toString(),
@@ -140,4 +198,5 @@ for (const present of [false, true]) {
 process.stdout.write(JSON.stringify({
   source: 'test-center/test-contracts/welcome.compact',
   cases,
+  organizerCalls,
 }, null, 2) + '\n');

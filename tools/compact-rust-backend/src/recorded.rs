@@ -337,6 +337,272 @@ fn proved_opaque_set_sequence(circuit: &StatefulCircuit) -> bool {
         .all(|value| matches!(value, Expr::Parameter { name } if name == &parameter.name))
 }
 
+/// A closed typed witness → Bytes32 hash → Set authorization followed by a
+/// single Set insertion. The matched callees are inspected transitively so
+/// recording never silently skips an assertion or private output.
+fn closed_organizer_gate_steps(
+    circuit: &StatefulCircuit,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure_circuits: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+) -> Result<Option<Vec<syn::Stmt>>, RenderError> {
+    let bytes32 = Type::Bytes { length: 32 };
+    let [parameter] = circuit.parameters.as_slice() else {
+        return Ok(None);
+    };
+    if !matches!(
+        parameter.ty,
+        Type::OpaqueString | Type::Bytes { length: 32 }
+    ) || circuit.result != Type::Unit
+        || circuit.return_value != StateReturn::Unit
+    {
+        return Ok(None);
+    }
+    let [
+        StateAction::Assert {
+            condition: Expr::Let { bindings, body },
+            message: organizer_message,
+        },
+        StateAction::SetInsert {
+            field: insert_field,
+            index: insert_index,
+            value: inserted,
+        },
+    ] = circuit.actions.as_slice()
+    else {
+        return Ok(None);
+    };
+    let [binding] = bindings.as_slice() else {
+        return Ok(None);
+    };
+    if binding.ty != bytes32
+        || !matches!(inserted, Expr::Parameter { name } if name == &parameter.name)
+    {
+        return Ok(None);
+    }
+    let Expr::SetMember {
+        field: member_field,
+        index: member_index,
+        value: member_value,
+    } = body.as_ref()
+    else {
+        return Ok(None);
+    };
+    if !matches!(member_value.as_ref(), Expr::Parameter { name } if name == &binding.name) {
+        return Ok(None);
+    }
+    let Some(member_slot) = ledger_fields.get(member_field.as_str()) else {
+        return Ok(None);
+    };
+    let Some(insert_slot) = ledger_fields.get(insert_field.as_str()) else {
+        return Ok(None);
+    };
+    if member_slot.index != *member_index
+        || member_slot.declaration
+            != (LedgerFieldKind::Set {
+                ty: bytes32.clone(),
+            })
+        || insert_slot.index != *insert_index
+        || insert_slot.declaration
+            != (LedgerFieldKind::Set {
+                ty: parameter.ty.clone(),
+            })
+    {
+        return Ok(None);
+    }
+    let Expr::Call {
+        name: hash_name,
+        arguments: hash_arguments,
+    } = &binding.value
+    else {
+        return Ok(None);
+    };
+    let [
+        Expr::Coerce {
+            value: helper_call,
+            ty: hash_argument_ty,
+        },
+    ] = hash_arguments.as_slice()
+    else {
+        return Ok(None);
+    };
+    if *hash_argument_ty != bytes32 {
+        return Ok(None);
+    }
+    let Expr::Call {
+        name: helper_name,
+        arguments: helper_arguments,
+    } = helper_call.as_ref()
+    else {
+        return Ok(None);
+    };
+    if !helper_arguments.is_empty() {
+        return Ok(None);
+    }
+    let Some(hash) = pure_circuits.get(hash_name.as_str()) else {
+        return Ok(None);
+    };
+    let [hash_parameter] = hash.parameters.as_slice() else {
+        return Ok(None);
+    };
+    if hash_parameter.ty != bytes32 || hash.result != bytes32 {
+        return Ok(None);
+    }
+    let Expr::PersistentHash { value: hash_value } = &hash.body else {
+        return Ok(None);
+    };
+    let Expr::Tuple {
+        elements: hash_elements,
+    } = hash_value.as_ref()
+    else {
+        return Ok(None);
+    };
+    let [
+        Expr::BytesLiteral { bytes: prefix },
+        Expr::Parameter { name: hashed_name },
+    ] = hash_elements.as_slice()
+    else {
+        return Ok(None);
+    };
+    if prefix.len() != 32 || hashed_name != &hash_parameter.name {
+        return Ok(None);
+    }
+
+    let Some(helper) = circuits.get(helper_name.as_str()) else {
+        return Ok(None);
+    };
+    if !helper.internal
+        || !helper.parameters.is_empty()
+        || !helper.actions.is_empty()
+        || helper.result != bytes32
+    {
+        return Ok(None);
+    }
+    let StateReturn::Expression {
+        value:
+            Expr::Let {
+                bindings: helper_bindings,
+                body: helper_body,
+            },
+    } = &helper.return_value
+    else {
+        return Ok(None);
+    };
+    let [maybe_binding] = helper_bindings.as_slice() else {
+        return Ok(None);
+    };
+    let Type::Struct {
+        fields: maybe_fields,
+        ..
+    } = &maybe_binding.ty
+    else {
+        return Ok(None);
+    };
+    let [present_field, value_field] = maybe_fields.as_slice() else {
+        return Ok(None);
+    };
+    if present_field.name != "is_some"
+        || present_field.ty != Type::Boolean
+        || value_field.name != "value"
+        || value_field.ty != bytes32
+    {
+        return Ok(None);
+    }
+    let Expr::WitnessCall {
+        name: witness_name,
+        arguments: witness_arguments,
+    } = &maybe_binding.value
+    else {
+        return Ok(None);
+    };
+    let Some(witness) = witnesses.get(witness_name.as_str()) else {
+        return Ok(None);
+    };
+    if !witness_arguments.is_empty()
+        || !witness.parameters.is_empty()
+        || witness.result != maybe_binding.ty
+    {
+        return Ok(None);
+    }
+    let Expr::Sequence {
+        steps: helper_steps,
+        value: helper_result,
+    } = helper_body.as_ref()
+    else {
+        return Ok(None);
+    };
+    let [
+        Expr::Assert {
+            condition: present_condition,
+            message: key_message,
+        },
+    ] = helper_steps.as_slice()
+    else {
+        return Ok(None);
+    };
+    let Expr::StructField {
+        value: present_source,
+        field: present_name,
+        index: 0,
+    } = present_condition.as_ref()
+    else {
+        return Ok(None);
+    };
+    let Expr::StructField {
+        value: key_source,
+        field: value_name,
+        index: 1,
+    } = helper_result.as_ref()
+    else {
+        return Ok(None);
+    };
+    if present_name != "is_some"
+        || value_name != "value"
+        || !matches!(present_source.as_ref(), Expr::Parameter { name } if name == &maybe_binding.name)
+        || !matches!(key_source.as_ref(), Expr::Parameter { name } if name == &maybe_binding.name)
+    {
+        return Ok(None);
+    }
+
+    let witness_method = ident(witness_name)?;
+    let hash_method = ident(hash_name)?;
+    let member_slot = ident(member_field)?;
+    let insert_slot = ident(insert_field)?;
+    let maybe_ty = rust_type(&maybe_binding.ty)?;
+    let inserted = retained_value(syn::parse_quote!(__compact_param_0), &parameter.ty);
+    Ok(Some(vec![
+        syn::parse_quote! {
+            let (frame, __compact_recorded_maybe_sk): (_, #maybe_ty) = frame.try_witness_metered(|context, meter| {
+                witnesses.#witness_method(context.witness_context_with(super::LedgerView {
+                    state: context.query.state.get_ref(), meter,
+                }))
+            })?;
+        },
+        syn::parse_quote! {
+            if !__compact_recorded_maybe_sk.is_some {
+                return Err(runtime::CompactError::AssertionFailed(#key_message.to_owned()));
+            }
+        },
+        syn::parse_quote! {
+            let __compact_recorded_organizer_pk: runtime::FixedBytes<32> =
+                crate::pure_circuits::#hash_method(__compact_recorded_maybe_sk.value)?;
+        },
+        syn::parse_quote! {
+            let (frame, __compact_recorded_is_organizer): (_, bool) =
+                crate::ledger_slots::#member_slot.record_member(frame, __compact_recorded_organizer_pk)?;
+        },
+        syn::parse_quote! {
+            if !__compact_recorded_is_organizer {
+                return Err(runtime::CompactError::AssertionFailed(#organizer_message.to_owned()));
+            }
+        },
+        syn::parse_quote! {
+            let frame = crate::ledger_slots::#insert_slot.record_insert(frame, #inserted)?;
+        },
+    ]))
+}
+
 /// A pure Field call may be evaluated while recording only when its whole
 /// transitive body is scalar arithmetic. Hashes and other primitives need
 /// their own VM/gas parity decision before they can join this path.
@@ -4062,25 +4328,30 @@ fn render_recorded_item(
         }
     }
 
-    let mut steps = Vec::<syn::Stmt>::new();
+    let organizer_steps =
+        closed_organizer_gate_steps(circuit, ledger_fields, witnesses, pure_circuits, circuits)?;
+    let organizer_gate = organizer_steps.is_some();
+    let mut steps = organizer_steps.unwrap_or_default();
     let mut next_temp = 0;
     let mut visiting = HashSet::from([circuit.name.clone()]);
-    for (index, action) in circuit.actions.iter().enumerate() {
-        if let RecordingOutcome::Unsupported(gap) = append_steps(
-            action,
-            &format!("actions[{index}]"),
-            &HashMap::new(),
-            &parameters,
-            ledger_fields,
-            witnesses,
-            pure_circuits,
-            circuits,
-            shared_callees,
-            &mut steps,
-            &mut next_temp,
-            &mut visiting,
-        )? {
-            return Ok(RecordingOutcome::Unsupported(gap));
+    if !organizer_gate {
+        for (index, action) in circuit.actions.iter().enumerate() {
+            if let RecordingOutcome::Unsupported(gap) = append_steps(
+                action,
+                &format!("actions[{index}]"),
+                &HashMap::new(),
+                &parameters,
+                ledger_fields,
+                witnesses,
+                pure_circuits,
+                circuits,
+                shared_callees,
+                &mut steps,
+                &mut next_temp,
+                &mut visiting,
+            )? {
+                return Ok(RecordingOutcome::Unsupported(gap));
+            }
         }
     }
     let result_ty = rust_type(&circuit.result)?;
@@ -4781,6 +5052,7 @@ fn render_recorded_item(
         .iter()
         .any(|parameter| parameter.ty == Type::OpaqueString)
         && !proved_opaque_set_sequence(circuit)
+        && !organizer_gate
     {
         return Ok(RecordingOutcome::Unsupported(
             match circuit.actions.first() {

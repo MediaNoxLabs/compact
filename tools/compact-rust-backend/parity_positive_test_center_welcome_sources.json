@@ -1,7 +1,7 @@
 {
   "format_version": 1,
   "suite": "compiler/test.ss",
-  "purpose": "Exact test-center Welcome compiler applicability, constructor state parity, and check_in proof parity; other proof-required exports remain unavailable",
+  "purpose": "Exact test-center Welcome compiler applicability, constructor state parity, and all three proof-required exported calls",
   "source_glob": "test-center/test-contracts/welcome.compact",
   "positive_sources": [
     {
@@ -18,10 +18,7 @@
         {"name": "check_in", "pure": false, "proof": true},
         {"name": "public_key", "pure": true, "proof": false}
       ],
-      "expected_recording_gaps": {
-        "add_participant": {"code": "unsupported_action", "ir_node": "StateAction::Assert", "path": "actions[0]"},
-        "add_organizer": {"code": "unsupported_action", "ir_node": "StateAction::Assert", "path": "actions[0]"}
-      },
+      "expected_recording_gaps": {},
       "pure_declarations": 0,
       "exported_pure_declarations": 0
     }

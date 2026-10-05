@@ -1,0 +1,631 @@
+{
+  "schema_version": 12,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "organizer_pks",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "set",
+        "ty": {
+          "kind": "bytes",
+          "length": 32
+        }
+      },
+      "source": {
+        "file": "welcome.compact",
+        "line": 30,
+        "column": 1
+      }
+    },
+    {
+      "id": "eligible_participants",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "set",
+        "ty": {
+          "kind": "opaque_string"
+        }
+      },
+      "source": {
+        "file": "welcome.compact",
+        "line": 31,
+        "column": 1
+      }
+    },
+    {
+      "id": "checked_in_participants",
+      "index": 2,
+      "path": [
+        2
+      ],
+      "declaration": {
+        "kind": "set",
+        "ty": {
+          "kind": "opaque_string"
+        }
+      },
+      "source": {
+        "file": "welcome.compact",
+        "line": 32,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "set_local_id",
+      "parameters": [
+        {
+          "name": "participant",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "source": {
+        "file": "welcome.compact",
+        "line": 25,
+        "column": 1
+      }
+    },
+    {
+      "name": "local_sk",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "MaybeCompact1",
+        "fields": [
+          {
+            "name": "is_some",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "value",
+            "ty": {
+              "kind": "bytes",
+              "length": 32
+            }
+          }
+        ]
+      },
+      "source": {
+        "file": "welcome.compact",
+        "line": 28,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+    {
+      "name": "public_key",
+      "parameters": [
+        {
+          "name": "sk",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result": {
+        "kind": "bytes",
+        "length": 32
+      },
+      "body": {
+        "kind": "persistent_hash",
+        "value": {
+          "kind": "tuple",
+          "elements": [
+            {
+              "kind": "bytes_literal",
+              "bytes": [
+                119,
+                101,
+                108,
+                99,
+                111,
+                109,
+                101,
+                58,
+                112,
+                107,
+                58,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "kind": "parameter",
+              "name": "sk"
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "welcome.compact",
+        "line": 66,
+        "column": 1
+      }
+    }
+  ],
+  "stateful_circuits": [
+    {
+      "name": "add_participant",
+      "parameters": [
+        {
+          "name": "participant",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "tmp_8",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                },
+                "value": {
+                  "kind": "call",
+                  "name": "public_key",
+                  "arguments": [
+                    {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "call",
+                        "name": "local_sk_or_error",
+                        "arguments": [
+                        ]
+                      },
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "body": {
+              "kind": "set_member",
+              "field": "organizer_pks",
+              "index": 0,
+              "value": {
+                "kind": "parameter",
+                "name": "tmp_8"
+              }
+            }
+          },
+          "message": "Not an organizer"
+        },
+        {
+          "kind": "set_insert",
+          "field": "eligible_participants",
+          "index": 1,
+          "value": {
+            "kind": "parameter",
+            "name": "participant"
+          }
+        }
+      ],
+      "source": {
+        "file": "welcome.compact",
+        "line": 43,
+        "column": 1
+      }
+    },
+    {
+      "name": "add_organizer",
+      "parameters": [
+        {
+          "name": "organizer_pk",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "tmp_7",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                },
+                "value": {
+                  "kind": "call",
+                  "name": "public_key",
+                  "arguments": [
+                    {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "call",
+                        "name": "local_sk_or_error",
+                        "arguments": [
+                        ]
+                      },
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "body": {
+              "kind": "set_member",
+              "field": "organizer_pks",
+              "index": 0,
+              "value": {
+                "kind": "parameter",
+                "name": "tmp_7"
+              }
+            }
+          },
+          "message": "Not an organizer"
+        },
+        {
+          "kind": "set_insert",
+          "field": "organizer_pks",
+          "index": 0,
+          "value": {
+            "kind": "parameter",
+            "name": "organizer_pk"
+          }
+        }
+      ],
+      "source": {
+        "file": "welcome.compact",
+        "line": 48,
+        "column": 1
+      }
+    },
+    {
+      "name": "check_in",
+      "parameters": [
+        {
+          "name": "participant",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "set_member",
+            "field": "eligible_participants",
+            "index": 1,
+            "value": {
+              "kind": "parameter",
+              "name": "participant"
+            }
+          },
+          "message": "Not eligible participant"
+        },
+        {
+          "kind": "set_insert",
+          "field": "checked_in_participants",
+          "index": 2,
+          "value": {
+            "kind": "parameter",
+            "name": "participant"
+          }
+        },
+        {
+          "kind": "expression",
+          "value": {
+            "kind": "witness_call",
+            "name": "set_local_id",
+            "arguments": [
+              {
+                "kind": "coerce",
+                "value": {
+                  "kind": "parameter",
+                  "name": "participant"
+                },
+                "ty": {
+                  "kind": "opaque_string"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "welcome.compact",
+        "line": 54,
+        "column": 1
+      }
+    },
+    {
+      "name": "local_sk_or_error",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "bytes",
+        "length": 32
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "maybe_sk",
+              "ty": {
+                "kind": "struct",
+                "name": "MaybeCompact1",
+                "fields": [
+                  {
+                    "name": "is_some",
+                    "ty": {
+                      "kind": "boolean"
+                    }
+                  },
+                  {
+                    "name": "value",
+                    "ty": {
+                      "kind": "bytes",
+                      "length": 32
+                    }
+                  }
+                ]
+              },
+              "value": {
+                "kind": "witness_call",
+                "name": "local_sk",
+                "arguments": [
+                ]
+              }
+            }
+          ],
+          "body": {
+            "kind": "sequence",
+            "steps": [
+              {
+                "kind": "assert",
+                "condition": {
+                  "kind": "struct_field",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "maybe_sk"
+                  },
+                  "field": "is_some",
+                  "index": 0
+                },
+                "message": "No secret key found"
+              }
+            ],
+            "value": {
+              "kind": "struct_field",
+              "value": {
+                "kind": "parameter",
+                "name": "maybe_sk"
+              },
+              "field": "value",
+              "index": 1
+            }
+          }
+        }
+      },
+      "actions": [
+      ],
+      "internal": true,
+      "source": {
+        "file": "welcome.compact",
+        "line": 60,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": {
+    "parameters": [
+      {
+        "name": "initial_eligible_participants",
+        "ty": {
+          "kind": "vector",
+          "length": 5000,
+          "element": {
+            "kind": "struct",
+            "name": "Maybe",
+            "fields": [
+              {
+                "name": "is_some",
+                "ty": {
+                  "kind": "boolean"
+                }
+              },
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "opaque_string"
+                }
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "steps": [
+      {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "tmp_5",
+            "ty": {
+              "kind": "bytes",
+              "length": 32
+            },
+            "value": {
+              "kind": "call",
+              "name": "public_key",
+              "arguments": [
+                {
+                  "kind": "call",
+                  "name": "local_sk_or_error",
+                  "arguments": [
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "step": {
+          "kind": "set_insert",
+          "field": "organizer_pks",
+          "index": 0,
+          "value": {
+            "kind": "parameter",
+            "name": "tmp_5"
+          }
+        }
+      },
+      {
+        "kind": "for_each_vector",
+        "binding": {
+          "name": "maybe_participant",
+          "ty": {
+            "kind": "struct",
+            "name": "Maybe",
+            "fields": [
+              {
+                "name": "is_some",
+                "ty": {
+                  "kind": "boolean"
+                }
+              },
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "opaque_string"
+                }
+              }
+            ]
+          }
+        },
+        "source": {
+          "kind": "parameter",
+          "name": "initial_eligible_participants"
+        },
+        "length": 5000,
+        "steps": [
+          {
+            "kind": "if",
+            "condition": {
+              "kind": "struct_field",
+              "value": {
+                "kind": "parameter",
+                "name": "maybe_participant"
+              },
+              "field": "is_some",
+              "index": 0
+            },
+            "then_steps": [
+              {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "tmp_6",
+                    "ty": {
+                      "kind": "opaque_string"
+                    },
+                    "value": {
+                      "kind": "struct_field",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "maybe_participant"
+                      },
+                      "field": "value",
+                      "index": 1
+                    }
+                  }
+                ],
+                "step": {
+                  "kind": "set_insert",
+                  "field": "eligible_participants",
+                  "index": 1,
+                  "value": {
+                    "kind": "parameter",
+                    "name": "tmp_6"
+                  }
+                }
+              }
+            ],
+            "otherwise_steps": [
+            ]
+          }
+        ]
+      }
+    ],
+    "source": {
+      "file": "welcome.compact",
+      "line": 34,
+      "column": 1
+    }
+  }
+}

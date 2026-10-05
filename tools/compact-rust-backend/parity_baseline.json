@@ -5266,6 +5266,38 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/shielded_send_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "send_forward",
+    "signature": "export circuit send_forward( input: QualifiedShieldedCoinInfo, recipient: Either<ZswapCoinPublicKey, ContractAddress>, value: Uint<128> ): ShieldedSendResult",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/shielded_send_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "send_to_contract",
+    "signature": "export circuit send_to_contract( input: QualifiedShieldedCoinInfo, address: ContractAddress, value: Uint<128> ): ShieldedSendResult",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/shielded_send_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "send_to_self",
+    "signature": "export circuit send_to_self( input: QualifiedShieldedCoinInfo, value: Uint<128> ): ShieldedSendResult",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/shielded_send_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "send_to_user",
+    "signature": "export circuit send_to_user( input: QualifiedShieldedCoinInfo, publicKey: ZswapCoinPublicKey, value: Uint<128> ): ShieldedSendResult",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/tiny_oracle.compact",
     "module_path": [],
     "kind": "circuit",

@@ -4,6 +4,7 @@
 
 use compact_rust_shielded_send_oracle_fixture::{ledger_contract, types};
 use midnight_compact_runtime as runtime;
+use midnight_transient_crypto::hash;
 use runtime::context::{CircuitContext, ConstructorContext};
 use runtime::ledger::{ContractAddress, DefaultDB, HashOutput};
 use runtime::{BoundedUint, FixedBytes};
@@ -83,6 +84,14 @@ fn effect_sets(mut effects: Value) -> Value {
     effects
 }
 
+fn upstream_nonce(input: FixedBytes<32>, domain: &[u8]) -> FixedBytes<32> {
+    let mut field_bytes = [0_u8; 32];
+    field_bytes[..domain.len()].copy_from_slice(domain);
+    let tag = runtime::Field::from_le_bytes(&field_bytes).unwrap();
+    let degraded = hash::degrade_to_transient(HashOutput(input.into_array()));
+    FixedBytes::new(hash::upgrade_from_transient(hash::transient_hash(&[tag, degraded])).0)
+}
+
 #[test]
 fn send_oracle_matches_native_recording_and_replay() {
     let data = fixture();
@@ -150,6 +159,10 @@ fn send_oracle_matches_native_recording_and_replay() {
             bytes(&row["result"]["sent"]["nonce"])
         );
         assert_eq!(
+            native.result.sent.nonce,
+            upstream_nonce(coin(row).nonce, b"midnight:kernel:nonce_evolve")
+        );
+        assert_eq!(
             native.result.sent.color.into_array(),
             bytes(&row["result"]["sent"]["color"])
         );
@@ -165,6 +178,12 @@ fn send_oracle_matches_native_recording_and_replay() {
             native.result.change.value.nonce.into_array(),
             bytes(&row["result"]["change"]["value"]["nonce"])
         );
+        if native.result.change.is_some {
+            assert_eq!(
+                native.result.change.value.nonce,
+                upstream_nonce(coin(row).nonce, b"midnight:kernel:nonce_evolve/2")
+            );
+        }
         assert_eq!(
             native.result.change.value.color.into_array(),
             bytes(&row["result"]["change"]["value"]["color"])

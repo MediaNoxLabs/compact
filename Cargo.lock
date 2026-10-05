@@ -2249,6 +2249,7 @@ dependencies = [
  "midnight-compact-runtime",
  "midnight-onchain-state",
  "midnight-serialize",
+ "midnight-transient-crypto",
  "serde",
  "serde_json",
 ]

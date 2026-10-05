@@ -1309,6 +1309,29 @@ be reused with `compact-rust-proof-smoke --field-observation <proof-output>`.
 Set `MIDNIGHT_LEDGER_TEST_STATIC_DIR` to the pinned upstream static fixtures for
 the Night-backed Dust funding helper.
 
+### Qualified shielded send (ADR0203)
+
+The unchanged `sendShielded` helper now records typed `ShieldedSendResult`
+returns for self, user and contract recipients. Its single frame preserves the
+qualified input and nullifier claim before checked u128 subtraction, then the
+sent output and optional branch-local change output. The transient nonce chain
+uses the pinned ledger cryptography through the existing runtime primitives.
+Pure helpers are audited by declaration, and every stateful binding, argument
+and branch is checked before admission; hidden collection or witness queries
+refuse recording. IR schema20 and runtime ABI48 remain unchanged.
+
+`check_compactc_target.py --shielded-send` checks all four exported recording
+APIs; `--proof` runs the pinned call and ledger proof. The checked-in corrected
+TypeScript oracle covers full, partial, underflow and wide u128 values, with
+native/recorded/replay and independent nonce/commitment comparisons. A
+contract-owned full send and a two-output partial send in source/normalized
+order pass default strictness and ledger application with separate Night-backed
+Dust. A reversed two-output order is rejected by exact offer binding. Other
+partial orders require an explicit indexed offer policy; this profile does not
+admit immediate sends, wallet input funding or the remaining original-source
+operations.
+
+
 ### Terminal lexical return recording (ADR202)
 
 The existing terminal-return fixture now records all five exports. Previously

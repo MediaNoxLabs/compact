@@ -1,0 +1,25 @@
+{
+  "format_version": 1,
+  "suite": "compiler/test.ss",
+  "purpose": "Unchanged standard-library qualified sendShielded wrappers; four exported proof APIs and strict recorded capabilities",
+  "source_glob": "examples/rust_backend/shielded_send_oracle.compact",
+  "positive_sources": [
+    {
+      "source": "examples/rust_backend/shielded_send_oracle.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [
+        {"name": "send_to_self", "pure": false, "proof": true},
+        {"name": "send_to_user", "pure": false, "proof": true},
+        {"name": "send_to_contract", "pure": false, "proof": true},
+        {"name": "send_forward", "pure": false, "proof": true}
+      ],
+      "expected_capability_circuits": ["send_to_self", "send_to_user", "send_to_contract", "send_forward"],
+      "expected_recorded_circuits": ["send_to_self", "send_to_user", "send_to_contract", "send_forward"],
+      "pure_declarations": 0,
+      "exported_pure_declarations": 0,
+      "rust_fixture": "tests-rust-backend/shielded-send-oracle/lib.rs"
+    }
+  ],
+  "expected_rejections": []
+}

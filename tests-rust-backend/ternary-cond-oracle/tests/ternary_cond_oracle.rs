@@ -106,6 +106,149 @@ fn oracle() -> serde_json::Value {
     .unwrap()
 }
 
+fn ordered_vm_shape(operations: serde_json::Value) -> serde_json::Value {
+    serde_json::Value::Array(
+        operations
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|operation| {
+                if let Some(kind) = operation.as_str() {
+                    return serde_json::json!({"kind":kind});
+                }
+                if let Some(idx) = operation.get("idx") {
+                    serde_json::json!({
+                        "kind":"idx", "cached":idx["cached"], "pushPath":idx["pushPath"],
+                        "pathLength":idx["path"].as_array().unwrap().len(),
+                    })
+                } else if let Some(push) = operation.get("push") {
+                    serde_json::json!({"kind":"push", "storage":push["storage"]})
+                } else if let Some(ins) = operation.get("ins") {
+                    serde_json::json!({"kind":"ins", "cached":ins["cached"], "n":ins["n"]})
+                } else if let Some(rem) = operation.get("rem") {
+                    serde_json::json!({"kind":"rem", "cached":rem["cached"]})
+                } else if let Some(dup) = operation.get("dup") {
+                    serde_json::json!({"kind":"dup", "n":dup["n"]})
+                } else if let Some(popeq) = operation.get("popeq") {
+                    serde_json::json!({
+                        "kind":"popeq", "cached":popeq["cached"],
+                        "resultAtoms":popeq["result"]["value"],
+                    })
+                } else if let Some(branch) = operation.get("branch") {
+                    serde_json::json!({"kind":"branch", "skip":branch["skip"]})
+                } else if let Some(swap) = operation.get("swap") {
+                    serde_json::json!({"kind":"swap", "n":swap["n"]})
+                } else if let Some(concat) = operation.get("concat") {
+                    serde_json::json!({"kind":"concat", "cached":concat["cached"], "n":concat["n"]})
+                } else if let Some(jmp) = operation.get("jmp") {
+                    serde_json::json!({"kind":"jmp", "skip":jmp["skip"]})
+                } else if let Some(addi) = operation.get("addi") {
+                    serde_json::json!({"kind":"addi", "immediate":addi["immediate"]})
+                } else {
+                    panic!("unexpected VM operation: {operation}");
+                }
+            })
+            .collect(),
+    )
+}
+
+#[test]
+fn recorded_closed_unsigned_ternary_comparisons_match_typescript() {
+    let reference: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/ternary-recorded-comparison.json"
+    ))
+    .unwrap();
+    for case in ["walkerTrue", "walkerFalse", "streamFalse"] {
+        let expected = &reference[case];
+        let native_initial = initial(true, true, 111);
+        let recorded_initial = initial(true, true, 111);
+        assert_eq!(
+            state_hex(native_initial.ledger_state.get_ref().clone()),
+            expected["initialStateHex"],
+            "{case}: initial state",
+        );
+        let native_context = native_initial.into_circuit_context(ContractAddress::default());
+        let recorded_context = recorded_initial.into_circuit_context(ContractAddress::default());
+        let (native, recorded) = match case {
+            "walkerTrue" | "walkerFalse" => {
+                let condition = case == "walkerTrue";
+                let x = BoundedUint::<255>::new(1).unwrap();
+                (
+                    walkerCompareEq(native_context, condition, x).unwrap(),
+                    recorded::walkerCompareEq(recorded_context, condition, x).unwrap(),
+                )
+            }
+            "streamFalse" => (
+                streamCompareEq(native_context).unwrap(),
+                recorded::streamCompareEq(recorded_context).unwrap(),
+            ),
+            _ => unreachable!(),
+        };
+        let _: () = native.result;
+        let _: () = recorded.execution.result;
+        assert_eq!(expected["result"], "", "{case}: TypeScript result");
+        assert_eq!(native.gas_cost, recorded.execution.gas_cost, "{case}: gas");
+        assert_eq!(
+            native.context.query.effects, recorded.execution.context.query.effects,
+            "{case}: effects",
+        );
+        assert_eq!(
+            native.context.query.state.get_ref(),
+            recorded.execution.context.query.state.get_ref(),
+            "{case}: state",
+        );
+        assert_eq!(
+            state_hex(recorded.execution.context.query.state.get_ref().clone()),
+            expected["afterStateHex"],
+            "{case}: TypeScript state",
+        );
+        assert_eq!(native.private_transcript_outputs.len(), 0);
+        assert_eq!(recorded.execution.private_transcript_outputs.len(), 0);
+        assert_eq!(expected["privateTranscriptCount"], 0);
+        assert_eq!(
+            ordered_vm_shape(serde_json::to_value(recorded.public.verify_ops()).unwrap()),
+            expected["publicTranscriptShape"],
+            "{case}: ordered VM",
+        );
+        let replay = recorded
+            .public
+            .initial()
+            .query(
+                recorded.public.verify_ops(),
+                None,
+                &recorded.execution.context.cost_model,
+            )
+            .unwrap();
+        assert_eq!(
+            replay.context.state.get_ref(),
+            native.context.query.state.get_ref(),
+            "{case}: replay state",
+        );
+        assert_eq!(replay.context.effects, native.context.query.effects);
+        let actual = serde_json::to_value(native.gas_cost).unwrap();
+        for dimension in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            let expected_gas: u64 = expected["queries"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|query| {
+                    query["gasCost"][dimension]
+                        .as_str()
+                        .unwrap()
+                        .parse::<u64>()
+                        .unwrap()
+                })
+                .sum();
+            assert_eq!(actual[dimension], expected_gas, "{case}: {dimension}");
+            assert_eq!(
+                expected["queries"].as_array().unwrap().last().unwrap()["gasCost"][dimension],
+                expected["reportedGas"][dimension],
+                "{case}: TypeScript reported {dimension}",
+            );
+        }
+    }
+}
+
 #[test]
 fn recorded_scalar_pure_and_witness_conditional_arguments_match_typescript() {
     let oracle: serde_json::Value = serde_json::from_str(include_str!(

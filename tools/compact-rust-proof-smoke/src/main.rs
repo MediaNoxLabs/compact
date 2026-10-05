@@ -883,6 +883,82 @@ fn check_conditional_assert_eq_proof(root: &Path) -> Result<(), Box<dyn Error>> 
     Ok(())
 }
 
+fn check_closed_unsigned_ternary_comparison_proof(root: &Path) -> Result<(), Box<dyn Error>> {
+    let mut rng = StdRng::seed_from_u64(0x0113_434f_4d50_4152);
+    for (circuit, condition, expected_field) in [
+        ("walkerCompareEq", Some(true), 1_u64),
+        ("walkerCompareEq", Some(false), 0_u64),
+        ("streamCompareEq", None, 0_u64),
+    ] {
+        let initial = conditional_counter_contract::initial_state(
+            ConstructorContext::new(()),
+            true,
+            true,
+            Field::from(111_u64),
+        )?;
+        let deploy = make_deploy(
+            root,
+            circuit,
+            initial.ledger_state.get_ref().clone(),
+            &mut rng,
+        )?;
+        let observed = ObservedContractState::new(
+            deploy.address(),
+            deploy.initial_state.clone(),
+            Observation {
+                transaction_hash: [0; 32],
+                block_hash: [0; 32],
+                block_height: 0,
+            },
+        );
+        let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
+            root.join(format!("keys/{circuit}.verifier")),
+        )?))?;
+        let generated = conditional_counter_contract::Contract::default();
+        let (manual, typed, expected_state) = if let Some(condition) = condition {
+            let x = BoundedUint::<255>::new(1)?;
+            let recorded = conditional_counter_contract::recorded::walkerCompareEq(
+                observed.circuit_context(()),
+                condition,
+                x,
+            )?;
+            let expected_state = recorded.execution.context.query.state.get_ref().clone();
+            let manual = check_generated_trace(root, circuit, recorded, (condition, x))?;
+            let typed = generated
+                .recording
+                .walkerCompareEq_call(&observed, (), condition, x)?
+                .prepare(verifier, Fr::from(0_u64))?;
+            (manual, typed, expected_state)
+        } else {
+            let recorded = conditional_counter_contract::recorded::streamCompareEq(
+                observed.circuit_context(()),
+            )?;
+            let expected_state = recorded.execution.context.query.state.get_ref().clone();
+            let manual = check_generated_trace(root, circuit, recorded, ())?;
+            let typed = generated
+                .recording
+                .streamCompareEq_call(&observed, ())?
+                .prepare(verifier, Fr::from(0_u64))?;
+            (manual, typed, expected_state)
+        };
+        if format!("{manual:?}") != format!("{typed:?}") {
+            return Err(format!("{circuit} typed observed call differs from manual trace").into());
+        }
+        check_transaction(root, circuit, deploy, typed, &mut rng, |state| {
+            let data = state.data.get_ref();
+            if data != &expected_state {
+                return Err(format!("{circuit} proof changed unexpected ledger state").into());
+            }
+            if read_cell_at_path::<Field, _>(data, &[1])? != Field::from(expected_field) {
+                return Err(format!("{circuit} proof stored the wrong comparison value").into());
+            }
+            Ok(())
+        })?;
+    }
+    println!("closed unsigned ternary comparisons proved and applied through ledger-8");
+    Ok(())
+}
+
 fn check_conditional_set_proof(root: &Path) -> Result<(), Box<dyn Error>> {
     let circuit = "choose";
     let mut rng = StdRng::seed_from_u64(0x0103_4348_4f4f_5345);
@@ -1229,6 +1305,17 @@ fn main() -> Result<(), Box<dyn Error>> {
             );
         }
         return check_conditional_assert_eq_proof(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--conditional-compare-eq")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --conditional-compare-eq <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --conditional-compare-eq <proof-output>".into(),
+            );
+        }
+        return check_closed_unsigned_ternary_comparison_proof(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--merkle-verify")) {
         let root = arguments

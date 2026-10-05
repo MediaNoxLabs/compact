@@ -1060,6 +1060,120 @@ fn render_recorded_item(
         cell_source(value, &Type::Boolean, locals, parameters)
     }
 
+    // A compiler-typed Uint comparison may select one of two closed literal
+    // arms. Keep its selection pure; any observation must already be bound in
+    // `locals`, so this cannot move a VM read across the comparison.
+    fn closed_unsigned_ternary_comparison(
+        left: &Expr,
+        right: &Expr,
+        locals: &HashMap<String, syn::Expr>,
+        parameters: &HashMap<&str, (&Type, syn::Ident)>,
+        equal: bool,
+    ) -> Option<syn::Expr> {
+        fn literal_arm(value: &Expr) -> Option<(u128, u128)> {
+            let Expr::Coerce {
+                value,
+                ty: Type::Unsigned { max },
+            } = value
+            else {
+                return None;
+            };
+            let Expr::UnsignedLiteral {
+                value: literal,
+                max: literal_max,
+            } = value.as_ref()
+            else {
+                return None;
+            };
+            let max = max.parse::<u128>().ok()?;
+            let literal_max = literal_max.parse::<u128>().ok()?;
+            let literal = literal.parse::<u128>().ok()?;
+            (max == literal_max && max <= u8::MAX as u128 && literal <= max)
+                .then_some((literal, max))
+        }
+
+        fn selected_literal(
+            value: &Expr,
+            locals: &HashMap<String, syn::Expr>,
+            parameters: &HashMap<&str, (&Type, syn::Ident)>,
+        ) -> Option<(syn::Expr, u128)> {
+            let (value, cast_max) = match value {
+                Expr::UnsignedCast { max, value } => {
+                    (value.as_ref(), Some(max.parse::<u128>().ok()?))
+                }
+                other => (other, None),
+            };
+            let Expr::If {
+                condition,
+                then,
+                otherwise,
+            } = value
+            else {
+                return None;
+            };
+            let (then_value, arm_max) = literal_arm(then)?;
+            let (otherwise_value, other_max) = literal_arm(otherwise)?;
+            if arm_max != other_max {
+                return None;
+            }
+            let target_max = cast_max.unwrap_or(arm_max);
+            if target_max < arm_max || target_max > u8::MAX as u128 {
+                return None;
+            }
+            let condition = cell_source(condition, &Type::Boolean, locals, parameters)?;
+            let then_value = syn::LitInt::new(&format!("{then_value}u128"), Span::call_site());
+            let otherwise_value =
+                syn::LitInt::new(&format!("{otherwise_value}u128"), Span::call_site());
+            Some((
+                syn::parse_quote!(if #condition { #then_value } else { #otherwise_value }),
+                target_max,
+            ))
+        }
+
+        fn comparable_operand(
+            value: &Expr,
+            max: u128,
+            parameters: &HashMap<&str, (&Type, syn::Ident)>,
+        ) -> Option<syn::Expr> {
+            match value {
+                Expr::Parameter { name } => {
+                    let (ty, rust_name) = parameters.get(name.as_str())?;
+                    let Type::Unsigned { max: actual_max } = ty else {
+                        return None;
+                    };
+                    (actual_max.parse::<u128>().ok()? == max)
+                        .then(|| syn::parse_quote!(#rust_name.value()))
+                }
+                Expr::UnsignedLiteral {
+                    value,
+                    max: actual_max,
+                } => {
+                    let actual_max = actual_max.parse::<u128>().ok()?;
+                    let value = value.parse::<u128>().ok()?;
+                    if actual_max != max || value > max {
+                        return None;
+                    }
+                    let value = syn::LitInt::new(&format!("{value}u128"), Span::call_site());
+                    Some(syn::parse_quote!(#value))
+                }
+                _ => None,
+            }
+        }
+
+        let (selected, max, other) = selected_literal(right, locals, parameters)
+            .map(|(selected, max)| (selected, max, left))
+            .or_else(|| {
+                selected_literal(left, locals, parameters)
+                    .map(|(selected, max)| (selected, max, right))
+            })?;
+        let other = comparable_operand(other, max, parameters)?;
+        Some(if equal {
+            syn::parse_quote!(#other == #selected)
+        } else {
+            syn::parse_quote!(#other != #selected)
+        })
+    }
+
     /// Lower a Field expression together with its ordered recording effects.
     /// The returned syntax refers only to values already evaluated in `steps`.
     #[expect(
@@ -1733,6 +1847,15 @@ fn render_recorded_item(
                 Ok(Some(syn::parse_quote!(#observed.is_some)))
             }
             Expr::Equal { left, right } | Expr::NotEqual { left, right } => {
+                if let Some(comparison) = closed_unsigned_ternary_comparison(
+                    left,
+                    right,
+                    locals,
+                    parameters,
+                    matches!(value, Expr::Equal { .. }),
+                ) {
+                    return Ok(Some(comparison));
+                }
                 let boolean_literal = match (&**left, &**right) {
                     (Expr::Boolean { value }, other) => Some((other, *value)),
                     (other, Expr::Boolean { value }) => Some((other, *value)),

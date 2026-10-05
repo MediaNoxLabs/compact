@@ -48,6 +48,78 @@ fn identity(result: Type, body: Expr) -> Contract {
 }
 
 #[test]
+fn closed_unsigned_ternary_comparison_records_only_matching_literal_arms() {
+    let uint = Type::Unsigned { max: "255".into() };
+    let narrow = Type::Unsigned { max: "1".into() };
+    let arm = |value: &str| Expr::Coerce {
+        value: Box::new(Expr::UnsignedLiteral {
+            value: value.into(),
+            max: "1".into(),
+        }),
+        ty: narrow.clone(),
+    };
+    let selected = Expr::UnsignedCast {
+        max: "255".into(),
+        value: Box::new(Expr::If {
+            condition: Box::new(Expr::Parameter { name: "c".into() }),
+            then: Box::new(arm("1")),
+            otherwise: Box::new(arm("0")),
+        }),
+    };
+    let mut contract = identity(Type::Unit, Expr::Unit);
+    contract.stateful_circuits = vec![StatefulCircuit {
+        source: None,
+        internal: false,
+        name: "test".into(),
+        parameters: vec![
+            Parameter {
+                name: "c".into(),
+                ty: Type::Boolean,
+            },
+            Parameter {
+                name: "x".into(),
+                ty: uint,
+            },
+            Parameter {
+                name: "y".into(),
+                ty: narrow.clone(),
+            },
+        ],
+        actions: vec![StateAction::Assert {
+            condition: Expr::Equal {
+                left: Box::new(Expr::Parameter { name: "x".into() }),
+                right: Box::new(selected),
+            },
+            message: "comparison".into(),
+        }],
+        result: Type::Unit,
+        return_value: StateReturn::Unit,
+    }];
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+
+    let StateAction::Assert { condition, .. } = &mut contract.stateful_circuits[0].actions[0]
+    else {
+        unreachable!()
+    };
+    let Expr::Equal { right, .. } = condition else {
+        unreachable!()
+    };
+    let Expr::UnsignedCast { value, .. } = right.as_mut() else {
+        unreachable!()
+    };
+    let Expr::If { then, .. } = value.as_mut() else {
+        unreachable!()
+    };
+    **then = Expr::Coerce {
+        value: Box::new(Expr::Parameter { name: "y".into() }),
+        ty: narrow,
+    };
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(!rendered.capabilities.circuits[0].recorded);
+}
+
+#[test]
 fn native_own_public_key_is_a_private_effect_without_a_user_witness() {
     let contract = Contract {
         schema_version: 11,

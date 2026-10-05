@@ -1396,6 +1396,23 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
+        pub fn walkerCompareEq<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: bool,
+            __compact_param_1: runtime::BoundedUint<255>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_conditional_field_0: runtime::Field =
+                if __compact_param_1.value() == if __compact_param_0 { 1u128 } else { 0u128 } {
+                    runtime::Field::from(1u128)
+                } else {
+                    runtime::Field::from(0u128)
+                };
+            let frame = crate::ledger_slots::fieldCell
+                .record_write(frame, __compact_recorded_conditional_field_0)?;
+            Ok(frame.finish(()))
+        }
         pub fn walkerCallPure<Private>(
             context: runtime::context::CircuitContext<Private>,
             __compact_param_0: bool,
@@ -1476,6 +1493,27 @@ pub mod ledger_contract {
                 })?;
             let frame =
                 crate::ledger_slots::wideCell.record_write(frame, __compact_recorded_uint64_1)?;
+            Ok(frame.finish(()))
+        }
+        pub fn streamCompareEq<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_recorded_bool_0): (_, bool) =
+                crate::ledger_slots::flag.record_read(frame)?;
+            let __compact_recorded_conditional_field_1: runtime::Field = if 1u128
+                == if __compact_recorded_bool_0 {
+                    1u128
+                } else {
+                    0u128
+                } {
+                runtime::Field::from(1u128)
+            } else {
+                runtime::Field::from(0u128)
+            };
+            let frame = crate::ledger_slots::fieldCell
+                .record_write(frame, __compact_recorded_conditional_field_1)?;
             Ok(frame.finish(()))
         }
         pub fn streamWrite<Private>(
@@ -1614,6 +1652,36 @@ pub mod ledger_contract {
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
         impl Contract {
+            pub fn walkerCompareEq<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                c: bool,
+                x: runtime::BoundedUint<255>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::walkerCompareEq(context, c, x)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn walkerCompareEq_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                c: bool,
+                x: runtime::BoundedUint<255>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from((c, x));
+                let recorded =
+                    self.walkerCompareEq(observed.circuit_context(private_state), c, x)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "walkerCompareEq",
+                    input,
+                ))
+            }
             pub fn walkerCallPure<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
@@ -1692,6 +1760,31 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "streamIncrement",
+                    input,
+                ))
+            }
+            pub fn streamCompareEq<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::streamCompareEq(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn streamCompareEq_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.streamCompareEq(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "streamCompareEq",
                     input,
                 ))
             }
@@ -1862,6 +1955,36 @@ pub mod ledger_contract {
             pub(super) witnesses: &'a W,
         }
         impl<W> BorrowedContract<'_, W> {
+            pub fn walkerCompareEq<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                c: bool,
+                x: runtime::BoundedUint<255>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                walkerCompareEq(context, c, x)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn walkerCompareEq_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                c: bool,
+                x: runtime::BoundedUint<255>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from((c, x));
+                let recorded =
+                    self.walkerCompareEq(observed.circuit_context(private_state), c, x)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "walkerCompareEq",
+                    input,
+                ))
+            }
             pub fn walkerCallPure<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
@@ -1972,6 +2095,31 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "streamIncrement",
+                    input,
+                ))
+            }
+            pub fn streamCompareEq<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                streamCompareEq(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn streamCompareEq_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.streamCompareEq(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "streamCompareEq",
                     input,
                 ))
             }

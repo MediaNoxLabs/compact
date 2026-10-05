@@ -1,0 +1,233 @@
+{
+  "format": "adr221-original-stateful-opposite-state-v1",
+  "mode": "set-size",
+  "provenance": {
+    "sourceSha256": "9e8951bd2a1103ae3b25ab0cd812d4682ac762e62642a215a0346a9a6152f5d0",
+    "generatedJsSha256": "a28cebf42f3a49ee240cc3e567f830163ee7898f10f16316ed0fcee77fe095f7",
+    "runtimeVersion": "0.16.101",
+    "runtimeJsSha256": "c55a8ab3e7533b3fa6e27b66ab742c783d912d5a00d6ecc23d9f6142ddb0ecde",
+    "compilerSha256": "41441b9b25459793fd55be7fa7e0e61b64c10070cab3a801243c9b3d909dd0d4"
+  },
+  "rows": [
+    {
+      "name": "check_set_empty",
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8c00084001040004010404080104000c412a41000400080c1000041408010404189003044080987466906e8f19bca5654c07dfe17e07e5c6d2fddeb6b88118fbd6e5f35e5b06041c040204200801040008074100080941042c0401082830000434080104043890030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d82043c04020440080104401008244410101010101010101010101008020c080448080410044c0403045000045408010404589d010304c389013e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104010401080941000104000001040000010400000104000001040000010400000104000001040000010400000104000001040000010400000045c15020304ff01020104030401080410080104010401084001000108020c40010400000108010404010401040108400100010801040401040204019003044080987466906e8f19bca5654c07dfe17e07e5c6d2fddeb6b88118fbd6e5f35e5b06040108010404010008010c412a4100010400000108010404010402040190030440802b05916d11c000403c636865636b5f7365745f656d707479086410000468080104046c9003043f80d96004f031ea4eaaa14fb165f1f1982bf3c547c79938be4cb022ad3537cd83b000403c636865636b5f6d61705f656d707479087410000478080104047c9003043f80a75e64546beecb9e54da94b31f9bff74fb5e31391eb88f1ede49d200526945204010701010101010108010101010101010080208144c106084101003000400",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8c00084001040004010404080104000c412a41000400080c1000041408010404189003044080987466906e8f19bca5654c07dfe17e07e5c6d2fddeb6b88118fbd6e5f35e5b06041c040204200801040008074100080941042c0401082830000434080104043890030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d82043c04020440080104401008244410101010101010101010101008020c080448080410044c0403045000045408010404589d010304c389013e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104010401080941000104000001040000010400000104000001040000010400000104000001040000010400000104000001040000010400000045c15020304ff01020104030401080410080104010401084001000108020c40010400000108010404010401040108400100010801040401040204019003044080987466906e8f19bca5654c07dfe17e07e5c6d2fddeb6b88118fbd6e5f35e5b06040108010404010008010c412a4100010400000108010404010402040190030440802b05916d11c000403c636865636b5f7365745f656d707479086410000468080104046c9003043f80d96004f031ea4eaaa14fb165f1f1982bf3c547c79938be4cb022ad3537cd83b000403c636865636b5f6d61705f656d707479087410000478080104047c9003043f80a75e64546beecb9e54da94b31f9bff74fb5e31391eb88f1ede49d200526945204010701010101010108010101010101010080208144c106084101003000400",
+      "result": "",
+      "effects": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": {},
+        "unshieldedMints": {},
+        "unshieldedInputs": {},
+        "unshieldedOutputs": {},
+        "claimedUnshieldedSpends": {}
+      },
+      "flags": {
+        "set": false,
+        "map": false,
+        "setSize": "1",
+        "mapSize": "1"
+      },
+      "publicTranscriptShape": [
+        {
+          "kind": "dup",
+          "n": 0
+        },
+        {
+          "kind": "idx",
+          "cached": false,
+          "pushPath": false,
+          "pathLength": 1
+        },
+        {
+          "kind": "size"
+        },
+        {
+          "kind": "push",
+          "storage": false
+        },
+        {
+          "kind": "eq"
+        },
+        {
+          "kind": "popeq",
+          "cached": true,
+          "resultAtoms": [
+            []
+          ]
+        },
+        {
+          "kind": "push",
+          "storage": false
+        },
+        {
+          "kind": "push",
+          "storage": true
+        },
+        {
+          "kind": "ins",
+          "cached": false,
+          "n": 1
+        }
+      ],
+      "privateTranscriptCount": 0,
+      "queryCount": 2,
+      "queries": [
+        {
+          "opTags": [
+            "dup",
+            "idx",
+            "size",
+            "push",
+            "eq",
+            "popeq"
+          ],
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1252757404",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "opTags": [
+            "push",
+            "push",
+            "ins"
+          ],
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1168248299",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "255000000",
+        "computeTime": "2421005703",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "reportedGas": {
+        "readTime": "85000000",
+        "computeTime": "1168248299",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      }
+    },
+    {
+      "name": "check_map_empty",
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8c00084001040004010404080104000c412a41000400080c1000041408010404189003044080987466906e8f19bca5654c07dfe17e07e5c6d2fddeb6b88118fbd6e5f35e5b06041c040204200801040008074100080941042c0401082830000434080104043890030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d82043c04020440080104401008244410101010101010101010101008020c080448080410044c0403045000045408010404589d010304c389013e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104010401080941000104000001040000010400000104000001040000010400000104000001040000010400000104000001040000010400000045c15020304ff01020104030401080410080104010401084001000108020c40010400000108010404010401040108400100010801040401040204019003044080987466906e8f19bca5654c07dfe17e07e5c6d2fddeb6b88118fbd6e5f35e5b06040108010404010008010c412a4100010400000108010404010402040190030440802b05916d11c000403c636865636b5f7365745f656d707479086410000468080104046c9003043f80d96004f031ea4eaaa14fb165f1f1982bf3c547c79938be4cb022ad3537cd83b000403c636865636b5f6d61705f656d707479087410000478080104047c9003043f80a75e64546beecb9e54da94b31f9bff74fb5e31391eb88f1ede49d200526945204010701010101010108010101010101010080208144c106084101003000400",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8c00084001040004010404080104000c412a41000400080c1000041408010404189003044080987466906e8f19bca5654c07dfe17e07e5c6d2fddeb6b88118fbd6e5f35e5b06041c040204200801040008074100080941042c0401082830000434080104043890030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d82043c04020440080104401008244410101010101010101010101008020c080448080410044c0403045000045408010404589d010304c389013e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104010401080941000104000001040000010400000104000001040000010400000104000001040000010400000104000001040000010400000045c15020304ff01020104030401080410080104010401084001000108020c40010400000108010404010401040108400100010801040401040204019003044080987466906e8f19bca5654c07dfe17e07e5c6d2fddeb6b88118fbd6e5f35e5b06040108010404010008010c412a4100010400000108010404010402040190030440802b05916d11c000403c636865636b5f7365745f656d707479086410000468080104046c9003043f80d96004f031ea4eaaa14fb165f1f1982bf3c547c79938be4cb022ad3537cd83b000403c636865636b5f6d61705f656d707479087410000478080104047c9003043f80a75e64546beecb9e54da94b31f9bff74fb5e31391eb88f1ede49d200526945204010701010101010108010101010101010080208144c106084101003000400",
+      "result": "",
+      "effects": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": {},
+        "unshieldedMints": {},
+        "unshieldedInputs": {},
+        "unshieldedOutputs": {},
+        "claimedUnshieldedSpends": {}
+      },
+      "flags": {
+        "set": false,
+        "map": false,
+        "setSize": "1",
+        "mapSize": "1"
+      },
+      "publicTranscriptShape": [
+        {
+          "kind": "dup",
+          "n": 0
+        },
+        {
+          "kind": "idx",
+          "cached": false,
+          "pushPath": false,
+          "pathLength": 1
+        },
+        {
+          "kind": "size"
+        },
+        {
+          "kind": "push",
+          "storage": false
+        },
+        {
+          "kind": "eq"
+        },
+        {
+          "kind": "popeq",
+          "cached": true,
+          "resultAtoms": [
+            []
+          ]
+        },
+        {
+          "kind": "push",
+          "storage": false
+        },
+        {
+          "kind": "push",
+          "storage": true
+        },
+        {
+          "kind": "ins",
+          "cached": false,
+          "n": 1
+        }
+      ],
+      "privateTranscriptCount": 0,
+      "queryCount": 2,
+      "queries": [
+        {
+          "opTags": [
+            "dup",
+            "idx",
+            "size",
+            "push",
+            "eq",
+            "popeq"
+          ],
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1252757404",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "opTags": [
+            "push",
+            "push",
+            "ins"
+          ],
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1168248299",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "255000000",
+        "computeTime": "2421005703",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "reportedGas": {
+        "readTime": "85000000",
+        "computeTime": "1168248299",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      }
+    }
+  ]
+}

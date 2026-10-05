@@ -1,0 +1,14 @@
+{
+  "format": "adr221-direct-pure-opposite-branch-v1",
+  "mode": "struct",
+  "export": "runWrapBeta",
+  "argument": false,
+  "result": false,
+  "provenance": {
+    "sourceSha256": "12dc9ce371dda4ce30f4dfcbcfb5c6f7422c9089e0e8a6d8a63cf0234918491c",
+    "generatedJsSha256": "de389bb9c7ca9cb663e4029e13b3cbf29d52bd3ef63aea67b18df3f431a634d2",
+    "runtimeVersion": "0.16.101",
+    "runtimeJsSha256": "c55a8ab3e7533b3fa6e27b66ab742c783d912d5a00d6ecc23d9f6142ddb0ecde",
+    "compilerSha256": "41441b9b25459793fd55be7fa7e0e61b64c10070cab3a801243c9b3d909dd0d4"
+  }
+}

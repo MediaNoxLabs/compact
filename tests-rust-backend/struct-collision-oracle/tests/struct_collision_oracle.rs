@@ -189,6 +189,17 @@ fn distinct_struct_layouts_and_nested_fields_match_typescript() {
         )
     );
     assert_eq!(runWrapBeta(true).unwrap(), oracle["wrapBeta"]);
+    let opposite: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/adr221-struct-false.json"
+    ))
+    .unwrap();
+    assert_eq!(opposite["export"], "runWrapBeta");
+    assert_eq!(opposite["argument"], false);
+    assert_eq!(opposite["result"], false);
+    assert_eq!(
+        runWrapBeta(false).unwrap(),
+        opposite["result"].as_bool().unwrap()
+    );
 
     let constructor = initial_state(ConstructorContext::new(())).unwrap();
     assert_eq!(

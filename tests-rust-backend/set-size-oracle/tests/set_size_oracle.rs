@@ -16,6 +16,7 @@
 use compact_rust_set_size_oracle_fixture::ledger_contract::{
     check_map_empty, check_set_empty, initial_state, recorded,
 };
+use compact_rust_set_size_oracle_fixture::ledger_slots;
 #[path = "../../boolean_observation_assertions.rs"]
 mod boolean_observation_assertions;
 use midnight_compact_runtime as runtime;
@@ -155,4 +156,104 @@ fn recorded_set_and_map_is_empty_match_native_typescript_and_replay() {
         )
         .unwrap()
     );
+}
+
+#[test]
+fn nonempty_set_and_map_checks_write_false_with_exact_recorded_trace() {
+    let capture: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/adr221-set-size-nonempty.json"
+    ))
+    .unwrap();
+    assert_eq!(capture["mode"], "set-size");
+    let rows = capture["rows"].as_array().unwrap();
+    assert_eq!(rows.len(), 2);
+    for row in rows {
+        let name = row["name"].as_str().unwrap();
+        let seed = || {
+            let context = initial_state(ConstructorContext::new(()))
+                .unwrap()
+                .into_circuit_context(ContractAddress::default());
+            let context = ledger_slots::s
+                .insert(context, runtime::Field::from(42_u64))
+                .unwrap()
+                .context;
+            ledger_slots::m
+                .insert(
+                    context,
+                    runtime::Field::from(7_u64),
+                    runtime::Field::from(9_u64),
+                )
+                .unwrap()
+                .context
+        };
+        let native = seed();
+        let recording = seed();
+        assert_eq!(
+            state_hex(native.query.state.get_ref().clone()),
+            row["before"],
+            "{name}: seeded state"
+        );
+        let (native, recorded) = match name {
+            "check_set_empty" => (
+                check_set_empty(native).unwrap(),
+                recorded::check_set_empty(recording).unwrap(),
+            ),
+            "check_map_empty" => (
+                check_map_empty(native).unwrap(),
+                recorded::check_map_empty(recording).unwrap(),
+            ),
+            _ => panic!("unexpected ADR221 export {name}"),
+        };
+        assert_eq!(row["result"], "");
+        let _: () = native.result;
+        let _: () = recorded.execution.result;
+        boolean_observation_assertions::assert_ts_trace(name, &native, &recorded, row);
+        assert_eq!(
+            native.context.query.state,
+            recorded.execution.context.query.state
+        );
+        assert_eq!(
+            native.context.query.effects,
+            recorded.execution.context.query.effects
+        );
+        assert_eq!(
+            serde_json::to_value(&native.context.query.effects).unwrap(),
+            row["effects"]
+        );
+        assert!(native.private_transcript_outputs.is_empty());
+        assert!(recorded.execution.private_transcript_outputs.is_empty());
+        assert_eq!(
+            state_hex(native.context.query.state.get_ref().clone()),
+            row["after"],
+            "{name}: TS state"
+        );
+        assert_replay(&recorded);
+        assert_eq!(row["flags"]["set"], false);
+        assert_eq!(row["flags"]["map"], false);
+        assert_eq!(row["flags"]["setSize"], "1");
+        assert_eq!(row["flags"]["mapSize"], "1");
+        assert!(
+            !ledger_slots::flag_set
+                .inspect(native.context.query.state.get_ref())
+                .unwrap()
+        );
+        assert!(
+            !ledger_slots::flag_map
+                .inspect(native.context.query.state.get_ref())
+                .unwrap()
+        );
+        let actual = serde_json::to_value(native.gas_cost).unwrap();
+        for dimension in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            let expected = row["queryCostSum"][dimension]
+                .as_str()
+                .unwrap()
+                .parse::<u64>()
+                .unwrap();
+            assert_eq!(actual[dimension], expected, "{name}: {dimension}");
+            assert_eq!(
+                row["queries"].as_array().unwrap().last().unwrap()["gasCost"][dimension],
+                row["reportedGas"][dimension]
+            );
+        }
+    }
 }

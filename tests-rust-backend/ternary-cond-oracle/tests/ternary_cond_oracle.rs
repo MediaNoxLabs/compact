@@ -688,6 +688,118 @@ fn recorded_closed_unsigned_ternary_comparisons_match_typescript() {
 }
 
 #[test]
+fn recorded_streaming_comparison_and_struct_true_paths_match_typescript() {
+    let capture: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/adr221-ternary-true.json"
+    ))
+    .unwrap();
+    assert_eq!(capture["mode"], "ternary");
+    let rows = capture["rows"].as_array().unwrap();
+    assert_eq!(rows.len(), 2);
+    for row in rows {
+        let name = row["name"].as_str().unwrap();
+        let native = ledger_slots::flag
+            .write(
+                initial(true, true, 111).into_circuit_context(ContractAddress::default()),
+                true,
+            )
+            .unwrap()
+            .context;
+        let recorded = ledger_slots::flag
+            .write(
+                initial(true, true, 111).into_circuit_context(ContractAddress::default()),
+                true,
+            )
+            .unwrap()
+            .context;
+        assert_eq!(
+            state_hex(native.query.state.get_ref().clone()),
+            row["before"],
+            "{name}: seeded state"
+        );
+        let (native, recorded) = match name {
+            "streamCompareEq" => (
+                streamCompareEq(native).unwrap(),
+                recorded::streamCompareEq(recorded).unwrap(),
+            ),
+            "streamStructMember" => (
+                streamStructMember(native).unwrap(),
+                recorded::streamStructMember(recorded).unwrap(),
+            ),
+            _ => panic!("unexpected ADR221 export {name}"),
+        };
+        assert_eq!(row["result"], "");
+        let _: () = native.result;
+        let _: () = recorded.execution.result;
+        assert_eq!(native.gas_cost, recorded.execution.gas_cost, "{name}: gas");
+        assert_eq!(
+            native.context.query.state, recorded.execution.context.query.state,
+            "{name}: state"
+        );
+        assert_eq!(
+            native.context.query.effects, recorded.execution.context.query.effects,
+            "{name}: effects"
+        );
+        assert_eq!(
+            serde_json::to_value(&native.context.query.effects).unwrap(),
+            row["effects"],
+            "{name}: TypeScript effects"
+        );
+        assert_eq!(
+            state_hex(native.context.query.state.get_ref().clone()),
+            row["after"],
+            "{name}: TS state"
+        );
+        assert_eq!(
+            ledger_slots::fieldCell
+                .inspect(native.context.query.state.get_ref())
+                .unwrap(),
+            Field::from(1_u64),
+            "{name}: selected true arm"
+        );
+        assert!(native.private_transcript_outputs.is_empty());
+        assert!(recorded.execution.private_transcript_outputs.is_empty());
+        assert_eq!(row["privateTranscriptCount"], 0);
+        assert_eq!(
+            ordered_vm_shape(serde_json::to_value(recorded.public.verify_ops()).unwrap()),
+            row["publicTranscriptShape"],
+            "{name}: ordered TS VM"
+        );
+        let replay = recorded
+            .public
+            .initial()
+            .query(
+                recorded.public.verify_ops(),
+                None,
+                &recorded.execution.context.cost_model,
+            )
+            .unwrap();
+        assert_eq!(
+            replay.context.state, native.context.query.state,
+            "{name}: replay state"
+        );
+        assert_eq!(
+            replay.context.effects, native.context.query.effects,
+            "{name}: replay effects"
+        );
+        let actual = serde_json::to_value(native.gas_cost).unwrap();
+        for dimension in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            let expected = row["queryCostSum"][dimension]
+                .as_str()
+                .unwrap()
+                .parse::<u64>()
+                .unwrap();
+            assert_eq!(actual[dimension], expected, "{name}: {dimension}");
+            assert_eq!(
+                row["queries"].as_array().unwrap().last().unwrap()["gasCost"][dimension],
+                row["reportedGas"][dimension],
+                "{name}: last reported query"
+            );
+        }
+    }
+}
+
+#[test]
 fn recorded_closed_ternary_struct_members_match_typescript() {
     let reference: serde_json::Value = serde_json::from_str(include_str!(
         "../../../runtime-rs/tests/fixtures/ternary-recorded-struct-member.json"

@@ -1,0 +1,14 @@
+{
+  "format": "adr221-direct-pure-opposite-branch-v1",
+  "mode": "chunked",
+  "export": "ping",
+  "argument": false,
+  "result": false,
+  "provenance": {
+    "sourceSha256": "bd5bc1c79ea6729835b871b40cd308cbf7586ecd8778ff44905bdf2de1a03126",
+    "generatedJsSha256": "0d0e7ac339ebb74cd3fd587585f0e818db06e247e5472af7a4489a2204543466",
+    "runtimeVersion": "0.16.101",
+    "runtimeJsSha256": "c55a8ab3e7533b3fa6e27b66ab742c783d912d5a00d6ecc23d9f6142ddb0ecde",
+    "compilerSha256": "41441b9b25459793fd55be7fa7e0e61b64c10070cab3a801243c9b3d909dd0d4"
+  }
+}

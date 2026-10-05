@@ -59,6 +59,14 @@ fn nested_state_matches_typescript_bytes_and_field_values() {
         reference["active"].as_bool().unwrap()
     );
     assert_eq!(ping(true).unwrap(), reference["ping"].as_bool().unwrap());
+    let opposite: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/adr221-chunked-false.json"
+    ))
+    .unwrap();
+    assert_eq!(opposite["export"], "ping");
+    assert_eq!(opposite["argument"], false);
+    assert_eq!(opposite["result"], false);
+    assert_eq!(ping(false).unwrap(), opposite["result"].as_bool().unwrap());
 }
 
 #[test]

@@ -384,6 +384,106 @@ fn recorded_field_pair_hash_calls_match_typescript_trace_and_gas() {
 }
 
 #[test]
+fn impure_if_false_skips_the_store_with_exact_typescript_trace() {
+    let capture: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/adr221-call-arg-false.json"
+    ))
+    .unwrap();
+    assert_eq!(capture["mode"], "call-arg");
+    let rows = capture["rows"].as_array().unwrap();
+    assert_eq!(rows.len(), 1);
+    let row = &rows[0];
+    assert_eq!(row["name"], "impureInIfArm");
+    assert_eq!(
+        row["before"], row["after"],
+        "untaken arm leaves public state untouched"
+    );
+    let seed = || {
+        let context = initial_state(ConstructorContext::new(()))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default());
+        ledger_slots::flag.write(context, false).unwrap().context
+    };
+    let native_context = seed();
+    let recorded_context = seed();
+    assert_eq!(
+        state_hex(native_context.query.state.get_ref().clone()),
+        row["before"]
+    );
+    let native = impureInIfArm(native_context).unwrap();
+    let recorded =
+        compact_rust_call_arg_declared_type_fixture::ledger_contract::recorded::impureInIfArm(
+            recorded_context,
+        )
+        .unwrap();
+    assert_eq!(row["result"], "");
+    let _: () = native.result;
+    let _: () = recorded.execution.result;
+    boolean_observation_assertions::assert_ts_trace("impureInIfArm false", &native, &recorded, row);
+    assert_eq!(
+        native.context.query.state,
+        recorded.execution.context.query.state
+    );
+    assert_eq!(
+        native.context.query.effects,
+        recorded.execution.context.query.effects
+    );
+    assert_eq!(
+        serde_json::to_value(&native.context.query.effects).unwrap(),
+        row["effects"]
+    );
+    assert_eq!(
+        state_hex(native.context.query.state.get_ref().clone()),
+        row["after"]
+    );
+    assert_eq!(row["flags"]["flag"], false);
+    assert_eq!(row["flags"]["fieldCell"], "0");
+    assert!(
+        !ledger_slots::flag
+            .inspect(native.context.query.state.get_ref())
+            .unwrap()
+    );
+    assert_eq!(
+        ledger_slots::fieldCell
+            .inspect(native.context.query.state.get_ref())
+            .unwrap(),
+        Field::from(0_u64)
+    );
+    assert!(native.private_transcript_outputs.is_empty());
+    assert!(recorded.execution.private_transcript_outputs.is_empty());
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(
+        replay.context.state.get_ref(),
+        recorded.execution.context.query.state.get_ref()
+    );
+    assert_eq!(
+        replay.context.effects,
+        recorded.execution.context.query.effects
+    );
+    let actual = serde_json::to_value(native.gas_cost).unwrap();
+    for dimension in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+        let expected = row["queryCostSum"][dimension]
+            .as_str()
+            .unwrap()
+            .parse::<u64>()
+            .unwrap();
+        assert_eq!(actual[dimension], expected);
+        assert_eq!(
+            row["queries"][0]["gasCost"][dimension],
+            row["reportedGas"][dimension]
+        );
+    }
+}
+
+#[test]
 fn recorded_impure_field_helper_uses_the_observed_nonzero_cell_value() {
     let seeded_context = || {
         let context = initial_state(ConstructorContext::new(()))

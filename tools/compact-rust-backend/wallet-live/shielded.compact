@@ -1,0 +1,26 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Local acceptance fixture: bootstrap is an actual on-chain mint, never a
+// substitute for confirmed wallet ownership or a production mint policy.
+import CompactStandardLibrary;
+
+export circuit bootstrap(domain: Bytes<32>, amount: Uint<64>): [] {
+  return kernel.mintShielded(disclose(domain), disclose(amount));
+}
+
+export circuit accept(coin: ShieldedCoinInfo): [] {
+  receiveShielded(disclose(coin));
+}
+
+export circuit release(
+  coin: QualifiedShieldedCoinInfo,
+  recipient: ZswapCoinPublicKey,
+  amount: Uint<128>
+): ShieldedSendResult {
+  return sendShielded(
+    disclose(coin),
+    left<ZswapCoinPublicKey, ContractAddress>(disclose(recipient)),
+    disclose(amount)
+  );
+}

@@ -131,11 +131,13 @@ const fullBeforeCapacity = full();
 context = capture('appendHash', () => contract.circuits.append_hash(context, new Uint8Array(32).fill(1))).context;
 const afterAppendHash = snapshot();
 const historyAfterAppendHash = history();
-context = contract.circuits.place_hash(context, new Uint8Array(32).fill(2), 7n).context;
+context = capture('placeHashAt7', () => contract.circuits.place_hash(context, new Uint8Array(32).fill(2), 7n)).context;
 const afterPlaceHashAt7 = snapshot();
+const historyAfterPlaceHashAt7 = history();
 const fullAtCapacity = full();
-context = contract.circuits.place_hash(context, new Uint8Array(32).fill(3), 1n).context;
+context = capture('placeHashAt1', () => contract.circuits.place_hash(context, new Uint8Array(32).fill(3), 1n)).context;
 const afterReplaceHashAt1 = snapshot();
+const historyAfterReplaceHashAt1 = history();
 const fullAfterReplacement = full();
 const rootBeforeTreeReset = currentRoot();
 context = contract.circuits.reset_tree(context).context;
@@ -152,4 +154,4 @@ function normalize(value) {
   }
   return value;
 }
-process.stdout.write(JSON.stringify(normalize({ afterInit, historyAtInit, afterAppend7, historyAfterAppend7, pathFor7At0, wrongPathFor8At0, foundPathFor7, missingPathFor8, afterPlace9At3, pathFor9At3, afterAppend11, afterPlace13At1, afterForgetHistory, historyAfterForget, fullAtInit, fullBeforeCapacity, afterAppendHash, historyAfterAppendHash, afterPlaceHashAt7, fullAtCapacity, afterReplaceHashAt1, fullAfterReplacement, afterResetTree, fullAfterTreeReset, knownOldAfterTreeReset, knownBlankAfterTreeReset, knownAtInit, knownInitialAfterAppend, knownInitialAfterReset, knownCurrentAfterReset, nativeQueries }), null, 2) + '\n');
+process.stdout.write(JSON.stringify(normalize({ afterInit, historyAtInit, afterAppend7, historyAfterAppend7, pathFor7At0, wrongPathFor8At0, foundPathFor7, missingPathFor8, afterPlace9At3, pathFor9At3, afterAppend11, afterPlace13At1, afterForgetHistory, historyAfterForget, fullAtInit, fullBeforeCapacity, afterAppendHash, historyAfterAppendHash, afterPlaceHashAt7, historyAfterPlaceHashAt7, fullAtCapacity, afterReplaceHashAt1, historyAfterReplaceHashAt1, fullAfterReplacement, afterResetTree, fullAfterTreeReset, knownOldAfterTreeReset, knownBlankAfterTreeReset, knownAtInit, knownInitialAfterAppend, knownInitialAfterReset, knownCurrentAfterReset, nativeQueries }), null, 2) + '\n');

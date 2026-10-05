@@ -2165,6 +2165,28 @@ fn main() -> Result<(), Box<dyn Error>> {
             Err(_) => Err("historic Merkle hash proof thread panicked".into()),
         };
     }
+    if first.as_deref() == Some(OsStr::new("--historic-merkle-indexed-hash")) {
+        let root = arguments.next().ok_or(
+            "usage: compact-rust-proof-smoke --historic-merkle-indexed-hash <proof-output>",
+        )?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --historic-merkle-indexed-hash <proof-output>"
+                    .into(),
+            );
+        }
+        let proof = std::thread::Builder::new()
+            .name("historic-merkle-indexed-hash-proof".into())
+            .stack_size(64 * 1024 * 1024)
+            .spawn(move || {
+                merkle_hash::run_historic_indexed(Path::new(&root)).map_err(|e| e.to_string())
+            })?;
+        return match proof.join() {
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(error)) => Err(error.into()),
+            Err(_) => Err("historic Merkle indexed hash proof thread panicked".into()),
+        };
+    }
     if first.as_deref() == Some(OsStr::new("--merkle-indexed")) {
         let root = arguments
             .next()

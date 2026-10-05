@@ -386,6 +386,16 @@ impl<T: CellValue, const DEPTH: u8> MerkleSlot<T, DEPTH, true> {
         frame.insert_historic_merkle_hash(self.path, hash)
     }
 
+    /// Record historic `insertHashIndex`, including its root-history update.
+    pub fn record_insert_hash_index<Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+        hash: crate::FixedBytes<32>,
+        position: crate::BoundedUint<{ u64::MAX as u128 }>,
+    ) -> Result<RecordingFrame<Private, D>, CompactError> {
+        frame.insert_historic_merkle_hash_index(self.path, hash, position)
+    }
+
     pub fn reset_history<Private, D: DB>(
         self,
         context: CircuitContext<Private, D>,

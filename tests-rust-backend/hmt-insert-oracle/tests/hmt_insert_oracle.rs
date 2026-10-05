@@ -284,6 +284,138 @@ fn recorded_historic_hash_append_preserves_typescript_history_and_replays() {
 }
 
 #[test]
+fn recorded_historic_indexed_hash_placement_matches_typescript_history_and_replays() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/hmt-insert-oracle.json"
+    ))
+    .unwrap();
+    let before_place = || {
+        let context = initial_state(ConstructorContext::new(()))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default());
+        let context = append(context, bounded::<255>(7)).unwrap().context;
+        let context = place(
+            context,
+            bounded::<255>(9),
+            bounded::<{ u64::MAX as u128 }>(3),
+        )
+        .unwrap()
+        .context;
+        let context = append(context, bounded::<255>(11)).unwrap().context;
+        let context = place(
+            context,
+            bounded::<255>(13),
+            bounded::<{ u64::MAX as u128 }>(1),
+        )
+        .unwrap()
+        .context;
+        let context = forget_history(context).unwrap().context;
+        let context = full(context).unwrap().context;
+        append_hash(context, runtime::FixedBytes::new([1; 32]))
+            .unwrap()
+            .context
+    };
+    let hash_at_7 = runtime::FixedBytes::new([2; 32]);
+    let index_7 = bounded::<{ u64::MAX as u128 }>(7);
+    let native = place_hash(before_place(), hash_at_7, index_7).unwrap();
+    let recorded = recorded::place_hash(before_place(), hash_at_7, index_7).unwrap();
+    assert_historic_hash_recording(
+        "placeHashAt7",
+        "afterPlaceHashAt7",
+        "historyAfterPlaceHashAt7",
+        8,
+        native,
+        recorded,
+        &oracle,
+    );
+
+    let before_replace = || {
+        let context = place_hash(before_place(), hash_at_7, index_7)
+            .unwrap()
+            .context;
+        full(context).unwrap().context
+    };
+    let hash_at_1 = runtime::FixedBytes::new([3; 32]);
+    let index_1 = bounded::<{ u64::MAX as u128 }>(1);
+    let native = place_hash(before_replace(), hash_at_1, index_1).unwrap();
+    let recorded = recorded::place_hash(before_replace(), hash_at_1, index_1).unwrap();
+    assert_historic_hash_recording(
+        "placeHashAt1",
+        "afterReplaceHashAt1",
+        "historyAfterReplaceHashAt1",
+        8,
+        native,
+        recorded,
+        &oracle,
+    );
+}
+
+fn assert_historic_hash_recording(
+    query: &str,
+    state: &str,
+    history: &str,
+    first_free: u128,
+    native: runtime::context::CircuitResult<(), (), DefaultDB>,
+    recorded: runtime::recording::RecordedCircuitResult<(), (), DefaultDB>,
+    oracle: &serde_json::Value,
+) {
+    assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+    assert_eq!(
+        native.context.query.effects,
+        recorded.execution.context.query.effects
+    );
+    assert!(recorded.execution.private_transcript_outputs.is_empty());
+    assert_state(
+        recorded.execution.context.query.state.get_ref(),
+        oracle,
+        state,
+        first_free,
+    );
+    assert_history(
+        recorded.execution.context.query.state.get_ref(),
+        oracle,
+        history,
+    );
+    assert_eq!(
+        state_hex(native.context.query.state.get_ref().clone()),
+        state_hex(recorded.execution.context.query.state.get_ref().clone())
+    );
+    assert_native_query_gas(query, &recorded.execution.gas_cost, oracle);
+    assert_eq!(
+        oracle["nativeQueries"][query]["result"],
+        serde_json::json!([])
+    );
+    assert_eq!(oracle["nativeQueries"][query]["privateOutputs"], 0);
+    let queries = oracle["nativeQueries"][query]["queries"]
+        .as_array()
+        .unwrap();
+    assert_eq!(queries.len(), 1);
+    assert_eq!(
+        serde_json::to_value(recorded.public.verify_ops()).unwrap(),
+        queries[0]["program"]
+    );
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(replay.gas_cost, recorded.execution.gas_cost);
+    assert_eq!(
+        replay.context.effects,
+        recorded.execution.context.query.effects
+    );
+    assert_eq!(
+        state_hex(replay.context.state.get_ref().clone()),
+        state_hex(recorded.execution.context.query.state.get_ref().clone())
+    );
+    assert_history(replay.context.state.get_ref(), oracle, history);
+}
+
+#[test]
 fn recorded_historic_indexed_insertion_matches_typescript_and_replays() {
     let oracle: serde_json::Value = serde_json::from_str(include_str!(
         "../../../runtime-rs/tests/fixtures/hmt-insert-oracle.json"

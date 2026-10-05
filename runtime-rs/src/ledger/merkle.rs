@@ -617,6 +617,20 @@ pub(crate) fn historic_merkle_insert_index_program<T: CellValue, D: DB>(
     )
 }
 
+/// Build native historic `insertHashIndex`'s verifying program with root history.
+pub(crate) fn historic_merkle_insert_hash_index_program<D: DB>(
+    path: impl Into<LedgerPath>,
+    hash: FixedBytes<32>,
+    position: u64,
+) -> Vec<Op<ResultModeVerify, D>> {
+    merkle_insert_index_hashed_program(
+        path.into(),
+        aligned_cell_value(hash),
+        position,
+        MerkleHistory::Historic,
+    )
+}
+
 pub(crate) fn historic_merkle_insert_index_default_program<T: CellValue + Default, D: DB>(
     path: impl Into<LedgerPath>,
     position: u64,

@@ -276,6 +276,20 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         ))
     }
 
+    /// Place an already hashed leaf at a historic index and retain root history.
+    pub fn insert_historic_merkle_hash_index(
+        self,
+        path: impl Into<LedgerPath>,
+        hash: crate::FixedBytes<32>,
+        position: crate::BoundedUint<{ u64::MAX as u128 }>,
+    ) -> Result<Self, CompactError> {
+        self.apply_verify_program(ledger::historic_merkle_insert_hash_index_program(
+            path,
+            hash,
+            position.value() as u64,
+        ))
+    }
+
     pub fn insert_historic_merkle_index_default<T: CellValue + Default>(
         self,
         path: impl Into<LedgerPath>,

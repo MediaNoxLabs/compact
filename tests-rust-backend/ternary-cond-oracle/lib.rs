@@ -2141,6 +2141,31 @@ pub mod ledger_contract {
                     input,
                 ))
             }
+            pub fn streamAssertEq<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                streamAssertEq(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn streamAssertEq_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.streamAssertEq(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "streamAssertEq",
+                    input,
+                ))
+            }
         }
     }
     /// Groups the contract's exported circuits for Rust consumers.

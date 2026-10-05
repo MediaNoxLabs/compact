@@ -229,6 +229,8 @@ pub(super) fn lower<'a>(
         composite_domain: CompositeDomain::None,
         intent_effects: 0,
         intent_queries: 0,
+        zswap_inputs: 0,
+        zswap_outputs: 0,
         counter_hash_helpers: false,
         scalar_arguments: false,
         scalar_body_depth: 0,

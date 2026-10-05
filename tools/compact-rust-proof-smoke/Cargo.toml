@@ -140,5 +140,6 @@ compact-rust-composite-zswap-transfer-oracle-fixture = { path = "../../tests-rus
 compact-rust-test-center-coracle-fixture = { path = "../../tests-rust-backend/test-center-coracle", features = ["ledger-transaction"] }
 
 compact-rust-shielded-receive-oracle-fixture = { path = "../../tests-rust-backend/shielded-receive-oracle", features = ["ledger-transaction"] }
+compact-rust-shielded-send-oracle-fixture = { path = "../../tests-rust-backend/shielded-send-oracle", features = ["ledger-transaction"] }
 
 compact-rust-field-observation-oracle-fixture = { path = "../../tests-rust-backend/field-observation-oracle", features = ["ledger-transaction"] }

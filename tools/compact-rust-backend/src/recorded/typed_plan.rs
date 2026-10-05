@@ -40,15 +40,22 @@ enum CompositeDomain {
     Values,
     Intents,
     ShieldedReceive,
+    ShieldedSend,
     FieldObservations,
     TerminalReturns,
 }
 impl CompositeDomain {
     fn values(self) -> bool {
-        matches!(self, Self::Values | Self::Intents | Self::FieldObservations)
+        matches!(
+            self,
+            Self::Values | Self::Intents | Self::FieldObservations | Self::ShieldedSend
+        )
     }
     fn intents(self) -> bool {
-        matches!(self, Self::Intents | Self::ShieldedReceive)
+        matches!(
+            self,
+            Self::Intents | Self::ShieldedReceive | Self::ShieldedSend
+        )
     }
 }
 
@@ -77,6 +84,8 @@ struct Plan<'a> {
     composite_domain: CompositeDomain,
     intent_effects: usize,
     intent_queries: usize,
+    zswap_inputs: usize,
+    zswap_outputs: usize,
     counter_hash_helpers: bool,
     scalar_arguments: bool,
     scalar_body_depth: usize,
@@ -233,7 +242,12 @@ impl Plan<'_> {
         steps: &mut Vec<syn::Stmt>,
     ) -> Option<TypedValue> {
         match expression {
-            Expr::Unit if self.read_only_assertions || self.unit_actions || self.phase_reset => {
+            Expr::Unit
+                if self.read_only_assertions
+                    || self.unit_actions
+                    || self.phase_reset
+                    || self.composite_domain == CompositeDomain::ShieldedSend =>
+            {
                 Some(TypedValue {
                     ty: Type::Unit,
                     value: syn::parse_quote!(()),
@@ -242,7 +256,10 @@ impl Plan<'_> {
             Expr::Sequence {
                 steps: expressions,
                 value,
-            } if self.read_only_assertions || self.unit_actions => {
+            } if self.read_only_assertions
+                || self.unit_actions
+                || self.composite_domain == CompositeDomain::ShieldedSend =>
+            {
                 for expression in expressions {
                     if self.expression(expression, scope, steps)?.ty != Type::Unit {
                         return None;
@@ -331,6 +348,10 @@ impl Plan<'_> {
                 let effect = intent_effect::emit(expression, &operands)?;
                 self.intent_effects += usize::from(effect.intent);
                 self.intent_queries += usize::from(effect.public_query);
+                self.zswap_inputs +=
+                    usize::from(matches!(expression, Expr::CreateZswapInput { .. }));
+                self.zswap_outputs +=
+                    usize::from(matches!(expression, Expr::CreateZswapOutput { .. }));
                 steps.push(effect.statement);
                 self.bind(syn::parse_quote!(()), Type::Unit, steps)
             }
@@ -387,6 +408,30 @@ impl Plan<'_> {
                     right.value,
                     &left_max,
                     &right_max,
+                    max,
+                )
+                .ok()?;
+                self.bind(value, Type::Unsigned { max: max.clone() }, steps)
+            }
+            Expr::UnsignedSubtract { max, left, right }
+                if self.composite_domain == CompositeDomain::ShieldedSend =>
+            {
+                let left = self.expression(left, scope, steps)?;
+                let right = self.expression(right, scope, steps)?;
+                let (Type::Unsigned { max: left_max }, Type::Unsigned { max: right_max }) =
+                    (&left.ty, &right.ty)
+                else {
+                    return None;
+                };
+                if left_max != max || right_max != max || max != &u128::MAX.to_string() {
+                    return None;
+                }
+                let value = crate::unsigned_arithmetic_syntax(
+                    expression,
+                    left.value,
+                    right.value,
+                    left_max,
+                    right_max,
                     max,
                 )
                 .ok()?;
@@ -504,7 +549,10 @@ impl Plan<'_> {
                 })
             }
             Expr::Tuple { elements }
-                if self.context_query || self.scalar_body_depth > 0 || self.unit_actions =>
+                if self.context_query
+                    || self.scalar_body_depth > 0
+                    || self.unit_actions
+                    || self.composite_domain == CompositeDomain::ShieldedSend =>
             {
                 let values = elements
                     .iter()
@@ -565,6 +613,52 @@ impl Plan<'_> {
                 self.bind(
                     syn::parse_quote!(runtime::transient_commit(#value, #opening)),
                     Type::Field,
+                    steps,
+                )
+            }
+            Expr::DegradeToTransient { value }
+                if self.composite_domain == CompositeDomain::ShieldedSend =>
+            {
+                let value = self.expression(value, scope, steps)?;
+                if value.ty != (Type::Bytes { length: 32 }) {
+                    return None;
+                }
+                let value = value.value;
+                self.bind(
+                    syn::parse_quote!(runtime::degrade_to_transient(#value)),
+                    Type::Field,
+                    steps,
+                )
+            }
+            Expr::TransientHash { value }
+                if self.composite_domain == CompositeDomain::ShieldedSend =>
+            {
+                let value = self.expression(value, scope, steps)?;
+                if value.ty
+                    != (Type::Tuple {
+                        elements: vec![Type::Field, Type::Field],
+                    })
+                {
+                    return None;
+                }
+                let value = value.value;
+                self.bind(
+                    syn::parse_quote!(runtime::transient_hash(#value)),
+                    Type::Field,
+                    steps,
+                )
+            }
+            Expr::UpgradeFromTransient { value }
+                if self.composite_domain == CompositeDomain::ShieldedSend =>
+            {
+                let value = self.expression(value, scope, steps)?;
+                if value.ty != Type::Field {
+                    return None;
+                }
+                let value = value.value;
+                self.bind(
+                    syn::parse_quote!(runtime::upgrade_from_transient(#value)),
+                    Type::Bytes { length: 32 },
                     steps,
                 )
             }
@@ -774,7 +868,9 @@ impl Plan<'_> {
             .copied();
         match (pure, stateful) {
             (Some(callee), None) => {
-                if self.composite_domain.values() {
+                if self.composite_domain.values()
+                    && self.composite_domain != CompositeDomain::ShieldedSend
+                {
                     return None;
                 } // preserve ADR0187 admission
                 if self.context_query || (self.unit_actions && !self.composite_domain.intents()) {
@@ -803,6 +899,25 @@ impl Plan<'_> {
                 }
             }
             (None, Some(callee)) => {
+                if self.composite_domain == CompositeDomain::ShieldedSend {
+                    let StateReturn::Expression { value } = &callee.return_value else {
+                        return None;
+                    };
+                    if !callee.actions.is_empty() {
+                        return None;
+                    }
+                    return self.inline_call(
+                        name,
+                        &callee.parameters,
+                        &callee.result,
+                        value,
+                        &[],
+                        arguments,
+                        scope,
+                        steps,
+                        false,
+                    );
+                }
                 if self.composite_domain == CompositeDomain::TerminalReturns {
                     let StateReturn::Expression { value } = &callee.return_value else {
                         return None;
@@ -1619,6 +1734,8 @@ pub(super) fn lower_effectful<'a>(
         composite_domain: CompositeDomain::None,
         intent_effects: 0,
         intent_queries: 0,
+        zswap_inputs: 0,
+        zswap_outputs: 0,
         counter_hash_helpers: false,
         scalar_arguments: false,
         scalar_body_depth: 0,
@@ -1831,6 +1948,8 @@ pub(super) fn lower_context_query<'a>(
         composite_domain: CompositeDomain::None,
         intent_effects: 0,
         intent_queries: 0,
+        zswap_inputs: 0,
+        zswap_outputs: 0,
         counter_hash_helpers: false,
         scalar_arguments: false,
         scalar_body_depth: 0,
@@ -2128,6 +2247,8 @@ pub(super) fn lower_shielded_receive<'a>(
         composite_domain: CompositeDomain::ShieldedReceive,
         intent_effects: 0,
         intent_queries: 0,
+        zswap_inputs: 0,
+        zswap_outputs: 0,
         counter_hash_helpers: false,
         scalar_arguments: false,
         scalar_body_depth: 0,
@@ -2179,6 +2300,215 @@ pub(super) fn lower_terminal_returns<'a>(
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
 ) -> Option<TypedPlan> {
     terminal_returns::lower(circuit, ledger, witnesses, pure, circuits)
+}
+
+// A send result is a typed pair of the sent coin and optional change. The
+// admission predicate describes the public type, not a helper/source name.
+fn shielded_send_result(ty: &Type) -> bool {
+    let Type::Struct { fields, .. } = ty else {
+        return false;
+    };
+    let [change, sent] = fields.as_slice() else {
+        return false;
+    };
+    if change.name != "change"
+        || sent.name != "sent"
+        || sent.ty != crate::stateful::shielded_coin_type()
+    {
+        return false;
+    }
+    matches!(&change.ty, Type::Struct { fields, .. }
+        if matches!(fields.as_slice(), [present, value]
+            if present.name == "is_some" && present.ty == Type::Boolean
+                && value.name == "value" && value.ty == sent.ty))
+}
+
+// Inspect every expression, including unused locals, arguments and unselected
+// branches. The Plan verifies the exact types and evaluates the ordered body;
+// this audit closes admission over its deliberately smaller effect domain.
+fn shielded_send_value(
+    value: &Expr,
+    pure: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+    visiting: &mut HashSet<String>,
+) -> bool {
+    let visit = |part: &Expr, visiting: &mut HashSet<String>| {
+        shielded_send_value(part, pure, circuits, visiting)
+    };
+    match value {
+        Expr::Parameter { .. }
+        | Expr::Boolean { .. }
+        | Expr::BytesLiteral { .. }
+        | Expr::FieldLiteral { .. }
+        | Expr::UnsignedLiteral { .. }
+        | Expr::EnumVariant { .. }
+        | Expr::Unit
+        | Expr::Default {
+            ty: Type::Struct { .. },
+        } => true,
+        Expr::KernelSelf { ty } => *ty == contract_address_type(),
+        Expr::StructLiteral { fields, .. } | Expr::Tuple { elements: fields } => {
+            fields.iter().all(|part| visit(part, visiting))
+        }
+        Expr::StructField { value, .. }
+        | Expr::Coerce { value, .. }
+        | Expr::UnsignedCast { value, .. }
+        | Expr::DegradeToTransient { value }
+        | Expr::TransientHash { value }
+        | Expr::UpgradeFromTransient { value }
+        | Expr::CreateZswapInput { coin: value }
+        | Expr::KernelClaim { value, .. } => visit(value, visiting),
+        Expr::CreateZswapOutput { coin, recipient }
+        | Expr::Equal {
+            left: coin,
+            right: recipient,
+        }
+        | Expr::UnsignedSubtract {
+            left: coin,
+            right: recipient,
+            ..
+        } => visit(coin, visiting) && visit(recipient, visiting),
+        Expr::If {
+            condition,
+            then,
+            otherwise,
+        } => visit(condition, visiting) && visit(then, visiting) && visit(otherwise, visiting),
+        Expr::Let { bindings, body } => {
+            bindings
+                .iter()
+                .all(|binding| visit(&binding.value, visiting))
+                && visit(body, visiting)
+        }
+        Expr::Sequence { steps, value } => {
+            steps.iter().all(|step| visit(step, visiting)) && visit(value, visiting)
+        }
+        Expr::Call { name, arguments } => {
+            if !arguments.iter().all(|argument| visit(argument, visiting)) {
+                return false;
+            }
+            if pure.contains_key(name.as_str()) {
+                return !circuits.contains_key(name.as_str());
+            }
+            let Some(callee) = circuits.get(name.as_str()) else {
+                return false;
+            };
+            let StateReturn::Expression { value } = &callee.return_value else {
+                return false;
+            };
+            if !callee.actions.is_empty() || !visiting.insert(name.clone()) {
+                return false;
+            }
+            let valid = visit(value, visiting);
+            visiting.remove(name);
+            valid
+        }
+        _ => false,
+    }
+}
+
+pub(super) fn lower_shielded_send<'a>(
+    circuit: &StatefulCircuit,
+    ledger: &'a HashMap<&'a str, &'a LedgerField>,
+    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
+    pure: &'a HashMap<&'a str, &'a PureCircuit>,
+    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
+) -> Option<TypedPlan> {
+    let StateReturn::Expression { value } = &circuit.return_value else {
+        return None;
+    };
+    if !circuit.actions.is_empty()
+        || !shielded_send_result(&circuit.result)
+        || circuit
+            .parameters
+            .iter()
+            .map(|p| &p.name)
+            .collect::<HashSet<_>>()
+            .len()
+            != circuit.parameters.len()
+        || !shielded_send_value(
+            value,
+            pure,
+            circuits,
+            &mut HashSet::from([circuit.name.clone()]),
+        )
+    {
+        return None;
+    }
+    let mut plan = Plan {
+        ledger,
+        witnesses,
+        pure,
+        next: 0,
+        witness_calls: 0,
+        kernel_self_reads: 0,
+        context_query: false,
+        root_observations: 0,
+        tree_writes: 0,
+        set_writes: 0,
+        counter_writes: 0,
+        counter_reads: 0,
+        counter_comparisons: 0,
+        cell_reads: 0,
+        cell_writes: 0,
+        field_cell_writes: 0,
+        field_cell_slot: None,
+        effectful_field_cells: false,
+        read_only_assertions: false,
+        unit_actions: false,
+        phase_reset: false,
+        composite_domain: CompositeDomain::ShieldedSend,
+        intent_effects: 0,
+        intent_queries: 0,
+        zswap_inputs: 0,
+        zswap_outputs: 0,
+        counter_hash_helpers: false,
+        scalar_arguments: false,
+        scalar_body_depth: 0,
+        scalar_helper_calls: 0,
+        scalar_counter_reads: 0,
+        active_calls: HashSet::new(),
+        stateful_circuits: Some(circuits),
+        optional_cells: 0,
+        opaque_cells: 0,
+        historic_roots: 0,
+        historic_writes: 0,
+        qualified_set_reads: 0,
+        qualified_set_writes: 0,
+        qualified_cell_writes: 0,
+    };
+    let scope = circuit
+        .parameters
+        .iter()
+        .enumerate()
+        .map(|(index, p)| {
+            let name = syn::Ident::new(&format!("__compact_param_{index}"), Span::call_site());
+            (
+                p.name.clone(),
+                TypedValue {
+                    ty: p.ty.clone(),
+                    value: syn::parse_quote! { #name },
+                },
+            )
+        })
+        .collect();
+    let mut steps = Vec::new();
+    let result = plan.expression(value, &scope, &mut steps)?;
+    (result.ty == circuit.result
+        && plan.zswap_inputs > 0
+        && plan.zswap_outputs > 0
+        && plan.intent_queries > 0
+        && plan.witness_calls == 0
+        && plan.cell_reads == 0
+        && plan.cell_writes == 0
+        && plan.counter_reads == 0
+        && plan.counter_comparisons == 0
+        && plan.counter_writes == 0
+        && plan.tree_writes == 0
+        && plan.set_writes == 0)
+        .then_some(TypedPlan {
+            steps,
+            result: result.value,
+        })
 }
 
 pub(super) fn lower_phase_reset<'a>(
@@ -2251,6 +2581,8 @@ pub(super) fn lower_composite<'a>(
         composite_domain: domain,
         intent_effects: 0,
         intent_queries: 0,
+        zswap_inputs: 0,
+        zswap_outputs: 0,
         counter_hash_helpers: false,
         scalar_arguments: false,
         scalar_body_depth: 0,
@@ -2395,6 +2727,8 @@ pub(super) fn lower<'a>(
         composite_domain: CompositeDomain::None,
         intent_effects: 0,
         intent_queries: 0,
+        zswap_inputs: 0,
+        zswap_outputs: 0,
         counter_hash_helpers: circuit.parameters.is_empty() && circuit.result == Type::Unit,
         scalar_arguments: false,
         scalar_body_depth: 0,
@@ -2941,6 +3275,8 @@ mod tests {
             composite_domain: CompositeDomain::None,
             intent_effects: 0,
             intent_queries: 0,
+            zswap_inputs: 0,
+            zswap_outputs: 0,
             counter_hash_helpers: false,
             scalar_arguments: false,
             scalar_body_depth: 0,
@@ -3033,6 +3369,8 @@ mod tests {
             composite_domain: CompositeDomain::None,
             intent_effects: 0,
             intent_queries: 0,
+            zswap_inputs: 0,
+            zswap_outputs: 0,
             counter_hash_helpers: false,
             scalar_arguments: false,
             scalar_body_depth: 0,
@@ -3419,5 +3757,144 @@ mod shielded_receive_tests {
         wrong_claim["stateful_circuits"][0]["actions"][0]["action"]["actions"][1]["action"]["value"]
             ["claim"] = "coin_spend".into();
         assert!(admitted(&wrong_claim).is_none());
+    }
+}
+
+#[cfg(test)]
+mod shielded_send_tests {
+    use super::*;
+    use serde_json::{Value, json};
+
+    fn source() -> Value {
+        serde_json::from_str(include_str!("../../tests/shielded-send-schema20-ir.json")).unwrap()
+    }
+
+    fn admitted(source: &Value) -> Vec<bool> {
+        let contract: crate::ir::Contract = serde_json::from_value(source.clone()).unwrap();
+        let ledger = contract
+            .ledger_fields
+            .iter()
+            .map(|f| (f.id.as_str(), f))
+            .collect();
+        let witnesses = contract
+            .witnesses
+            .iter()
+            .map(|w| (w.name.as_str(), w))
+            .collect();
+        let pure = contract
+            .circuits
+            .iter()
+            .map(|c| (c.name.as_str(), c))
+            .collect();
+        let circuits = contract
+            .stateful_circuits
+            .iter()
+            .map(|c| (c.name.as_str(), c))
+            .collect();
+        contract
+            .stateful_circuits
+            .iter()
+            .map(|c| lower_shielded_send(c, &ledger, &witnesses, &pure, &circuits).is_some())
+            .collect()
+    }
+
+    #[test]
+    fn unchanged_send_helper_and_wrappers_have_typed_ordered_plans() {
+        let source = source();
+        assert_eq!(admitted(&source), vec![true; 5]);
+        let contract: crate::ir::Contract = serde_json::from_value(source).unwrap();
+        let ledger = HashMap::new();
+        let witnesses = HashMap::new();
+        let pure = contract
+            .circuits
+            .iter()
+            .map(|c| (c.name.as_str(), c))
+            .collect();
+        let circuits = contract
+            .stateful_circuits
+            .iter()
+            .map(|c| (c.name.as_str(), c))
+            .collect();
+        let plan = lower_shielded_send(
+            &contract.stateful_circuits[1],
+            &ledger,
+            &witnesses,
+            &pure,
+            &circuits,
+        )
+        .unwrap();
+        let statements = &plan.steps;
+        let steps = quote::quote!(#(#statements)*).to_string();
+        assert!(
+            steps.find("create_zswap_input").unwrap() < steps.find("subtract_unsigned").unwrap()
+        );
+        assert!(
+            steps.find("subtract_unsigned").unwrap() < steps.find("create_zswap_output").unwrap()
+        );
+        assert!(steps.contains("transient_hash") && steps.contains("upgrade_from_transient"));
+    }
+
+    #[test]
+    fn hidden_queries_in_unused_bindings_branches_and_arguments_are_refused() {
+        let source = source();
+        let mut unused = source.clone();
+        let original = unused["stateful_circuits"][1]["return_value"]["value"].take();
+        unused["stateful_circuits"][1]["return_value"]["value"] = json!({
+            "kind":"let", "bindings":[{"name":"hidden", "ty":{"kind":"boolean"},
+                "value":{"kind":"set_member", "field":"coins", "index":0,
+                    "value":{"kind":"parameter", "name":"input"}}}], "body":original
+        });
+        unused["ledger_fields"] = json!([{"id":"coins", "index":0,
+            "declaration":{"kind":"set", "ty": source["stateful_circuits"][0]["parameters"][0]["ty"]}}]);
+        assert!(!admitted(&unused)[1]);
+
+        let mut branch = source.clone();
+        let original = branch["stateful_circuits"][1]["return_value"]["value"].take();
+        branch["stateful_circuits"][1]["return_value"]["value"] = json!({
+            "kind":"if", "condition":{"kind":"boolean", "value":true},
+            "then":original.clone(),
+            "otherwise":{"kind":"let", "bindings":[{"name":"hidden", "ty":{"kind":"unsigned", "max":"18446744073709551615"},
+                "value":{"kind":"set_size", "field":"coins", "index":0}}], "body": original}
+        });
+        branch["ledger_fields"] = unused["ledger_fields"].clone();
+        assert!(!admitted(&branch)[1]);
+
+        let mut argument = source;
+        let original =
+            argument["stateful_circuits"][1]["return_value"]["value"]["arguments"][0].take();
+        argument["stateful_circuits"][1]["return_value"]["value"]["arguments"][0] = json!({
+            "kind":"let", "bindings":[{"name":"hidden", "ty":{"kind":"boolean"},
+                "value":{"kind":"set_member", "field":"coins", "index":0,
+                    "value":{"kind":"parameter", "name":"input"}}}], "body":original
+        });
+        argument["ledger_fields"] = unused["ledger_fields"].clone();
+        assert!(!admitted(&argument)[1]);
+    }
+
+    #[test]
+    fn recursive_impure_and_malformed_helpers_are_refused() {
+        let source = source();
+        let mut recursive = source.clone();
+        recursive["stateful_circuits"][0]["return_value"]["value"] = json!({
+            "kind":"call", "name":"sendShielded", "arguments":[
+                {"kind":"parameter", "name":"input"},
+                {"kind":"parameter", "name":"recipient"},
+                {"kind":"parameter", "name":"value"}]
+        });
+        assert!(!admitted(&recursive)[1]);
+
+        let mut impure = source.clone();
+        let helper = impure["circuits"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .find(|c| c["name"] == "coinCommitment")
+            .unwrap();
+        helper["body"] = json!({"kind":"cell_read", "field":"hidden", "index":0});
+        assert!(!admitted(&impure)[1]);
+
+        let mut malformed = source;
+        malformed["stateful_circuits"][0]["result"] = json!({"kind":"boolean"});
+        assert!(!admitted(&malformed)[1]);
     }
 }

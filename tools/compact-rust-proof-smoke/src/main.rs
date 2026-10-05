@@ -41,6 +41,7 @@ mod test_center_counter;
 mod test_center_welcome;
 mod unsigned_recording;
 mod witness_assert;
+mod witness_vector_action;
 mod witness_vector_let;
 
 use std::env;
@@ -1379,6 +1380,28 @@ fn main() -> Result<(), Box<dyn Error>> {
             );
         }
         return witness_vector_let::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--witness-vector-bare")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --witness-vector-bare <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --witness-vector-bare <proof-output>".into(),
+            );
+        }
+        return witness_vector_let::run_bare(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--witness-vector-discard")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --witness-vector-discard <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --witness-vector-discard <proof-output>".into(),
+            );
+        }
+        return witness_vector_action::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--composite-cell")) {
         let root = arguments

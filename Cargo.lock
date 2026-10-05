@@ -1827,6 +1827,7 @@ dependencies = [
  "compact-rust-widening-arith-oracle-fixture",
  "compact-rust-witness-cell-write-fixture",
  "compact-rust-witness-list-shapes-fixture",
+ "compact-rust-witness-vector-action-fixture",
  "futures-executor",
  "midnight-base-crypto",
  "midnight-circuits",

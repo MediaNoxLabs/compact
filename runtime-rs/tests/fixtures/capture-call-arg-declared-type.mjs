@@ -21,7 +21,7 @@
 // value written (e.g. a commitment to an `i32` instead of a `Field`) even
 // when the generated crate builds. The persistent commitments and closed pure
 // Field call retain their ordered VM transcript, per-query gas, and private
-// output count. A separate witnessConst run advances private state and records
+// output count. Separate witness runs advance private state and record
 // the witness argument and aligned private output.
 //
 // Usage:
@@ -141,6 +141,7 @@ for (const name of CIRCUITS) {
     'commitSmall', 'commitU128', 'commitFieldOnly', 'pureBodyFieldOnly',
     'pureBodyVec', 'bridgeTupleIntoVec', 'bridgeVecIntoTuple',
     'pureFromImpure', 'impureBare', 'impureInIfArm', 'inlinedAssert',
+    'witnessBare',
   ].includes(name)) {
     fixture.circuits[name].trace = {
       publicTranscriptShape: out.proofData.publicTranscript.map(operationShape),
@@ -153,44 +154,46 @@ for (const name of CIRCUITS) {
   }
 }
 
-const witnessCalls = [];
-const advancingContract = new Contract({
-  sumWitness: (ctx, values) => {
-    witnessCalls.push({
-      privateState: ctx.privateState,
-      values: values.map((value) => value.toString()),
-    });
-    return [ctx.privateState + 1, values[0] + values[1]];
-  },
-});
-const advancingInit = advancingContract.initialState({
-  ...constructorCtx,
-  initialPrivateState: 7,
-});
-const advancingContext = cr.createCircuitContext(
-  cr.dummyContractAddress(),
-  emptyCpk,
-  advancingInit.currentContractState.data,
-  advancingInit.currentPrivateState,
-);
-const advancingQueryStart = queries.length;
-const witnessed = advancingContract.circuits.witnessConst(advancingContext);
-const witnessedState = new cr.ChargedState(witnessed.context.currentQueryContext.state.state);
-fixture.witnessConstAdvanced = {
-  stateHex: hexOf(rewrapEnvelope(advancingInit.currentContractState, witnessedState)),
-  privateState: witnessed.context.currentPrivateState,
-  witnessCalls,
-  privateTranscriptOutputs: witnessed.proofData.privateTranscriptOutputs.map(
-    ({ value, alignment }) => ({ valueAtoms: value.map((atom) => Array.from(atom)), alignment }),
-  ),
-  trace: {
-    publicTranscriptShape: witnessed.proofData.publicTranscript.map(operationShape),
-    privateTranscriptCount: witnessed.proofData.privateTranscriptOutputs.length,
-    queries: queries.slice(advancingQueryStart),
-    reportedGas: Object.fromEntries(
-      Object.entries(witnessed.gasCost).map(([key, value]) => [key, value.toString()]),
+for (const name of ['witnessConst', 'witnessBare']) {
+  const witnessCalls = [];
+  const advancingContract = new Contract({
+    sumWitness: (ctx, values) => {
+      witnessCalls.push({
+        privateState: ctx.privateState,
+        values: values.map((value) => value.toString()),
+      });
+      return [ctx.privateState + 1, values[0] + values[1]];
+    },
+  });
+  const advancingInit = advancingContract.initialState({
+    ...constructorCtx,
+    initialPrivateState: 7,
+  });
+  const advancingContext = cr.createCircuitContext(
+    cr.dummyContractAddress(),
+    emptyCpk,
+    advancingInit.currentContractState.data,
+    advancingInit.currentPrivateState,
+  );
+  const advancingQueryStart = queries.length;
+  const witnessed = advancingContract.circuits[name](advancingContext);
+  const witnessedState = new cr.ChargedState(witnessed.context.currentQueryContext.state.state);
+  fixture[`${name}Advanced`] = {
+    stateHex: hexOf(rewrapEnvelope(advancingInit.currentContractState, witnessedState)),
+    privateState: witnessed.context.currentPrivateState,
+    witnessCalls,
+    privateTranscriptOutputs: witnessed.proofData.privateTranscriptOutputs.map(
+      ({ value, alignment }) => ({ valueAtoms: value.map((atom) => Array.from(atom)), alignment }),
     ),
-  },
-};
+    trace: {
+      publicTranscriptShape: witnessed.proofData.publicTranscript.map(operationShape),
+      privateTranscriptCount: witnessed.proofData.privateTranscriptOutputs.length,
+      queries: queries.slice(advancingQueryStart),
+      reportedGas: Object.fromEntries(
+        Object.entries(witnessed.gasCost).map(([key, value]) => [key, value.toString()]),
+      ),
+    },
+  };
+}
 
 process.stdout.write(JSON.stringify(fixture, null, 2) + '\n');

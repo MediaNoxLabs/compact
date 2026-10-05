@@ -2646,24 +2646,42 @@ fn render_recorded_item(
                 let declaration = witnesses
                     .get(name.as_str())
                     .ok_or_else(|| RenderError::UnknownWitness(name.clone()))?;
-                if declaration.result != Type::Unit
-                    || arguments.len() != declaration.parameters.len()
+                if arguments.len() != declaration.parameters.len() {
+                    return Err(RenderError::ArgumentCount {
+                        circuit: name.clone(),
+                        expected: declaration.parameters.len(),
+                        actual: arguments.len(),
+                    });
+                }
+                if declaration.result != Type::Unit && declaration.result != Type::Field {
+                    return Ok(unavailable_action(action, path));
+                }
+                if declaration.result == Type::Unit
+                    && !(arguments.is_empty()
+                        || matches!(declaration.parameters.as_slice(), [parameter] if parameter.ty == Type::OpaqueString))
                 {
                     return Ok(unavailable_action(action, path));
                 }
-                let args: Vec<syn::Expr> =
-                    match (arguments.as_slice(), declaration.parameters.as_slice()) {
-                        ([], []) => Vec::new(),
-                        ([value], [parameter]) if parameter.ty == Type::OpaqueString => {
-                            let Some(value) =
-                                cell_source(value, &Type::OpaqueString, locals, parameters)
-                            else {
-                                return Ok(unavailable_action(action, path));
-                            };
-                            vec![value]
-                        }
-                        _ => return Ok(unavailable_action(action, path)),
+                let mut args = Vec::new();
+                for (index, (argument, parameter)) in
+                    arguments.iter().zip(&declaration.parameters).enumerate()
+                {
+                    let Some(value) = cell_source(argument, &parameter.ty, locals, parameters)
+                    else {
+                        return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
+                            argument,
+                            format!("{path}.value.arguments[{index}]"),
+                        )));
                     };
+                    let ty = rust_type(&parameter.ty)?;
+                    let arg = syn::Ident::new(
+                        &format!("__compact_recorded_witness_arg_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    steps.push(syn::parse_quote!(let #arg: #ty = #value;));
+                    args.push(arg);
+                }
                 let method = ident(name)?;
                 steps.push(syn::parse_quote! {
                     let (frame, _) = frame.try_witness_metered(|context, meter| {

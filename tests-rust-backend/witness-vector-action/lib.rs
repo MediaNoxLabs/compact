@@ -235,6 +235,31 @@ pub mod ledger_contract {
             let frame = crate::ledger_slots::stored.record_write(frame, __compact_witness_1)?;
             Ok(frame.finish(()))
         }
+        pub fn discardResult<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_witness_arg_0: runtime::FixedVector<runtime::Field, 2> = {
+                let __compact_cast_source_0 =
+                    (runtime::Field::from(0u128), runtime::Field::from(1u128));
+                let (__compact_cast_item_0_0, __compact_cast_item_0_1) = __compact_cast_source_0;
+                runtime::FixedVector::new([__compact_cast_item_0_0, __compact_cast_item_0_1])
+            };
+            let (frame, _) = frame.try_witness_metered(|context, meter| {
+                witnesses.sumWitness(
+                    context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }),
+                    __compact_recorded_witness_arg_0,
+                )
+            })?;
+            let frame =
+                crate::ledger_slots::stored.record_write(frame, runtime::Field::from(7u128))?;
+            Ok(frame.finish(()))
+        }
         pub fn reuseResult<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
@@ -298,6 +323,36 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "keepResult",
+                    input,
+                ))
+            }
+            pub fn discardResult<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                discardResult(context, self.witnesses)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn discardResult_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.discardResult(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "discardResult",
                     input,
                 ))
             }

@@ -52,6 +52,7 @@ LIST_SOURCE = ROOT / "examples/rust_backend/list_field.compact"
 MERKLE_SOURCE = ROOT / "examples/rust_backend/merkle_tree_oracle.compact"
 MERKLE_VERIFY_SOURCE = ROOT / "examples/rust_backend/merkle_path_verify.compact"
 PERSISTENT_COMMIT_SOURCE = ROOT / "examples/rust_backend/call_arg_declared_type.compact"
+WITNESS_VECTOR_ACTION_SOURCE = ROOT / "examples/rust_backend/witness_vector_action.compact"
 INTERNAL_PURE_CALL_SOURCE = ROOT / "examples/rust_backend/internal_pure_call.compact"
 STATEFUL_PURE_CALL_SOURCE = ROOT / "examples/rust_backend/stateful_pure_call.compact"
 FIELD_CAST_UINT128_SOURCE = ROOT / "examples/rust_backend/field_cast_uint128.compact"
@@ -1414,6 +1415,7 @@ def main() -> None:
             for name in ("commitSmall", "commitU128", "commitFieldOnly",
                          "pureBodyFieldOnly", "pureBodyVec",
                          "bridgeTupleIntoVec", "bridgeVecIntoTuple",
+                         "witnessBare",
                          "pureFromImpure", "impureBare", "impureInIfArm",
                          "inlinedAssert"):
                 capability = next(circuit for circuit in capabilities["circuits"]
@@ -1430,6 +1432,12 @@ def main() -> None:
             for extension in ("zkir", "bzkir"):
                 assert (persistent_commit_proof / "zkir" /
                         f"bridgeTupleIntoVec.{extension}").is_file()
+            for extension in ("prover", "verifier"):
+                assert (persistent_commit_proof / "keys" /
+                        f"witnessBare.{extension}").is_file()
+            for extension in ("zkir", "bzkir"):
+                assert (persistent_commit_proof / "zkir" /
+                        f"witnessBare.{extension}").is_file()
             for name in ("impureBare", "impureInIfArm", "inlinedAssert"):
                 for extension in ("prover", "verifier"):
                     assert (persistent_commit_proof / "keys" /
@@ -1437,6 +1445,23 @@ def main() -> None:
                 for extension in ("zkir", "bzkir"):
                     assert (persistent_commit_proof / "zkir" /
                             f"{name}.{extension}").is_file()
+            witness_vector_action_proof = base / "witness-vector-action-proof"
+            run(compiler, "--target", "rust", "--rust-require-recording",
+                str(WITNESS_VECTOR_ACTION_SOURCE), str(witness_vector_action_proof))
+            check_manifest(witness_vector_action_proof)
+            capabilities = json.loads(
+                (witness_vector_action_proof / "contract/rust-capabilities.json").read_text()
+            )
+            discard = next(circuit for circuit in capabilities["circuits"]
+                           if circuit["name"] == "discardResult")
+            assert discard["proof_required"] and discard["recorded"] \
+                and discard["observed_call"]
+            for extension in ("prover", "verifier"):
+                assert (witness_vector_action_proof / "keys" /
+                        f"discardResult.{extension}").is_file()
+            for extension in ("zkir", "bzkir"):
+                assert (witness_vector_action_proof / "zkir" /
+                        f"discardResult.{extension}").is_file()
             internal_pure_call_proof = base / "internal-pure-call-proof"
             run(compiler, "--target", "rust", str(INTERNAL_PURE_CALL_SOURCE),
                 str(internal_pure_call_proof))
@@ -1684,6 +1709,14 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--persistent-commit", str(persistent_commit_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--witness-vector-bare", str(persistent_commit_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--witness-vector-discard", str(witness_vector_action_proof),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

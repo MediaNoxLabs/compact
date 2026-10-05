@@ -322,63 +322,66 @@ fn recorded_vector_witness_let_matches_typescript_and_advances_private_state_onc
         "../../../runtime-rs/tests/fixtures/call-arg-declared-type.json"
     ))
     .unwrap();
-    let expected = &oracle["witnessConstAdvanced"];
-    let native_witness = AdvancingWitness::default();
-    let recorded_witness = AdvancingWitness::default();
-    let native = witnessConst(
-        initial_state(ConstructorContext::new(7_u64))
+    for name in ["witnessConst", "witnessBare"] {
+        let expected = &oracle[format!("{name}Advanced")];
+        let native_witness = AdvancingWitness::default();
+        let recorded_witness = AdvancingWitness::default();
+        let native_context = initial_state(ConstructorContext::new(7_u64))
             .unwrap()
-            .into_circuit_context(ContractAddress::default()),
-        &native_witness,
-    )
-    .unwrap();
-    let recorded =
-        compact_rust_call_arg_declared_type_fixture::ledger_contract::recorded::witnessConst(
-            initial_state(ConstructorContext::new(7_u64))
-                .unwrap()
-                .into_circuit_context(ContractAddress::default()),
-            &recorded_witness,
-        )
-        .unwrap();
-    assert_eq!(&*native_witness.calls.borrow(), &[7]);
-    assert_eq!(&*recorded_witness.calls.borrow(), &[7]);
-    assert_eq!(
-        expected["witnessCalls"],
-        serde_json::json!([{"privateState": 7, "values": ["0", "1"]}])
-    );
-    assert_eq!(native.context.private_state, 8);
-    assert_eq!(recorded.execution.context.private_state, 8);
-    assert_eq!(expected["privateState"], 8);
-    boolean_observation_assertions::assert_ts_trace(
-        "witnessConst",
-        &native,
-        &recorded,
-        &expected["trace"],
-    );
-    assert_eq!(
-        recorded.execution.context.query.state.get_ref(),
-        native.context.query.state.get_ref(),
-    );
-    assert_eq!(
-        state_hex(recorded.execution.context.query.state.get_ref().clone()),
-        expected["stateHex"],
-    );
-    for output in [
-        &native.private_transcript_outputs,
-        &recorded.execution.private_transcript_outputs,
-    ] {
-        let actual = output
-            .iter()
-            .map(|item| {
-                serde_json::json!({
-                    "valueAtoms": item.value.0.iter().map(|atom| &atom.0).collect::<Vec<_>>(),
-                    "alignment": item.alignment,
-                })
-            })
-            .collect::<Vec<_>>();
+            .into_circuit_context(ContractAddress::default());
+        let recorded_context = initial_state(ConstructorContext::new(7_u64))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default());
+        let native = match name {
+            "witnessConst" => witnessConst(native_context, &native_witness).unwrap(),
+            "witnessBare" => witnessBare(native_context, &native_witness).unwrap(),
+            _ => unreachable!(),
+        };
+        let recorded = match name {
+            "witnessConst" => compact_rust_call_arg_declared_type_fixture::ledger_contract::recorded::witnessConst(recorded_context, &recorded_witness).unwrap(),
+            "witnessBare" => compact_rust_call_arg_declared_type_fixture::ledger_contract::recorded::witnessBare(recorded_context, &recorded_witness).unwrap(),
+            _ => unreachable!(),
+        };
+        assert_eq!(&*native_witness.calls.borrow(), &[7]);
+        assert_eq!(&*recorded_witness.calls.borrow(), &[7]);
         assert_eq!(
-            serde_json::to_value(actual).unwrap(),
-            expected["privateTranscriptOutputs"]
+            expected["witnessCalls"],
+            serde_json::json!([{"privateState": 7, "values": ["0", "1"]}])
         );
+        assert_eq!(native.context.private_state, 8);
+        assert_eq!(recorded.execution.context.private_state, 8);
+        assert_eq!(expected["privateState"], 8);
+        boolean_observation_assertions::assert_ts_trace(
+            name,
+            &native,
+            &recorded,
+            &expected["trace"],
+        );
+        assert_eq!(
+            recorded.execution.context.query.state.get_ref(),
+            native.context.query.state.get_ref(),
+        );
+        assert_eq!(
+            state_hex(recorded.execution.context.query.state.get_ref().clone()),
+            expected["stateHex"],
+        );
+        for output in [
+            &native.private_transcript_outputs,
+            &recorded.execution.private_transcript_outputs,
+        ] {
+            let actual = output
+                .iter()
+                .map(|item| {
+                    serde_json::json!({
+                        "valueAtoms": item.value.0.iter().map(|atom| &atom.0).collect::<Vec<_>>(),
+                        "alignment": item.alignment,
+                    })
+                })
+                .collect::<Vec<_>>();
+            assert_eq!(
+                serde_json::to_value(actual).unwrap(),
+                expected["privateTranscriptOutputs"]
+            );
+        }
     }
 }

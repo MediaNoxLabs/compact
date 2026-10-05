@@ -19,7 +19,41 @@
           }
         ]
       }
-    ]
+    ],
+    "trace": {
+      "publicTranscriptShape": [
+        {
+          "kind": "push",
+          "storage": false
+        },
+        {
+          "kind": "push",
+          "storage": true
+        },
+        {
+          "kind": "ins",
+          "cached": false,
+          "n": 1
+        }
+      ],
+      "privateTranscriptCount": 1,
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1233942932",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          }
+        }
+      ],
+      "reportedGas": {
+        "readTime": "85000000",
+        "computeTime": "1233942932",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      }
+    }
   },
   "discardResult": {
     "calls": 1,
@@ -41,7 +75,41 @@
           }
         ]
       }
-    ]
+    ],
+    "trace": {
+      "publicTranscriptShape": [
+        {
+          "kind": "push",
+          "storage": false
+        },
+        {
+          "kind": "push",
+          "storage": true
+        },
+        {
+          "kind": "ins",
+          "cached": false,
+          "n": 1
+        }
+      ],
+      "privateTranscriptCount": 1,
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1233942932",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          }
+        }
+      ],
+      "reportedGas": {
+        "readTime": "85000000",
+        "computeTime": "1233942932",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      }
+    }
   },
   "reuseResult": {
     "calls": 1,
@@ -63,6 +131,61 @@
           }
         ]
       }
-    ]
+    ],
+    "trace": {
+      "publicTranscriptShape": [
+        {
+          "kind": "push",
+          "storage": false
+        },
+        {
+          "kind": "push",
+          "storage": true
+        },
+        {
+          "kind": "ins",
+          "cached": false,
+          "n": 1
+        },
+        {
+          "kind": "push",
+          "storage": false
+        },
+        {
+          "kind": "push",
+          "storage": true
+        },
+        {
+          "kind": "ins",
+          "cached": false,
+          "n": 1
+        }
+      ],
+      "privateTranscriptCount": 1,
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1233942932",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1233942932",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          }
+        }
+      ],
+      "reportedGas": {
+        "readTime": "85000000",
+        "computeTime": "1233942932",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      }
+    }
   }
 }

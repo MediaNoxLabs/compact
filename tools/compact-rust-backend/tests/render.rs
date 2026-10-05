@@ -4479,6 +4479,76 @@ fn standalone_unit_witness_is_recorded_only_with_its_exact_signature() {
 }
 
 #[test]
+fn standalone_field_witness_records_typed_argument_but_rejects_nested_effects() {
+    let mut contract = Contract {
+        schema_version: 12,
+        type_aliases: vec![],
+        constructor: None,
+        witnesses: vec![WitnessDeclaration {
+            source: None,
+            name: "secret".into(),
+            parameters: vec![Parameter {
+                name: "seed".into(),
+                ty: Type::Field,
+            }],
+            result: Type::Field,
+        }],
+        ledger_fields: vec![LedgerField {
+            source: None,
+            id: "round".into(),
+            index: 0,
+            path: vec![],
+            declaration: LedgerFieldKind::Counter,
+        }],
+        circuits: vec![],
+        stateful_circuits: vec![StatefulCircuit {
+            source: None,
+            internal: false,
+            name: "run".into(),
+            parameters: vec![],
+            result: Type::Unit,
+            return_value: StateReturn::Unit,
+            actions: vec![
+                StateAction::Expression {
+                    value: Expr::WitnessCall {
+                        name: "secret".into(),
+                        arguments: vec![Expr::FieldLiteral { value: "1".into() }],
+                    },
+                },
+                StateAction::CounterIncrement {
+                    field: "round".into(),
+                    index: 0,
+                    amount: CounterAmount::Literal { value: 1 },
+                },
+            ],
+        }],
+    };
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].observed_call);
+    assert!(rendered.source.contains("__compact_recorded_witness_arg_0"));
+    assert!(rendered.source.contains(".try_witness_metered"));
+
+    let StateAction::Expression {
+        value: Expr::WitnessCall { arguments, .. },
+    } = &mut contract.stateful_circuits[0].actions[0]
+    else {
+        unreachable!()
+    };
+    arguments[0] = Expr::WitnessCall {
+        name: "secret".into(),
+        arguments: vec![Expr::FieldLiteral { value: "2".into() }],
+    };
+    let rejected = render_with_capabilities(&contract).unwrap();
+    let gap = rejected.capabilities.circuits[0]
+        .recording_unavailable
+        .as_ref()
+        .unwrap();
+    assert_eq!(gap.code.as_str(), "unsupported_expression");
+    assert_eq!(gap.path, "actions[0].value.arguments[0]");
+}
+
+#[test]
 fn boolean_pair_hash_cell_assertion_records_read_before_counter_write() {
     let vector = Type::Vector {
         element: Box::new(Type::Field),

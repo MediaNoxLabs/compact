@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
 // Licensed under the Apache License, Version 2.0 (the "License");
-// You may not use this file except in compliance with the License.
+// you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
 //   http://www.apache.org/licenses/LICENSE-2.0
@@ -13,10 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Prove an ordered Field witness Let whose formal is a typed Field vector.
+//! Prove an ordered discarded Field witness call with a typed vector argument.
 
 use super::*;
-use compact_rust_call_arg_declared_type_fixture::ledger_contract as contract;
+use compact_rust_witness_vector_action_fixture::ledger_contract as contract;
 
 struct Sum;
 
@@ -27,37 +27,33 @@ impl contract::Witnesses<u64> for Sum {
         values: FixedVector<Field, 2>,
     ) -> (u64, Field) {
         assert_eq!(values.0, [Field::from(0_u64), Field::from(1_u64)]);
-        (*context.private_state + 1, values.0[0] + values.0[1])
+        (
+            *context.private_state + 1,
+            values.0[0] + values.0[1] + Field::from(*context.private_state),
+        )
     }
 }
 
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
-    run_named(root, false)
-}
-
-pub(super) fn run_bare(root: &Path) -> Result<(), Box<dyn Error>> {
-    run_named(root, true)
-}
-
-fn run_named(root: &Path, bare: bool) -> Result<(), Box<dyn Error>> {
-    let name = if bare { "witnessBare" } else { "witnessConst" };
-    let mut rng = StdRng::seed_from_u64(0x0094_5749_544e_4553);
+    let mut rng = StdRng::seed_from_u64(0x4449_5343_4152_4437);
     let initial = contract::initial_state(ConstructorContext::new(7_u64))?;
-    let deploy = make_deploy(root, name, initial.ledger_state.get_ref().clone(), &mut rng)?;
+    let deploy = make_deploy(
+        root,
+        "discardResult",
+        initial.ledger_state.get_ref().clone(),
+        &mut rng,
+    )?;
     let generated = contract::Contract::from(Sum);
-    let context = initial.into_circuit_context(deploy.address());
-    let recorded = if bare {
-        generated.recording().witnessBare(context)?
-    } else {
-        generated.recording().witnessConst(context)?
-    };
+    let recorded = generated
+        .recording()
+        .discardResult(initial.into_circuit_context(deploy.address()))?;
     if recorded.execution.context.private_state != 8
         || recorded.execution.private_transcript_outputs.len() != 1
     {
-        return Err("recorded vector witness lost its private effects".into());
+        return Err("recorded discarded witness lost its private effects".into());
     }
     let expected_state = recorded.execution.context.query.state.get_ref().clone();
-    let manual = check_generated_trace(root, name, recorded, ())?;
+    let manual = check_generated_trace(root, "discardResult", recorded, ())?;
 
     let observed = ObservedContractState::new(
         deploy.address(),
@@ -69,31 +65,27 @@ fn run_named(root: &Path, bare: bool) -> Result<(), Box<dyn Error>> {
         },
     );
     let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
-        root.join(format!("keys/{name}.verifier")),
+        root.join("keys/discardResult.verifier"),
     )?))?;
-    let typed = if bare {
-        generated.recording().witnessBare_call(&observed, 7_u64)?
-    } else {
-        generated.recording().witnessConst_call(&observed, 7_u64)?
-    };
+    let typed = generated.recording().discardResult_call(&observed, 7_u64)?;
     let prepared = typed.prepare(verifier, Fr::from(0_u64))?;
     if format!("{manual:?}") != format!("{prepared:?}") {
-        return Err("observed vector witness differs from direct recorded call".into());
+        return Err("observed discarded witness differs from direct recorded call".into());
     }
 
-    check_transaction(root, name, deploy, prepared, &mut rng, |state| {
+    check_transaction(root, "discardResult", deploy, prepared, &mut rng, |state| {
         if state.data.get_ref() != &expected_state {
-            return Err("proven vector witness changed the expected ledger state".into());
+            return Err("proven discarded witness changed the expected ledger state".into());
         }
         let StateValue::Array(fields) = state.data.get_ref() else {
-            return Err("vector witness state is not an array".into());
+            return Err("discarded witness state is not an array".into());
         };
-        let stored: Field = read_cell(fields.get(3).ok_or("Field Cell missing")?)?;
-        if stored != Field::from(if bare { 7_u64 } else { 1_u64 }) {
-            return Err("proven vector witness stored a wrong Field value".into());
+        let stored: Field = read_cell(fields.get(0).ok_or("stored Cell missing")?)?;
+        if stored != Field::from(7_u64) {
+            return Err("proven discarded witness stored a wrong Field value".into());
         }
         Ok(())
     })?;
-    println!("typed vector witness {name} proved and applied through ledger-8");
+    println!("typed vector witness discardResult proved and applied through ledger-8");
     Ok(())
 }

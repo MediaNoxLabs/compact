@@ -32,6 +32,37 @@ const contract = new Contract({
   },
 });
 const coinPublicKey = { bytes: new Uint8Array(32) };
+const queries = [];
+const originalQuery = runtime.QueryContext.prototype.query;
+runtime.QueryContext.prototype.query = function (...args) {
+  const result = originalQuery.call(this, ...args);
+  queries.push({
+    gasCost: Object.fromEntries(
+      Object.entries(result.gasCost).map(([key, value]) => [key, value.toString()]),
+    ),
+  });
+  return result;
+};
+
+function operationShape(operation) {
+  if (typeof operation === 'string') return { kind: operation };
+  if (operation.idx) {
+    const { cached, pushPath, path } = operation.idx;
+    return { kind: 'idx', cached, pushPath, pathLength: path.length };
+  }
+  if (operation.push) return { kind: 'push', storage: operation.push.storage };
+  if (operation.addi) return { kind: 'addi', immediate: operation.addi.immediate };
+  if (operation.ins) return { kind: 'ins', cached: operation.ins.cached, n: operation.ins.n };
+  if (operation.rem) return { kind: 'rem', cached: operation.rem.cached };
+  if (operation.dup) return { kind: 'dup', n: operation.dup.n };
+  if (operation.popeq) {
+    return {
+      kind: 'popeq', cached: operation.popeq.cached,
+      resultAtoms: operation.popeq.result.value.map((atom) => Array.from(atom)),
+    };
+  }
+  throw new Error(`unexpected operation: ${Object.keys(operation)}`);
+}
 
 function scenario(name) {
   calls = 0;
@@ -43,6 +74,7 @@ function scenario(name) {
     runtime.dummyContractAddress(), coinPublicKey,
     initial.currentContractState.data, initial.currentPrivateState,
   );
+  const queryStart = queries.length;
   const result = contract.circuits[name](context);
   initial.currentContractState.data = new runtime.ChargedState(
     result.context.currentQueryContext.state.state,
@@ -57,6 +89,14 @@ function scenario(name) {
         alignment,
       }),
     ),
+    trace: {
+      publicTranscriptShape: result.proofData.publicTranscript.map(operationShape),
+      privateTranscriptCount: result.proofData.privateTranscriptOutputs.length,
+      queries: queries.slice(queryStart),
+      reportedGas: Object.fromEntries(
+        Object.entries(result.gasCost).map(([key, value]) => [key, value.toString()]),
+      ),
+    },
   };
 }
 

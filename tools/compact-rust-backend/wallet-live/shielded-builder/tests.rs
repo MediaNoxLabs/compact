@@ -58,6 +58,9 @@ fn candidate_profile_is_exact_and_remains_a_candidate() -> Result<()> {
         changed[name] = json!("unknown");
         assert!(validate_node_profile(&changed).is_err());
     }
+    let mut unknown = valid.clone();
+    unknown["nodeLedgerConstraint"] = json!("=8.0.3");
+    assert!(validate_node_profile(&unknown).is_err());
     let mut accepted = valid.clone();
     accepted["compatibilityStatus"] = json!("accepted");
     assert!(validate_node_profile(&accepted).is_err());
@@ -96,7 +99,7 @@ fn checkpoint_file(
         .serialize(&mut root_bytes)?;
     let block = hex::encode([step; 32]);
     let height = step.to_string();
-    let value = json!({"format":FORMAT,"kind":"checkpoint","metadata":{"networkId":"local-test","ledgerVersion":"8.0.3","nodeLedgerConstraint":"=8.0.3","addressHex":hex::encode(address.0.0),"transactionHash":block,"blockHash":block,"blockHeight":height,"parentBlockHash":hex::encode([step.saturating_sub(1);32]),"nodeZswapRootHex":hex::encode(root_bytes),"firstFree":state.ledger.zswap.first_free.to_string(),"finalZswapEventId":height},"wallet":{"networkId":"local-test","ledgerVersion":"8.0.3","blockHash":block,"blockHeight":height,"appliedEventId":height,"walletStateSha256":wallet_ref["sha256"]},"files":{"nodeContract":node_ref,"contractTree":tree_ref,"walletState":wallet_ref}});
+    let value = json!({"format":FORMAT,"kind":"checkpoint","metadata":{"networkId":"local-test","ledgerVersion":"8.0.3","nodeLedgerConstraint":"=8.0.3","compatibilityProfile":"offline-ledger-8.0.3-fixture","compatibilityStatus":"offline-not-live","addressHex":hex::encode(address.0.0),"transactionHash":block,"blockHash":block,"blockHeight":height,"parentBlockHash":hex::encode([step.saturating_sub(1);32]),"nodeZswapRootHex":hex::encode(root_bytes),"firstFree":state.ledger.zswap.first_free.to_string(),"finalZswapEventId":height},"wallet":{"networkId":"local-test","ledgerVersion":"8.0.3","blockHash":block,"blockHeight":height,"appliedEventId":height,"walletStateSha256":wallet_ref["sha256"]},"files":{"nodeContract":node_ref,"contractTree":tree_ref,"walletState":wallet_ref}});
     // Negative transport consistency controls use actual upstream bytes.
     let mut wrong = value.clone();
     wrong["metadata"]["nodeLedgerConstraint"] = json!("=8.0.2");

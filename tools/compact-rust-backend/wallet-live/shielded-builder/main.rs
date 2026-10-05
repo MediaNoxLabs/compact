@@ -233,7 +233,13 @@ fn validate_node_profile(metadata: &Value) -> Result<()> {
     if text(metadata, "ledgerVersion")? != "8.0.3" {
         return Err("unsupported decoder version".into());
     }
-    if text(metadata, "nodeLedgerConstraint")? == "=8.0.3" {
+    // Only test fixtures possess a complete reference 8.0.3 state. This
+    // branch does not exist in the acceptance CLI and cannot admit a node.
+    #[cfg(test)]
+    if metadata["compatibilityProfile"] == "offline-ledger-8.0.3-fixture"
+        && metadata["compatibilityStatus"] == "offline-not-live"
+        && metadata["nodeLedgerConstraint"] == "=8.0.3"
+    {
         return Ok(());
     }
     let pins = [

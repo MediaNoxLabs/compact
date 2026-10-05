@@ -295,6 +295,48 @@ fn recordable_cell_type(ty: &Type) -> bool {
     }
 }
 
+/// Opaque string recording is admitted for the proved assertion → insertion
+/// → Unit witness sequence. Other opaque APIs need their own TS/ledger proof
+/// parity before the capability report can advertise them.
+fn proved_opaque_set_sequence(circuit: &StatefulCircuit) -> bool {
+    let [parameter] = circuit.parameters.as_slice() else {
+        return false;
+    };
+    if parameter.ty != Type::OpaqueString
+        || circuit.result != Type::Unit
+        || circuit.return_value != StateReturn::Unit
+    {
+        return false;
+    }
+    let [
+        StateAction::Assert {
+            condition: Expr::SetMember { value: member, .. },
+            ..
+        },
+        StateAction::SetInsert {
+            value: inserted, ..
+        },
+        StateAction::Expression {
+            value: Expr::WitnessCall { arguments, .. },
+        },
+    ] = circuit.actions.as_slice()
+    else {
+        return false;
+    };
+    let [
+        Expr::Coerce {
+            value: witnessed,
+            ty: Type::OpaqueString,
+        },
+    ] = arguments.as_slice()
+    else {
+        return false;
+    };
+    [member.as_ref(), inserted, witnessed.as_ref()]
+        .iter()
+        .all(|value| matches!(value, Expr::Parameter { name } if name == &parameter.name))
+}
+
 /// A pure Field call may be evaluated while recording only when its whole
 /// transitive body is scalar arithmetic. Hashes and other primitives need
 /// their own VM/gas parity decision before they can join this path.
@@ -1027,6 +1069,7 @@ fn render_recorded_item(
                 | Type::JubjubPoint
                 | Type::Bytes { .. }
                 | Type::Unsigned { .. }
+                | Type::OpaqueString
                 | Type::Enum { .. }
                 | Type::Struct { .. }
                 | Type::Tuple { .. }
@@ -1070,7 +1113,9 @@ fn render_recorded_item(
                 let variant = ident(variant).ok()?;
                 Some(syn::parse_quote!(#rust_ty::#variant))
             }
-            Expr::Default { ty: default_ty } if default_ty == ty => {
+            Expr::Default { ty: default_ty }
+                if default_ty == ty && !matches!(ty, Type::OpaqueString) =>
+            {
                 let rust_ty = rust_type(ty).ok()?;
                 Some(syn::parse_quote!(<#rust_ty as Default>::default()))
             }
@@ -2301,6 +2346,7 @@ fn render_recorded_item(
                     ty,
                     Type::Field
                         | Type::Boolean
+                        | Type::OpaqueString
                         | Type::Enum { .. }
                         | Type::Tuple { .. }
                         | Type::Struct { .. }
@@ -2422,6 +2468,7 @@ fn render_recorded_item(
             ),
             Type::Bytes { .. }
             | Type::Unsigned { .. }
+            | Type::OpaqueString
             | Type::Enum { .. }
             | Type::Struct { .. }
             | Type::Tuple { .. }
@@ -2599,19 +2646,31 @@ fn render_recorded_item(
                 let declaration = witnesses
                     .get(name.as_str())
                     .ok_or_else(|| RenderError::UnknownWitness(name.clone()))?;
-                if !arguments.is_empty()
-                    || !declaration.parameters.is_empty()
-                    || declaration.result != Type::Unit
+                if declaration.result != Type::Unit
+                    || arguments.len() != declaration.parameters.len()
                 {
                     return Ok(unavailable_action(action, path));
                 }
+                let args: Vec<syn::Expr> =
+                    match (arguments.as_slice(), declaration.parameters.as_slice()) {
+                        ([], []) => Vec::new(),
+                        ([value], [parameter]) if parameter.ty == Type::OpaqueString => {
+                            let Some(value) =
+                                cell_source(value, &Type::OpaqueString, locals, parameters)
+                            else {
+                                return Ok(unavailable_action(action, path));
+                            };
+                            vec![value]
+                        }
+                        _ => return Ok(unavailable_action(action, path)),
+                    };
                 let method = ident(name)?;
                 steps.push(syn::parse_quote! {
                     let (frame, _) = frame.try_witness_metered(|context, meter| {
                         witnesses.#method(context.witness_context_with(super::LedgerView {
                             state: context.query.state.get_ref(),
                             meter,
-                        }))
+                        }), #(#args),*)
                     })?;
                 });
                 Ok(RecordingOutcome::Supported(()))
@@ -3585,7 +3644,9 @@ fn render_recorded_item(
                         | Type::Tuple { .. }
                         | Type::Struct { .. }
                         | Type::Vector { .. }
-                ) {
+                ) && !(*ty == Type::OpaqueString
+                    && matches!(action, StateAction::SetInsert { .. }))
+                {
                     return Ok(unavailable_action(action, path));
                 }
                 let value = scalar_expression(
@@ -4696,6 +4757,19 @@ fn render_recorded_item(
     };
     if steps.is_empty() && return_steps.is_empty() {
         return Ok(RecordingOutcome::Unsupported(RecordingGap::no_effect()));
+    }
+    if circuit
+        .parameters
+        .iter()
+        .any(|parameter| parameter.ty == Type::OpaqueString)
+        && !proved_opaque_set_sequence(circuit)
+    {
+        return Ok(RecordingOutcome::Unsupported(
+            match circuit.actions.first() {
+                Some(action) => RecordingGap::action(action, "actions[0]".to_owned()),
+                None => RecordingGap::returned(&circuit.return_value),
+            },
+        ));
     }
 
     let uses_witness = circuit_uses_witness(circuit, circuits, &mut HashSet::new())?;

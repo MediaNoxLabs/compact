@@ -39,6 +39,7 @@ mod stateful_pair_hash;
 mod stateful_pure_return;
 mod test_center_counter;
 mod unsigned_recording;
+mod test_center_welcome;
 mod witness_assert;
 mod witness_vector_let;
 
@@ -1134,6 +1135,17 @@ fn main() -> Result<(), Box<dyn Error>> {
             );
         }
         return test_center_counter::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--test-center-welcome")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --test-center-welcome <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --test-center-welcome <proof-output>".into(),
+            );
+        }
+        return test_center_welcome::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--conditional-set")) {
         let root = arguments

@@ -36,14 +36,81 @@ runtime.QueryContext.prototype.query = function (...args) {
 };
 
 const witnessCalls = [];
+const checkInWitnessCalls = [];
 const contract = new Contract({
   local_sk: ({ privateState }) => {
     witnessCalls.push(privateState);
     return [privateState, { is_some: true, value: new Uint8Array(32) }];
   },
-  set_local_id: ({ privateState }) => [privateState, []],
+  set_local_id: ({ privateState }, participant) => {
+    checkInWitnessCalls.push({ privateState, participant });
+    return [privateState + 1, []];
+  },
 });
 const coinPublicKey = { bytes: new Uint8Array(32) };
+const stateHex = (state) => Buffer.from(state.serialize()).toString('hex');
+function stateAfter(initial, queryState) {
+  const state = new runtime.ContractState();
+  state.data = new runtime.ChargedState(queryState);
+  for (const entry of initial.currentContractState.operations()) {
+    state.setOperation(entry, initial.currentContractState.operation(entry));
+  }
+  state.maintenanceAuthority = initial.currentContractState.maintenanceAuthority;
+  state.balance = initial.currentContractState.balance;
+  return stateHex(state);
+}
+function shape(operation) {
+  if (typeof operation === 'string') return { kind: operation };
+  const [kind, details] = Object.entries(operation)[0];
+  if (kind === 'idx') return { kind, cached: details.cached, pushPath: details.pushPath, pathLength: details.path.length };
+  if (kind === 'push') return { kind, storage: details.storage };
+  if (kind === 'ins') return { kind, cached: details.cached, n: details.n };
+  if (kind === 'popeq') return { kind, cached: details.cached, resultAtoms: details.result.value.map((atom) => Array.from(atom)) };
+  if (kind === 'branch' || kind === 'jmp') return { kind, skip: details.skip };
+  if (kind === 'swap' || kind === 'dup' || kind === 'concat') return { kind, n: details.n, cached: details.cached };
+  throw new Error(`unexpected check-in VM operation: ${kind}`);
+}
+function captureCheckIn(initial, participant) {
+  const context = runtime.createCircuitContext(
+    runtime.dummyContractAddress(), coinPublicKey,
+    initial.currentContractState.data, initial.currentPrivateState,
+  );
+  const before = stateHex(initial.currentContractState);
+  const queryStart = queries.length;
+  const witnessStart = checkInWitnessCalls.length;
+  try {
+    const output = contract.circuits.check_in(context, participant);
+    return {
+      success: true,
+      participant,
+      initialStateHex: before,
+      afterStateHex: stateAfter(initial, output.context.currentQueryContext.state.state),
+      privateState: output.context.currentPrivateState,
+      result: output.result,
+      gasCost: Object.fromEntries(Object.entries(output.gasCost).map(([key, value]) => [key, value.toString()])),
+      publicTranscriptShape: output.proofData.publicTranscript.map(shape),
+      privateTranscriptCount: output.proofData.privateTranscriptOutputs.length,
+      privateTranscriptOutputs: output.proofData.privateTranscriptOutputs.map(({ value, alignment }) => ({
+        valueAtoms: value.map((atom) => Array.from(atom)),
+        alignment,
+      })),
+      queries: queries.slice(queryStart),
+      witnessCalls: checkInWitnessCalls.slice(witnessStart),
+    };
+  } catch (error) {
+    return {
+      success: false,
+      participant,
+      initialStateHex: before,
+      afterStateHex: stateAfter(initial, context.currentQueryContext.state.state),
+      privateState: context.currentPrivateState,
+      error: error.message,
+      compactError: error.constructor.name === 'CompactError',
+      queries: queries.slice(queryStart),
+      witnessCalls: checkInWitnessCalls.slice(witnessStart),
+    };
+  }
+}
 const cases = [];
 for (const present of [false, true]) {
   queries.length = 0;
@@ -67,6 +134,7 @@ for (const present of [false, true]) {
     eligibleSize: view.eligible_participants.size().toString(),
     organizerSize: view.organizer_pks.size().toString(),
     constructorQueries,
+    checkIn: captureCheckIn(initial, present ? 'alice' : 'bob'),
   });
 }
 process.stdout.write(JSON.stringify({

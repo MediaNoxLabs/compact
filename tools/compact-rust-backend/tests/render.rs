@@ -48,6 +48,151 @@ fn identity(result: Type, body: Expr) -> Contract {
 }
 
 #[test]
+fn opaque_set_check_in_records_only_typed_parameter_and_unit_witness() {
+    let opaque = Type::OpaqueString;
+    let parameter = Parameter {
+        name: "participant".into(),
+        ty: opaque.clone(),
+    };
+    let key = Expr::Parameter {
+        name: "participant".into(),
+    };
+    let mut contract = Contract {
+        schema_version: 12,
+        type_aliases: vec![],
+        constructor: None,
+        witnesses: vec![WitnessDeclaration {
+            source: None,
+            name: "set_local_id".into(),
+            parameters: vec![parameter.clone()],
+            result: Type::Unit,
+        }],
+        ledger_fields: vec![
+            LedgerField {
+                source: None,
+                id: "eligible".into(),
+                index: 0,
+                path: vec![],
+                declaration: LedgerFieldKind::Set { ty: opaque.clone() },
+            },
+            LedgerField {
+                source: None,
+                id: "checked".into(),
+                index: 1,
+                path: vec![],
+                declaration: LedgerFieldKind::Set { ty: opaque.clone() },
+            },
+        ],
+        circuits: vec![],
+        stateful_circuits: vec![StatefulCircuit {
+            source: None,
+            internal: false,
+            name: "check_in".into(),
+            parameters: vec![parameter],
+            result: Type::Unit,
+            return_value: StateReturn::Unit,
+            actions: vec![
+                StateAction::Assert {
+                    condition: Expr::SetMember {
+                        field: "eligible".into(),
+                        index: 0,
+                        value: Box::new(key.clone()),
+                    },
+                    message: "not eligible".into(),
+                },
+                StateAction::SetInsert {
+                    field: "checked".into(),
+                    index: 1,
+                    value: key.clone(),
+                },
+                StateAction::Expression {
+                    value: Expr::WitnessCall {
+                        name: "set_local_id".into(),
+                        arguments: vec![Expr::Coerce {
+                            value: Box::new(key),
+                            ty: opaque.clone(),
+                        }],
+                    },
+                },
+            ],
+        }],
+    };
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].observed_call);
+    assert!(rendered.source.contains("record_member"));
+    assert!(rendered.source.contains("record_insert"));
+    assert!(rendered.source.contains("try_witness_metered"));
+
+    let mut incomplete = contract.clone();
+    incomplete.stateful_circuits[0].actions.truncate(2);
+    let rejected = render_with_capabilities(&incomplete).unwrap();
+    assert!(!rejected.capabilities.circuits[0].recorded);
+    assert_eq!(
+        rejected.capabilities.circuits[0]
+            .recording_unavailable
+            .as_ref()
+            .unwrap()
+            .path,
+        "actions[0]"
+    );
+
+    let StateAction::Expression {
+        value: Expr::WitnessCall { arguments, .. },
+    } = &mut contract.stateful_circuits[0].actions[2]
+    else {
+        unreachable!()
+    };
+    arguments[0] = Expr::Default { ty: opaque.clone() };
+    let rejected = render_with_capabilities(&contract).unwrap();
+    assert!(!rejected.capabilities.circuits[0].recorded);
+    assert_eq!(
+        rejected.capabilities.circuits[0]
+            .recording_unavailable
+            .as_ref()
+            .unwrap()
+            .path,
+        "actions[2]"
+    );
+
+    contract.stateful_circuits[0].actions[2] = StateAction::SetRemove {
+        field: "checked".into(),
+        index: 1,
+        value: Expr::Parameter {
+            name: "participant".into(),
+        },
+    };
+    let rejected = render_with_capabilities(&contract).unwrap();
+    assert!(!rejected.capabilities.circuits[0].recorded);
+    assert_eq!(
+        rejected.capabilities.circuits[0]
+            .recording_unavailable
+            .as_ref()
+            .unwrap()
+            .path,
+        "actions[2]"
+    );
+
+    contract.stateful_circuits[0].parameters[0].ty = Type::OpaqueBytes;
+    contract.ledger_fields[0].declaration = LedgerFieldKind::Set {
+        ty: Type::OpaqueBytes,
+    };
+    contract.ledger_fields[1].declaration = LedgerFieldKind::Set {
+        ty: Type::OpaqueBytes,
+    };
+    let rejected = render_with_capabilities(&contract).unwrap();
+    assert!(!rejected.capabilities.circuits[0].recorded);
+    assert_eq!(
+        rejected.capabilities.circuits[0]
+            .recording_unavailable
+            .as_ref()
+            .unwrap()
+            .path,
+        "actions[0]"
+    );
+}
+
+#[test]
 fn closed_unsigned_ternary_comparison_records_only_matching_literal_arms() {
     let uint = Type::Unsigned { max: "255".into() };
     let narrow = Type::Unsigned { max: "1".into() };

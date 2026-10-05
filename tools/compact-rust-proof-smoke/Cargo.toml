@@ -25,6 +25,7 @@ description = "Ledger-8 proof compatibility gate for Rust Compact output"
 # Match midnight-ledger ledger-8.0.3's ZKIR and crypto graph.
 compact-rust-counter-fixture = { path = "../../tests-rust-backend/counter", features = ["ledger-transaction"] }
 compact-rust-test-center-counter-fixture = { path = "../../tests-rust-backend/test-center-counter", features = ["ledger-transaction"] }
+compact-rust-test-center-welcome-fixture = { path = "../../tests-rust-backend/test-center-welcome", features = ["ledger-transaction"] }
 compact-rust-call-arg-declared-type-fixture = { path = "../../tests-rust-backend/call-arg-declared-type", features = ["ledger-transaction"] }
 compact-rust-internal-pure-call-fixture = { path = "../../tests-rust-backend/internal-pure-call", features = ["ledger-transaction"] }
 compact-rust-stateful-pure-call-fixture = { path = "../../tests-rust-backend/stateful-pure-call", features = ["ledger-transaction"] }

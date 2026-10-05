@@ -8,7 +8,7 @@
 use std::cell::RefCell;
 
 use compact_rust_test_center_welcome_fixture::ledger_contract::{
-    LedgerView, PublicStateView, Witnesses, initial_state,
+    LedgerView, PublicStateView, Witnesses, check_in, initial_state, recorded,
 };
 use compact_rust_test_center_welcome_fixture::types::{Maybe, MaybeCompact1};
 use midnight_compact_runtime as runtime;
@@ -18,11 +18,12 @@ use midnight_onchain_state::state::{
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 use runtime::context::{ConstructorContext, WitnessContext};
+use runtime::ledger::ContractAddress;
 use runtime::ledger::{DefaultDB, StateValue};
 use runtime::{FixedBytes, FixedVector, OpaqueString};
 
 #[derive(Default)]
-struct OrganizerWitness(RefCell<Vec<u64>>);
+struct OrganizerWitness(RefCell<Vec<u64>>, RefCell<Vec<(u64, String)>>);
 
 impl Witnesses<u64> for OrganizerWitness {
     fn local_sk(&self, context: WitnessContext<'_, u64, LedgerView<'_>>) -> (u64, MaybeCompact1) {
@@ -39,9 +40,189 @@ impl Witnesses<u64> for OrganizerWitness {
     fn set_local_id(
         &self,
         context: WitnessContext<'_, u64, LedgerView<'_>>,
-        _participant: OpaqueString,
+        participant: OpaqueString,
     ) -> (u64, ()) {
-        (*context.private_state, ())
+        self.1
+            .borrow_mut()
+            .push((*context.private_state, participant.0));
+        (*context.private_state + 1, ())
+    }
+}
+
+fn participants(present: bool) -> FixedVector<Maybe, 5000> {
+    FixedVector::new(std::array::from_fn(|index| Maybe {
+        is_some: present && index == 7,
+        value: OpaqueString::from(if present && index == 7 { "alice" } else { "" }),
+    }))
+}
+
+fn vm_shape(actual: serde_json::Value) -> serde_json::Value {
+    serde_json::Value::Array(actual.as_array().unwrap().iter().map(|operation| {
+        if let Some(kind) = operation.as_str() { return serde_json::json!({"kind":kind}); }
+        if let Some(idx) = operation.get("idx") {
+            serde_json::json!({"kind":"idx", "cached":idx["cached"], "pushPath":idx["pushPath"], "pathLength":idx["path"].as_array().unwrap().len()})
+        } else if let Some(push) = operation.get("push") {
+            serde_json::json!({"kind":"push", "storage":push["storage"]})
+        } else if let Some(ins) = operation.get("ins") {
+            serde_json::json!({"kind":"ins", "cached":ins["cached"], "n":ins["n"]})
+        } else if let Some(dup) = operation.get("dup") {
+            serde_json::json!({"kind":"dup", "n":dup["n"]})
+        } else if let Some(popeq) = operation.get("popeq") {
+            serde_json::json!({"kind":"popeq", "cached":popeq["cached"], "resultAtoms":popeq["result"]["value"]})
+        } else { panic!("unexpected VM operation: {operation}") }
+    }).collect())
+}
+
+#[test]
+fn original_welcome_check_in_matches_typescript_and_replays() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/test-center-welcome.json"
+    ))
+    .unwrap();
+    let success = &oracle["cases"][1]["checkIn"];
+    let native_witness = OrganizerWitness::default();
+    let native_initial = initial_state(
+        ConstructorContext::new(7_u64),
+        &native_witness,
+        participants(true),
+    )
+    .unwrap();
+    assert_eq!(
+        state_hex(native_initial.ledger_state.get_ref().clone()),
+        success["initialStateHex"]
+    );
+    let native = check_in(
+        native_initial.into_circuit_context(ContractAddress::default()),
+        &native_witness,
+        OpaqueString::from("alice"),
+    )
+    .unwrap();
+    let recorded_witness = OrganizerWitness::default();
+    let recorded_initial = initial_state(
+        ConstructorContext::new(7_u64),
+        &recorded_witness,
+        participants(true),
+    )
+    .unwrap();
+    let recorded = recorded::check_in(
+        recorded_initial.into_circuit_context(ContractAddress::default()),
+        &recorded_witness,
+        OpaqueString::from("alice"),
+    )
+    .unwrap();
+    let _: () = native.result;
+    let _: () = recorded.execution.result;
+    assert_eq!(success["result"], serde_json::json!([]));
+    for (execution, witness) in [
+        (&native, &native_witness),
+        (&recorded.execution, &recorded_witness),
+    ] {
+        assert_eq!(
+            state_hex(execution.context.query.state.get_ref().clone()),
+            success["afterStateHex"]
+        );
+        assert_eq!(
+            execution.context.private_state,
+            success["privateState"].as_u64().unwrap()
+        );
+        assert_eq!(*witness.1.borrow(), vec![(7, "alice".to_owned())]);
+        let cost = serde_json::to_value(execution.gas_cost).unwrap();
+        for dimension in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            let oracle_total: u64 = success["queries"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|query| {
+                    query["gasCost"][dimension]
+                        .as_str()
+                        .unwrap()
+                        .parse::<u64>()
+                        .unwrap()
+                })
+                .sum();
+            assert_eq!(
+                cost[dimension].as_u64().unwrap(),
+                oracle_total,
+                "{dimension}"
+            );
+        }
+        assert_eq!(execution.private_transcript_outputs.len(), 1);
+        let output = &execution.private_transcript_outputs[0];
+        let atoms = output
+            .value
+            .0
+            .iter()
+            .map(|atom| &atom.0)
+            .collect::<Vec<_>>();
+        assert_eq!(
+            serde_json::to_value(atoms).unwrap(),
+            success["privateTranscriptOutputs"][0]["valueAtoms"]
+        );
+        assert_eq!(
+            serde_json::to_value(&output.alignment).unwrap(),
+            success["privateTranscriptOutputs"][0]["alignment"]
+        );
+    }
+    assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+    assert_eq!(
+        native.context.query.effects,
+        recorded.execution.context.query.effects
+    );
+    assert_eq!(
+        native.private_transcript_outputs,
+        recorded.execution.private_transcript_outputs
+    );
+    assert_eq!(
+        vm_shape(serde_json::to_value(recorded.public.verify_ops()).unwrap()),
+        success["publicTranscriptShape"]
+    );
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(
+        replay.context.state.get_ref(),
+        recorded.execution.context.query.state.get_ref()
+    );
+    assert_eq!(
+        replay.context.effects,
+        recorded.execution.context.query.effects
+    );
+
+    let failure = &oracle["cases"][0]["checkIn"];
+    assert_eq!(failure["compactError"], true);
+    assert_eq!(failure["initialStateHex"], failure["afterStateHex"]);
+    assert!(failure["witnessCalls"].as_array().unwrap().is_empty());
+    for recorded_mode in [false, true] {
+        let witness = OrganizerWitness::default();
+        let initial = initial_state(
+            ConstructorContext::new(7_u64),
+            &witness,
+            participants(false),
+        )
+        .unwrap();
+        assert_eq!(
+            state_hex(initial.ledger_state.get_ref().clone()),
+            failure["initialStateHex"]
+        );
+        let context = initial.into_circuit_context(ContractAddress::default());
+        let error = if recorded_mode {
+            recorded::check_in(context, &witness, OpaqueString::from("bob"))
+                .err()
+                .unwrap()
+        } else {
+            check_in(context, &witness, OpaqueString::from("bob"))
+                .err()
+                .unwrap()
+        };
+        assert!(matches!(error, runtime::CompactError::AssertionFailed(_)));
+        assert_eq!(error.to_string(), failure["error"]);
+        assert!(witness.1.borrow().is_empty());
     }
 }
 
@@ -71,10 +252,7 @@ fn original_welcome_constructor_matches_typescript_empty_and_one_participant() {
     );
     for case in oracle["cases"].as_array().unwrap() {
         let present = case["present"].as_bool().unwrap();
-        let participants = FixedVector::new(std::array::from_fn(|index| Maybe {
-            is_some: present && index == 7,
-            value: OpaqueString::from(if present && index == 7 { "alice" } else { "" }),
-        }));
+        let participants = participants(present);
         let witness = OrganizerWitness::default();
         let initial =
             initial_state(ConstructorContext::new(7_u64), &witness, participants).unwrap();

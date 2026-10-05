@@ -1,0 +1,30 @@
+{
+  "format_version": 1,
+  "suite": "tools/compact-rust-backend/check_compactc_target.py --effectful-return",
+  "purpose": "Typed ordered conditional returns; native TS parity with explicit recording gap",
+  "source_glob": "examples/rust_backend/effectful_return_oracle.compact",
+  "positive_sources": [
+    {
+      "source": "examples/rust_backend/effectful_return_oracle.compact",
+      "typescript_capture": "runtime-rs/tests/fixtures/capture-effectful-return-oracle.mjs",
+      "typescript_fixture": "runtime-rs/tests/fixtures/effectful-return-oracle.json",
+      "rust_fixture": "tests-rust-backend/effectful-return-oracle/lib.rs",
+      "rust_test": "tests-rust-backend/effectful-return-oracle/tests/effectful_return_oracle.rs",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [
+        {"name": "choose", "pure": false, "proof": true}
+      ],
+      "expected_recording_gaps": {
+        "choose": {
+          "code": "unsupported_return",
+          "ir_node": "StateReturn::Effectful",
+          "path": "return_value"
+        }
+      },
+      "pure_declarations": 0,
+      "exported_pure_declarations": 0
+    }
+  ],
+  "expected_rejections": []
+}

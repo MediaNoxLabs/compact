@@ -83,6 +83,7 @@ TINY_SOURCE = ROOT / "examples/rust_backend/tiny_oracle.compact"
 CELL_READ_SOURCE = ROOT / "examples/rust_backend/cell_read.compact"
 LET_RETURN_SOURCE = ROOT / "examples/rust_backend/let_return_oracle.compact"
 ROOT_LET_ACTION_RETURN_SOURCE = ROOT / "examples/rust_backend/root_let_action_return_oracle.compact"
+EFFECTFUL_RETURN_SOURCE = ROOT / "examples/rust_backend/effectful_return_oracle.compact"
 CORACLE_SOURCE = ROOT / "test-center/test-contracts/coracle.compact"
 TEST_CENTER_WELCOME_SOURCE = ROOT / "test-center/test-contracts/welcome.compact"
 WITNESS_CELL_SOURCE = ROOT / "examples/rust_backend/witness_cell_write.compact"
@@ -1109,6 +1110,8 @@ def main() -> None:
                         help="compile the original qualified Set source and check typed coin insertion capability")
     parser.add_argument("--coracle-root-let", action="store_true",
                         help="check root Let action extraction and the next complete Coracle blocker")
+    parser.add_argument("--effectful-return", action="store_true",
+                        help="check ordered terminal return plans and the next complete Coracle blocker")
     args = parser.parse_args()
     # Captured Rust errors are asserted below; runner color settings must not split their text.
     os.environ["CARGO_TERM_COLOR"] = "never"
@@ -1123,7 +1126,7 @@ def main() -> None:
             source = ROOT / "examples/rust_backend/native_zswap_intents_oracle.compact"
             run(compiler, "--target", "rust", "--skip-zk", str(source), str(output))
             ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 18
+            assert ir["schema_version"] == 19
             encoded = json.dumps(ir)
             assert '"create_zswap_input"' in encoded and '"create_zswap_output"' in encoded
             report = json.loads((output / "contract/rust-capabilities.json").read_text())
@@ -1136,12 +1139,69 @@ def main() -> None:
             assert not (base / "requires-recording/contract/lib.rs").exists()
             print("native Zswap intent admission and explicit recording refusal passed")
             return
+        if args.effectful_return:
+            output = base / "effectful-return"
+            run(compiler, "--target", "rust", "--skip-zk",
+                str(EFFECTFUL_RETURN_SOURCE), str(output))
+            ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
+            assert ir["schema_version"] == 19
+            circuit, = ir["stateful_circuits"]
+            assert circuit["name"] == "choose" and circuit["actions"] == []
+            returned = circuit["return_value"]
+            assert returned["kind"] == "effectful"
+            outer = returned["body"]
+            assert outer["kind"] == "let"
+            assert [(row["name"], row["value"]["kind"]) for row in outer["bindings"]] == [
+                ("before", "cell_read")]
+            sequence = outer["result"]
+            assert sequence["kind"] == "sequence" and len(sequence["actions"]) == 1
+            branch = sequence["result"]
+            assert branch["kind"] == "conditional"
+            assert branch["condition"]["left"]["kind"] == "cell_read"
+            assert branch["then"]["kind"] == "let"
+            assert branch["then"]["bindings"][0]["name"] == "selected"
+            assert branch["then"]["result"]["actions"][0]["kind"] == "cell_write"
+            assert branch["otherwise"]["kind"] == "let"
+            assert branch["otherwise"]["bindings"][0]["name"] == "offset"
+            assert branch["otherwise"]["result"]["actions"][0]["kind"] == "let"
+            caps = json.loads((output / "contract/rust-capabilities.json").read_text())
+            assert [(row["name"], row["recorded"], row["observed_call"],
+                     row["recording_unavailable"]["ir_node"]) for row in caps["circuits"]] == [
+                ("choose", False, False, "StateReturn::Effectful")]
+            strict = subprocess.run(
+                [compiler, "--target", "rust", "--rust-require-recording", "--skip-zk",
+                 str(EFFECTFUL_RETURN_SOURCE), str(base / "strict")],
+                cwd=ROOT, capture_output=True, text=True)
+            assert strict.returncode != 0 and "choose" in strict.stderr
+            for name, source, expected in [
+                ("welcome", TEST_CENTER_WELCOME_SOURCE, 3),
+                ("bboard", TEST_CENTER_BBOARD_SOURCE, 2),
+                ("election", ELECTION_SOURCE, 5),
+            ]:
+                existing = base / name
+                run(compiler, "--target", "rust", "--skip-zk", str(source), str(existing))
+                previous = json.loads((existing / "contract/rust-capabilities.json").read_text())
+                assert len(previous["circuits"]) == expected
+                assert all(row["recorded"] and row["observed_call"] for row in previous["circuits"])
+                existing_ir = json.loads((existing / "contract/compact-rust-ir.json").read_text())
+                assert all(row["return_value"]["kind"] != "effectful"
+                           for row in existing_ir["stateful_circuits"])
+            complete = subprocess.run(
+                [compiler, "--target", "rust", "--skip-zk",
+                 str(CORACLE_SOURCE), str(base / "coracle")],
+                cwd=ROOT, capture_output=True, text=True)
+            assert complete.returncode != 0
+            assert "<standard library>" in complete.stderr
+            assert "native witness expression" in complete.stderr
+            assert not (base / "coracle/contract/lib.rs").exists()
+            print("typed effectful returns admitted; complete Coracle remains unassessed at shielded witness")
+            return
         if args.qualified_coin_cell:
             output = base / "qualified-coin-cell"
             source = ROOT / "examples/rust_backend/qualified_coin_cell_oracle.compact"
             run(compiler, "--target", "rust", "--skip-zk", str(source), str(output))
             ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 18
+            assert ir["schema_version"] == 19
             action = next(row for row in ir["stateful_circuits"] if row["name"] == "write_coin")["actions"][0]
             assert action["kind"] == "cell_write_coin"
             report = json.loads((output / "contract/rust-capabilities.json").read_text())
@@ -1164,7 +1224,7 @@ def main() -> None:
                 command.append("--skip-zk")
             run(*command, str(ROOT / "examples/rust_backend/counter_less_than_oracle.compact"), str(output))
             ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 18
+            assert ir["schema_version"] == 19
             report = json.loads((output / "contract/rust-capabilities.json").read_text())
             assert {row["name"] for row in report["circuits"]} == {"compare", "nested", "short_circuit", "checked"}
             assert all(row["recorded"] and row["observed_call"] for row in report["circuits"])
@@ -1196,7 +1256,7 @@ def main() -> None:
             run(compiler, "--target", "rust", "--skip-zk",
                 str(ROOT_LET_ACTION_RETURN_SOURCE), str(oracle))
             ir = json.loads((oracle / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 18
+            assert ir["schema_version"] == 19
             circuit, = ir["stateful_circuits"]
             assert circuit["name"] == "step"
             assert circuit["return_value"] == {
@@ -1238,16 +1298,16 @@ def main() -> None:
                  str(CORACLE_SOURCE), str(base / "coracle")],
                 cwd=ROOT, capture_output=True, text=True)
             assert complete.returncode != 0
-            assert "coracle.compact line 191 char 5" in complete.stderr
-            assert "nested ledger query: __compact_Cell.write" in complete.stderr
-            print("root Let actions retained; complete Coracle remains unassessed at branch write")
+            assert "<standard library>" in complete.stderr
+            assert "native witness expression" in complete.stderr
+            print("root Let actions retained; complete Coracle remains unassessed at shielded witness")
             return
         if args.adt_set_qualified:
             output = base / "adt-set-qualified"
             run(compiler, "--target", "rust", "--skip-zk",
                 str(ADT_SET_QUALIFIED_SOURCE), str(output))
             ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 18
+            assert ir["schema_version"] == 19
             def has_coin_insert(value):
                 if isinstance(value, dict):
                     return value.get("kind") == "set_insert_coin" or any(
@@ -1302,7 +1362,7 @@ def main() -> None:
                 command.append("--skip-zk")
             run(*command, str(TEST_CENTER_BBOARD_SOURCE), str(output))
             ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 18
+            assert ir["schema_version"] == 19
             assert [row["name"] for row in ir["circuits"]] == ["some", "none", "public_key"]
             assert [row["name"] for row in ir["stateful_circuits"]] == ["post", "take_down"]
             taken = ir["stateful_circuits"][1]
@@ -1336,7 +1396,7 @@ def main() -> None:
                 command.append("--skip-zk")
             run(*command, str(FIELD_TO_BYTES32_SOURCE), str(output))
             ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 18
+            assert ir["schema_version"] == 19
             assert [(row["name"], row["body"]["kind"])
                     for row in ir["circuits"]] == [("encode", "field_to_bytes32")]
             assert [(row["name"], row["return_value"]["value"]["kind"])
@@ -1379,7 +1439,7 @@ def main() -> None:
         assert all(c["proof_required"] is True and c["recording_status"] == "available"
                    for c in capabilities["circuits"])
         rust_ir = json.loads((rust / "contract/compact-rust-ir.json").read_text())
-        assert rust_ir["schema_version"] == 18
+        assert rust_ir["schema_version"] == 19
         native_output = base / "native-own-public-key"
         run(compiler, "--target", "rust", "--skip-zk", str(PM_19252_SOURCE), str(native_output))
         native_contract = native_output / "contract"
@@ -1407,7 +1467,7 @@ def main() -> None:
             str(native_value_output))
         native_value_contract = native_value_output / "contract"
         native_value_ir = json.loads((native_value_contract / "compact-rust-ir.json").read_text())
-        assert native_value_ir["schema_version"] == 18
+        assert native_value_ir["schema_version"] == 19
         assert native_value_ir["witnesses"] == []
         assert [(c["name"], c["return_value"]["value"]["kind"])
                 for c in native_value_ir["stateful_circuits"]] == [
@@ -1442,7 +1502,7 @@ def main() -> None:
             output = base / f"source-{name}"
             run(compiler, "--target", "rust", "--skip-zk", str(source), str(output))
             emitted = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert emitted["schema_version"] == 18
+            assert emitted["schema_version"] == 19
             owners = emitted[key]
             if isinstance(owners, dict):
                 owners = [owners]

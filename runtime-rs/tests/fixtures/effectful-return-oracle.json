@@ -1,0 +1,159 @@
+{
+  "initialStateHex": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a3c00084041040004010404080104040814030401041008040c080408041004030414000418080104041cb0030450a001040304010804080801040104010840410001140304010410040108010404010401040108404100001c1863686f6f736500040008242800042c080104043090030440800eb033090ab34f7ae7d06e0e4d20e932e4d871457aeeaa377ef90f344901477a1410282034281003000400",
+  "chosen": {
+    "next": "9",
+    "result": "0",
+    "privateState": 0,
+    "afterStateHex": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a4400080941040004010008404104080401040c080104041014030401041008041408040804180403041c0004200801040424b0030450a001040304010804080801040104010809410001140304010410040108010404010401040108404100001c1863686f6f7365000400082c30000434080104043890030440800eb033090ab34f7ae7d06e0e4d20e932e4d871457aeeaa377ef90f344901477a141830283c301003000400",
+    "effects": {
+      "claimedNullifiers": [],
+      "claimedShieldedReceives": [],
+      "claimedShieldedSpends": [],
+      "claimedContractCalls": [],
+      "shieldedMints": {},
+      "unshieldedMints": {},
+      "unshieldedInputs": {},
+      "unshieldedOutputs": {},
+      "claimedUnshieldedSpends": {}
+    },
+    "reportedGas": {
+      "readTime": "85000000",
+      "computeTime": "1233942932",
+      "bytesWritten": "80",
+      "bytesDeleted": "80"
+    },
+    "queries": [
+      {
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1249914853",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        "opTags": [
+          "dup",
+          "idx",
+          "popeq"
+        ]
+      },
+      {
+        "gasCost": {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "80",
+          "bytesDeleted": "80"
+        },
+        "opTags": [
+          "push",
+          "push",
+          "ins"
+        ]
+      },
+      {
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1249914853",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        "opTags": [
+          "dup",
+          "idx",
+          "popeq"
+        ]
+      },
+      {
+        "gasCost": {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "80",
+          "bytesDeleted": "80"
+        },
+        "opTags": [
+          "push",
+          "push",
+          "ins"
+        ]
+      }
+    ],
+    "privateTranscriptCount": 0
+  },
+  "unchosen": {
+    "next": "8",
+    "result": "109",
+    "privateState": 1,
+    "afterStateHex": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a4400080a4104000401000c414d4104080401040c080104041014030401041008041408040804180403041c0004200801040424b4030452a40104030401080408080104010401080a41000114030401041004010801040401040104010c414d4100001c1863686f6f7365000400082c30000434080104043890030440800eb033090ab34f7ae7d06e0e4d20e932e4d871457aeeaa377ef90f344901477a141830283c301003000400",
+    "effects": {
+      "claimedNullifiers": [],
+      "claimedShieldedReceives": [],
+      "claimedShieldedSpends": [],
+      "claimedContractCalls": [],
+      "shieldedMints": {},
+      "unshieldedMints": {},
+      "unshieldedInputs": {},
+      "unshieldedOutputs": {},
+      "claimedUnshieldedSpends": {}
+    },
+    "reportedGas": {
+      "readTime": "85000000",
+      "computeTime": "1233942932",
+      "bytesWritten": "82",
+      "bytesDeleted": "80"
+    },
+    "queries": [
+      {
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1249914853",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        "opTags": [
+          "dup",
+          "idx",
+          "popeq"
+        ]
+      },
+      {
+        "gasCost": {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "80",
+          "bytesDeleted": "80"
+        },
+        "opTags": [
+          "push",
+          "push",
+          "ins"
+        ]
+      },
+      {
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1249914853",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        "opTags": [
+          "dup",
+          "idx",
+          "popeq"
+        ]
+      },
+      {
+        "gasCost": {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "82",
+          "bytesDeleted": "80"
+        },
+        "opTags": [
+          "push",
+          "push",
+          "ins"
+        ]
+      }
+    ],
+    "privateTranscriptCount": 1
+  }
+}

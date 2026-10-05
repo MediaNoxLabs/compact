@@ -1305,6 +1305,76 @@
                    (vector->list (stateful-body-ir expr src1 environment witness-ids)))))]
           [else (vector)]))
 
+      ;; Keep a terminal conditional and its selected effects in one ordered
+      ;; return body. In particular, a condition must not be rebuilt after a
+      ;; branch has changed the ledger cell that it read.
+      (define (terminal-cell-write-conditional? expr)
+        (nanopass-case (Lnodisclose Expression) expr
+          [(return ,src ,expr) (terminal-cell-write-conditional? expr)]
+          [(let* ,src ([,local* ,expr*] ...) ,expr)
+           (terminal-cell-write-conditional? expr)]
+          [(seq ,src ,expr* ... ,expr)
+           (terminal-cell-write-conditional? expr)]
+          [(if ,src ,expr0 ,expr1 ,expr2)
+           (or (stateful-body-has-cell-write? expr1)
+               (stateful-body-has-cell-write? expr2))]
+          [else #f]))
+
+      (define (unit-return-type? ty)
+        (nanopass-case (Lnodisclose Type) ty
+          [(ttuple ,src ,type* ...) (null? type*)]
+          [(talias ,src ,nominal? ,type-name ,type)
+           (unit-return-type? type)]
+          [else #f]))
+
+      (define (stateful-return-plan-ir expr expected-type owner-src environment witness-ids)
+        (nanopass-case (Lnodisclose Expression) expr
+          [(return ,src ,expr)
+           (stateful-return-plan-ir expr expected-type src environment witness-ids)]
+          [(let* ,src ([,local* ,expr*] ...) ,expr)
+           (let ([environment^
+                   (fold-left
+                     (lambda (current local value)
+                       (nanopass-case (Lnodisclose Argument) local
+                         [(,var-name ,type)
+                          (cons (cons (id-sym var-name)
+                                      (object (cons "kind" "parameter")
+                                              (cons "name" (rust-var-name var-name))))
+                                current)]))
+                     environment local* expr*)])
+             (object (cons "kind" "let")
+                     (cons "bindings"
+                           (list->vector
+                             (map (lambda (local value)
+                                    (nanopass-case (Lnodisclose Argument) local
+                                      [(,var-name ,type)
+                                       (object (cons "name" (rust-var-name var-name))
+                                               (cons "ty" (type-ir type src))
+                                               (cons "value"
+                                                     (stateful-typed-expression-ir value type src witness-ids)))]))
+                                  local* expr*)))
+                     (cons "result"
+                           (stateful-return-plan-ir expr expected-type src environment^ witness-ids))))]
+          [(seq ,src ,expr* ... ,expr)
+           (object (cons "kind" "sequence")
+                   (cons "actions"
+                         (list->vector
+                           (map (lambda (action)
+                                  (state-action-ir action src environment witness-ids)) expr*)))
+                   (cons "result"
+                         (stateful-return-plan-ir expr expected-type src environment witness-ids)))]
+          [(if ,src ,expr0 ,expr1 ,expr2)
+           (object (cons "kind" "conditional")
+                   (cons "condition" (stateful-expression-ir expr0 src witness-ids))
+                   (cons "then"
+                         (stateful-return-plan-ir expr1 expected-type src environment witness-ids))
+                   (cons "otherwise"
+                         (stateful-return-plan-ir expr2 expected-type src environment witness-ids)))]
+          [else
+           (object (cons "kind" "value")
+                   (cons "value"
+                         (stateful-typed-expression-ir expr expected-type owner-src witness-ids)))]))
+
       ;; Stateful expressions keep witness calls explicit so Rust can evaluate
       ;; them in order and append each private transcript value exactly once.
       (define (stateful-typed-expression-ir value-expr expected-type owner-src witness-ids)
@@ -1851,6 +1921,8 @@
                circuits
                (let* ([names (exported-names function-name export-alist)]
                       [internal-name (rust-function-name function-name)]
+                      [effectful-return? (and (not (unit-return-type? type))
+                                              (terminal-cell-write-conditional? expr))]
                       [all-names (if (member internal-name names)
                                      names
                                      (append names (list internal-name)))])
@@ -1861,16 +1933,30 @@
                               (object (cons "name" name)
                                     (cons "parameters" (list->vector (map (lambda (arg) (argument-ir arg src)) arg*)))
                                     (cons "result" (type-ir type src))
-                                    (cons "return_value" (stateful-return-ir expr src witness-ids))
+                                    (cons "return_value"
+                                          (if effectful-return?
+                                              (object (cons "kind" "effectful")
+                                                      (cons "body"
+                                                            (stateful-return-plan-ir expr type src
+                                                              (map (lambda (arg)
+                                                                     (nanopass-case (Lnodisclose Argument) arg
+                                                                       [(,var-name ,type)
+                                                                        (cons (id-sym var-name)
+                                                                              (object (cons "kind" "parameter")
+                                                                                      (cons "name" (rust-var-name var-name))))]))
+                                                                   arg*) witness-ids)))
+                                              (stateful-return-ir expr src witness-ids)))
                                     (cons "actions"
-                                          (stateful-body-ir expr src
-                                            (map (lambda (arg)
-                                                   (nanopass-case (Lnodisclose Argument) arg
-                                                     [(,var-name ,type)
-                                                      (cons (id-sym var-name)
-                                                            (object (cons "kind" "parameter")
-                                                                    (cons "name" (rust-var-name var-name))))]))
-                                                 arg*) witness-ids)))
+                                          (if effectful-return?
+                                              (vector)
+                                              (stateful-body-ir expr src
+                                                (map (lambda (arg)
+                                                       (nanopass-case (Lnodisclose Argument) arg
+                                                         [(,var-name ,type)
+                                                          (cons (id-sym var-name)
+                                                                (object (cons "kind" "parameter")
+                                                                        (cons "name" (rust-var-name var-name))))]))
+                                                     arg*) witness-ids))))
                               (if (member name names) '() (list (cons "internal" #t))))))
                         all-names)
                    circuits)))]
@@ -2228,7 +2314,7 @@
            (source-errorf src "Rust backend found multiple constructors"))
          (print-json
            (get-target-port 'rust.ir.json)
-           (append (object (cons "schema_version" 18)
+           (append (object (cons "schema_version" 19)
                    (cons "type_aliases"
                          (list->vector (fold-right type-alias-ir '() pelt*)))
                    (cons "ledger_fields"

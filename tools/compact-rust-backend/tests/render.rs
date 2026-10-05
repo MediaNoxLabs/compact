@@ -18,12 +18,176 @@ use std::process::{Command, Stdio};
 
 use compact_rust_backend::ir::{
     Constructor, ConstructorStep, Contract, CounterAmount, Expr, LedgerField, LedgerFieldKind,
-    LocalBinding, NativeWitnessBuiltin, Parameter, PureCircuit, SCHEMA_VERSION, SourceLocation,
-    StateAction, StateReturn, StatefulCircuit, StructField, Type, TypeAlias, WitnessDeclaration,
+    LocalBinding, NativeWitnessBuiltin, Parameter, PureCircuit, ReturnPlan, SCHEMA_VERSION,
+    SourceLocation, StateAction, StateReturn, StatefulCircuit, StructField, Type, TypeAlias,
+    WitnessDeclaration,
 };
 use compact_rust_backend::{
     RenderError, render, render_with_capabilities, render_with_proof_capabilities,
 };
+
+#[test]
+fn effectful_return_plan_owns_order_scope_and_typed_branch_results() {
+    let before = Expr::Parameter {
+        name: "before".into(),
+    };
+    let mut contract = Contract {
+        schema_version: SCHEMA_VERSION,
+        type_aliases: vec![],
+        constructor: None,
+        witnesses: vec![],
+        ledger_fields: vec![LedgerField {
+            source: None,
+            id: "state".into(),
+            index: 0,
+            path: vec![],
+            declaration: LedgerFieldKind::Cell { ty: Type::Field },
+        }],
+        circuits: vec![],
+        stateful_circuits: vec![StatefulCircuit {
+            source: None,
+            internal: false,
+            name: "choose".into(),
+            parameters: vec![],
+            actions: vec![],
+            result: Type::Field,
+            return_value: StateReturn::Effectful {
+                body: ReturnPlan::Let {
+                    bindings: vec![LocalBinding {
+                        name: "before".into(),
+                        ty: Type::Field,
+                        value: Expr::CellRead {
+                            field: "state".into(),
+                            index: 0,
+                        },
+                    }],
+                    result: Box::new(ReturnPlan::Sequence {
+                        actions: vec![StateAction::CellWrite {
+                            field: "state".into(),
+                            index: 0,
+                            value: Expr::FieldLiteral { value: "1".into() },
+                        }],
+                        result: Box::new(ReturnPlan::Conditional {
+                            condition: Expr::Boolean { value: true },
+                            then: Box::new(ReturnPlan::Let {
+                                bindings: vec![LocalBinding {
+                                    name: "before".into(),
+                                    ty: Type::Field,
+                                    value: Expr::FieldLiteral { value: "7".into() },
+                                }],
+                                result: Box::new(ReturnPlan::Sequence {
+                                    actions: vec![StateAction::CellWrite {
+                                        field: "state".into(),
+                                        index: 0,
+                                        value: Expr::FieldLiteral { value: "2".into() },
+                                    }],
+                                    result: Box::new(ReturnPlan::Value {
+                                        value: before.clone(),
+                                    }),
+                                }),
+                            }),
+                            otherwise: Box::new(ReturnPlan::Value { value: before }),
+                        }),
+                    }),
+                },
+            },
+        }],
+    };
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(!rendered.capabilities.circuits[0].recorded);
+    assert!(
+        rendered
+            .source
+            .contains("let (context, __compact_effectful_result)")
+    );
+    assert!(rendered.source.contains("__compact_return_local_0"));
+    assert!(rendered.source.contains("__compact_return_local_1"));
+
+    let mut duplicate = contract.clone();
+    duplicate.stateful_circuits[0]
+        .actions
+        .push(StateAction::CellWrite {
+            field: "state".into(),
+            index: 0,
+            value: Expr::FieldLiteral { value: "3".into() },
+        });
+    assert_eq!(render(&duplicate), Err(RenderError::MalformedReturnPlan));
+    let mut malformed = serde_json::to_value(&contract).unwrap();
+    malformed["stateful_circuits"][0]["return_value"]["body"]["result"]["result"]
+        .as_object_mut()
+        .unwrap()
+        .remove("otherwise");
+    assert!(serde_json::from_value::<Contract>(malformed).is_err());
+
+    fn branch(contract: &mut Contract) -> (&mut Expr, &mut Box<ReturnPlan>, &mut Box<ReturnPlan>) {
+        let StateReturn::Effectful { body } = &mut contract.stateful_circuits[0].return_value
+        else {
+            unreachable!()
+        };
+        let ReturnPlan::Let { result, .. } = body else {
+            unreachable!()
+        };
+        let ReturnPlan::Sequence { result, .. } = result.as_mut() else {
+            unreachable!()
+        };
+        let ReturnPlan::Conditional {
+            condition,
+            then,
+            otherwise,
+        } = result.as_mut()
+        else {
+            unreachable!()
+        };
+        (condition, then, otherwise)
+    }
+    *branch(&mut contract).0 = Expr::FieldLiteral { value: "1".into() };
+    assert!(matches!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Boolean,
+            ..
+        })
+    ));
+    *branch(&mut contract).0 = Expr::Boolean { value: true };
+    **branch(&mut contract).2 = ReturnPlan::Value {
+        value: Expr::Boolean { value: false },
+    };
+    assert!(matches!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Field,
+            ..
+        })
+    ));
+    {
+        let (_, then, otherwise) = branch(&mut contract);
+        **then = ReturnPlan::Let {
+            bindings: vec![LocalBinding {
+                name: "branch_only".into(),
+                ty: Type::Field,
+                value: Expr::FieldLiteral { value: "7".into() },
+            }],
+            result: Box::new(ReturnPlan::Value {
+                value: Expr::Parameter {
+                    name: "branch_only".into(),
+                },
+            }),
+        };
+        **otherwise = ReturnPlan::Value {
+            value: Expr::Parameter {
+                name: "branch_only".into(),
+            },
+        };
+    }
+    assert!(
+        matches!(render(&contract), Err(RenderError::UnknownParameter(name)) if name == "branch_only")
+    );
+    contract.schema_version = SCHEMA_VERSION - 1;
+    assert!(matches!(
+        render(&contract),
+        Err(RenderError::SchemaVersion(_))
+    ));
+}
 
 #[test]
 fn discarded_field_binding_keeps_reads_but_rejects_wrong_slot_type_and_nonunit_body() {

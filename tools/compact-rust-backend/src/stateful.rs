@@ -20,7 +20,8 @@ use std::collections::{HashMap, HashSet};
 
 use crate::ir::{
     ComparisonOperator, CounterAmount, Expr, LedgerField, LedgerFieldKind, NativeWitnessBuiltin,
-    PureCircuit, StateAction, StateReturn, StatefulCircuit, StructField, Type, WitnessDeclaration,
+    PureCircuit, ReturnPlan, StateAction, StateReturn, StatefulCircuit, StructField, Type,
+    WitnessDeclaration,
 };
 use crate::{
     RenderError, UnsignedMaximum, coerce_expression, condition_needs_statement, discard_expression,
@@ -1690,6 +1691,7 @@ fn expression_calls_named(expression: &Expr, name: &str) -> bool {
 
 fn return_calls_named(value: &StateReturn, name: &str) -> bool {
     match value {
+        StateReturn::Effectful { body } => plan_calls_named(body, name),
         StateReturn::Expression { value }
         | StateReturn::SetMember { value, .. }
         | StateReturn::HistoricMerkleCheckRoot { root: value, .. }
@@ -1698,6 +1700,33 @@ fn return_calls_named(value: &StateReturn, name: &str) -> bool {
             expression_calls_named(key, name)
         }
         _ => false,
+    }
+}
+
+fn plan_calls_named(plan: &ReturnPlan, name: &str) -> bool {
+    match plan {
+        ReturnPlan::Value { value } => expression_calls_named(value, name),
+        ReturnPlan::Sequence { actions, result } => {
+            actions
+                .iter()
+                .any(|action| action_calls_named(action, name))
+                || plan_calls_named(result, name)
+        }
+        ReturnPlan::Let { bindings, result } => {
+            bindings
+                .iter()
+                .any(|binding| expression_calls_named(&binding.value, name))
+                || plan_calls_named(result, name)
+        }
+        ReturnPlan::Conditional {
+            condition,
+            then,
+            otherwise,
+        } => {
+            expression_calls_named(condition, name)
+                || plan_calls_named(then, name)
+                || plan_calls_named(otherwise, name)
+        }
     }
 }
 
@@ -1812,6 +1841,7 @@ fn expression_contains_native_witness(expression: &Expr) -> bool {
 
 fn return_contains_native_witness(value: &StateReturn) -> bool {
     match value {
+        StateReturn::Effectful { body } => plan_contains_native_witness(body),
         StateReturn::Expression { value }
         | StateReturn::SetMember { value, .. }
         | StateReturn::HistoricMerkleCheckRoot { root: value, .. }
@@ -1822,6 +1852,31 @@ fn return_contains_native_witness(value: &StateReturn) -> bool {
             expression_contains_native_witness(key)
         }
         _ => false,
+    }
+}
+
+fn plan_contains_native_witness(plan: &ReturnPlan) -> bool {
+    match plan {
+        ReturnPlan::Value { value } => expression_contains_native_witness(value),
+        ReturnPlan::Sequence { actions, result } => {
+            actions.iter().any(action_emits_native_private_output)
+                || plan_contains_native_witness(result)
+        }
+        ReturnPlan::Let { bindings, result } => {
+            bindings
+                .iter()
+                .any(|binding| expression_contains_native_witness(&binding.value))
+                || plan_contains_native_witness(result)
+        }
+        ReturnPlan::Conditional {
+            condition,
+            then,
+            otherwise,
+        } => {
+            expression_contains_native_witness(condition)
+                || plan_contains_native_witness(then)
+                || plan_contains_native_witness(otherwise)
+        }
     }
 }
 
@@ -2115,6 +2170,7 @@ fn action_contains_witness(action: &StateAction) -> bool {
 pub(crate) fn circuit_contains_witness(circuit: &StatefulCircuit) -> bool {
     circuit.actions.iter().any(action_contains_witness)
         || match &circuit.return_value {
+            StateReturn::Effectful { body } => plan_contains_witness(body),
             StateReturn::Expression { value }
             | StateReturn::SetMember { value, .. }
             | StateReturn::HistoricMerkleCheckRoot { root: value, .. }
@@ -2128,6 +2184,30 @@ pub(crate) fn circuit_contains_witness(circuit: &StatefulCircuit) -> bool {
         }
 }
 
+fn plan_contains_witness(plan: &ReturnPlan) -> bool {
+    match plan {
+        ReturnPlan::Value { value } => expression_contains_witness(value),
+        ReturnPlan::Sequence { actions, result } => {
+            actions.iter().any(action_contains_witness) || plan_contains_witness(result)
+        }
+        ReturnPlan::Let { bindings, result } => {
+            bindings
+                .iter()
+                .any(|binding| expression_contains_witness(&binding.value))
+                || plan_contains_witness(result)
+        }
+        ReturnPlan::Conditional {
+            condition,
+            then,
+            otherwise,
+        } => {
+            expression_contains_witness(condition)
+                || plan_contains_witness(then)
+                || plan_contains_witness(otherwise)
+        }
+    }
+}
+
 pub(crate) fn render_stateful_circuit(
     circuit: &StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,
@@ -2135,6 +2215,10 @@ pub(crate) fn render_stateful_circuit(
     circuits: &HashMap<&str, &PureCircuit>,
     stateful_circuits: &HashMap<&str, &StatefulCircuit>,
 ) -> Result<syn::Item, RenderError> {
+    if matches!(circuit.return_value, StateReturn::Effectful { .. }) && !circuit.actions.is_empty()
+    {
+        return Err(RenderError::MalformedReturnPlan);
+    }
     if let Some(item) = crate::native_frame::render_if_supported(
         circuit,
         ledger_fields,
@@ -2164,11 +2248,15 @@ pub(crate) fn render_stateful_circuit(
         circuit_emits_native_private_output(circuit, stateful_circuits, &mut HashSet::new())?;
     let mut next_temp = 0;
     let mut next_local = 0;
+    let result_ty = rust_type(&circuit.result)?;
     enum Pending<'a> {
         Action(&'a StateAction),
+        Plan(&'a ReturnPlan),
         RestoreScope,
         EndThen(usize, &'a StateAction),
         EndElse(usize),
+        PlanEndThen(usize, &'a ReturnPlan),
+        PlanEndElse(usize),
     }
     struct BranchFrame<'a> {
         condition: syn::Expr,
@@ -2176,12 +2264,10 @@ pub(crate) fn render_stateful_circuit(
         then_statements: Vec<syn::Stmt>,
         parameters: HashMap<&'a str, (&'a Type, syn::Ident)>,
     }
-    let mut pending = circuit
-        .actions
-        .iter()
-        .rev()
-        .map(Pending::Action)
-        .collect::<Vec<_>>();
+    let mut pending = match &circuit.return_value {
+        StateReturn::Effectful { body } => vec![Pending::Plan(body)],
+        _ => circuit.actions.iter().rev().map(Pending::Action).collect(),
+    };
     let mut scopes = Vec::new();
     let mut branches = Vec::<Option<BranchFrame>>::new();
     let mut local_parameters = parameters.clone();
@@ -2189,6 +2275,120 @@ pub(crate) fn render_stateful_circuit(
     while let Some(pending_action) = pending.pop() {
         let action = match pending_action {
             Pending::Action(action) => action,
+            Pending::Plan(plan) => {
+                match plan {
+                    ReturnPlan::Value { value } => {
+                        let mut effect_statements = Vec::new();
+                        let mut query_effect = false;
+                        let (rendered, actual, effect) = render_state_expression(
+                            value,
+                            &local_parameters,
+                            witnesses,
+                            &mut effect_statements,
+                            &mut next_temp,
+                            circuits,
+                            stateful_circuits,
+                            ledger_fields,
+                            &mut query_effect,
+                        )?;
+                        if actual != circuit.result {
+                            return Err(RenderError::TypeMismatch {
+                                expected: circuit.result.clone(),
+                                actual,
+                            });
+                        }
+                        uses_witness |= effect;
+                        if effect || query_effect {
+                            statements.push(syn::parse_quote!(let mut context = context;));
+                        }
+                        statements.extend(effect_statements);
+                        statements.push(syn::parse_quote!(let __compact_effectful_result: #result_ty = #rendered;));
+                    }
+                    ReturnPlan::Sequence { actions, result } => {
+                        pending.push(Pending::Plan(result));
+                        pending.extend(actions.iter().rev().map(Pending::Action));
+                    }
+                    ReturnPlan::Let { bindings, result } => {
+                        scopes.push(local_parameters.clone());
+                        for binding in bindings {
+                            ident(&binding.name)?;
+                            let mut binding_statements = Vec::new();
+                            let mut query_effect = false;
+                            let (value, actual, effect) = render_state_expression(
+                                &binding.value,
+                                &local_parameters,
+                                witnesses,
+                                &mut binding_statements,
+                                &mut next_temp,
+                                circuits,
+                                stateful_circuits,
+                                ledger_fields,
+                                &mut query_effect,
+                            )?;
+                            if actual != binding.ty {
+                                return Err(RenderError::TypeMismatch {
+                                    expected: binding.ty.clone(),
+                                    actual,
+                                });
+                            }
+                            uses_witness |= effect;
+                            if effect || query_effect {
+                                statements.push(syn::parse_quote!(let mut context = context;));
+                            }
+                            statements.extend(binding_statements);
+                            let local_name = syn::Ident::new(
+                                &format!("__compact_return_local_{next_local}"),
+                                Span::call_site(),
+                            );
+                            next_local += 1;
+                            let ty = rust_type(&binding.ty)?;
+                            statements.push(syn::parse_quote!(let #local_name: #ty = #value;));
+                            local_parameters
+                                .insert(binding.name.as_str(), (&binding.ty, local_name));
+                        }
+                        pending.push(Pending::RestoreScope);
+                        pending.push(Pending::Plan(result));
+                    }
+                    ReturnPlan::Conditional {
+                        condition,
+                        then,
+                        otherwise,
+                    } => {
+                        let mut condition_statements = Vec::new();
+                        let mut query_effect = false;
+                        let (rendered, actual, effect) = render_state_expression(
+                            condition,
+                            &local_parameters,
+                            witnesses,
+                            &mut condition_statements,
+                            &mut next_temp,
+                            circuits,
+                            stateful_circuits,
+                            ledger_fields,
+                            &mut query_effect,
+                        )?;
+                        if actual != Type::Boolean {
+                            return Err(RenderError::TypeMismatch {
+                                expected: Type::Boolean,
+                                actual,
+                            });
+                        }
+                        uses_witness |= effect;
+                        statements.push(syn::parse_quote!(let mut context = context;));
+                        statements.extend(condition_statements);
+                        let index = branches.len();
+                        branches.push(Some(BranchFrame {
+                            condition: rendered,
+                            parent_statements: std::mem::take(&mut statements),
+                            then_statements: Vec::new(),
+                            parameters: local_parameters.clone(),
+                        }));
+                        pending.push(Pending::PlanEndThen(index, otherwise));
+                        pending.push(Pending::Plan(then));
+                    }
+                }
+                continue;
+            }
             Pending::RestoreScope => {
                 local_parameters = scopes.pop().expect("scope marker has a matching scope");
                 continue;
@@ -2219,6 +2419,34 @@ pub(crate) fn render_stateful_circuit(
                         let mut context = context;
                         #(#else_statements)*
                         context
+                    };
+                });
+                continue;
+            }
+            Pending::PlanEndThen(index, otherwise) => {
+                let frame = branches[index].as_mut().expect("open return branch");
+                frame.then_statements = std::mem::take(&mut statements);
+                local_parameters = frame.parameters.clone();
+                pending.push(Pending::PlanEndElse(index));
+                pending.push(Pending::Plan(otherwise));
+                continue;
+            }
+            Pending::PlanEndElse(index) => {
+                let frame = branches[index].take().expect("open return branch");
+                let else_statements = std::mem::take(&mut statements);
+                local_parameters = frame.parameters;
+                statements = frame.parent_statements;
+                let condition = frame.condition;
+                let then_statements = frame.then_statements;
+                statements.push(syn::parse_quote! {
+                    let (context, __compact_effectful_result): (_, #result_ty) = if #condition {
+                        let mut context = context;
+                        #(#then_statements)*
+                        (context, __compact_effectful_result)
+                    } else {
+                        let mut context = context;
+                        #(#else_statements)*
+                        (context, __compact_effectful_result)
                     };
                 });
                 continue;
@@ -3191,8 +3419,8 @@ pub(crate) fn render_stateful_circuit(
             }
         }
     }
-    let result_ty = rust_type(&circuit.result)?;
     let return_expr: syn::Expr = match &circuit.return_value {
+        StateReturn::Effectful { .. } => syn::parse_quote!(__compact_effectful_result),
         StateReturn::Expression { value } => {
             let mut effect_statements = Vec::new();
             let mut query_effect = false;

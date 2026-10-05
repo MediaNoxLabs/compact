@@ -198,6 +198,7 @@ pub enum RenderError {
     },
     ExpectedUnsigned(Type),
     EffectfulExpression,
+    MalformedReturnPlan,
 }
 
 impl fmt::Display for RenderError {
@@ -211,6 +212,10 @@ impl fmt::Display for RenderError {
             Self::SchemaVersion(version) => {
                 write!(f, "unsupported Rust backend IR schema {version}")
             }
+            Self::MalformedReturnPlan => write!(
+                f,
+                "effectful return plan must own the entire ordered circuit body"
+            ),
             Self::ProofApplicability(message) => {
                 write!(f, "invalid proof applicability: {message}")
             }
@@ -935,6 +940,38 @@ fn collect_action_types(
         | StateAction::MerkleResetToDefault { .. } => {}
     }
     Ok(())
+}
+
+fn collect_return_plan_types(
+    plan: &ir::ReturnPlan,
+    structs: &mut BTreeMap<String, Vec<StructField>>,
+    enums: &mut BTreeMap<String, Vec<String>>,
+) -> Result<(), RenderError> {
+    match plan {
+        ir::ReturnPlan::Value { value } => collect_expression_types(value, structs, enums),
+        ir::ReturnPlan::Sequence { actions, result } => {
+            for action in actions {
+                collect_action_types(action, structs, enums)?;
+            }
+            collect_return_plan_types(result, structs, enums)
+        }
+        ir::ReturnPlan::Let { bindings, result } => {
+            for binding in bindings {
+                collect_named_types(&binding.ty, structs, enums)?;
+                collect_expression_types(&binding.value, structs, enums)?;
+            }
+            collect_return_plan_types(result, structs, enums)
+        }
+        ir::ReturnPlan::Conditional {
+            condition,
+            then,
+            otherwise,
+        } => {
+            collect_expression_types(condition, structs, enums)?;
+            collect_return_plan_types(then, structs, enums)?;
+            collect_return_plan_types(otherwise, structs, enums)
+        }
+    }
 }
 
 fn coerce_aggregate_fields(
@@ -3137,6 +3174,9 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
             | ir::StateReturn::MerkleCheckRoot { root: value, .. } = &circuit.return_value
             {
                 collect_expression_types(value, &mut struct_definitions, &mut enum_definitions)?;
+            }
+            if let ir::StateReturn::Effectful { body } = &circuit.return_value {
+                collect_return_plan_types(body, &mut struct_definitions, &mut enum_definitions)?;
             }
             for action in &circuit.actions {
                 collect_action_types(action, &mut struct_definitions, &mut enum_definitions)?;

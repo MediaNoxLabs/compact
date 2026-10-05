@@ -22,7 +22,7 @@
 
 use serde::{Deserialize, Serialize};
 
-pub const SCHEMA_VERSION: u32 = 18;
+pub const SCHEMA_VERSION: u32 = 19;
 
 /// A Compact source position, independent of the compiler checkout path.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -239,6 +239,9 @@ pub enum StateReturn {
     Expression {
         value: Expr,
     },
+    Effectful {
+        body: ReturnPlan,
+    },
     CellRead {
         field: String,
         index: u8,
@@ -307,6 +310,29 @@ pub enum StateReturn {
         field: String,
         index: u8,
         root: Expr,
+    },
+}
+
+/// An ordered, single-owner body for a value-returning circuit with effects.
+/// A circuit using this form must have no separate `actions`.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+pub enum ReturnPlan {
+    Value {
+        value: Expr,
+    },
+    Sequence {
+        actions: Vec<StateAction>,
+        result: Box<ReturnPlan>,
+    },
+    Let {
+        bindings: Vec<LocalBinding>,
+        result: Box<ReturnPlan>,
+    },
+    Conditional {
+        condition: Expr,
+        then: Box<ReturnPlan>,
+        otherwise: Box<ReturnPlan>,
     },
 }
 

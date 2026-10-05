@@ -1514,6 +1514,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/effectful_return_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "choose",
+    "signature": "export circuit choose(next: Field): Field",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/set_boolean.compact",
     "module_path": [],
     "kind": "circuit",
@@ -7446,6 +7454,14 @@
     "kind": "witness",
     "name": "local_vote_cast",
     "signature": "witness local_vote_cast(): Maybe<Boolean>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effectful_return_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "mark",
+    "signature": "witness mark(): Field",
     "visibility": "internal"
   },
   {

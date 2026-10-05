@@ -2229,6 +2229,14 @@ fn render_recorded_item(
     shared_callees: &HashSet<String>,
     helper: bool,
 ) -> Result<RecordingOutcome<syn::Item>, RenderError> {
+    // This form owns branch-local ledger and witness effects. Until recorded
+    // lowering can audit that same ordered plan, no specialized recording
+    // gate may admit it through a coincidental action/return shape.
+    if matches!(circuit.return_value, StateReturn::Effectful { .. }) {
+        return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+            &circuit.return_value,
+        )));
+    }
     if circuit.internal && !helper {
         return Ok(RecordingOutcome::Unsupported(RecordingGap::no_effect()));
     }

@@ -5618,6 +5618,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/adt/tests/list_vector_field_4.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test",
+    "signature": "export circuit test(): []",
+    "visibility": "export"
+  },
+  {
     "source": "examples/adt/tests/set_enum.compact",
     "module_path": [],
     "kind": "circuit",

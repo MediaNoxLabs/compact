@@ -4946,6 +4946,69 @@ fn enum_list_head_value_records_only_with_matching_typed_head() {
 }
 
 #[test]
+fn field_vector_list_head_value_records_without_admitting_other_vector_elements() {
+    fn contract_for(element: Type) -> Contract {
+        let vector = Type::Vector {
+            element: Box::new(element),
+            length: 4,
+        };
+        let maybe = Type::Struct {
+            name: "Maybe".into(),
+            fields: vec![
+                StructField {
+                    name: "is_some".into(),
+                    ty: Type::Boolean,
+                },
+                StructField {
+                    name: "value".into(),
+                    ty: vector.clone(),
+                },
+            ],
+        };
+        let mut contract = identity(Type::Unit, Expr::Unit);
+        contract.ledger_fields = vec![LedgerField {
+            source: None,
+            id: "items".into(),
+            index: 0,
+            path: vec![],
+            declaration: LedgerFieldKind::List { ty: vector.clone() },
+        }];
+        contract.stateful_circuits = vec![StatefulCircuit {
+            source: None,
+            internal: false,
+            name: "test".into(),
+            parameters: vec![],
+            actions: vec![StateAction::Assert {
+                condition: Expr::Equal {
+                    left: Box::new(Expr::StructField {
+                        value: Box::new(Expr::ListHead {
+                            field: "items".into(),
+                            index: 0,
+                            ty: maybe,
+                        }),
+                        field: "value".into(),
+                        index: 1,
+                    }),
+                    right: Box::new(Expr::Default { ty: vector }),
+                },
+                message: "head vector".into(),
+            }],
+            result: Type::Unit,
+            return_value: StateReturn::Unit,
+        }];
+        contract
+    }
+
+    let field = render_with_capabilities(&contract_for(Type::Field)).unwrap();
+    assert!(field.capabilities.circuits[0].recorded);
+    assert!(field.source.contains("record_head::<crate::types::Maybe"));
+
+    let boolean = render_with_capabilities(&contract_for(Type::Boolean)).unwrap();
+    assert!(!boolean.capabilities.circuits[0].recorded);
+    assert!(!boolean.capabilities.circuits[0].observed_call);
+}
+
+#[test]
 fn list_push_front_and_length_validate_declared_types() {
     let mut contract = Contract {
         schema_version: 11,

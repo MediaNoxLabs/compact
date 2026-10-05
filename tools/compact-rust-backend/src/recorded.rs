@@ -1828,8 +1828,13 @@ fn render_recorded_item(
                     let LedgerFieldKind::List { ty: element } = &declaration.declaration else {
                         return Ok(None);
                     };
+                    let comparable_element = match element {
+                        Type::Field | Type::Enum { .. } => true,
+                        Type::Vector { element, .. } => **element == Type::Field,
+                        _ => false,
+                    };
                     if declaration.index != index
-                        || !matches!(element, Type::Field | Type::Enum { .. })
+                        || !comparable_element
                         || *ty != list_head_result_type(element, ty)
                     {
                         return Ok(None);

@@ -35,4 +35,5 @@ compact-rust-counter-parameter-fixture = { path = "../tests-rust-backend/counter
 compact-rust-witnesses-oracle-fixture = { path = "../tests-rust-backend/witnesses-oracle" }
 compact-rust-set-size-oracle-fixture = { path = "../tests-rust-backend/set-size-oracle" }
 compact-rust-witness-conditional-fixture = { path = "../tests-rust-backend/witness-conditional" }
+compact-rust-merkle-tree-oracle-fixture = { path = "../tests-rust-backend/merkle-tree-oracle" }
 serde_json = "1"

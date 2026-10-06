@@ -213,7 +213,8 @@ pub mod proof_data;
 pub use proof_data::{
     aligned_value_from_parts, gather_ops_to_public_transcript, proof_aligned_array,
     proof_aligned_maybe_merkle_path, proof_aligned_merkle_path, proof_aligned_value, CallProofData,
-    CallProofDataTrace, PartialProofData, PrivateTranscriptOutputs, ProofData, SingleCallProof,
+    CallProofDataTrace, ConstructorProofData, PartialProofData, PrivateTranscriptOutputs,
+    ProofData, SingleCallProof,
 };
 
 mod witness;

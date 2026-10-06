@@ -3389,6 +3389,7 @@
         (cond
           [(eq? mode 'ctor)
            (out "        let results = recorded_query_for_verify(&mut __compact_proof_data, &qctx, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?;\n")
+           (emit-constructor-proof-data-local "results.context")
            (out "\n")
            (out "        Ok(ConstructorResult {\n")
            (out "            current_contract_state: results.context.state,\n")
@@ -3396,6 +3397,7 @@
                     "            current_private_state,\n"
                     "            current_private_state: ctx.initial_private_state,\n"))
            (out (ctor-zswap-result-field))
+           (out "            constructor_proof_data: __compact_constructor_proof_data,\n")
            (out "        })\n")]
           [else
            ;; 'circuit mode: results live on the inbound ctx and we wrap
@@ -3539,6 +3541,7 @@
              (cond
                [(eq? mode 'ctor)
                 (out "        let results = recorded_query_for_verify(&mut __compact_proof_data, &qctx, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?;\n")
+                (emit-constructor-proof-data-local "results.context")
                 (out "\n")
                 (out "        Ok(ConstructorResult {\n")
                 (out "            current_contract_state: results.context.state,\n")
@@ -3546,6 +3549,7 @@
                          "            current_private_state,\n"
                          "            current_private_state: ctx.initial_private_state,\n"))
                 (out (ctor-zswap-result-field))
+                (out "            constructor_proof_data: __compact_constructor_proof_data,\n")
                 (out "        })\n")]
                [else
                 (out "        let results = recorded_query_for_verify(&mut __compact_proof_data,\n")
@@ -3686,6 +3690,7 @@
                         (cond
                           [(eq? mode 'ctor)
                            (out "        let results = recorded_query_for_verify(&mut __compact_proof_data, &qctx, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?;\n")
+                           (emit-constructor-proof-data-local "results.context")
                            (out "\n")
                            (out "        Ok(ConstructorResult {\n")
                            (out "            current_contract_state: results.context.state,\n")
@@ -3693,6 +3698,7 @@
                                     "            current_private_state,\n"
                                     "            current_private_state: ctx.initial_private_state,\n"))
                            (out (ctor-zswap-result-field))
+                           (out "            constructor_proof_data: __compact_constructor_proof_data,\n")
                            (out "        })\n")]
                           [else
                            (out "        let results = recorded_query_for_verify(&mut __compact_proof_data,\n")
@@ -3779,12 +3785,14 @@
                (out "\n"))
              (cond
                [(eq? mode 'ctor)
+                (emit-constructor-proof-data-local "_if_results.context")
                 (out "        Ok(ConstructorResult {\n")
                 (out "            current_contract_state: _if_results.context.state,\n")
                 (out (if witness-emitted?
                          "            current_private_state,\n"
                          "            current_private_state: ctx.initial_private_state,\n"))
                 (out (ctor-zswap-result-field))
+                (out "            constructor_proof_data: __compact_constructor_proof_data,\n")
                 (out "        })\n")]
                [else
                 (out "        Ok(CircuitResults {\n")
@@ -3859,6 +3867,7 @@
              (cond
                [(eq? mode 'ctor)
                 (out "        let results = recorded_query_for_verify(&mut __compact_proof_data, &qctx, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?;\n")
+                (emit-constructor-proof-data-local "results.context")
                 (out "\n")
                 (out "        Ok(ConstructorResult {\n")
                 (out "            current_contract_state: results.context.state,\n")
@@ -3866,6 +3875,7 @@
                          "            current_private_state,\n"
                          "            current_private_state: ctx.initial_private_state,\n"))
                 (out (ctor-zswap-result-field))
+                (out "            constructor_proof_data: __compact_constructor_proof_data,\n")
                 (out "        })\n")]
                [else
                 (out "        let results = recorded_query_for_verify(&mut __compact_proof_data,\n")
@@ -3922,6 +3932,7 @@
              (cond
                [(eq? mode 'ctor)
                 (out "        let results = recorded_query_for_verify(&mut __compact_proof_data, &qctx, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?;\n")
+                (emit-constructor-proof-data-local "results.context")
                 (out "\n")
                 (out "        Ok(ConstructorResult {\n")
                 (out "            current_contract_state: results.context.state,\n")
@@ -3929,6 +3940,7 @@
                          "            current_private_state,\n"
                          "            current_private_state: ctx.initial_private_state,\n"))
                 (out (ctor-zswap-result-field))
+                (out "            constructor_proof_data: __compact_constructor_proof_data,\n")
                 (out "        })\n")]
                [else
                 (out "        let results = recorded_query_for_verify(&mut __compact_proof_data,\n")

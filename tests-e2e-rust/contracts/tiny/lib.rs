@@ -29,7 +29,7 @@
 use midnight_compact_runtime::*;
 use std::marker::PhantomData;
 
-midnight_compact_runtime::check_runtime_version!("0.16.101");
+midnight_compact_runtime::check_runtime_version!("0.16.102");
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 #[repr(u8)]
@@ -111,8 +111,11 @@ where
         ]);
         let state = ChargedState::new(sv);
         let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());
-        let mut __compact_proof_data =
-            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[]));
+        let __compact_initial_query_context = qctx.clone();
+        let __compact_constructor_id = "constructor";
+        let mut __compact_proof_data = PartialProofData::<DefaultDB>::new(
+            aligned_value_from_parts(&[proof_aligned_value(&v)]),
+        );
         let _witness_ctx_0 =
             WitnessContext::new(ledger(&qctx.state), ctx.initial_private_state, &qctx);
         let (current_private_state, sk) = self.witnesses.private_secret_key(&_witness_ctx_0);
@@ -137,11 +140,18 @@ where
             ctx.gas_limit.clone(),
             &ctx.cost_model,
         )?;
+        let __compact_constructor_proof_data = ConstructorProofData::new(
+            __compact_constructor_id,
+            __compact_initial_query_context,
+            results.context.clone(),
+            __compact_proof_data.finalize(aligned_value_from_parts(&[])),
+        );
 
         Ok(ConstructorResult {
             current_contract_state: results.context.state,
             current_private_state,
             current_zswap_local_state: ctx.empty_zswap_local_state,
+            constructor_proof_data: __compact_constructor_proof_data,
         })
     }
 

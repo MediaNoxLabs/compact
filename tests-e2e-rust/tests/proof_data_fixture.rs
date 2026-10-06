@@ -37,6 +37,24 @@ impl Witnesses<()> for ProofWitnesses {
 
 #[derive(Deserialize)]
 struct TsProofDataFixture {
+    constructor: TsConstructorFixture,
+    circuit: TsCircuitFixture,
+}
+
+#[derive(Deserialize)]
+struct TsConstructorFixture {
+    #[serde(rename = "constructorId")]
+    constructor_id: String,
+    #[serde(rename = "publicTranscriptTags")]
+    public_transcript_tags: Vec<String>,
+    #[serde(rename = "privateTranscriptOutputs")]
+    private_transcript_outputs: Vec<TsAlignedSummary>,
+    input: TsAlignedSummary,
+    output: TsAlignedSummary,
+}
+
+#[derive(Deserialize)]
+struct TsCircuitFixture {
     #[serde(rename = "publicTranscriptTags")]
     public_transcript_tags: Vec<String>,
     #[serde(rename = "privateTranscriptOutputs")]
@@ -103,6 +121,37 @@ fn generated_proof_data_matches_ts_reference_shape() {
     let init = contract
         .initial_state(ctor_ctx(), Fr::from(11u64))
         .expect("initial_state");
+
+    let ctor = &init.constructor_proof_data;
+    assert_eq!(ctor.constructor_id, ts.constructor.constructor_id);
+    assert_eq!(ctor.constructor_id, "constructor");
+    assert_eq!(ctor.initial_query_context.address, ctor.contract_address);
+    assert_eq!(ctor.final_query_context.state, init.current_contract_state);
+    assert_eq!(ts.constructor.input.value_atoms, ["0b"]);
+    assert_eq!(ts.constructor.output.value_atoms, Vec::<String>::new());
+    assert_eq!(ctor.proof_data.input, proof_aligned_value(&Fr::from(11u64)));
+    assert_eq!(ctor.proof_data.output, aligned_value_from_parts(&[]));
+    assert_eq!(rust_summary(&ctor.proof_data.input), ts.constructor.input);
+    assert_eq!(rust_summary(&ctor.proof_data.output), ts.constructor.output);
+    let ctor_tags: Vec<_> = ctor
+        .proof_data
+        .public_transcript
+        .iter()
+        .map(op_tag)
+        .collect();
+    assert_eq!(ctor_tags, ts.constructor.public_transcript_tags);
+    assert_eq!(ctor_tags, ["push", "push", "ins"]);
+    let ctor_private = ctor.proof_data.private_transcript_outputs().as_slice();
+    assert_eq!(
+        ctor_private.len(),
+        ts.constructor.private_transcript_outputs.len()
+    );
+    assert_eq!(ctor_private[0], proof_aligned_value(&Fr::from(5u64)));
+    assert_eq!(
+        rust_summary(&ctor_private[0]),
+        ts.constructor.private_transcript_outputs[0]
+    );
+
     let read_qctx = QueryContext::new(
         init.current_contract_state.clone(),
         midnight_compact_runtime::ContractAddress::default(),
@@ -127,7 +176,7 @@ fn generated_proof_data_matches_ts_reference_shape() {
 
     let ctx = CircuitContext::new(init.current_contract_state, ());
     let result = contract
-        .read_witness_write(ctx, Fr::from(11u64), Fr::from(30u64))
+        .read_witness_write(ctx, Fr::from(16u64), Fr::from(30u64))
         .expect("read_witness_write");
 
     let call = result
@@ -137,33 +186,17 @@ fn generated_proof_data_matches_ts_reference_shape() {
         .last()
         .expect("call proof data");
     assert_eq!(call.circuit_id, "read_witness_write");
-    assert_eq!(ts.input.value_atoms, ["0b", "1e"]);
-    assert_eq!(ts.output.value_atoms, Vec::<String>::new());
+    assert_eq!(ts.circuit.input.value_atoms, ["10", "1e"]);
+    assert_eq!(ts.circuit.output.value_atoms, Vec::<String>::new());
     let expected_input = aligned_value_from_parts(&[
-        proof_aligned_value(&Fr::from(11u64)),
+        proof_aligned_value(&Fr::from(16u64)),
         proof_aligned_value(&Fr::from(30u64)),
     ]);
     let expected_output = aligned_value_from_parts(&[]);
     assert_eq!(call.proof_data.input, expected_input);
     assert_eq!(call.proof_data.output, expected_output);
-    assert_eq!(rust_summary(&call.proof_data.input), ts.input);
-    assert_eq!(rust_summary(&call.proof_data.output), ts.output);
-    assert_eq!(
-        call.proof_data.input.value.0.len(),
-        ts.input.value_atoms.len()
-    );
-    assert_eq!(
-        call.proof_data.input.alignment.0.len(),
-        ts.input.alignment.len()
-    );
-    assert_eq!(
-        call.proof_data.output.value.0.len(),
-        ts.output.value_atoms.len()
-    );
-    assert_eq!(
-        call.proof_data.output.alignment.0.len(),
-        ts.output.alignment.len()
-    );
+    assert_eq!(rust_summary(&call.proof_data.input), ts.circuit.input);
+    assert_eq!(rust_summary(&call.proof_data.output), ts.circuit.output);
 
     let tags: Vec<_> = call
         .proof_data
@@ -171,7 +204,7 @@ fn generated_proof_data_matches_ts_reference_shape() {
         .iter()
         .map(op_tag)
         .collect();
-    assert_eq!(tags, ts.public_transcript_tags);
+    assert_eq!(tags, ts.circuit.public_transcript_tags);
     assert_eq!(tags, ["dup", "idx", "popeq", "push", "push", "ins"]);
 
     let popeq_values: Vec<_> = call
@@ -183,20 +216,26 @@ fn generated_proof_data_matches_ts_reference_shape() {
             _ => None,
         })
         .collect();
-    assert_eq!(popeq_values.len(), ts.popeq_values.len());
+    assert_eq!(popeq_values.len(), ts.circuit.popeq_values.len());
     assert_eq!(
         std_lib::decode_fr(popeq_values[0]).unwrap(),
-        Fr::from(11u64)
+        Fr::from(16u64)
     );
 
     let private = call.proof_data.private_transcript_outputs().as_slice();
-    assert_eq!(private.len(), ts.private_transcript_outputs.len());
-    assert_eq!(ts.private_transcript_outputs[0].value_atoms, ["05"]);
-    assert_eq!(ts.private_transcript_outputs[1].value_atoms, ["07"]);
+    assert_eq!(private.len(), ts.circuit.private_transcript_outputs.len());
+    assert_eq!(ts.circuit.private_transcript_outputs[0].value_atoms, ["05"]);
+    assert_eq!(ts.circuit.private_transcript_outputs[1].value_atoms, ["07"]);
     assert_eq!(private[0], proof_aligned_value(&Fr::from(5u64)));
     assert_eq!(private[1], proof_aligned_value(&Fr::from(7u64)));
-    assert_eq!(rust_summary(&private[0]), ts.private_transcript_outputs[0]);
-    assert_eq!(rust_summary(&private[1]), ts.private_transcript_outputs[1]);
+    assert_eq!(
+        rust_summary(&private[0]),
+        ts.circuit.private_transcript_outputs[0]
+    );
+    assert_eq!(
+        rust_summary(&private[1]),
+        ts.circuit.private_transcript_outputs[1]
+    );
     assert_eq!(std_lib::decode_fr(&private[0]).unwrap(), Fr::from(5u64));
     assert_eq!(std_lib::decode_fr(&private[1]).unwrap(), Fr::from(7u64));
 }

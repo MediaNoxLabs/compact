@@ -143,7 +143,17 @@
                   ;; shadow the upstream coin-structure type required by
                   ;; QueryContext::new.
                   (out "        let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());\n")
-                  (out "        let mut __compact_proof_data = PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[]));\n"))]
+                  (out "        let __compact_initial_query_context = qctx.clone();\n")
+                  (out "        let __compact_constructor_id = \"constructor\";\n")
+                  (out "        let mut __compact_proof_data = PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[")
+                  (let loop ([args ctor-arg*] [first? #t])
+                    (unless (null? args)
+                      (nanopass-case (Ltypescript Argument) (car args)
+                        [(,var-name ,type)
+                         (unless first? (out ", "))
+                         (out (proof-value-rust type (camel->snake (id-sym var-name))))])
+                      (loop (cdr args) #f)))
+                  (out "]));\n"))]
                ;; J2: emit the constructor body if we have one and its shape
                ;; matches. Fall back to the K1-only return otherwise (counter has
                ;; no constructor body, so it lands here naturally).
@@ -216,10 +226,12 @@
               "no walker shape matched the constructor body; ~a"
               "emitting the default scaffold here would silently discard every constructor write"))
           (unless emitted?
+            (emit-constructor-proof-data-local "qctx")
             (out "        Ok(ConstructorResult {\n")
             (out "            current_contract_state: qctx.state,\n")
             (out "            current_private_state: ctx.initial_private_state,\n")
             (out "            current_zswap_local_state: ctx.empty_zswap_local_state,\n")
+            (out "            constructor_proof_data: __compact_constructor_proof_data,\n")
             (out "        })\n")))
         (out "    }\n\n"))
 

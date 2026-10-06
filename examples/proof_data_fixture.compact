@@ -21,7 +21,8 @@ witness second_secret(): Field;
 export ledger value: Field;
 
 constructor(initial: Field) {
-  value = disclose(initial);
+  const seed = first_secret();
+  value = disclose(initial + seed);
 }
 
 export circuit read_witness_write(expected: Field, next: Field): [] {

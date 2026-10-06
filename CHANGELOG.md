@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Toolchain 0.31.124, language 0.23.103, runtime 0.16.102]
+
+### Added
+
+- **`--target rust` constructor results now expose deployment proof data** — generated constructors finalize a stable `constructor` proof-data record with initial/final query contexts, exact Compact-aligned constructor inputs, ordered public transcript, private witness outputs, and empty aligned output for Ledger8 deployment construction. The existing circuit-call proof-data trace remains fail-closed and unchanged.
+
 ## [Toolchain 0.31.123, language 0.23.103, runtime 0.16.101]
 
 ### Added

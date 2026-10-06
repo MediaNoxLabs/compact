@@ -29,7 +29,7 @@
 use midnight_compact_runtime::*;
 use std::marker::PhantomData;
 
-midnight_compact_runtime::check_runtime_version!("0.16.101");
+midnight_compact_runtime::check_runtime_version!("0.16.102");
 
 pub trait Witnesses<PS> {}
 impl<PS> Witnesses<PS> for NoWitnesses {}
@@ -60,6 +60,8 @@ where
         let sv = new_array(vec![new_cell(0u64)]);
         let state = ChargedState::new(sv);
         let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());
+        let __compact_initial_query_context = qctx.clone();
+        let __compact_constructor_id = "constructor";
         let mut __compact_proof_data =
             PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[]));
         let ops = OpProgramVerify::<DefaultDB>::new()
@@ -102,11 +104,18 @@ where
             ctx.gas_limit.clone(),
             &ctx.cost_model,
         )?;
+        let __compact_constructor_proof_data = ConstructorProofData::new(
+            __compact_constructor_id,
+            __compact_initial_query_context,
+            results.context.clone(),
+            __compact_proof_data.finalize(aligned_value_from_parts(&[])),
+        );
 
         Ok(ConstructorResult {
             current_contract_state: results.context.state,
             current_private_state: ctx.initial_private_state,
             current_zswap_local_state: ctx.empty_zswap_local_state,
+            constructor_proof_data: __compact_constructor_proof_data,
         })
     }
 

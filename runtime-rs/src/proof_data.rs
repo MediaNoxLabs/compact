@@ -170,6 +170,34 @@ impl<D: DB> CallProofData<D> {
     }
 }
 
+/// One finalized Compact constructor/deployment proof-data record.
+#[derive(Clone)]
+pub struct ConstructorProofData<D: DB = DefaultDB> {
+    pub constructor_id: String,
+    pub contract_address: ContractAddress,
+    pub initial_query_context: QueryContext<D>,
+    pub final_query_context: QueryContext<D>,
+    pub proof_data: ProofData<D>,
+}
+
+impl<D: DB> ConstructorProofData<D> {
+    pub fn new(
+        constructor_id: impl Into<String>,
+        initial_query_context: QueryContext<D>,
+        final_query_context: QueryContext<D>,
+        proof_data: ProofData<D>,
+    ) -> Self {
+        let contract_address = initial_query_context.address;
+        Self {
+            constructor_id: constructor_id.into(),
+            contract_address,
+            initial_query_context,
+            final_query_context,
+            proof_data,
+        }
+    }
+}
+
 /// Ordered proof-data trace for calls made by a context.
 #[derive(Clone, Default)]
 pub struct CallProofDataTrace<D: DB = DefaultDB> {
@@ -417,6 +445,42 @@ mod tests {
         pd.push_private_output(AlignedValue::from(2u8));
         let out = pd.private_transcript_outputs().as_slice();
         assert_eq!(out, &[AlignedValue::from(1u8), AlignedValue::from(2u8)]);
+    }
+
+    #[test]
+    fn constructor_proof_data_preserves_metadata_and_private_outputs() {
+        let initial = QueryContext::new(
+            crate::ChargedState::new(new_cell(0u8)),
+            ContractAddress::default(),
+        );
+        let final_qctx = QueryContext::new(
+            crate::ChargedState::new(new_cell(1u8)),
+            ContractAddress::default(),
+        );
+        let mut partial = PartialProofData::<DefaultDB>::new(AlignedValue::from(11u8));
+        partial.push_private_output(AlignedValue::from(5u8));
+        let constructor = ConstructorProofData::new(
+            "constructor",
+            initial.clone(),
+            final_qctx.clone(),
+            partial.finalize(aligned_value_from_parts(&[])),
+        );
+
+        assert_eq!(constructor.constructor_id, "constructor");
+        assert_eq!(constructor.contract_address, initial.address);
+        assert_eq!(constructor.initial_query_context.address, initial.address);
+        assert_eq!(constructor.final_query_context.address, final_qctx.address);
+        assert_eq!(constructor.initial_query_context.state, initial.state);
+        assert_eq!(constructor.final_query_context.state, final_qctx.state);
+        assert_eq!(constructor.proof_data.input, AlignedValue::from(11u8));
+        assert_eq!(constructor.proof_data.output, aligned_value_from_parts(&[]));
+        assert_eq!(
+            constructor
+                .proof_data
+                .private_transcript_outputs()
+                .as_slice(),
+            &[AlignedValue::from(5u8)]
+        );
     }
 
     #[test]

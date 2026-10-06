@@ -120,7 +120,7 @@ The generated `lib.rs` opens with:
 use midnight_compact_runtime::*;
 use std::marker::PhantomData;
 
-midnight_compact_runtime::check_runtime_version!("0.16.101");
+midnight_compact_runtime::check_runtime_version!("0.16.102");
 ```
 
 The `check_runtime_version!` macro is a compile-time assertion: if
@@ -312,9 +312,15 @@ you'd get from upstream `compactc`.
 
 ### Proof-data extraction for transaction builders
 
-Generated Rust impure circuit wrappers now record one proof-data call per
-exported circuit invocation in `CircuitContext::call_proof_data_trace`. Each
-call contains the actual circuit id, exact Compact-aligned formal input, ordered
+Generated Rust constructors return `ConstructorResult::constructor_proof_data`
+for deployment transaction construction. It carries the stable constructor id
+`"constructor"`, exact Compact-aligned constructor input, ordered constructor
+public transcript, private witness outputs in source/witness-call order, empty
+aligned primary output, and the initial/final query contexts.
+
+Generated Rust impure circuit wrappers record one proof-data call per exported
+circuit invocation in `CircuitContext::call_proof_data_trace`. Each call
+contains the actual circuit id, exact Compact-aligned formal input, ordered
 public transcript (`popeq` reads and writes in VM order), private witness
 outputs in source/witness-call order, exact primary output, and the initial and
 final query contexts needed by Ledger8 transaction construction. Use
@@ -416,7 +422,7 @@ that differs from the one `compactc` was built against. The
 generated `lib.rs` opens with:
 
 ```rust
-midnight_compact_runtime::check_runtime_version!("0.16.101");
+midnight_compact_runtime::check_runtime_version!("0.16.102");
 ```
 
 That literal is the version `compactc` expected. Compare against the
@@ -481,11 +487,11 @@ name. Two common gotchas:
 
 `midnight-compact-runtime` and `compactc` share a synchronised version string.
 The runtime crate exports `COMPACT_RUNTIME_VERSION` (currently
-`0.16.101`), and `compactc --runtime-version` prints the same string.
+`0.16.102`), and `compactc --runtime-version` prints the same string.
 
 ```bash
 compactc --runtime-version
-# → 0.16.101
+# → 0.16.102
 ```
 
 When you upgrade the compiler:
@@ -495,8 +501,8 @@ When you upgrade the compiler:
 2. Bump the `midnight-compact-runtime` dependency in your `Cargo.toml`
    accordingly.
 
-The version pin is **exact**, not semver-ranged: a `0.16.101`
-contract will refuse to link against a `0.16.101` runtime, on the
+The version pin is **exact**, not semver-ranged: a `0.16.102`
+contract will refuse to link against a `0.16.102` runtime, on the
 assumption that any prelude change might shift the ABI of generated
 code. If we move to a looser pin in future, this section will be
 updated.

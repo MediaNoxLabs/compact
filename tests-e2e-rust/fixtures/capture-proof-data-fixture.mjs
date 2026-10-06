@@ -21,6 +21,12 @@ const witnesses = {
   second_secret: (ctx) => [ctx.privateState, 7n],
 };
 
+const fieldAligned = (value) => ({
+  value: cr.CompactTypeField.toValue(value),
+  alignment: cr.CompactTypeField.alignment(),
+});
+const emptyAligned = () => ({ value: [], alignment: [] });
+
 const contract = new Contract(witnesses);
 const emptyCpk = { bytes: new Uint8Array(32) };
 const constructorCtx = {
@@ -35,12 +41,14 @@ const ctx = cr.createCircuitContext(
   init.currentContractState.data,
   init.currentPrivateState,
 );
-const call = contract.circuits.read_witness_write(ctx, 11n, 30n);
+const call = contract.circuits.read_witness_write(ctx, 16n, 30n);
 
 const atomHex = (atom) => Buffer.from(atom.bytes ?? atom).toString('hex');
 const alignedSummary = (av) => ({
   valueAtoms: av.value.map(atomHex),
-  alignment: av.alignment.map((a) => JSON.stringify(a, (_, v) => typeof v === 'bigint' ? v.toString() : v)),
+  alignment: av.alignment.map((a) =>
+    JSON.stringify(a, (_, v) => (typeof v === 'bigint' ? v.toString() : v)),
+  ),
 });
 const opTag = (op) => Object.keys(op)[0];
 const popeqValues = call.proofData.publicTranscript
@@ -48,10 +56,19 @@ const popeqValues = call.proofData.publicTranscript
   .map((op) => alignedSummary(op.popeq.result));
 
 const fixture = {
-  input: alignedSummary(call.proofData.input),
-  output: alignedSummary(call.proofData.output),
-  privateTranscriptOutputs: call.proofData.privateTranscriptOutputs.map(alignedSummary),
-  publicTranscriptTags: call.proofData.publicTranscript.map(opTag),
-  popeqValues,
+  constructor: {
+    constructorId: 'constructor',
+    input: alignedSummary(fieldAligned(11n)),
+    output: alignedSummary(emptyAligned()),
+    privateTranscriptOutputs: [alignedSummary(fieldAligned(5n))],
+    publicTranscriptTags: ['push', 'push', 'ins'],
+  },
+  circuit: {
+    input: alignedSummary(call.proofData.input),
+    output: alignedSummary(call.proofData.output),
+    privateTranscriptOutputs: call.proofData.privateTranscriptOutputs.map(alignedSummary),
+    publicTranscriptTags: call.proofData.publicTranscript.map(opTag),
+    popeqValues,
+  },
 };
 process.stdout.write(JSON.stringify(fixture, null, 2) + '\n');

@@ -2661,7 +2661,7 @@ dependencies = [
 
 [[package]]
 name = "midnight-compact-runtime"
-version = "0.16.101"
+version = "0.16.102"
 dependencies = [
  "midnight-base-crypto",
  "midnight-coin-structure",
@@ -2677,7 +2677,7 @@ dependencies = [
 
 [[package]]
 name = "midnight-compact-runtime-macros"
-version = "0.16.101"
+version = "0.16.102"
 dependencies = [
  "midnight-compact-runtime",
  "proc-macro2",

@@ -521,6 +521,19 @@
         (format "            current_zswap_local_state: ~a,\n"
                 (if (ctor-zswap-threaded?) "_zswap" "ctx.empty_zswap_local_state")))
 
+
+      ;; Emit a finalized constructor/deployment proof-data local. Constructors
+      ;; have a single stable deployment entry point and an empty primary
+      ;; output; their input is initialized by emit-initial-state from the
+      ;; constructor formals.
+      (define (emit-constructor-proof-data-local final-qctx-expr)
+        (out "        let __compact_constructor_proof_data = ConstructorProofData::new(\n")
+        (out "            __compact_constructor_id,\n")
+        (out "            __compact_initial_query_context,\n")
+        (out (format "            ~a.clone(),\n" final-qctx-expr))
+        (out "            __compact_proof_data.finalize(aligned_value_from_parts(&[])),\n")
+        (out "        );\n"))
+
       ;; integer-literal-rendering?: returns #t when `s` is a string of
       ;; one or more decimal digits (with no suffix, no operator chars,
       ;; no parens). Used by arith-operand-rust to decide whether

@@ -88,6 +88,9 @@ fn select_targets(args: Vec<OsString>) -> Result<(Targets, Vec<OsString>), Strin
             let root = arguments
                 .next()
                 .ok_or("--rust-runtime-root needs a directory")?;
+            if root.is_empty() {
+                return Err("--rust-runtime-root needs a directory".into());
+            }
             if targets.runtime_root.replace(PathBuf::from(root)).is_some() {
                 return Err("--rust-runtime-root may be given only once".into());
             }
@@ -267,7 +270,12 @@ fn runtime_source_root() -> Result<PathBuf, Box<dyn Error>> {
     // installer; Nix packages keep binaries under bin/. Both preserve share/.
     for prefix in [Some(directory), directory.parent()].into_iter().flatten() {
         let installed = prefix.join("share/compactc");
-        if installed.try_exists()? {
+        if installed.try_exists().map_err(|error| {
+            format!(
+                "cannot inspect installed runtime source root {}: {error}",
+                installed.display()
+            )
+        })? {
             return Ok(installed);
         }
     }
@@ -289,15 +297,48 @@ fn write_source_file(source: &Path, destination: &Path) -> Result<(), Box<dyn Er
     // fs::copy preserves archive/Nix timestamps on macOS. Cargo can then reuse
     // an older runtime in a shared target directory despite changed sources.
     // These are generated source files, so write their bytes with fresh times.
-    fs::write(destination, fs::read(source)?)?;
+    let bytes = fs::read(source).map_err(|error| {
+        format!(
+            "cannot read selected runtime source {}: {error}",
+            source.display()
+        )
+    })?;
+    fs::write(destination, bytes).map_err(|error| {
+        format!(
+            "cannot copy selected runtime source {} to {}: {error}",
+            source.display(),
+            destination.display()
+        )
+    })?;
     Ok(())
 }
 
 fn copy_source_tree(source: &Path, destination: &Path) -> Result<(), Box<dyn Error>> {
-    fs::create_dir_all(destination)?;
-    for entry in fs::read_dir(source)? {
-        let entry = entry?;
-        let kind = entry.file_type()?;
+    fs::create_dir_all(destination).map_err(|error| {
+        format!(
+            "cannot create runtime copy directory {} from {}: {error}",
+            destination.display(),
+            source.display()
+        )
+    })?;
+    for entry in fs::read_dir(source).map_err(|error| {
+        format!(
+            "cannot read selected runtime source directory {}: {error}",
+            source.display()
+        )
+    })? {
+        let entry = entry.map_err(|error| {
+            format!(
+                "cannot read selected runtime source entry in {}: {error}",
+                source.display()
+            )
+        })?;
+        let kind = entry.file_type().map_err(|error| {
+            format!(
+                "cannot inspect selected runtime source {}: {error}",
+                entry.path().display()
+            )
+        })?;
         let target = destination.join(entry.file_name());
         if kind.is_dir() {
             copy_source_tree(&entry.path(), &target)?;
@@ -318,7 +359,13 @@ fn copy_runtime_sources(root: &Path, contract_dir: &Path) -> Result<(), Box<dyn 
     for package in ["runtime-rs", "runtime-rs-macros"] {
         let source = root.join(package);
         let destination = contract_dir.join(package);
-        fs::create_dir_all(&destination)?;
+        fs::create_dir_all(&destination).map_err(|error| {
+            format!(
+                "cannot create runtime copy directory {} from {}: {error}",
+                destination.display(),
+                source.display()
+            )
+        })?;
         for file in ["Cargo.toml", "README.md", "LICENSE"] {
             write_source_file(&source.join(file), &destination.join(file))?;
         }
@@ -833,6 +880,35 @@ mod tests {
         assert!(
             fs::metadata(&generated).unwrap().modified().unwrap()
                 > fs::metadata(&file).unwrap().modified().unwrap()
+        );
+    }
+
+    #[test]
+    fn runtime_copy_errors_identify_source_and_destination() {
+        let root = TempRoot::new();
+        let source = root.0.join("missing-source.rs");
+        let destination = root.0.join("generated.rs");
+        let error = super::write_source_file(&source, &destination)
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains(&source.display().to_string()), "{error}");
+        fs::write(&source, "source bytes").unwrap();
+        fs::create_dir(&destination).unwrap();
+        let error = super::write_source_file(&source, &destination)
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains(&source.display().to_string()), "{error}");
+        assert!(
+            error.contains(&destination.display().to_string()),
+            "{error}"
+        );
+        let missing_tree = root.0.join("missing-tree");
+        let error = super::copy_source_tree(&missing_tree, &root.0.join("copy"))
+            .unwrap_err()
+            .to_string();
+        assert!(
+            error.contains(&missing_tree.display().to_string()),
+            "{error}"
         );
     }
 

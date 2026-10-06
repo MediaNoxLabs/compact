@@ -296,7 +296,7 @@ fn inline_dependency_table_is_valid_and_malformed_container_is_an_error() {
     assert_eq!(validate_root(&root.0).unwrap().compatibility, required());
     document["dependencies"] = toml_edit::value("invalid dependency container");
     fs::write(&path, document.to_string()).unwrap();
-    root.fails("dependencies.midnight-compact-runtime-macros.version");
+    root.fails("runtime-rs.dependencies must be a TOML table");
 }
 
 #[cfg(unix)]
@@ -456,4 +456,205 @@ fn literal_only_source_labels_refuse_expression_or_wrong_literal_forms() {
         // Even an equivalent constant expression is outside its literal contract.
         root.fails(field);
     }
+}
+
+fn set_dependency(
+    root: &Root,
+    package: &str,
+    context: &str,
+    target: Option<&str>,
+    name: &str,
+    spec: &str,
+) {
+    let path = root.0.join(package).join("Cargo.toml");
+    let mut document: toml_edit::DocumentMut = fs::read_to_string(&path).unwrap().parse().unwrap();
+    let parsed: toml_edit::DocumentMut = format!("entry = {spec}").parse().unwrap();
+    let value = parsed["entry"].clone();
+    if let Some(target) = target {
+        document["target"][target][context][name] = value;
+    } else {
+        document[context][name] = value;
+    }
+    fs::write(path, document.to_string()).unwrap();
+}
+
+fn public_refusal(root: &Root, expected: &str) {
+    let output = root
+        .0
+        .join(format!("output-{}", NEXT.fetch_add(1, Ordering::Relaxed)));
+    fs::create_dir(&output).unwrap();
+    fs::write(output.join("sentinel"), "existing artifact").unwrap();
+    let result = Command::new(env!("CARGO_BIN_EXE_compactc"))
+        .args(["--target", "rust", "--rust-runtime-root"])
+        .arg(&root.0)
+        .arg("unused.compact")
+        .arg(&output)
+        .env("COMPACTC_SCHEME", root.0.join("frontend-must-not-execute"))
+        .output()
+        .unwrap();
+    assert!(!result.status.success());
+    let error = String::from_utf8(result.stderr).unwrap();
+    assert!(error.contains(expected), "expected {expected}: {error}");
+    assert_eq!(
+        fs::read_to_string(output.join("sentinel")).unwrap(),
+        "existing artifact"
+    );
+    assert_eq!(fs::read_dir(output).unwrap().count(), 1);
+}
+
+#[test]
+fn midnight_dependencies_in_every_context_are_checked_before_frontend() {
+    for target in [Some("cfg(unix)"), Some("x86_64-unknown-linux-gnu"), None] {
+        for context in ["dependencies", "dev-dependencies", "build-dependencies"] {
+            for spec in [
+                r#"{ version = "=9.0.0" }"#,
+                r#"{ version = "=8.0.3", path = "../other-ledger" }"#,
+            ] {
+                let root = Root::new();
+                set_dependency(
+                    &root,
+                    "runtime-rs",
+                    context,
+                    target,
+                    "midnight-ledger",
+                    spec,
+                );
+                let label = match target {
+                    Some(target) => format!("runtime-rs.target.{target}.{context}.midnight-ledger"),
+                    None => format!("runtime-rs.{context}.midnight-ledger"),
+                };
+                public_refusal(&root, &label);
+            }
+        }
+    }
+}
+
+#[test]
+fn aliases_resolve_before_midnight_classification_and_macros_reject_extra_graphs() {
+    for package in ["runtime-rs", "runtime-rs-macros"] {
+        for context in ["dependencies", "dev-dependencies", "build-dependencies"] {
+            for target in [None, Some("cfg(unix)")] {
+                let root = Root::new();
+                set_dependency(
+                    &root,
+                    package,
+                    context,
+                    target,
+                    "innocent_alias",
+                    r#"{ package = "midnight-ledger", version = "=8.0.3" }"#,
+                );
+                let label = match target {
+                    Some(target) => format!("{package}.target.{target}.{context}.innocent_alias"),
+                    None => format!("{package}.{context}.innocent_alias"),
+                };
+                public_refusal(&root, &label);
+                root.fails("midnight-ledger");
+            }
+        }
+    }
+    let root = Root::new();
+    set_dependency(
+        &root,
+        "runtime-rs",
+        "dependencies",
+        Some("cfg(unix)"),
+        "harmless",
+        r#"{ package = "midnight-ledger", version = "=9.0.0" }"#,
+    );
+    public_refusal(&root, "runtime-rs.target.cfg(unix).dependencies.harmless");
+}
+
+#[test]
+fn matching_ledger_declarations_remain_valid_in_all_runtime_contexts() {
+    let root = Root::new();
+    for context in ["dependencies", "dev-dependencies", "build-dependencies"] {
+        for target in [None, Some("cfg(unix)"), Some("aarch64-apple-darwin")] {
+            set_dependency(
+                &root,
+                "runtime-rs",
+                context,
+                target,
+                "midnight-ledger",
+                r#""=8.0.3""#,
+            );
+        }
+    }
+    validate_root(&root.0).unwrap();
+    // Ordinary table entries and inline tables have the same checked semantics.
+    set_dependency(
+        &root,
+        "runtime-rs",
+        "dev-dependencies",
+        Some("cfg(unix)"),
+        "midnight-ledger",
+        r#"{ version = "=8.0.3", features = ["test-utilities"] }"#,
+    );
+    validate_root(&root.0).unwrap();
+    let path = root.0.join("runtime-rs/Cargo.toml");
+    let mut document: toml_edit::DocumentMut = fs::read_to_string(&path).unwrap().parse().unwrap();
+    let table = document["target"]["cfg(unix)"]["dev-dependencies"]["midnight-ledger"]
+        .as_inline_table()
+        .unwrap()
+        .clone()
+        .into_table();
+    document["target"]["cfg(unix)"]["dev-dependencies"]["midnight-ledger"] =
+        toml_edit::Item::Table(table);
+    fs::write(path, document.to_string()).unwrap();
+    validate_root(&root.0).unwrap();
+}
+
+#[test]
+fn root_and_parse_failures_identify_the_selected_input() {
+    let root = Root::new();
+    let missing = root.0.join("not-a-runtime-root");
+    let error = validate_root(&missing).unwrap_err().to_string();
+    assert!(error.contains("selected runtime root"), "{error}");
+    assert!(error.contains(&missing.display().to_string()), "{error}");
+    fs::write(root.0.join("runtime-rs/Cargo.toml"), "[malformed").unwrap();
+    public_refusal(&root, "runtime-rs/Cargo.toml");
+    let root = Root::new();
+    fs::write(root.0.join("runtime-rs/src/lib.rs"), "pub const =").unwrap();
+    public_refusal(&root, "runtime-rs/src/lib.rs");
+}
+
+#[test]
+fn both_empty_runtime_root_spellings_require_a_directory() {
+    for args in [
+        vec!["--rust-runtime-root", ""],
+        vec!["--rust-runtime-root="],
+    ] {
+        let root = Root::new();
+        let result = Command::new(env!("CARGO_BIN_EXE_compactc"))
+            .args(["--target", "rust"])
+            .args(args)
+            .arg("unused.compact")
+            .arg(root.0.join("output"))
+            .env("COMPACTC_SCHEME", root.0.join("frontend-must-not-execute"))
+            .output()
+            .unwrap();
+        assert!(!result.status.success());
+        assert!(
+            String::from_utf8(result.stderr)
+                .unwrap()
+                .contains("--rust-runtime-root needs a directory")
+        );
+        assert!(!root.0.join("output").exists());
+    }
+}
+
+#[test]
+fn malformed_dependency_paths_do_not_disappear_as_absent() {
+    let root = Root::new();
+    set_dependency(
+        &root,
+        "runtime-rs",
+        "dependencies",
+        Some("cfg(unix)"),
+        "midnight-ledger",
+        r#"{ version = "=8.0.3", path = false }"#,
+    );
+    public_refusal(
+        &root,
+        "runtime-rs.target.cfg(unix).dependencies.midnight-ledger.path must be a string",
+    );
 }

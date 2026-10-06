@@ -125,7 +125,13 @@ fn manifest(
                 path.display()
             )
         })?
-        .parse()?;
+        .parse()
+        .map_err(|error| {
+            format!(
+                "invalid Rust runtime compatibility manifest {}: {error}",
+                path.display()
+            )
+        })?;
     for (key, expected) in [
         ("name", name),
         ("version", version),
@@ -137,45 +143,137 @@ fn manifest(
     Ok(document)
 }
 
-fn dependency(
-    document: &DocumentMut,
-    name: &str,
+fn dependency_entry(
+    item: Option<&Item>,
+    label: &str,
     version: &str,
     path: Option<&str>,
 ) -> Result<(), Box<dyn Error>> {
-    let item = document
-        .get("dependencies")
-        .and_then(|table| table.get(name));
     let actual = item.and_then(|item| {
         item.as_str()
             .or_else(|| item.get("version").and_then(Item::as_str))
     });
     if actual != Some(version) {
-        return Err(mismatch(
-            &format!("dependencies.{name}.version"),
-            actual,
-            version,
-        ));
+        return Err(mismatch(&format!("{label}.version"), actual, version));
     }
     let selected_path = item
         .and_then(|item| item.get("path"))
-        .and_then(Item::as_str);
+        .map(|value| {
+            value
+                .as_str()
+                .ok_or_else(|| format!("Rust runtime compatibility: {label}.path must be a string"))
+        })
+        .transpose()?;
     if selected_path != path {
-        return Err(mismatch(
-            &format!("dependencies.{name}.path"),
-            selected_path,
-            path,
-        ));
+        return Err(mismatch(&format!("{label}.path"), selected_path, path));
     }
-    for key in ["git", "registry", "registry-index", "package"] {
+    for key in ["git", "registry", "registry-index", "package", "workspace"] {
         if item.and_then(|item| item.get(key)).is_some() {
             return Err(format!(
-                "Rust runtime compatibility: dependencies.{name}.{key} override is unsupported"
+                "Rust runtime compatibility: {label}.{key} override is unsupported"
             )
             .into());
         }
     }
     Ok(())
+}
+
+fn dependency_table(
+    table: &Item,
+    label: &str,
+    package: &str,
+    allow_macro_sibling: bool,
+    required: &Compatibility,
+) -> Result<(), Box<dyn Error>> {
+    let table = table
+        .as_table_like()
+        .ok_or_else(|| format!("Rust runtime compatibility: {label} must be a TOML table"))?;
+    for (name, item) in table.iter() {
+        // Cargo's package alias determines the real package; the local key can
+        // look unrelated to Midnight. Check both sides before classification.
+        let resolved = match item.get("package") {
+            Some(value) => value.as_str().ok_or_else(|| {
+                format!("Rust runtime compatibility: {label}.{name}.package must be a string")
+            })?,
+            None => name,
+        };
+        if !name.starts_with("midnight-") && !resolved.starts_with("midnight-") {
+            continue;
+        }
+        let entry = format!("{label}.{name}");
+        if package != "runtime-rs" {
+            return Err(format!("Rust runtime compatibility: {entry} resolves to unreviewed Midnight dependency {resolved} in {package}").into());
+        }
+        let (version, path) = if resolved == required.macros_package && allow_macro_sibling {
+            (
+                format!("={}", required.macros_version),
+                Some("../runtime-rs-macros"),
+            )
+        } else if let Some(version) = required.ledger_dependencies.get(resolved) {
+            (version.clone(), None)
+        } else {
+            return Err(format!("Rust runtime compatibility: {entry} resolves to unrecorded Midnight dependency {resolved}").into());
+        };
+        let diagnostic = if resolved == name {
+            entry
+        } else {
+            format!("{entry} (package {resolved})")
+        };
+        dependency_entry(Some(item), &diagnostic, &version, path)?;
+    }
+    Ok(())
+}
+
+fn declared_dependencies(
+    document: &DocumentMut,
+    package: &str,
+    required: &Compatibility,
+) -> Result<(), Box<dyn Error>> {
+    let contexts = ["dependencies", "dev-dependencies", "build-dependencies"];
+    for context in contexts {
+        if let Some(table) = document.get(context) {
+            dependency_table(
+                table,
+                &format!("{package}.{context}"),
+                package,
+                context == "dependencies",
+                required,
+            )?;
+        }
+    }
+    if let Some(targets) = document.get("target") {
+        let targets = targets.as_table_like().ok_or_else(|| {
+            format!("Rust runtime compatibility: {package}.target must be a TOML table")
+        })?;
+        // Inspect every target, including targets not active on this host. A
+        // generated portable consumer must not change its graph on another host.
+        for (target, config) in targets.iter() {
+            let label = format!("{package}.target.{target}");
+            let config = config.as_table_like().ok_or_else(|| {
+                format!("Rust runtime compatibility: {label} must be a TOML table")
+            })?;
+            for context in contexts {
+                if let Some(table) = config.get(context) {
+                    dependency_table(
+                        table,
+                        &format!("{label}.{context}"),
+                        package,
+                        false,
+                        required,
+                    )?;
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn source_error(action: &str, path: &Path, error: impl std::fmt::Display) -> Box<dyn Error> {
+    format!(
+        "Rust runtime compatibility {action} {}: {error}",
+        path.display()
+    )
+    .into()
 }
 
 fn hash_file(
@@ -184,15 +282,27 @@ fn hash_file(
     hashes: &mut BTreeMap<String, String>,
 ) -> Result<(), Box<dyn Error>> {
     let path = root.join(relative);
-    let kind = fs::symlink_metadata(&path)?.file_type();
+    let kind = fs::symlink_metadata(&path)
+        .map_err(|e| source_error("source metadata", &path, e))?
+        .file_type();
     if kind.is_dir() {
-        for entry in fs::read_dir(path)? {
-            hash_file(root, &relative.join(entry?.file_name()), hashes)?;
+        for entry in
+            fs::read_dir(&path).map_err(|e| source_error("read source directory", &path, e))?
+        {
+            let entry = entry.map_err(|e| source_error("read source entry", &path, e))?;
+            hash_file(root, &relative.join(entry.file_name()), hashes)?;
         }
     } else if kind.is_file() {
         hashes.insert(
             relative.to_string_lossy().replace('\\', "/"),
-            format!("{:x}", Sha256::digest(fs::read(path)?)),
+            format!(
+                "{:x}",
+                Sha256::digest(fs::read(&path).map_err(|e| source_error(
+                    "read source file",
+                    &path,
+                    e
+                ))?)
+            ),
         );
     } else {
         return Err(format!("unsupported runtime source entry: {}", path.display()).into());
@@ -204,7 +314,8 @@ fn hash_file(
 /// exact for this source-distributed compiler; arbitrary same-version trees are
 /// not interchangeable, and registry availability is not checked here.
 pub fn validate_root(root: &Path) -> Result<ValidatedRuntime, Box<dyn Error>> {
-    let root = fs::canonicalize(root)?;
+    let root =
+        fs::canonicalize(root).map_err(|e| source_error("selected runtime root", root, e))?;
     let record_path = root.join("runtime-rs/compatibility.json");
     let bytes = fs::read(&record_path).map_err(|error| format!("Rust runtime compatibility record {}: {error}; select a matching runtime root (no fallback)",record_path.display()))?;
     let selected: Compatibility = serde_json::from_slice(&bytes).map_err(|error| {
@@ -245,33 +356,33 @@ pub fn validate_root(root: &Path) -> Result<ValidatedRuntime, Box<dyn Error>> {
             "Rust runtime compatibility: runtime-rs-macros.lib.proc-macro must be true".into(),
         );
     }
-    dependency(
-        &runtime,
-        &required.macros_package,
+    let normal = runtime
+        .get("dependencies")
+        .and_then(Item::as_table_like)
+        .ok_or("Rust runtime compatibility: runtime-rs.dependencies must be a TOML table")?;
+    dependency_entry(
+        normal.get(&required.macros_package),
+        &format!("runtime-rs.dependencies.{}", required.macros_package),
         &format!("={}", required.macros_version),
         Some("../runtime-rs-macros"),
     )?;
     for (name, version) in &required.ledger_dependencies {
-        dependency(&runtime, name, version, None)?;
+        dependency_entry(
+            normal.get(name),
+            &format!("runtime-rs.dependencies.{name}"),
+            version,
+            None,
+        )?;
     }
-    let declared = runtime
-        .get("dependencies")
-        .and_then(Item::as_table_like)
-        .ok_or("Rust runtime compatibility: dependencies must be a TOML table")?;
-    for (name, _) in declared
-        .iter()
-        .filter(|(name, _)| name.starts_with("midnight-"))
-    {
-        if name != required.macros_package && !required.ledger_dependencies.contains_key(name) {
-            return Err(format!(
-                "Rust runtime compatibility: unrecorded Midnight dependency {name}"
-            )
-            .into());
-        }
-    }
+    declared_dependencies(&runtime, "runtime-rs", &required)?;
+    declared_dependencies(&macros, "runtime-rs-macros", &required)?;
     // These public literals are a useful stale-source diagnostic, not execution
     // of a selected build script or authentication of arbitrary Rust source.
-    let source = syn::parse_file(&fs::read_to_string(root.join("runtime-rs/src/lib.rs"))?)?;
+    let source_path = root.join("runtime-rs/src/lib.rs");
+    let source_text = fs::read_to_string(&source_path)
+        .map_err(|e| source_error("read source file", &source_path, e))?;
+    let source = syn::parse_file(&source_text)
+        .map_err(|e| source_error("parse source file", &source_path, e))?;
     for (name, expected) in [
         ("RUST_RUNTIME_ABI", required.runtime_abi.to_string()),
         ("LEDGER_VERSION", required.ledger_version.clone()),

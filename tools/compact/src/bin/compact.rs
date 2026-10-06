@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::{path::PathBuf, str::FromStr, sync::Arc};
+use std::{collections::BTreeMap, path::PathBuf, str::FromStr, sync::Arc};
 
 use anyhow::{Context as _, Result, anyhow, bail};
 use axoupdater::AxoUpdater;
@@ -303,25 +303,32 @@ async fn format(cfg: &CommandLineArguments, command: &FormatCommand) -> Result<(
         return Ok(());
     }
 
-    let mut join_set = JoinSet::new();
-
-    let bin = Arc::new(bin);
-    let check_mode = command.check;
-
+    // Resolve all aliases before starting any writer. Keep each original path for
+    // reporting, including repeated arguments and files also found in directories.
+    let mut groups: BTreeMap<PathBuf, Vec<PathBuf>> = BTreeMap::new();
     for file_path in &command.files {
         let path = PathBuf::from_str(file_path).unwrap();
-
-        if path.is_dir() {
-            for path in formatter::compact_files_excluding_gitignore(&path) {
-                let bin = Arc::clone(&bin);
-
-                join_set.spawn(async move { format_file(&bin, check_mode, path).await });
-            }
+        let paths = if path.is_dir() {
+            formatter::compact_files_excluding_gitignore(&path).collect()
         } else {
-            let bin = Arc::clone(&bin);
-
-            join_set.spawn(async move { format_file(&bin, check_mode, path).await });
+            vec![path]
+        };
+        for path in paths {
+            let canonical = path.canonicalize().unwrap_or_else(|_| path.clone());
+            groups.entry(canonical).or_default().push(path);
         }
+    }
+
+    let mut join_set = JoinSet::new();
+    let bin = Arc::new(bin);
+    let check_mode = command.check;
+    for (canonical, paths) in groups {
+        let bin = Arc::clone(&bin);
+        join_set.spawn(async move {
+            format_file(&bin, check_mode, canonical)
+                .await
+                .map(|(_, message, style)| (paths, message, style))
+        });
     }
 
     let mut something_failed = false;
@@ -333,42 +340,44 @@ async fn format(cfg: &CommandLineArguments, command: &FormatCommand) -> Result<(
             continue;
         };
 
-        let Ok((path, message, style)) = file_result else {
+        let Ok((paths, message, style)) = file_result else {
             something_failed = true;
 
             continue;
         };
 
-        match style {
-            FormatStatus::Error => {
-                eprintln!(
-                    "{}: {}",
-                    cfg.style.version_raw(path.display()),
-                    cfg.style.error(message)
-                );
+        for path in paths {
+            match &style {
+                FormatStatus::Error => {
+                    eprintln!(
+                        "{}: {}",
+                        cfg.style.version_raw(path.display()),
+                        cfg.style.error(message)
+                    );
 
-                something_failed = true;
+                    something_failed = true;
+                }
+                FormatStatus::Success if command.verbose => {
+                    println!(
+                        "{}: {}",
+                        cfg.style.version_raw(path.display()),
+                        cfg.style.success(message)
+                    );
+                }
+                FormatStatus::Warn if command.verbose => {
+                    println!(
+                        "{}: {}",
+                        cfg.style.version_raw(path.display()),
+                        cfg.style.warn(message)
+                    );
+                }
+                FormatStatus::Diff(diff) => {
+                    eprintln!("{}:", cfg.style.version_raw(path.display()));
+                    eprintln!("{diff}");
+                    something_failed = true;
+                }
+                _ => (),
             }
-            FormatStatus::Success if command.verbose => {
-                println!(
-                    "{}: {}",
-                    cfg.style.version_raw(path.display()),
-                    cfg.style.success(message)
-                );
-            }
-            FormatStatus::Warn if command.verbose => {
-                println!(
-                    "{}: {}",
-                    cfg.style.version_raw(path.display()),
-                    cfg.style.warn(message)
-                );
-            }
-            FormatStatus::Diff(diff) => {
-                eprintln!("{}:", cfg.style.version_raw(path.display()));
-                eprintln!("{diff}");
-                something_failed = true;
-            }
-            _ => (),
         }
     }
 

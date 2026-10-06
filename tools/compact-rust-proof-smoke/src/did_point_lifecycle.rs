@@ -144,6 +144,7 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
     println!(
         "DID original constructor data: actual default-strict Dust-funded deployment applied; stored zero id retained, distinct deployed address"
     );
+    let mut checked_calls = Vec::new();
     for (number, &id) in calls.iter().enumerate() {
         let row = scenario["steps"]
             .as_array()
@@ -255,7 +256,9 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
         if format!("{manual:?}") != format!("{prepared:?}") {
             return Err("typed call preparation differs from manual FAB binding".into());
         }
-        super::kernel_shielded_effects::prove_and_verify_call(root, name, &prepared, &verifier)?;
+        let proof_bytes = super::kernel_shielded_effects::prove_and_verify_call_measured(
+            root, name, &prepared, &verifier,
+        )?;
         let intent: Intent<Signature, ProofPreimageMarker, PedersenRandomness, DefaultDB> =
             Intent::empty(&mut rng, Timestamp::from_secs(state.time.to_secs() + 3600))
                 .add_call::<ProofPreimage>(prepared);
@@ -324,6 +327,11 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
         if state.ledger != unchanged {
             return Err("replay validation mutated ledger".into());
         }
+        checked_calls.push(json!({
+            "case": id, "operation": name, "proof_bytes": proof_bytes,
+            "changed_binding_rejected": true, "applied": true,
+            "replay_refusal": "IntentAlreadyExists",
+        }));
     }
     let final_state = state
         .ledger
@@ -358,5 +366,23 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
             );
         }
     }
+    let (scenario, selector) = match lifecycle {
+        Lifecycle::Points => ("points", "--did-point-lifecycle"),
+        Lifecycle::Aliases => ("aliases", "--did-alias-lifecycle"),
+    };
+    let final_state_file = format!("did-{scenario}-final-state.bin");
+    let mut public_state = Vec::new();
+    tagged_serialize(&final_state, &mut public_state)?;
+    fs::write(root.join(&final_state_file), public_state)?;
+    fs::write(
+        root.join(format!("did-{scenario}-result.json")),
+        serde_json::to_vec_pretty(&json!({
+            "format": "compact-did-proof-result/v1", "scenario": scenario,
+            "selector": selector, "installed_operations": operation_names,
+            "strictness": "default", "deployment_applied": true,
+            "constructor_execution_proved": false, "calls": checked_calls,
+            "final_state_file": final_state_file,
+        }))?,
+    )?;
     Ok(())
 }

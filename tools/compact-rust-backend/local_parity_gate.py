@@ -332,6 +332,9 @@ def main() -> int:
                 raise GateError("full proof gate requires " + ", ".join(missing)
                                 + " on PATH; use the Nix compiler environment or add "
                                 "the packaged compiler's lib directory before --full")
+        if args.full:
+            import did_proof_gate
+            did_proof_gate.prerequisites(os.environ)
         selected = select_sources(args.source, args.full)
         head = git_head()
         if args.expect_head and not head.startswith(args.expect_head):
@@ -411,6 +414,10 @@ def main() -> int:
             run([sys.executable, str(ROOT / "tools/compact-rust-backend/check_oracle_acceptance.py")],
                 "oracle-acceptance", directory, receipt, env=environment)
             run([sys.executable, str(ROOT / "tools/compact-rust-backend/check_positive_source_scope.py"),
+                 "--manifest", str(ROOT / "tools/compact-rust-backend/parity_positive_unit_composition_sources.json"),
+                 "--compiler", str(snapshot), "--output", str(directory / "unit-composition-source-scope.json")],
+                "unit-composition-source-scope", directory, receipt, env=environment)
+            run([sys.executable, str(ROOT / "tools/compact-rust-backend/check_positive_source_scope.py"),
                  "--manifest", str(ROOT / "tools/compact-rust-backend/parity_positive_top_level_sources.json"),
                  "--compiler", str(snapshot), "--output", str(directory / "top-level-source-scope.json")],
                 "top-level-source-scope", directory, receipt, env=environment)
@@ -482,6 +489,14 @@ def main() -> int:
             run([sys.executable, str(ROOT / "tools/compact-rust-backend/check_compactc_target.py"),
                  "--consumer", "--proof"], "consumer-proof-ledger", directory, receipt,
                 env=environment)
+            did_directory = directory / "did-proof"
+            run([sys.executable, str(ROOT / "tools/compact-rust-backend/did_proof_gate.py"),
+                 "--compiler", str(snapshot), "--scheme", str(directory / "bin/compactc-scheme"),
+                 "--cargo-target-dir", environment["CARGO_TARGET_DIR"],
+                 "--run-dir", str(did_directory)], "did-proof-lifecycles", directory, receipt,
+                env=environment)
+            did_receipt = did_directory / "receipt.json"
+            receipt["did_proof_gate"] = {"path": str(did_receipt), "sha256": sha256(did_receipt)}
         elif not args.skip_cargo:
             run(["cargo", "+1.99.0", "test", "--locked", *sum((["-p", name] for name in packages), [])],
                 "selected-cargo-tests", directory, receipt, env=environment)

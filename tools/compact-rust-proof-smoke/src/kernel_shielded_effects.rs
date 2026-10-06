@@ -181,6 +181,15 @@ pub(super) fn prove_and_verify_call(
     call: &ContractCallPrototype<DefaultDB>,
     verifier: &VerifierKey,
 ) -> Result<(), Box<dyn Error>> {
+    prove_and_verify_call_measured(root, name, call, verifier).map(|_| ())
+}
+
+pub(super) fn prove_and_verify_call_measured(
+    root: &Path,
+    name: &'static str,
+    call: &ContractCallPrototype<DefaultDB>,
+    verifier: &VerifierKey,
+) -> Result<usize, Box<dyn Error>> {
     let mut fields = Vec::new();
     call.input.value_only_field_repr(&mut fields);
     call.output.value_only_field_repr(&mut fields);
@@ -224,7 +233,7 @@ pub(super) fn prove_and_verify_call(
         "{name} cryptographic proof verified ({} bytes), changed binding rejected",
         proof.0.len()
     );
-    Ok(())
+    Ok(proof.0.len())
 }
 
 fn funded_mint(root: &Path) -> Result<(), Box<dyn Error>> {

@@ -16,6 +16,8 @@
 # limitations under the License.
 
 import os
+import json
+from unittest.mock import patch
 import subprocess
 import sys
 import tempfile
@@ -39,6 +41,39 @@ class WorkspaceTestPlanTests(unittest.TestCase):
             self.assertIn("MIDNIGHT_LEDGER_TEST_STATIC_DIR", result.stderr)
             self.assertIn("ledger/static", result.stderr)
             self.assertFalse(run_dir.exists())
+
+    def test_full_gate_invokes_unit_composition_registry_and_both_scenario_driver(self):
+        import did_proof_gate
+        calls = []
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            compiler = root / "compiler"
+            compiler.write_text("#!/bin/sh\nexit 0\n")
+            compiler.chmod(0o755)
+            def record(command, label, directory, receipt, **kwargs):
+                calls.append((label, command))
+                if label == "workspace-test-metadata":
+                    kwargs["stdout_path"].write_text(json.dumps({"workspace_members": [], "packages": []}))
+                if label == "did-proof-lifecycles":
+                    raise gate.GateError("controlled stop after mandatory DID invocation")
+            with patch.object(sys, "argv", ["gate", "--full", "--compiler", str(compiler),
+                    "--scheme", str(compiler), "--run-dir", str(root / "run")]), \
+                 patch.dict(os.environ, {"MIDNIGHT_LEDGER_TEST_STATIC_DIR": str(root)}), \
+                 patch.object(gate.shutil, "which", return_value=str(compiler)), \
+                 patch.object(did_proof_gate, "prerequisites", return_value={}), \
+                 patch.object(gate, "select_sources", return_value=[]), \
+                 patch.object(gate.inventory, "source_paths", return_value=[]), \
+                 patch.object(gate, "compare_baseline"), \
+                 patch.object(gate.inventory, "receipt_metadata", return_value={}), \
+                 patch.object(gate, "run", side_effect=record):
+                self.assertEqual(gate.main(), 1)
+            by_label = dict(calls)
+            registry = by_label["unit-composition-source-scope"]
+            self.assertEqual(registry[registry.index("--manifest") + 1],
+                             str(gate.ROOT / "tools/compact-rust-backend/parity_positive_unit_composition_sources.json"))
+            self.assertIn("did_proof_gate.py", by_label["did-proof-lifecycles"][1])
+            self.assertIn("consumer-proof-ledger", by_label)
+            self.assertNotIn("--skip", by_label["did-proof-lifecycles"])
 
     def test_generated_library_guard_falls_back_for_test_or_unknown_expansion(self):
         safe = '#[derive(Clone)]\npub fn f() { if !(true) { assert!(false); } }'

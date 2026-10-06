@@ -16,6 +16,7 @@
 //! Admission is separate from advance's false reset and readonly payout. The
 //! shared Plan owns all evaluation, scopes, checked effects and helper calls.
 use super::*;
+use crate::coin_shapes::{qualified_coin_type, shielded_coin_type};
 
 fn optional_key(ty: &Type) -> bool {
     matches!(ty, Type::Struct { fields, .. }
@@ -24,13 +25,11 @@ fn optional_key(ty: &Type) -> bool {
                 && value.name == "value" && wrapped_bytes32(&value.ty)))
 }
 pub(super) fn read_type(ty: &Type) -> bool {
-    matches!(ty, Type::Enum { .. })
-        || *ty == crate::stateful::qualified_coin_type()
-        || optional_key(ty)
+    matches!(ty, Type::Enum { .. }) || *ty == qualified_coin_type() || optional_key(ty)
 }
 pub(super) fn write_type(ty: &Type) -> bool {
     matches!(ty, Type::Boolean | Type::Enum { .. })
-        || *ty == crate::stateful::qualified_coin_type()
+        || *ty == qualified_coin_type()
         || optional_string(ty)
         || optional_key(ty)
 }
@@ -41,7 +40,7 @@ fn reset_value(value: &Expr, pure: &HashMap<&str, &PureCircuit>) -> bool {
     match value {
         Expr::Parameter { .. } | Expr::Boolean { .. } | Expr::EnumVariant { .. } => true,
         Expr::UnsignedLiteral { value, max } => value == "1" && max == "65535",
-        Expr::Default { ty } => *ty == crate::stateful::qualified_coin_type(),
+        Expr::Default { ty } => *ty == qualified_coin_type(),
         Expr::Coerce { value, .. } => reset_value(value, pure),
         Expr::Equal { left, right } => reset_value(left, pure) && reset_value(right, pure),
         Expr::If {
@@ -118,7 +117,7 @@ pub(super) fn lower<'a>(
     if circuit.internal
         || !circuit.parameters.is_empty()
         || !circuit.actions.is_empty()
-        || circuit.result != crate::stateful::shielded_coin_type()
+        || circuit.result != shielded_coin_type()
         || shielded_payout::actionful_call_paths(
             value,
             pure,

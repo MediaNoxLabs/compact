@@ -18,6 +18,7 @@
 
 use super::*;
 use crate::coerce_expression;
+use crate::coin_shapes::{qualified_coin_type, shielded_coin_type, shielded_recipient_type};
 use crate::ir::{KernelClaimKind, ReturnPlan};
 mod field_observations;
 mod funded_mint;
@@ -993,10 +994,10 @@ impl Plan<'_> {
                     return None;
                 };
                 let ty = ty.clone();
-                if !bytes32_key(&ty) && ty != crate::stateful::qualified_coin_type() {
+                if !bytes32_key(&ty) && ty != qualified_coin_type() {
                     return None;
                 }
-                if ty == crate::stateful::qualified_coin_type() {
+                if ty == qualified_coin_type() {
                     self.qualified_set_reads += 1;
                 }
                 let value = self.expression(value, scope, steps)?;
@@ -1015,7 +1016,7 @@ impl Plan<'_> {
                 let LedgerFieldKind::Set { ty } = &self.field(field, *index)?.declaration else {
                     return None;
                 };
-                if *ty != crate::stateful::qualified_coin_type() {
+                if *ty != qualified_coin_type() {
                     return None;
                 }
                 self.qualified_set_reads += 1;
@@ -1594,14 +1595,12 @@ impl Plan<'_> {
                 else {
                     return None;
                 };
-                if *ty != crate::stateful::qualified_coin_type() {
+                if *ty != qualified_coin_type() {
                     return None;
                 }
                 let coin = self.expression(coin, scope, steps)?;
                 let recipient = self.expression(recipient, scope, steps)?;
-                if coin.ty != crate::stateful::shielded_coin_type()
-                    || recipient.ty != crate::stateful::shielded_recipient_type()
-                {
+                if coin.ty != shielded_coin_type() || recipient.ty != shielded_recipient_type() {
                     return None;
                 }
                 let slot = ident(field).ok()?;
@@ -1742,7 +1741,7 @@ impl Plan<'_> {
                         self.set_writes += 1
                     }
                     (StateAction::SetInsert { .. }, LedgerFieldKind::Set { ty })
-                        if *ty == crate::stateful::qualified_coin_type() =>
+                        if *ty == qualified_coin_type() =>
                     {
                         self.qualified_set_writes += 1
                     }
@@ -1774,7 +1773,7 @@ impl Plan<'_> {
                 let LedgerFieldKind::Set { ty } = &self.field(field, *index)?.declaration else {
                     return None;
                 };
-                if *ty != crate::stateful::qualified_coin_type() {
+                if *ty != qualified_coin_type() {
                     return None;
                 }
                 let ty = ty.clone();
@@ -1796,7 +1795,7 @@ impl Plan<'_> {
                 {
                     return None;
                 }
-                if *ty != crate::stateful::qualified_coin_type()
+                if *ty != qualified_coin_type()
                     && !((self.phase_reset
                         || self.composite_domain == CompositeDomain::ResetShieldedPayout)
                         && *ty == (Type::Bytes { length: 32 }))
@@ -1807,7 +1806,7 @@ impl Plan<'_> {
                 steps.push(
                     syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_reset(frame)?;),
                 );
-                if *ty == crate::stateful::qualified_coin_type() {
+                if *ty == qualified_coin_type() {
                     self.qualified_set_writes += 1;
                 } else {
                     self.set_writes += 1;
@@ -1822,14 +1821,12 @@ impl Plan<'_> {
                 let LedgerFieldKind::Set { ty } = &self.field(field, *index)?.declaration else {
                     return None;
                 };
-                if *ty != crate::stateful::qualified_coin_type() {
+                if *ty != qualified_coin_type() {
                     return None;
                 }
                 let coin = self.expression(coin, scope, steps)?;
                 let recipient = self.expression(recipient, scope, steps)?;
-                if coin.ty != crate::stateful::shielded_coin_type()
-                    || recipient.ty != crate::stateful::shielded_recipient_type()
-                {
+                if coin.ty != shielded_coin_type() || recipient.ty != shielded_recipient_type() {
                     return None;
                 }
                 let slot = ident(field).ok()?;
@@ -2414,9 +2411,9 @@ fn composite_circuit(
         && circuit.parameters.iter().all(|p| {
             p.ty == Type::Boolean
                 || (intents
-                    && (p.ty == crate::stateful::shielded_coin_type()
-                        || p.ty == crate::stateful::qualified_coin_type()
-                        || p.ty == crate::stateful::shielded_recipient_type()
+                    && (p.ty == shielded_coin_type()
+                        || p.ty == qualified_coin_type()
+                        || p.ty == shielded_recipient_type()
                         || p.ty == (Type::Bytes { length: 32 })))
         })
         && matches!(&circuit.return_value, StateReturn::Expression { value } if composite_value(value,witnesses,circuits,visiting,intents))
@@ -2425,7 +2422,7 @@ fn composite_circuit(
 fn shielded_unit_signature(circuit: &StatefulCircuit) -> bool {
     circuit.result == Type::Unit
         && circuit.return_value == StateReturn::Unit
-        && matches!(circuit.parameters.as_slice(), [parameter] if parameter.ty == crate::stateful::shielded_coin_type())
+        && matches!(circuit.parameters.as_slice(), [parameter] if parameter.ty == shielded_coin_type())
         && !circuit.actions.is_empty()
 }
 
@@ -2640,10 +2637,7 @@ fn shielded_send_result(ty: &Type) -> bool {
     let [change, sent] = fields.as_slice() else {
         return false;
     };
-    if change.name != "change"
-        || sent.name != "sent"
-        || sent.ty != crate::stateful::shielded_coin_type()
-    {
+    if change.name != "change" || sent.name != "sent" || sent.ty != shielded_coin_type() {
         return false;
     }
     matches!(&change.ty, Type::Struct { fields, .. }
@@ -3300,12 +3294,12 @@ pub(super) fn lower<'a>(
         && plan.historic_writes == 0
         && ((circuit.parameters.is_empty() && plan.qualified_set_reads > 0)
             || matches!(circuit.parameters.as_slice(), [coin, recipient]
-                if coin.ty == crate::stateful::shielded_coin_type()
-                    && recipient.ty == crate::stateful::shielded_recipient_type()));
+                if coin.ty == shielded_coin_type()
+                    && recipient.ty == shielded_recipient_type()));
     let qualified_cell_replacement = circuit.result == Type::Unit
         && matches!(circuit.parameters.as_slice(), [coin, recipient]
-            if coin.ty == crate::stateful::shielded_coin_type()
-                && recipient.ty == crate::stateful::shielded_recipient_type())
+            if coin.ty == shielded_coin_type()
+                && recipient.ty == shielded_recipient_type())
         && plan.qualified_cell_writes == 1
         && plan.qualified_set_reads == 0
         && plan.qualified_set_writes == 0

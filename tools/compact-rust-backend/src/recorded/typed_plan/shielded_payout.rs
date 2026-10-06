@@ -15,10 +15,10 @@
 //! Qualified-coin payout composition. Distinct read-only and actionful domains
 //! audit every branch and binding; the shared Plan owns values, calls and scope.
 use super::*;
+use crate::coin_shapes::{qualified_coin_type, shielded_coin_type};
 
 pub(super) fn cell_type(ty: &Type) -> bool {
-    matches!(ty, Type::Bytes { length: 32 } | Type::Enum { .. })
-        || *ty == crate::stateful::qualified_coin_type()
+    matches!(ty, Type::Bytes { length: 32 } | Type::Enum { .. }) || *ty == qualified_coin_type()
 }
 pub(super) fn actionful_cell_type(ty: &Type) -> bool {
     cell_type(ty)
@@ -30,7 +30,7 @@ pub(super) fn actionful_cell_type(ty: &Type) -> bool {
                     && value.name == "value" && value.ty == Type::Field))
 }
 fn coin_result(ty: &Type) -> bool {
-    if *ty == crate::stateful::shielded_coin_type() {
+    if *ty == shielded_coin_type() {
         return true;
     }
     matches!(ty,Type::Struct { fields, .. } if !fields.is_empty() && fields.iter().all(|field|coin_result(&field.ty)))
@@ -511,7 +511,7 @@ mod tests {
             ),
             (
                 json!({"kind":"cell_read","field":"pot","index":99}),
-                serde_json::to_value(crate::stateful::qualified_coin_type()).unwrap(),
+                serde_json::to_value(qualified_coin_type()).unwrap(),
             ),
             (
                 json!({"kind":"call","name":"missing","arguments":[]}),

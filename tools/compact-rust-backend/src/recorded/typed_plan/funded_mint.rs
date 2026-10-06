@@ -15,6 +15,7 @@
 //! Checked-price funding followed by a shielded mint. Admission composes the
 //! received-coin provenance audit; evaluation and scopes remain in shared Plan.
 use super::*;
+use crate::coin_shapes::shielded_coin_type;
 
 pub(super) const PRODUCT: &str = "340282366920938463426481119284349108225";
 
@@ -32,7 +33,7 @@ pub(super) fn lower<'a>(
         return None;
     };
     if coin.name == amount.name
-        || coin.ty != crate::stateful::shielded_coin_type()
+        || coin.ty != shielded_coin_type()
         || amount.ty
             != (Type::Unsigned {
                 max: u64::MAX.to_string(),

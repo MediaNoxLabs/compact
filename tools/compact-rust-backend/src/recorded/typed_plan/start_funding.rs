@@ -16,10 +16,11 @@
 //! writes, and an audited historical-plus-received merge on the second path.
 //! The shared Plan owns evaluation, types, scope, and transcript order.
 use super::*;
+use crate::coin_shapes::{qualified_coin_type, shielded_coin_type};
 
 pub(super) fn cell_type(ty: &Type) -> bool {
     matches!(ty, Type::Enum { .. } | Type::Bytes { length: 32 })
-        || *ty == crate::stateful::qualified_coin_type()
+        || *ty == qualified_coin_type()
         || matches!(ty, Type::Struct { fields, .. } if matches!(fields.as_slice(), [member] if member.ty == Type::Field))
 }
 
@@ -277,7 +278,7 @@ fn branch_action(
                 if funding_names.contains(&binding.name.as_str()) {
                     return false;
                 }
-                if binding.ty == crate::stateful::shielded_coin_type() {
+                if binding.ty == shielded_coin_type() {
                     let Some(origin) = coin_origin(
                         &binding.value,
                         &scoped,
@@ -405,7 +406,7 @@ fn branch(
                     if funding_names.contains(&binding.name.as_str()) {
                         return false;
                     }
-                    if binding.ty == crate::stateful::shielded_coin_type() {
+                    if binding.ty == shielded_coin_type() {
                         let Some(origin) = coin_origin(
                             &binding.value,
                             &scoped,
@@ -573,7 +574,7 @@ pub(super) fn lower<'a>(
         || !matches!(circuit.result, Type::Enum { .. })
         || !matches!(circuit.parameters.as_slice(), [position, wager, deposit]
             if position.ty == Type::Field
-                && wager.ty == crate::stateful::shielded_coin_type()
+                && wager.ty == shielded_coin_type()
                 && deposit.ty == wager.ty)
         || circuit
             .parameters
@@ -786,8 +787,7 @@ mod tests {
             &mut receive["actions"],
             "create_zswap_output",
             &mut |node| {
-                node["coin"] =
-                    json!({"kind":"default", "ty":crate::stateful::shielded_coin_type()});
+                node["coin"] = json!({"kind":"default", "ty":shielded_coin_type()});
                 changed = true;
             },
         );
@@ -814,10 +814,8 @@ mod tests {
         start["return_value"]["body"]["result"]["bindings"]
             .as_array_mut()
             .unwrap()
-            .push(
-                json!({"name":"wager", "ty":crate::stateful::shielded_coin_type(),
-                "value":{"kind":"parameter","name":"deposit"}}),
-            );
+            .push(json!({"name":"wager", "ty":shielded_coin_type(),
+                "value":{"kind":"parameter","name":"deposit"}}));
         assert!(!admitted(&shadow, "start"));
 
         let mut wrong_red_store = source();

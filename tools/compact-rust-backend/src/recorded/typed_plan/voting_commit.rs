@@ -16,6 +16,7 @@
 //! Admission audits the complete closure; the shared Plan alone evaluates it.
 use super::immediate_send::{parameter, uncoerced};
 use super::*;
+use crate::coin_shapes::{shielded_coin_type, shielded_recipient_type};
 
 enum Step<'a> {
     Binding(&'a crate::ir::LocalBinding),
@@ -61,7 +62,7 @@ fn zero_user_target(value: &Expr, pure: &HashMap<&str, &PureCircuit>) -> bool {
         return false;
     };
     matches!(&helper.body, Expr::StructLiteral { ty, fields }
-        if *ty == crate::stateful::shielded_recipient_type()
+        if *ty == shielded_recipient_type()
         && matches!(fields.as_slice(), [Expr::Boolean { value: true }, left, Expr::Default { ty }]
             if parameter(left, &formal.name) && *ty == contract_address_type()))
 }
@@ -129,7 +130,7 @@ pub(super) fn lower<'a>(
     };
     if ballot.name == coin.name
         || ballot.ty != Type::Boolean
-        || coin.ty != crate::stateful::shielded_coin_type()
+        || coin.ty != shielded_coin_type()
         || circuit.result != Type::Unit
         || !matches!(circuit.return_value, StateReturn::Unit)
     {

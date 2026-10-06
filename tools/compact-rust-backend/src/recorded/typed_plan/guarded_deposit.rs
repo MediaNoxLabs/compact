@@ -17,12 +17,13 @@
 //! lexical scope, exact types, query order and branch-local frame ownership.
 use super::immediate_send::{parameter, uncoerced};
 use super::*;
+use crate::coin_shapes::{qualified_coin_type, shielded_coin_type};
 
 pub(super) fn read_type(ty: &Type) -> bool {
     matches!(
         ty,
         Type::Boolean | Type::Bytes { length: 32 } | Type::Enum { .. }
-    ) || *ty == crate::stateful::qualified_coin_type()
+    ) || *ty == qualified_coin_type()
         || matches!(ty, Type::Struct { fields, .. }
             if fields.len() == 2 && fields.iter().all(|field|
                 field.ty == Type::Unsigned { max: u64::MAX.to_string() }))
@@ -313,7 +314,7 @@ pub(super) fn lower<'a>(
         || !matches!(circuit.return_value, StateReturn::Unit)
         || topic.ty != Type::OpaqueString
         || !wrapped_bytes32(&beneficiary.ty)
-        || seed.ty != crate::stateful::shielded_coin_type()
+        || seed.ty != shielded_coin_type()
         || circuit
             .parameters
             .iter()

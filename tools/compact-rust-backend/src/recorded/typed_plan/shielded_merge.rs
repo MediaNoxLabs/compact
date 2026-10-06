@@ -17,6 +17,7 @@
 //! provenance and audits the complete reachable expression domain.
 use super::immediate_send::{parameter, singleton_bridge, uncoerced};
 use super::*;
+use crate::coin_shapes::{qualified_coin_type, shielded_coin_type};
 use crate::ir::Parameter;
 
 pub(super) const INPUT: &str = "340282366920938463463374607431768211455";
@@ -55,7 +56,7 @@ fn received_bridge(
     if !bridge.actions.is_empty()
         || a.ty != left.ty
         || b.ty != right.ty
-        || bridge.result != crate::stateful::shielded_coin_type()
+        || bridge.result != shielded_coin_type()
     {
         return false;
     }
@@ -77,7 +78,7 @@ fn received_bridge(
         || merge
             .parameters
             .iter()
-            .any(|p| p.ty != crate::stateful::qualified_coin_type())
+            .any(|p| p.ty != qualified_coin_type())
         || merge.result != bridge.result
     {
         return false;
@@ -105,8 +106,8 @@ pub(super) fn received_helper(
     let [left, right] = callee.parameters.as_slice() else {
         return false;
     };
-    left.ty == crate::stateful::qualified_coin_type()
-        && right.ty == crate::stateful::shielded_coin_type()
+    left.ty == qualified_coin_type()
+        && right.ty == shielded_coin_type()
         && received_bridge(
             &Expr::Call {
                 name: name.to_owned(),
@@ -140,14 +141,14 @@ pub(super) fn lower<'a>(
         return None;
     };
     if left.name == right.name
-        || left.ty != crate::stateful::qualified_coin_type()
-        || circuit.result != crate::stateful::shielded_coin_type()
+        || left.ty != qualified_coin_type()
+        || circuit.result != shielded_coin_type()
     {
         return None;
     }
     let inputs = if right.ty == left.ty && circuit.actions.is_empty() {
         Inputs::HistoricalPair
-    } else if right.ty == crate::stateful::shielded_coin_type() {
+    } else if right.ty == shielded_coin_type() {
         let [prefix @ StateAction::CircuitCall { arguments, .. }] = circuit.actions.as_slice()
         else {
             return None;

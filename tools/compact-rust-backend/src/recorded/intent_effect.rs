@@ -16,6 +16,7 @@
 //! Canonical frame steps for already evaluated, exactly typed effect operands.
 //! This leaf emitter owns no scopes, witnesses, call graph or evaluation order.
 use super::*;
+use crate::coin_shapes::{qualified_coin_type, shielded_coin_type, shielded_recipient_type};
 use crate::ir::KernelClaimKind;
 
 pub(super) struct EffectStep {
@@ -26,20 +27,15 @@ pub(super) struct EffectStep {
 
 pub(super) fn emit(effect: &Expr, operands: &[(Type, syn::Expr)]) -> Option<EffectStep> {
     let (statement, intent, public_query) = match (effect, operands) {
-        (Expr::CreateZswapInput { .. }, [(ty, coin)])
-            if *ty == crate::stateful::qualified_coin_type() =>
-        {
-            (
-                syn::parse_quote! { let frame = frame.create_zswap_input(
-                    runtime::ledger::coin_info_from_compact(#coin.nonce, #coin.color, #coin.value.value()).qualify(#coin.mt_index.value() as u64)
-                ); },
-                true,
-                false,
-            )
-        }
+        (Expr::CreateZswapInput { .. }, [(ty, coin)]) if *ty == qualified_coin_type() => (
+            syn::parse_quote! { let frame = frame.create_zswap_input(
+                runtime::ledger::coin_info_from_compact(#coin.nonce, #coin.color, #coin.value.value()).qualify(#coin.mt_index.value() as u64)
+            ); },
+            true,
+            false,
+        ),
         (Expr::CreateZswapOutput { .. }, [(coin_ty, coin), (recipient_ty, recipient)])
-            if *coin_ty == crate::stateful::shielded_coin_type()
-                && *recipient_ty == crate::stateful::shielded_recipient_type() =>
+            if *coin_ty == shielded_coin_type() && *recipient_ty == shielded_recipient_type() =>
         {
             (
                 syn::parse_quote! { let frame = frame.create_zswap_output(

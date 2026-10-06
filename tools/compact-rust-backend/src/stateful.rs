@@ -18,6 +18,7 @@
 use proc_macro2::Span;
 use std::collections::{HashMap, HashSet};
 
+use crate::coin_shapes::{qualified_coin_type, shielded_coin_type, shielded_recipient_type};
 use crate::ir::{
     ComparisonOperator, CounterAmount, Expr, LedgerField, LedgerFieldKind, NativeWitnessBuiltin,
     PureCircuit, ReturnPlan, StateAction, StateReturn, StatefulCircuit, StructField, Type,
@@ -29,79 +30,6 @@ use crate::{
     list_head_result_type, map_slot_types, public_parameter_idents, retained_value, rust_type,
     unsigned_arithmetic_syntax, unsigned_cast_syntax, unsigned_maximum,
 };
-
-pub(crate) fn qualified_coin_type() -> Type {
-    let bytes = Type::Bytes { length: 32 };
-    Type::Struct {
-        name: "QualifiedShieldedCoinInfo".into(),
-        fields: vec![
-            StructField {
-                name: "nonce".into(),
-                ty: bytes.clone(),
-            },
-            StructField {
-                name: "color".into(),
-                ty: bytes,
-            },
-            StructField {
-                name: "value".into(),
-                ty: Type::Unsigned {
-                    max: u128::MAX.to_string(),
-                },
-            },
-            StructField {
-                name: "mt_index".into(),
-                ty: Type::Unsigned {
-                    max: u64::MAX.to_string(),
-                },
-            },
-        ],
-    }
-}
-
-pub(crate) fn shielded_coin_type() -> Type {
-    let Type::Struct { name, mut fields } = qualified_coin_type() else {
-        unreachable!()
-    };
-    fields.pop();
-    Type::Struct {
-        name: name.replace("Qualified", ""),
-        fields,
-    }
-}
-
-pub(crate) fn shielded_recipient_type() -> Type {
-    let bytes = Type::Bytes { length: 32 };
-    Type::Struct {
-        name: "Either".into(),
-        fields: vec![
-            StructField {
-                name: "is_left".into(),
-                ty: Type::Boolean,
-            },
-            StructField {
-                name: "left".into(),
-                ty: Type::Struct {
-                    name: "ZswapCoinPublicKey".into(),
-                    fields: vec![StructField {
-                        name: "bytes".into(),
-                        ty: bytes.clone(),
-                    }],
-                },
-            },
-            StructField {
-                name: "right".into(),
-                ty: Type::Struct {
-                    name: "ContractAddress".into(),
-                    fields: vec![StructField {
-                        name: "bytes".into(),
-                        ty: bytes,
-                    }],
-                },
-            },
-        ],
-    }
-}
 
 #[expect(
     clippy::too_many_arguments,

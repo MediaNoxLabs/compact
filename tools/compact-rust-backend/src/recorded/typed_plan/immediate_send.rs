@@ -16,6 +16,7 @@
 //! This audits every branch and binding; the shared Plan owns evaluation,
 //! concrete types, lexical scope, argument ordering and same-frame calls.
 use super::*;
+use crate::coin_shapes::{qualified_coin_type, shielded_coin_type, shielded_recipient_type};
 
 pub(super) fn uncoerced(value: &Expr) -> &Expr {
     match value {
@@ -37,9 +38,7 @@ pub(super) fn singleton_bridge(callee: &PureCircuit) -> bool {
     let [coin] = callee.parameters.as_slice() else {
         return false;
     };
-    if coin.ty != crate::stateful::shielded_coin_type()
-        || callee.result != crate::stateful::qualified_coin_type()
-    {
+    if coin.ty != shielded_coin_type() || callee.result != qualified_coin_type() {
         return false;
     }
     let Expr::StructLiteral { ty, fields } = &callee.body else {
@@ -69,8 +68,8 @@ pub(super) fn audit_bridge(
     };
     if !bridge.actions.is_empty()
         || !shielded_send_result(&bridge.result)
-        || input.ty != crate::stateful::shielded_coin_type()
-        || target.ty != crate::stateful::shielded_recipient_type()
+        || input.ty != shielded_coin_type()
+        || target.ty != shielded_recipient_type()
         || value.ty
             != (Type::Unsigned {
                 max: u128::MAX.to_string(),
@@ -127,8 +126,8 @@ pub(super) fn lower<'a>(
         return None;
     };
     if coin.name == recipient.name
-        || coin.ty != crate::stateful::shielded_coin_type()
-        || recipient.ty != crate::stateful::shielded_recipient_type()
+        || coin.ty != shielded_coin_type()
+        || recipient.ty != shielded_recipient_type()
         || !shielded_send_result(&circuit.result)
     {
         return None;

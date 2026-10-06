@@ -15,6 +15,7 @@
 //! Audited no-argument phase advancement with a literal-false reset helper.
 //! The shared Plan owns typed values, lexical scopes and ordered execution.
 use super::*;
+use crate::coin_shapes::qualified_coin_type;
 pub(super) const WIDENED: &str = "18446744073709551616";
 pub(super) const SUM: &str = "36893488147419103231";
 const U64: &str = "18446744073709551615";
@@ -41,7 +42,7 @@ pub(super) fn false_arguments(args: &[Expr]) -> bool {
 pub(super) fn cell_type(ty: &Type) -> bool {
     super::cell_type(ty)
         || *ty == Type::Boolean
-        || *ty == crate::stateful::qualified_coin_type()
+        || *ty == qualified_coin_type()
         || matches!(ty, Type::Struct { fields, .. } if matches!(fields.as_slice(), [tag, value] if tag.name == "is_some" && tag.ty == Type::Boolean && value.name == "value" && matches!(&value.ty, Type::Struct { name, fields } if name == "ZswapCoinPublicKey" && matches!(fields.as_slice(), [bytes] if bytes.name == "bytes" && bytes.ty == (Type::Bytes { length: 32 })))))
 }
 struct Audit<'a> {
@@ -67,7 +68,7 @@ impl Audit<'_> {
             | Expr::BytesLiteral { .. }
             | Expr::EnumVariant { .. } => true,
             Expr::UnsignedLiteral { max, .. } => matches!(max.as_str(), "65535" | U64 | WIDENED),
-            Expr::Default { ty } => *ty == crate::stateful::qualified_coin_type(),
+            Expr::Default { ty } => *ty == qualified_coin_type(),
             Expr::Coerce { value, .. } => self.value(value),
             Expr::Equal { left, right } => self.value(left) && self.value(right),
             Expr::If {

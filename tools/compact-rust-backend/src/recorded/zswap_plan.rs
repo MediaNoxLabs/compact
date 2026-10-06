@@ -16,6 +16,7 @@
 //! Bounded intent recording and inlined Unit helper effects.
 
 use super::*;
+use crate::coin_shapes::{qualified_coin_type, shielded_coin_type, shielded_recipient_type};
 
 #[derive(Clone)]
 struct Value {
@@ -35,9 +36,9 @@ struct ZswapPlan<'a> {
 }
 
 fn operand_type(ty: &Type) -> bool {
-    *ty == crate::stateful::shielded_coin_type()
-        || *ty == crate::stateful::qualified_coin_type()
-        || *ty == crate::stateful::shielded_recipient_type()
+    *ty == shielded_coin_type()
+        || *ty == qualified_coin_type()
+        || *ty == shielded_recipient_type()
         || matches!(ty, Type::Boolean | Type::Bytes { length: 32 })
         || *ty
             == (Type::Unsigned {
@@ -129,16 +130,14 @@ impl ZswapPlan<'_> {
                 }
                 if declaration.declaration
                     != (LedgerFieldKind::Cell {
-                        ty: crate::stateful::qualified_coin_type(),
+                        ty: qualified_coin_type(),
                     })
                 {
                     return None;
                 }
                 let coin = self.value(coin, scope, steps)?;
                 let recipient = self.value(recipient, scope, steps)?;
-                if coin.ty != crate::stateful::shielded_coin_type()
-                    || recipient.ty != crate::stateful::shielded_recipient_type()
-                {
+                if coin.ty != shielded_coin_type() || recipient.ty != shielded_recipient_type() {
                     return None;
                 }
                 let (coin, recipient) = (coin.expr, recipient.expr);

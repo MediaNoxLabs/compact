@@ -20,7 +20,6 @@
 //! its corresponding verifying VM instruction.
 
 mod kernel;
-mod local_boundary;
 mod zswap;
 
 use midnight_base_crypto::cost_model::RunningCost;
@@ -211,25 +210,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
             CircuitContext<Private, D>,
         ) -> Result<CircuitResult<Private, Output, D>, CompactError>,
     {
-        let prior_query = self.state.context.query.clone();
-        let prior_zswap = self.state.context.zswap_state.clone();
-        let prior_circuit_zswap = self.state.context.circuit_zswap.clone();
-        let prior_coin_key = self.state.context.own_coin_public_key().ok();
-        let prior_cost_model = self.state.context.cost_model.clone();
-        let prior_gas_limit = self.state.context.gas_limit;
-        let result = call(self.state.context)?;
-        let next = &result.context;
-        if !local_boundary::same_query(&prior_query, &next.query)
-            || prior_circuit_zswap != next.circuit_zswap
-            || !local_boundary::same_wallet(&prior_zswap, &next.zswap_state)
-            || prior_coin_key != next.own_coin_public_key().ok()
-            || prior_cost_model != next.cost_model
-            || prior_gas_limit != next.gas_limit
-        {
-            return Err(CompactError::InvalidLedgerCell(
-                "local helper changed public or Zswap execution context".into(),
-            ));
-        }
+        let result = self.state.context.call_local_checked(call)?;
         self.state.context = result.context;
         self.state.observed_gas += result.gas_cost;
         self.state

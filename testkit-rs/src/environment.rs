@@ -46,15 +46,29 @@ impl Environment {
         }
     }
     pub(crate) fn apply<P>(&self, mut context: CircuitContext<P>) -> CircuitContext<P> {
+        let Self {
+            address: _,      // Applied when ContractLab constructs the fresh context.
+            fixture_seed: _, // Snapshot provenance only; never an RNG reset.
+            block,
+            coin_public_key,
+            cost_model,
+            query_gas_limit,
+        } = self;
+        let BlockContext {
+            tblock,
+            tblock_err,
+            parent_block_hash,
+            last_block_time,
+        } = block;
         let call = &mut context.query.call_context;
-        call.tblock = self.block.tblock;
-        call.tblock_err = self.block.tblock_err;
-        call.parent_block_hash = self.block.parent_block_hash;
-        call.last_block_time = self.block.last_block_time;
-        context.cost_model = self.cost_model.clone();
-        context.gas_limit = self.query_gas_limit;
-        if let Some(key) = self.coin_public_key {
-            context = context.with_coin_public_key_bytes(key);
+        call.tblock = *tblock;
+        call.tblock_err = *tblock_err;
+        call.parent_block_hash = *parent_block_hash;
+        call.last_block_time = *last_block_time;
+        context.cost_model = cost_model.clone();
+        context.gas_limit = *query_gas_limit;
+        if let Some(key) = coin_public_key {
+            context = context.with_coin_public_key_bytes(*key);
         }
         context
     }
@@ -121,4 +135,51 @@ fn same_block(a: &BlockContext, b: &BlockContext) -> bool {
         && tblock_err == &b.tblock_err
         && parent_block_hash == &b.parent_block_hash
         && last_block_time == &b.last_block_time
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::runtime::context::ConstructorContext;
+    use compact_rust_counter_parameter_fixture::ledger_contract as counter;
+    use midnight_base_crypto::{hash::HashOutput, time::Timestamp};
+
+    #[test]
+    fn applying_policy_does_not_reset_address_identity_or_fixture_provenance() {
+        let original_address = ContractAddress(HashOutput([3; 32]));
+        let context = counter::initial_state(ConstructorContext::new(17))
+            .unwrap()
+            .into_circuit_context(original_address)
+            .with_coin_public_key_bytes([5; 32]);
+        let prior_own_address = context.query.call_context.own_address;
+        let mut environment = Environment::new(
+            ContractAddress(HashOutput([7; 32])),
+            BlockContext::default(),
+            [11; 32],
+        );
+        environment.block.tblock = Timestamp::from_secs(100);
+        environment.block.last_block_time = Timestamp::from_secs(95);
+        environment.block.tblock_err = 2;
+        environment.block.parent_block_hash = HashOutput([13; 32]);
+        environment.query_gas_limit = Some(RunningCost::ZERO);
+        let applied = environment.apply(context);
+        assert_eq!(applied.query.address, original_address);
+        assert_eq!(applied.query.call_context.own_address, prior_own_address);
+        assert_eq!(applied.own_coin_public_key().unwrap(), [5; 32]);
+        assert_eq!(applied.private_state, 17);
+        assert_eq!(applied.query.call_context.tblock, environment.block.tblock);
+        assert_eq!(
+            applied.query.call_context.last_block_time,
+            environment.block.last_block_time
+        );
+        assert_eq!(applied.query.call_context.tblock_err, 2);
+        assert_eq!(
+            applied.query.call_context.parent_block_hash,
+            environment.block.parent_block_hash
+        );
+        assert_eq!(applied.cost_model, environment.cost_model);
+        assert_eq!(applied.gas_limit, Some(RunningCost::ZERO));
+        assert_eq!(environment.coin_public_key, None);
+        assert_eq!(environment.fixture_seed, [11; 32]);
+    }
 }

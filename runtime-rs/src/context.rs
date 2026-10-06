@@ -19,6 +19,8 @@
 //! This module also owns a separate ordered circuit intent plan, ties execution
 //! to private state, and carries ownership across constructor and circuit calls.
 
+mod local_boundary;
+
 pub use midnight_base_crypto::cost_model::RunningCost;
 use midnight_base_crypto::fab::AlignedValue;
 use midnight_base_crypto::hash::HashOutput;

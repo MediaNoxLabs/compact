@@ -31,13 +31,17 @@ ROOT = common.ROOT
 SOURCE_ROOT = Path("examples/rust_backend/did_adoption")
 SOURCE = SOURCE_ROOT / "packages/contract/src/did.compact"
 FIXTURE = Path("tests-rust-backend/did-adoption/lib.rs")
-KEYS = ("rotateControllerKey", "recoverControllerKey", "deactivate", "setAlsoKnownAs")
+KEYS = ("rotateControllerKey", "recoverControllerKey", "deactivate", "setAlsoKnownAs",
+        "setService", "removeService")
 SCENARIOS = {
     "points": {"selector": "--did-point-lifecycle", "installed_operations": list(KEYS[:3]),
                "cases": ["rotate", "recover", "deactivate"], "operations": list(KEYS[:3])},
-    "aliases": {"selector": "--did-alias-lifecycle", "installed_operations": list(KEYS),
+    "aliases": {"selector": "--did-alias-lifecycle", "installed_operations": list(KEYS[:4]),
                 "cases": ["insert-unicode", "remove-unicode"],
                 "operations": ["setAlsoKnownAs", "setAlsoKnownAs"]},
+    "services": {"selector": "--did-service-lifecycle", "installed_operations": list(KEYS),
+                 "cases": ["insert-unicode", "update-empty-fields", "remove-unicode"],
+                 "operations": ["setService", "setService", "removeService"]},
 }
 EXPORTS = set(KEYS) | {"setVerificationMethod", "removeVerificationMethod",
     "setSchnorrJubjubVerificationMethod", "removeSchnorrJubjubVerificationMethod",
@@ -124,7 +128,7 @@ def capability_inventory(output):
             "DID gate requires the complete twelve-export capability inventory")
     require(all(r["proof"] for r in rows), "DID proof applicability changed")
     require({r["name"] for r in rows if r["recorded"]} == set(KEYS),
-            "DID recorded inventory differs from the reviewed four-export scope")
+            "DID recorded inventory differs from the reviewed six-export scope")
     return report
 
 
@@ -155,8 +159,8 @@ def run_gate(directory, compiler, scheme, target, environment=None, *, command=c
     directory = directory.resolve()
     directory.mkdir(parents=True, exist_ok=False, mode=0o700)
     receipt = {"format": "compact-did-proof-gate/v1", "status": "failed", "commands": [],
-               "scenarios": {}, "key_operations": list(KEYS), "required_proof_call_count": 5,
-               "scope": "offline default-strict deployment/calls; constructor execution unproved; four of twelve recorded exports"}
+               "scenarios": {}, "key_operations": list(KEYS), "required_proof_call_count": 8,
+               "scope": "offline default-strict deployment/calls; constructor execution unproved; six of twelve recorded exports"}
     env = dict(os.environ if environment is None else environment)
     try:
         receipt["prerequisites"] = prerequisites(env)

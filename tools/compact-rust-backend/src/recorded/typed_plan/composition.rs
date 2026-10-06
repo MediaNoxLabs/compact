@@ -56,6 +56,18 @@ pub(super) fn write_type(ty: &Type) -> bool {
                 max: u64::MAX.to_string(),
             })
 }
+// A named product of opaque strings is the only Map value admitted by this
+// composition profile. The name and field count are declaration data; an
+// empty product and nested or mixed products remain outside this domain.
+pub(super) fn flat_string_product(ty: &Type) -> bool {
+    matches!(ty, Type::Struct { fields, .. }
+        if !fields.is_empty() && fields.iter().all(|field| field.ty == Type::OpaqueString))
+}
+
+pub(super) fn flat_string_map(declaration: &LedgerFieldKind) -> bool {
+    matches!(declaration, LedgerFieldKind::Map { key: Type::OpaqueString, value }
+        if flat_string_product(value))
+}
 pub(super) fn slot_path(field: &LedgerField) -> bool {
     let path = field.physical_path();
     // The contract-level ledger validator owns physical layout/uniqueness.
@@ -140,6 +152,16 @@ impl Audit<'_> {
                 }
                 self.public += 1;
                 self.value(value, false)
+            }
+            Expr::MapMember { field, index, key } if !pure => {
+                if !self
+                    .slot(field, *index)
+                    .is_some_and(|slot| flat_string_map(&slot.declaration))
+                {
+                    return false;
+                }
+                self.public += 1;
+                self.value(key, false)
             }
             Expr::CounterRead { field, index } if !pure => {
                 if !matches!(
@@ -326,6 +348,31 @@ impl Audit<'_> {
                 }
                 self.public += 1;
                 self.value(value, false)
+            }
+            StateAction::MapInsert {
+                field,
+                index,
+                key,
+                value,
+            } => {
+                if !self
+                    .slot(field, *index)
+                    .is_some_and(|slot| flat_string_map(&slot.declaration))
+                {
+                    return false;
+                }
+                self.public += 1;
+                self.value(key, false) && self.value(value, false)
+            }
+            StateAction::MapRemove { field, index, key } => {
+                if !self
+                    .slot(field, *index)
+                    .is_some_and(|slot| flat_string_map(&slot.declaration))
+                {
+                    return false;
+                }
+                self.public += 1;
+                self.value(key, false)
             }
             StateAction::PureCall { name, arguments } => {
                 arguments.iter().all(|value| self.value(value, false))

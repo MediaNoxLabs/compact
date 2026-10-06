@@ -1,0 +1,614 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "services",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "map",
+        "key": {
+          "kind": "opaque_string"
+        },
+        "value": {
+          "kind": "struct",
+          "name": "Service",
+          "fields": [
+            {
+              "name": "id",
+              "ty": {
+                "kind": "opaque_string"
+              }
+            },
+            {
+              "name": "typ",
+              "ty": {
+                "kind": "opaque_string"
+              }
+            },
+            {
+              "name": "serviceEndpoint",
+              "ty": {
+                "kind": "opaque_string"
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "service_mutation.compact",
+        "line": 4,
+        "column": 1
+      }
+    },
+    {
+      "id": "count",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "service_mutation.compact",
+        "line": 5,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+    {
+      "name": "defined",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "m",
+          "ty": {
+            "kind": "enum",
+            "name": "Mutation",
+            "variants": [
+              "Undefined",
+              "Insert",
+              "Update"
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "body": {
+        "kind": "sequence",
+        "steps": [
+          {
+            "kind": "assert",
+            "condition": {
+              "kind": "if",
+              "condition": {
+                "kind": "equal",
+                "left": {
+                  "kind": "parameter",
+                  "name": "m"
+                },
+                "right": {
+                  "kind": "enum_variant",
+                  "ty": {
+                    "kind": "enum",
+                    "name": "Mutation",
+                    "variants": [
+                      "Undefined",
+                      "Insert",
+                      "Update"
+                    ]
+                  },
+                  "variant": "Insert"
+                }
+              },
+              "then": {
+                "kind": "boolean",
+                "value": true
+              },
+              "otherwise": {
+                "kind": "equal",
+                "left": {
+                  "kind": "parameter",
+                  "name": "m"
+                },
+                "right": {
+                  "kind": "enum_variant",
+                  "ty": {
+                    "kind": "enum",
+                    "name": "Mutation",
+                    "variants": [
+                      "Undefined",
+                      "Insert",
+                      "Update"
+                    ]
+                  },
+                  "variant": "Update"
+                }
+              }
+            },
+            "message": "undefined mutation"
+          }
+        ],
+        "value": {
+          "kind": "unit"
+        }
+      },
+      "source": {
+        "file": "service_mutation.compact",
+        "line": 6,
+        "column": 1
+      }
+    }
+  ],
+  "stateful_circuits": [
+    {
+      "name": "bump",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_19",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "count",
+            "index": 1,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_19"
+            }
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "service_mutation.compact",
+        "line": 9,
+        "column": 1
+      }
+    },
+    {
+      "name": "set_service",
+      "parameters": [
+        {
+          "name": "service",
+          "ty": {
+            "kind": "struct",
+            "name": "Service",
+            "fields": [
+              {
+                "name": "id",
+                "ty": {
+                  "kind": "opaque_string"
+                }
+              },
+              {
+                "name": "typ",
+                "ty": {
+                  "kind": "opaque_string"
+                }
+              },
+              {
+                "name": "serviceEndpoint",
+                "ty": {
+                  "kind": "opaque_string"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "m",
+          "ty": {
+            "kind": "enum",
+            "name": "Mutation",
+            "variants": [
+              "Undefined",
+              "Insert",
+              "Update"
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "disclosed",
+              "ty": {
+                "kind": "struct",
+                "name": "Service",
+                "fields": [
+                  {
+                    "name": "id",
+                    "ty": {
+                      "kind": "opaque_string"
+                    }
+                  },
+                  {
+                    "name": "typ",
+                    "ty": {
+                      "kind": "opaque_string"
+                    }
+                  },
+                  {
+                    "name": "serviceEndpoint",
+                    "ty": {
+                      "kind": "opaque_string"
+                    }
+                  }
+                ]
+              },
+              "value": {
+                "kind": "parameter",
+                "name": "service"
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "mutation",
+                "ty": {
+                  "kind": "enum",
+                  "name": "Mutation",
+                  "variants": [
+                    "Undefined",
+                    "Insert",
+                    "Update"
+                  ]
+                },
+                "value": {
+                  "kind": "parameter",
+                  "name": "m"
+                }
+              }
+            ],
+            "action": {
+              "kind": "sequence",
+              "actions": [
+                {
+                  "kind": "pure_call",
+                  "name": "defined",
+                  "arguments": [
+                    {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "mutation"
+                      },
+                      "ty": {
+                        "kind": "enum",
+                        "name": "Mutation",
+                        "variants": [
+                          "Undefined",
+                          "Insert",
+                          "Update"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "if",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "parameter",
+                      "name": "mutation"
+                    },
+                    "right": {
+                      "kind": "enum_variant",
+                      "ty": {
+                        "kind": "enum",
+                        "name": "Mutation",
+                        "variants": [
+                          "Undefined",
+                          "Insert",
+                          "Update"
+                        ]
+                      },
+                      "variant": "Update"
+                    }
+                  },
+                  "then": {
+                    "kind": "sequence",
+                    "actions": [
+                      {
+                        "kind": "assert",
+                        "condition": {
+                          "kind": "let",
+                          "bindings": [
+                            {
+                              "name": "tmp_17",
+                              "ty": {
+                                "kind": "opaque_string"
+                              },
+                              "value": {
+                                "kind": "struct_field",
+                                "value": {
+                                  "kind": "parameter",
+                                  "name": "disclosed"
+                                },
+                                "field": "id",
+                                "index": 0
+                              }
+                            }
+                          ],
+                          "body": {
+                            "kind": "map_member",
+                            "field": "services",
+                            "index": 0,
+                            "key": {
+                              "kind": "parameter",
+                              "name": "tmp_17"
+                            }
+                          }
+                        },
+                        "message": "missing service"
+                      },
+                      {
+                        "kind": "let",
+                        "bindings": [
+                          {
+                            "name": "tmp_16",
+                            "ty": {
+                              "kind": "opaque_string"
+                            },
+                            "value": {
+                              "kind": "struct_field",
+                              "value": {
+                                "kind": "parameter",
+                                "name": "disclosed"
+                              },
+                              "field": "id",
+                              "index": 0
+                            }
+                          }
+                        ],
+                        "action": {
+                          "kind": "map_remove",
+                          "field": "services",
+                          "index": 0,
+                          "key": {
+                            "kind": "parameter",
+                            "name": "tmp_16"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "otherwise": {
+                    "kind": "if",
+                    "condition": {
+                      "kind": "equal",
+                      "left": {
+                        "kind": "parameter",
+                        "name": "mutation"
+                      },
+                      "right": {
+                        "kind": "enum_variant",
+                        "ty": {
+                          "kind": "enum",
+                          "name": "Mutation",
+                          "variants": [
+                            "Undefined",
+                            "Insert",
+                            "Update"
+                          ]
+                        },
+                        "variant": "Insert"
+                      }
+                    },
+                    "then": {
+                      "kind": "assert",
+                      "condition": {
+                        "kind": "if",
+                        "condition": {
+                          "kind": "let",
+                          "bindings": [
+                            {
+                              "name": "tmp_18",
+                              "ty": {
+                                "kind": "opaque_string"
+                              },
+                              "value": {
+                                "kind": "struct_field",
+                                "value": {
+                                  "kind": "parameter",
+                                  "name": "disclosed"
+                                },
+                                "field": "id",
+                                "index": 0
+                              }
+                            }
+                          ],
+                          "body": {
+                            "kind": "map_member",
+                            "field": "services",
+                            "index": 0,
+                            "key": {
+                              "kind": "parameter",
+                              "name": "tmp_18"
+                            }
+                          }
+                        },
+                        "then": {
+                          "kind": "boolean",
+                          "value": false
+                        },
+                        "otherwise": {
+                          "kind": "boolean",
+                          "value": true
+                        }
+                      },
+                      "message": "duplicate service"
+                    },
+                    "otherwise": {
+                      "kind": "sequence",
+                      "actions": [
+                      ]
+                    }
+                  }
+                },
+                {
+                  "kind": "let",
+                  "bindings": [
+                    {
+                      "name": "tmp_15",
+                      "ty": {
+                        "kind": "opaque_string"
+                      },
+                      "value": {
+                        "kind": "struct_field",
+                        "value": {
+                          "kind": "parameter",
+                          "name": "disclosed"
+                        },
+                        "field": "id",
+                        "index": 0
+                      }
+                    }
+                  ],
+                  "action": {
+                    "kind": "map_insert",
+                    "field": "services",
+                    "index": 0,
+                    "key": {
+                      "kind": "parameter",
+                      "name": "tmp_15"
+                    },
+                    "value": {
+                      "kind": "parameter",
+                      "name": "disclosed"
+                    }
+                  }
+                },
+                {
+                  "kind": "circuit_call",
+                  "name": "bump",
+                  "arguments": [
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "service_mutation.compact",
+        "line": 10,
+        "column": 1
+      }
+    },
+    {
+      "name": "remove_service",
+      "parameters": [
+        {
+          "name": "id",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "disclosed",
+              "ty": {
+                "kind": "opaque_string"
+              },
+              "value": {
+                "kind": "parameter",
+                "name": "id"
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "assert",
+                "condition": {
+                  "kind": "map_member",
+                  "field": "services",
+                  "index": 0,
+                  "key": {
+                    "kind": "parameter",
+                    "name": "disclosed"
+                  }
+                },
+                "message": "missing service"
+              },
+              {
+                "kind": "map_remove",
+                "field": "services",
+                "index": 0,
+                "key": {
+                  "kind": "parameter",
+                  "name": "disclosed"
+                }
+              },
+              {
+                "kind": "circuit_call",
+                "name": "bump",
+                "arguments": [
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "service_mutation.compact",
+        "line": 23,
+        "column": 1
+      }
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+import CompactStandardLibrary;
+export struct Service { id: Opaque<"string">, typ: Opaque<"string">, serviceEndpoint: Opaque<"string"> }
+struct Payload { service: Service }
+export ledger flag: Boolean;
+circuit digest(item: Service): Field {
+  return transientHash<Payload>(Payload { service: item });
+}
+circuit mark(value: Field): [] { assert(value == value, "bad digest"); flag = true; }
+export circuit run(item: Service): [] { mark(digest(disclose(item))); }

@@ -49,6 +49,7 @@ fn capture_source_and_reviewed_test_identities() {
         "pure.json",
         "point-lifecycle.json",
         "alias-lifecycle.json",
+        "service-lifecycle.json",
     ] {
         hash_rows(&data(file)["provenance"]);
     }

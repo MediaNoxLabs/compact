@@ -1,0 +1,99 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "entries",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "map",
+        "key": {
+          "kind": "opaque_string"
+        },
+        "value": {
+          "kind": "struct",
+          "name": "Empty",
+          "fields": [
+          ]
+        }
+      },
+      "source": {
+        "file": "empty_map.compact",
+        "line": 3,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "put",
+      "parameters": [
+        {
+          "name": "key",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_0",
+              "ty": {
+                "kind": "struct",
+                "name": "Empty",
+                "fields": [
+                ]
+              },
+              "value": {
+                "kind": "struct_literal",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Empty",
+                  "fields": [
+                  ]
+                },
+                "fields": [
+                ]
+              }
+            }
+          ],
+          "action": {
+            "kind": "map_insert",
+            "field": "entries",
+            "index": 0,
+            "key": {
+              "kind": "parameter",
+              "name": "key"
+            },
+            "value": {
+              "kind": "parameter",
+              "name": "tmp_0"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "empty_map.compact",
+        "line": 4,
+        "column": 1
+      }
+    }
+  ]
+}

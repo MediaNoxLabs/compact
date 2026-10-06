@@ -338,6 +338,32 @@ impl Plan<'_> {
         .then_some(declaration)
     }
 
+    // Keep this recursive Map probe out of the already deep expression frame.
+    // The scoped query and type checks are identical to the inline branch.
+    fn composition_map_member(
+        &mut self,
+        field: &str,
+        index: u8,
+        key: &Expr,
+        scope: &Scope,
+        steps: &mut Vec<syn::Stmt>,
+    ) -> Option<TypedValue> {
+        if !composition::flat_string_map(&self.field(field, index)?.declaration) {
+            return None;
+        }
+        let key = self.expression(key, scope, steps)?;
+        if key.ty != Type::OpaqueString {
+            return None;
+        }
+        self.observe(
+            field,
+            "record_member",
+            vec![key.value],
+            Type::Boolean,
+            steps,
+        )
+    }
+
     fn expression(
         &mut self,
         expression: &Expr,
@@ -1029,6 +1055,9 @@ impl Plan<'_> {
                     Type::Boolean,
                     steps,
                 )
+            }
+            Expr::MapMember { field, index, key } if self.composition_calls.is_some() => {
+                self.composition_map_member(field, *index, key, scope, steps)
             }
             Expr::SetSize { field, index } | Expr::SetIsEmpty { field, index } => {
                 let LedgerFieldKind::Set { ty } = &self.field(field, *index)?.declaration else {
@@ -1875,6 +1904,47 @@ impl Plan<'_> {
                 } else {
                     self.set_writes += 1;
                 }
+            }
+            StateAction::MapInsert {
+                field,
+                index,
+                key,
+                value,
+            } if self.composition_calls.is_some() => {
+                let LedgerFieldKind::Map {
+                    key: key_ty,
+                    value: value_ty,
+                } = &self.field(field, *index)?.declaration
+                else {
+                    return None;
+                };
+                if *key_ty != Type::OpaqueString || !composition::flat_string_product(value_ty) {
+                    return None;
+                }
+                let value_ty = value_ty.clone();
+                let key = self.expression(key, scope, steps)?;
+                if key.ty != Type::OpaqueString {
+                    return None;
+                }
+                let value = self.expression(value, scope, steps)?;
+                if value.ty != value_ty {
+                    return None;
+                }
+                let slot = ident(field).ok()?;
+                let (key, value) = (key.value, value.value);
+                steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_insert(frame, #key, #value)?;));
+            }
+            StateAction::MapRemove { field, index, key } if self.composition_calls.is_some() => {
+                if !composition::flat_string_map(&self.field(field, *index)?.declaration) {
+                    return None;
+                }
+                let key = self.expression(key, scope, steps)?;
+                if key.ty != Type::OpaqueString {
+                    return None;
+                }
+                let slot = ident(field).ok()?;
+                let key = key.value;
+                steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_remove(frame, #key)?;));
             }
             StateAction::SetReset { field, index } => {
                 let LedgerFieldKind::Set { ty } = &self.field(field, *index)?.declaration else {

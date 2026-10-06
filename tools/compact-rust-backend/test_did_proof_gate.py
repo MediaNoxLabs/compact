@@ -132,13 +132,13 @@ class OrchestrationTests(unittest.TestCase):
         return gate.run_gate(self.root / "run", self.root / "compiler", self.root / "scheme",
                              self.target, self.env, command=self.command)
 
-    def test_both_scenarios_and_four_keys_are_mandatory(self):
+    def test_three_scenarios_and_six_keys_are_mandatory(self):
         result = self.run_gate()
         self.assertEqual(result["status"], "passed", result.get("error"))
-        self.assertEqual(set(result["scenarios"]), {"points", "aliases"})
-        self.assertEqual(len(result["keygen"]), 4)
-        self.assertEqual(sum(len(row["calls"]) for row in result["scenarios"].values()), 5)
-        self.assertEqual(self.calls[-2:], ["prove-points", "prove-aliases"])
+        self.assertEqual(set(result["scenarios"]), {"points", "aliases", "services"})
+        self.assertEqual(len(result["keygen"]), 6)
+        self.assertEqual(sum(len(row["calls"]) for row in result["scenarios"].values()), 8)
+        self.assertEqual(self.calls[-3:], ["prove-points", "prove-aliases", "prove-services"])
 
     def test_missing_prerequisite_refuses_before_commands_and_retains_failure(self):
         self.env.pop("MIDNIGHT_PP")
@@ -153,6 +153,13 @@ class OrchestrationTests(unittest.TestCase):
         result = self.run_gate()
         self.assertEqual(result["status"], "failed")
         self.assertEqual(set(result["scenarios"]), {"points"})
+        self.assertEqual(result["commands"][-1]["exit_code"], 1)
+
+    def test_service_failure_is_not_masked_by_prior_successful_lifecycles(self):
+        self.failure = "prove-services"
+        result = self.run_gate()
+        self.assertEqual(result["status"], "failed")
+        self.assertEqual(set(result["scenarios"]), {"points", "aliases"})
         self.assertEqual(result["commands"][-1]["exit_code"], 1)
 
     def test_existing_output_directory_is_never_reused(self):
@@ -178,7 +185,7 @@ class OrchestrationTests(unittest.TestCase):
         self.assertNotIn("prove-points", self.calls)
 
     def test_missing_success_summary_is_a_failed_gate(self):
-        self.mutation = lambda label, output: (output / "did-aliases-result.json").unlink() if label == "prove-aliases" else None
+        self.mutation = lambda label, output: (output / "did-services-result.json").unlink() if label == "prove-services" else None
         self.assertEqual(self.run_gate()["status"], "failed")
 
     def test_nonzero_keygen_retains_failure_before_any_proof(self):
@@ -238,6 +245,10 @@ class OrchestrationTests(unittest.TestCase):
         value["calls"][0]["proof_bytes"] = 0
         with self.assertRaises(gate.common.GateError):
             gate.validate_summary(value, "aliases")
+        value = summary("services")
+        value["calls"][1]["operation"] = "removeService"
+        with self.assertRaises(gate.common.GateError):
+            gate.validate_summary(value, "services")
 
 
 if __name__ == "__main__":

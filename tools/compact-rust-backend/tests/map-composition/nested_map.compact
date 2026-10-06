@@ -1,0 +1,10 @@
+import CompactStandardLibrary;
+export struct Inner { text: Opaque<"string"> }
+export struct Nested { label: Opaque<"string">, inner: Inner }
+export ledger entries: Map<Opaque<"string">, Nested>;
+export ledger count: Counter;
+circuit bump(): [] { count.increment(1); }
+export circuit put(key: Opaque<"string">, value: Nested): [] {
+  entries.insert(disclose(key), disclose(value));
+  bump();
+}

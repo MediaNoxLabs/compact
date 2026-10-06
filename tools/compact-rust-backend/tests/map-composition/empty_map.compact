@@ -1,0 +1,4 @@
+import CompactStandardLibrary;
+export struct Empty { }
+export ledger entries: Map<Opaque<"string">, Empty>;
+export circuit put(key: Opaque<"string">): [] { entries.insert(disclose(key), Empty { }); }

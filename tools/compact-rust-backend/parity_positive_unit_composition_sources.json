@@ -1,7 +1,7 @@
 {
   "format_version": 1,
   "suite": "ADR0251 typed Unit composition",
-  "purpose": "Typed flat/chunked, crypto and repeated-helper composition plus original DID deactivate, rotateControllerKey, recoverControllerKey and setAlsoKnownAs; eight precise original stateful gaps retained. Recording availability is distinct from branch-level proof evidence.",
+  "purpose": "Typed flat/chunked, crypto and repeated-helper composition plus six original DID recording exports including Service Map mutation; six precise original stateful gaps retained. Recording availability is distinct from branch-level proof evidence.",
   "positive_sources": [
     {
       "source": "examples/rust_backend/unit_composition_flat.compact",
@@ -250,16 +250,6 @@
           "code": "unsupported_action",
           "ir_node": "StateAction::CircuitCall",
           "path": "actions[0].action.action.action.actions[0]"
-        },
-        "setService": {
-          "code": "unsupported_action",
-          "ir_node": "StateAction::Let",
-          "path": "actions[0]"
-        },
-        "removeService": {
-          "code": "unsupported_action",
-          "ir_node": "StateAction::CircuitCall",
-          "path": "actions[0].action.actions[0]"
         }
       },
       "rust_fixture": "tests-rust-backend/did-adoption/lib.rs",
@@ -281,6 +271,8 @@
         "rotateControllerKey",
         "recoverControllerKey",
         "setAlsoKnownAs",
+        "setService",
+        "removeService",
         "deactivate"
       ],
       "pure_declarations": 12,

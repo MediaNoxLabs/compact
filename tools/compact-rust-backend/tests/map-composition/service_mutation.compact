@@ -1,0 +1,28 @@
+import CompactStandardLibrary;
+export struct Service { id: Opaque<"string">, typ: Opaque<"string">, serviceEndpoint: Opaque<"string"> }
+export enum Mutation { Undefined, Insert, Update }
+export ledger services: Map<Opaque<"string">, Service>;
+export ledger count: Counter;
+circuit defined(m: Mutation): [] {
+  assert(m == Mutation.Insert || m == Mutation.Update, "undefined mutation");
+}
+circuit bump(): [] { count.increment(1); }
+export circuit set_service(service: Service, m: Mutation): [] {
+  const disclosed = disclose(service);
+  const mutation = disclose(m);
+  defined(mutation);
+  if (mutation == Mutation.Update) {
+    assert(services.member(disclosed.id), "missing service");
+    services.remove(disclosed.id);
+  } else if (mutation == Mutation.Insert) {
+    assert(!services.member(disclosed.id), "duplicate service");
+  }
+  services.insert(disclosed.id, disclosed);
+  bump();
+}
+export circuit remove_service(id: Opaque<"string">): [] {
+  const disclosed = disclose(id);
+  assert(services.member(disclosed), "missing service");
+  services.remove(disclosed);
+  bump();
+}

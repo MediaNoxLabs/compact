@@ -1,0 +1,9 @@
+import CompactStandardLibrary;
+export struct Mixed { label: Opaque<"string">, count: Uint<8> }
+export ledger entries: Map<Opaque<"string">, Mixed>;
+export ledger count: Counter;
+circuit bump(): [] { count.increment(1); }
+export circuit put(key: Opaque<"string">, value: Mixed): [] {
+  entries.insert(disclose(key), disclose(value));
+  bump();
+}

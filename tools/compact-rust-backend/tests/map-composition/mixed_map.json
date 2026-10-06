@@ -1,0 +1,175 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "entries",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "map",
+        "key": {
+          "kind": "opaque_string"
+        },
+        "value": {
+          "kind": "struct",
+          "name": "Mixed",
+          "fields": [
+            {
+              "name": "label",
+              "ty": {
+                "kind": "opaque_string"
+              }
+            },
+            {
+              "name": "count",
+              "ty": {
+                "kind": "unsigned",
+                "max": "255"
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "mixed_map.compact",
+        "line": 3,
+        "column": 1
+      }
+    },
+    {
+      "id": "count",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "mixed_map.compact",
+        "line": 4,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "bump",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_0",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "count",
+            "index": 1,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_0"
+            }
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "mixed_map.compact",
+        "line": 5,
+        "column": 1
+      }
+    },
+    {
+      "name": "put",
+      "parameters": [
+        {
+          "name": "key",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        },
+        {
+          "name": "value",
+          "ty": {
+            "kind": "struct",
+            "name": "Mixed",
+            "fields": [
+              {
+                "name": "label",
+                "ty": {
+                  "kind": "opaque_string"
+                }
+              },
+              {
+                "name": "count",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "255"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "map_insert",
+          "field": "entries",
+          "index": 0,
+          "key": {
+            "kind": "parameter",
+            "name": "key"
+          },
+          "value": {
+            "kind": "parameter",
+            "name": "value"
+          }
+        },
+        {
+          "kind": "circuit_call",
+          "name": "bump",
+          "arguments": [
+          ]
+        }
+      ],
+      "source": {
+        "file": "mixed_map.compact",
+        "line": 6,
+        "column": 1
+      }
+    }
+  ]
+}

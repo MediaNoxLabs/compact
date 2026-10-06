@@ -3448,11 +3448,11 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/lifecycle.json",
-      "sha256": "5e2d1ba9fc5594915aefa1cd922b69dec14cd0b5812db5a0430b48acf9b08fdc"
+      "sha256": "1246d974cd9f21f2d5b3c54fec330f98766bd7b86beef512b8d3af4718620271"
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/pure.json",
-      "sha256": "0a0ac053e3e2fa173fa7e35113e7ca823a4c1525a58db83cb731ed0d225fb70a"
+      "sha256": "f0b5ca792191b35f3f98321093cebd44409ea171ff278126e0d4fe7db77d904d"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/codec.rs",
@@ -3480,7 +3480,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/point-lifecycle.json",
-      "sha256": "23e8e303238fd9780f45d4b93e242f1e484d4d0bb1753435189ef360919e1970"
+      "sha256": "2444288a819ff736713791e6678105b3ce4e2c7ca5c9dab2f720ecca9c2bc742"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/point_calls.rs",
@@ -3496,7 +3496,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/alias-lifecycle.json",
-      "sha256": "483927d9d901f945f9fadf5221b9cda8635cf15c54067cd6f31259fc830ee9df"
+      "sha256": "44b1ebb52ffddd3cee167ea3879c0de1c6954bc2626d5baf920db37a3ece6b53"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/alias_calls.rs",
@@ -3505,6 +3505,22 @@
     {
       "path": "tests-rust-backend/did-adoption/tests/alias_recording.rs",
       "sha256": "5152288e38d7fd4afa63307319dee3728431c3c6e73aa065c28971a0a91aec80"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/oracle/service-lifecycle-cases.mjs",
+      "sha256": "00299ded033d1fccf92fac95e222b1b792a15d1eccf429a0735a286be978c125"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/oracle/service-lifecycle.json",
+      "sha256": "8bd4a41259fdd5e747c189a091839e2ede2854d0187b6bf8c93c28423cd67a69"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/support/service_calls.rs",
+      "sha256": "33ce74426410d6becc8828bc021c49faee88f03fc0be24e747a13f6a8b4c224b"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/tests/service_recording.rs",
+      "sha256": "d5f21a5980b83fc53a2e0ec019190d128441230f72a8b54d71237b0a86b69907"
     }
   ],
   "amendment_0259": {
@@ -3528,5 +3544,28 @@
     ],
     "historical_alias_cases": 15,
     "fresh_alias_sequence_cases_including_deactivate": 14
+  },
+  "amendment_0269": {
+    "scope": "Original setService and removeService recording added for nonempty flat named OpaqueString product Map values; native and pure semantic rows unchanged. Three default-strict proofs follow actual original-data deployment, applying Insert, Update and Remove. Constructor execution itself remains unproved; original stored zero id stays distinct from deployed address.",
+    "historical_baseline": "ADR0255 stateful_export_summary and prior ADR0259/0265 amendments are retained as historical snapshots; their earlier recorded availability is not current.",
+    "current_recorded_exports": [
+      "deactivate",
+      "recoverControllerKey",
+      "rotateControllerKey",
+      "setAlsoKnownAs",
+      "setService",
+      "removeService"
+    ],
+    "historical_service_cases": 7,
+    "fresh_service_sequence_cases_including_deactivate": 14,
+    "strict_service_calls": [
+      "setService",
+      "setService",
+      "removeService"
+    ],
+    "limits": [
+      "The finite Service sequence and typed Map reducers do not admit nested, mixed or empty product Map values.",
+      "These sampled proof calls do not prove original constructor execution or all DID branches."
+    ]
   }
 }

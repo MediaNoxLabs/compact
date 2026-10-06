@@ -1,0 +1,260 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "flag",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "boolean"
+        }
+      },
+      "source": {
+        "file": "service_digest.compact",
+        "line": 4,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+    {
+      "name": "digest",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "item",
+          "ty": {
+            "kind": "struct",
+            "name": "Service",
+            "fields": [
+              {
+                "name": "id",
+                "ty": {
+                  "kind": "opaque_string"
+                }
+              },
+              {
+                "name": "typ",
+                "ty": {
+                  "kind": "opaque_string"
+                }
+              },
+              {
+                "name": "serviceEndpoint",
+                "ty": {
+                  "kind": "opaque_string"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "body": {
+        "kind": "transient_hash",
+        "value": {
+          "kind": "struct_literal",
+          "ty": {
+            "kind": "struct",
+            "name": "Payload",
+            "fields": [
+              {
+                "name": "service",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Service",
+                  "fields": [
+                    {
+                      "name": "id",
+                      "ty": {
+                        "kind": "opaque_string"
+                      }
+                    },
+                    {
+                      "name": "typ",
+                      "ty": {
+                        "kind": "opaque_string"
+                      }
+                    },
+                    {
+                      "name": "serviceEndpoint",
+                      "ty": {
+                        "kind": "opaque_string"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "fields": [
+            {
+              "kind": "parameter",
+              "name": "item"
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "service_digest.compact",
+        "line": 5,
+        "column": 1
+      }
+    }
+  ],
+  "stateful_circuits": [
+    {
+      "name": "mark",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "equal",
+            "left": {
+              "kind": "parameter",
+              "name": "value"
+            },
+            "right": {
+              "kind": "parameter",
+              "name": "value"
+            }
+          },
+          "message": "bad digest"
+        },
+        {
+          "kind": "cell_write",
+          "field": "flag",
+          "index": 0,
+          "value": {
+            "kind": "boolean",
+            "value": true
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "service_digest.compact",
+        "line": 8,
+        "column": 1
+      }
+    },
+    {
+      "name": "run",
+      "parameters": [
+        {
+          "name": "item",
+          "ty": {
+            "kind": "struct",
+            "name": "Service",
+            "fields": [
+              {
+                "name": "id",
+                "ty": {
+                  "kind": "opaque_string"
+                }
+              },
+              {
+                "name": "typ",
+                "ty": {
+                  "kind": "opaque_string"
+                }
+              },
+              {
+                "name": "serviceEndpoint",
+                "ty": {
+                  "kind": "opaque_string"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "circuit_call",
+          "name": "mark",
+          "arguments": [
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "call",
+                "name": "digest",
+                "arguments": [
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "item"
+                    },
+                    "ty": {
+                      "kind": "struct",
+                      "name": "Service",
+                      "fields": [
+                        {
+                          "name": "id",
+                          "ty": {
+                            "kind": "opaque_string"
+                          }
+                        },
+                        {
+                          "name": "typ",
+                          "ty": {
+                            "kind": "opaque_string"
+                          }
+                        },
+                        {
+                          "name": "serviceEndpoint",
+                          "ty": {
+                            "kind": "opaque_string"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "ty": {
+                "kind": "field"
+              }
+            }
+          ]
+        }
+      ],
+      "source": {
+        "file": "service_digest.compact",
+        "line": 9,
+        "column": 1
+      }
+    }
+  ]
+}

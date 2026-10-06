@@ -1,0 +1,14 @@
+import CompactStandardLibrary;
+export struct Quad { label: Opaque<"string">, target: Opaque<"string">, nonce: Opaque<"string">, note: Opaque<"string"> }
+export ledger entries: Map<Opaque<"string">, Quad>;
+export ledger count: Counter;
+circuit bump(): [] { count.increment(1); }
+export circuit put(key: Opaque<"string">, value: Quad): [] {
+  entries.insert(disclose(key), disclose(value));
+  bump();
+}
+export circuit drop(key: Opaque<"string">): [] {
+  assert(entries.member(disclose(key)), "missing");
+  entries.remove(disclose(key));
+  bump();
+}

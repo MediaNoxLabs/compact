@@ -29,18 +29,24 @@ mod lifecycle_calls;
 mod lifecycle_witness;
 #[path = "../../../tests-rust-backend/did-adoption/support/point_calls.rs"]
 mod point_calls;
+#[path = "../../../tests-rust-backend/did-adoption/support/service_calls.rs"]
+mod service_calls;
 use lifecycle_witness::Witness;
 
 #[derive(Clone, Copy)]
 enum Lifecycle {
     Points,
     Aliases,
+    Services,
 }
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
     run_lifecycle(root, Lifecycle::Points)
 }
 pub(super) fn run_aliases(root: &Path) -> Result<(), Box<dyn Error>> {
     run_lifecycle(root, Lifecycle::Aliases)
+}
+pub(super) fn run_services(root: &Path) -> Result<(), Box<dyn Error>> {
+    run_lifecycle(root, Lifecycle::Services)
 }
 fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>> {
     let (capture, scenario_id, calls, operations): (&str, &str, &[&str], &[&str]) = match lifecycle
@@ -60,6 +66,19 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
                 "recoverControllerKey",
                 "deactivate",
                 "setAlsoKnownAs",
+            ],
+        ),
+        Lifecycle::Services => (
+            include_str!("../../../tests-rust-backend/did-adoption/oracle/service-lifecycle.json"),
+            "service-recording",
+            &["insert-unicode", "update-empty-fields", "remove-unicode"],
+            &[
+                "rotateControllerKey",
+                "recoverControllerKey",
+                "deactivate",
+                "setAlsoKnownAs",
+                "setService",
+                "removeService",
             ],
         ),
     };
@@ -156,6 +175,12 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
             "rotate" => "rotateControllerKey",
             "recover" => "recoverControllerKey",
             "deactivate" => "deactivate",
+            "insert-unicode" | "update-empty-fields"
+                if matches!(lifecycle, Lifecycle::Services) =>
+            {
+                "setService"
+            }
+            "remove-unicode" if matches!(lifecycle, Lifecycle::Services) => "removeService",
             _ => "setAlsoKnownAs",
         };
         let prior = state
@@ -186,6 +211,7 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
         let record = match lifecycle {
             Lifecycle::Points => point_calls::invoke_recorded,
             Lifecycle::Aliases => alias_calls::invoke_recorded,
+            Lifecycle::Services => service_calls::invoke_recorded,
         };
         let recorded = record(
             observed.circuit_context(private),
@@ -204,7 +230,20 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
             response: codec::field_hex(row["responseHex"].as_str().unwrap()),
         };
         let version = codec::version(row["version"].as_str().unwrap());
-        let input = if name == "setAlsoKnownAs" {
+        let input = if name == "setService" {
+            AlignedValue::from((
+                codec::service(&row["args"]["service"]),
+                codec::map(&row["args"]["mutation"]),
+                signature.clone(),
+                version,
+            ))
+        } else if name == "removeService" {
+            AlignedValue::from((
+                codec::string(&row["args"]["id"]),
+                signature.clone(),
+                version,
+            ))
+        } else if name == "setAlsoKnownAs" {
             AlignedValue::from((
                 codec::string(&row["args"]["value"]),
                 codec::set(&row["args"]["mutation"]),
@@ -243,6 +282,27 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
             "deactivate" => facade
                 .recording()
                 .deactivate_call(&observed, private, signature, version)?,
+            "insert-unicode" | "update-empty-fields"
+                if matches!(lifecycle, Lifecycle::Services) =>
+            {
+                facade.recording().setService_call(
+                    &observed,
+                    private,
+                    codec::service(&row["args"]["service"]),
+                    codec::map(&row["args"]["mutation"]),
+                    signature,
+                    version,
+                )?
+            }
+            "remove-unicode" if matches!(lifecycle, Lifecycle::Services) => {
+                facade.recording().removeService_call(
+                    &observed,
+                    private,
+                    codec::string(&row["args"]["id"]),
+                    signature,
+                    version,
+                )?
+            }
             _ => facade.recording().setAlsoKnownAs_call(
                 &observed,
                 private,
@@ -365,10 +425,24 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
                 "original DID deploy -> setAlsoKnownAs insert -> remove: strict sequential acceptance; constructor execution not proved, stored-id semantics unchanged"
             );
         }
+        Lifecycle::Services => {
+            if !slots::active.inspect(data)?
+                || slots::deactivated.inspect(data)?
+                || slots::version.inspect(data)? != 3
+                || slots::operationCount.inspect(data)? != 3
+                || !slots::services.inspect(data)?.is_empty()
+            {
+                return Err("final DID Service lifecycle fields differ".into());
+            }
+            println!(
+                "original DID deploy -> setService insert -> update -> removeService: strict sequential acceptance; constructor execution not proved, stored-id semantics unchanged"
+            );
+        }
     }
     let (scenario, selector) = match lifecycle {
         Lifecycle::Points => ("points", "--did-point-lifecycle"),
         Lifecycle::Aliases => ("aliases", "--did-alias-lifecycle"),
+        Lifecycle::Services => ("services", "--did-service-lifecycle"),
     };
     let final_state_file = format!("did-{scenario}-final-state.bin");
     let mut public_state = Vec::new();

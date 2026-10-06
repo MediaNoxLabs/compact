@@ -1,0 +1,58 @@
+{
+  "profile": "branch-0.31.133-ledger8.0.3",
+  "rows": [
+    {
+      "name": "private_parts_valid",
+      "outcome": "ok"
+    },
+    {
+      "name": "private_parts_wrong_first_opening",
+      "outcome": "error",
+      "message": "failed assert: Private-parts first-name value does not match credential commitment"
+    },
+    {
+      "name": "private_parts_wrong_last_value",
+      "outcome": "error",
+      "message": "failed assert: Private-parts last-name value does not match credential commitment"
+    },
+    {
+      "name": "private_parts_wrong_dob_opening",
+      "outcome": "error",
+      "message": "failed assert: Private-parts date-of-birth value does not match credential commitment"
+    },
+    {
+      "name": "private_parts_wrong_doc_value",
+      "outcome": "error",
+      "message": "failed assert: Private-parts document-number value does not match credential commitment"
+    },
+    {
+      "name": "private_parts_wrong_doc_opening",
+      "outcome": "error",
+      "message": "failed assert: Private-parts document-number value does not match credential commitment"
+    },
+    {
+      "name": "private_parts_wrong_issuing_state",
+      "outcome": "error",
+      "message": "failed assert: Private-parts issuing-state value does not match credential commitment"
+    },
+    {
+      "name": "private_parts_wrong_root",
+      "outcome": "error",
+      "message": "failed assert: Private-parts claim root does not match credential"
+    },
+    {
+      "name": "private_parts_absent_valid",
+      "outcome": "ok"
+    },
+    {
+      "name": "private_parts_absent_nonzero_value",
+      "outcome": "error",
+      "message": "failed assert: Private-parts document-number value must be zero-filled when document number is absent"
+    },
+    {
+      "name": "private_parts_absent_nonzero_opening",
+      "outcome": "error",
+      "message": "failed assert: Private-parts document-number opening must be zero-filled when document number is absent"
+    }
+  ]
+}

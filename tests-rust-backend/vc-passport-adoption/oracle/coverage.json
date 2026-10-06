@@ -1,8 +1,8 @@
 {
   "format": "compact-vc-passport-adoption-coverage/v1",
   "total_exports": 75,
-  "directly_checked_exports": 19,
-  "direct_cases": 65,
+  "directly_checked_exports": 28,
+  "direct_cases": 96,
   "note": "compile_only is API availability evidence, not behavior parity; no proof or ledger behavior applies to pure exports.",
   "exports": [
     {
@@ -250,8 +250,20 @@
     },
     {
       "export": "assertValidDigitalPassportCredentialPrivateParts",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "private_parts_valid",
+        "private_parts_wrong_first_opening",
+        "private_parts_wrong_last_value",
+        "private_parts_wrong_dob_opening",
+        "private_parts_wrong_doc_value",
+        "private_parts_wrong_doc_opening",
+        "private_parts_wrong_issuing_state",
+        "private_parts_wrong_root",
+        "private_parts_absent_valid",
+        "private_parts_absent_nonzero_value",
+        "private_parts_absent_nonzero_opening"
+      ]
     },
     {
       "export": "noProtocolResponseReference",
@@ -273,23 +285,40 @@
     },
     {
       "export": "assertProtocolResponseEnvelope",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "response_envelope_valid",
+        "response_envelope_wrong_thread",
+        "response_envelope_wrong_previous",
+        "response_envelope_early",
+        "response_envelope_initial"
+      ]
     },
     {
       "export": "DigitalPassportIssuance_assertValidOfferMessage",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "issuance_offer_valid",
+        "issuance_offer_response_envelope"
+      ]
     },
     {
       "export": "DigitalPassportIssuance_assertValidRequestMessage",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "issuance_request_valid",
+        "issuance_request_initial_envelope"
+      ]
     },
     {
       "export": "DigitalPassportIssuance_assertOfferRequestAlignment",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "issuance_alignment_valid",
+        "issuance_alignment_wrong_method",
+        "issuance_alignment_wrong_schema",
+        "issuance_alignment_wrong_thread"
+      ]
     },
     {
       "export": "DigitalPassportIssuance_assertValidResultMessage",
@@ -303,8 +332,11 @@
     },
     {
       "export": "DigitalPassportVerification_assertValidRequestMessage",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "verification_request_valid",
+        "verification_request_response_envelope"
+      ]
     },
     {
       "export": "DigitalPassportVerification_assertValidSubmissionMessage",
@@ -318,8 +350,11 @@
     },
     {
       "export": "DigitalPassportVerification_assertValidResultMessage",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "verification_result_valid",
+        "verification_result_initial_envelope"
+      ]
     },
     {
       "export": "DigitalPassportVerification_assertSubmissionResultAlignment",
@@ -338,8 +373,10 @@
     },
     {
       "export": "digitalPassportPresentationRequestBodyRoot",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "presentation_request_body_root"
+      ]
     },
     {
       "export": "assertValidDigitalPassportSchemaRef",
@@ -365,8 +402,11 @@
     },
     {
       "export": "digitalPassportPresentationRequestFromProtocol",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "presentation_from_protocol",
+        "presentation_from_future_transport"
+      ]
     },
     {
       "export": "assertValidDigitalPassportCredential",

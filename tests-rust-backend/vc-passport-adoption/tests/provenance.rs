@@ -56,15 +56,29 @@ fn dual_typescript_captures_and_export_inventory_remain_exact() {
         serde_json::from_str(include_str!("../oracle/branch-age-capture.json")).unwrap();
     let upstream_age: serde_json::Value =
         serde_json::from_str(include_str!("../oracle/upstream-age-capture.json")).unwrap();
+    let branch_private: serde_json::Value =
+        serde_json::from_str(include_str!("../oracle/branch-private-parts-capture.json")).unwrap();
+    let upstream_private: serde_json::Value = serde_json::from_str(include_str!(
+        "../oracle/upstream-private-parts-capture.json"
+    ))
+    .unwrap();
+    let branch_protocol: serde_json::Value =
+        serde_json::from_str(include_str!("../oracle/branch-protocol-capture.json")).unwrap();
+    let upstream_protocol: serde_json::Value =
+        serde_json::from_str(include_str!("../oracle/upstream-protocol-capture.json")).unwrap();
     assert_ne!(branch["profile"], upstream["profile"]);
     assert_ne!(branch_age["profile"], upstream_age["profile"]);
     assert_ne!(branch_request["profile"], upstream_request["profile"]);
     assert_eq!(branch["rows"], upstream["rows"]);
     assert_eq!(branch_age["rows"], upstream_age["rows"]);
     assert_eq!(branch_request["rows"], upstream_request["rows"]);
+    assert_eq!(branch_private["rows"], upstream_private["rows"]);
+    assert_eq!(branch_protocol["rows"], upstream_protocol["rows"]);
     assert_eq!(branch["rows"].as_array().unwrap().len(), 24);
     assert_eq!(branch_age["rows"].as_array().unwrap().len(), 25);
     assert_eq!(branch_request["rows"].as_array().unwrap().len(), 16);
+    assert_eq!(branch_private["rows"].as_array().unwrap().len(), 11);
+    assert_eq!(branch_protocol["rows"].as_array().unwrap().len(), 20);
 
     let coverage: serde_json::Value =
         serde_json::from_str(include_str!("../oracle/coverage.json")).unwrap();
@@ -74,13 +88,15 @@ fn dual_typescript_captures_and_export_inventory_remain_exact() {
         .iter()
         .filter(|export| export["evidence"] == "direct_rust_and_dual_typescript")
         .collect::<Vec<_>>();
-    assert_eq!(measured.len(), 19);
+    assert_eq!(measured.len(), 28);
     let captured_cases = branch["rows"]
         .as_array()
         .unwrap()
         .iter()
         .chain(branch_age["rows"].as_array().unwrap())
         .chain(branch_request["rows"].as_array().unwrap())
+        .chain(branch_private["rows"].as_array().unwrap())
+        .chain(branch_protocol["rows"].as_array().unwrap())
         .map(|row| row["name"].as_str().unwrap())
         .collect::<BTreeSet<_>>();
     let covered_cases = measured
@@ -89,7 +105,7 @@ fn dual_typescript_captures_and_export_inventory_remain_exact() {
         .map(|case| case.as_str().unwrap())
         .collect::<BTreeSet<_>>();
     assert_eq!(captured_cases, covered_cases);
-    assert_eq!(captured_cases.len(), 65);
+    assert_eq!(captured_cases.len(), 96);
     assert!(
         exports
             .iter()
@@ -104,7 +120,7 @@ fn oracle_programs_and_captures_match_recorded_provenance() {
         serde_json::from_str(include_str!("../oracle/provenance.json")).unwrap();
     let oracle = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("oracle");
     let files = provenance["oracle_files"].as_object().unwrap();
-    assert_eq!(files.len(), 12);
+    assert_eq!(files.len(), 18);
     for (name, expected) in files {
         assert!(!name.contains('/') && !name.contains(".."));
         let bytes = std::fs::read(oracle.join(name)).unwrap();

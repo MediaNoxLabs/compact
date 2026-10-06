@@ -1,0 +1,147 @@
+{
+  "profile": "branch-0.31.133-ledger8.0.3",
+  "rows": [
+    {
+      "name": "response_envelope_valid",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "response_envelope_wrong_thread",
+      "outcome": "error",
+      "message": "failed assert: Protocol response thread id does not match the request thread id"
+    },
+    {
+      "name": "response_envelope_wrong_previous",
+      "outcome": "error",
+      "message": "failed assert: Protocol response does not reference the request message id"
+    },
+    {
+      "name": "response_envelope_early",
+      "outcome": "error",
+      "message": "failed assert: Protocol response creation time must not precede the request"
+    },
+    {
+      "name": "response_envelope_initial",
+      "outcome": "error",
+      "message": "failed assert: Protocol response must not be initial"
+    },
+    {
+      "name": "issuance_offer_valid",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "issuance_offer_response_envelope",
+      "outcome": "error",
+      "message": "failed assert: Issuance offer must be the initial message"
+    },
+    {
+      "name": "issuance_request_valid",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "issuance_request_initial_envelope",
+      "outcome": "error",
+      "message": "failed assert: Issuance request must be a response message"
+    },
+    {
+      "name": "issuance_alignment_valid",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "issuance_alignment_wrong_method",
+      "outcome": "error",
+      "message": "failed assert: Issuance request issuer verification method does not match the offer"
+    },
+    {
+      "name": "issuance_alignment_wrong_schema",
+      "outcome": "error",
+      "message": "failed assert: Schema reference mismatch"
+    },
+    {
+      "name": "issuance_alignment_wrong_thread",
+      "outcome": "error",
+      "message": "failed assert: Protocol response thread id does not match the request thread id"
+    },
+    {
+      "name": "verification_request_valid",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "verification_request_response_envelope",
+      "outcome": "error",
+      "message": "failed assert: Presentation request must be the initial message"
+    },
+    {
+      "name": "verification_result_valid",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "verification_result_initial_envelope",
+      "outcome": "error",
+      "message": "failed assert: Presentation result must be a response message"
+    },
+    {
+      "name": "presentation_from_protocol",
+      "outcome": "ok",
+      "value": {
+        "version": "1",
+        "schema": {
+          "packageId": "6d69646e696768743a76633a6469676974616c2d70617373706f727400000000",
+          "schemaId": "6469676974616c2d70617373706f72743a763100000000000000000000000000",
+          "majorVersion": "1",
+          "minorVersion": "0"
+        },
+        "issuerVerificationMethodRef": {
+          "controllerAddress": {
+            "bytes": "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"
+          },
+          "methodId": "02030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f2021"
+        },
+        "requireFirstNameDisclosure": true,
+        "requireLastNameDisclosure": false,
+        "requireAgeOverThreshold": true,
+        "requestedAgeThresholdYears": "18",
+        "requireDocumentNumberDisclosure": false,
+        "requireIssuingStateDisclosure": false,
+        "verifierChallengeHash": "0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d"
+      }
+    },
+    {
+      "name": "presentation_from_future_transport",
+      "outcome": "ok",
+      "value": {
+        "version": "1",
+        "schema": {
+          "packageId": "6d69646e696768743a76633a6469676974616c2d70617373706f727400000000",
+          "schemaId": "6469676974616c2d70617373706f72743a763100000000000000000000000000",
+          "majorVersion": "1",
+          "minorVersion": "0"
+        },
+        "issuerVerificationMethodRef": {
+          "controllerAddress": {
+            "bytes": "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"
+          },
+          "methodId": "02030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f2021"
+        },
+        "requireFirstNameDisclosure": true,
+        "requireLastNameDisclosure": false,
+        "requireAgeOverThreshold": true,
+        "requestedAgeThresholdYears": "18",
+        "requireDocumentNumberDisclosure": false,
+        "requireIssuingStateDisclosure": false,
+        "verifierChallengeHash": "0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d"
+      }
+    },
+    {
+      "name": "presentation_request_body_root",
+      "outcome": "ok",
+      "value": "58239eab7e147bf4d2ce28fb0e39fa4ecf7dc0e7a53d8d6ae0c4e518143f3e12"
+    }
+  ]
+}

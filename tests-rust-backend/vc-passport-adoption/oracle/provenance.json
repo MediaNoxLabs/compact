@@ -35,23 +35,31 @@
     "branch-request-capture.json": "941e4979ad703457951bcea2dab0436dc91d63b2dbc2d5247bf8c734bf86a4c8",
     "upstream-request-capture.json": "0420670a23d917a2889609051a1c61716737f9cc12167c2c00891877efc3fc0c",
     "age-inputs.json": "f822c1ceecd4932685420a4ffaa91edfd4d0e746621c6183aa9e95fc261a7701",
-    "coverage.json": "b896452345b2107cc921bb8c0395df9fa32b2e039e80f80ee8672b0fd2c3d3a9",
-    "replay.py": "1448a71c8481753340c995fae7f3733e5964edc0b5b8d5820a68b7ceec24cfc6"
+    "coverage.json": "fb9233c0cb975b2a3b28520984df1f63e087f15a95dd138e01785d88aaea01bf",
+    "replay.py": "dcaa2bbd6051eaa4c17970f70e5cfe8f2bdef7ab4ecee0be73d38d012757a71a",
+    "capture-private-parts.mjs": "14f681ad5c342b0f8b805e28feb7a9d2ca8aba42a01ac59d35a51bdc4bb9471d",
+    "branch-private-parts-capture.json": "191ea8d98b682364acb57e1a7e002beb2efb6b1c15fad20ebe1d02e48a5f1c76",
+    "upstream-private-parts-capture.json": "fa9aa809c68d6e9571674a279fe54d86a65946aae1ce9a0ad4eb3bcf55fda6a5",
+    "capture-protocol.mjs": "20f6dc080cdc6670df9d86bca474e574475b78c09d513c54f65e2e71505ac6be",
+    "branch-protocol-capture.json": "1d49596552f37610976cce38856f1a9274c46bdcb762b8f791d171b16d67eedc",
+    "upstream-protocol-capture.json": "8e4ce3e907a04fb28774230717575557ec5a81c371b1b04eddd0d3d966d651f6"
   },
   "acceptance": {
     "export_count": 75,
-    "directly_compared_exports": 19,
-    "direct_cases": 65,
+    "directly_compared_exports": 28,
+    "direct_cases": 96,
     "branch_vs_upstream_rows_equal": true,
     "rust_direct_tests": [
       "pure_oracle.rs",
       "age_predicate.rs",
-      "request_validation.rs"
+      "request_validation.rs",
+      "private_parts.rs",
+      "protocol.rs"
     ],
     "pure_only": true
   },
   "limits": [
-    "The 56 compile-only exports have no direct behavior-parity claim.",
+    "The 47 compile-only exports have no direct behavior-parity claim.",
     "No circuit proof, ledger transaction, wallet, or simulator behavior applies to this pure-only closure.",
     "Matching selected outputs do not establish protocol-wide compatibility between ledger 8.0.2 and 8.0.3."
   ]

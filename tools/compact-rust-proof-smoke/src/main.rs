@@ -139,6 +139,7 @@ use compact_rust_constructor_list_actions_fixture::ledger_contract as constructo
 use compact_rust_constructor_map_actions_fixture::ledger_contract as constructor_map_contract;
 use compact_rust_counter_fixture::ledger_contract as counter_contract;
 use compact_rust_counter_parameter_fixture::ledger_contract as counter_parameter_contract;
+use compact_rust_cross_circuit_oracle_fixture::ledger_contract as cross_circuit_contract;
 use compact_rust_hmt_default_oracle_fixture::ledger_contract as historic_merkle_default_contract;
 use compact_rust_hmt_insert_oracle_fixture::ledger_contract as historic_merkle_contract;
 use compact_rust_list_field_fixture::ledger_contract as list_contract;
@@ -788,11 +789,13 @@ fn check_boolean_observation_proof(root: &Path) -> Result<(), Box<dyn Error>> {
 
 fn check_conditional_counter_proof(root: &Path) -> Result<(), Box<dyn Error>> {
     let mut rng = StdRng::seed_from_u64(0x434f_4e44_434e_5452);
-    for (circuit, condition, expected_counter) in [
-        ("streamWrite", false, 2),
-        ("streamWrite", true, 1),
-        ("streamConstAnnotated", false, 2),
-        ("streamIncrement", false, 4),
+    for (circuit, condition, flag, expected_counter) in [
+        ("streamWrite", false, false, 2),
+        ("streamWrite", true, false, 1),
+        ("streamConstAnnotated", false, false, 2),
+        ("streamConstAnnotated", false, true, 1),
+        ("streamIncrement", false, false, 4),
+        ("streamIncrement", false, true, 3),
     ] {
         let initial = conditional_counter_contract::initial_state(
             ConstructorContext::new(()),
@@ -800,13 +803,18 @@ fn check_conditional_counter_proof(root: &Path) -> Result<(), Box<dyn Error>> {
             true,
             Field::from(111_u64),
         )?;
-        let deploy = make_deploy(
-            root,
-            circuit,
-            initial.ledger_state.get_ref().clone(),
-            &mut rng,
-        )?;
-        let context = initial.into_circuit_context(deploy.address());
+        let seed = initial.into_circuit_context(Default::default());
+        let seed = if flag {
+            seed.write_cell(0_u8, true)?.context
+        } else {
+            seed
+        };
+        let deploy = make_deploy(root, circuit, seed.query.state.get_ref().clone(), &mut rng)?;
+        let context = midnight_compact_runtime::context::CircuitContext::from_contract_state(
+            (),
+            deploy.address(),
+            &deploy.initial_state,
+        );
         let call = if circuit == "streamWrite" {
             let recorded = conditional_counter_contract::recorded::streamWrite(
                 context,
@@ -825,12 +833,15 @@ fn check_conditional_counter_proof(root: &Path) -> Result<(), Box<dyn Error>> {
             let StateValue::Array(fields) = state.data.get_ref() else {
                 return Err("conditional Counter state is not an array".into());
             };
+            if read_cell::<bool, _>(fields.get(0).ok_or("flag Cell missing")?)? != flag {
+                return Err(format!("{circuit} proof used the wrong ledger flag").into());
+            }
             if circuit == "streamIncrement" {
                 let wide = read_cell::<
                     midnight_compact_runtime::BoundedUint<18446744073709551615>,
                     _,
                 >(fields.get(2).ok_or("Uint64 Cell missing")?)?;
-                if wide.value() != 20 {
+                if wide.value() != if flag { 10 } else { 20 } {
                     return Err("streamIncrement proof stored the wrong Uint64 Cell".into());
                 }
             } else {
@@ -846,7 +857,55 @@ fn check_conditional_counter_proof(root: &Path) -> Result<(), Box<dyn Error>> {
             }
             Ok(())
         })?;
+        println!("{circuit} ledger flag={flag} counter={expected_counter} proof applied");
     }
+    Ok(())
+}
+
+fn check_unsigned_sequential_proof(root: &Path) -> Result<(), Box<dyn Error>> {
+    let circuit = "reset_and_set";
+    let mut rng = StdRng::seed_from_u64(0x0052_4553_4554_5345);
+    let initial = cross_circuit_contract::initial_state(ConstructorContext::new(()))?;
+    let deploy = make_deploy(
+        root,
+        circuit,
+        initial.ledger_state.get_ref().clone(),
+        &mut rng,
+    )?;
+    let value = BoundedUint::<{ u64::MAX as u128 }>::new(7)?;
+    let recorded = cross_circuit_contract::recorded::reset_and_set(
+        initial.into_circuit_context(deploy.address()),
+        value,
+    )?;
+    if !matches!(
+        recorded.public.verify_ops(),
+        [
+            Op::Push { storage: false, .. },
+            Op::Push { storage: true, .. },
+            Op::Ins {
+                cached: false,
+                n: 1
+            },
+            Op::Push { storage: false, .. },
+            Op::Push { storage: true, .. },
+            Op::Ins {
+                cached: false,
+                n: 1
+            },
+        ]
+    ) {
+        return Err("reset_and_set did not record two ordered Cell writes".into());
+    }
+    let call = check_generated_trace(root, circuit, recorded, value)?;
+    check_transaction(root, circuit, deploy, call, &mut rng, |state| {
+        let written =
+            read_cell_at_path::<BoundedUint<{ u64::MAX as u128 }>, _>(state.data.get_ref(), &[0])?;
+        if written.value() != 7 {
+            return Err("reset_and_set proof did not persist the second unsigned write".into());
+        }
+        Ok(())
+    })?;
+    println!("reset_and_set(7) ordered writes proved and applied");
     Ok(())
 }
 
@@ -2601,6 +2660,17 @@ fn run() -> Result<(), Box<dyn Error>> {
             );
         }
         return check_conditional_counter_proof(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--unsigned-sequential")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --unsigned-sequential <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --unsigned-sequential <proof-output>".into(),
+            );
+        }
+        return check_unsigned_sequential_proof(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--conditional-field")) {
         let root = arguments

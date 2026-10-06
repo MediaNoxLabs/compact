@@ -2803,6 +2803,14 @@ def main() -> None:
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--conditional-counter", str(ternary_cond_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--unsigned-sequential", str(unsigned_proofs["cross-circuit"]),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--pure-field-arguments", str(internal_pure_call_proof), str(ternary_cond_proof),
             )
             run(

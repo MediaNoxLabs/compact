@@ -19,59 +19,51 @@
 pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod types {
-    use midnight_compact_runtime as runtime;
-    use runtime::{BinaryHashRepr, CompactCellValue, FieldRepr, Fr, FromFieldRepr, MemWrite};
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct Attestation {
         pub proof: crate::types::StatusProof,
-        pub hasExpiration: bool,
-        pub expiresAt: runtime::BoundedUint<18446744073709551615>,
+        pub hasExpiration: ::core::primitive::bool,
+        pub expiresAt: ::midnight_compact_runtime::BoundedUint<18446744073709551615>,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct StatusProof {
-        pub createdAt: runtime::BoundedUint<18446744073709551615>,
-        pub issuer: runtime::BoundedUint<18446744073709551615>,
+        pub createdAt: ::midnight_compact_runtime::BoundedUint<18446744073709551615>,
+        pub issuer: ::midnight_compact_runtime::BoundedUint<18446744073709551615>,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct VerifierPolicy {
-        pub enforceMaxAge: bool,
-        pub maxAge: runtime::BoundedUint<18446744073709551615>,
+        pub enforceMaxAge: ::core::primitive::bool,
+        pub maxAge: ::midnight_compact_runtime::BoundedUint<18446744073709551615>,
     }
 }
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 49);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
     pub fn assertFreshEnough(
         policy: crate::types::VerifierPolicy,
         attestation: crate::types::Attestation,
@@ -167,7 +159,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 49);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,

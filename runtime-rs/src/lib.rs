@@ -36,7 +36,7 @@ pub mod transaction;
 
 pub use midnight_compact_runtime_macros::{
     CompactCellValue, CompactEnum, CompactMerklePath, CompactMerklePathEntry,
-    CompactMerkleTreeDigest, compact_witness_bridge,
+    CompactMerkleTreeDigest, CompactStructRepr, compact_witness_bridge,
 };
 pub use natives::{
     construct_jubjub_point, degrade_to_transient, ec_add, ec_mul, ec_mul_generator, ec_neg,
@@ -57,7 +57,7 @@ pub mod fab {
 }
 
 /// Increment when generated Rust and the runtime's public contract change.
-pub const RUST_RUNTIME_ABI: u32 = 49;
+pub const RUST_RUNTIME_ABI: u32 = 50;
 /// The ledger line selected by this Compact branch's `flake.nix`.
 pub const LEDGER_VERSION: &str = "ledger-8.0.3";
 

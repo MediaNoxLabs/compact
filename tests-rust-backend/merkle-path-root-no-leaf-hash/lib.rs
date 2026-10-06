@@ -19,60 +19,52 @@
 pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod types {
-    use midnight_compact_runtime as runtime;
-    use runtime::{BinaryHashRepr, CompactCellValue, FieldRepr, Fr, FromFieldRepr, MemWrite};
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
-        runtime::CompactMerkleTreeDigest,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactMerkleTreeDigest,
     )]
     pub struct MerkleTreeDigest {
-        pub field: runtime::Field,
+        pub field: ::midnight_compact_runtime::Field,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
-        runtime::CompactMerklePath,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactMerklePath,
     )]
     pub struct MerkleTreePath {
-        pub leaf: runtime::FixedBytes<32>,
-        pub path: runtime::FixedVector<crate::types::MerkleTreePathEntry, 3>,
+        pub leaf: ::midnight_compact_runtime::FixedBytes<32>,
+        pub path: ::midnight_compact_runtime::FixedVector<crate::types::MerkleTreePathEntry, 3>,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
-        runtime::CompactMerklePathEntry,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactMerklePathEntry,
     )]
     pub struct MerkleTreePathEntry {
         pub sibling: crate::types::MerkleTreeDigest,
-        pub goes_left: bool,
+        pub goes_left: ::core::primitive::bool,
     }
 }
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 49);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
     pub(crate) fn merkleTreePathRootNoLeafHash(
         path: crate::types::MerkleTreePath,
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {

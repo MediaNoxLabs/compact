@@ -19,88 +19,74 @@
 pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod types {
-    use midnight_compact_runtime as runtime;
-    use runtime::{BinaryHashRepr, CompactCellValue, FieldRepr, Fr, FromFieldRepr, MemWrite};
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct Inner {
-        pub b: bool,
+        pub b: ::core::primitive::bool,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct InnerCompact1 {
-        pub a: runtime::Field,
+        pub a: ::midnight_compact_runtime::Field,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct Rec {
-        pub beta: runtime::Field,
+        pub beta: ::midnight_compact_runtime::Field,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct RecCompact1 {
-        pub alpha: runtime::Field,
+        pub alpha: ::midnight_compact_runtime::Field,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct Wrap {
         pub inner: crate::types::Inner,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct WrapCompact1 {
         pub inner: crate::types::InnerCompact1,
@@ -109,7 +95,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 49);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
     pub(crate) fn makeAlpha(
         x: runtime::Field,
     ) -> Result<crate::types::RecCompact1, runtime::CompactError> {
@@ -155,7 +141,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 49);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,

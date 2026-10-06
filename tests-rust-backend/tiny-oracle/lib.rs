@@ -19,26 +19,29 @@
 pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod types {
-    use midnight_compact_runtime as runtime;
-    use runtime::CompactEnum;
-    use runtime::{BinaryHashRepr, CompactCellValue, FieldRepr, Fr, FromFieldRepr, MemWrite};
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct Maybe {
-        pub is_some: bool,
-        pub value: runtime::Field,
+        pub is_some: ::core::primitive::bool,
+        pub value: ::midnight_compact_runtime::Field,
     }
     #[allow(non_camel_case_types)]
-    #[derive(Clone, Copy, Debug, PartialEq, Eq, CompactCellValue, CompactEnum)]
+    #[derive(
+        ::core::clone::Clone,
+        ::core::marker::Copy,
+        ::core::fmt::Debug,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactEnum,
+    )]
     pub enum STATE {
         unset,
         set,
@@ -47,7 +50,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 49);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
     pub(crate) fn some(
         value: runtime::Field,
     ) -> Result<crate::types::Maybe, runtime::CompactError> {
@@ -89,7 +92,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 49);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,

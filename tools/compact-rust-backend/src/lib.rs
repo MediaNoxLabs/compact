@@ -10,9 +10,10 @@ mod native_frame;
 mod recorded;
 pub use recorded::{RecordingGap, RecordingGapCode};
 mod stateful;
+mod type_declarations;
 mod witness;
 
-const RUNTIME_ABI_VERSION: u32 = 49;
+const RUNTIME_ABI_VERSION: u32 = 50;
 
 const GENERATED_HEADER: &str = r#"// This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
@@ -3605,130 +3606,14 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
     };
 
     let runtime_abi = syn::LitInt::new(&RUNTIME_ABI_VERSION.to_string(), Span::call_site());
-    let mut struct_items = Vec::<syn::Item>::new();
-    let has_merkle_path = struct_definitions
-        .keys()
-        .any(|name| is_compact_struct_instantiation(name, "MerkleTreePath"));
-    for (name, fields) in &struct_definitions {
-        let empty = fields.is_empty();
-        let conversion = if has_merkle_path {
-            if is_compact_struct_instantiation(name, "MerkleTreeDigest") {
-                Some("CompactMerkleTreeDigest")
-            } else if is_compact_struct_instantiation(name, "MerkleTreePathEntry") {
-                Some("CompactMerklePathEntry")
-            } else if is_compact_struct_instantiation(name, "MerkleTreePath") {
-                Some("CompactMerklePath")
-            } else {
-                None
-            }
-        } else {
-            None
-        };
-        let name = ident(name)?;
-        let fields = fields
-            .iter()
-            .map(|field| {
-                let field_name = ident(&field.name)?;
-                let field_ty = rust_type(&field.ty)?;
-                Ok(syn::parse_quote!(pub #field_name: #field_ty))
-            })
-            .collect::<Result<Vec<syn::Field>, RenderError>>()?;
-        let mut item: syn::ItemStruct = if empty {
-            syn::parse_quote! {
-                #[derive(Clone, Debug, Default, PartialEq, Eq, CompactCellValue, BinaryHashRepr, FieldRepr)]
-                pub struct #name {}
-            }
-        } else {
-            syn::parse_quote! {
-                #[derive(Clone, Debug, Default, PartialEq, Eq, CompactCellValue, BinaryHashRepr, FieldRepr, FromFieldRepr)]
-                pub struct #name { #(#fields),* }
-            }
-        };
-        if let Some(conversion) = conversion {
-            let conversion = syn::Ident::new(conversion, Span::call_site());
-            item.attrs
-                .push(syn::parse_quote!(#[derive(runtime::#conversion)]));
-        }
-        struct_items.push(syn::Item::Struct(item));
-        if empty {
-            struct_items.push(syn::parse_quote! {
-                impl FromFieldRepr for #name {
-                    const FIELD_SIZE: usize = 0;
-
-                    fn from_field_repr(repr: &[Fr]) -> Option<Self> {
-                        repr.is_empty().then_some(Self {})
-                    }
-                }
-            });
-        }
-    }
-    for (name, variants) in &enum_definitions {
-        let name = ident(name)?;
-        let variants = variants
-            .iter()
-            .map(|variant| ident(variant))
-            .collect::<Result<Vec<_>, _>>()?;
-        struct_items.push(syn::parse_quote! {
-            #[allow(non_camel_case_types)]
-            #[derive(Clone, Copy, Debug, PartialEq, Eq, CompactCellValue, CompactEnum)]
-            pub enum #name { #(#variants),* }
-        });
-    }
-    let mut alias_names = HashSet::new();
-    let mut alias_reexports = Vec::new();
-    for alias in &contract.type_aliases {
-        located(alias.source.as_ref(), || {
-            if !alias_names.insert(alias.name.as_str())
-                || struct_definitions.contains_key(&alias.name)
-                || enum_definitions.contains_key(&alias.name)
-                || matches!(
-                    alias.name.as_str(),
-                    "runtime" | "types" | "pure_circuits" | "ledger_contract"
-                )
-            {
-                return Err(RenderError::ConflictingTypeAlias(alias.name.clone()));
-            }
-            let name = ident(&alias.name)?;
-            let ty = rust_type(&alias.ty)?;
-            struct_items
-                .push(syn::parse_quote!(#[allow(non_camel_case_types)] pub type #name = #ty;));
-            alias_reexports.push(name);
-            Ok(())
-        })?;
-    }
-    let mut derive_imports = Vec::<syn::Item>::new();
-    if !struct_definitions.is_empty() {
-        // The upstream struct derives expand with unqualified Fr and MemWrite.
-        derive_imports.push(syn::parse_quote!(
-            use runtime::{BinaryHashRepr, CompactCellValue, FieldRepr, Fr, FromFieldRepr, MemWrite};
-        ));
-        if !enum_definitions.is_empty() {
-            derive_imports.push(syn::parse_quote!(
-                use runtime::CompactEnum;
-            ));
-        }
-    } else if !enum_definitions.is_empty() {
-        derive_imports.push(syn::parse_quote!(
-            use runtime::{CompactCellValue, CompactEnum};
-        ));
-    }
-    let types_module: Option<syn::Item> = if struct_items.is_empty() {
-        None
-    } else {
-        Some(syn::parse_quote! {
-            #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
-            pub mod types {
-                use midnight_compact_runtime as runtime;
-                #(#derive_imports)*
-                #(#struct_items)*
-            }
-        })
-    };
-    let alias_exports: Option<syn::Item> = if alias_reexports.is_empty() {
-        None
-    } else {
-        Some(syn::parse_quote!(pub use types::{#(#alias_reexports),*};))
-    };
+    let type_declarations::TypeDeclarations {
+        module: types_module,
+        alias_exports,
+    } = type_declarations::render(
+        &struct_definitions,
+        &enum_definitions,
+        &contract.type_aliases,
+    )?;
     let initial_state: syn::Item = if constructor_uses_witness {
         syn::parse_quote! {
             pub fn initial_state<Private, W: TryWitnesses<Private>>(

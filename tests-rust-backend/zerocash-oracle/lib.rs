@@ -19,189 +19,163 @@
 pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod types {
-    use midnight_compact_runtime as runtime;
-    use runtime::{BinaryHashRepr, CompactCellValue, FieldRepr, Fr, FromFieldRepr, MemWrite};
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct LeafPreimage {
-        pub domain_sep: runtime::FixedBytes<6>,
+        pub domain_sep: ::midnight_compact_runtime::FixedBytes<6>,
         pub data: crate::types::commitment,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
-        runtime::CompactMerkleTreeDigest,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactMerkleTreeDigest,
     )]
     pub struct MerkleTreeDigest {
-        pub field: runtime::Field,
+        pub field: ::midnight_compact_runtime::Field,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
-        runtime::CompactMerklePath,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactMerklePath,
     )]
     pub struct MerkleTreePath {
         pub leaf: crate::types::commitment,
-        pub path: runtime::FixedVector<crate::types::MerkleTreePathEntry, 32>,
+        pub path: ::midnight_compact_runtime::FixedVector<crate::types::MerkleTreePathEntry, 32>,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
-        runtime::CompactMerklePathEntry,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactMerklePathEntry,
     )]
     pub struct MerkleTreePathEntry {
         pub sibling: crate::types::MerkleTreeDigest,
-        pub goes_left: bool,
+        pub goes_left: ::core::primitive::bool,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct Nonce {
-        pub bytes: runtime::FixedBytes<32>,
+        pub bytes: ::midnight_compact_runtime::FixedBytes<32>,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct coin_info {
         pub nonce: crate::types::Nonce,
         pub opening: crate::types::opening,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct commitment {
-        pub bytes: runtime::FixedBytes<32>,
+        pub bytes: ::midnight_compact_runtime::FixedBytes<32>,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct nullifier {
-        pub bytes: runtime::FixedBytes<32>,
+        pub bytes: ::midnight_compact_runtime::FixedBytes<32>,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct opening {
-        pub bytes: runtime::FixedBytes<32>,
+        pub bytes: ::midnight_compact_runtime::FixedBytes<32>,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct public_key {
         pub zk: crate::types::zk_public_key,
-        pub encryption: runtime::OpaqueBytes,
+        pub encryption: ::midnight_compact_runtime::OpaqueBytes,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct zk_public_key {
-        pub bytes: runtime::FixedBytes<32>,
+        pub bytes: ::midnight_compact_runtime::FixedBytes<32>,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct zk_secret_key {
-        pub bytes: runtime::FixedBytes<32>,
+        pub bytes: ::midnight_compact_runtime::FixedBytes<32>,
     }
 }
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 49);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
     pub(crate) fn merkleTreePathRoot(
         path: crate::types::MerkleTreePath,
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {
@@ -302,7 +276,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 49);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,

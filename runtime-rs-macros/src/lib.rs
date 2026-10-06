@@ -21,6 +21,7 @@ use quote::quote;
 use syn::{Data, DeriveInput, Fields, LitInt, parse_macro_input};
 
 mod merkle;
+mod struct_repr;
 mod witness_bridge;
 
 /// Derive the fallible witness trait and infallible adapter from one signature list.
@@ -60,6 +61,15 @@ pub fn compact_merkle_path_entry(input: TokenStream) -> TokenStream {
 pub fn compact_merkle_path(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     merkle::path(input)
+        .unwrap_or_else(syn::Error::into_compile_error)
+        .into()
+}
+
+/// Compose upstream field and binary representations for a concrete named struct.
+#[proc_macro_derive(CompactStructRepr)]
+pub fn compact_struct_repr(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    struct_repr::expand(input)
         .unwrap_or_else(syn::Error::into_compile_error)
         .into()
 }

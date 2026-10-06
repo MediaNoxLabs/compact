@@ -19,110 +19,96 @@
 pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod types {
-    use midnight_compact_runtime as runtime;
-    use runtime::{BinaryHashRepr, CompactCellValue, FieldRepr, Fr, FromFieldRepr, MemWrite};
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct ContractAddress {
-        pub bytes: runtime::FixedBytes<32>,
+        pub bytes: ::midnight_compact_runtime::FixedBytes<32>,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct Either {
-        pub is_left: bool,
+        pub is_left: ::core::primitive::bool,
         pub left: crate::types::ZswapCoinPublicKey,
         pub right: crate::types::ContractAddress,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct QualifiedShieldedCoinInfo {
-        pub nonce: runtime::FixedBytes<32>,
-        pub color: runtime::FixedBytes<32>,
-        pub value: runtime::BoundedUint<340282366920938463463374607431768211455>,
-        pub mt_index: runtime::BoundedUint<18446744073709551615>,
+        pub nonce: ::midnight_compact_runtime::FixedBytes<32>,
+        pub color: ::midnight_compact_runtime::FixedBytes<32>,
+        pub value: ::midnight_compact_runtime::BoundedUint<340282366920938463463374607431768211455>,
+        pub mt_index: ::midnight_compact_runtime::BoundedUint<18446744073709551615>,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct ShieldedCoinInfo {
-        pub nonce: runtime::FixedBytes<32>,
-        pub color: runtime::FixedBytes<32>,
-        pub value: runtime::BoundedUint<340282366920938463463374607431768211455>,
+        pub nonce: ::midnight_compact_runtime::FixedBytes<32>,
+        pub color: ::midnight_compact_runtime::FixedBytes<32>,
+        pub value: ::midnight_compact_runtime::BoundedUint<340282366920938463463374607431768211455>,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct Transfer {
-        pub first: runtime::BoundedUint<340282366920938463463374607431768211455>,
+        pub first: ::midnight_compact_runtime::BoundedUint<340282366920938463463374607431768211455>,
         pub consumed: (),
         pub claimed_input: (),
         pub emitted: (),
         pub claimed_output: (),
         pub address: crate::types::ContractAddress,
-        pub after: runtime::BoundedUint<340282366920938463463374607431768211455>,
+        pub after: ::midnight_compact_runtime::BoundedUint<340282366920938463463374607431768211455>,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct ZswapCoinPublicKey {
-        pub bytes: runtime::FixedBytes<32>,
+        pub bytes: ::midnight_compact_runtime::FixedBytes<32>,
     }
 }
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 49);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -134,7 +120,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 49);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,

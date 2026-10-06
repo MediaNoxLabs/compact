@@ -2822,9 +2822,10 @@ fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
     );
     contract.circuits[0].parameters[0].ty = choice;
     let source = render(&contract).unwrap();
-    assert!(source.contains("CompactCellValue, CompactEnum"));
+    assert!(source.contains("::midnight_compact_runtime::CompactCellValue"));
+    assert!(source.contains("::midnight_compact_runtime::CompactEnum"));
     assert!(source.contains("pub enum Choice"));
-    assert!(source.contains("RUST_RUNTIME_ABI == 49"));
+    assert!(source.contains("RUST_RUNTIME_ABI == 50"));
     assert!(!source.contains("impl FieldRepr for Choice"));
     assert!(!source.contains("impl BinaryHashRepr for Choice"));
     assert!(!source.contains("impl FromFieldRepr for Choice"));
@@ -3716,7 +3717,7 @@ fn exported_alias_is_typed_and_reexported() {
     };
     contract.type_aliases.push(alias.clone());
     let source = render(&contract).unwrap();
-    assert!(source.contains("pub type Tag = runtime::FixedBytes<8>;"));
+    assert!(source.contains("pub type Tag = ::midnight_compact_runtime::FixedBytes<8>;"));
     assert!(source.contains("pub use types::Tag;"));
     contract.type_aliases.push(alias);
     assert_eq!(

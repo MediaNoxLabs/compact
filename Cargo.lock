@@ -2274,6 +2274,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-source-name-hygiene-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+]
+
+[[package]]
 name = "compact-rust-stateful-assert-oracle-fixture"
 version = "0.1.0"
 dependencies = [

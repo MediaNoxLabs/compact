@@ -1293,7 +1293,7 @@ def main() -> None:
             generated = (output / "contract/lib.rs").read_text()
             assert "runtime::add_wide_unsigned" in generated
             assert "runtime::narrow_wide_uint" in generated
-            assert "RUST_RUNTIME_ABI == 49" in generated
+            assert "RUST_RUNTIME_ABI == 50" in generated
             report = json.loads((output / "contract/rust-capabilities.json").read_text())
             assert len(report["circuits"]) == 1
             row = report["circuits"][0]

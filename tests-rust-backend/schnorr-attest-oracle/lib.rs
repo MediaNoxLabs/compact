@@ -19,83 +19,71 @@
 pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod types {
-    use midnight_compact_runtime as runtime;
-    use runtime::{BinaryHashRepr, CompactCellValue, FieldRepr, Fr, FromFieldRepr, MemWrite};
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct AttestationDomain {
-        pub domain: runtime::FixedBytes<32>,
+        pub domain: ::midnight_compact_runtime::FixedBytes<32>,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct AttestationPayload {
-        pub payloadHash: runtime::Field,
+        pub payloadHash: ::midnight_compact_runtime::Field,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct AttestationSubject {
-        pub subject: runtime::FixedBytes<32>,
-        pub epoch: runtime::BoundedUint<18446744073709551615>,
+        pub subject: ::midnight_compact_runtime::FixedBytes<32>,
+        pub epoch: ::midnight_compact_runtime::BoundedUint<18446744073709551615>,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct SchnorrHashInput {
-        pub ann_x: runtime::Field,
-        pub ann_y: runtime::Field,
-        pub pk_x: runtime::Field,
-        pub pk_y: runtime::Field,
-        pub msg: runtime::FixedVector<runtime::Field, 4>,
+        pub ann_x: ::midnight_compact_runtime::Field,
+        pub ann_y: ::midnight_compact_runtime::Field,
+        pub pk_x: ::midnight_compact_runtime::Field,
+        pub pk_y: ::midnight_compact_runtime::Field,
+        pub msg: ::midnight_compact_runtime::FixedVector<::midnight_compact_runtime::Field, 4>,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct SchnorrSignature {
-        pub announcement: runtime::JubjubPoint,
-        pub response: runtime::Field,
+        pub announcement: ::midnight_compact_runtime::JubjubPoint,
+        pub response: ::midnight_compact_runtime::Field,
     }
     #[allow(non_camel_case_types)]
     pub type Schnorr_SchnorrSignature = crate::types::SchnorrSignature;
@@ -104,7 +92,7 @@ pub use types::Schnorr_SchnorrSignature;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 49);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
     pub fn attestationDigest(
         subject: runtime::FixedBytes<32>,
         epoch: runtime::BoundedUint<18446744073709551615>,
@@ -136,7 +124,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 49);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,

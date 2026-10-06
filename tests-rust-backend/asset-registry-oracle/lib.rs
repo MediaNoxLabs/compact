@@ -19,89 +19,84 @@
 pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod types {
-    use midnight_compact_runtime as runtime;
-    use runtime::CompactEnum;
-    use runtime::{BinaryHashRepr, CompactCellValue, FieldRepr, Fr, FromFieldRepr, MemWrite};
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct AssetRecord {
-        pub code: runtime::FixedBytes<32>,
-        pub note: runtime::OpaqueString,
+        pub code: ::midnight_compact_runtime::FixedBytes<32>,
+        pub note: ::midnight_compact_runtime::OpaqueString,
         pub provenance: crate::types::Provenance,
         pub kind: crate::types::AssetClass,
-        pub quantity: runtime::BoundedUint<18446744073709551615>,
+        pub quantity: ::midnight_compact_runtime::BoundedUint<18446744073709551615>,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct ContractAddress {
-        pub bytes: runtime::FixedBytes<32>,
+        pub bytes: ::midnight_compact_runtime::FixedBytes<32>,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct CustodyGrant {
-        pub code: runtime::FixedBytes<32>,
+        pub code: ::midnight_compact_runtime::FixedBytes<32>,
         pub holder: crate::types::ContractAddress,
-        pub grantedAt: runtime::BoundedUint<18446744073709551615>,
+        pub grantedAt: ::midnight_compact_runtime::BoundedUint<18446744073709551615>,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct FreshnessPolicy {
-        pub enforceMaxAge: bool,
-        pub maxAge: runtime::BoundedUint<18446744073709551615>,
+        pub enforceMaxAge: ::core::primitive::bool,
+        pub maxAge: ::midnight_compact_runtime::BoundedUint<18446744073709551615>,
     }
     #[derive(
-        Clone,
-        Debug,
-        Default,
-        PartialEq,
-        Eq,
-        CompactCellValue,
-        BinaryHashRepr,
-        FieldRepr,
-        FromFieldRepr,
+        ::core::clone::Clone,
+        ::core::fmt::Debug,
+        ::core::default::Default,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactStructRepr,
     )]
     pub struct Provenance {
-        pub facility: runtime::FixedBytes<32>,
-        pub registeredAt: runtime::BoundedUint<18446744073709551615>,
+        pub facility: ::midnight_compact_runtime::FixedBytes<32>,
+        pub registeredAt: ::midnight_compact_runtime::BoundedUint<18446744073709551615>,
     }
     #[allow(non_camel_case_types)]
-    #[derive(Clone, Copy, Debug, PartialEq, Eq, CompactCellValue, CompactEnum)]
+    #[derive(
+        ::core::clone::Clone,
+        ::core::marker::Copy,
+        ::core::fmt::Debug,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactEnum,
+    )]
     pub enum AssetClass {
         Unspecified,
         Instrument,
@@ -109,14 +104,30 @@ pub mod types {
         Document,
     }
     #[allow(non_camel_case_types)]
-    #[derive(Clone, Copy, Debug, PartialEq, Eq, CompactCellValue, CompactEnum)]
+    #[derive(
+        ::core::clone::Clone,
+        ::core::marker::Copy,
+        ::core::fmt::Debug,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactEnum,
+    )]
     pub enum ListMutation {
         Unspecified,
         Add,
         Drop,
     }
     #[allow(non_camel_case_types)]
-    #[derive(Clone, Copy, Debug, PartialEq, Eq, CompactCellValue, CompactEnum)]
+    #[derive(
+        ::core::clone::Clone,
+        ::core::marker::Copy,
+        ::core::fmt::Debug,
+        ::core::cmp::PartialEq,
+        ::core::cmp::Eq,
+        ::midnight_compact_runtime::CompactCellValue,
+        ::midnight_compact_runtime::CompactEnum,
+    )]
     pub enum RecordMutation {
         Unspecified,
         Insert,
@@ -126,7 +137,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 49);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
     pub fn assertRecordFreshEnough(
         policy: crate::types::FreshnessPolicy,
         record: crate::types::AssetRecord,
@@ -263,7 +274,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 49);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,

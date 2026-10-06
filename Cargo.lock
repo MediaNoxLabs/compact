@@ -894,6 +894,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-contract-proof-data-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+]
+
+[[package]]
 name = "compact-contract-pure-circuit-fixture"
 version = "0.1.0"
 dependencies = [
@@ -2654,7 +2661,7 @@ dependencies = [
 
 [[package]]
 name = "midnight-compact-runtime"
-version = "0.16.100"
+version = "0.16.101"
 dependencies = [
  "midnight-base-crypto",
  "midnight-coin-structure",
@@ -2670,7 +2677,7 @@ dependencies = [
 
 [[package]]
 name = "midnight-compact-runtime-macros"
-version = "0.16.100"
+version = "0.16.101"
 dependencies = [
  "midnight-compact-runtime",
  "proc-macro2",
@@ -4867,6 +4874,7 @@ dependencies = [
  "compact-contract-module-fixture",
  "compact-contract-multi-pl-call-fixture",
  "compact-contract-nested-map-fixture",
+ "compact-contract-proof-data-fixture",
  "compact-contract-pure-circuit-fixture",
  "compact-contract-schnorr-attest-fixture",
  "compact-contract-sealed-ledger-fixture",

@@ -1,0 +1,52 @@
+{
+  "input": {
+    "valueAtoms": [
+      "0b",
+      "1e"
+    ],
+    "alignment": [
+      "{\"tag\":\"atom\",\"value\":{\"tag\":\"field\"}}",
+      "{\"tag\":\"atom\",\"value\":{\"tag\":\"field\"}}"
+    ]
+  },
+  "output": {
+    "valueAtoms": [],
+    "alignment": []
+  },
+  "privateTranscriptOutputs": [
+    {
+      "valueAtoms": [
+        "05"
+      ],
+      "alignment": [
+        "{\"tag\":\"atom\",\"value\":{\"tag\":\"field\"}}"
+      ]
+    },
+    {
+      "valueAtoms": [
+        "07"
+      ],
+      "alignment": [
+        "{\"tag\":\"atom\",\"value\":{\"tag\":\"field\"}}"
+      ]
+    }
+  ],
+  "publicTranscriptTags": [
+    "dup",
+    "idx",
+    "popeq",
+    "push",
+    "push",
+    "ins"
+  ],
+  "popeqValues": [
+    {
+      "valueAtoms": [
+        "0b"
+      ],
+      "alignment": [
+        "{\"tag\":\"atom\",\"value\":{\"tag\":\"field\"}}"
+      ]
+    }
+  ]
+}

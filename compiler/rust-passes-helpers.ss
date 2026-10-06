@@ -666,6 +666,25 @@
             [else
              (infer-rhs-type e (current-witness-id-ht) (current-circuit-id-ht))])))
 
+
+      (define (proof-value-rust type expr)
+        (let ([rt (type-rust type)])
+          (cond
+            [(and (> (string-length rt) 0) (char=? (string-ref rt 0) #\[))
+             (format "proof_aligned_array(&~a)" expr)]
+            [(let ([n (string-length rt)] [needle "Maybe<midnight_compact_runtime::MerklePath"])
+               (and (>= n (string-length needle))
+                    (string=? (substring rt 0 (string-length needle)) needle)))
+             (format "proof_aligned_maybe_merkle_path(&~a)" expr)]
+            [(let ([needle "midnight_compact_runtime::MerklePath"])
+               (let loop ([i 0])
+                 (cond
+                   [(> (+ i (string-length needle)) (string-length rt)) #f]
+                   [(string=? (substring rt i (+ i (string-length needle))) needle) #t]
+                   [else (loop (+ i 1))])))
+             (format "proof_aligned_merkle_path(&~a)" expr)]
+            [else (format "proof_aligned_value(&~a)" expr)])))
+
       ;; rust-keyword?: returns #t when the symbol matches a Rust reserved
       ;; keyword (strict + reserved). Enum variant names like
       ;; `final` (election.compact's PublicState.final) collide otherwise.

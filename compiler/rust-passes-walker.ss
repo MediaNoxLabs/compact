@@ -37,6 +37,7 @@
 ;;; See compiler/README-rust-passes.md for the module map and the three
 ;;; body routes (constructor / impure / pure).
 
+
       ;; witness-pelt?: returns #t if a Program-Element is a witness
       ;; declaration. Used by build-witness-id-ht to index witnesses.
       (define (witness-pelt? pelt)
@@ -1526,11 +1527,20 @@
                                (cond
                                  [(null? xs) acc]
                                  [else (join (cdr xs)
-                                             (string-append acc ", " (car xs)))])))])
+                                             (string-append acc ", " (car xs)))])))]
+                    [record-line
+                     (let ([wp (eq-hashtable-ref witness-id-ht function-name #f)])
+                       (nanopass-case (Ltypescript Program-Element) wp
+                         [(witness ,src ,function-name (,arg* ...) ,type)
+                          (format "        __compact_proof_data.push_private_output(~a);\n"
+                                  (proof-value-rust type rust-name))]
+                         [else
+                          (format "        __compact_proof_data.push_private_output(proof_aligned_value(&~a));\n"
+                                  rust-name)]))])
                (loop (cdr subs)
                      (fx+ counter 1)
                      #t
-                     (cons bind-line (cons call-line rev-lines))
+                     (cons record-line (cons bind-line (cons call-line rev-lines)))
                      (cons (list function-name arg-exprs rust-name) binds)))])))
 
       ;; assert-cond-supported?: like expr-supported? but additionally
@@ -2322,11 +2332,20 @@
                                         (cond
                                           [(null? xs) acc]
                                           [else (join (cdr xs)
-                                                      (string-append acc ", " (car xs)))])))])
+                                                      (string-append acc ", " (car xs)))])))]
+                             [record-line
+                              (let ([wp (eq-hashtable-ref witness-id-ht (cadddr classified) #f)])
+                                (nanopass-case (Ltypescript Program-Element) wp
+                                  [(witness ,src ,function-name (,arg* ...) ,type)
+                                   (format "        __compact_proof_data.push_private_output(~a);\n"
+                                           (proof-value-rust type rust-name))]
+                                  [else
+                                   (format "        __compact_proof_data.push_private_output(proof_aligned_value(&~a));\n"
+                                           rust-name)]))])
                         (loop (cdr stmts)
                               (cons (cons var-name rust-name) local-binds)
                               #t
-                              (cons bind-line (cons call-line pre-lines))
+                              (cons record-line (cons bind-line (cons call-line pre-lines)))
                               writes))]
                      [(pure-circuit)
                       ;; A6: witness sub-calls inside pure-circuit args.
@@ -3353,7 +3372,7 @@
                  writes))
           (list
             "            .build();\n"
-            (format "        let _ctor_flush_~a = query_for_verify(&qctx, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?;\n" n)
+            (format "        let _ctor_flush_~a = recorded_query_for_verify(&mut __compact_proof_data, &qctx, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?;\n" n)
             (format "        let qctx = _ctor_flush_~a.context;\n" n))))
 
       (define (emit-body-writes writes mode local-binds
@@ -3369,7 +3388,7 @@
         (out "\n")
         (cond
           [(eq? mode 'ctor)
-           (out "        let results = query_for_verify(&qctx, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?;\n")
+           (out "        let results = recorded_query_for_verify(&mut __compact_proof_data, &qctx, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?;\n")
            (out "\n")
            (out "        Ok(ConstructorResult {\n")
            (out "            current_contract_state: results.context.state,\n")
@@ -3381,7 +3400,7 @@
           [else
            ;; 'circuit mode: results live on the inbound ctx and we wrap
            ;; everything in a CircuitResults with unit result.
-           (out "        let results = query_for_verify(\n")
+           (out "        let results = recorded_query_for_verify(&mut __compact_proof_data,\n")
            (out "            &ctx.current_query_context,\n")
            (out "            &ops,\n")
            (out "            ctx.gas_limit.clone(),\n")
@@ -3395,7 +3414,12 @@
            (when witness-emitted?
              (out "                current_private_state,\n"))
            (out "                ..ctx\n")
-           (out "            },\n")
+           (out "            }.with_finalized_call_proof_data(\n")
+            (out "                __compact_circuit_id,\n")
+            (out "                __compact_initial_query_context,\n")
+            (out "                __compact_proof_data,\n")
+            (out "                aligned_value_from_parts(&[]),\n")
+            (out "            ),\n")
            (out (circuit-gas-result-field))
            (out "        })\n")]))
 
@@ -3514,7 +3538,7 @@
              (out "\n")
              (cond
                [(eq? mode 'ctor)
-                (out "        let results = query_for_verify(&qctx, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?;\n")
+                (out "        let results = recorded_query_for_verify(&mut __compact_proof_data, &qctx, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?;\n")
                 (out "\n")
                 (out "        Ok(ConstructorResult {\n")
                 (out "            current_contract_state: results.context.state,\n")
@@ -3524,7 +3548,7 @@
                 (out (ctor-zswap-result-field))
                 (out "        })\n")]
                [else
-                (out "        let results = query_for_verify(\n")
+                (out "        let results = recorded_query_for_verify(&mut __compact_proof_data,\n")
                 (out "            &ctx.current_query_context,\n")
                 (out "            &ops,\n")
                 (out "            ctx.gas_limit.clone(),\n")
@@ -3538,7 +3562,12 @@
                 (when witness-emitted?
                   (out "                current_private_state,\n"))
                 (out "                ..ctx\n")
-                (out "            },\n")
+                (out "            }.with_finalized_call_proof_data(\n")
+            (out "                __compact_circuit_id,\n")
+            (out "                __compact_initial_query_context,\n")
+            (out "                __compact_proof_data,\n")
+            (out "                aligned_value_from_parts(&[]),\n")
+            (out "            ),\n")
                 (out (circuit-gas-result-field))
                 (out "        })\n")])
              #t])))
@@ -3656,7 +3685,7 @@
                         (out "\n")
                         (cond
                           [(eq? mode 'ctor)
-                           (out "        let results = query_for_verify(&qctx, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?;\n")
+                           (out "        let results = recorded_query_for_verify(&mut __compact_proof_data, &qctx, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?;\n")
                            (out "\n")
                            (out "        Ok(ConstructorResult {\n")
                            (out "            current_contract_state: results.context.state,\n")
@@ -3666,7 +3695,7 @@
                            (out (ctor-zswap-result-field))
                            (out "        })\n")]
                           [else
-                           (out "        let results = query_for_verify(\n")
+                           (out "        let results = recorded_query_for_verify(&mut __compact_proof_data,\n")
                            (out "            &ctx.current_query_context,\n")
                            (out "            &ops,\n")
                            (out "            ctx.gas_limit.clone(),\n")
@@ -3680,7 +3709,12 @@
                            (when witness-emitted?
                              (out "                current_private_state,\n"))
                            (out "                ..ctx\n")
-                           (out "            },\n")
+                           (out "            }.with_finalized_call_proof_data(\n")
+            (out "                __compact_circuit_id,\n")
+            (out "                __compact_initial_query_context,\n")
+            (out "                __compact_proof_data,\n")
+            (out "                aligned_value_from_parts(&[]),\n")
+            (out "            ),\n")
                            (out (circuit-gas-result-field))
                            (out "        })\n")])
                         #t]))]))])]))
@@ -3733,13 +3767,13 @@
                (out "            let ops = OpProgramVerify::<DefaultDB>::new()\n")
                (for-each (lambda (l) (out (format "    ~a" l))) then-lines)
                (out "                .build();\n")
-               (out (format "            query_for_verify(~a, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?\n"
+               (out (format "            recorded_query_for_verify(&mut __compact_proof_data, ~a, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?\n"
                             qctx-ref))
                (out "        } else {\n")
                (out "            let ops = OpProgramVerify::<DefaultDB>::new()\n")
                (for-each (lambda (l) (out (format "    ~a" l))) else-lines)
                (out "                .build();\n")
-               (out (format "            query_for_verify(~a, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?\n"
+               (out (format "            recorded_query_for_verify(&mut __compact_proof_data, ~a, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?\n"
                             qctx-ref))
                (out "        };\n")
                (out "\n"))
@@ -3760,7 +3794,12 @@
                 (when witness-emitted?
                   (out "                current_private_state,\n"))
                 (out "                ..ctx\n")
-                (out "            },\n")
+                (out "            }.with_finalized_call_proof_data(\n")
+            (out "                __compact_circuit_id,\n")
+            (out "                __compact_initial_query_context,\n")
+            (out "                __compact_proof_data,\n")
+            (out "                aligned_value_from_parts(&[]),\n")
+            (out "            ),\n")
                 (out "            gas_cost: _if_results.gas_cost,\n")
                 (out "        })\n")])
              #t])))
@@ -3819,7 +3858,7 @@
              (out "\n")
              (cond
                [(eq? mode 'ctor)
-                (out "        let results = query_for_verify(&qctx, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?;\n")
+                (out "        let results = recorded_query_for_verify(&mut __compact_proof_data, &qctx, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?;\n")
                 (out "\n")
                 (out "        Ok(ConstructorResult {\n")
                 (out "            current_contract_state: results.context.state,\n")
@@ -3829,7 +3868,7 @@
                 (out (ctor-zswap-result-field))
                 (out "        })\n")]
                [else
-                (out "        let results = query_for_verify(\n")
+                (out "        let results = recorded_query_for_verify(&mut __compact_proof_data,\n")
                 (out "            &ctx.current_query_context,\n")
                 (out "            &ops,\n")
                 (out "            ctx.gas_limit.clone(),\n")
@@ -3843,7 +3882,12 @@
                 (when witness-emitted?
                   (out "                current_private_state,\n"))
                 (out "                ..ctx\n")
-                (out "            },\n")
+                (out "            }.with_finalized_call_proof_data(\n")
+            (out "                __compact_circuit_id,\n")
+            (out "                __compact_initial_query_context,\n")
+            (out "                __compact_proof_data,\n")
+            (out "                aligned_value_from_parts(&[]),\n")
+            (out "            ),\n")
                 (out (circuit-gas-result-field))
                 (out "        })\n")])
              #t])))
@@ -3877,7 +3921,7 @@
              (out "\n")
              (cond
                [(eq? mode 'ctor)
-                (out "        let results = query_for_verify(&qctx, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?;\n")
+                (out "        let results = recorded_query_for_verify(&mut __compact_proof_data, &qctx, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?;\n")
                 (out "\n")
                 (out "        Ok(ConstructorResult {\n")
                 (out "            current_contract_state: results.context.state,\n")
@@ -3887,7 +3931,7 @@
                 (out (ctor-zswap-result-field))
                 (out "        })\n")]
                [else
-                (out "        let results = query_for_verify(\n")
+                (out "        let results = recorded_query_for_verify(&mut __compact_proof_data,\n")
                 (out "            &ctx.current_query_context,\n")
                 (out "            &ops,\n")
                 (out "            ctx.gas_limit.clone(),\n")
@@ -3901,7 +3945,12 @@
                 (when witness-emitted?
                   (out "                current_private_state,\n"))
                 (out "                ..ctx\n")
-                (out "            },\n")
+                (out "            }.with_finalized_call_proof_data(\n")
+            (out "                __compact_circuit_id,\n")
+            (out "                __compact_initial_query_context,\n")
+            (out "                __compact_proof_data,\n")
+            (out "                aligned_value_from_parts(&[]),\n")
+            (out "            ),\n")
                 (out (circuit-gas-result-field))
                 (out "        })\n")])
              #t])))

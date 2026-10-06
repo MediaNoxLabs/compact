@@ -184,3 +184,30 @@ fn tiny_get_returns_maybe_some_99() {
     let decoded_u128: u128 = got.result.value.try_into().expect("fits in u128");
     assert_eq!(decoded_u128.to_string(), ts_ref.get_result.value);
 }
+
+#[test]
+fn tiny_get_records_proof_data_for_reads_and_circuit_id() {
+    let contract = fresh_contract();
+    let init = contract
+        .initial_state(ctor_ctx(), Fr::from(42u64))
+        .expect("initial_state");
+    let circ_ctx = CircuitContext::new(init.current_contract_state, init.current_private_state);
+    let cleared = contract.clear(circ_ctx).expect("clear");
+    let after_set = contract.set(cleared.context, Fr::from(99u64)).expect("set");
+    let got = contract.get(after_set.context).expect("get");
+
+    let call = got
+        .context
+        .call_proof_data_trace
+        .as_slice()
+        .last()
+        .expect("get call proof data");
+    assert_eq!(call.circuit_id, "get");
+    assert!(!call.proof_data.public_transcript.is_empty());
+    assert!(call
+        .proof_data
+        .public_transcript
+        .iter()
+        .any(|op| { matches!(op, midnight_compact_runtime::Op::Popeq { .. }) }));
+    assert_eq!(call.proof_data.output, proof_aligned_value(&got.result));
+}

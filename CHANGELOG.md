@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Toolchain 0.31.123, language 0.23.103, runtime 0.16.101]
+
+### Added
+
+- **`--target rust` now exposes Compact proof data for Ledger8 transaction construction** — generated impure/provable wrappers encode formal inputs, record ordered public ledger transcripts including read `popeq` results and writes, capture private witness outputs in Compact order, encode primary outputs, and finalize per-call proof metadata with the actual circuit id plus initial/final query contexts. The runtime exposes a ledger-crate-free extraction API that fails closed for empty or multi-call traces. New `proof_data_fixture` pins input/transcript/private-output/output shape against the TypeScript proof-data reference.
+
 ## [Toolchain 0.31.122, language 0.23.103, runtime 0.16.100]
 
 ### Fixed

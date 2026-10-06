@@ -27,7 +27,7 @@ what `midnight-compact-runtime` re-exports.
 
 `midnight-compact-runtime-macros`'s version is lock-stepped to `midnight-compact-runtime`
 via an exact-version pin (`midnight-compact-runtime-macros = { version =
-"=0.16.100" }` in `midnight-compact-runtime`'s manifest). Bump them together; do
+"=0.16.101" }` in `midnight-compact-runtime`'s manifest). Bump them together; do
 not publish one without the other.
 
 This crate is version-locked to `midnight-compact-runtime` with an `=`

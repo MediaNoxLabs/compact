@@ -31,8 +31,10 @@ use std::marker::PhantomData;
 
 midnight_compact_runtime::check_runtime_version!("0.16.101");
 
-pub trait Witnesses<PS> {}
-impl<PS> Witnesses<PS> for NoWitnesses {}
+pub trait Witnesses<PS> {
+    fn first_secret<'a>(&self, ctx: &WitnessContext<Ledger<'a>, PS>) -> (PS, Fr);
+    fn second_secret<'a>(&self, ctx: &WitnessContext<Ledger<'a>, PS>) -> (PS, Fr);
+}
 
 pub struct Contract<PS, W = NoWitnesses>
 where
@@ -56,27 +58,96 @@ where
     pub fn initial_state(
         &self,
         ctx: ConstructorContext<PS>,
+        initial: Fr,
     ) -> Result<ConstructorResult<PS>, CompactError> {
-        let sv = new_array(vec![new_cell(false), new_map()]);
+        let sv = new_array(vec![new_cell(Fr::default())]);
         let state = ChargedState::new(sv);
         let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());
         let mut __compact_proof_data =
             PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[]));
+        let ops = OpProgramVerify::<DefaultDB>::new()
+            .push(false, new_cell(0u8))
+            .push(true, new_cell(initial))
+            .ins(false, 1)
+            .build();
+
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
+            &qctx,
+            &ops,
+            ctx.gas_limit.clone(),
+            &ctx.cost_model,
+        )?;
+
         Ok(ConstructorResult {
-            current_contract_state: qctx.state,
+            current_contract_state: results.context.state,
             current_private_state: ctx.initial_private_state,
             current_zswap_local_state: ctx.empty_zswap_local_state,
         })
     }
 
-    pub fn ping(&self, ctx: CircuitContext<PS>) -> Result<CircuitResults<PS, ()>, CompactError> {
+    pub fn read_witness_write(
+        &self,
+        ctx: CircuitContext<PS>,
+        expected: Fr,
+        next: Fr,
+    ) -> Result<CircuitResults<PS, ()>, CompactError> {
         let __compact_initial_query_context = ctx.current_query_context.clone();
-        let __compact_circuit_id = "ping";
+        let __compact_circuit_id = "read_witness_write";
         let mut __compact_proof_data =
-            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[]));
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[
+                proof_aligned_value(&expected),
+                proof_aligned_value(&next),
+            ]));
+        compact_assert!(
+            ({
+                let _gather_ops = OpProgramGather::<DefaultDB>::new()
+                    .dup(0)
+                    .idx_at_index(0u8, false)
+                    .popeq(false)
+                    .build();
+                let _gather_results = recorded_query_for_read(
+                    &mut __compact_proof_data,
+                    &ctx.current_query_context,
+                    &_gather_ops,
+                    None,
+                    &initial_cost_model(),
+                )
+                .map_err(|e| {
+                    CompactError::AssertionFailed(format!("ledger query failed: {:?}", e))
+                })?;
+                let _av = match _gather_results.events.last() {
+                    Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(
+                        av,
+                    )) => av,
+                    _ => {
+                        return Err(CompactError::AssertionFailed(
+                            "ledger: expected Read event".into(),
+                        ))
+                    }
+                };
+                midnight_compact_runtime::std_lib::decode_fr(_av)?
+            } == expected),
+            "unexpected value before write"
+        );
+        let _witness_ctx_1 = WitnessContext::new(
+            ledger(&ctx.current_query_context.state),
+            ctx.current_private_state,
+            &ctx.current_query_context,
+        );
+        let (current_private_state, a) = self.witnesses.first_secret(&_witness_ctx_1);
+        __compact_proof_data.push_private_output(proof_aligned_value(&a));
+        let _witness_ctx_4 = WitnessContext::new(
+            ledger(&ctx.current_query_context.state),
+            current_private_state,
+            &ctx.current_query_context,
+        );
+        let (current_private_state, b) = self.witnesses.second_secret(&_witness_ctx_4);
+        __compact_proof_data.push_private_output(proof_aligned_value(&b));
+        let tmp = ((next) + (a)) + (b);
         let ops = OpProgramVerify::<DefaultDB>::new()
             .push(false, new_cell(0u8))
-            .push(true, new_cell(true))
+            .push(true, new_cell(tmp.clone()))
             .ins(false, 1)
             .build();
 
@@ -92,6 +163,7 @@ where
             result: (),
             context: CircuitContext {
                 current_query_context: results.context,
+                current_private_state,
                 ..ctx
             }
             .with_finalized_call_proof_data(
@@ -114,7 +186,7 @@ pub fn ledger<D: DB>(state: &ChargedState<D>) -> Ledger<'_, D> {
 }
 
 impl<'a, D: DB> Ledger<'a, D> {
-    pub fn flag(&self) -> Result<bool, CompactError> {
+    pub fn value(&self) -> Result<Fr, CompactError> {
         let qctx = QueryContext::new(
             self.state.clone(),
             midnight_compact_runtime::ContractAddress::default(),
@@ -134,7 +206,7 @@ impl<'a, D: DB> Ledger<'a, D> {
                 ))
             }
         };
-        midnight_compact_runtime::std_lib::decode_bool(av)
+        midnight_compact_runtime::std_lib::decode_fr(av)
     }
 }
 

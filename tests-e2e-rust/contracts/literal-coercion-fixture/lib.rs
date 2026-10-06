@@ -29,7 +29,7 @@
 use midnight_compact_runtime::*;
 use std::marker::PhantomData;
 
-midnight_compact_runtime::check_runtime_version!("0.16.100");
+midnight_compact_runtime::check_runtime_version!("0.16.101");
 
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct Box {
@@ -169,6 +169,8 @@ where
         ]);
         let state = ChargedState::new(sv);
         let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());
+        let mut __compact_proof_data =
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[]));
         let tmp = Fr::from(0u64);
         let tmp_0 = 0u64;
         let tmp_1 = [Fr::from(0u64), Fr::from(0u64)];
@@ -195,7 +197,13 @@ where
             .ins(false, 1)
             .build();
 
-        let results = query_for_verify(&qctx, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?;
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
+            &qctx,
+            &ops,
+            ctx.gas_limit.clone(),
+            &ctx.cost_model,
+        )?;
 
         Ok(ConstructorResult {
             current_contract_state: results.context.state,

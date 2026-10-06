@@ -29,7 +29,7 @@
 use midnight_compact_runtime::*;
 use std::marker::PhantomData;
 
-midnight_compact_runtime::check_runtime_version!("0.16.100");
+midnight_compact_runtime::check_runtime_version!("0.16.101");
 
 pub trait Witnesses<PS> {}
 impl<PS> Witnesses<PS> for NoWitnesses {}
@@ -60,6 +60,8 @@ where
         let sv = new_array(vec![new_cell(false), new_cell(false), new_map(), new_map()]);
         let state = ChargedState::new(sv);
         let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());
+        let mut __compact_proof_data =
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[]));
         Ok(ConstructorResult {
             current_contract_state: qctx.state,
             current_private_state: ctx.initial_private_state,
@@ -71,6 +73,10 @@ where
         &self,
         ctx: CircuitContext<PS>,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "check_set_empty";
+        let mut __compact_proof_data =
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[]));
         let tmp = {
             let _gather_ops = OpProgramGather::<DefaultDB>::new()
                 .dup(0)
@@ -80,7 +86,8 @@ where
                 .eq()
                 .popeq(true)
                 .build();
-            let _gather_results = query_for_read(
+            let _gather_results = recorded_query_for_read(
+                &mut __compact_proof_data,
                 &ctx.current_query_context,
                 &_gather_ops,
                 None,
@@ -105,7 +112,8 @@ where
             .ins(false, 1)
             .build();
 
-        let results = query_for_verify(
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
             &ctx.current_query_context,
             &ops,
             ctx.gas_limit.clone(),
@@ -117,7 +125,13 @@ where
             context: CircuitContext {
                 current_query_context: results.context,
                 ..ctx
-            },
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
             gas_cost: results.gas_cost,
         })
     }
@@ -126,6 +140,10 @@ where
         &self,
         ctx: CircuitContext<PS>,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "check_map_empty";
+        let mut __compact_proof_data =
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[]));
         let tmp = {
             let _gather_ops = OpProgramGather::<DefaultDB>::new()
                 .dup(0)
@@ -135,7 +153,8 @@ where
                 .eq()
                 .popeq(true)
                 .build();
-            let _gather_results = query_for_read(
+            let _gather_results = recorded_query_for_read(
+                &mut __compact_proof_data,
                 &ctx.current_query_context,
                 &_gather_ops,
                 None,
@@ -160,7 +179,8 @@ where
             .ins(false, 1)
             .build();
 
-        let results = query_for_verify(
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
             &ctx.current_query_context,
             &ops,
             ctx.gas_limit.clone(),
@@ -172,7 +192,13 @@ where
             context: CircuitContext {
                 current_query_context: results.context,
                 ..ctx
-            },
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
             gas_cost: results.gas_cost,
         })
     }

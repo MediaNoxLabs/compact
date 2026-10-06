@@ -142,7 +142,8 @@
                   ;; named `ContractAddress` does not
                   ;; shadow the upstream coin-structure type required by
                   ;; QueryContext::new.
-                  (out "        let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());\n"))]
+                  (out "        let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());\n")
+                  (out "        let mut __compact_proof_data = PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[]));\n"))]
                ;; J2: emit the constructor body if we have one and its shape
                ;; matches. Fall back to the K1-only return otherwise (counter has
                ;; no constructor body, so it lands here naturally).
@@ -234,6 +235,21 @@
                             (camel->snake (id-sym var-name))
                             (type-rust type)))]))
           arg*))
+
+
+      ;; emit-proof-data-preamble: initialise per-wrapper proof-data buffers.
+      (define (emit-proof-data-preamble function-name arg*)
+        (out "        let __compact_initial_query_context = ctx.current_query_context.clone();\n")
+        (out (format "        let __compact_circuit_id = ~s;\n" (format "~a" (id->rust-name function-name))))
+        (out "        let mut __compact_proof_data = PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[")
+        (let loop ([args arg*] [first? #t])
+          (unless (null? args)
+            (nanopass-case (Ltypescript Argument) (car args)
+              [(,var-name ,type)
+               (unless first? (out ", "))
+               (out (proof-value-rust type (camel->snake (id-sym var-name))))])
+            (loop (cdr args) #f)))
+        (out "]));\n"))
 
       ;; unit-type?: returns #t if a Type IR node is the empty tuple `()`
       ;; (Compact's `Void` / Ltypescript `(ttuple src)` with no element
@@ -1333,7 +1349,7 @@
                         (for-each out lines)
                         (out "            .build();\n")
                         (out "\n")
-                        (out "        let results = query_for_verify(\n")
+                        (out "        let results = recorded_query_for_verify(&mut __compact_proof_data,\n")
                         (out "            &ctx.current_query_context,\n")
                         (out "            &ops,\n")
                         (out "            ctx.gas_limit.clone(),\n")
@@ -1345,7 +1361,12 @@
                         (out "            context: CircuitContext {\n")
                         (out "                current_query_context: results.context,\n")
                         (out "                ..ctx\n")
-                        (out "            },\n")
+                        (out "            }.with_finalized_call_proof_data(\n")
+            (out "                __compact_circuit_id,\n")
+            (out "                __compact_initial_query_context,\n")
+            (out "                __compact_proof_data,\n")
+            (out "                aligned_value_from_parts(&[]),\n")
+            (out "            ),\n")
                         (out "            gas_cost: results.gas_cost,\n")
                         (out "        })\n")
                         #t]))]))])]))
@@ -1391,7 +1412,12 @@
              (out "        };\n")
              (out "        Ok(CircuitResults {\n")
              (out "            result,\n")
-             (out "            context: ctx,\n")
+             (out "            context: ctx.with_finalized_call_proof_data(\n")
+              (out "                __compact_circuit_id,\n")
+              (out "                __compact_initial_query_context,\n")
+              (out "                __compact_proof_data,\n")
+              (out (format "                ~a,\n" (proof-value-rust return-type "result")))
+              (out "            ),\n")
              (out "            gas_cost: midnight_compact_runtime::RunningCost::default(),\n")
              (out "        })\n")
              #t])))
@@ -1440,7 +1466,12 @@
              (out (format "        let result = ~a;\n" else-str))
              (out "        Ok(CircuitResults {\n")
              (out "            result,\n")
-             (out "            context: ctx,\n")
+             (out "            context: ctx.with_finalized_call_proof_data(\n")
+              (out "                __compact_circuit_id,\n")
+              (out "                __compact_initial_query_context,\n")
+              (out "                __compact_proof_data,\n")
+              (out (format "                ~a,\n" (proof-value-rust return-type "result")))
+              (out "            ),\n")
              (out "            gas_cost: midnight_compact_runtime::RunningCost::default(),\n")
              (out "        })\n")
              #t]
@@ -1463,7 +1494,12 @@
                   (loop (cdr xs) #f)]))
              (out "        Ok(CircuitResults {\n")
              (out "            result,\n")
-             (out "            context: ctx,\n")
+             (out "            context: ctx.with_finalized_call_proof_data(\n")
+              (out "                __compact_circuit_id,\n")
+              (out "                __compact_initial_query_context,\n")
+              (out "                __compact_proof_data,\n")
+              (out (format "                ~a,\n" (proof-value-rust return-type "result")))
+              (out "            ),\n")
              (out "            gas_cost: midnight_compact_runtime::RunningCost::default(),\n")
              (out "        })\n")
              #t])))
@@ -1573,6 +1609,7 @@
                 (format "            current_zswap_local_state: ~a,\n" zswap-in)
                 "            cost_model: ctx.cost_model.clone(),\n"
                 "            gas_limit: ctx.gas_limit.clone(),\n"
+                "            call_proof_data_trace: CallProofDataTrace::new(),\n"
                 "        };\n"
                 (format "        let ~a = ~a(~a~a)?;\n" cr-name target cctx arg-tail)
                 (format "        let qctx = ~a.context.current_query_context;\n" cr-name)
@@ -1674,6 +1711,7 @@
                           [current-value-types (make-eq-hashtable)]
                           [current-witness-id-ht witness-id-ht]
                           [current-circuit-id-ht circuit-id-ht])
+           (emit-proof-data-preamble function-name arg*)
            (let ([emitted?
                   (or
                     ;; I3b/4: single if-expression body returning non-unit.
@@ -2531,7 +2569,8 @@
             idx-lines
             "                .popeq(true)\n"
             "                .build();\n"
-            "            let _gather_results = query_for_read(\n"
+            "            let _gather_results = recorded_query_for_read(\n"
+                          "                &mut __compact_proof_data,\n"
             "                " (current-qctx-ref) ",\n"
             "                &_gather_ops,\n"
             "                None,\n"
@@ -2617,7 +2656,8 @@
                            idx-lines
                            "                .popeq(true)\n"
                            "                .build();\n"
-                           "            let _gather_results = query_for_read(\n"
+                           "            let _gather_results = recorded_query_for_read(\n"
+                          "                &mut __compact_proof_data,\n"
                            "                " (current-qctx-ref) ",\n"
                            "                &_gather_ops,\n"
                            "                None,\n"
@@ -2673,7 +2713,8 @@
                           "            let _gather_ops = OpProgramGather::<DefaultDB>::new()\n"
                           (apply string-append lines)
                           "                .build();\n"
-                          "            let _gather_results = query_for_read(\n"
+                          "            let _gather_results = recorded_query_for_read(\n"
+                          "                &mut __compact_proof_data,\n"
                           "                " (current-qctx-ref) ",\n"
                           "                &_gather_ops,\n"
                           "                None,\n"

@@ -29,7 +29,7 @@
 use midnight_compact_runtime::*;
 use std::marker::PhantomData;
 
-midnight_compact_runtime::check_runtime_version!("0.16.100");
+midnight_compact_runtime::check_runtime_version!("0.16.101");
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 #[repr(u8)]
@@ -578,6 +578,8 @@ where
         ]);
         let state = ChargedState::new(sv);
         let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());
+        let mut __compact_proof_data =
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[]));
         let tmp = 3u32;
         let tmp_0 = {
             let _gather_ops = OpProgramGather::<DefaultDB>::new()
@@ -585,10 +587,14 @@ where
                 .idx_at_index(0u8, false)
                 .popeq(true)
                 .build();
-            let _gather_results = query_for_read(&qctx, &_gather_ops, None, &initial_cost_model())
-                .map_err(|e| {
-                    CompactError::AssertionFailed(format!("ledger query failed: {:?}", e))
-                })?;
+            let _gather_results = recorded_query_for_read(
+                &mut __compact_proof_data,
+                &qctx,
+                &_gather_ops,
+                None,
+                &initial_cost_model(),
+            )
+            .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
             let _av = match _gather_results.events.last() {
                 Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => {
                     av
@@ -605,8 +611,10 @@ where
         let _witness_ctx_3 =
             WitnessContext::new(ledger(&qctx.state), ctx.initial_private_state, &qctx);
         let (current_private_state, tmp_2) = self.witnesses.local_operator_key(&_witness_ctx_3);
-        let _witness_ctx_5 = WitnessContext::new(ledger(&qctx.state), current_private_state, &qctx);
-        let (current_private_state, tmp_3) = self.witnesses.local_auditor_key(&_witness_ctx_5);
+        __compact_proof_data.push_private_output(proof_aligned_value(&tmp_2));
+        let _witness_ctx_6 = WitnessContext::new(ledger(&qctx.state), current_private_state, &qctx);
+        let (current_private_state, tmp_3) = self.witnesses.local_auditor_key(&_witness_ctx_6);
+        __compact_proof_data.push_private_output(proof_aligned_value(&tmp_3));
         let ops = OpProgramVerify::<DefaultDB>::new()
             .idx_at_index(0u8, true)
             .push(false, new_cell(4u8))
@@ -655,19 +663,29 @@ where
             .ins(false, 1)
             .ins(true, 1)
             .build();
-        let _ctor_flush_7 = query_for_verify(&qctx, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?;
-        let qctx = _ctor_flush_7.context;
-        let _carg_7_0 = {
+        let _ctor_flush_9 = recorded_query_for_verify(
+            &mut __compact_proof_data,
+            &qctx,
+            &ops,
+            ctx.gas_limit.clone(),
+            &ctx.cost_model,
+        )?;
+        let qctx = _ctor_flush_9.context;
+        let _carg_9_0 = {
             let _gather_ops = OpProgramGather::<DefaultDB>::new()
                 .dup(0)
                 .idx_at_index(0u8, false)
                 .idx_at_index(3u8, false)
                 .popeq(false)
                 .build();
-            let _gather_results = query_for_read(&qctx, &_gather_ops, None, &initial_cost_model())
-                .map_err(|e| {
-                    CompactError::AssertionFailed(format!("ledger query failed: {:?}", e))
-                })?;
+            let _gather_results = recorded_query_for_read(
+                &mut __compact_proof_data,
+                &qctx,
+                &_gather_ops,
+                None,
+                &initial_cost_model(),
+            )
+            .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
             let _av = match _gather_results.events.last() {
                 Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => {
                     av
@@ -680,20 +698,22 @@ where
             };
             midnight_compact_runtime::std_lib::decode_jubjub_point(_av)?
         };
-        let _cctx_7 = CircuitContext {
+        let _cctx_9 = CircuitContext {
             current_private_state: current_private_state,
             current_query_context: qctx,
             current_zswap_local_state: ctx.empty_zswap_local_state.clone(),
             cost_model: ctx.cost_model.clone(),
             gas_limit: ctx.gas_limit.clone(),
+            call_proof_data_trace: CallProofDataTrace::new(),
         };
-        let _cr_7 = self.assert_operator_distinct_from_auditor(_cctx_7, _carg_7_0)?;
-        let qctx = _cr_7.context.current_query_context;
-        let current_private_state = _cr_7.context.current_private_state;
-        let _zswap = _cr_7.context.current_zswap_local_state;
-        let _witness_ctx_63 =
+        let _cr_9 = self.assert_operator_distinct_from_auditor(_cctx_9, _carg_9_0)?;
+        let qctx = _cr_9.context.current_query_context;
+        let current_private_state = _cr_9.context.current_private_state;
+        let _zswap = _cr_9.context.current_zswap_local_state;
+        let _witness_ctx_66 =
             WitnessContext::new(ledger(&qctx.state), current_private_state, &qctx);
-        let (current_private_state, now) = self.witnesses.current_timestamp(&_witness_ctx_63);
+        let (current_private_state, now) = self.witnesses.current_timestamp(&_witness_ctx_66);
+        __compact_proof_data.push_private_output(proof_aligned_value(&now));
         let ops = OpProgramVerify::<DefaultDB>::new()
             .idx_at_index(1u8, true)
             .push(false, new_cell(2u8))
@@ -707,7 +727,13 @@ where
             .ins(true, 1)
             .build();
 
-        let results = query_for_verify(&qctx, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?;
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
+            &qctx,
+            &ops,
+            ctx.gas_limit.clone(),
+            &ctx.cost_model,
+        )?;
 
         Ok(ConstructorResult {
             current_contract_state: results.context.state,
@@ -721,6 +747,11 @@ where
         ctx: CircuitContext<PS>,
         candidate: JubjubPoint,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "assert_operator_distinct_from_auditor";
+        let mut __compact_proof_data = PartialProofData::<DefaultDB>::new(
+            aligned_value_from_parts(&[proof_aligned_value(&candidate)]),
+        );
         compact_assert!(
             ((midnight_compact_runtime::jubjub_point_x(candidate.clone())
                 != midnight_compact_runtime::jubjub_point_x({
@@ -730,7 +761,8 @@ where
                         .idx_at_index(4u8, false)
                         .popeq(false)
                         .build();
-                    let _gather_results = query_for_read(
+                    let _gather_results = recorded_query_for_read(
+                        &mut __compact_proof_data,
                         &ctx.current_query_context,
                         &_gather_ops,
                         None,
@@ -761,7 +793,8 @@ where
                             .idx_at_index(4u8, false)
                             .popeq(false)
                             .build();
-                        let _gather_results = query_for_read(
+                        let _gather_results = recorded_query_for_read(
+                            &mut __compact_proof_data,
                             &ctx.current_query_context,
                             &_gather_ops,
                             None,
@@ -780,7 +813,8 @@ where
         );
         let ops = OpProgramVerify::<DefaultDB>::new().build();
 
-        let results = query_for_verify(
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
             &ctx.current_query_context,
             &ops,
             ctx.gas_limit.clone(),
@@ -792,7 +826,13 @@ where
             context: CircuitContext {
                 current_query_context: results.context,
                 ..ctx
-            },
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
             gas_cost: results.gas_cost,
         })
     }
@@ -801,6 +841,10 @@ where
         &self,
         ctx: CircuitContext<PS>,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "record_write";
+        let mut __compact_proof_data =
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[]));
         let tmp = 1u16;
         let tmp_0 = 1u16;
         let _witness_ctx_2 = WitnessContext::new(
@@ -809,6 +853,7 @@ where
             &ctx.current_query_context,
         );
         let (current_private_state, tmp_1) = self.witnesses.current_timestamp(&_witness_ctx_2);
+        __compact_proof_data.push_private_output(proof_aligned_value(&tmp_1));
         let ops = OpProgramVerify::<DefaultDB>::new()
             .idx_at_index(1u8, true)
             .idx_at_index(9u8, true)
@@ -825,7 +870,8 @@ where
             .ins(true, 1)
             .build();
 
-        let results = query_for_verify(
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
             &ctx.current_query_context,
             &ops,
             ctx.gas_limit.clone(),
@@ -838,7 +884,13 @@ where
                 current_query_context: results.context,
                 current_private_state,
                 ..ctx
-            },
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
             gas_cost: results.gas_cost,
         })
     }
@@ -847,6 +899,10 @@ where
         &self,
         ctx: CircuitContext<PS>,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "assert_writable";
+        let mut __compact_proof_data =
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[]));
         compact_assert!(
             {
                 let _gather_ops = OpProgramGather::<DefaultDB>::new()
@@ -855,7 +911,8 @@ where
                     .idx_at_index(6u8, false)
                     .popeq(false)
                     .build();
-                let _gather_results = query_for_read(
+                let _gather_results = recorded_query_for_read(
+                    &mut __compact_proof_data,
                     &ctx.current_query_context,
                     &_gather_ops,
                     None,
@@ -886,7 +943,8 @@ where
                     .idx_at_index(7u8, false)
                     .popeq(false)
                     .build();
-                let _gather_results = query_for_read(
+                let _gather_results = recorded_query_for_read(
+                    &mut __compact_proof_data,
                     &ctx.current_query_context,
                     &_gather_ops,
                     None,
@@ -911,7 +969,8 @@ where
         );
         let ops = OpProgramVerify::<DefaultDB>::new().build();
 
-        let results = query_for_verify(
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
             &ctx.current_query_context,
             &ops,
             ctx.gas_limit.clone(),
@@ -923,7 +982,13 @@ where
             context: CircuitContext {
                 current_query_context: results.context,
                 ..ctx
-            },
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
             gas_cost: results.gas_cost,
         })
     }
@@ -933,6 +998,11 @@ where
         ctx: CircuitContext<PS>,
         id: midnight_compact_runtime::std_lib::OpaqueString,
     ) -> Result<CircuitResults<PS, bool>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "record_exists";
+        let mut __compact_proof_data = PartialProofData::<DefaultDB>::new(
+            aligned_value_from_parts(&[proof_aligned_value(&id)]),
+        );
         let result = ({
             let _gather_ops = OpProgramGather::<DefaultDB>::new()
                 .dup(0)
@@ -942,7 +1012,8 @@ where
                 .member()
                 .popeq(true)
                 .build();
-            let _gather_results = query_for_read(
+            let _gather_results = recorded_query_for_read(
+                &mut __compact_proof_data,
                 &ctx.current_query_context,
                 &_gather_ops,
                 None,
@@ -969,7 +1040,8 @@ where
                 .member()
                 .popeq(true)
                 .build();
-            let _gather_results = query_for_read(
+            let _gather_results = recorded_query_for_read(
+                &mut __compact_proof_data,
                 &ctx.current_query_context,
                 &_gather_ops,
                 None,
@@ -990,7 +1062,12 @@ where
         });
         Ok(CircuitResults {
             result,
-            context: ctx,
+            context: ctx.with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                proof_aligned_value(&result),
+            ),
             gas_cost: midnight_compact_runtime::RunningCost::default(),
         })
     }
@@ -1000,6 +1077,11 @@ where
         ctx: CircuitContext<PS>,
         holder: ContractAddress,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "set_custodian";
+        let mut __compact_proof_data = PartialProofData::<DefaultDB>::new(
+            aligned_value_from_parts(&[proof_aligned_value(&holder)]),
+        );
         let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
         let _cr_1 = self.assert_writable(ctx)?;
         let ctx = _cr_1.context;
@@ -1015,7 +1097,8 @@ where
             .ins(true, 1)
             .build();
 
-        let results = query_for_verify(
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
             &ctx.current_query_context,
             &ops,
             ctx.gas_limit.clone(),
@@ -1027,7 +1110,13 @@ where
             context: CircuitContext {
                 current_query_context: results.context,
                 ..ctx
-            },
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
             gas_cost: __gas_acc + results.gas_cost,
         })
     }
@@ -1039,6 +1128,14 @@ where
         record: AssetRecord,
         mutation: RecordMutation,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "set_record";
+        let mut __compact_proof_data =
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[
+                proof_aligned_value(&record_id),
+                proof_aligned_value(&record),
+                proof_aligned_value(&mutation),
+            ]));
         let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
         let disclosed_id = record_id.clone();
         let disclosed_record = record.clone();
@@ -1064,7 +1161,8 @@ where
                         .member()
                         .popeq(true)
                         .build();
-                    let _gather_results = query_for_read(
+                    let _gather_results = recorded_query_for_read(
+                        &mut __compact_proof_data,
                         &ctx.current_query_context,
                         &_gather_ops,
                         None,
@@ -1096,7 +1194,8 @@ where
                 .rem(false)
                 .ins(true, 2)
                 .build();
-            query_for_verify(
+            recorded_query_for_verify(
+                &mut __compact_proof_data,
                 &ctx.current_query_context,
                 &ops,
                 ctx.gas_limit.clone(),
@@ -1113,7 +1212,8 @@ where
                 .addi(1)
                 .ins(true, 2)
                 .build();
-            query_for_verify(
+            recorded_query_for_verify(
+                &mut __compact_proof_data,
                 &ctx.current_query_context,
                 &ops,
                 ctx.gas_limit.clone(),
@@ -1121,7 +1221,8 @@ where
             )?
         } else {
             let ops = OpProgramVerify::<DefaultDB>::new().build();
-            query_for_verify(
+            recorded_query_for_verify(
+                &mut __compact_proof_data,
                 &ctx.current_query_context,
                 &ops,
                 ctx.gas_limit.clone(),
@@ -1142,7 +1243,8 @@ where
             .ins(false, 1)
             .ins(true, 2)
             .build();
-        let _results_7 = query_for_verify(
+        let _results_7 = recorded_query_for_verify(
+            &mut __compact_proof_data,
             &ctx.current_query_context,
             &_ops_7,
             ctx.gas_limit.clone(),
@@ -1162,7 +1264,13 @@ where
             context: CircuitContext {
                 current_query_context: ctx.current_query_context,
                 ..ctx
-            },
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
             gas_cost: __gas_acc,
         })
     }
@@ -1172,6 +1280,11 @@ where
         ctx: CircuitContext<PS>,
         record_id: midnight_compact_runtime::std_lib::OpaqueString,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "remove_record";
+        let mut __compact_proof_data = PartialProofData::<DefaultDB>::new(
+            aligned_value_from_parts(&[proof_aligned_value(&record_id)]),
+        );
         let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
         let disclosed_id = record_id.clone();
         let _cr_2 = self.assert_writable(ctx)?;
@@ -1187,7 +1300,8 @@ where
                     .member()
                     .popeq(true)
                     .build();
-                let _gather_results = query_for_read(
+                let _gather_results = recorded_query_for_read(
+                    &mut __compact_proof_data,
                     &ctx.current_query_context,
                     &_gather_ops,
                     None,
@@ -1220,7 +1334,8 @@ where
                     .member()
                     .popeq(true)
                     .build();
-                let _gather_results = query_for_read(
+                let _gather_results = recorded_query_for_read(
+                    &mut __compact_proof_data,
                     &ctx.current_query_context,
                     &_gather_ops,
                     None,
@@ -1260,7 +1375,8 @@ where
             .ins(true, 2)
             .build();
 
-        let results = query_for_verify(
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
             &ctx.current_query_context,
             &ops,
             ctx.gas_limit.clone(),
@@ -1272,7 +1388,13 @@ where
             context: CircuitContext {
                 current_query_context: results.context,
                 ..ctx
-            },
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
             gas_cost: __gas_acc + results.gas_cost,
         })
     }
@@ -1284,6 +1406,14 @@ where
         grant: CustodyGrant,
         mutation: RecordMutation,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "set_custody_grant";
+        let mut __compact_proof_data =
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[
+                proof_aligned_value(&grant_id),
+                proof_aligned_value(&grant),
+                proof_aligned_value(&mutation),
+            ]));
         let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
         let disclosed_id = grant_id.clone();
         let disclosed_grant = grant.clone();
@@ -1308,7 +1438,8 @@ where
                         .member()
                         .popeq(true)
                         .build();
-                    let _gather_results = query_for_read(
+                    let _gather_results = recorded_query_for_read(
+                        &mut __compact_proof_data,
                         &ctx.current_query_context,
                         &_gather_ops,
                         None,
@@ -1340,7 +1471,8 @@ where
                 .rem(false)
                 .ins(true, 2)
                 .build();
-            query_for_verify(
+            recorded_query_for_verify(
+                &mut __compact_proof_data,
                 &ctx.current_query_context,
                 &ops,
                 ctx.gas_limit.clone(),
@@ -1351,7 +1483,8 @@ where
             let ctx = _cr_h0.context;
             compact_assert!((!(_cr_h0.result.clone())), "grant already exists");
             let ops = OpProgramVerify::<DefaultDB>::new().build();
-            query_for_verify(
+            recorded_query_for_verify(
+                &mut __compact_proof_data,
                 &ctx.current_query_context,
                 &ops,
                 ctx.gas_limit.clone(),
@@ -1359,7 +1492,8 @@ where
             )?
         } else {
             let ops = OpProgramVerify::<DefaultDB>::new().build();
-            query_for_verify(
+            recorded_query_for_verify(
+                &mut __compact_proof_data,
                 &ctx.current_query_context,
                 &ops,
                 ctx.gas_limit.clone(),
@@ -1380,7 +1514,8 @@ where
             .ins(false, 1)
             .ins(true, 2)
             .build();
-        let _results_6 = query_for_verify(
+        let _results_6 = recorded_query_for_verify(
+            &mut __compact_proof_data,
             &ctx.current_query_context,
             &_ops_6,
             ctx.gas_limit.clone(),
@@ -1400,7 +1535,13 @@ where
             context: CircuitContext {
                 current_query_context: ctx.current_query_context,
                 ..ctx
-            },
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
             gas_cost: __gas_acc,
         })
     }
@@ -1411,6 +1552,13 @@ where
         record_id: midnight_compact_runtime::std_lib::OpaqueString,
         mutation: ListMutation,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "set_watch";
+        let mut __compact_proof_data =
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[
+                proof_aligned_value(&record_id),
+                proof_aligned_value(&mutation),
+            ]));
         let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
         let disclosed_id = record_id.clone();
         let disclosed_mutation = mutation.clone();
@@ -1432,7 +1580,8 @@ where
                     .member()
                     .popeq(true)
                     .build();
-                let _gather_results = query_for_read(
+                let _gather_results = recorded_query_for_read(
+                    &mut __compact_proof_data,
                     &ctx.current_query_context,
                     &_gather_ops,
                     None,
@@ -1461,7 +1610,8 @@ where
                     .member()
                     .popeq(true)
                     .build();
-                let _gather_results = query_for_read(
+                let _gather_results = recorded_query_for_read(
+                    &mut __compact_proof_data,
                     &ctx.current_query_context,
                     &_gather_ops,
                     None,
@@ -1496,7 +1646,8 @@ where
                         .member()
                         .popeq(true)
                         .build();
-                    let _gather_results = query_for_read(
+                    let _gather_results = recorded_query_for_read(
+                        &mut __compact_proof_data,
                         &ctx.current_query_context,
                         &_gather_ops,
                         None,
@@ -1529,7 +1680,8 @@ where
                 .ins(false, 1)
                 .ins(true, 2)
                 .build();
-            query_for_verify(
+            recorded_query_for_verify(
+                &mut __compact_proof_data,
                 &ctx.current_query_context,
                 &ops,
                 ctx.gas_limit.clone(),
@@ -1546,7 +1698,8 @@ where
                         .member()
                         .popeq(true)
                         .build();
-                    let _gather_results = query_for_read(
+                    let _gather_results = recorded_query_for_read(
+                        &mut __compact_proof_data,
                         &ctx.current_query_context,
                         &_gather_ops,
                         None,
@@ -1578,7 +1731,8 @@ where
                 .rem(false)
                 .ins(true, 2)
                 .build();
-            query_for_verify(
+            recorded_query_for_verify(
+                &mut __compact_proof_data,
                 &ctx.current_query_context,
                 &ops,
                 ctx.gas_limit.clone(),
@@ -1586,7 +1740,8 @@ where
             )?
         } else {
             let ops = OpProgramVerify::<DefaultDB>::new().build();
-            query_for_verify(
+            recorded_query_for_verify(
+                &mut __compact_proof_data,
                 &ctx.current_query_context,
                 &ops,
                 ctx.gas_limit.clone(),
@@ -1607,7 +1762,13 @@ where
             context: CircuitContext {
                 current_query_context: ctx.current_query_context,
                 ..ctx
-            },
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
             gas_cost: __gas_acc,
         })
     }
@@ -1617,6 +1778,11 @@ where
         ctx: CircuitContext<PS>,
         value: Fr,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "tag";
+        let mut __compact_proof_data = PartialProofData::<DefaultDB>::new(
+            aligned_value_from_parts(&[proof_aligned_value(&value)]),
+        );
         let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
         let _cr_1 = self.assert_writable(ctx)?;
         let ctx = _cr_1.context;
@@ -1633,7 +1799,8 @@ where
             .ins(true, 2)
             .build();
 
-        let results = query_for_verify(
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
             &ctx.current_query_context,
             &ops,
             ctx.gas_limit.clone(),
@@ -1645,7 +1812,13 @@ where
             context: CircuitContext {
                 current_query_context: results.context,
                 ..ctx
-            },
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
             gas_cost: __gas_acc + results.gas_cost,
         })
     }
@@ -1657,6 +1830,14 @@ where
         policy: FreshnessPolicy,
         current_time: u64,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "assert_stored_record_fresh";
+        let mut __compact_proof_data =
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[
+                proof_aligned_value(&record_id),
+                proof_aligned_value(&policy),
+                proof_aligned_value(&current_time),
+            ]));
         let disclosed_id = record_id.clone();
         compact_assert!(
             {
@@ -1668,7 +1849,8 @@ where
                     .member()
                     .popeq(true)
                     .build();
-                let _gather_results = query_for_read(
+                let _gather_results = recorded_query_for_read(
+                    &mut __compact_proof_data,
                     &ctx.current_query_context,
                     &_gather_ops,
                     None,
@@ -1705,7 +1887,8 @@ where
                 )
                 .popeq(false)
                 .build();
-            let _gather_results = query_for_read(
+            let _gather_results = recorded_query_for_read(
+                &mut __compact_proof_data,
                 &ctx.current_query_context,
                 &_gather_ops,
                 None,
@@ -1731,7 +1914,8 @@ where
         )?;
         let ops = OpProgramVerify::<DefaultDB>::new().build();
 
-        let results = query_for_verify(
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
             &ctx.current_query_context,
             &ops,
             ctx.gas_limit.clone(),
@@ -1743,7 +1927,13 @@ where
             context: CircuitContext {
                 current_query_context: results.context,
                 ..ctx
-            },
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
             gas_cost: results.gas_cost,
         })
     }
@@ -1754,6 +1944,13 @@ where
         grant_id: midnight_compact_runtime::std_lib::OpaqueString,
         as_of: u64,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "assert_grant_effective";
+        let mut __compact_proof_data =
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[
+                proof_aligned_value(&grant_id),
+                proof_aligned_value(&as_of),
+            ]));
         let disclosed_id = grant_id.clone();
         compact_assert!(
             {
@@ -1765,7 +1962,8 @@ where
                     .member()
                     .popeq(true)
                     .build();
-                let _gather_results = query_for_read(
+                let _gather_results = recorded_query_for_read(
+                    &mut __compact_proof_data,
                     &ctx.current_query_context,
                     &_gather_ops,
                     None,
@@ -1802,7 +2000,8 @@ where
                 )
                 .popeq(false)
                 .build();
-            let _gather_results = query_for_read(
+            let _gather_results = recorded_query_for_read(
+                &mut __compact_proof_data,
                 &ctx.current_query_context,
                 &_gather_ops,
                 None,
@@ -1824,7 +2023,8 @@ where
         let _ = pure_circuits::assert_grant_not_future(grant.clone(), as_of)?;
         let ops = OpProgramVerify::<DefaultDB>::new().build();
 
-        let results = query_for_verify(
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
             &ctx.current_query_context,
             &ops,
             ctx.gas_limit.clone(),
@@ -1836,7 +2036,13 @@ where
             context: CircuitContext {
                 current_query_context: results.context,
                 ..ctx
-            },
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
             gas_cost: results.gas_cost,
         })
     }
@@ -1848,6 +2054,14 @@ where
         record: AssetRecord,
         current_time: u64,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "accept_if_fresh";
+        let mut __compact_proof_data =
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[
+                proof_aligned_value(&policy),
+                proof_aligned_value(&record),
+                proof_aligned_value(&current_time),
+            ]));
         let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
         let _ = pure_circuits::assert_record_fresh_enough(
             policy.clone(),
@@ -1859,7 +2073,8 @@ where
         __gas_acc += _cr_2.gas_cost.clone();
         let ops = OpProgramVerify::<DefaultDB>::new().build();
 
-        let results = query_for_verify(
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
             &ctx.current_query_context,
             &ops,
             ctx.gas_limit.clone(),
@@ -1871,12 +2086,22 @@ where
             context: CircuitContext {
                 current_query_context: results.context,
                 ..ctx
-            },
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
             gas_cost: __gas_acc + results.gas_cost,
         })
     }
 
     pub fn close(&self, ctx: CircuitContext<PS>) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "close";
+        let mut __compact_proof_data =
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[]));
         let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
         compact_assert!(
             {
@@ -1886,7 +2111,8 @@ where
                     .idx_at_index(6u8, false)
                     .popeq(false)
                     .build();
-                let _gather_results = query_for_read(
+                let _gather_results = recorded_query_for_read(
+                    &mut __compact_proof_data,
                     &ctx.current_query_context,
                     &_gather_ops,
                     None,
@@ -1925,7 +2151,8 @@ where
             .ins(true, 1)
             .build();
 
-        let results = query_for_verify(
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
             &ctx.current_query_context,
             &ops,
             ctx.gas_limit.clone(),
@@ -1937,7 +2164,13 @@ where
             context: CircuitContext {
                 current_query_context: results.context,
                 ..ctx
-            },
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
             gas_cost: __gas_acc + results.gas_cost,
         })
     }

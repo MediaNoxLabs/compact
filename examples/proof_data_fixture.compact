@@ -13,18 +13,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#[test]
-fn matching_version_compiles() {
-    // The macro expands to a const assertion. If the expected string equals
-    // midnight_compact_runtime::COMPACT_RUNTIME_VERSION, the assertion passes and the
-    // test compiles. If not, compilation fails.
-    midnight_compact_runtime::check_runtime_version!("0.16.101");
+import CompactStandardLibrary;
+
+witness first_secret(): Field;
+witness second_secret(): Field;
+
+export ledger value: Field;
+
+constructor(initial: Field) {
+  value = disclose(initial);
 }
 
-#[test]
-fn version_constant_is_exposed() {
-    assert_eq!(
-        midnight_compact_runtime::COMPACT_RUNTIME_VERSION,
-        "0.16.101"
-    );
+export circuit read_witness_write(expected: Field, next: Field): [] {
+  assert(value == expected, "unexpected value before write");
+  const a = first_secret();
+  const b = second_secret();
+  value = disclose(next + a + b);
 }

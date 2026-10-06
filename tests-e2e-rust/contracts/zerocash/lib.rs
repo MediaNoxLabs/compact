@@ -29,7 +29,7 @@
 use midnight_compact_runtime::*;
 use std::marker::PhantomData;
 
-midnight_compact_runtime::check_runtime_version!("0.16.100");
+midnight_compact_runtime::check_runtime_version!("0.16.101");
 
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct commitment {
@@ -607,6 +607,8 @@ where
         ]);
         let state = ChargedState::new(sv);
         let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());
+        let mut __compact_proof_data =
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[]));
         Ok(ConstructorResult {
             current_contract_state: qctx.state,
             current_private_state: ctx.initial_private_state,
@@ -620,6 +622,13 @@ where
         dest_public_key: public_key,
         input_coin: coin_info,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "spend";
+        let mut __compact_proof_data =
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[
+                proof_aligned_value(&dest_public_key),
+                proof_aligned_value(&input_coin),
+            ]));
         let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
         let _witness_ctx_0 = WitnessContext::new(
             ledger(&ctx.current_query_context.state),
@@ -639,7 +648,8 @@ where
                     .member()
                     .popeq(true)
                     .build();
-                let _gather_results = query_for_read(
+                let _gather_results = recorded_query_for_read(
+                    &mut __compact_proof_data,
                     &ctx.current_query_context,
                     &_gather_ops,
                     None,
@@ -670,7 +680,8 @@ where
             .ins(false, 1)
             .ins(true, 1)
             .build();
-        let _results_3 = query_for_verify(
+        let _results_3 = recorded_query_for_verify(
+            &mut __compact_proof_data,
             &ctx.current_query_context,
             &_ops_3,
             ctx.gas_limit.clone(),
@@ -701,7 +712,8 @@ where
                     .member()
                     .popeq(true)
                     .build();
-                let _gather_results = query_for_read(
+                let _gather_results = recorded_query_for_read(
+                    &mut __compact_proof_data,
                     &ctx.current_query_context,
                     &_gather_ops,
                     None,
@@ -760,7 +772,8 @@ where
             .ins(false, 1)
             .ins(true, 2)
             .build();
-        let _results_12 = query_for_verify(
+        let _results_12 = recorded_query_for_verify(
+            &mut __compact_proof_data,
             &_results_3.context,
             &_ops_12,
             ctx.gas_limit.clone(),
@@ -783,7 +796,8 @@ where
             .push(true, new_cell(ciphertext.clone()))
             .ins(false, 1)
             .build();
-        let _results_15 = query_for_verify(
+        let _results_15 = recorded_query_for_verify(
+            &mut __compact_proof_data,
             &_results_12.context,
             &_ops_15,
             ctx.gas_limit.clone(),
@@ -805,7 +819,13 @@ where
                 current_query_context: _results_15.context,
                 current_private_state,
                 ..ctx
-            },
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
             gas_cost: __gas_acc,
         })
     }
@@ -814,26 +834,32 @@ where
         &self,
         ctx: CircuitContext<PS>,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "zerocash_mint";
+        let mut __compact_proof_data =
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[]));
         let _witness_ctx_0 = WitnessContext::new(
             ledger(&ctx.current_query_context.state),
             ctx.current_private_state,
             &ctx.current_query_context,
         );
         let (current_private_state, coin) = self.witnesses.context_new_coin_info(&_witness_ctx_0);
-        let _witness_ctx_2 = WitnessContext::new(
+        __compact_proof_data.push_private_output(proof_aligned_value(&coin));
+        let _witness_ctx_3 = WitnessContext::new(
             ledger(&ctx.current_query_context.state),
             current_private_state,
             &ctx.current_query_context,
         );
-        let (current_private_state, pk) = self.witnesses.private_zk_public_key(&_witness_ctx_2);
-        let _witness_ctx_4 = WitnessContext::new(
+        let (current_private_state, pk) = self.witnesses.private_zk_public_key(&_witness_ctx_3);
+        __compact_proof_data.push_private_output(proof_aligned_value(&pk));
+        let _witness_ctx_6 = WitnessContext::new(
             ledger(&ctx.current_query_context.state),
             current_private_state,
             &ctx.current_query_context,
         );
         let (current_private_state, _) = self
             .witnesses
-            .private_add_coin(&_witness_ctx_4, coin.clone());
+            .private_add_coin(&_witness_ctx_6, coin.clone());
         let cm = pure_circuits::commitment_from_coin_info(coin.clone(), pk.clone())?;
         let ops = OpProgramVerify::<DefaultDB>::new()
             .idx_at_index(1u8, true)
@@ -860,7 +886,8 @@ where
             .ins(true, 2)
             .build();
 
-        let results = query_for_verify(
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
             &ctx.current_query_context,
             &ops,
             ctx.gas_limit.clone(),
@@ -873,7 +900,13 @@ where
                 current_query_context: results.context,
                 current_private_state,
                 ..ctx
-            },
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
             gas_cost: results.gas_cost,
         })
     }

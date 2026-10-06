@@ -74,6 +74,7 @@ const FIXTURES: &[(&str, &str)] = &[
     ("map_lambda_fixture.compact", "map-lambda-fixture"),
     ("module_fixture.compact", "module-fixture"),
     ("multi_pl_call_fixture.compact", "multi-pl-call-fixture"),
+    ("proof_data_fixture.compact", "proof-data-fixture"),
     ("nested_map_fixture.compact", "nested-map-fixture"),
     ("pure_circuit_fixture.compact", "pure-circuit-fixture"),
     // CPT-006 / compact#83: tuple-typed values must take the Rust tuple

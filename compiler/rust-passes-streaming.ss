@@ -362,7 +362,12 @@
                (when witness-emitted?
                  (out "                current_private_state,\n"))
                (out "                ..ctx\n")
-               (out "            },\n")
+               (out "            }.with_finalized_call_proof_data(\n")
+            (out "                __compact_circuit_id,\n")
+            (out "                __compact_initial_query_context,\n")
+            (out "                __compact_proof_data,\n")
+            (out "                aligned_value_from_parts(&[]),\n")
+            (out "            ),\n")
                (out "            gas_cost: __gas_acc,\n")
                (out "        })\n"))
              #t]
@@ -673,7 +678,7 @@
                       (out (format "        let ~a = OpProgramVerify::<DefaultDB>::new()\n" ops-name))
                       (for-each out lines)
                       (out "            .build();\n")
-                      (out (format "        let ~a = query_for_verify(~a, &~a, ctx.gas_limit.clone(), &ctx.cost_model)?;\n"
+                      (out (format "        let ~a = recorded_query_for_verify(&mut __compact_proof_data, ~a, &~a, ctx.gas_limit.clone(), &ctx.cost_model)?;\n"
                                    res-name ctx-expr ops-name))
                       (out (format "        __gas_acc += ~a.gas_cost.clone();\n" res-name))
                       (loop (cdr stmts) local-binds witness-emitted?
@@ -972,14 +977,14 @@
                                          (out (format "            __gas_acc += ~a.gas_cost.clone();\n"
                                                       cr-name))
                                          (out "            let _empty_ops = OpProgramVerify::<DefaultDB>::new().build();\n")
-                                         (out (format "            query_for_verify(&~a.context.current_query_context, &_empty_ops, ctx.gas_limit.clone(), &ctx.cost_model)?\n"
+                                         (out (format "            recorded_query_for_verify(&mut __compact_proof_data, &~a.context.current_query_context, &_empty_ops, ctx.gas_limit.clone(), &ctx.cost_model)?\n"
                                                       cr-name)))]
                                       [else
                                        (out "            let ops = OpProgramVerify::<DefaultDB>::new()\n")
                                        (for-each (lambda (l) (out (format "    ~a" l)))
                                                  lines)
                                        (out "                .build();\n")
-                                       (out (format "            query_for_verify(~a, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?\n"
+                                       (out (format "            recorded_query_for_verify(&mut __compact_proof_data, ~a, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?\n"
                                                     terminal-ctx))]))
                                   (loop-emit (cdr xs) #f))]))
                            (out "        } else {\n")
@@ -1085,18 +1090,18 @@
                                        (out (format "            __gas_acc += ~a.gas_cost.clone();\n"
                                                     cr-name))
                                        (out "            let _empty_ops = OpProgramVerify::<DefaultDB>::new().build();\n")
-                                       (out (format "            query_for_verify(&~a.context.current_query_context, &_empty_ops, ctx.gas_limit.clone(), &ctx.cost_model)?\n"
+                                       (out (format "            recorded_query_for_verify(&mut __compact_proof_data, &~a.context.current_query_context, &_empty_ops, ctx.gas_limit.clone(), &ctx.cost_model)?\n"
                                                     cr-name)))]
                                     [else
                                      (out "            let ops = OpProgramVerify::<DefaultDB>::new()\n")
                                      (for-each (lambda (l) (out (format "    ~a" l)))
                                                lines)
                                      (out "                .build();\n")
-                                     (out (format "            query_for_verify(~a, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?\n"
+                                     (out (format "            recorded_query_for_verify(&mut __compact_proof_data, ~a, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?\n"
                                                   terminal-ctx))])))]
                              [else
                               (out "            let ops = OpProgramVerify::<DefaultDB>::new().build();\n")
-                              (out (format "            query_for_verify(~a, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?\n"
+                              (out (format "            recorded_query_for_verify(&mut __compact_proof_data, ~a, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?\n"
                                            ctx-expr))])
                            (out "        };\n")
                            (out (format "        __gas_acc += ~a.gas_cost.clone();\n" res-name))
@@ -1150,13 +1155,13 @@
                          (out "            let ops = OpProgramVerify::<DefaultDB>::new()\n")
                          (for-each (lambda (l) (out (format "    ~a" l))) then-lines)
                          (out "                .build();\n")
-                         (out (format "            query_for_verify(~a, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?\n"
+                         (out (format "            recorded_query_for_verify(&mut __compact_proof_data, ~a, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?\n"
                                       ctx-expr))
                          (out "        } else {\n")
                          (out "            let ops = OpProgramVerify::<DefaultDB>::new()\n")
                          (for-each (lambda (l) (out (format "    ~a" l))) else-lines)
                          (out "                .build();\n")
-                         (out (format "            query_for_verify(~a, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?\n"
+                         (out (format "            recorded_query_for_verify(&mut __compact_proof_data, ~a, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?\n"
                                       ctx-expr))
                          (out "        };\n")
                          (out (format "        __gas_acc += ~a.gas_cost.clone();\n" res-name))

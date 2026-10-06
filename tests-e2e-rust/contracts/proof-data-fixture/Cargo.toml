@@ -1,0 +1,10 @@
+[package]
+name = "compact-contract-proof-data-fixture"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "lib.rs"
+
+[dependencies]
+midnight-compact-runtime = { path = "../../../runtime-rs" }

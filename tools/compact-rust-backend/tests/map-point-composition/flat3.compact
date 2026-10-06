@@ -1,0 +1,14 @@
+import CompactStandardLibrary;
+export struct WitnessKey { label: Opaque<"string">, point: JubjubPoint, note: Opaque<"string"> }
+export ledger registry: Map<Opaque<"string">, WitnessKey>;
+export ledger count: Counter;
+circuit mark(): [] { count.increment(1); }
+export circuit put(id: Opaque<"string">, value: WitnessKey): [] {
+  registry.insert(disclose(id), disclose(value));
+  mark();
+}
+export circuit drop(id: Opaque<"string">): [] {
+  assert(registry.member(disclose(id)), "missing");
+  registry.remove(disclose(id));
+  mark();
+}

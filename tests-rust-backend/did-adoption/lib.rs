@@ -3711,6 +3711,339 @@ pub mod ledger_contract {
             let frame = crate::ledger_slots::updated.record_write(frame, __compact_plan_37)?;
             Ok(frame.finish(()))
         }
+        pub fn setSchnorrJubjubVerificationMethod<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: crate::types::SchnorrJubjubVerificationMethod,
+            __compact_param_1: crate::types::MapMutation,
+            __compact_param_2: crate::types::SchnorrSignature,
+            __compact_param_3: runtime::BoundedUint<18446744073709551615>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_plan_0: crate::types::SchnorrJubjubVerificationMethod =
+                (__compact_param_0).clone();
+            let __compact_plan_1: crate::types::MapMutation = __compact_param_1;
+            let __compact_plan_2: crate::types::SchnorrSignature = (__compact_param_2).clone();
+            let __compact_plan_3: runtime::BoundedUint<18446744073709551615> = __compact_param_3;
+            let (frame, __compact_plan_4): (_, crate::types::ContractAddress) =
+                crate::ledger_slots::id.record_read(frame)?;
+            let __compact_plan_5: crate::types::ContractAddress = __compact_plan_4;
+            let __compact_plan_6: runtime::BoundedUint<18446744073709551615> = __compact_param_3;
+            let __compact_plan_7: crate::types::SchnorrJubjubVerificationMethod =
+                (__compact_plan_0).clone();
+            let __compact_plan_8: crate::types::MapMutation = __compact_plan_1;
+            let __compact_plan_9: runtime::FixedVector<runtime::Field, 4> =
+                crate::pure_circuits::setSchnorrJubjubVerificationMethodAuthorizationDigest(
+                    __compact_plan_5,
+                    __compact_plan_6,
+                    __compact_plan_7,
+                    __compact_plan_8,
+                )?;
+            let __compact_plan_10: runtime::FixedVector<runtime::Field, 4> = __compact_plan_9;
+            let __compact_plan_11: crate::types::SchnorrSignature = (__compact_plan_2).clone();
+            let __compact_plan_12: runtime::BoundedUint<18446744073709551615> = __compact_plan_3;
+            let __compact_plan_13: runtime::FixedVector<runtime::Field, 4> =
+                (__compact_plan_10).clone();
+            let (frame, __compact_plan_14) = crate::ledger_slots::version.record_read(frame)?;
+            let __compact_plan_15: runtime::BoundedUint<18446744073709551615> =
+                runtime::BoundedUint::<18446744073709551615>::new(__compact_plan_14 as u128)?;
+            let __compact_plan_16: bool = __compact_plan_12 == __compact_plan_15;
+            if !__compact_plan_16 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Controller authorization version is stale".to_owned(),
+                ));
+            }
+            let __compact_plan_17: runtime::FixedVector<runtime::Field, 4> =
+                (__compact_plan_13).clone();
+            let __compact_plan_18: crate::types::SchnorrSignature = (__compact_plan_11).clone();
+            let (frame, __compact_plan_19): (_, runtime::JubjubPoint) =
+                crate::ledger_slots::controllerPublicKey.record_read(frame)?;
+            let __compact_plan_20: runtime::JubjubPoint = __compact_plan_19;
+            let (frame, ()) = frame.call_local(|context| {
+                super::schnorrVerifyDigest(
+                    context,
+                    witnesses,
+                    __compact_plan_17,
+                    __compact_plan_18,
+                    __compact_plan_20,
+                )
+            })?;
+            let (frame, __compact_plan_21): (_, bool) =
+                crate::ledger_slots::active.record_read(frame)?;
+            if !__compact_plan_21 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Contract is not active".to_owned(),
+                ));
+            }
+            let __compact_plan_22: crate::types::MapMutation = __compact_plan_1;
+            crate::pure_circuits::assertMapMutationDefined(__compact_plan_22)?;
+            let __compact_plan_23: crate::types::MapMutation = crate::types::MapMutation::Update;
+            let __compact_plan_24: bool = __compact_plan_1 == __compact_plan_23;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform branch frames preserve ordered recording steps"
+            )]
+            let frame = if __compact_plan_24 {
+                let __compact_plan_25: runtime::OpaqueString =
+                    (((__compact_plan_0).clone()).id).clone();
+                let __compact_plan_26: runtime::OpaqueString = __compact_plan_25;
+                let (frame, __compact_plan_27): (_, bool) =
+                    crate::ledger_slots::schnorrJubjubVerificationMethods
+                        .record_member(frame, (__compact_plan_26).clone())?;
+                if !__compact_plan_27 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "Verification method does not exist".to_owned(),
+                    ));
+                }
+                let __compact_plan_28: runtime::OpaqueString =
+                    (((__compact_plan_0).clone()).id).clone();
+                let __compact_plan_29: runtime::OpaqueString = __compact_plan_28;
+                let frame = crate::ledger_slots::schnorrJubjubVerificationMethods
+                    .record_remove(frame, (__compact_plan_29).clone())?;
+                frame
+            } else {
+                let __compact_plan_30: crate::types::MapMutation =
+                    crate::types::MapMutation::Insert;
+                let __compact_plan_31: bool = __compact_plan_1 == __compact_plan_30;
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform branch frames preserve ordered recording steps"
+                )]
+                let frame = if __compact_plan_31 {
+                    let __compact_plan_32: runtime::OpaqueString =
+                        (((__compact_plan_0).clone()).id).clone();
+                    let __compact_plan_33: runtime::OpaqueString = __compact_plan_32;
+                    let (frame, __compact_plan_34): (_, bool) =
+                        crate::ledger_slots::verificationMethods
+                            .record_member(frame, (__compact_plan_33).clone())?;
+                    let (frame, __compact_plan_37): (_, bool) = if __compact_plan_34 {
+                        let __compact_plan_35: bool = true;
+                        (frame, __compact_plan_35)
+                    } else {
+                        let (frame, __compact_plan_36): (_, bool) =
+                            crate::ledger_slots::schnorrJubjubVerificationMethods
+                                .record_member(frame, (__compact_plan_33).clone())?;
+                        (frame, __compact_plan_36)
+                    };
+                    let (frame, __compact_plan_40): (_, bool) = if __compact_plan_37 {
+                        let __compact_plan_38: bool = false;
+                        (frame, __compact_plan_38)
+                    } else {
+                        let __compact_plan_39: bool = true;
+                        (frame, __compact_plan_39)
+                    };
+                    if !__compact_plan_40 {
+                        return Err(runtime::CompactError::AssertionFailed(
+                            "Verification method already exists".to_owned(),
+                        ));
+                    }
+                    frame
+                } else {
+                    frame
+                };
+                frame
+            };
+            let __compact_plan_41: runtime::OpaqueString =
+                (((__compact_plan_0).clone()).id).clone();
+            let __compact_plan_42: runtime::OpaqueString = __compact_plan_41;
+            let frame = crate::ledger_slots::schnorrJubjubVerificationMethods.record_insert(
+                frame,
+                (__compact_plan_42).clone(),
+                (__compact_plan_0).clone(),
+            )?;
+            let __compact_plan_43: runtime::BoundedUint<65535> =
+                runtime::BoundedUint::<65535>::new(1u128)
+                    .expect("Compact Uint literal fits its maximum");
+            let __compact_plan_44: runtime::BoundedUint<65535> = __compact_plan_43;
+            let frame = crate::ledger_slots::operationCount
+                .record_increment(frame, (__compact_plan_44).value() as u16)?;
+            let __compact_plan_45: runtime::BoundedUint<65535> =
+                runtime::BoundedUint::<65535>::new(1u128)
+                    .expect("Compact Uint literal fits its maximum");
+            let __compact_plan_46: runtime::BoundedUint<65535> = __compact_plan_45;
+            let frame = crate::ledger_slots::version
+                .record_increment(frame, (__compact_plan_46).value() as u16)?;
+            let (frame, __compact_plan_47): (_, runtime::BoundedUint<18446744073709551615>) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.currentTimestamp(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            let __compact_plan_48: runtime::BoundedUint<18446744073709551615> = __compact_plan_47;
+            let frame = crate::ledger_slots::updated.record_write(frame, __compact_plan_48)?;
+            Ok(frame.finish(()))
+        }
+        pub fn removeSchnorrJubjubVerificationMethod<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::OpaqueString,
+            __compact_param_1: crate::types::SchnorrSignature,
+            __compact_param_2: runtime::BoundedUint<18446744073709551615>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_plan_0: runtime::OpaqueString = (__compact_param_0).clone();
+            let __compact_plan_1: crate::types::SchnorrSignature = (__compact_param_1).clone();
+            let __compact_plan_2: runtime::BoundedUint<18446744073709551615> = __compact_param_2;
+            let (frame, __compact_plan_3): (_, crate::types::ContractAddress) =
+                crate::ledger_slots::id.record_read(frame)?;
+            let __compact_plan_4: crate::types::ContractAddress = __compact_plan_3;
+            let __compact_plan_5: runtime::BoundedUint<18446744073709551615> = __compact_param_2;
+            let __compact_plan_6: runtime::OpaqueString = (__compact_plan_0).clone();
+            let __compact_plan_7: runtime::FixedVector<runtime::Field, 4> =
+                crate::pure_circuits::removeSchnorrJubjubVerificationMethodAuthorizationDigest(
+                    __compact_plan_4,
+                    __compact_plan_5,
+                    __compact_plan_6,
+                )?;
+            let __compact_plan_8: runtime::FixedVector<runtime::Field, 4> = __compact_plan_7;
+            let __compact_plan_9: crate::types::SchnorrSignature = (__compact_plan_1).clone();
+            let __compact_plan_10: runtime::BoundedUint<18446744073709551615> = __compact_plan_2;
+            let __compact_plan_11: runtime::FixedVector<runtime::Field, 4> =
+                (__compact_plan_8).clone();
+            let (frame, __compact_plan_12) = crate::ledger_slots::version.record_read(frame)?;
+            let __compact_plan_13: runtime::BoundedUint<18446744073709551615> =
+                runtime::BoundedUint::<18446744073709551615>::new(__compact_plan_12 as u128)?;
+            let __compact_plan_14: bool = __compact_plan_10 == __compact_plan_13;
+            if !__compact_plan_14 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Controller authorization version is stale".to_owned(),
+                ));
+            }
+            let __compact_plan_15: runtime::FixedVector<runtime::Field, 4> =
+                (__compact_plan_11).clone();
+            let __compact_plan_16: crate::types::SchnorrSignature = (__compact_plan_9).clone();
+            let (frame, __compact_plan_17): (_, runtime::JubjubPoint) =
+                crate::ledger_slots::controllerPublicKey.record_read(frame)?;
+            let __compact_plan_18: runtime::JubjubPoint = __compact_plan_17;
+            let (frame, ()) = frame.call_local(|context| {
+                super::schnorrVerifyDigest(
+                    context,
+                    witnesses,
+                    __compact_plan_15,
+                    __compact_plan_16,
+                    __compact_plan_18,
+                )
+            })?;
+            let (frame, __compact_plan_19): (_, bool) =
+                crate::ledger_slots::active.record_read(frame)?;
+            if !__compact_plan_19 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Contract is not active".to_owned(),
+                ));
+            }
+            let (frame, __compact_plan_20): (_, bool) =
+                crate::ledger_slots::schnorrJubjubVerificationMethods
+                    .record_member(frame, (__compact_plan_0).clone())?;
+            if !__compact_plan_20 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Verification method does not exist".to_owned(),
+                ));
+            }
+            let __compact_plan_21: runtime::OpaqueString = (__compact_plan_0).clone();
+            let (frame, __compact_plan_22): (_, bool) = crate::ledger_slots::authenticationRelation
+                .record_member(frame, (__compact_plan_21).clone())?;
+            let (frame, __compact_plan_25): (_, bool) = if __compact_plan_22 {
+                let __compact_plan_23: bool = false;
+                (frame, __compact_plan_23)
+            } else {
+                let __compact_plan_24: bool = true;
+                (frame, __compact_plan_24)
+            };
+            if !__compact_plan_25 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Verification method still referenced in authenticationRelation".to_owned(),
+                ));
+            }
+            let (frame, __compact_plan_26): (_, bool) =
+                crate::ledger_slots::assertionMethodRelation
+                    .record_member(frame, (__compact_plan_21).clone())?;
+            let (frame, __compact_plan_29): (_, bool) = if __compact_plan_26 {
+                let __compact_plan_27: bool = false;
+                (frame, __compact_plan_27)
+            } else {
+                let __compact_plan_28: bool = true;
+                (frame, __compact_plan_28)
+            };
+            if !__compact_plan_29 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Verification method still referenced in assertionMethodRelation".to_owned(),
+                ));
+            }
+            let (frame, __compact_plan_30): (_, bool) =
+                crate::ledger_slots::keyAgreementRelation
+                    .record_member(frame, (__compact_plan_21).clone())?;
+            let (frame, __compact_plan_33): (_, bool) = if __compact_plan_30 {
+                let __compact_plan_31: bool = false;
+                (frame, __compact_plan_31)
+            } else {
+                let __compact_plan_32: bool = true;
+                (frame, __compact_plan_32)
+            };
+            if !__compact_plan_33 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Verification method still referenced in keyAgreementRelation".to_owned(),
+                ));
+            }
+            let (frame, __compact_plan_34): (_, bool) =
+                crate::ledger_slots::capabilityInvocationRelation
+                    .record_member(frame, (__compact_plan_21).clone())?;
+            let (frame, __compact_plan_37): (_, bool) = if __compact_plan_34 {
+                let __compact_plan_35: bool = false;
+                (frame, __compact_plan_35)
+            } else {
+                let __compact_plan_36: bool = true;
+                (frame, __compact_plan_36)
+            };
+            if !__compact_plan_37 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Verification method still referenced in capabilityInvocationRelation"
+                        .to_owned(),
+                ));
+            }
+            let (frame, __compact_plan_38): (_, bool) =
+                crate::ledger_slots::capabilityDelegationRelation
+                    .record_member(frame, (__compact_plan_21).clone())?;
+            let (frame, __compact_plan_41): (_, bool) = if __compact_plan_38 {
+                let __compact_plan_39: bool = false;
+                (frame, __compact_plan_39)
+            } else {
+                let __compact_plan_40: bool = true;
+                (frame, __compact_plan_40)
+            };
+            if !__compact_plan_41 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Verification method still referenced in capabilityDelegationRelation"
+                        .to_owned(),
+                ));
+            }
+            let frame = crate::ledger_slots::schnorrJubjubVerificationMethods
+                .record_remove(frame, (__compact_plan_0).clone())?;
+            let __compact_plan_42: runtime::BoundedUint<65535> =
+                runtime::BoundedUint::<65535>::new(1u128)
+                    .expect("Compact Uint literal fits its maximum");
+            let __compact_plan_43: runtime::BoundedUint<65535> = __compact_plan_42;
+            let frame = crate::ledger_slots::operationCount
+                .record_increment(frame, (__compact_plan_43).value() as u16)?;
+            let __compact_plan_44: runtime::BoundedUint<65535> =
+                runtime::BoundedUint::<65535>::new(1u128)
+                    .expect("Compact Uint literal fits its maximum");
+            let __compact_plan_45: runtime::BoundedUint<65535> = __compact_plan_44;
+            let frame = crate::ledger_slots::version
+                .record_increment(frame, (__compact_plan_45).value() as u16)?;
+            let (frame, __compact_plan_46): (_, runtime::BoundedUint<18446744073709551615>) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.currentTimestamp(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            let __compact_plan_47: runtime::BoundedUint<18446744073709551615> = __compact_plan_46;
+            let frame = crate::ledger_slots::updated.record_write(frame, __compact_plan_47)?;
+            Ok(frame.finish(()))
+        }
         pub fn setService<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
@@ -4194,6 +4527,113 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "setAlsoKnownAs",
+                    input,
+                ))
+            }
+            pub fn setSchnorrJubjubVerificationMethod<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                verificationMethod: crate::types::SchnorrJubjubVerificationMethod,
+                mutation: crate::types::MapMutation,
+                controllerSignature: crate::types::SchnorrSignature,
+                expectedVersion: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                setSchnorrJubjubVerificationMethod(
+                    context,
+                    self.witnesses,
+                    verificationMethod,
+                    mutation,
+                    controllerSignature,
+                    expectedVersion,
+                )
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn setSchnorrJubjubVerificationMethod_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                verificationMethod: crate::types::SchnorrJubjubVerificationMethod,
+                mutation: crate::types::MapMutation,
+                controllerSignature: crate::types::SchnorrSignature,
+                expectedVersion: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::concat(&[
+                    runtime::fab::AlignedValue::from((verificationMethod).clone()),
+                    runtime::fab::AlignedValue::from(mutation),
+                    runtime::fab::AlignedValue::from((controllerSignature).clone()),
+                    runtime::fab::AlignedValue::from(expectedVersion),
+                ]);
+                let recorded = self.setSchnorrJubjubVerificationMethod(
+                    observed.circuit_context(private_state),
+                    verificationMethod,
+                    mutation,
+                    controllerSignature,
+                    expectedVersion,
+                )?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "setSchnorrJubjubVerificationMethod",
+                    input,
+                ))
+            }
+            pub fn removeSchnorrJubjubVerificationMethod<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                methodId: runtime::OpaqueString,
+                controllerSignature: crate::types::SchnorrSignature,
+                expectedVersion: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                removeSchnorrJubjubVerificationMethod(
+                    context,
+                    self.witnesses,
+                    methodId,
+                    controllerSignature,
+                    expectedVersion,
+                )
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn removeSchnorrJubjubVerificationMethod_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                methodId: runtime::OpaqueString,
+                controllerSignature: crate::types::SchnorrSignature,
+                expectedVersion: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::concat(&[
+                    runtime::fab::AlignedValue::from((methodId).clone()),
+                    runtime::fab::AlignedValue::from((controllerSignature).clone()),
+                    runtime::fab::AlignedValue::from(expectedVersion),
+                ]);
+                let recorded = self.removeSchnorrJubjubVerificationMethod(
+                    observed.circuit_context(private_state),
+                    methodId,
+                    controllerSignature,
+                    expectedVersion,
+                )?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "removeSchnorrJubjubVerificationMethod",
                     input,
                 ))
             }

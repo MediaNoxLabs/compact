@@ -348,7 +348,7 @@ impl Plan<'_> {
         scope: &Scope,
         steps: &mut Vec<syn::Stmt>,
     ) -> Option<TypedValue> {
-        if !composition::flat_string_map(&self.field(field, index)?.declaration) {
+        if !composition::string_key_map(&self.field(field, index)?.declaration) {
             return None;
         }
         let key = self.expression(key, scope, steps)?;
@@ -1180,6 +1180,20 @@ impl Plan<'_> {
                     steps,
                     false,
                 ),
+                composition::AuditedCall::ReadOnlyBoolean(callee) => {
+                    let value = composition::boolean_result(callee)?;
+                    self.inline_call(
+                        name,
+                        &callee.parameters,
+                        &callee.result,
+                        &value,
+                        &[],
+                        arguments,
+                        scope,
+                        steps,
+                        false,
+                    )
+                }
             };
         }
         let pure = self.pure.get(name).copied();
@@ -1918,7 +1932,9 @@ impl Plan<'_> {
                 else {
                     return None;
                 };
-                if *key_ty != Type::OpaqueString || !composition::flat_string_product(value_ty) {
+                if *key_ty != Type::OpaqueString
+                    || !composition::flat_string_point_product(value_ty)
+                {
                     return None;
                 }
                 let value_ty = value_ty.clone();
@@ -1935,7 +1951,7 @@ impl Plan<'_> {
                 steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_insert(frame, #key, #value)?;));
             }
             StateAction::MapRemove { field, index, key } if self.composition_calls.is_some() => {
-                if !composition::flat_string_map(&self.field(field, *index)?.declaration) {
+                if !composition::flat_string_point_map(&self.field(field, *index)?.declaration) {
                     return None;
                 }
                 let key = self.expression(key, scope, steps)?;

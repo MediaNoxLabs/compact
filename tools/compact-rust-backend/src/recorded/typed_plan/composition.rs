@@ -21,8 +21,23 @@ pub(super) enum AuditedCall<'a> {
     PureUnitGuard(&'a PureCircuit),
     LocalUnit(&'a StatefulCircuit),
     RecordedUnit(&'a StatefulCircuit),
+    ReadOnlyBoolean(&'a StatefulCircuit),
 }
 pub(super) type Calls<'a> = HashMap<String, AuditedCall<'a>>;
+
+// The frontend may retain a Boolean Map membership as a specialized return
+// rather than Expr::MapMember. Both forms use the one shared typed evaluator.
+pub(super) fn boolean_result(circuit: &StatefulCircuit) -> Option<Expr> {
+    match &circuit.return_value {
+        StateReturn::Expression { value } => Some(value.clone()),
+        StateReturn::MapMember { field, index, key } => Some(Expr::MapMember {
+            field: field.clone(),
+            index: *index,
+            key: Box::new(key.clone()),
+        }),
+        _ => None,
+    }
+}
 
 // Preserve the Cell and witness signature domain independently from argument
 // and pure-helper values admitted by collection composition.
@@ -56,17 +71,30 @@ pub(super) fn write_type(ty: &Type) -> bool {
                 max: u64::MAX.to_string(),
             })
 }
-// A named product of opaque strings is the only Map value admitted by this
-// composition profile. The name and field count are declaration data; an
-// empty product and nested or mixed products remain outside this domain.
-pub(super) fn flat_string_product(ty: &Type) -> bool {
-    matches!(ty, Type::Struct { fields, .. }
-        if !fields.is_empty() && fields.iter().all(|field| field.ty == Type::OpaqueString))
+// A declared, key-only membership query never reads or constructs the Map value.
+// Keep this independent from the narrower value mutation domain.
+pub(super) fn string_key_map(declaration: &LedgerFieldKind) -> bool {
+    matches!(
+        declaration,
+        LedgerFieldKind::Map {
+            key: Type::OpaqueString,
+            ..
+        }
+    )
 }
 
-pub(super) fn flat_string_map(declaration: &LedgerFieldKind) -> bool {
+// Mutation accepts nonempty flat named products of previously audited scalar
+// values. The declared struct name/field order remain exact typed data, never
+// an admission dispatch key.
+pub(super) fn flat_string_point_product(ty: &Type) -> bool {
+    matches!(ty, Type::Struct { fields, .. }
+        if !fields.is_empty() && fields.iter().all(|field|
+            matches!(field.ty, Type::OpaqueString | Type::JubjubPoint)))
+}
+
+pub(super) fn flat_string_point_map(declaration: &LedgerFieldKind) -> bool {
     matches!(declaration, LedgerFieldKind::Map { key: Type::OpaqueString, value }
-        if flat_string_product(value))
+        if flat_string_point_product(value))
 }
 pub(super) fn slot_path(field: &LedgerField) -> bool {
     let path = field.physical_path();
@@ -82,6 +110,8 @@ struct Audit<'a> {
     active: HashSet<String>,
     calls: Calls<'a>,
     public: usize,
+    flat_product_map_writes: usize,
+    read_only_boolean_depth: usize,
 }
 impl Audit<'_> {
     fn slot(&self, name: &str, index: u8) -> Option<&LedgerField> {
@@ -129,7 +159,7 @@ impl Audit<'_> {
             Expr::Vector { elements, .. } | Expr::Tuple { elements } if pure => {
                 elements.iter().all(|v| self.value(v, true))
             }
-            Expr::CellRead { field, index } if !pure => {
+            Expr::CellRead { field, index } if !pure && self.read_only_boolean_depth == 0 => {
                 if !matches!(self.slot(field,*index).map(|f| &f.declaration), Some(LedgerFieldKind::Cell {ty}) if observed_value_type(ty))
                 {
                     return false;
@@ -141,7 +171,7 @@ impl Audit<'_> {
                 field,
                 index,
                 value,
-            } if !pure => {
+            } if !pure && self.read_only_boolean_depth == 0 => {
                 if !matches!(
                     self.slot(field, *index).map(|f| &f.declaration),
                     Some(LedgerFieldKind::Set {
@@ -154,16 +184,17 @@ impl Audit<'_> {
                 self.value(value, false)
             }
             Expr::MapMember { field, index, key } if !pure => {
-                if !self
-                    .slot(field, *index)
-                    .is_some_and(|slot| flat_string_map(&slot.declaration))
-                {
+                if !self.slot(field, *index).is_some_and(|slot| {
+                    string_key_map(&slot.declaration)
+                        && (self.read_only_boolean_depth > 0
+                            || flat_string_point_map(&slot.declaration))
+                }) {
                     return false;
                 }
                 self.public += 1;
                 self.value(key, false)
             }
-            Expr::CounterRead { field, index } if !pure => {
+            Expr::CounterRead { field, index } if !pure && self.read_only_boolean_depth == 0 => {
                 if !matches!(
                     self.slot(field, *index).map(|f| &f.declaration),
                     Some(LedgerFieldKind::Counter)
@@ -173,7 +204,7 @@ impl Audit<'_> {
                 self.public += 1;
                 true
             }
-            Expr::WitnessCall { name, arguments } if !pure => {
+            Expr::WitnessCall { name, arguments } if !pure && self.read_only_boolean_depth == 0 => {
                 self.witnesses.get(name.as_str()).is_some_and(|w| {
                     observed_value_type(&w.result)
                         && w.parameters.iter().all(|p| observed_value_type(&p.ty))
@@ -216,11 +247,19 @@ impl Audit<'_> {
     }
     fn call(&mut self, name: &str, pure_only: bool) -> bool {
         if let Some(call) = self.calls.get(name) {
-            return !pure_only
-                || matches!(
+            return if pure_only {
+                matches!(
                     call,
                     AuditedCall::PureValue(_) | AuditedCall::PureUnitGuard(_)
-                );
+                )
+            } else if self.read_only_boolean_depth > 0 {
+                matches!(
+                    call,
+                    AuditedCall::PureValue(_) | AuditedCall::ReadOnlyBoolean(_)
+                )
+            } else {
+                true
+            };
         }
         if !self.active.insert(name.to_owned()) {
             return false;
@@ -270,6 +309,7 @@ impl Audit<'_> {
             }
             (None, Some(c))
                 if !pure_only
+                    && self.read_only_boolean_depth == 0
                     && c.result == Type::Unit
                     && c.return_value == StateReturn::Unit
                     && c.parameters.iter().all(|p| value_type(&p.ty)) =>
@@ -285,6 +325,31 @@ impl Audit<'_> {
                 } else {
                     false
                 }
+            }
+            (None, Some(c))
+                if !pure_only
+                    && c.result == Type::Boolean
+                    && c.actions.is_empty()
+                    && c.parameters.iter().all(|p| value_type(&p.ty))
+                    && c.parameters
+                        .iter()
+                        .map(|p| &p.name)
+                        .collect::<HashSet<_>>()
+                        .len()
+                        == c.parameters.len() =>
+            {
+                let Some(value) = boolean_result(c) else {
+                    self.active.remove(name);
+                    return false;
+                };
+                self.read_only_boolean_depth += 1;
+                let accepted = self.value(&value, false);
+                self.read_only_boolean_depth -= 1;
+                if accepted {
+                    self.calls
+                        .insert(name.to_owned(), AuditedCall::ReadOnlyBoolean(c));
+                }
+                accepted
             }
             _ => false,
         };
@@ -357,21 +422,23 @@ impl Audit<'_> {
             } => {
                 if !self
                     .slot(field, *index)
-                    .is_some_and(|slot| flat_string_map(&slot.declaration))
+                    .is_some_and(|slot| flat_string_point_map(&slot.declaration))
                 {
                     return false;
                 }
                 self.public += 1;
+                self.flat_product_map_writes += 1;
                 self.value(key, false) && self.value(value, false)
             }
             StateAction::MapRemove { field, index, key } => {
                 if !self
                     .slot(field, *index)
-                    .is_some_and(|slot| flat_string_map(&slot.declaration))
+                    .is_some_and(|slot| flat_string_point_map(&slot.declaration))
                 {
                     return false;
                 }
                 self.public += 1;
+                self.flat_product_map_writes += 1;
                 self.value(key, false)
             }
             StateAction::PureCall { name, arguments } => {
@@ -413,6 +480,8 @@ pub(super) fn lower<'a>(
         active: HashSet::from([circuit.name.clone()]),
         calls: HashMap::new(),
         public: 0,
+        flat_product_map_writes: 0,
+        read_only_boolean_depth: 0,
     };
     if !circuit.actions.iter().all(|a| audit.action(a))
         || audit.public == 0
@@ -422,6 +491,10 @@ pub(super) fn lower<'a>(
                 AuditedCall::LocalUnit(_) | AuditedCall::RecordedUnit(_)
             )
         })
+        // A read-only Boolean Map helper is part of this Map-mutation profile;
+        // other existing collection profiles retain their prior recorder.
+        || (audit.calls.values().any(|call| matches!(call, AuditedCall::ReadOnlyBoolean(_)))
+            && audit.flat_product_map_writes == 0)
     {
         return None;
     }

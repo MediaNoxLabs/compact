@@ -2962,7 +2962,7 @@
     },
     {
       "export": "setVerificationMethodAuthorizationDigest",
-      "case": "jwk-x-\u65e5\u672c\u8a9e\ud83d\udddd\ufe0f",
+      "case": "jwk-x-日本語🗝️",
       "asserted_dimensions": [
         "exact 4-Field independent TS vector",
         "sampled argument/domain sensitivity"
@@ -2978,7 +2978,7 @@
     },
     {
       "export": "setVerificationMethodAuthorizationDigest",
-      "case": "jwk-y-\u65e5\u672c\u8a9e\ud83d\udddd\ufe0f",
+      "case": "jwk-y-日本語🗝️",
       "asserted_dimensions": [
         "exact 4-Field independent TS vector",
         "sampled argument/domain sensitivity"
@@ -3448,11 +3448,11 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/lifecycle.json",
-      "sha256": "1246d974cd9f21f2d5b3c54fec330f98766bd7b86beef512b8d3af4718620271"
+      "sha256": "5e95c61287b255f5ab34f1653b79cc1735e6fa6036bad3cfd800ef898f909942"
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/pure.json",
-      "sha256": "f0b5ca792191b35f3f98321093cebd44409ea171ff278126e0d4fe7db77d904d"
+      "sha256": "f32479c1146d4289509cbbffa91c2083699aa335222e2aa9950593fa18bd9cbd"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/codec.rs",
@@ -3480,7 +3480,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/point-lifecycle.json",
-      "sha256": "2444288a819ff736713791e6678105b3ce4e2c7ca5c9dab2f720ecca9c2bc742"
+      "sha256": "7a86f6401867f412c1572ef8c9635f2ac095ec3440a4644cf6661f22a5fe3779"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/point_calls.rs",
@@ -3496,7 +3496,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/alias-lifecycle.json",
-      "sha256": "44b1ebb52ffddd3cee167ea3879c0de1c6954bc2626d5baf920db37a3ece6b53"
+      "sha256": "5ddd23a927dad5978abb01f8f8721ac45a70434e3c81beb8725408640d2c0dd6"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/alias_calls.rs",
@@ -3512,7 +3512,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/service-lifecycle.json",
-      "sha256": "8bd4a41259fdd5e747c189a091839e2ede2854d0187b6bf8c93c28423cd67a69"
+      "sha256": "4a4031169fb4fb4642cef552372ffd9250dc6884d7ee0874d87a232f9f73057f"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/service_calls.rs",
@@ -3521,6 +3521,22 @@
     {
       "path": "tests-rust-backend/did-adoption/tests/service_recording.rs",
       "sha256": "d5f21a5980b83fc53a2e0ec019190d128441230f72a8b54d71237b0a86b69907"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/oracle/schnorr-method-lifecycle-cases.mjs",
+      "sha256": "7ce4b5fa1691d9421629a833efff7006c87adb2e99cb6864fdde030ae6444b7a"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/oracle/schnorr-method-lifecycle.json",
+      "sha256": "36aa464fc2f2003dcb0a4a31caf43655b7a2c517b78d536efddd9c01f75233a0"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/support/schnorr_method_calls.rs",
+      "sha256": "7dd634e4c9133a7cf5161263a0c9a67730bd5b46390db94f65ffd7dfb50c2795"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/tests/schnorr_method_recording.rs",
+      "sha256": "85055a113ca2c4d1e7b826ad29ed28115b94d6ece04aa2ee6c0ec5cdc3d76818"
     }
   ],
   "amendment_0259": {
@@ -3566,6 +3582,31 @@
     "limits": [
       "The finite Service sequence and typed Map reducers do not admit nested, mixed or empty product Map values.",
       "These sampled proof calls do not prove original constructor execution or all DID branches."
+    ]
+  },
+  "amendment_0278": {
+    "scope": "Original SchnorrJubjub method Insert, Update and Remove recording added for flat named String/Point product Map values, plus checked key-only membership and action-free Boolean helper composition. Existing native and pure semantic rows unchanged.",
+    "historical_baseline": "ADR0255 stateful_export_summary and prior amendments remain historical; the current recorded set is listed here.",
+    "current_recorded_exports": [
+      "deactivate",
+      "recoverControllerKey",
+      "rotateControllerKey",
+      "setAlsoKnownAs",
+      "setService",
+      "removeService",
+      "setSchnorrJubjubVerificationMethod",
+      "removeSchnorrJubjubVerificationMethod"
+    ],
+    "historical_schnorr_method_cases": 9,
+    "fresh_schnorr_method_sequence_cases_including_deactivate": 14,
+    "strict_schnorr_method_calls": [
+      "setSchnorrJubjubVerificationMethod",
+      "setSchnorrJubjubVerificationMethod",
+      "removeSchnorrJubjubVerificationMethod"
+    ],
+    "limits": [
+      "Constructor execution itself is not proved; actual deployment uses unchanged original constructor data.",
+      "These finite cases do not prove all DID branches or cross-instance authorization."
     ]
   }
 }

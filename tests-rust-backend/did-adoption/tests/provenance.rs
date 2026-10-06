@@ -50,6 +50,7 @@ fn capture_source_and_reviewed_test_identities() {
         "point-lifecycle.json",
         "alias-lifecycle.json",
         "service-lifecycle.json",
+        "schnorr-method-lifecycle.json",
     ] {
         hash_rows(&data(file)["provenance"]);
     }

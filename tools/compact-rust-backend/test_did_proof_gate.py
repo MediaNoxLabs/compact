@@ -132,13 +132,13 @@ class OrchestrationTests(unittest.TestCase):
         return gate.run_gate(self.root / "run", self.root / "compiler", self.root / "scheme",
                              self.target, self.env, command=self.command)
 
-    def test_three_scenarios_and_six_keys_are_mandatory(self):
+    def test_four_scenarios_and_eight_keys_are_mandatory(self):
         result = self.run_gate()
         self.assertEqual(result["status"], "passed", result.get("error"))
-        self.assertEqual(set(result["scenarios"]), {"points", "aliases", "services"})
-        self.assertEqual(len(result["keygen"]), 6)
-        self.assertEqual(sum(len(row["calls"]) for row in result["scenarios"].values()), 8)
-        self.assertEqual(self.calls[-3:], ["prove-points", "prove-aliases", "prove-services"])
+        self.assertEqual(set(result["scenarios"]), {"points", "aliases", "services", "schnorr-methods"})
+        self.assertEqual(len(result["keygen"]), 8)
+        self.assertEqual(sum(len(row["calls"]) for row in result["scenarios"].values()), 11)
+        self.assertEqual(self.calls[-3:], ["prove-aliases", "prove-services", "prove-schnorr-methods"])
 
     def test_missing_prerequisite_refuses_before_commands_and_retains_failure(self):
         self.env.pop("MIDNIGHT_PP")
@@ -160,6 +160,13 @@ class OrchestrationTests(unittest.TestCase):
         result = self.run_gate()
         self.assertEqual(result["status"], "failed")
         self.assertEqual(set(result["scenarios"]), {"points", "aliases"})
+        self.assertEqual(result["commands"][-1]["exit_code"], 1)
+
+    def test_schnorr_method_failure_is_not_masked_by_prior_lifecycles(self):
+        self.failure = "prove-schnorr-methods"
+        result = self.run_gate()
+        self.assertEqual(result["status"], "failed")
+        self.assertEqual(set(result["scenarios"]), {"points", "aliases", "services"})
         self.assertEqual(result["commands"][-1]["exit_code"], 1)
 
     def test_existing_output_directory_is_never_reused(self):

@@ -1,0 +1,24 @@
+import CompactStandardLibrary;
+export struct PointMethod { id: Opaque<"string">, publicKey: JubjubPoint }
+export ledger pointMethods: Map<Opaque<"string">, PointMethod>;
+export ledger count: Counter;
+circuit present(id: Opaque<"string">): Boolean { return pointMethods.member(id); }
+circuit bump(): [] { count.increment(1); }
+export circuit upsert(method: PointMethod, update: Boolean): [] {
+  const disclosed = disclose(method);
+  const doUpdate = disclose(update);
+  if (doUpdate) {
+    assert(present(disclosed.id), "missing");
+    pointMethods.remove(disclosed.id);
+  } else {
+    assert(!present(disclosed.id), "duplicate");
+  }
+  pointMethods.insert(disclosed.id, disclosed);
+  bump();
+}
+export circuit remove(id: Opaque<"string">): [] {
+  const disclosed = disclose(id);
+  assert(present(disclosed), "missing");
+  pointMethods.remove(disclosed);
+  bump();
+}

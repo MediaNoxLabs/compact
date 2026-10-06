@@ -1,0 +1,249 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "registry",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "map",
+        "key": {
+          "kind": "opaque_string"
+        },
+        "value": {
+          "kind": "struct",
+          "name": "Quartet",
+          "fields": [
+            {
+              "name": "point",
+              "ty": {
+                "kind": "jubjub_point"
+              }
+            },
+            {
+              "name": "label",
+              "ty": {
+                "kind": "opaque_string"
+              }
+            },
+            {
+              "name": "backup",
+              "ty": {
+                "kind": "jubjub_point"
+              }
+            },
+            {
+              "name": "note",
+              "ty": {
+                "kind": "opaque_string"
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "flat4.compact",
+        "line": 3,
+        "column": 1
+      }
+    },
+    {
+      "id": "count",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "flat4.compact",
+        "line": 4,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "mark",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_1",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "count",
+            "index": 1,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_1"
+            }
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "flat4.compact",
+        "line": 5,
+        "column": 1
+      }
+    },
+    {
+      "name": "put",
+      "parameters": [
+        {
+          "name": "id",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        },
+        {
+          "name": "value",
+          "ty": {
+            "kind": "struct",
+            "name": "Quartet",
+            "fields": [
+              {
+                "name": "point",
+                "ty": {
+                  "kind": "jubjub_point"
+                }
+              },
+              {
+                "name": "label",
+                "ty": {
+                  "kind": "opaque_string"
+                }
+              },
+              {
+                "name": "backup",
+                "ty": {
+                  "kind": "jubjub_point"
+                }
+              },
+              {
+                "name": "note",
+                "ty": {
+                  "kind": "opaque_string"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "map_insert",
+          "field": "registry",
+          "index": 0,
+          "key": {
+            "kind": "parameter",
+            "name": "id"
+          },
+          "value": {
+            "kind": "parameter",
+            "name": "value"
+          }
+        },
+        {
+          "kind": "circuit_call",
+          "name": "mark",
+          "arguments": [
+          ]
+        }
+      ],
+      "source": {
+        "file": "flat4.compact",
+        "line": 6,
+        "column": 1
+      }
+    },
+    {
+      "name": "drop",
+      "parameters": [
+        {
+          "name": "id",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "map_member",
+            "field": "registry",
+            "index": 0,
+            "key": {
+              "kind": "parameter",
+              "name": "id"
+            }
+          },
+          "message": "missing"
+        },
+        {
+          "kind": "map_remove",
+          "field": "registry",
+          "index": 0,
+          "key": {
+            "kind": "parameter",
+            "name": "id"
+          }
+        },
+        {
+          "kind": "circuit_call",
+          "name": "mark",
+          "arguments": [
+          ]
+        }
+      ],
+      "source": {
+        "file": "flat4.compact",
+        "line": 10,
+        "column": 1
+      }
+    }
+  ]
+}

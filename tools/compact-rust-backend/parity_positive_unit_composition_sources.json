@@ -1,7 +1,7 @@
 {
   "format_version": 1,
   "suite": "ADR0251 typed Unit composition",
-  "purpose": "Typed flat/chunked, crypto and repeated-helper composition plus six original DID recording exports including Service Map mutation; six precise original stateful gaps retained. Recording availability is distinct from branch-level proof evidence.",
+  "purpose": "Typed flat/chunked, crypto and repeated-helper composition plus eight original DID recording exports including flat point-product Map mutation; four precise original stateful gaps retained. Recording availability is distinct from branch-level proof evidence.",
   "positive_sources": [
     {
       "source": "examples/rust_backend/unit_composition_flat.compact",
@@ -231,16 +231,6 @@
           "ir_node": "StateAction::CircuitCall",
           "path": "actions[0].action.actions[0]"
         },
-        "setSchnorrJubjubVerificationMethod": {
-          "code": "unsupported_action",
-          "ir_node": "StateAction::Let",
-          "path": "actions[0]"
-        },
-        "removeSchnorrJubjubVerificationMethod": {
-          "code": "unsupported_action",
-          "ir_node": "StateAction::CircuitCall",
-          "path": "actions[0].action.actions[0]"
-        },
         "verifySchnorrJubjubDigestSignature": {
           "code": "unsupported_action",
           "ir_node": "StateAction::Let",
@@ -273,7 +263,9 @@
         "setAlsoKnownAs",
         "setService",
         "removeService",
-        "deactivate"
+        "deactivate",
+        "setSchnorrJubjubVerificationMethod",
+        "removeSchnorrJubjubVerificationMethod"
       ],
       "pure_declarations": 12,
       "exported_pure_declarations": 12

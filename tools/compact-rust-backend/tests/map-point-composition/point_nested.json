@@ -1,0 +1,526 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "pointMethods",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "map",
+        "key": {
+          "kind": "opaque_string"
+        },
+        "value": {
+          "kind": "struct",
+          "name": "PointMethod",
+          "fields": [
+            {
+              "name": "id",
+              "ty": {
+                "kind": "opaque_string"
+              }
+            },
+            {
+              "name": "publicKey",
+              "ty": {
+                "kind": "jubjub_point"
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "point-and-nested-member.compact",
+        "line": 5,
+        "column": 1
+      }
+    },
+    {
+      "id": "nestedMethods",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "map",
+        "key": {
+          "kind": "opaque_string"
+        },
+        "value": {
+          "kind": "struct",
+          "name": "NestedMethod",
+          "fields": [
+            {
+              "name": "id",
+              "ty": {
+                "kind": "opaque_string"
+              }
+            },
+            {
+              "name": "inner",
+              "ty": {
+                "kind": "struct",
+                "name": "Inner",
+                "fields": [
+                  {
+                    "name": "curve",
+                    "ty": {
+                      "kind": "opaque_string"
+                    }
+                  },
+                  {
+                    "name": "key",
+                    "ty": {
+                      "kind": "jubjub_point"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "point-and-nested-member.compact",
+        "line": 6,
+        "column": 1
+      }
+    },
+    {
+      "id": "count",
+      "index": 2,
+      "path": [
+        2
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "point-and-nested-member.compact",
+        "line": 7,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "exists",
+      "parameters": [
+        {
+          "name": "id",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        }
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "if",
+          "condition": {
+            "kind": "map_member",
+            "field": "nestedMethods",
+            "index": 1,
+            "key": {
+              "kind": "parameter",
+              "name": "id"
+            }
+          },
+          "then": {
+            "kind": "boolean",
+            "value": true
+          },
+          "otherwise": {
+            "kind": "map_member",
+            "field": "pointMethods",
+            "index": 0,
+            "key": {
+              "kind": "parameter",
+              "name": "id"
+            }
+          }
+        }
+      },
+      "actions": [
+      ],
+      "internal": true,
+      "source": {
+        "file": "point-and-nested-member.compact",
+        "line": 8,
+        "column": 1
+      }
+    },
+    {
+      "name": "bump",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_13",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "count",
+            "index": 2,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_13"
+            }
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "point-and-nested-member.compact",
+        "line": 11,
+        "column": 1
+      }
+    },
+    {
+      "name": "upsert",
+      "parameters": [
+        {
+          "name": "method",
+          "ty": {
+            "kind": "struct",
+            "name": "PointMethod",
+            "fields": [
+              {
+                "name": "id",
+                "ty": {
+                  "kind": "opaque_string"
+                }
+              },
+              {
+                "name": "publicKey",
+                "ty": {
+                  "kind": "jubjub_point"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "update",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "disclosed",
+              "ty": {
+                "kind": "struct",
+                "name": "PointMethod",
+                "fields": [
+                  {
+                    "name": "id",
+                    "ty": {
+                      "kind": "opaque_string"
+                    }
+                  },
+                  {
+                    "name": "publicKey",
+                    "ty": {
+                      "kind": "jubjub_point"
+                    }
+                  }
+                ]
+              },
+              "value": {
+                "kind": "parameter",
+                "name": "method"
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "doUpdate",
+                "ty": {
+                  "kind": "boolean"
+                },
+                "value": {
+                  "kind": "parameter",
+                  "name": "update"
+                }
+              }
+            ],
+            "action": {
+              "kind": "sequence",
+              "actions": [
+                {
+                  "kind": "if",
+                  "condition": {
+                    "kind": "parameter",
+                    "name": "doUpdate"
+                  },
+                  "then": {
+                    "kind": "sequence",
+                    "actions": [
+                      {
+                        "kind": "assert",
+                        "condition": {
+                          "kind": "let",
+                          "bindings": [
+                            {
+                              "name": "tmp_11",
+                              "ty": {
+                                "kind": "opaque_string"
+                              },
+                              "value": {
+                                "kind": "struct_field",
+                                "value": {
+                                  "kind": "parameter",
+                                  "name": "disclosed"
+                                },
+                                "field": "id",
+                                "index": 0
+                              }
+                            }
+                          ],
+                          "body": {
+                            "kind": "map_member",
+                            "field": "pointMethods",
+                            "index": 0,
+                            "key": {
+                              "kind": "parameter",
+                              "name": "tmp_11"
+                            }
+                          }
+                        },
+                        "message": "missing"
+                      },
+                      {
+                        "kind": "let",
+                        "bindings": [
+                          {
+                            "name": "tmp_10",
+                            "ty": {
+                              "kind": "opaque_string"
+                            },
+                            "value": {
+                              "kind": "struct_field",
+                              "value": {
+                                "kind": "parameter",
+                                "name": "disclosed"
+                              },
+                              "field": "id",
+                              "index": 0
+                            }
+                          }
+                        ],
+                        "action": {
+                          "kind": "map_remove",
+                          "field": "pointMethods",
+                          "index": 0,
+                          "key": {
+                            "kind": "parameter",
+                            "name": "tmp_10"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "otherwise": {
+                    "kind": "assert",
+                    "condition": {
+                      "kind": "if",
+                      "condition": {
+                        "kind": "call",
+                        "name": "exists",
+                        "arguments": [
+                          {
+                            "kind": "coerce",
+                            "value": {
+                              "kind": "struct_field",
+                              "value": {
+                                "kind": "parameter",
+                                "name": "disclosed"
+                              },
+                              "field": "id",
+                              "index": 0
+                            },
+                            "ty": {
+                              "kind": "opaque_string"
+                            }
+                          }
+                        ]
+                      },
+                      "then": {
+                        "kind": "boolean",
+                        "value": false
+                      },
+                      "otherwise": {
+                        "kind": "boolean",
+                        "value": true
+                      }
+                    },
+                    "message": "duplicate"
+                  }
+                },
+                {
+                  "kind": "let",
+                  "bindings": [
+                    {
+                      "name": "tmp_12",
+                      "ty": {
+                        "kind": "opaque_string"
+                      },
+                      "value": {
+                        "kind": "struct_field",
+                        "value": {
+                          "kind": "parameter",
+                          "name": "disclosed"
+                        },
+                        "field": "id",
+                        "index": 0
+                      }
+                    }
+                  ],
+                  "action": {
+                    "kind": "map_insert",
+                    "field": "pointMethods",
+                    "index": 0,
+                    "key": {
+                      "kind": "parameter",
+                      "name": "tmp_12"
+                    },
+                    "value": {
+                      "kind": "parameter",
+                      "name": "disclosed"
+                    }
+                  }
+                },
+                {
+                  "kind": "circuit_call",
+                  "name": "bump",
+                  "arguments": [
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "point-and-nested-member.compact",
+        "line": 12,
+        "column": 1
+      }
+    },
+    {
+      "name": "remove",
+      "parameters": [
+        {
+          "name": "id",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "disclosed",
+              "ty": {
+                "kind": "opaque_string"
+              },
+              "value": {
+                "kind": "parameter",
+                "name": "id"
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "assert",
+                "condition": {
+                  "kind": "map_member",
+                  "field": "pointMethods",
+                  "index": 0,
+                  "key": {
+                    "kind": "parameter",
+                    "name": "disclosed"
+                  }
+                },
+                "message": "missing"
+              },
+              {
+                "kind": "map_remove",
+                "field": "pointMethods",
+                "index": 0,
+                "key": {
+                  "kind": "parameter",
+                  "name": "disclosed"
+                }
+              },
+              {
+                "kind": "circuit_call",
+                "name": "bump",
+                "arguments": [
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "point-and-nested-member.compact",
+        "line": 24,
+        "column": 1
+      }
+    }
+  ]
+}

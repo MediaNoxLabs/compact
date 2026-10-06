@@ -131,6 +131,7 @@ compact list                       # list available versions
 - [Writing a contract](./doc/writing.mdx) -- introductory walkthrough
 - [Language reference](./doc/lang-ref.mdx) -- complete language specification
 - [API documentation](./doc/api/)
+- [Rust backend/runtime guides and architecture decisions](./doc/rust/README.md)
 - [Examples](./examples/)
 - [Midnight developer docs](https://docs.midnight.network/)
 

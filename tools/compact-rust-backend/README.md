@@ -1,5 +1,7 @@
 # Compact Rust backend (ledger 8)
 
+Architecture history: [Rust backend and runtime ADRs](https://github.com/MediaNoxLabs/compact/tree/codex/rust-backend-ast/doc/rust/adr), with decision status, code examples and delivery evidence.
+
 This backend compiles Compact through the ledger-8 Scheme frontend and renders
 its typed Rust IR as native Rust source. It is independent of the TypeScript
 backend. The generated code uses [`midnight-compact-runtime`](../../runtime-rs),

@@ -1,5 +1,7 @@
 # Midnight Compact runtime derives
 
+Architecture history: [Rust backend and runtime ADRs](https://github.com/MediaNoxLabs/compact/tree/codex/rust-backend-ast/doc/rust/adr), with decision status, code examples and delivery evidence.
+
 This crate provides procedural derives for ledger representation types emitted
 by the Compact Rust backend: `CompactCellValue`, `CompactEnum`, `CompactMerklePath`,
 `CompactMerklePathEntry`, and `CompactMerkleTreeDigest`. The main

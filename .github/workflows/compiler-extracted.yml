@@ -21,7 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    timeout-minutes: 45
+    # Match the main compiler job: an uncached default Nix build can take 90+ minutes.
+    timeout-minutes: 180
     steps:
       - name: Checkout compactc repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

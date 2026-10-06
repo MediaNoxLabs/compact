@@ -77,6 +77,11 @@
       "value": "32414247efdc42abbb2c15d54195fa5b74b5d75eb8cb60aff7e27380cea338c1"
     },
     {
+      "name": "claim_root_changed_date",
+      "outcome": "ok",
+      "value": "99f4a8bbb53e5595da38e2f2ed45f5ea1ed5b0fed4d2af23c5f17110cb90f14b"
+    },
+    {
       "name": "schema_valid",
       "outcome": "ok",
       "value": "unit"

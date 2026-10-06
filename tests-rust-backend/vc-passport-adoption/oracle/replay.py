@@ -37,6 +37,18 @@ def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def runtime_js_tree_sha256(package: Path) -> str:
+    digest = hashlib.sha256()
+    files = sorted((package / "dist").rglob("*.js"))
+    assert files, f"runtime has no JavaScript files: {package}"
+    for file in files:
+        digest.update(file.relative_to(package).as_posix().encode())
+        digest.update(b"\0")
+        digest.update(bytes.fromhex(sha256(file)))
+        digest.update(b"\n")
+    return digest.hexdigest()
+
+
 def run(args: list[str]) -> None:
     completed = subprocess.run(args, capture_output=True, text=True, check=False, timeout=120)
     if completed.returncode:
@@ -55,6 +67,8 @@ def main() -> None:
     runtime = args.runtime_package.resolve(strict=True)
     assert sha256(compiler) == identity["compiler_sha256"], "compiler byte identity differs"
     assert json.loads((runtime / "package.json").read_text())["version"] == identity["runtime_version"]
+    assert sha256(runtime / "package.json") == identity["runtime_package_json_sha256"]
+    assert runtime_js_tree_sha256(runtime) == identity["runtime_js_tree_sha256"]
     assert SOURCE.is_file(), f"missing pinned source {SOURCE}"
     with tempfile.TemporaryDirectory(prefix="compact-vc-passport-oracle-") as temporary:
         output = Path(temporary)
@@ -65,6 +79,19 @@ def main() -> None:
         run(command)
         generated = output / "contract/index.js"
         assert sha256(generated) == identity["generated_js_sha256"], "generated JS differs"
+        if args.profile == "branch":
+            rust_output = output / "rust"
+            run([str(compiler), "--target", "rust", "--skip-zk", str(SOURCE), str(rust_output)])
+            rust_ir = rust_output / "contract/compact-rust-ir.json"
+            metadata = PROVENANCE["compiler_metadata"]
+            assert sha256(rust_ir) == metadata["ir_sha256"], "private Rust IR differs"
+            ir = json.loads(rust_ir.read_text())
+            assert ir["schema_version"] == metadata["schema_version"]
+            for key, field in (("circuits", "pure_circuits"),
+                               ("stateful_circuits", "stateful_circuits"),
+                               ("ledger_fields", "ledger_fields"),
+                               ("witnesses", "witnesses")):
+                assert len(ir[key]) == metadata[field], f"{key} capability count differs"
         package_link = output / "contract/node_modules/@midnight-ntwrk/compact-runtime"
         package_link.parent.mkdir(parents=True)
         package_link.symlink_to(runtime, target_is_directory=True)
@@ -77,7 +104,8 @@ def main() -> None:
                                ("signed-flow", "capture-signed-flow.mjs"),
                                ("authorization", "capture-authorization.mjs"),
                                ("protocol-roundtrip", "capture-protocol-roundtrip.mjs"),
-                               ("complete-flow", "capture-complete-flow.mjs")):
+                               ("complete-flow", "capture-complete-flow.mjs"),
+                               ("codec", "capture-codec.mjs")):
             actual = output / f"{suffix}.json"
             command = ["node", str(ORACLE / script), str(generated)]
             if suffix == "age":
@@ -86,7 +114,7 @@ def main() -> None:
             run(command)
             expected = ORACLE / f"{args.profile}-{suffix}-capture.json"
             assert json.loads(actual.read_text()) == json.loads(expected.read_text()), expected
-    print(f"{args.profile}: 193 exact cases across all 75 exports match checked-in capture")
+    print(f"{args.profile}: 202 exact cases across all 75 exports match checked-in capture")
 
 
 if __name__ == "__main__":

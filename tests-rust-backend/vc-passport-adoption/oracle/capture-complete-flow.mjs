@@ -138,6 +138,29 @@ const verificationResult = {
   envelope: finalResponse, approved: true,
   body: { credentialRoot: credentialBodyRoot, verifiedThresholdYears: 0n },
 };
+const nullParts = {
+  claimValues: { ...values, documentNumberValue: new Uint8Array(32) },
+  openings: { ...openings, documentNumberOpening: new Uint8Array(32) },
+};
+const nullCommitments = {
+  ...claimCommitments,
+  documentNumberCommitment: pure.documentNumberNullCommitment(),
+};
+const nullCredential = {
+  ...credential, claimCommitments: nullCommitments,
+  claimRoot: pure.digitalPassportClaimRoot(nullCommitments),
+};
+const nullCredentialProof = sign(pure.digitalPassportCredentialBodyRoot(nullCredential), 'issuance', 13n);
+const nullPresentation = {
+  ...presentation, credentialClaimRoot: nullCredential.claimRoot,
+};
+const nullPresentationProof = sign(pure.digitalPassportPresentationBodyRoot(nullPresentation), 'presentation', 17n);
+const revealingNullDocument = {
+  ...nullPresentation,
+  disclosed: { ...disclosed, revealDocumentNumber: true,
+    documentNumberValue: b32(1), documentNumberOpening: b32(2) },
+};
+const revealingNullProof = sign(pure.digitalPassportPresentationBodyRoot(revealingNullDocument), 'presentation', 19n);
 const run = (name, evaluate) => {
   try { return { name, outcome: 'ok', value: evaluate() }; }
   catch (error) { return { name, outcome: 'error', message: String(error.message) }; }
@@ -158,6 +181,42 @@ const rows = [
   run('full_submission_missing_disclosure', () => pure.assertDigitalPassportVerificationSubmissionMatchesRequest({
     ...verificationRequest, body: { ...verificationRequest.body, requireLastNameDisclosure: true },
   }, submission)),
+  run('full_submission_missing_document_disclosure', () => pure.assertDigitalPassportVerificationSubmissionMatchesRequest({
+    ...verificationRequest, body: { ...verificationRequest.body, requireDocumentNumberDisclosure: true },
+  }, submission)),
+  run('full_submission_missing_issuing_state_disclosure', () => pure.assertDigitalPassportVerificationSubmissionMatchesRequest({
+    ...verificationRequest, body: { ...verificationRequest.body, requireIssuingStateDisclosure: true },
+  }, submission)),
+  run('full_request_age_threshold_mismatch', () => pure.assertDigitalPassportPresentationSatisfiesRequest(
+    credential,
+    { ...verificationRequest.body, version: 1n, requireAgeOverThreshold: true,
+      requestedAgeThresholdYears: 18n, schema, issuerVerificationMethodRef: method,
+      verifierChallengeHash: b32(55) },
+    { ...presentation, disclosed: { ...disclosed, proveAgeOverThreshold: true, ageThresholdYears: 21n } },
+    presentationProof,
+  )),
+  run('full_request_missing_first_name_disclosure', () => pure.assertDigitalPassportPresentationSatisfiesRequest(
+    credential,
+    { ...verificationRequest.body, version: 1n, schema,
+      issuerVerificationMethodRef: method, verifierChallengeHash: b32(55) },
+    { ...presentation, disclosed: { ...disclosed, revealFirstName: false } },
+    presentationProof,
+  )),
+  run('full_presentation_last_name_opening_mismatch', () => pure.assertValidDigitalPassportPresentation(
+    credential, credentialProof,
+    { ...presentation, disclosed: { ...disclosed, revealLastName: true, lastNameOpening: b32(111) } },
+    presentationProof,
+  )),
+  run('full_null_document_private_issuance_valid', () => pure.assertValidDigitalPassportIssuanceResult({
+    ...issuanceResult, body: { ...issuanceResult.body, credential: nullCredential,
+      credentialProof: nullCredentialProof, privateParts: nullParts },
+  })),
+  run('full_null_document_hidden_valid', () => pure.assertValidDigitalPassportPresentation(
+    nullCredential, nullCredentialProof, nullPresentation, nullPresentationProof,
+  )),
+  run('full_null_document_reveal_rejected', () => pure.assertValidDigitalPassportPresentation(
+    nullCredential, nullCredentialProof, revealingNullDocument, revealingNullProof,
+  )),
   run('full_result_matches_submission', () => pure.assertDigitalPassportVerificationResultMatchesSubmission(submission, verificationResult)),
   run('full_result_other_root', () => pure.assertDigitalPassportVerificationResultMatchesSubmission(submission, {
     ...verificationResult, body: { ...verificationResult.body, credentialRoot: b32(99) },
@@ -168,5 +227,10 @@ const vectors = {
   presentationScalar: presentationProof.signature.s.toString(16),
   credentialBodyRoot: Buffer.from(credentialBodyRoot).toString('hex'),
   presentationBodyRoot: Buffer.from(presentationBodyRoot).toString('hex'),
+  nullIssuanceScalar: nullCredentialProof.signature.s.toString(16),
+  nullPresentationScalar: nullPresentationProof.signature.s.toString(16),
+  nullRevealingScalar: revealingNullProof.signature.s.toString(16),
+  nullCredentialBodyRoot: Buffer.from(pure.digitalPassportCredentialBodyRoot(nullCredential)).toString('hex'),
+  nullPresentationBodyRoot: Buffer.from(pure.digitalPassportPresentationBodyRoot(nullPresentation)).toString('hex'),
 };
 writeFileSync(output, `${JSON.stringify({ profile, vectors, rows }, null, 2)}\n`);

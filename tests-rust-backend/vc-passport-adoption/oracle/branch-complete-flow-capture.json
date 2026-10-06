@@ -4,7 +4,12 @@
     "issuanceScalar": "213717abe310081e8402b65cef4ff3b0924733bb6abed23f4625ed899c31b7c",
     "presentationScalar": "21d536fd84f67d8c31ff9ba1fd66b9b05b2e6ee9c964f017a1f6491c52747ab",
     "credentialBodyRoot": "d035ee391a309241427e571957fe1d3c89efcc258c0e1e4ce1abca697f08af45",
-    "presentationBodyRoot": "29c0d8531b49d1ca243c20e62d4414b01947cd132574726dddb0b80e816b3c40"
+    "presentationBodyRoot": "29c0d8531b49d1ca243c20e62d4414b01947cd132574726dddb0b80e816b3c40",
+    "nullIssuanceScalar": "2d014d5937c9fc30b06bce1ef02aebe841ed6e20775714ba024ddb51aa80b8d",
+    "nullPresentationScalar": "2f19258bc563db5e79495e343aac6b805548ee8181b60fbf099394140d05326",
+    "nullRevealingScalar": "2abda904dded9d3b063cfd472de230898bd5d4b53cd9c4327142e638ac0abcf",
+    "nullCredentialBodyRoot": "8ef859d09447f3be8b23f5832e6368a688b0cc9310a02b8115632ad5759a7430",
+    "nullPresentationBodyRoot": "5bab09ffe87559a3e579b975474d21ebb94b121f58787f3da684ae6b10616690"
   },
   "rows": [
     {
@@ -46,6 +51,46 @@
       "name": "full_submission_missing_disclosure",
       "outcome": "error",
       "message": "failed assert: Presentation request requires the last-name disclosure"
+    },
+    {
+      "name": "full_submission_missing_document_disclosure",
+      "outcome": "error",
+      "message": "failed assert: Presentation request requires the document-number disclosure"
+    },
+    {
+      "name": "full_submission_missing_issuing_state_disclosure",
+      "outcome": "error",
+      "message": "failed assert: Presentation request requires the issuing-state disclosure"
+    },
+    {
+      "name": "full_request_age_threshold_mismatch",
+      "outcome": "error",
+      "message": "failed assert: Presentation age threshold does not match the request"
+    },
+    {
+      "name": "full_request_missing_first_name_disclosure",
+      "outcome": "error",
+      "message": "failed assert: Presentation request requires the first-name disclosure"
+    },
+    {
+      "name": "full_presentation_last_name_opening_mismatch",
+      "outcome": "error",
+      "message": "failed assert: Presentation last-name disclosure does not match the credential"
+    },
+    {
+      "name": "full_null_document_private_issuance_valid",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "full_null_document_hidden_valid",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "full_null_document_reveal_rejected",
+      "outcome": "error",
+      "message": "failed assert: Cannot reveal document-number when the credential has no document number (null commitment)"
     },
     {
       "name": "full_result_matches_submission",

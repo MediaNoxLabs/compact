@@ -118,7 +118,7 @@ fn dual_typescript_captures_and_export_inventory_remain_exact() {
     assert_eq!(branch_roundtrip["rows"], upstream_roundtrip["rows"]);
     assert_eq!(branch_complete["rows"], upstream_complete["rows"]);
     assert_eq!(branch_complete["vectors"], upstream_complete["vectors"]);
-    assert_eq!(branch["rows"].as_array().unwrap().len(), 24);
+    assert_eq!(branch["rows"].as_array().unwrap().len(), 25);
     assert_eq!(branch_age["rows"].as_array().unwrap().len(), 25);
     assert_eq!(branch_request["rows"].as_array().unwrap().len(), 16);
     assert_eq!(branch_private["rows"].as_array().unwrap().len(), 11);
@@ -128,7 +128,13 @@ fn dual_typescript_captures_and_export_inventory_remain_exact() {
     assert_eq!(branch_signed["rows"].as_array().unwrap().len(), 9);
     assert_eq!(branch_authorization["rows"].as_array().unwrap().len(), 25);
     assert_eq!(branch_roundtrip["rows"].as_array().unwrap().len(), 20);
-    assert_eq!(branch_complete["rows"].as_array().unwrap().len(), 10);
+    assert_eq!(branch_complete["rows"].as_array().unwrap().len(), 18);
+    let branch_codec: serde_json::Value =
+        serde_json::from_str(include_str!("../oracle/branch-codec-capture.json")).unwrap();
+    let upstream_codec: serde_json::Value =
+        serde_json::from_str(include_str!("../oracle/upstream-codec-capture.json")).unwrap();
+    assert_eq!(branch_codec["vectors"], upstream_codec["vectors"]);
+    assert_eq!(branch_codec["vectors"].as_object().unwrap().len(), 4);
 
     let coverage: serde_json::Value =
         serde_json::from_str(include_str!("../oracle/coverage.json")).unwrap();
@@ -161,7 +167,7 @@ fn dual_typescript_captures_and_export_inventory_remain_exact() {
         .map(|case| case.as_str().unwrap())
         .collect::<BTreeSet<_>>();
     assert_eq!(captured_cases, covered_cases);
-    assert_eq!(captured_cases.len(), 193);
+    assert_eq!(captured_cases.len(), 202);
     assert!(
         exports
             .iter()
@@ -176,13 +182,24 @@ fn oracle_programs_and_captures_match_recorded_provenance() {
         serde_json::from_str(include_str!("../oracle/provenance.json")).unwrap();
     let oracle = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("oracle");
     let files = provenance["oracle_files"].as_object().unwrap();
-    assert_eq!(files.len(), 36);
+    assert_eq!(files.len(), 39);
     for (name, expected) in files {
         assert!(!name.contains('/') && !name.contains(".."));
         let bytes = std::fs::read(oracle.join(name)).unwrap();
         assert_eq!(
             format!("{:x}", Sha256::digest(bytes)),
             expected.as_str().unwrap(),
+            "{name}"
+        );
+    }
+    let codec_sources = provenance["codec_sources"].as_object().unwrap();
+    assert_eq!(codec_sources.len(), 2);
+    for (name, record) in codec_sources {
+        assert!(!name.contains('/') && !name.contains(".."));
+        let bytes = std::fs::read(oracle.join("upstream-codec-source").join(name)).unwrap();
+        assert_eq!(
+            format!("{:x}", Sha256::digest(bytes)),
+            record["sha256"],
             "{name}"
         );
     }

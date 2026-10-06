@@ -98,9 +98,23 @@ fn constructors_and_hashes_match_independent_ts_capture() {
     let base_root = pure::digitalPassportClaimRoot(commitments.clone()).unwrap();
     let changed_root = pure::digitalPassportClaimRoot(types::DigitalPassportClaimCommitments {
         documentNumberCommitment: b32(99),
+        ..commitments.clone()
+    })
+    .unwrap();
+    let changed_date = pure::digitalPassportClaimRoot(types::DigitalPassportClaimCommitments {
+        dateOfBirthCommitment: b32(99),
         ..commitments
     })
     .unwrap();
+    let capture: serde_json::Value =
+        serde_json::from_str(include_str!("../oracle/upstream-ts-capture.json")).unwrap();
+    let expected_date = capture["rows"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|row| row["name"] == "claim_root_changed_date")
+        .unwrap();
+    assert_eq!(hex(changed_date), expected_date["value"].as_str().unwrap());
     assert_eq!(
         hex(base_root),
         "1719d1840150ddc72ed9bd11126c673158594527eb03c0e3935868201a64b28d"
@@ -110,6 +124,7 @@ fn constructors_and_hashes_match_independent_ts_capture() {
         "32414247efdc42abbb2c15d54195fa5b74b5d75eb8cb60aff7e27380cea338c1"
     );
     assert_ne!(base_root, changed_root);
+    assert_ne!(base_root, changed_date);
 }
 
 #[test]

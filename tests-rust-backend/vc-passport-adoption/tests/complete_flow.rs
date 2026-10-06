@@ -232,6 +232,16 @@ fn verification_request() -> types::DigitalPassportVerification_RequestMessage {
         },
     }
 }
+fn presentation_request() -> types::DigitalPassportPresentationRequest {
+    types::DigitalPassportPresentationRequest {
+        version: u16(1),
+        schema: schema(),
+        issuerVerificationMethodRef: method(),
+        requireFirstNameDisclosure: true,
+        verifierChallengeHash: b32(55),
+        ..Default::default()
+    }
+}
 fn submission(
     credential: &types::Credential,
     credential_proof: &types::Proof,
@@ -286,7 +296,7 @@ fn complete_signed_issuance_and_verification_match_dual_typescript() {
     .unwrap();
     let rows = capture["rows"].as_array().unwrap();
     let vectors = &capture["vectors"];
-    assert_eq!(rows.len(), 10);
+    assert_eq!(rows.len(), 18);
     let parts = private_parts();
     let credential = credential(&parts);
     let presentation = presentation(&credential, &parts);
@@ -331,7 +341,7 @@ fn complete_signed_issuance_and_verification_match_dual_typescript() {
         ),
         rows,
     );
-    let mut changed_holder = issuance_result;
+    let mut changed_holder = issuance_result.clone();
     changed_holder.body.holderPublicKey = rt::ec_mul_generator(rt::Field::from(6_u64)).unwrap();
     assert_case(
         "full_issuance_result_other_holder",
@@ -365,6 +375,124 @@ fn complete_signed_issuance_and_verification_match_dual_typescript() {
         pure::assertDigitalPassportVerificationSubmissionMatchesRequest(
             stricter_request,
             submission.clone(),
+        ),
+        rows,
+    );
+    let mut document_required = verification_request();
+    document_required.body.requireDocumentNumberDisclosure = true;
+    assert_case(
+        "full_submission_missing_document_disclosure",
+        pure::assertDigitalPassportVerificationSubmissionMatchesRequest(
+            document_required,
+            submission.clone(),
+        ),
+        rows,
+    );
+    let mut state_required = verification_request();
+    state_required.body.requireIssuingStateDisclosure = true;
+    assert_case(
+        "full_submission_missing_issuing_state_disclosure",
+        pure::assertDigitalPassportVerificationSubmissionMatchesRequest(
+            state_required,
+            submission.clone(),
+        ),
+        rows,
+    );
+    let mut age_required = presentation_request();
+    age_required.requireAgeOverThreshold = true;
+    age_required.requestedAgeThresholdYears = rt::BoundedUint::<255>::new(18).unwrap();
+    let mut age_presentation = presentation.clone();
+    age_presentation.disclosed.proveAgeOverThreshold = true;
+    age_presentation.disclosed.ageThresholdYears = rt::BoundedUint::<255>::new(21).unwrap();
+    assert_case(
+        "full_request_age_threshold_mismatch",
+        pure::assertDigitalPassportPresentationSatisfiesRequest(
+            credential.clone(),
+            age_required,
+            age_presentation,
+            presentation_proof.clone(),
+        ),
+        rows,
+    );
+    let mut missing_first_name = presentation.clone();
+    missing_first_name.disclosed.revealFirstName = false;
+    assert_case(
+        "full_request_missing_first_name_disclosure",
+        pure::assertDigitalPassportPresentationSatisfiesRequest(
+            credential.clone(),
+            presentation_request(),
+            missing_first_name,
+            presentation_proof.clone(),
+        ),
+        rows,
+    );
+    let mut bad_last_name = presentation.clone();
+    bad_last_name.disclosed.revealLastName = true;
+    bad_last_name.disclosed.lastNameOpening = b32(111);
+    assert_case(
+        "full_presentation_last_name_opening_mismatch",
+        pure::assertValidDigitalPassportPresentation(
+            credential.clone(),
+            credential_proof.clone(),
+            bad_last_name,
+            presentation_proof.clone(),
+        ),
+        rows,
+    );
+    let mut null_parts = parts.clone();
+    null_parts.claimValues.documentNumberValue = rt::FixedBytes::new([0; 32]);
+    null_parts.openings.documentNumberOpening = rt::FixedBytes::new([0; 32]);
+    let mut null_credential = credential.clone();
+    null_credential.claimCommitments.documentNumberCommitment =
+        pure::documentNumberNullCommitment().unwrap();
+    null_credential.claimRoot =
+        pure::digitalPassportClaimRoot(null_credential.claimCommitments.clone()).unwrap();
+    let null_root = pure::digitalPassportCredentialBodyRoot(null_credential.clone()).unwrap();
+    assert_eq!(
+        hex::encode(null_root.into_array()),
+        vectors["nullCredentialBodyRoot"]
+    );
+    let null_proof = proof(13, vectors["nullIssuanceScalar"].as_str().unwrap());
+    assert_case(
+        "full_null_document_private_issuance_valid",
+        pure::assertValidDigitalPassportIssuanceResult(self::issuance_result(
+            &null_credential,
+            &null_proof,
+            &null_parts,
+        )),
+        rows,
+    );
+    let mut null_presentation = presentation.clone();
+    null_presentation.credentialClaimRoot = null_credential.claimRoot;
+    let null_presentation_root =
+        pure::digitalPassportPresentationBodyRoot(null_presentation.clone()).unwrap();
+    assert_eq!(
+        hex::encode(null_presentation_root.into_array()),
+        vectors["nullPresentationBodyRoot"]
+    );
+    let hidden_proof = proof(17, vectors["nullPresentationScalar"].as_str().unwrap());
+    assert_case(
+        "full_null_document_hidden_valid",
+        pure::assertValidDigitalPassportPresentation(
+            null_credential.clone(),
+            null_proof.clone(),
+            null_presentation.clone(),
+            hidden_proof,
+        ),
+        rows,
+    );
+    let mut revealing_null = null_presentation;
+    revealing_null.disclosed.revealDocumentNumber = true;
+    revealing_null.disclosed.documentNumberValue = b32(1);
+    revealing_null.disclosed.documentNumberOpening = b32(2);
+    let revealing_proof = proof(19, vectors["nullRevealingScalar"].as_str().unwrap());
+    assert_case(
+        "full_null_document_reveal_rejected",
+        pure::assertValidDigitalPassportPresentation(
+            null_credential,
+            null_proof,
+            revealing_null,
+            revealing_proof,
         ),
         rows,
     );

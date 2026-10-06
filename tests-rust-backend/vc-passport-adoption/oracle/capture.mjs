@@ -68,6 +68,7 @@ const rows = [
   run('date_of_birth_commitment_max', () => pureCircuits.dateOfBirthCommitment(4294967295n, b32(32))),
   run('claim_root_base', () => pureCircuits.digitalPassportClaimRoot(claims)),
   run('claim_root_changed_document', () => pureCircuits.digitalPassportClaimRoot({ ...claims, documentNumberCommitment: b32(99) })),
+  run('claim_root_changed_date', () => pureCircuits.digitalPassportClaimRoot({ ...claims, dateOfBirthCommitment: b32(99) })),
   run('schema_valid', () => pureCircuits.assertValidSchemaRef(schema)),
   run('schema_missing_package', () => pureCircuits.assertValidSchemaRef({ ...schema, packageId: new Uint8Array(32) })),
   run('schema_missing_schema', () => pureCircuits.assertValidSchemaRef({ ...schema, schemaId: new Uint8Array(32) })),

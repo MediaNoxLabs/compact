@@ -13,7 +13,9 @@
     "reported_ledger": "8.0.2",
     "runtime_version": "0.16.0",
     "compiler_sha256": "d226e593b843772298b82804b106586b58023fd16fa4447c907ad2a6236b3434",
-    "generated_js_sha256": "4f11e79b00f57514a0d205dfa31406d155ecdbe93e1b4dcdb25f43bc34ffdcb3"
+    "generated_js_sha256": "4f11e79b00f57514a0d205dfa31406d155ecdbe93e1b4dcdb25f43bc34ffdcb3",
+    "runtime_package_json_sha256": "ac4f818510afca0d17758b4c38af613f7b1a489aec96633548d0d361683f124c",
+    "runtime_js_tree_sha256": "916d8a59653201985d642db598a1fdd795899fb31e8816e890c04202b04d6635"
   },
   "branch_typescript_and_rust": {
     "compiler_version": "0.31.133",
@@ -22,21 +24,23 @@
     "runtime_abi": 50,
     "compiler_sha256": "e6d066d5e52b2381b82a070be6ffb5592f728974d49e968cef7bf7b0022be5b2",
     "generated_js_sha256": "e22bb7771e98272e4e3fba0f45e584c893194e81ed7b23d2d05679cb5c01a638",
-    "checked_in_generated_rust_sha256": "758c3c1bbd1f87eda347c9912fe5b95ad03d9f165f05f7f2ab0440b2ad34062d"
+    "checked_in_generated_rust_sha256": "758c3c1bbd1f87eda347c9912fe5b95ad03d9f165f05f7f2ab0440b2ad34062d",
+    "runtime_package_json_sha256": "38f113eeb408c9b7d51fc67c5688f3b9fcceff4bba0047b79413bbe0ad1d45b0",
+    "runtime_js_tree_sha256": "f419a43fde542e38f8c50bc77f4cf8a02688c8588e32868e05a0d9b3d64b7af1"
   },
   "oracle_files": {
-    "capture.mjs": "39435df61faf5313bc3cde253e66bf046c21e6e8a74edfc25febc76f0bc7b3a5",
+    "capture.mjs": "7516b41e82874911d2a9c17ef50fb7448a662ee3b11966ce03e467490a62febf",
     "capture-age.mjs": "82ecf1fec829ec4c239925ca0cf269608249b0ea9b957ff3a0d209c0cffcf127",
     "capture-request.mjs": "da48fb65012864e386cabe4a549bfeb37cb26fe91d23e99209b32a125eb739ba",
-    "branch-ts-capture.json": "982f1d7fae9d4c9330b451ad533d15d92c2fdca9c051f11e6c9cb23df57a0e0a",
-    "upstream-ts-capture.json": "599af399fbaba0b374586cd08ffac124fdc0eeef2b823bf0a84b8dabdb17dc28",
+    "branch-ts-capture.json": "3d8e60eed38396e3c7b68b7bc67c97535977b4cc56ed8c8e80239d13ab2401a3",
+    "upstream-ts-capture.json": "cf2058658d9710e59cdb7bb09417f2965ce0f5967933c25816f6835135c4370f",
     "branch-age-capture.json": "a8cbe32cda7532adf325910214d7b2a4c91ca9da6a95a86946a5ddd32703ce10",
     "upstream-age-capture.json": "3d0b9650e228b6a2fff047b87b5e1a85e7a098adf43c5be0d83c666cba686909",
     "branch-request-capture.json": "941e4979ad703457951bcea2dab0436dc91d63b2dbc2d5247bf8c734bf86a4c8",
     "upstream-request-capture.json": "0420670a23d917a2889609051a1c61716737f9cc12167c2c00891877efc3fc0c",
     "age-inputs.json": "f822c1ceecd4932685420a4ffaa91edfd4d0e746621c6183aa9e95fc261a7701",
-    "coverage.json": "5538f0e20590dc53b8c1fef9aa146d6c0dbcb4f3297129e10e0d2ef0c704e12d",
-    "replay.py": "269eae41828df59e923be352d2742a3d89dd620cfc1040c3a7e3f7b6b66cd96a",
+    "coverage.json": "ec9ef856e4b1993b1646fd893c4a3bbb25989d70f7709cb8d8952502e22b6772",
+    "replay.py": "68bc8f1cf74ecedd181dd438ebc4645d55962ab6bef2a0ab825ad62d185bfe07",
     "capture-private-parts.mjs": "14f681ad5c342b0f8b805e28feb7a9d2ca8aba42a01ac59d35a51bdc4bb9471d",
     "branch-private-parts-capture.json": "191ea8d98b682364acb57e1a7e002beb2efb6b1c15fad20ebe1d02e48a5f1c76",
     "upstream-private-parts-capture.json": "fa9aa809c68d6e9571674a279fe54d86a65946aae1ce9a0ad4eb3bcf55fda6a5",
@@ -58,14 +62,17 @@
     "capture-protocol-roundtrip.mjs": "f00dfd80693295808581b8c94aafd84e0193d3d7eea5d6d4f4d9bd5c86f3a9d8",
     "upstream-protocol-roundtrip-capture.json": "49fce9f398253ea68a13f957bbccb578c58968dbaf29d44db160b83d9c8f4e01",
     "branch-protocol-roundtrip-capture.json": "047afbd42673dd4c048fd53041988399c56d3d7c54d939443c02048ad6ff9dbd",
-    "capture-complete-flow.mjs": "b7a32f0fbdfa2f74402c1fa2d1b73d4e17782addc13e16db36263b376cef6da3",
-    "upstream-complete-flow-capture.json": "2611630f6d729d0f2cf632598d3acb2e57c41017358552927149529a19d56435",
-    "branch-complete-flow-capture.json": "c6fad951173b5437dab4aa8051f1079ebdb00c2355a0f44b4f823af7534d3c0b"
+    "capture-complete-flow.mjs": "f4e0f00685adc1e77ef7a5ad698624efd325c176b46f1e57ac49d8a9b36389a7",
+    "upstream-complete-flow-capture.json": "763e3cd6dbb3cfd108392d8ff0257db2e4b9198d18c2d23ba87b0a929f031f2e",
+    "branch-complete-flow-capture.json": "298e0f5f8abf7528d5ef0743424706024df824a780f4367eeef10f3dbbc92ec2",
+    "capture-codec.mjs": "59c715c8fa700b7574c9b6d62884231e76b2523bf86a24ea35803421100dcd72",
+    "branch-codec-capture.json": "7241605414ec344e769f496bd08416e2cac4ca8da8bccdc0974139b1e1f82de6",
+    "upstream-codec-capture.json": "c5faf1b6f395a3c73637b1ceafce5822a9da1bcadb4fab32f7e3290e120e9c86"
   },
   "acceptance": {
     "export_count": 75,
     "directly_compared_exports": 75,
-    "direct_cases": 193,
+    "direct_cases": 202,
     "branch_vs_upstream_rows_equal": true,
     "rust_direct_tests": [
       "pure_oracle.rs",
@@ -78,12 +85,34 @@
       "signed_flow.rs",
       "complete_flow.rs"
     ],
-    "pure_only": true
+    "pure_only": true,
+    "codec_profiles_equal": true,
+    "credential_and_proof_codec_vectors": 4
   },
   "limits": [
     "All 75 exports have sampled direct cases; this is not exhaustive branch coverage or a full protocol simulation.",
     "No circuit proof, ledger transaction, wallet, or simulator behavior applies to this pure-only closure.",
     "Matching selected outputs do not establish protocol-wide compatibility between ledger 8.0.2 and 8.0.3.",
-    "The signed flow validates native Jubjub/Schnorr logic in pure circuits; no generated ZK circuit proof or ledger application is involved."
-  ]
+    "The signed flow validates native Jubjub/Schnorr logic in pure circuits; no generated ZK circuit proof or ledger application is involved.",
+    "Cross-language codec checks compare exact typed FAB chunks, alignment, and MCV1 framing for four selected credential/proof samples; they do not implement a Rust transport decoder or exhaust all credential values."
+  ],
+  "codec_sources": {
+    "codecs.ts": {
+      "git_blob_sha1": "3133499423ad0e47b6c68bf24db8a06a2cc31781",
+      "sha256": "b38ab51b1ef001a8d54506ac28da5980381f68e7fcf906da629e0e3b572c893f"
+    },
+    "compact-value-codec.ts": {
+      "git_blob_sha1": "a8c4fa72bc35d76dd7482b5675a0f8d2a2057a09",
+      "sha256": "f70a6c56d68e2b126a25bb60e1f9a25ea9cbeeaa7696ba506c1eba77c2a48681"
+    }
+  },
+  "compiler_metadata": {
+    "source": "frozen branch compactc --target rust --skip-zk, unedited 17-file closure",
+    "schema_version": 20,
+    "pure_circuits": 89,
+    "stateful_circuits": 0,
+    "ledger_fields": 0,
+    "witnesses": 0,
+    "ir_sha256": "fd506d53ea5747fb7f63252c0c6338f62dbdc66be4f2b5df3a3734336d3bddc8"
+  }
 }

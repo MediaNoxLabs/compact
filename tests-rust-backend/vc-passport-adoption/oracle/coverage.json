@@ -2,7 +2,7 @@
   "format": "compact-vc-passport-adoption-coverage/v1",
   "total_exports": 75,
   "directly_checked_exports": 75,
-  "direct_cases": 193,
+  "direct_cases": 202,
   "note": "Every pure export has direct Rust and dual-TypeScript sampled behavior evidence; this is not exhaustive branch coverage or protocol-wide compatibility.",
   "exports": [
     {
@@ -284,7 +284,8 @@
       "evidence": "direct_rust_and_dual_typescript",
       "cases": [
         "claim_root_base",
-        "claim_root_changed_document"
+        "claim_root_changed_document",
+        "claim_root_changed_date"
       ]
     },
     {
@@ -525,7 +526,10 @@
       "evidence": "direct_rust_and_dual_typescript",
       "cases": [
         "presentation_signed_and_disclosed",
-        "presentation_disclosure_mutated"
+        "presentation_disclosure_mutated",
+        "full_presentation_last_name_opening_mismatch",
+        "full_null_document_hidden_valid",
+        "full_null_document_reveal_rejected"
       ]
     },
     {
@@ -534,7 +538,9 @@
       "cases": [
         "request_satisfied",
         "request_challenge_changed",
-        "request_adds_last_name"
+        "request_adds_last_name",
+        "full_request_age_threshold_mismatch",
+        "full_request_missing_first_name_disclosure"
       ]
     },
     {
@@ -597,7 +603,8 @@
       "evidence": "direct_rust_and_dual_typescript",
       "cases": [
         "full_issuance_result_valid",
-        "full_issuance_result_private_tamper"
+        "full_issuance_result_private_tamper",
+        "full_null_document_private_issuance_valid"
       ]
     },
     {
@@ -629,7 +636,9 @@
       "evidence": "direct_rust_and_dual_typescript",
       "cases": [
         "full_submission_matches_request",
-        "full_submission_missing_disclosure"
+        "full_submission_missing_disclosure",
+        "full_submission_missing_document_disclosure",
+        "full_submission_missing_issuing_state_disclosure"
       ]
     },
     {

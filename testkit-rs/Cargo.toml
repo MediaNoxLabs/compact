@@ -1,0 +1,38 @@
+# This file is part of Compact.
+# Copyright (C) 2026 Midnight Foundation
+# SPDX-License-Identifier: Apache-2.0
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#  	http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+[package]
+name = "midnight-compact-testkit"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+license = "Apache-2.0"
+description = "Typed plain-ledger Compact scenarios over the ledger VM"
+publish = false
+
+[dependencies]
+midnight-compact-runtime = { path = "../runtime-rs", version = "=0.1.0" }
+midnight-onchain-runtime = "=3.0.0"
+midnight-onchain-vm = "=3.0.0"
+midnight-zswap = "=8.0.3"
+
+[dev-dependencies]
+midnight-base-crypto = "=1.0.0"
+midnight-coin-structure = "=2.0.1"
+compact-rust-counter-parameter-fixture = { path = "../tests-rust-backend/counter-parameter" }
+compact-rust-witnesses-oracle-fixture = { path = "../tests-rust-backend/witnesses-oracle" }
+compact-rust-set-size-oracle-fixture = { path = "../tests-rust-backend/set-size-oracle" }
+compact-rust-witness-conditional-fixture = { path = "../tests-rust-backend/witness-conditional" }
+serde_json = "1"

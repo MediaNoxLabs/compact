@@ -4589,6 +4589,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "midnight-compact-testkit"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-counter-parameter-fixture",
+ "compact-rust-set-size-oracle-fixture",
+ "compact-rust-witness-conditional-fixture",
+ "compact-rust-witnesses-oracle-fixture",
+ "midnight-base-crypto",
+ "midnight-coin-structure",
+ "midnight-compact-runtime",
+ "midnight-onchain-runtime",
+ "midnight-onchain-vm",
+ "midnight-zswap",
+ "serde_json",
+]
+
+[[package]]
 name = "midnight-curves"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

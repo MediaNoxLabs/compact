@@ -1,0 +1,656 @@
+{
+  "seed_from": "runtime-rs/tests/fixtures/passport-dogfood-oracle.json",
+  "seed_sha256": "3a34c17c834bdba3d84d1502c4abe509b36f7482fddbe5d7b2a78cbf94a279ca",
+  "scenarios": {
+    "accept_birthday_passed": {
+      "proveAgeOverThreshold": true,
+      "ageThresholdYears": "18",
+      "currentDay": "19894",
+      "dateOfBirthDays": "7439",
+      "dateOfBirthOpening": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+      "dateOfBirthCommitment": "fd6c0b3a73370d1b31c3d5400142035356f18c5afe1c2dcd28053bb1ed87cf31",
+      "currentDate": {
+        "year": "2024",
+        "month": "6",
+        "day": "20",
+        "yearAdjustedQuotient4": "506",
+        "yearAdjustedQuotient100": "20",
+        "yearAdjustedQuotient400": "5",
+        "marchBasedMonthDayOffset": "92"
+      },
+      "dateOfBirthDate": {
+        "year": "1990",
+        "month": "5",
+        "day": "15",
+        "yearAdjustedQuotient4": "497",
+        "yearAdjustedQuotient100": "19",
+        "yearAdjustedQuotient400": "4",
+        "marchBasedMonthDayOffset": "61"
+      }
+    },
+    "accept_birthday_pending": {
+      "proveAgeOverThreshold": true,
+      "ageThresholdYears": "18",
+      "currentDay": "19792",
+      "dateOfBirthDays": "7439",
+      "dateOfBirthOpening": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+      "dateOfBirthCommitment": "fd6c0b3a73370d1b31c3d5400142035356f18c5afe1c2dcd28053bb1ed87cf31",
+      "currentDate": {
+        "year": "2024",
+        "month": "3",
+        "day": "10",
+        "yearAdjustedQuotient4": "506",
+        "yearAdjustedQuotient100": "20",
+        "yearAdjustedQuotient400": "5",
+        "marchBasedMonthDayOffset": "0"
+      },
+      "dateOfBirthDate": {
+        "year": "1990",
+        "month": "5",
+        "day": "15",
+        "yearAdjustedQuotient4": "497",
+        "yearAdjustedQuotient100": "19",
+        "yearAdjustedQuotient400": "4",
+        "marchBasedMonthDayOffset": "61"
+      }
+    },
+    "accept_february_leap_dob": {
+      "proveAgeOverThreshold": true,
+      "ageThresholdYears": "20",
+      "currentDay": "19782",
+      "dateOfBirthDays": "11016",
+      "dateOfBirthOpening": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+      "dateOfBirthCommitment": "d4832a8b0363d7c633595ea50de21690bba11eeb9c6639e75b97bc399dd313d3",
+      "currentDate": {
+        "year": "2024",
+        "month": "2",
+        "day": "29",
+        "yearAdjustedQuotient4": "505",
+        "yearAdjustedQuotient100": "20",
+        "yearAdjustedQuotient400": "5",
+        "marchBasedMonthDayOffset": "337"
+      },
+      "dateOfBirthDate": {
+        "year": "2000",
+        "month": "2",
+        "day": "29",
+        "yearAdjustedQuotient4": "499",
+        "yearAdjustedQuotient100": "19",
+        "yearAdjustedQuotient400": "4",
+        "marchBasedMonthDayOffset": "337"
+      }
+    },
+    "accept_february_nonleap": {
+      "proveAgeOverThreshold": true,
+      "ageThresholdYears": "20",
+      "currentDay": "19781",
+      "dateOfBirthDays": "11381",
+      "dateOfBirthOpening": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+      "dateOfBirthCommitment": "56fe2db1587d1e4e6d78f6b5547424d416eaa02feee3003087644326fbb87ecb",
+      "currentDate": {
+        "year": "2024",
+        "month": "2",
+        "day": "28",
+        "yearAdjustedQuotient4": "505",
+        "yearAdjustedQuotient100": "20",
+        "yearAdjustedQuotient400": "5",
+        "marchBasedMonthDayOffset": "337"
+      },
+      "dateOfBirthDate": {
+        "year": "2001",
+        "month": "2",
+        "day": "28",
+        "yearAdjustedQuotient4": "500",
+        "yearAdjustedQuotient100": "20",
+        "yearAdjustedQuotient400": "5",
+        "marchBasedMonthDayOffset": "337"
+      }
+    },
+    "accept_30day_month": {
+      "proveAgeOverThreshold": true,
+      "ageThresholdYears": "18",
+      "currentDay": "19843",
+      "dateOfBirthDays": "7409",
+      "dateOfBirthOpening": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+      "dateOfBirthCommitment": "64c7f93240a059cdf7217e051fe2358d29681810e7010b36a35867f5594d1c53",
+      "currentDate": {
+        "year": "2024",
+        "month": "4",
+        "day": "30",
+        "yearAdjustedQuotient4": "506",
+        "yearAdjustedQuotient100": "20",
+        "yearAdjustedQuotient400": "5",
+        "marchBasedMonthDayOffset": "31"
+      },
+      "dateOfBirthDate": {
+        "year": "1990",
+        "month": "4",
+        "day": "15",
+        "yearAdjustedQuotient4": "497",
+        "yearAdjustedQuotient100": "19",
+        "yearAdjustedQuotient400": "4",
+        "marchBasedMonthDayOffset": "31"
+      }
+    },
+    "accept_birthday_today_at_threshold": {
+      "proveAgeOverThreshold": true,
+      "ageThresholdYears": "34",
+      "currentDay": "19858",
+      "dateOfBirthDays": "7439",
+      "dateOfBirthOpening": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+      "dateOfBirthCommitment": "fd6c0b3a73370d1b31c3d5400142035356f18c5afe1c2dcd28053bb1ed87cf31",
+      "currentDate": {
+        "year": "2024",
+        "month": "5",
+        "day": "15",
+        "yearAdjustedQuotient4": "506",
+        "yearAdjustedQuotient100": "20",
+        "yearAdjustedQuotient400": "5",
+        "marchBasedMonthDayOffset": "61"
+      },
+      "dateOfBirthDate": {
+        "year": "1990",
+        "month": "5",
+        "day": "15",
+        "yearAdjustedQuotient4": "497",
+        "yearAdjustedQuotient100": "19",
+        "yearAdjustedQuotient400": "4",
+        "marchBasedMonthDayOffset": "61"
+      }
+    },
+    "reject_prove_age_disabled": {
+      "proveAgeOverThreshold": false,
+      "ageThresholdYears": "18",
+      "currentDay": "19894",
+      "dateOfBirthDays": "7439",
+      "dateOfBirthOpening": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+      "dateOfBirthCommitment": "fd6c0b3a73370d1b31c3d5400142035356f18c5afe1c2dcd28053bb1ed87cf31",
+      "currentDate": {
+        "year": "2024",
+        "month": "6",
+        "day": "20",
+        "yearAdjustedQuotient4": "506",
+        "yearAdjustedQuotient100": "20",
+        "yearAdjustedQuotient400": "5",
+        "marchBasedMonthDayOffset": "92"
+      },
+      "dateOfBirthDate": {
+        "year": "1990",
+        "month": "5",
+        "day": "15",
+        "yearAdjustedQuotient4": "497",
+        "yearAdjustedQuotient100": "19",
+        "yearAdjustedQuotient400": "4",
+        "marchBasedMonthDayOffset": "61"
+      }
+    },
+    "reject_dob_commitment_mismatch": {
+      "proveAgeOverThreshold": true,
+      "ageThresholdYears": "18",
+      "currentDay": "19894",
+      "dateOfBirthDays": "7439",
+      "dateOfBirthOpening": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+      "dateOfBirthCommitment": "5b26fdd4c0b13d01bd3788dd7be36949a5b85ba0adc280da5fd695f2676b86b6",
+      "currentDate": {
+        "year": "2024",
+        "month": "6",
+        "day": "20",
+        "yearAdjustedQuotient4": "506",
+        "yearAdjustedQuotient100": "20",
+        "yearAdjustedQuotient400": "5",
+        "marchBasedMonthDayOffset": "92"
+      },
+      "dateOfBirthDate": {
+        "year": "1990",
+        "month": "5",
+        "day": "15",
+        "yearAdjustedQuotient4": "497",
+        "yearAdjustedQuotient100": "19",
+        "yearAdjustedQuotient400": "4",
+        "marchBasedMonthDayOffset": "61"
+      }
+    },
+    "reject_current_before_dob": {
+      "proveAgeOverThreshold": true,
+      "ageThresholdYears": "18",
+      "currentDay": "3652",
+      "dateOfBirthDays": "7439",
+      "dateOfBirthOpening": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+      "dateOfBirthCommitment": "fd6c0b3a73370d1b31c3d5400142035356f18c5afe1c2dcd28053bb1ed87cf31",
+      "currentDate": {
+        "year": "2024",
+        "month": "6",
+        "day": "20",
+        "yearAdjustedQuotient4": "506",
+        "yearAdjustedQuotient100": "20",
+        "yearAdjustedQuotient400": "5",
+        "marchBasedMonthDayOffset": "92"
+      },
+      "dateOfBirthDate": {
+        "year": "1990",
+        "month": "5",
+        "day": "15",
+        "yearAdjustedQuotient4": "497",
+        "yearAdjustedQuotient100": "19",
+        "yearAdjustedQuotient400": "4",
+        "marchBasedMonthDayOffset": "61"
+      }
+    },
+    "reject_year_before_1970": {
+      "proveAgeOverThreshold": true,
+      "ageThresholdYears": "18",
+      "currentDay": "19894",
+      "dateOfBirthDays": "7439",
+      "dateOfBirthOpening": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+      "dateOfBirthCommitment": "fd6c0b3a73370d1b31c3d5400142035356f18c5afe1c2dcd28053bb1ed87cf31",
+      "currentDate": {
+        "year": "1969",
+        "month": "6",
+        "day": "20",
+        "yearAdjustedQuotient4": "492",
+        "yearAdjustedQuotient100": "19",
+        "yearAdjustedQuotient400": "4",
+        "marchBasedMonthDayOffset": "92"
+      },
+      "dateOfBirthDate": {
+        "year": "1990",
+        "month": "5",
+        "day": "15",
+        "yearAdjustedQuotient4": "497",
+        "yearAdjustedQuotient100": "19",
+        "yearAdjustedQuotient400": "4",
+        "marchBasedMonthDayOffset": "61"
+      }
+    },
+    "reject_month_zero": {
+      "proveAgeOverThreshold": true,
+      "ageThresholdYears": "18",
+      "currentDay": "19894",
+      "dateOfBirthDays": "7439",
+      "dateOfBirthOpening": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+      "dateOfBirthCommitment": "fd6c0b3a73370d1b31c3d5400142035356f18c5afe1c2dcd28053bb1ed87cf31",
+      "currentDate": {
+        "year": "2024",
+        "month": "0",
+        "day": "20",
+        "yearAdjustedQuotient4": "505",
+        "yearAdjustedQuotient100": "20",
+        "yearAdjustedQuotient400": "5",
+        "marchBasedMonthDayOffset": "275"
+      },
+      "dateOfBirthDate": {
+        "year": "1990",
+        "month": "5",
+        "day": "15",
+        "yearAdjustedQuotient4": "497",
+        "yearAdjustedQuotient100": "19",
+        "yearAdjustedQuotient400": "4",
+        "marchBasedMonthDayOffset": "61"
+      }
+    },
+    "reject_month_thirteen": {
+      "proveAgeOverThreshold": true,
+      "ageThresholdYears": "18",
+      "currentDay": "19894",
+      "dateOfBirthDays": "7439",
+      "dateOfBirthOpening": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+      "dateOfBirthCommitment": "fd6c0b3a73370d1b31c3d5400142035356f18c5afe1c2dcd28053bb1ed87cf31",
+      "currentDate": {
+        "year": "2024",
+        "month": "13",
+        "day": "20",
+        "yearAdjustedQuotient4": "506",
+        "yearAdjustedQuotient100": "20",
+        "yearAdjustedQuotient400": "5",
+        "marchBasedMonthDayOffset": "306"
+      },
+      "dateOfBirthDate": {
+        "year": "1990",
+        "month": "5",
+        "day": "15",
+        "yearAdjustedQuotient4": "497",
+        "yearAdjustedQuotient100": "19",
+        "yearAdjustedQuotient400": "4",
+        "marchBasedMonthDayOffset": "61"
+      }
+    },
+    "reject_day_zero": {
+      "proveAgeOverThreshold": true,
+      "ageThresholdYears": "18",
+      "currentDay": "19894",
+      "dateOfBirthDays": "7439",
+      "dateOfBirthOpening": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+      "dateOfBirthCommitment": "fd6c0b3a73370d1b31c3d5400142035356f18c5afe1c2dcd28053bb1ed87cf31",
+      "currentDate": {
+        "year": "2024",
+        "month": "6",
+        "day": "0",
+        "yearAdjustedQuotient4": "506",
+        "yearAdjustedQuotient100": "20",
+        "yearAdjustedQuotient400": "5",
+        "marchBasedMonthDayOffset": "92"
+      },
+      "dateOfBirthDate": {
+        "year": "1990",
+        "month": "5",
+        "day": "15",
+        "yearAdjustedQuotient4": "497",
+        "yearAdjustedQuotient100": "19",
+        "yearAdjustedQuotient400": "4",
+        "marchBasedMonthDayOffset": "61"
+      }
+    },
+    "reject_quotient4_invalid": {
+      "proveAgeOverThreshold": true,
+      "ageThresholdYears": "18",
+      "currentDay": "19894",
+      "dateOfBirthDays": "7439",
+      "dateOfBirthOpening": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+      "dateOfBirthCommitment": "fd6c0b3a73370d1b31c3d5400142035356f18c5afe1c2dcd28053bb1ed87cf31",
+      "currentDate": {
+        "year": "2024",
+        "month": "6",
+        "day": "20",
+        "yearAdjustedQuotient4": "507",
+        "yearAdjustedQuotient100": "20",
+        "yearAdjustedQuotient400": "5",
+        "marchBasedMonthDayOffset": "92"
+      },
+      "dateOfBirthDate": {
+        "year": "1990",
+        "month": "5",
+        "day": "15",
+        "yearAdjustedQuotient4": "497",
+        "yearAdjustedQuotient100": "19",
+        "yearAdjustedQuotient400": "4",
+        "marchBasedMonthDayOffset": "61"
+      }
+    },
+    "reject_quotient100_invalid": {
+      "proveAgeOverThreshold": true,
+      "ageThresholdYears": "18",
+      "currentDay": "19894",
+      "dateOfBirthDays": "7439",
+      "dateOfBirthOpening": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+      "dateOfBirthCommitment": "fd6c0b3a73370d1b31c3d5400142035356f18c5afe1c2dcd28053bb1ed87cf31",
+      "currentDate": {
+        "year": "2024",
+        "month": "6",
+        "day": "20",
+        "yearAdjustedQuotient4": "506",
+        "yearAdjustedQuotient100": "21",
+        "yearAdjustedQuotient400": "5",
+        "marchBasedMonthDayOffset": "92"
+      },
+      "dateOfBirthDate": {
+        "year": "1990",
+        "month": "5",
+        "day": "15",
+        "yearAdjustedQuotient4": "497",
+        "yearAdjustedQuotient100": "19",
+        "yearAdjustedQuotient400": "4",
+        "marchBasedMonthDayOffset": "61"
+      }
+    },
+    "reject_quotient400_invalid": {
+      "proveAgeOverThreshold": true,
+      "ageThresholdYears": "18",
+      "currentDay": "19894",
+      "dateOfBirthDays": "7439",
+      "dateOfBirthOpening": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+      "dateOfBirthCommitment": "fd6c0b3a73370d1b31c3d5400142035356f18c5afe1c2dcd28053bb1ed87cf31",
+      "currentDate": {
+        "year": "2024",
+        "month": "6",
+        "day": "20",
+        "yearAdjustedQuotient4": "506",
+        "yearAdjustedQuotient100": "20",
+        "yearAdjustedQuotient400": "6",
+        "marchBasedMonthDayOffset": "92"
+      },
+      "dateOfBirthDate": {
+        "year": "1990",
+        "month": "5",
+        "day": "15",
+        "yearAdjustedQuotient4": "497",
+        "yearAdjustedQuotient100": "19",
+        "yearAdjustedQuotient400": "4",
+        "marchBasedMonthDayOffset": "61"
+      }
+    },
+    "reject_month_day_offset_invalid": {
+      "proveAgeOverThreshold": true,
+      "ageThresholdYears": "18",
+      "currentDay": "19894",
+      "dateOfBirthDays": "7439",
+      "dateOfBirthOpening": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+      "dateOfBirthCommitment": "fd6c0b3a73370d1b31c3d5400142035356f18c5afe1c2dcd28053bb1ed87cf31",
+      "currentDate": {
+        "year": "2024",
+        "month": "6",
+        "day": "20",
+        "yearAdjustedQuotient4": "506",
+        "yearAdjustedQuotient100": "20",
+        "yearAdjustedQuotient400": "5",
+        "marchBasedMonthDayOffset": "93"
+      },
+      "dateOfBirthDate": {
+        "year": "1990",
+        "month": "5",
+        "day": "15",
+        "yearAdjustedQuotient4": "497",
+        "yearAdjustedQuotient100": "19",
+        "yearAdjustedQuotient400": "4",
+        "marchBasedMonthDayOffset": "61"
+      }
+    },
+    "reject_31day_month_overflow": {
+      "proveAgeOverThreshold": true,
+      "ageThresholdYears": "18",
+      "currentDay": "19894",
+      "dateOfBirthDays": "7439",
+      "dateOfBirthOpening": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+      "dateOfBirthCommitment": "fd6c0b3a73370d1b31c3d5400142035356f18c5afe1c2dcd28053bb1ed87cf31",
+      "currentDate": {
+        "year": "2024",
+        "month": "1",
+        "day": "32",
+        "yearAdjustedQuotient4": "505",
+        "yearAdjustedQuotient100": "20",
+        "yearAdjustedQuotient400": "5",
+        "marchBasedMonthDayOffset": "306"
+      },
+      "dateOfBirthDate": {
+        "year": "1990",
+        "month": "5",
+        "day": "15",
+        "yearAdjustedQuotient4": "497",
+        "yearAdjustedQuotient100": "19",
+        "yearAdjustedQuotient400": "4",
+        "marchBasedMonthDayOffset": "61"
+      }
+    },
+    "reject_february_nonleap_29": {
+      "proveAgeOverThreshold": true,
+      "ageThresholdYears": "18",
+      "currentDay": "19894",
+      "dateOfBirthDays": "7439",
+      "dateOfBirthOpening": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+      "dateOfBirthCommitment": "fd6c0b3a73370d1b31c3d5400142035356f18c5afe1c2dcd28053bb1ed87cf31",
+      "currentDate": {
+        "year": "2023",
+        "month": "2",
+        "day": "29",
+        "yearAdjustedQuotient4": "505",
+        "yearAdjustedQuotient100": "20",
+        "yearAdjustedQuotient400": "5",
+        "marchBasedMonthDayOffset": "337"
+      },
+      "dateOfBirthDate": {
+        "year": "1990",
+        "month": "5",
+        "day": "15",
+        "yearAdjustedQuotient4": "497",
+        "yearAdjustedQuotient100": "19",
+        "yearAdjustedQuotient400": "4",
+        "marchBasedMonthDayOffset": "61"
+      }
+    },
+    "reject_february_leap_30": {
+      "proveAgeOverThreshold": true,
+      "ageThresholdYears": "18",
+      "currentDay": "19894",
+      "dateOfBirthDays": "7439",
+      "dateOfBirthOpening": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+      "dateOfBirthCommitment": "fd6c0b3a73370d1b31c3d5400142035356f18c5afe1c2dcd28053bb1ed87cf31",
+      "currentDate": {
+        "year": "2024",
+        "month": "2",
+        "day": "30",
+        "yearAdjustedQuotient4": "505",
+        "yearAdjustedQuotient100": "20",
+        "yearAdjustedQuotient400": "5",
+        "marchBasedMonthDayOffset": "337"
+      },
+      "dateOfBirthDate": {
+        "year": "1990",
+        "month": "5",
+        "day": "15",
+        "yearAdjustedQuotient4": "497",
+        "yearAdjustedQuotient100": "19",
+        "yearAdjustedQuotient400": "4",
+        "marchBasedMonthDayOffset": "61"
+      }
+    },
+    "reject_30day_month_overflow": {
+      "proveAgeOverThreshold": true,
+      "ageThresholdYears": "18",
+      "currentDay": "19894",
+      "dateOfBirthDays": "7439",
+      "dateOfBirthOpening": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+      "dateOfBirthCommitment": "fd6c0b3a73370d1b31c3d5400142035356f18c5afe1c2dcd28053bb1ed87cf31",
+      "currentDate": {
+        "year": "2023",
+        "month": "4",
+        "day": "31",
+        "yearAdjustedQuotient4": "505",
+        "yearAdjustedQuotient100": "20",
+        "yearAdjustedQuotient400": "5",
+        "marchBasedMonthDayOffset": "31"
+      },
+      "dateOfBirthDate": {
+        "year": "1990",
+        "month": "5",
+        "day": "15",
+        "yearAdjustedQuotient4": "497",
+        "yearAdjustedQuotient100": "19",
+        "yearAdjustedQuotient400": "4",
+        "marchBasedMonthDayOffset": "61"
+      }
+    },
+    "reject_epoch_days_mismatch": {
+      "proveAgeOverThreshold": true,
+      "ageThresholdYears": "18",
+      "currentDay": "19895",
+      "dateOfBirthDays": "7439",
+      "dateOfBirthOpening": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+      "dateOfBirthCommitment": "fd6c0b3a73370d1b31c3d5400142035356f18c5afe1c2dcd28053bb1ed87cf31",
+      "currentDate": {
+        "year": "2024",
+        "month": "6",
+        "day": "20",
+        "yearAdjustedQuotient4": "506",
+        "yearAdjustedQuotient100": "20",
+        "yearAdjustedQuotient400": "5",
+        "marchBasedMonthDayOffset": "92"
+      },
+      "dateOfBirthDate": {
+        "year": "1990",
+        "month": "5",
+        "day": "15",
+        "yearAdjustedQuotient4": "497",
+        "yearAdjustedQuotient100": "19",
+        "yearAdjustedQuotient400": "4",
+        "marchBasedMonthDayOffset": "61"
+      }
+    },
+    "reject_age_below_threshold": {
+      "proveAgeOverThreshold": true,
+      "ageThresholdYears": "40",
+      "currentDay": "19894",
+      "dateOfBirthDays": "7439",
+      "dateOfBirthOpening": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+      "dateOfBirthCommitment": "fd6c0b3a73370d1b31c3d5400142035356f18c5afe1c2dcd28053bb1ed87cf31",
+      "currentDate": {
+        "year": "2024",
+        "month": "6",
+        "day": "20",
+        "yearAdjustedQuotient4": "506",
+        "yearAdjustedQuotient100": "20",
+        "yearAdjustedQuotient400": "5",
+        "marchBasedMonthDayOffset": "92"
+      },
+      "dateOfBirthDate": {
+        "year": "1990",
+        "month": "5",
+        "day": "15",
+        "yearAdjustedQuotient4": "497",
+        "yearAdjustedQuotient100": "19",
+        "yearAdjustedQuotient400": "4",
+        "marchBasedMonthDayOffset": "61"
+      }
+    },
+    "reject_before_birthday_disjunct": {
+      "proveAgeOverThreshold": true,
+      "ageThresholdYears": "34",
+      "currentDay": "19853",
+      "dateOfBirthDays": "7439",
+      "dateOfBirthOpening": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+      "dateOfBirthCommitment": "fd6c0b3a73370d1b31c3d5400142035356f18c5afe1c2dcd28053bb1ed87cf31",
+      "currentDate": {
+        "year": "2024",
+        "month": "5",
+        "day": "10",
+        "yearAdjustedQuotient4": "506",
+        "yearAdjustedQuotient100": "20",
+        "yearAdjustedQuotient400": "5",
+        "marchBasedMonthDayOffset": "61"
+      },
+      "dateOfBirthDate": {
+        "year": "1990",
+        "month": "5",
+        "day": "15",
+        "yearAdjustedQuotient4": "497",
+        "yearAdjustedQuotient100": "19",
+        "yearAdjustedQuotient400": "4",
+        "marchBasedMonthDayOffset": "61"
+      }
+    },
+    "reject_before_birthday_first_disjunct": {
+      "proveAgeOverThreshold": true,
+      "ageThresholdYears": "34",
+      "currentDay": "19792",
+      "dateOfBirthDays": "7439",
+      "dateOfBirthOpening": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+      "dateOfBirthCommitment": "fd6c0b3a73370d1b31c3d5400142035356f18c5afe1c2dcd28053bb1ed87cf31",
+      "currentDate": {
+        "year": "2024",
+        "month": "3",
+        "day": "10",
+        "yearAdjustedQuotient4": "506",
+        "yearAdjustedQuotient100": "20",
+        "yearAdjustedQuotient400": "5",
+        "marchBasedMonthDayOffset": "0"
+      },
+      "dateOfBirthDate": {
+        "year": "1990",
+        "month": "5",
+        "day": "15",
+        "yearAdjustedQuotient4": "497",
+        "yearAdjustedQuotient100": "19",
+        "yearAdjustedQuotient400": "4",
+        "marchBasedMonthDayOffset": "61"
+      }
+    }
+  }
+}

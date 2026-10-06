@@ -1,0 +1,81 @@
+{
+  "profile": "branch-0.31.133-ledger8.0.3",
+  "rows": [
+    {
+      "name": "family_schema_valid",
+      "outcome": "ok"
+    },
+    {
+      "name": "family_schema_wrong_package",
+      "outcome": "error",
+      "message": "failed assert: Digital-passport package identifier mismatch"
+    },
+    {
+      "name": "family_schema_wrong_schema",
+      "outcome": "error",
+      "message": "failed assert: Digital-passport schema identifier mismatch"
+    },
+    {
+      "name": "family_schema_wrong_major",
+      "outcome": "error",
+      "message": "failed assert: Digital-passport major version mismatch"
+    },
+    {
+      "name": "family_schema_wrong_minor",
+      "outcome": "error",
+      "message": "failed assert: Digital-passport minor version mismatch"
+    },
+    {
+      "name": "matching_schema_valid",
+      "outcome": "ok"
+    },
+    {
+      "name": "matching_schema_minor_mismatch",
+      "outcome": "error",
+      "message": "failed assert: Schema reference mismatch"
+    },
+    {
+      "name": "matching_schema_invalid_expected",
+      "outcome": "error",
+      "message": "failed assert: Schema package id must be set"
+    },
+    {
+      "name": "verification_method_valid",
+      "outcome": "ok"
+    },
+    {
+      "name": "verification_method_missing_controller",
+      "outcome": "error",
+      "message": "failed assert: Verification method controller address must be set"
+    },
+    {
+      "name": "verification_method_missing_id",
+      "outcome": "error",
+      "message": "failed assert: Verification method reference must be set"
+    },
+    {
+      "name": "presentation_request_valid",
+      "outcome": "ok"
+    },
+    {
+      "name": "presentation_request_empty_challenge",
+      "outcome": "error",
+      "message": "failed assert: Digital-passport verifier challenge must be set"
+    },
+    {
+      "name": "presentation_request_zero_age_required",
+      "outcome": "error",
+      "message": "failed assert: Requested age threshold must be positive"
+    },
+    {
+      "name": "presentation_request_nonzero_age_disabled",
+      "outcome": "error",
+      "message": "failed assert: Requested age threshold must be zero when disabled"
+    },
+    {
+      "name": "presentation_request_wrong_schema_minor",
+      "outcome": "error",
+      "message": "failed assert: Digital-passport minor version mismatch"
+    }
+  ]
+}

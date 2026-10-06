@@ -1,0 +1,58 @@
+{
+  "format": "compact-vc-passport-adoption-oracle-provenance/v1",
+  "sources": {
+    "manifest": "examples/rust_backend/vc_passport_adoption/source-manifest.json",
+    "manifest_sha256": "f122c9c890e841d50f2f2980df4229de584333a9eb6c9a4525794f8ce8a77f78",
+    "closure_files": 17,
+    "passport_commit": "2e13b029f7f9e37a7ba1e4d987fdcd8620c4eab3",
+    "core_commit": "1a65558b9fcc1c3334932464ca23141f82c8e974",
+    "published_core_npm_sri": "sha512-VbHryqfKW9qWSdBEyftnmk8z5ELzeAYYZhBxF4oOUJK2ZDmsCTmPi4dRy9qHPtT1rzxH26+PDQt3sO5cDeCb5A=="
+  },
+  "upstream_typescript": {
+    "compiler_version": "0.31.1",
+    "reported_ledger": "8.0.2",
+    "runtime_version": "0.16.0",
+    "compiler_sha256": "d226e593b843772298b82804b106586b58023fd16fa4447c907ad2a6236b3434",
+    "generated_js_sha256": "4f11e79b00f57514a0d205dfa31406d155ecdbe93e1b4dcdb25f43bc34ffdcb3"
+  },
+  "branch_typescript_and_rust": {
+    "compiler_version": "0.31.133",
+    "reported_ledger": "8.0.3",
+    "runtime_version": "0.16.101",
+    "runtime_abi": 50,
+    "compiler_sha256": "e6d066d5e52b2381b82a070be6ffb5592f728974d49e968cef7bf7b0022be5b2",
+    "generated_js_sha256": "e22bb7771e98272e4e3fba0f45e584c893194e81ed7b23d2d05679cb5c01a638",
+    "checked_in_generated_rust_sha256": "758c3c1bbd1f87eda347c9912fe5b95ad03d9f165f05f7f2ab0440b2ad34062d"
+  },
+  "oracle_files": {
+    "capture.mjs": "39435df61faf5313bc3cde253e66bf046c21e6e8a74edfc25febc76f0bc7b3a5",
+    "capture-age.mjs": "82ecf1fec829ec4c239925ca0cf269608249b0ea9b957ff3a0d209c0cffcf127",
+    "capture-request.mjs": "da48fb65012864e386cabe4a549bfeb37cb26fe91d23e99209b32a125eb739ba",
+    "branch-ts-capture.json": "982f1d7fae9d4c9330b451ad533d15d92c2fdca9c051f11e6c9cb23df57a0e0a",
+    "upstream-ts-capture.json": "599af399fbaba0b374586cd08ffac124fdc0eeef2b823bf0a84b8dabdb17dc28",
+    "branch-age-capture.json": "a8cbe32cda7532adf325910214d7b2a4c91ca9da6a95a86946a5ddd32703ce10",
+    "upstream-age-capture.json": "3d0b9650e228b6a2fff047b87b5e1a85e7a098adf43c5be0d83c666cba686909",
+    "branch-request-capture.json": "941e4979ad703457951bcea2dab0436dc91d63b2dbc2d5247bf8c734bf86a4c8",
+    "upstream-request-capture.json": "0420670a23d917a2889609051a1c61716737f9cc12167c2c00891877efc3fc0c",
+    "age-inputs.json": "f822c1ceecd4932685420a4ffaa91edfd4d0e746621c6183aa9e95fc261a7701",
+    "coverage.json": "b896452345b2107cc921bb8c0395df9fa32b2e039e80f80ee8672b0fd2c3d3a9",
+    "replay.py": "1448a71c8481753340c995fae7f3733e5964edc0b5b8d5820a68b7ceec24cfc6"
+  },
+  "acceptance": {
+    "export_count": 75,
+    "directly_compared_exports": 19,
+    "direct_cases": 65,
+    "branch_vs_upstream_rows_equal": true,
+    "rust_direct_tests": [
+      "pure_oracle.rs",
+      "age_predicate.rs",
+      "request_validation.rs"
+    ],
+    "pure_only": true
+  },
+  "limits": [
+    "The 56 compile-only exports have no direct behavior-parity claim.",
+    "No circuit proof, ledger transaction, wallet, or simulator behavior applies to this pure-only closure.",
+    "Matching selected outputs do not establish protocol-wide compatibility between ledger 8.0.2 and 8.0.3."
+  ]
+}

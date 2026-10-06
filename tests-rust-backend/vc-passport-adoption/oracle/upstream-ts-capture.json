@@ -1,0 +1,125 @@
+{
+  "profile": "upstream-0.31.1-ledger8.0.2",
+  "rows": [
+    {
+      "name": "protocol_none_reference",
+      "outcome": "ok",
+      "value": "6d69646e696768743a76633a70726f746f636f6c3a6e6f6e6500000000000000"
+    },
+    {
+      "name": "document_number_null_commitment",
+      "outcome": "ok",
+      "value": "c1a62a311c7f9a87675762a656cc7fc023a01b1143b59c60124e3d8ee7ac2f29"
+    },
+    {
+      "name": "issuance_context_tag",
+      "outcome": "ok",
+      "value": "6d69646e696768743a76633a69737375616e6365000000000000000000000000"
+    },
+    {
+      "name": "presentation_context_tag",
+      "outcome": "ok",
+      "value": "6d69646e696768743a76633a70726573656e746174696f6e0000000000000000"
+    },
+    {
+      "name": "signer_authorization_context_tag",
+      "outcome": "ok",
+      "value": "6d69646e696768743a76633a7369676e65722d617574683a7631000000000000"
+    },
+    {
+      "name": "verifier_request_context_tag",
+      "outcome": "ok",
+      "value": "6d69646e696768743a76633a76657269666965722d7265713a76310000000000"
+    },
+    {
+      "name": "last_name_commitment",
+      "outcome": "ok",
+      "value": "9b226dadd059b34805333f1f8f2ab07930dc0d3814195c470e0d4bdd15f28d98"
+    },
+    {
+      "name": "document_number_commitment",
+      "outcome": "ok",
+      "value": "da30d3ffab90bd516e5ae4e4d5e26f3890d3e6b64e1d7e95c00a19f9a1baefc5"
+    },
+    {
+      "name": "issuing_state_commitment",
+      "outcome": "ok",
+      "value": "19adb431ce1026d863b80e114814cd5930aa4399c7b7c9685bcc2d94f4c5f822"
+    },
+    {
+      "name": "first_name_commitment_opening_a",
+      "outcome": "ok",
+      "value": "a11ec2726b6ccdfe8e1cc0e3066923a1cd71366cb276fc2d26ec82b27c7d9e14"
+    },
+    {
+      "name": "first_name_commitment_opening_b",
+      "outcome": "ok",
+      "value": "316e280303745fedcc3aba12f79658198dd6539ba4e3ca5383313c172605d684"
+    },
+    {
+      "name": "date_of_birth_commitment_zero",
+      "outcome": "ok",
+      "value": "efaef20e6b8940753e828d4bf7d093ce4017867f3f95ed88eaa25d73f8dcc811"
+    },
+    {
+      "name": "date_of_birth_commitment_max",
+      "outcome": "ok",
+      "value": "056bfd667478157190d0996298d40b5f16b064484a62ba13287d38f5783866c7"
+    },
+    {
+      "name": "claim_root_base",
+      "outcome": "ok",
+      "value": "1719d1840150ddc72ed9bd11126c673158594527eb03c0e3935868201a64b28d"
+    },
+    {
+      "name": "claim_root_changed_document",
+      "outcome": "ok",
+      "value": "32414247efdc42abbb2c15d54195fa5b74b5d75eb8cb60aff7e27380cea338c1"
+    },
+    {
+      "name": "schema_valid",
+      "outcome": "ok",
+      "value": "unit"
+    },
+    {
+      "name": "schema_missing_package",
+      "outcome": "error",
+      "message": "failed assert: Schema package id must be set"
+    },
+    {
+      "name": "schema_missing_schema",
+      "outcome": "error",
+      "message": "failed assert: Schema id must be set"
+    },
+    {
+      "name": "schema_zero_major",
+      "outcome": "error",
+      "message": "failed assert: Schema major version must be positive"
+    },
+    {
+      "name": "envelope_valid_initial",
+      "outcome": "ok",
+      "value": "unit"
+    },
+    {
+      "name": "envelope_valid_response",
+      "outcome": "ok",
+      "value": "unit"
+    },
+    {
+      "name": "envelope_invalid_version",
+      "outcome": "error",
+      "message": "failed assert: Protocol message version mismatch"
+    },
+    {
+      "name": "envelope_initial_with_reference",
+      "outcome": "error",
+      "message": "failed assert: Initial protocol message must not reference a previous message"
+    },
+    {
+      "name": "envelope_expiry_before_creation",
+      "outcome": "error",
+      "message": "failed assert: Protocol message expiration must not precede creation"
+    }
+  ]
+}

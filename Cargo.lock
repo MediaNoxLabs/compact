@@ -2559,6 +2559,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-vc-passport-adoption-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
 name = "compact-rust-vector-key-adt-fixture"
 version = "0.1.0"
 dependencies = [

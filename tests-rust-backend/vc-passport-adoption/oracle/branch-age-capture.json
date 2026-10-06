@@ -1,0 +1,124 @@
+{
+  "profile": "branch-0.31.133-ledger8.0.3",
+  "rows": [
+    {
+      "name": "accept_birthday_passed",
+      "outcome": "ok"
+    },
+    {
+      "name": "accept_birthday_pending",
+      "outcome": "ok"
+    },
+    {
+      "name": "accept_february_leap_dob",
+      "outcome": "ok"
+    },
+    {
+      "name": "accept_february_nonleap",
+      "outcome": "ok"
+    },
+    {
+      "name": "accept_30day_month",
+      "outcome": "ok"
+    },
+    {
+      "name": "accept_birthday_today_at_threshold",
+      "outcome": "ok"
+    },
+    {
+      "name": "reject_prove_age_disabled",
+      "outcome": "error",
+      "message": "failed assert: Presentation must request the age-over-threshold predicate"
+    },
+    {
+      "name": "reject_dob_commitment_mismatch",
+      "outcome": "error",
+      "message": "failed assert: Date-of-birth witness does not match credential commitment"
+    },
+    {
+      "name": "reject_current_before_dob",
+      "outcome": "error",
+      "message": "failed assert: Current day must not precede the date-of-birth witness"
+    },
+    {
+      "name": "reject_year_before_1970",
+      "outcome": "error",
+      "message": "failed assert: Civil date year must be at least 1970"
+    },
+    {
+      "name": "reject_month_zero",
+      "outcome": "error",
+      "message": "failed assert: Civil date month must be at least 1"
+    },
+    {
+      "name": "reject_month_thirteen",
+      "outcome": "error",
+      "message": "failed assert: Civil date month must be at most 12"
+    },
+    {
+      "name": "reject_day_zero",
+      "outcome": "error",
+      "message": "failed assert: Civil date day must be at least 1"
+    },
+    {
+      "name": "reject_quotient4_invalid",
+      "outcome": "error",
+      "message": "failed assert: Civil date quotient for 4 is invalid"
+    },
+    {
+      "name": "reject_quotient100_invalid",
+      "outcome": "error",
+      "message": "failed assert: Civil date quotient for 100 is invalid"
+    },
+    {
+      "name": "reject_quotient400_invalid",
+      "outcome": "error",
+      "message": "failed assert: Civil date quotient for 400 is invalid"
+    },
+    {
+      "name": "reject_month_day_offset_invalid",
+      "outcome": "error",
+      "message": "failed assert: Civil date month day offset is invalid"
+    },
+    {
+      "name": "reject_31day_month_overflow",
+      "outcome": "error",
+      "message": "failed assert: Civil date day exceeds the 31-day month length"
+    },
+    {
+      "name": "reject_february_nonleap_29",
+      "outcome": "error",
+      "message": "failed assert: Civil date day exceeds the February month length"
+    },
+    {
+      "name": "reject_february_leap_30",
+      "outcome": "error",
+      "message": "failed assert: Civil date day exceeds the February month length"
+    },
+    {
+      "name": "reject_30day_month_overflow",
+      "outcome": "error",
+      "message": "failed assert: Civil date day exceeds the 30-day month length"
+    },
+    {
+      "name": "reject_epoch_days_mismatch",
+      "outcome": "error",
+      "message": "failed assert: Civil date does not match the day number"
+    },
+    {
+      "name": "reject_age_below_threshold",
+      "outcome": "error",
+      "message": "failed assert: Age predicate does not satisfy the requested threshold"
+    },
+    {
+      "name": "reject_before_birthday_disjunct",
+      "outcome": "error",
+      "message": "failed assert: Age predicate does not satisfy the requested threshold"
+    },
+    {
+      "name": "reject_before_birthday_first_disjunct",
+      "outcome": "error",
+      "message": "failed assert: Age predicate does not satisfy the requested threshold"
+    }
+  ]
+}

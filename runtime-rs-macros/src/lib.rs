@@ -389,3 +389,7 @@ mod tests {
         );
     }
 }
+
+#[cfg(test)]
+#[path = "tests/cell_value.rs"]
+mod cell_value_tests;

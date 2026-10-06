@@ -79,6 +79,11 @@ pub enum RenderError {
         max: String,
     },
     DuplicateCircuit(String),
+    ConflictingCircuitIdentifier {
+        first: String,
+        second: String,
+        rust_identifier: String,
+    },
     DuplicateWitness(String),
     UnknownWitness(String),
     DuplicateParameter(String),
@@ -156,6 +161,14 @@ impl fmt::Display for RenderError {
                 )
             }
             Self::DuplicateCircuit(name) => write!(f, "duplicate circuit {name:?}"),
+            Self::ConflictingCircuitIdentifier {
+                first,
+                second,
+                rust_identifier,
+            } => write!(
+                f,
+                "circuits {first:?} and {second:?} both emit Rust identifier {rust_identifier:?}"
+            ),
             Self::DuplicateWitness(name) => write!(f, "duplicate witness {name:?}"),
             Self::UnknownWitness(name) => write!(f, "unknown witness {name:?}"),
             Self::DuplicateParameter(name) => write!(f, "duplicate parameter {name:?}"),
@@ -258,6 +271,34 @@ fn ident(name: &str) -> Result<syn::Ident, RenderError> {
     syn::parse_str::<syn::Ident>(&rust_name)
         .or_else(|_| syn::parse_str::<syn::Ident>(&format!("r#{rust_name}")))
         .map_err(|_| RenderError::InvalidIdentifier(name.to_owned()))
+}
+
+fn validate_circuit_function_namespace<'a>(
+    declarations: impl IntoIterator<Item = (&'a str, Option<&'a ir::SourceLocation>)>,
+) -> Result<(), RenderError> {
+    let mut emitted = HashMap::<String, &'a str>::new();
+    for (name, source) in declarations {
+        located(source, || {
+            // `foo` and `r#foo` bind the same Rust name. Compare the
+            // semantic identifier after `ident` has normalized Compact `$`
+            // and escaped Rust keywords.
+            let rendered_identifier = ident(name)?.to_string();
+            let rust_identifier = rendered_identifier
+                .strip_prefix("r#")
+                .unwrap_or(&rendered_identifier)
+                .to_owned();
+            if let Some(first) = emitted.get(&rust_identifier) {
+                return Err(RenderError::ConflictingCircuitIdentifier {
+                    first: (*first).to_owned(),
+                    second: name.to_owned(),
+                    rust_identifier,
+                });
+            }
+            emitted.insert(rust_identifier, name);
+            Ok(())
+        })?;
+    }
+    Ok(())
 }
 
 /// Name public wrapper arguments after their Compact parameters. Wrapper
@@ -3042,7 +3083,47 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
         return Err(RenderError::SchemaVersion(contract.schema_version));
     }
 
+    // Build callable lookup maps only after checking their keys. Otherwise a
+    // later declaration silently replaces an earlier one in a HashMap, and a
+    // caller can fail with a misleading type error before we reach the
+    // duplicate declaration and its Compact source location.
     let mut names = HashSet::new();
+    for (name, source) in contract
+        .circuits
+        .iter()
+        .map(|circuit| (&circuit.name, circuit.source.as_ref()))
+        .chain(
+            contract
+                .stateful_circuits
+                .iter()
+                .map(|circuit| (&circuit.name, circuit.source.as_ref())),
+        )
+    {
+        located(source, || {
+            ident(name)?;
+            if !names.insert(name.as_str()) {
+                return Err(RenderError::DuplicateCircuit(name.clone()));
+            }
+            Ok(())
+        })?;
+    }
+    // Pure functions and ledger methods live in distinct generated Rust
+    // namespaces. Check each independently after raw-name duplicates, since
+    // Compact `$` and Rust keywords can normalize distinct source names to
+    // the same emitted function identifier.
+    validate_circuit_function_namespace(
+        contract
+            .circuits
+            .iter()
+            .map(|circuit| (circuit.name.as_str(), circuit.source.as_ref())),
+    )?;
+    validate_circuit_function_namespace(
+        contract
+            .stateful_circuits
+            .iter()
+            .map(|circuit| (circuit.name.as_str(), circuit.source.as_ref())),
+    )?;
+
     let mut struct_definitions = BTreeMap::new();
     let mut enum_definitions = BTreeMap::new();
     if let Some(constructor) = &contract.constructor {
@@ -3193,9 +3274,6 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
     for circuit in &contract.circuits {
         let item = located(circuit.source.as_ref(), || {
             let name = ident(&circuit.name)?;
-            if !names.insert(circuit.name.as_str()) {
-                return Err(RenderError::DuplicateCircuit(circuit.name.clone()));
-            }
             let mut parameters = HashMap::new();
             let mut args = Vec::<syn::FnArg>::new();
             for parameter in &circuit.parameters {
@@ -3273,9 +3351,6 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
     let mut witnessed_recorded = false;
     for circuit in &contract.stateful_circuits {
         located(circuit.source.as_ref(), || {
-            if !names.insert(circuit.name.as_str()) {
-                return Err(RenderError::DuplicateCircuit(circuit.name.clone()));
-            }
             stateful_items.push(stateful::render_stateful_circuit(
                 circuit,
                 &ledger_fields,

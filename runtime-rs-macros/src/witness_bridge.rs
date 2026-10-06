@@ -190,3 +190,7 @@ mod tests {
         assert_eq!(source.matches("Reads the secret value.").count(), 2);
     }
 }
+
+#[cfg(test)]
+#[path = "tests/witness_bridge.rs"]
+mod validation_tests;

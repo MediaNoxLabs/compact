@@ -151,3 +151,7 @@ pub(crate) fn path(input: DeriveInput) -> syn::Result<TokenStream> {
         }
     })
 }
+
+#[cfg(test)]
+#[path = "tests/merkle.rs"]
+mod validation_tests;

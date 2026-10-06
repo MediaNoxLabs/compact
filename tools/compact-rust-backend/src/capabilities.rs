@@ -174,4 +174,151 @@ mod proof_applicability_tests {
             assert_eq!(report.schema_version, 2);
         }
     }
+
+    fn unchanged_on_error(report: &mut RustCapabilityReport, metadata: Value) -> String {
+        let before = serde_json::to_value(&*report).unwrap();
+        let error = report.apply_contract_info(&metadata).unwrap_err();
+        assert_eq!(serde_json::to_value(&*report).unwrap(), before);
+        error
+    }
+
+    #[test]
+    fn late_metadata_failure_does_not_partially_classify_exports() {
+        for second in [
+            json!([]),
+            json!([{"name": "later", "proof": null}]),
+            json!([{"name": "later", "proof": 1}]),
+            json!([{"name": "later", "proof": true}, {"name": "later", "proof": false}]),
+        ] {
+            let mut report = report();
+            let mut later = report.circuits[0].clone();
+            later.name = "later".into();
+            report.circuits.push(later);
+            let mut metadata = vec![json!({"name": "exported", "proof": true})];
+            metadata.extend(second.as_array().unwrap().iter().cloned());
+            let error = unchanged_on_error(&mut report, json!({"circuits": metadata}));
+            assert!(error.contains("later"), "{error}");
+        }
+    }
+
+    #[test]
+    fn schema_guard_rejects_unknown_and_already_classified_reports_atomically() {
+        for version in [0, 1, 3, 4, u32::MAX] {
+            let mut report = report();
+            report.schema_version = version;
+            let error = unchanged_on_error(
+                &mut report,
+                json!({"circuits": [{"name": "exported", "proof": true}]}),
+            );
+            assert!(error.contains("unclassified schema-2 draft"), "{error}");
+        }
+        let mut report = report();
+        report
+            .apply_contract_info(&json!({"circuits": [{"name": "exported", "proof": false}]}))
+            .unwrap();
+        unchanged_on_error(
+            &mut report,
+            json!({"circuits": [{"name": "exported", "proof": true}]}),
+        );
+    }
+
+    #[test]
+    fn malformed_metadata_container_leaves_the_draft_unchanged() {
+        for metadata in [
+            json!(null),
+            json!([]),
+            json!({}),
+            json!({"circuits": null}),
+            json!({"circuits": {}}),
+            json!({"circuits": "not an array"}),
+        ] {
+            let mut report = report();
+            assert_eq!(
+                unchanged_on_error(&mut report, metadata),
+                "contract-info.json has no circuits array"
+            );
+        }
+    }
+
+    #[test]
+    fn proof_and_both_api_flags_determine_recording_status() {
+        for proof in [false, true] {
+            for recorded in [false, true] {
+                for observed_call in [false, true] {
+                    let mut report = report();
+                    report.circuits[0].recorded = recorded;
+                    report.circuits[0].observed_call = observed_call;
+                    report
+                        .apply_contract_info(
+                            &json!({"circuits": [{"name": "exported", "proof": proof}]}),
+                        )
+                        .unwrap();
+                    let expected = match (proof, recorded, observed_call) {
+                        (false, _, _) => RecordingStatus::NotApplicable,
+                        (true, true, true) => RecordingStatus::Available,
+                        _ => RecordingStatus::Unavailable,
+                    };
+                    let row = &report.circuits[0];
+                    assert_eq!(row.recording_status, Some(expected));
+                    assert_eq!(row.proof_required, Some(proof));
+                    assert_eq!((row.recorded, row.observed_call), (recorded, observed_call));
+                    assert_eq!(report.schema_version, RUST_CAPABILITY_SCHEMA_VERSION);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn metadata_join_uses_names_and_preserves_export_order() {
+        let mut report = report();
+        let mut second = report.circuits[0].clone();
+        second.name = "other".into();
+        report.circuits.push(second);
+        report
+            .apply_contract_info(&json!({"circuits": [
+                {"name": "other", "proof": false},
+                {"name": "helper"},
+                {"name": "helper", "proof": "irrelevant"},
+                {"name": "exported", "proof": true}
+            ]}))
+            .unwrap();
+        let actual: Vec<_> = report
+            .circuits
+            .iter()
+            .map(|row| (row.name.as_str(), row.proof_required))
+            .collect();
+        assert_eq!(actual, [("exported", Some(true)), ("other", Some(false))]);
+    }
+
+    #[test]
+    fn empty_export_set_still_requires_valid_metadata_shape() {
+        let mut report = RustCapabilityReport {
+            schema_version: 2,
+            circuits: vec![],
+        };
+        unchanged_on_error(&mut report, json!({}));
+        report
+            .apply_contract_info(&json!({"circuits": []}))
+            .unwrap();
+        assert_eq!(
+            serde_json::to_value(&report).unwrap(),
+            json!({"schema_version": 3, "circuits": []})
+        );
+    }
+
+    #[test]
+    fn draft_serialization_omits_unclassified_optional_fields() {
+        let json = serde_json::to_value(report()).unwrap();
+        let row = json["circuits"][0].as_object().unwrap();
+        for key in [
+            "proof_required",
+            "recording_status",
+            "recording_unavailable",
+            "observed_call_unavailable",
+        ] {
+            assert!(!row.contains_key(key), "draft unexpectedly published {key}");
+        }
+        assert_eq!(row["recorded"], false);
+        assert_eq!(row["observed_call"], false);
+    }
 }

@@ -2717,13 +2717,29 @@ fn shielded_send_value(
     circuits: &HashMap<&str, &StatefulCircuit>,
     visiting: &mut HashSet<String>,
 ) -> bool {
-    shielded_value(
+    shielded_send_value_checked(value, pure, circuits, visiting).is_ok()
+}
+
+fn shielded_send_value_checked(
+    value: &Expr,
+    pure: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+    visiting: &mut HashSet<String>,
+) -> Result<(), RecordingGap> {
+    let mut failure = None;
+    if shielded_value_at(
         value,
         pure,
         circuits,
         visiting,
         CompositeDomain::ShieldedSend,
-    )
+        "return_value.value",
+        &mut failure,
+    ) {
+        Ok(())
+    } else {
+        Err(failure.expect("rejected shielded value has a first failed expression"))
+    }
 }
 
 fn shielded_value(
@@ -2733,138 +2749,191 @@ fn shielded_value(
     visiting: &mut HashSet<String>,
     domain: CompositeDomain,
 ) -> bool {
-    let visit = |part: &Expr, visiting: &mut HashSet<String>| {
-        shielded_value(part, pure, circuits, visiting, domain)
+    shielded_value_at(
+        value,
+        pure,
+        circuits,
+        visiting,
+        domain,
+        "return_value.value",
+        &mut None,
+    )
+}
+
+fn shielded_value_at(
+    value: &Expr,
+    pure: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+    visiting: &mut HashSet<String>,
+    domain: CompositeDomain,
+    path: &str,
+    failure: &mut Option<RecordingGap>,
+) -> bool {
+    let mut visit = |part: &Expr, suffix: &str, visiting: &mut HashSet<String>| {
+        shielded_value_at(
+            part,
+            pure,
+            circuits,
+            visiting,
+            domain,
+            &format!("{path}.{suffix}"),
+            failure,
+        )
     };
-    match value {
-        Expr::NativeWitnessCall {
-            builtin: crate::ir::NativeWitnessBuiltin::OwnPublicKey,
-        } if domain == CompositeDomain::FundedShieldedMint => true,
-        Expr::KernelMintShielded {
-            domain: token_domain,
-            amount,
-        } if domain == CompositeDomain::FundedShieldedMint => {
-            visit(token_domain, visiting) && visit(amount, visiting)
-        }
-        Expr::CounterRead { .. } if domain == CompositeDomain::ResetShieldedPayout => true,
-        Expr::CounterLessThan { threshold, .. }
-            if domain == CompositeDomain::ResetShieldedPayout =>
-        {
-            visit(threshold, visiting)
-        }
-        Expr::CellRead { .. } | Expr::NativeWitnessCall { .. }
-            if matches!(
-                domain,
-                CompositeDomain::ShieldedPayout
-                    | CompositeDomain::ActionfulShieldedPayout
-                    | CompositeDomain::ResetShieldedPayout
-            ) =>
-        {
-            true
-        }
-        Expr::WitnessCall { arguments, .. }
-            if matches!(
-                domain,
-                CompositeDomain::ShieldedPayout
-                    | CompositeDomain::ActionfulShieldedPayout
-                    | CompositeDomain::ResetShieldedPayout
-            ) =>
-        {
-            arguments.iter().all(|value| visit(value, visiting))
-        }
-        Expr::Assert { condition, .. }
-            if matches!(
-                domain,
-                CompositeDomain::ShieldedPayout
-                    | CompositeDomain::ActionfulShieldedPayout
-                    | CompositeDomain::ResetShieldedPayout
-            ) || domain.shielded_merge() =>
-        {
-            visit(condition, visiting)
-        }
-        Expr::Parameter { .. }
-        | Expr::Boolean { .. }
-        | Expr::BytesLiteral { .. }
-        | Expr::FieldLiteral { .. }
-        | Expr::UnsignedLiteral { .. }
-        | Expr::EnumVariant { .. }
-        | Expr::Unit
-        | Expr::Default {
-            ty: Type::Struct { .. },
-        } => true,
-        Expr::KernelSelf { ty } => *ty == contract_address_type(),
-        Expr::StructLiteral { fields, .. } | Expr::Tuple { elements: fields } => {
-            fields.iter().all(|part| visit(part, visiting))
-        }
-        Expr::StructField { value, .. }
-        | Expr::Coerce { value, .. }
-        | Expr::UnsignedCast { value, .. }
-        | Expr::DegradeToTransient { value }
-        | Expr::TransientHash { value }
-        | Expr::UpgradeFromTransient { value }
-        | Expr::CreateZswapInput { coin: value }
-        | Expr::KernelClaim { value, .. } => visit(value, visiting),
-        Expr::UnsignedAdd { left, right, .. } if domain.shielded_merge() => {
-            visit(left, visiting) && visit(right, visiting)
-        }
-        Expr::CreateZswapOutput { coin, recipient }
-        | Expr::Equal {
-            left: coin,
-            right: recipient,
-        }
-        | Expr::UnsignedSubtract {
-            left: coin,
-            right: recipient,
-            ..
-        } => visit(coin, visiting) && visit(recipient, visiting),
-        Expr::If {
-            condition,
-            then,
-            otherwise,
-        } => visit(condition, visiting) && visit(then, visiting) && visit(otherwise, visiting),
-        Expr::Let { bindings, body } => {
-            bindings
+    let valid =
+        match value {
+            Expr::NativeWitnessCall {
+                builtin: crate::ir::NativeWitnessBuiltin::OwnPublicKey,
+            } if domain == CompositeDomain::FundedShieldedMint => true,
+            Expr::KernelMintShielded {
+                domain: token_domain,
+                amount,
+            } if domain == CompositeDomain::FundedShieldedMint => {
+                visit(token_domain, "domain", visiting) && visit(amount, "amount", visiting)
+            }
+            Expr::CounterRead { .. } if domain == CompositeDomain::ResetShieldedPayout => true,
+            Expr::CounterLessThan { threshold, .. }
+                if domain == CompositeDomain::ResetShieldedPayout =>
+            {
+                visit(threshold, "threshold", visiting)
+            }
+            Expr::CellRead { .. } | Expr::NativeWitnessCall { .. }
+                if matches!(
+                    domain,
+                    CompositeDomain::ShieldedPayout
+                        | CompositeDomain::ActionfulShieldedPayout
+                        | CompositeDomain::ResetShieldedPayout
+                ) =>
+            {
+                true
+            }
+            Expr::WitnessCall { arguments, .. }
+                if matches!(
+                    domain,
+                    CompositeDomain::ShieldedPayout
+                        | CompositeDomain::ActionfulShieldedPayout
+                        | CompositeDomain::ResetShieldedPayout
+                ) =>
+            {
+                arguments
+                    .iter()
+                    .enumerate()
+                    .all(|(index, value)| visit(value, &format!("arguments[{index}]"), visiting))
+            }
+            Expr::Assert { condition, .. }
+                if matches!(
+                    domain,
+                    CompositeDomain::ShieldedPayout
+                        | CompositeDomain::ActionfulShieldedPayout
+                        | CompositeDomain::ResetShieldedPayout
+                ) || domain.shielded_merge() =>
+            {
+                visit(condition, "condition", visiting)
+            }
+            Expr::Parameter { .. }
+            | Expr::Boolean { .. }
+            | Expr::BytesLiteral { .. }
+            | Expr::FieldLiteral { .. }
+            | Expr::UnsignedLiteral { .. }
+            | Expr::EnumVariant { .. }
+            | Expr::Unit
+            | Expr::Default {
+                ty: Type::Struct { .. },
+            } => true,
+            Expr::KernelSelf { ty } => *ty == contract_address_type(),
+            Expr::StructLiteral { fields, .. } => fields
                 .iter()
-                .all(|binding| visit(&binding.value, visiting))
-                && visit(body, visiting)
-        }
-        Expr::Sequence { steps, value } => {
-            steps.iter().all(|step| visit(step, visiting)) && visit(value, visiting)
-        }
-        Expr::Call { name, arguments } => {
-            if !arguments.iter().all(|argument| visit(argument, visiting)) {
-                return false;
+                .enumerate()
+                .all(|(index, part)| visit(part, &format!("fields[{index}]"), visiting)),
+            Expr::Tuple { elements } => elements
+                .iter()
+                .enumerate()
+                .all(|(index, part)| visit(part, &format!("elements[{index}]"), visiting)),
+            Expr::StructField { value, .. }
+            | Expr::Coerce { value, .. }
+            | Expr::UnsignedCast { value, .. }
+            | Expr::DegradeToTransient { value }
+            | Expr::TransientHash { value }
+            | Expr::UpgradeFromTransient { value }
+            | Expr::KernelClaim { value, .. } => visit(value, "value", visiting),
+            Expr::CreateZswapInput { coin } => visit(coin, "coin", visiting),
+            Expr::UnsignedAdd { left, right, .. } if domain.shielded_merge() => {
+                visit(left, "left", visiting) && visit(right, "right", visiting)
             }
-            if pure.contains_key(name.as_str()) {
-                return !circuits.contains_key(name.as_str());
+            Expr::CreateZswapOutput { coin, recipient } => {
+                visit(coin, "coin", visiting) && visit(recipient, "recipient", visiting)
             }
-            let Some(callee) = circuits.get(name.as_str()) else {
-                return false;
-            };
-            if domain == CompositeDomain::ResetShieldedPayout
-                && phase_reset::helper_signature(callee)
-            {
-                return reset_payout::true_arguments(arguments)
-                    && reset_payout::helper_shape(callee, pure);
+            Expr::Equal { left, right } | Expr::UnsignedSubtract { left, right, .. } => {
+                visit(left, "left", visiting) && visit(right, "right", visiting)
             }
-            let StateReturn::Expression { value } = &callee.return_value else {
-                return false;
-            };
-            if !callee.actions.is_empty()
-                && !(domain == CompositeDomain::ActionfulShieldedPayout
-                    && shielded_payout::action_shape(&callee.actions, pure) == Some(1))
-            {
-                return false;
+            Expr::If {
+                condition,
+                then,
+                otherwise,
+            } => {
+                visit(condition, "condition", visiting)
+                    && visit(then, "then", visiting)
+                    && visit(otherwise, "otherwise", visiting)
             }
-            if !visiting.insert(name.clone()) {
-                return false;
+            Expr::Let { bindings, body } => {
+                bindings.iter().enumerate().all(|(index, binding)| {
+                    visit(
+                        &binding.value,
+                        &format!("bindings[{index}].value"),
+                        visiting,
+                    )
+                }) && visit(body, "body", visiting)
             }
-            let valid = visit(value, visiting);
-            visiting.remove(name);
-            valid
-        }
-        _ => false,
+            Expr::Sequence { steps, value } => {
+                steps
+                    .iter()
+                    .enumerate()
+                    .all(|(index, step)| visit(step, &format!("steps[{index}]"), visiting))
+                    && visit(value, "value", visiting)
+            }
+            Expr::Call { name, arguments } => {
+                if !arguments.iter().enumerate().all(|(index, argument)| {
+                    visit(argument, &format!("arguments[{index}]"), visiting)
+                }) {
+                    false
+                } else if pure.contains_key(name.as_str()) {
+                    !circuits.contains_key(name.as_str())
+                } else if let Some(callee) = circuits.get(name.as_str()) {
+                    if domain == CompositeDomain::ResetShieldedPayout
+                        && phase_reset::helper_signature(callee)
+                    {
+                        reset_payout::true_arguments(arguments)
+                            && reset_payout::helper_shape(callee, pure)
+                    } else if let StateReturn::Expression { value } = &callee.return_value {
+                        if !callee.actions.is_empty()
+                            && !(domain == CompositeDomain::ActionfulShieldedPayout
+                                && shielded_payout::action_shape(&callee.actions, pure) == Some(1))
+                        {
+                            false
+                        } else if visiting.insert(name.clone()) {
+                            let valid = visit(
+                                value,
+                                &format!("callee[{name}].return_value.value"),
+                                visiting,
+                            );
+                            visiting.remove(name);
+                            valid
+                        } else {
+                            false
+                        }
+                    } else {
+                        false
+                    }
+                } else {
+                    false
+                }
+            }
+            _ => false,
+        };
+    if !valid && failure.is_none() {
+        *failure = Some(RecordingGap::expression(value, path.to_owned()));
     }
+    valid
 }
 
 fn shielded_plan<'a>(
@@ -2926,26 +2995,40 @@ pub(super) fn lower_shielded_send<'a>(
     pure: &'a HashMap<&'a str, &'a PureCircuit>,
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
 ) -> Option<TypedPlan> {
+    lower_shielded_send_checked(circuit, ledger, witnesses, pure, circuits).into_option()
+}
+
+pub(super) fn lower_shielded_send_checked<'a>(
+    circuit: &StatefulCircuit,
+    ledger: &'a HashMap<&'a str, &'a LedgerField>,
+    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
+    pure: &'a HashMap<&'a str, &'a PureCircuit>,
+    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
+) -> ProfileAttempt<TypedPlan> {
     let StateReturn::Expression { value } = &circuit.return_value else {
-        return None;
+        return ProfileAttempt::NotApplicable;
     };
-    if !circuit.actions.is_empty()
-        || !shielded_send_result(&circuit.result)
-        || circuit
-            .parameters
-            .iter()
-            .map(|p| &p.name)
-            .collect::<HashSet<_>>()
-            .len()
-            != circuit.parameters.len()
-        || !shielded_send_value(
-            value,
-            pure,
-            circuits,
-            &mut HashSet::from([circuit.name.clone()]),
-        )
+    if !circuit.actions.is_empty() || !shielded_send_result(&circuit.result) {
+        return ProfileAttempt::NotApplicable;
+    }
+    let rejected_return = || RecordingGap::returned(&circuit.return_value);
+    if circuit
+        .parameters
+        .iter()
+        .map(|p| &p.name)
+        .collect::<HashSet<_>>()
+        .len()
+        != circuit.parameters.len()
     {
-        return None;
+        return ProfileAttempt::Rejected(rejected_return());
+    }
+    if let Err(gap) = shielded_send_value_checked(
+        value,
+        pure,
+        circuits,
+        &mut HashSet::from([circuit.name.clone()]),
+    ) {
+        return ProfileAttempt::Rejected(gap);
     }
     let mut plan = shielded_plan(
         ledger,
@@ -2970,8 +3053,10 @@ pub(super) fn lower_shielded_send<'a>(
         })
         .collect();
     let mut steps = Vec::new();
-    let result = plan.expression(value, &scope, &mut steps)?;
-    (result.ty == circuit.result
+    let Some(result) = plan.expression(value, &scope, &mut steps) else {
+        return ProfileAttempt::Rejected(rejected_return());
+    };
+    if result.ty == circuit.result
         && plan.zswap_inputs > 0
         && plan.zswap_outputs > 0
         && plan.intent_queries > 0
@@ -2982,11 +3067,15 @@ pub(super) fn lower_shielded_send<'a>(
         && plan.counter_comparisons == 0
         && plan.counter_writes == 0
         && plan.tree_writes == 0
-        && plan.set_writes == 0)
-        .then_some(TypedPlan {
+        && plan.set_writes == 0
+    {
+        ProfileAttempt::Admitted(TypedPlan {
             steps,
             result: result.value,
         })
+    } else {
+        ProfileAttempt::Rejected(rejected_return())
+    }
 }
 
 pub(super) fn lower_shielded_merge<'a>(
@@ -4344,6 +4433,36 @@ mod shielded_send_tests {
             steps.find("subtract_unsigned").unwrap() < steps.find("create_zswap_output").unwrap()
         );
         assert!(steps.contains("transient_hash") && steps.contains("upgrade_from_transient"));
+    }
+
+    #[test]
+    fn checked_send_profile_distinguishes_unrelated_and_admitted_shapes() {
+        let source = source();
+        let contract: crate::ir::Contract = serde_json::from_value(source).unwrap();
+        let ledger = HashMap::new();
+        let witnesses = HashMap::new();
+        let pure = contract
+            .circuits
+            .iter()
+            .map(|c| (c.name.as_str(), c))
+            .collect();
+        let circuits = contract
+            .stateful_circuits
+            .iter()
+            .map(|c| (c.name.as_str(), c))
+            .collect();
+        let send = &contract.stateful_circuits[1];
+        assert!(matches!(
+            lower_shielded_send_checked(send, &ledger, &witnesses, &pure, &circuits),
+            ProfileAttempt::Admitted(_)
+        ));
+        let mut unrelated = send.clone();
+        unrelated.result = Type::Unit;
+        unrelated.return_value = StateReturn::Unit;
+        assert!(matches!(
+            lower_shielded_send_checked(&unrelated, &ledger, &witnesses, &pure, &circuits),
+            ProfileAttempt::NotApplicable
+        ));
     }
 
     #[test]

@@ -19,7 +19,9 @@
 mod facade;
 mod helpers;
 mod pure_calls;
+mod profile_attempt;
 use helpers::helper_ident;
+use profile_attempt::ProfileAttempt;
 pub(crate) use helpers::plan_recorded_helpers;
 use pure_calls::{
     closed_literal_field_vector_call, closed_pure_assert_call, closed_pure_field_call,
@@ -7354,6 +7356,10 @@ fn render_recorded_item(
     }
 
     let mut typed_result = None;
+    // A closed profile may find a precise nested rejection while a later
+    // profile can still admit the same circuit. Retain it only for a coarse
+    // generic return gap after every existing profile has declined.
+    let mut shielded_send_rejection = None;
     let mut organizer_steps = if let Some(plan) = effectful_plan {
         typed_result = Some(plan.result);
         Some(plan.steps)
@@ -7454,13 +7460,20 @@ fn render_recorded_item(
                     )
                 })
                 .or_else(|| {
-                    typed_plan::lower_shielded_send(
+                    match typed_plan::lower_shielded_send_checked(
                         circuit,
                         ledger_fields,
                         witnesses,
                         pure_circuits,
                         circuits,
-                    )
+                    ) {
+                        ProfileAttempt::Admitted(plan) => Some(plan),
+                        ProfileAttempt::Rejected(gap) => {
+                            shielded_send_rejection = Some(gap);
+                            None
+                        }
+                        ProfileAttempt::NotApplicable => None,
+                    }
                 })
                 .or_else(|| {
                     typed_plan::lower_reset_payout(
@@ -7655,6 +7668,23 @@ fn render_recorded_item(
                 }
             }
         }
+    }
+    // The checked send profile has inspected the entire value tree. With no
+    // accepted typed or legacy profile (and no actions), the generic return
+    // arms cannot record a ShieldedSendResult. Keep the first concrete nested
+    // failure instead of collapsing it to UnsupportedReturn for an outer If
+    // or Call. Action diagnostics above still take precedence.
+    if !organizer_gate
+        && !guarded_map_read_gate
+        && !typed_map_write_gate
+        && !guarded_set_mutation_gate
+        && !guarded_pure_call
+        && circuit.actions.is_empty()
+        && steps.is_empty()
+        && let Some(gap) = shielded_send_rejection.as_ref()
+        && gap.code == RecordingGapCode::UnsupportedExpression
+    {
+        return Ok(RecordingOutcome::Unsupported(gap.clone()));
     }
     let result_ty = rust_type(&circuit.result)?;
     let (return_steps, result): (Vec<syn::Stmt>, syn::Expr) = match &circuit.return_value {
@@ -8509,9 +8539,10 @@ fn render_recorded_item(
             )
         }
         _ => {
-            return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                &circuit.return_value,
-            )));
+            let gap = shielded_send_rejection
+                .filter(|gap| gap.code == RecordingGapCode::UnsupportedExpression)
+                .unwrap_or_else(|| RecordingGap::returned(&circuit.return_value));
+            return Ok(RecordingOutcome::Unsupported(gap));
         }
     };
     if steps.is_empty() && return_steps.is_empty() {

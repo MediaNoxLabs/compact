@@ -2378,6 +2378,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/repeated_unit_helper.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "echo",
+    "signature": "pure circuit echo(value: Uint<64>): Uint<64>",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/boolean_logic.compact",
     "module_path": [],
     "kind": "circuit",
@@ -6866,6 +6874,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/repeated_unit_helper.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "twice",
+    "signature": "export circuit twice(first: Uint<64>, second: Uint<64>): []",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/terminal_lexical_return_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -7314,6 +7330,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/repeated_unit_helper.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "write",
+    "signature": "circuit write(value: Uint<64>): []",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/wide_uint_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -7666,6 +7690,14 @@
     "visibility": "internal"
   },
   {
+    "source": "examples/rust_backend/repeated_unit_helper.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/schnorr_attest_oracle.compact",
     "module_path": [],
     "kind": "constructor",
@@ -7943,6 +7975,14 @@
     "name": "test2",
     "signature": "export witness test2(a: Field): Field",
     "visibility": "module_export"
+  },
+  {
+    "source": "examples/rust_backend/repeated_unit_helper.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "argument",
+    "signature": "witness argument(label: Uint<64>): Uint<64>",
+    "visibility": "internal"
   },
   {
     "source": "examples/rust_backend/witness_ledger_set.compact",
@@ -8494,6 +8534,14 @@
     "kind": "witness",
     "name": "now",
     "signature": "witness now(): Uint<64>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/repeated_unit_helper.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "observe",
+    "signature": "witness observe(value: Uint<64>): Uint<64>",
     "visibility": "internal"
   },
   {

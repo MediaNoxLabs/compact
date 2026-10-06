@@ -297,6 +297,29 @@
       ],
       "pure_declarations": 12,
       "exported_pure_declarations": 12
+    },
+    {
+      "source": "examples/rust_backend/repeated_unit_helper.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "cargo_check": true,
+      "proof_circuits": [
+        {
+          "name": "twice",
+          "pure": false,
+          "proof": true
+        }
+      ],
+      "expected_recording_gaps": {},
+      "rust_fixture": "tests-rust-backend/repeated-unit-helper/lib.rs",
+      "expected_capability_circuits": [
+        "twice"
+      ],
+      "expected_recorded_circuits": [
+        "twice"
+      ],
+      "pure_declarations": 1,
+      "exported_pure_declarations": 0
     }
   ],
   "expected_rejections": []

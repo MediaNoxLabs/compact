@@ -1,0 +1,1692 @@
+{
+  "scope": "Branch TypeScript compiler/runtime independent execution capture; no proof or network claim",
+  "compiler": "0.31.133",
+  "runtime": "0.16.101",
+  "provenance": [
+    {
+      "role": "source",
+      "path": "examples/rust_backend/repeated_unit_helper.compact",
+      "sha256": "3ef5076edf6d7d56164ec10531dc1eeb3db3306b896b9df090b602c4a0c98bfb"
+    },
+    {
+      "role": "capture",
+      "path": "tests-rust-backend/repeated-unit-helper/oracle/capture.mjs",
+      "sha256": "e491da7cfa66b4f65f57b527dcc8c9db1bca5b0f718abf0a1e6d3e5a07dc2c56"
+    },
+    {
+      "role": "generated_typescript",
+      "path": "generated/contract/index.js",
+      "sha256": "238ec4755195dadb4d336dd5830d168d4447f924b0e7488167e45037663dff35"
+    },
+    {
+      "role": "runtime_builtins",
+      "path": "runtime/dist/built-ins.js",
+      "sha256": "f6b1b8b0d4ecfd6458706fd3969babbb988879dd9c39618cc137c463a151781b"
+    },
+    {
+      "role": "runtime_types",
+      "path": "runtime/dist/compact-types.js",
+      "sha256": "7f709304c3dfc88d400e89b37b457a1e305f7a8b1edf8c6846e5918cf3d570a4"
+    }
+  ],
+  "cases": [
+    {
+      "id": "distinct",
+      "first": "3",
+      "second": "7",
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a3c00084008040004010404080104000400400c08080c0c0c0c0c0c0c0c0c0c0c0c0c08020808041008040c04140403041800041c0801040420c1010304d6ad01010403040108040c080104010401084008000108020840010400000108010404010401040108400800010801040401040104010840080001040000010400000104000001040000010400000104000001040000010400000104000001040000010400000104000001040000001814747769636508280c00042c08010404309003044080542d3071bd7c12835a16605491efd0d5b1e046262695299ccbb45371bc64d40c14140c24340c1003000400",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a500008020804000401000c416d0804080401040c0801040010424008080414040104180801040004004020101c2020202020202020202020202008020808042408040c04280403042c0004300801040434cd010304dcb901010403040108040c08010401040108020800010802084001040000010801040401040104010c416d080001080104040104010401104240080800010400000104000001040000010400000104000001040000010400000104000001040000010400000104000001040000010400000018147477696365083c2000044008010404449003044080542d3071bd7c12835a16605491efd0d5b1e046262695299ccbb45371bc64d40c1428203848201003000400",
+      "result": [],
+      "privateAfter": [
+        {
+          "name": "argument",
+          "argument": "3",
+          "count": "0",
+          "last": "0",
+          "receipt": "0",
+          "result": "3"
+        },
+        {
+          "name": "observe",
+          "argument": "3",
+          "count": "1",
+          "last": "3",
+          "receipt": "0",
+          "result": "1004"
+        },
+        {
+          "name": "argument",
+          "argument": "7",
+          "count": "1",
+          "last": "3",
+          "receipt": "1004",
+          "result": "109"
+        },
+        {
+          "name": "observe",
+          "argument": "109",
+          "count": "2",
+          "last": "109",
+          "receipt": "1004",
+          "result": "2112"
+        }
+      ],
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1233942932",
+            "bytesWritten": "214",
+            "bytesDeleted": "214"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "214",
+            "bytesDeleted": "214"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1233942932",
+            "bytesWritten": "218",
+            "bytesDeleted": "214"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914883",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1233942932",
+            "bytesWritten": "220",
+            "bytesDeleted": "218"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "220",
+            "bytesDeleted": "220"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914868",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914883",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1233942932",
+            "bytesWritten": "220",
+            "bytesDeleted": "220"
+          }
+        }
+      ],
+      "reportedGas": {
+        "readTime": "85000000",
+        "computeTime": "1233942932",
+        "bytesWritten": "220",
+        "bytesDeleted": "220"
+      },
+      "publicTranscript": [
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    3
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 8
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": true,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    []
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "addi": {
+            "immediate": 1
+          }
+        },
+        {
+          "ins": {
+            "cached": true,
+            "n": 1
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    2
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    236,
+                    3
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 8
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    109
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 8
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": true,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    []
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "addi": {
+            "immediate": 1
+          }
+        },
+        {
+          "ins": {
+            "cached": true,
+            "n": 1
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    2
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    64,
+                    8
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 8
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": [
+        {
+          "valueAtoms": [
+            [
+              3
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 8
+              }
+            }
+          ]
+        },
+        {
+          "valueAtoms": [
+            [
+              236,
+              3
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 8
+              }
+            }
+          ]
+        },
+        {
+          "valueAtoms": [
+            [
+              109
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 8
+              }
+            }
+          ]
+        },
+        {
+          "valueAtoms": [
+            [
+              64,
+              8
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 8
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reversed",
+      "first": "7",
+      "second": "3",
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a3c00084008040004010404080104000400400c08080c0c0c0c0c0c0c0c0c0c0c0c0c08020808041008040c04140403041800041c0801040420c1010304d6ad01010403040108040c080104010401084008000108020840010400000108010404010401040108400800010801040401040104010840080001040000010400000104000001040000010400000104000001040000010400000104000001040000010400000104000001040000001814747769636508280c00042c08010404309003044080542d3071bd7c12835a16605491efd0d5b1e046262695299ccbb45371bc64d40c14140c24340c1003000400",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a500008020804000401000c41690804080401040c0801040010423c08080414040104180801040004004020101c2020202020202020202020202008020808042408040c04280403042c0004300801040434cd010304dcb901010403040108040c08010401040108020800010802084001040000010801040401040104010c416908000108010404010401040110423c080800010400000104000001040000010400000104000001040000010400000104000001040000010400000104000001040000010400000018147477696365083c2000044008010404449003044080542d3071bd7c12835a16605491efd0d5b1e046262695299ccbb45371bc64d40c1428203848201003000400",
+      "result": [],
+      "privateAfter": [
+        {
+          "name": "argument",
+          "argument": "7",
+          "count": "0",
+          "last": "0",
+          "receipt": "0",
+          "result": "7"
+        },
+        {
+          "name": "observe",
+          "argument": "7",
+          "count": "1",
+          "last": "7",
+          "receipt": "0",
+          "result": "1008"
+        },
+        {
+          "name": "argument",
+          "argument": "3",
+          "count": "1",
+          "last": "7",
+          "receipt": "1008",
+          "result": "105"
+        },
+        {
+          "name": "observe",
+          "argument": "105",
+          "count": "2",
+          "last": "105",
+          "receipt": "1008",
+          "result": "2108"
+        }
+      ],
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1233942932",
+            "bytesWritten": "214",
+            "bytesDeleted": "214"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "214",
+            "bytesDeleted": "214"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1233942932",
+            "bytesWritten": "218",
+            "bytesDeleted": "214"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914883",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1233942932",
+            "bytesWritten": "220",
+            "bytesDeleted": "218"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "220",
+            "bytesDeleted": "220"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914868",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914883",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1233942932",
+            "bytesWritten": "220",
+            "bytesDeleted": "220"
+          }
+        }
+      ],
+      "reportedGas": {
+        "readTime": "85000000",
+        "computeTime": "1233942932",
+        "bytesWritten": "220",
+        "bytesDeleted": "220"
+      },
+      "publicTranscript": [
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    7
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 8
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": true,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    []
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "addi": {
+            "immediate": 1
+          }
+        },
+        {
+          "ins": {
+            "cached": true,
+            "n": 1
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    2
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    240,
+                    3
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 8
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    105
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 8
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": true,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    []
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "addi": {
+            "immediate": 1
+          }
+        },
+        {
+          "ins": {
+            "cached": true,
+            "n": 1
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    2
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    60,
+                    8
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 8
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": [
+        {
+          "valueAtoms": [
+            [
+              7
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 8
+              }
+            }
+          ]
+        },
+        {
+          "valueAtoms": [
+            [
+              240,
+              3
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 8
+              }
+            }
+          ]
+        },
+        {
+          "valueAtoms": [
+            [
+              105
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 8
+              }
+            }
+          ]
+        },
+        {
+          "valueAtoms": [
+            [
+              60,
+              8
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 8
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "same-label-zero",
+      "first": "0",
+      "second": "0",
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a3c00084008040004010404080104000400400c08080c0c0c0c0c0c0c0c0c0c0c0c0c08020808041008040c04140403041800041c0801040420c1010304d6ad01010403040108040c080104010401084008000108020840010400000108010404010401040108400800010801040401040104010840080001040000010400000104000001040000010400000104000001040000010400000104000001040000010400000104000001040000001814747769636508280c00042c08010404309003044080542d3071bd7c12835a16605491efd0d5b1e046262695299ccbb45371bc64d40c14140c24340c1003000400",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a500008020804000401000c41660804080401040c0801040010423908080414040104180801040004004020101c2020202020202020202020202008020808042408040c04280403042c0004300801040434cd010304dcb901010403040108040c08010401040108020800010802084001040000010801040401040104010c4166080001080104040104010401104239080800010400000104000001040000010400000104000001040000010400000104000001040000010400000104000001040000010400000018147477696365083c2000044008010404449003044080542d3071bd7c12835a16605491efd0d5b1e046262695299ccbb45371bc64d40c1428203848201003000400",
+      "result": [],
+      "privateAfter": [
+        {
+          "name": "argument",
+          "argument": "0",
+          "count": "0",
+          "last": "0",
+          "receipt": "0",
+          "result": "0"
+        },
+        {
+          "name": "observe",
+          "argument": "0",
+          "count": "1",
+          "last": "0",
+          "receipt": "0",
+          "result": "1001"
+        },
+        {
+          "name": "argument",
+          "argument": "0",
+          "count": "1",
+          "last": "0",
+          "receipt": "1001",
+          "result": "102"
+        },
+        {
+          "name": "observe",
+          "argument": "102",
+          "count": "2",
+          "last": "102",
+          "receipt": "1001",
+          "result": "2105"
+        }
+      ],
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1168248299",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "214",
+            "bytesDeleted": "214"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1233942932",
+            "bytesWritten": "218",
+            "bytesDeleted": "214"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914883",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1233942932",
+            "bytesWritten": "220",
+            "bytesDeleted": "218"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "220",
+            "bytesDeleted": "220"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914868",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914883",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1233942932",
+            "bytesWritten": "220",
+            "bytesDeleted": "220"
+          }
+        }
+      ],
+      "reportedGas": {
+        "readTime": "85000000",
+        "computeTime": "1233942932",
+        "bytesWritten": "220",
+        "bytesDeleted": "220"
+      },
+      "publicTranscript": [
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 8
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": true,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    []
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "addi": {
+            "immediate": 1
+          }
+        },
+        {
+          "ins": {
+            "cached": true,
+            "n": 1
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    2
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    233,
+                    3
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 8
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    102
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 8
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": true,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    []
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "addi": {
+            "immediate": 1
+          }
+        },
+        {
+          "ins": {
+            "cached": true,
+            "n": 1
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    2
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    57,
+                    8
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 8
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": [
+        {
+          "valueAtoms": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 8
+              }
+            }
+          ]
+        },
+        {
+          "valueAtoms": [
+            [
+              233,
+              3
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 8
+              }
+            }
+          ]
+        },
+        {
+          "valueAtoms": [
+            [
+              102
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 8
+              }
+            }
+          ]
+        },
+        {
+          "valueAtoms": [
+            [
+              57,
+              8
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 8
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

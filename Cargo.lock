@@ -2172,6 +2172,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-repeated-unit-helper-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-serialize",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
 name = "compact-rust-root-let-action-return-oracle-fixture"
 version = "0.1.0"
 dependencies = [

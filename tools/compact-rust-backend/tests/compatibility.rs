@@ -373,3 +373,87 @@ fn broken_installed_root_does_not_fall_back_to_build_checkout() {
     assert!(error.contains("no fallback"), "{error}");
     assert_eq!(fs::read(output.join("sentinel")).unwrap(), b"keep");
 }
+
+#[test]
+fn same_version_alternate_dependency_sources_refuse_before_frontend_and_publication() {
+    for (dependency, key, alternate) in [
+        ("midnight-compact-runtime-macros", "path", "../other-macros"),
+        ("midnight-ledger", "path", "../other-ledger"),
+        ("midnight-ledger", "git", "https://invalid.example/ledger"),
+        ("midnight-ledger", "registry", "another-registry"),
+        (
+            "midnight-ledger",
+            "registry-index",
+            "https://invalid.example/index",
+        ),
+        ("midnight-ledger", "package", "another-ledger-package"),
+    ] {
+        let root = Root::new();
+        let manifest = root.0.join("runtime-rs/Cargo.toml");
+        let mut document: toml_edit::DocumentMut =
+            fs::read_to_string(&manifest).unwrap().parse().unwrap();
+        let version = document["dependencies"][dependency]["version"]
+            .as_str()
+            .unwrap()
+            .to_owned();
+        document["dependencies"][dependency][key] = toml_edit::value(alternate);
+        assert_eq!(
+            document["dependencies"][dependency]["version"].as_str(),
+            Some(version.as_str())
+        );
+        fs::write(manifest, document.to_string()).unwrap();
+        root.fails(&format!("dependencies.{dependency}.{key}"));
+        let output = root.0.join("existing");
+        fs::create_dir(&output).unwrap();
+        fs::write(output.join("sentinel"), b"prior artifact").unwrap();
+        let result = Command::new(env!("CARGO_BIN_EXE_compactc"))
+            .args(["--target", "rust", "--rust-runtime-root"])
+            .arg(&root.0)
+            .arg("unused.compact")
+            .arg(&output)
+            .env("COMPACTC_SCHEME", root.0.join("must-not-execute"))
+            .output()
+            .unwrap();
+        assert!(!result.status.success());
+        let error = String::from_utf8(result.stderr).unwrap();
+        assert!(
+            error.contains(&format!("dependencies.{dependency}.{key}")),
+            "{error}"
+        );
+        assert_eq!(
+            fs::read(output.join("sentinel")).unwrap(),
+            b"prior artifact"
+        );
+        assert_eq!(fs::read_dir(output).unwrap().count(), 1);
+    }
+}
+
+#[test]
+fn matching_macro_version_still_requires_a_proc_macro_library() {
+    let root = Root::new();
+    root.replace(
+        "runtime-rs-macros/Cargo.toml",
+        "proc-macro = true",
+        "proc-macro = false",
+    );
+    root.fails("runtime-rs-macros.lib.proc-macro must be true");
+}
+
+#[test]
+fn literal_only_source_labels_refuse_expression_or_wrong_literal_forms() {
+    for (before, after, field) in [
+        ("ABI:u32=50", "ABI:u32=50 + 0", "RUST_RUNTIME_ABI"),
+        ("ABI:u32=50", "ABI:u32=true", "RUST_RUNTIME_ABI"),
+        (
+            "\"ledger-8.0.3\"",
+            "concat!(\"ledger-\", \"8.0.3\")",
+            "LEDGER_VERSION",
+        ),
+    ] {
+        let root = Root::new();
+        root.replace("runtime-rs/src/lib.rs", before, after);
+        // The developer preflight deliberately does not execute/evaluate source.
+        // Even an equivalent constant expression is outside its literal contract.
+        root.fails(field);
+    }
+}

@@ -1,0 +1,33 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import CompactStandardLibrary;
+
+export ledger count: Counter;
+export ledger last: Uint<64>;
+export ledger receipt: Uint<64>;
+witness argument(label: Uint<64>): Uint<64>;
+witness observe(value: Uint<64>): Uint<64>;
+constructor() { last = 0; receipt = 0; }
+pure circuit echo(value: Uint<64>): Uint<64> { return value; }
+circuit write(value: Uint<64>): [] {
+  last = disclose(value);
+  count.increment(1);
+  receipt = disclose(observe(value));
+}
+export circuit twice(first: Uint<64>, second: Uint<64>): [] {
+  write(argument(echo(first)));
+  write(argument(echo(second)));
+}

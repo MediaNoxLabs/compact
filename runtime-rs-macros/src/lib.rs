@@ -278,6 +278,11 @@ fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
                             variant,
                             "CompactCellValue supports unit enum variants only",
                         ))
+                    } else if variant.discriminant.is_some() {
+                        Err(syn::Error::new_spanned(
+                            variant,
+                            "CompactCellValue supports unit variants without Rust discriminants only",
+                        ))
                     } else {
                         Ok(&variant.ident)
                     }

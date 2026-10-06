@@ -79,6 +79,23 @@ fn cell_value_rejects_nonconcrete_and_nonrecord_shapes() {
 }
 
 #[test]
+fn both_enum_codecs_reject_rust_discriminants_instead_of_reinterpreting_them() {
+    for source in [
+        "enum Numbered { First = 0, Second }",
+        "enum Numbered { First = 2, Second = 5 }",
+        "enum Numbered { First = 1 + 2 }",
+    ] {
+        for derive in [expand, expand_enum] {
+            let error = derive(syn::parse_str(source).unwrap()).unwrap_err();
+            assert!(error.to_string().contains("without Rust discriminants"));
+        }
+    }
+    for derive in [expand, expand_enum] {
+        assert!(derive(syn::parse_str("enum Ordinals { First, Second }").unwrap()).is_ok());
+    }
+}
+
+#[test]
 fn enum_representation_rejects_non_enums_and_named_payloads() {
     for (source, message) in [
         ("struct Record { value: u8 }", "requires a unit enum"),

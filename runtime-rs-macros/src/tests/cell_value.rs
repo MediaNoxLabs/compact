@@ -263,5 +263,8 @@ fn enum_representation_has_default_field_binary_and_checked_decode_contracts() {
     };
     assert_eq!(decoded.arms.len(), 3);
     assert!(matches!(&decoded.arms[2].pat, syn::Pat::Wild(_)));
-    assert_eq!(decoded.arms[2].body.to_token_stream().to_string(), "None");
+    assert_eq!(
+        decoded.arms[2].body.to_token_stream().to_string(),
+        ":: core :: option :: Option :: None"
+    );
 }

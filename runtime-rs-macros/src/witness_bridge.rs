@@ -124,13 +124,13 @@ pub(crate) fn expand(input: ItemTrait) -> syn::Result<TokenStream> {
             ));
         }
         let mut fallible_signature = method.sig.clone();
-        fallible_signature.output = syn::parse_quote!(-> Result<#output, runtime::CompactError>);
+        fallible_signature.output = syn::parse_quote!(-> ::core::result::Result<#output, ::midnight_compact_runtime::CompactError>);
         let name = &method.sig.ident;
         let attrs = &method.attrs;
         fallible_methods.push(quote! { #(#attrs)* #fallible_signature; });
         adapter_methods.push(quote! {
             #fallible_signature {
-                Ok(<W as Witnesses<Private>>::#name(self, #(#argument_names),*))
+                ::core::result::Result::Ok(<W as Witnesses<Private>>::#name(self, #(#argument_names),*))
             }
         });
     }

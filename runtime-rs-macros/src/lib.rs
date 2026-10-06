@@ -134,13 +134,13 @@ fn expand_enum(input: DeriveInput) -> syn::Result<TokenStream2> {
         .enumerate()
         .map(|(index, variant)| {
             let index = LitInt::new(&index.to_string(), Span::call_site());
-            quote!(#index => Some(Self::#variant),)
+            quote!(#index => ::core::option::Option::Some(Self::#variant),)
         })
         .collect::<Vec<_>>();
     let first = variants[0];
     let byte_length = enum_byte_length(variants.len());
     Ok(quote! {
-        impl Default for #name {
+        impl ::core::default::Default for #name {
             fn default() -> Self { Self::#first }
         }
 
@@ -149,28 +149,28 @@ fn expand_enum(input: DeriveInput) -> syn::Result<TokenStream2> {
                 &self,
                 writer: &mut W,
             ) {
-                let ordinal: u128 = match self { #(#to_ordinal)* };
+                let ordinal: ::core::primitive::u128 = match self { #(#to_ordinal)* };
                 ::midnight_compact_runtime::FieldRepr::field_repr(&ordinal, writer);
             }
-            fn field_size(&self) -> usize { 1 }
+            fn field_size(&self) -> ::core::primitive::usize { 1 }
         }
 
         impl ::midnight_compact_runtime::BinaryHashRepr for #name {
-            fn binary_repr<W: ::midnight_compact_runtime::MemWrite<u8>>(
+            fn binary_repr<W: ::midnight_compact_runtime::MemWrite<::core::primitive::u8>>(
                 &self,
                 writer: &mut W,
             ) {
-                let ordinal: u128 = match self { #(#to_ordinal)* };
+                let ordinal: ::core::primitive::u128 = match self { #(#to_ordinal)* };
                 writer.write(&ordinal.to_le_bytes()[..#byte_length]);
             }
-            fn binary_len(&self) -> usize { #byte_length }
+            fn binary_len(&self) -> ::core::primitive::usize { #byte_length }
         }
 
         impl ::midnight_compact_runtime::FromFieldRepr for #name {
-            const FIELD_SIZE: usize = 1;
-            fn from_field_repr(repr: &[::midnight_compact_runtime::Fr]) -> Option<Self> {
-                let ordinal = <u128 as ::midnight_compact_runtime::FromFieldRepr>::from_field_repr(repr)?;
-                match ordinal { #(#from_ordinal)* _ => None }
+            const FIELD_SIZE: ::core::primitive::usize = 1;
+            fn from_field_repr(repr: &[::midnight_compact_runtime::Fr]) -> ::core::option::Option<Self> {
+                let ordinal = <::core::primitive::u128 as ::midnight_compact_runtime::FromFieldRepr>::from_field_repr(repr)?;
+                match ordinal { #(#from_ordinal)* _ => ::core::option::Option::None }
             }
         }
     })
@@ -206,7 +206,7 @@ fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
                 #field: {
                     let length = <#ty as ::midnight_compact_runtime::fab::Aligned>::alignment().0.len();
                     if offset + length > __compact_cell_value.0.len() {
-                        return Err(::midnight_compact_runtime::CompactError::InvalidLedgerCell(
+                        return ::core::result::Result::Err(::midnight_compact_runtime::CompactError::InvalidLedgerCell(
                             "struct atom count differs from declared type".into()
                         ));
                     }
@@ -220,16 +220,16 @@ fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
             Ok(quote! {
                 impl ::midnight_compact_runtime::fab::Aligned for #name {
                     fn alignment() -> ::midnight_compact_runtime::fab::Alignment {
-                        let parts: Vec<::midnight_compact_runtime::fab::Alignment> = vec![
+                        let parts: ::std::vec::Vec<::midnight_compact_runtime::fab::Alignment> = ::std::vec![
                             #(<#types as ::midnight_compact_runtime::fab::Aligned>::alignment()),*
                         ];
                         ::midnight_compact_runtime::fab::Alignment::concat(parts.iter())
                     }
                 }
 
-                impl From<#name> for ::midnight_compact_runtime::fab::Value {
+                impl ::core::convert::From<#name> for ::midnight_compact_runtime::fab::Value {
                     fn from(value: #name) -> Self {
-                        let parts: Vec<::midnight_compact_runtime::fab::Value> = vec![
+                        let parts: ::std::vec::Vec<::midnight_compact_runtime::fab::Value> = ::std::vec![
                             #(value.#names.into()),*
                         ];
                         ::midnight_compact_runtime::fab::Value::concat(parts.iter())
@@ -239,15 +239,15 @@ fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
                 impl ::midnight_compact_runtime::ledger::CellValue for #name {
                     fn decode_cell_value(
                         __compact_cell_value: &::midnight_compact_runtime::fab::ValueSlice,
-                    ) -> Result<Self, ::midnight_compact_runtime::CompactError> {
+                    ) -> ::core::result::Result<Self, ::midnight_compact_runtime::CompactError> {
                         let mut offset = 0;
                         let decoded = Self { #(#decode)* };
                         if offset != __compact_cell_value.0.len() {
-                            return Err(::midnight_compact_runtime::CompactError::InvalidLedgerCell(
+                            return ::core::result::Result::Err(::midnight_compact_runtime::CompactError::InvalidLedgerCell(
                                 "struct has trailing atoms".into()
                             ));
                         }
-                        Ok(decoded)
+                        ::core::result::Result::Ok(decoded)
                     }
                 }
             })
@@ -286,7 +286,7 @@ fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
                 .enumerate()
                 .map(|(index, variant)| {
                     let index = LitInt::new(&index.to_string(), Span::call_site());
-                    quote!(#index => Ok(Self::#variant),)
+                    quote!(#index => ::core::result::Result::Ok(Self::#variant),)
                 })
                 .collect::<Vec<_>>();
             let byte_length = enum_byte_length(variants.len());
@@ -299,9 +299,9 @@ fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
                     }
                 }
 
-                impl From<#name> for ::midnight_compact_runtime::fab::Value {
+                impl ::core::convert::From<#name> for ::midnight_compact_runtime::fab::Value {
                     fn from(value: #name) -> Self {
-                        let ordinal: u128 = match value { #(#to_ordinal)* };
+                        let ordinal: ::core::primitive::u128 = match value { #(#to_ordinal)* };
                         Self::from(ordinal)
                     }
                 }
@@ -309,12 +309,12 @@ fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
                 impl ::midnight_compact_runtime::ledger::CellValue for #name {
                     fn decode_cell_value(
                         value: &::midnight_compact_runtime::fab::ValueSlice,
-                    ) -> Result<Self, ::midnight_compact_runtime::CompactError> {
-                        let ordinal = <u128 as TryFrom<&::midnight_compact_runtime::fab::ValueSlice>>::try_from(value)
+                    ) -> ::core::result::Result<Self, ::midnight_compact_runtime::CompactError> {
+                        let ordinal = <::core::primitive::u128 as ::core::convert::TryFrom<&::midnight_compact_runtime::fab::ValueSlice>>::try_from(value)
                             .map_err(|error| ::midnight_compact_runtime::CompactError::InvalidLedgerCell(error.to_string()))?;
                         match ordinal {
                             #(#from_ordinal)*
-                            _ => Err(::midnight_compact_runtime::CompactError::InvalidLedgerCell(
+                            _ => ::core::result::Result::Err(::midnight_compact_runtime::CompactError::InvalidLedgerCell(
                                 "enum ordinal is outside declared variants".into()
                             )),
                         }

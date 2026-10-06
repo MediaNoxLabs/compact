@@ -54,12 +54,12 @@ pub(crate) fn digest(input: DeriveInput) -> syn::Result<TokenStream> {
     field(fields, "field")?;
     let name = &input.ident;
     Ok(quote! {
-        impl From<::midnight_compact_runtime::ledger::MerkleTreeDigest> for #name {
+        impl ::core::convert::From<::midnight_compact_runtime::ledger::MerkleTreeDigest> for #name {
             fn from(digest: ::midnight_compact_runtime::ledger::MerkleTreeDigest) -> Self {
                 Self { field: digest.0 }
             }
         }
-        impl From<#name> for ::midnight_compact_runtime::ledger::MerkleTreeDigest {
+        impl ::core::convert::From<#name> for ::midnight_compact_runtime::ledger::MerkleTreeDigest {
             fn from(digest: #name) -> Self {
                 Self(digest.field)
             }
@@ -73,12 +73,12 @@ pub(crate) fn entry(input: DeriveInput) -> syn::Result<TokenStream> {
     field(fields, "goes_left")?;
     let name = &input.ident;
     Ok(quote! {
-        impl From<::midnight_compact_runtime::ledger::MerklePathEntry> for #name {
+        impl ::core::convert::From<::midnight_compact_runtime::ledger::MerklePathEntry> for #name {
             fn from(entry: ::midnight_compact_runtime::ledger::MerklePathEntry) -> Self {
                 Self { sibling: entry.sibling.into(), goes_left: entry.goes_left }
             }
         }
-        impl From<#name> for ::midnight_compact_runtime::ledger::MerklePathEntry {
+        impl ::core::convert::From<#name> for ::midnight_compact_runtime::ledger::MerklePathEntry {
             fn from(entry: #name) -> Self {
                 Self { sibling: entry.sibling.into(), goes_left: entry.goes_left }
             }
@@ -128,16 +128,16 @@ pub(crate) fn path(input: DeriveInput) -> syn::Result<TokenStream> {
         impl #name {
             pub fn from_ledger_path(
                 path: ::midnight_compact_runtime::ledger::MerklePath<#leaf_ty>,
-            ) -> Result<Self, ::midnight_compact_runtime::CompactError> {
+            ) -> ::core::result::Result<Self, ::midnight_compact_runtime::CompactError> {
                 let entries: [#entry_ty; #depth] = path.path
                     .into_iter()
-                    .map(Into::into)
-                    .collect::<Vec<#entry_ty>>()
+                    .map(::core::convert::Into::into)
+                    .collect::<::std::vec::Vec<#entry_ty>>()
                     .try_into()
                     .map_err(|_| ::midnight_compact_runtime::CompactError::InvalidLedgerCell(
                         "Merkle path depth differs from Compact type".into()
                     ))?;
-                Ok(Self { leaf: path.leaf, path: ::midnight_compact_runtime::FixedVector::new(entries) })
+                ::core::result::Result::Ok(Self { leaf: path.leaf, path: ::midnight_compact_runtime::FixedVector::new(entries) })
             }
 
             pub fn into_ledger_path(
@@ -145,7 +145,7 @@ pub(crate) fn path(input: DeriveInput) -> syn::Result<TokenStream> {
             ) -> ::midnight_compact_runtime::ledger::MerklePath<#leaf_ty> {
                 ::midnight_compact_runtime::ledger::MerklePath {
                     leaf: self.leaf,
-                    path: self.path.into_array().into_iter().map(Into::into).collect(),
+                    path: self.path.into_array().into_iter().map(::core::convert::Into::into).collect(),
                 }
             }
         }

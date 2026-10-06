@@ -208,7 +208,7 @@ fn valid_bridge_preserves_visibility_signatures_and_argument_order() {
         );
         assert_eq!(
             arguments.args[1].to_token_stream().to_string(),
-            "runtime :: CompactError"
+            ":: midnight_compact_runtime :: CompactError"
         );
     }
     let ImplItem::Fn(first) = &adapter.items[0] else {

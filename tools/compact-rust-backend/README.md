@@ -561,6 +561,16 @@ The existing synchronous proof resolvers require this material locally.
 `MIDNIGHT_LEDGER_TEST_STATIC_DIR` separately locates the ledger test fixtures
 used for fee funding; it does not replace the proof parameter cache.
 
+Linux compiler CI shares the absolute workspace `target/` directory across
+preparation, generated consumers, workspace tests, Clippy and package rehearsal.
+The consumer scripts honor `CARGO_TARGET_DIR`; package archives remain under
+`target/package`. That job sets `CARGO_PROFILE_DEV_DEBUG=0` and
+`CARGO_PROFILE_TEST_DEBUG=0` to avoid storing debug symbols in its many test
+binaries. Debug assertions, overflow checks and the full validation commands
+remain enabled. Local developer profiles and Apple CI retain their existing
+settings. Storage telemetry around the native gate records runner capacity and
+the target directory size.
+
 ```sh
 cargo fmt --all -- --check
 nix develop .#compiler --command env COMPACTC=compactc \

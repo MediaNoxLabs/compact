@@ -1,9 +1,9 @@
 {
   "format": "compact-vc-passport-adoption-coverage/v1",
   "total_exports": 75,
-  "directly_checked_exports": 48,
-  "direct_cases": 129,
-  "note": "compile_only is API availability evidence, not behavior parity; no proof or ledger behavior applies to pure exports.",
+  "directly_checked_exports": 75,
+  "direct_cases": 193,
+  "note": "Every pure export has direct Rust and dual-TypeScript sampled behavior evidence; this is not exhaustive branch coverage or protocol-wide compatibility.",
   "exports": [
     {
       "export": "assertValidSchemaRef",
@@ -114,14 +114,16 @@
       "export": "assertValidIssuanceContextProof",
       "evidence": "direct_rust_and_dual_typescript",
       "cases": [
-        "issuance_proof_identity_key"
+        "issuance_proof_identity_key",
+        "issuance_context_signed"
       ]
     },
     {
       "export": "assertValidPresentationContextProof",
       "evidence": "direct_rust_and_dual_typescript",
       "cases": [
-        "presentation_proof_identity_key"
+        "presentation_proof_identity_key",
+        "presentation_context_signed"
       ]
     },
     {
@@ -140,56 +142,90 @@
     },
     {
       "export": "assertValidAuthorizedSignerDescriptor",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "auth_descriptor_valid",
+        "auth_descriptor_bad_version",
+        "auth_descriptor_identity_key",
+        "auth_descriptor_wrong_relation"
+      ]
     },
     {
       "export": "authorizedSignerDescriptorRoot",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "auth_descriptor_root"
+      ]
     },
     {
       "export": "issuerScopeCommitment",
       "evidence": "direct_rust_and_dual_typescript",
       "cases": [
         "issuer_scope_valid",
-        "issuer_scope_invalid"
+        "issuer_scope_invalid",
+        "auth_scope_commitment"
       ]
     },
     {
       "export": "assertProofSignerMatchesAuthorization",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "auth_proof_matches",
+        "auth_proof_wrong_key",
+        "auth_proof_suspended"
+      ]
     },
     {
       "export": "assertAuthorizedIssuerDescriptor",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "auth_issuer_valid",
+        "auth_issuer_wrong_scope",
+        "auth_issuer_wrong_role"
+      ]
     },
     {
       "export": "assertAuthorizedVerifierProof",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "auth_verifier_valid",
+        "auth_verifier_wrong_scope",
+        "auth_verifier_wrong_role"
+      ]
     },
     {
       "export": "assertValidSignerAuthorizationAuthority",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "auth_authority_valid",
+        "auth_authority_zero_domain"
+      ]
     },
     {
       "export": "signerAuthorizationDecisionRoot",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "auth_decision_root",
+        "auth_decision_zero_domain"
+      ]
     },
     {
       "export": "assertValidSignerAuthorizationProof",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "auth_proof_valid",
+        "auth_proof_wrong_sequence",
+        "auth_proof_wrong_authority"
+      ]
     },
     {
       "export": "assertValidSignerAuthorizationUpdate",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "auth_update_valid",
+        "auth_update_same_sequence",
+        "auth_update_revoked_reactivated"
+      ]
     },
     {
       "export": "assertValidExplicitHolderBinding",
@@ -369,13 +405,19 @@
     },
     {
       "export": "DigitalPassportIssuance_assertValidResultMessage",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "generic_issuance_result_valid",
+        "generic_issuance_result_initial"
+      ]
     },
     {
       "export": "DigitalPassportIssuance_assertRequestResultAlignment",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "generic_issuance_result_alignment",
+        "generic_issuance_result_wrong_thread"
+      ]
     },
     {
       "export": "DigitalPassportVerification_assertValidRequestMessage",
@@ -387,13 +429,19 @@
     },
     {
       "export": "DigitalPassportVerification_assertValidSubmissionMessage",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "generic_submission_valid",
+        "generic_submission_initial"
+      ]
     },
     {
       "export": "DigitalPassportVerification_assertRequestSubmissionAlignment",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "generic_submission_alignment",
+        "generic_submission_wrong_challenge"
+      ]
     },
     {
       "export": "DigitalPassportVerification_assertValidResultMessage",
@@ -405,8 +453,11 @@
     },
     {
       "export": "DigitalPassportVerification_assertSubmissionResultAlignment",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "generic_result_alignment",
+        "generic_result_wrong_previous"
+      ]
     },
     {
       "export": "digitalPassportCredentialBodyRoot",
@@ -463,18 +514,28 @@
     },
     {
       "export": "assertValidDigitalPassportCredential",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "credential_signed",
+        "credential_mutated_after_signing"
+      ]
     },
     {
       "export": "assertValidDigitalPassportPresentation",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "presentation_signed_and_disclosed",
+        "presentation_disclosure_mutated"
+      ]
     },
     {
       "export": "assertDigitalPassportPresentationSatisfiesRequest",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "request_satisfied",
+        "request_challenge_changed",
+        "request_adds_last_name"
+      ]
     },
     {
       "export": "assertValidDigitalPassportAgePredicate",
@@ -509,53 +570,83 @@
     },
     {
       "export": "assertValidDigitalPassportIssuanceOffer",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "passport_offer_valid",
+        "passport_offer_bad_expiration"
+      ]
     },
     {
       "export": "assertValidDigitalPassportIssuanceRequest",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "passport_request_valid",
+        "passport_request_missing_challenge"
+      ]
     },
     {
       "export": "assertDigitalPassportIssuanceRequestMatchesOffer",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "passport_offer_request_match",
+        "passport_offer_request_unsupported_expiration"
+      ]
     },
     {
       "export": "assertValidDigitalPassportIssuanceResult",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "full_issuance_result_valid",
+        "full_issuance_result_private_tamper"
+      ]
     },
     {
       "export": "assertDigitalPassportIssuanceResultMatchesRequest",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "full_issuance_result_matches_request",
+        "full_issuance_result_other_holder"
+      ]
     },
     {
       "export": "assertValidDigitalPassportVerificationRequestMessage",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "passport_verification_request_valid",
+        "passport_verification_request_missing_method"
+      ]
     },
     {
       "export": "assertValidDigitalPassportVerificationSubmissionMessage",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "full_verification_submission_valid",
+        "full_verification_submission_other_challenge"
+      ]
     },
     {
       "export": "assertDigitalPassportVerificationSubmissionMatchesRequest",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "full_submission_matches_request",
+        "full_submission_missing_disclosure"
+      ]
     },
     {
       "export": "assertValidDigitalPassportVerificationResultMessage",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "passport_verification_result_valid",
+        "passport_verification_result_missing_root"
+      ]
     },
     {
       "export": "assertDigitalPassportVerificationResultMatchesSubmission",
-      "evidence": "compile_only",
-      "cases": []
+      "evidence": "direct_rust_and_dual_typescript",
+      "cases": [
+        "full_result_matches_submission",
+        "full_result_other_root"
+      ]
     }
   ]
 }

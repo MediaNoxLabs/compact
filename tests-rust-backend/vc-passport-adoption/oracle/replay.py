@@ -73,7 +73,11 @@ def main() -> None:
                                ("private-parts", "capture-private-parts.mjs"),
                                ("protocol", "capture-protocol.mjs"),
                                ("roots", "capture-roots.mjs"),
-                               ("bindings", "capture-bindings.mjs")):
+                               ("bindings", "capture-bindings.mjs"),
+                               ("signed-flow", "capture-signed-flow.mjs"),
+                               ("authorization", "capture-authorization.mjs"),
+                               ("protocol-roundtrip", "capture-protocol-roundtrip.mjs"),
+                               ("complete-flow", "capture-complete-flow.mjs")):
             actual = output / f"{suffix}.json"
             command = ["node", str(ORACLE / script), str(generated)]
             if suffix == "age":
@@ -82,7 +86,7 @@ def main() -> None:
             run(command)
             expected = ORACLE / f"{args.profile}-{suffix}-capture.json"
             assert json.loads(actual.read_text()) == json.loads(expected.read_text()), expected
-    print(f"{args.profile}: 129 exact cases across 48 exports match checked-in capture")
+    print(f"{args.profile}: 193 exact cases across all 75 exports match checked-in capture")
 
 
 if __name__ == "__main__":

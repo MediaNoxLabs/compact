@@ -1,0 +1,134 @@
+{
+  "profile": "upstream-0.31.1-ledger8.0.2",
+  "vectors": {
+    "authorizationScalar": "cf86438394712f4c43da577bc7801c487fa34e6bd6c162d749a4ed018a37af",
+    "verifierScalar": "2e4602f051a1126a95fe422e9c23eb70a9db5d6cfffe8caec6cafaa61cc6ca3"
+  },
+  "rows": [
+    {
+      "name": "auth_descriptor_valid",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "auth_descriptor_root",
+      "outcome": "ok",
+      "value": "24a3bb31c0c1c042701353692cd5d5656adfa8f09faafe779dc7cc8c2a95faf3"
+    },
+    {
+      "name": "auth_descriptor_bad_version",
+      "outcome": "error",
+      "message": "failed assert: Signer authorization version mismatch"
+    },
+    {
+      "name": "auth_descriptor_identity_key",
+      "outcome": "error",
+      "message": "failed assert: Jubjub point must not be the identity point"
+    },
+    {
+      "name": "auth_descriptor_wrong_relation",
+      "outcome": "error",
+      "message": "failed assert: Issuer authorization requires assertionMethod"
+    },
+    {
+      "name": "auth_scope_commitment",
+      "outcome": "ok",
+      "value": "cec89796bcf187bbe583bc24c68c516939b538079cd46625cb4a55912c53c938"
+    },
+    {
+      "name": "auth_proof_matches",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "auth_proof_wrong_key",
+      "outcome": "error",
+      "message": "failed assert: Jubjub points do not match"
+    },
+    {
+      "name": "auth_proof_suspended",
+      "outcome": "error",
+      "message": "failed assert: Signer authorization must be active"
+    },
+    {
+      "name": "auth_issuer_valid",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "auth_issuer_wrong_scope",
+      "outcome": "error",
+      "message": "failed assert: Issuer authorization scope does not match schema"
+    },
+    {
+      "name": "auth_issuer_wrong_role",
+      "outcome": "error",
+      "message": "failed assert: Signer authorization role must be issuer"
+    },
+    {
+      "name": "auth_authority_valid",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "auth_authority_zero_domain",
+      "outcome": "error",
+      "message": "failed assert: Signer authorization authority domain must be set"
+    },
+    {
+      "name": "auth_decision_root",
+      "outcome": "ok",
+      "value": "60c21803a3971b6070f785859ff31f92015de81a9e263afb391d1e66be297b43"
+    },
+    {
+      "name": "auth_decision_zero_domain",
+      "outcome": "error",
+      "message": "failed assert: Signer authorization authority domain must be set"
+    },
+    {
+      "name": "auth_verifier_valid",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "auth_verifier_wrong_scope",
+      "outcome": "error",
+      "message": "failed assert: Verifier authorization scope does not match request"
+    },
+    {
+      "name": "auth_verifier_wrong_role",
+      "outcome": "error",
+      "message": "failed assert: Signer authorization role must be verifier"
+    },
+    {
+      "name": "auth_proof_valid",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "auth_proof_wrong_sequence",
+      "outcome": "error",
+      "message": "failed assert: Authorization proof sequence does not match descriptor"
+    },
+    {
+      "name": "auth_proof_wrong_authority",
+      "outcome": "error",
+      "message": "failed assert: Authorization proof method does not match authority"
+    },
+    {
+      "name": "auth_update_valid",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "auth_update_same_sequence",
+      "outcome": "error",
+      "message": "failed assert: Signer authorization update sequence must increase"
+    },
+    {
+      "name": "auth_update_revoked_reactivated",
+      "outcome": "error",
+      "message": "failed assert: Revoked signer authorization must remain revoked"
+    }
+  ]
+}

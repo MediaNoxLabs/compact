@@ -1,0 +1,105 @@
+{
+  "profile": "branch-0.31.133-ledger8.0.3",
+  "rows": [
+    {
+      "name": "generic_issuance_result_valid",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "generic_issuance_result_initial",
+      "outcome": "error",
+      "message": "failed assert: Issuance result must be a response message"
+    },
+    {
+      "name": "generic_issuance_result_alignment",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "generic_issuance_result_wrong_thread",
+      "outcome": "error",
+      "message": "failed assert: Protocol response thread id does not match the request thread id"
+    },
+    {
+      "name": "generic_submission_valid",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "generic_submission_initial",
+      "outcome": "error",
+      "message": "failed assert: Presentation submission must be a response message"
+    },
+    {
+      "name": "generic_submission_alignment",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "generic_submission_wrong_challenge",
+      "outcome": "error",
+      "message": "failed assert: Presentation submission challenge does not match the request challenge"
+    },
+    {
+      "name": "generic_result_alignment",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "generic_result_wrong_previous",
+      "outcome": "error",
+      "message": "failed assert: Protocol response does not reference the request message id"
+    },
+    {
+      "name": "passport_offer_valid",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "passport_offer_bad_expiration",
+      "outcome": "error",
+      "message": "failed assert: Digital-passport issuance offer default expiration must be zero when expiration is disabled"
+    },
+    {
+      "name": "passport_request_valid",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "passport_request_missing_challenge",
+      "outcome": "error",
+      "message": "failed assert: Digital-passport issuance request holder challenge must be set"
+    },
+    {
+      "name": "passport_offer_request_match",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "passport_offer_request_unsupported_expiration",
+      "outcome": "error",
+      "message": "failed assert: Digital-passport issuance request cannot require expiration when the offer disables it"
+    },
+    {
+      "name": "passport_verification_request_valid",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "passport_verification_request_missing_method",
+      "outcome": "error",
+      "message": "failed assert: Verification method reference must be set"
+    },
+    {
+      "name": "passport_verification_result_valid",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "passport_verification_result_missing_root",
+      "outcome": "error",
+      "message": "failed assert: Digital-passport verification result must include a credential root when approved"
+    }
+  ]
+}

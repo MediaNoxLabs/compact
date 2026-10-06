@@ -1,0 +1,68 @@
+{
+  "profile": "upstream-0.31.1-ledger8.0.2",
+  "vectors": {
+    "publicKey": {
+      "x": "13d8c3c67691262cc869a019d5cbe5b22257879e46c56955beee75fcb689bbcd",
+      "y": "479c33dba2949dba817ee156520e1df08d959c01c75a0058aea437cbd15d29c5"
+    },
+    "issuanceNoncePoint": {
+      "x": "69b0fb638c01a066859db5c1386766c844970573f55fe1e5869b17d51fb1b6d8",
+      "y": "18100ccf927de921d18e203c14ab2100d7cc8773809db28aa337e192c49cc626"
+    },
+    "presentationNoncePoint": {
+      "x": "2534278f46b53c31f8fc08ba768f0fc75c5d401d8e00b8fa6f4f07c159ec2bb4",
+      "y": "6158d3a3040cecd0a90bfdedbc3b7a9bef5138ca5df798c49dd033d6a05583b2"
+    },
+    "credentialBodyRoot": "8b1f83b2d687bdbfc088a18ea8e7b35d60580d7879f9934d2d90f9dbe4e53b64",
+    "presentationBodyRoot": "a11275fbe576fb45096fc5ee35e99f5fb6de629c37a32714393693d15f7696e2",
+    "issuanceScalar": "92bc9d92ba8a6b8b22afd3afdfea2dc909bcc7156b529cb4f2c07da306976d",
+    "presentationScalar": "1df1fef50d71a49663742cf02fb5c8ef69aee53741fefcd0b2e26923c58b7de"
+  },
+  "rows": [
+    {
+      "name": "issuance_context_signed",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "credential_signed",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "credential_mutated_after_signing",
+      "outcome": "error",
+      "message": "failed assert: Signature verification failed"
+    },
+    {
+      "name": "presentation_context_signed",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "presentation_signed_and_disclosed",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "presentation_disclosure_mutated",
+      "outcome": "error",
+      "message": "failed assert: Presentation first-name disclosure does not match the credential"
+    },
+    {
+      "name": "request_satisfied",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "request_challenge_changed",
+      "outcome": "error",
+      "message": "failed assert: Presentation proof challenge does not match the request challenge"
+    },
+    {
+      "name": "request_adds_last_name",
+      "outcome": "error",
+      "message": "failed assert: Presentation request requires the last-name disclosure"
+    }
+  ]
+}

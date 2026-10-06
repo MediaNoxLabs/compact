@@ -35,8 +35,8 @@
     "branch-request-capture.json": "941e4979ad703457951bcea2dab0436dc91d63b2dbc2d5247bf8c734bf86a4c8",
     "upstream-request-capture.json": "0420670a23d917a2889609051a1c61716737f9cc12167c2c00891877efc3fc0c",
     "age-inputs.json": "f822c1ceecd4932685420a4ffaa91edfd4d0e746621c6183aa9e95fc261a7701",
-    "coverage.json": "336f09b7d2f8dd1342b2c46f9cfc8a3e3051dd054c117237cfdc644b3bc83bc6",
-    "replay.py": "c7c51a5129100025cc0836c9ad4a651ab095f68106a31a283da2965789dafea2",
+    "coverage.json": "5538f0e20590dc53b8c1fef9aa146d6c0dbcb4f3297129e10e0d2ef0c704e12d",
+    "replay.py": "269eae41828df59e923be352d2742a3d89dd620cfc1040c3a7e3f7b6b66cd96a",
     "capture-private-parts.mjs": "14f681ad5c342b0f8b805e28feb7a9d2ca8aba42a01ac59d35a51bdc4bb9471d",
     "branch-private-parts-capture.json": "191ea8d98b682364acb57e1a7e002beb2efb6b1c15fad20ebe1d02e48a5f1c76",
     "upstream-private-parts-capture.json": "fa9aa809c68d6e9571674a279fe54d86a65946aae1ce9a0ad4eb3bcf55fda6a5",
@@ -48,12 +48,24 @@
     "branch-roots-capture.json": "2b579e5097a0fd006ebaf6b31316e971a10bcbb6ab71a6475c87ad6e273083de",
     "capture-bindings.mjs": "80233e92adcb32d86251e2f73d52ac7e5878e76e0425b9aeaf9cdc54c882a3b4",
     "upstream-bindings-capture.json": "e658a40355e20534e5a19a74afa060b07da0e7e3782feaa3f0ee073e69119b99",
-    "branch-bindings-capture.json": "9814268265e6060d7b28e69d1ab86f8bc903c5e05c18bc36314fc034580a0413"
+    "branch-bindings-capture.json": "9814268265e6060d7b28e69d1ab86f8bc903c5e05c18bc36314fc034580a0413",
+    "capture-signed-flow.mjs": "663a06b1c2caa4f3169cc55d7c80cfc07c873048ffaec8af76a60707a52f4472",
+    "upstream-signed-flow-capture.json": "b920f7de7e8a42c4656603d2ed851a55a36d9ec9ecdecb47bc5dfa2b64e46e6a",
+    "branch-signed-flow-capture.json": "9b7ba1efd36ff8faa006a625c9c530e71692bde9933f6ecafc5f2e06e126c738",
+    "capture-authorization.mjs": "0e65ffadb82623e959b29caaf780d9a034f17f487dfcc8d6924409387e7cb5c6",
+    "upstream-authorization-capture.json": "d5d34c090ed6206fdd6458b46844d2c30b95aaaaa97fb7ddf2c6c5bf324416bb",
+    "branch-authorization-capture.json": "647d9f2398456ca676fe65a964220e7836ecf5f79a1b48673c9ace5dfaefa108",
+    "capture-protocol-roundtrip.mjs": "f00dfd80693295808581b8c94aafd84e0193d3d7eea5d6d4f4d9bd5c86f3a9d8",
+    "upstream-protocol-roundtrip-capture.json": "49fce9f398253ea68a13f957bbccb578c58968dbaf29d44db160b83d9c8f4e01",
+    "branch-protocol-roundtrip-capture.json": "047afbd42673dd4c048fd53041988399c56d3d7c54d939443c02048ad6ff9dbd",
+    "capture-complete-flow.mjs": "b7a32f0fbdfa2f74402c1fa2d1b73d4e17782addc13e16db36263b376cef6da3",
+    "upstream-complete-flow-capture.json": "2611630f6d729d0f2cf632598d3acb2e57c41017358552927149529a19d56435",
+    "branch-complete-flow-capture.json": "c6fad951173b5437dab4aa8051f1079ebdb00c2355a0f44b4f823af7534d3c0b"
   },
   "acceptance": {
     "export_count": 75,
-    "directly_compared_exports": 48,
-    "direct_cases": 129,
+    "directly_compared_exports": 75,
+    "direct_cases": 193,
     "branch_vs_upstream_rows_equal": true,
     "rust_direct_tests": [
       "pure_oracle.rs",
@@ -62,13 +74,16 @@
       "private_parts.rs",
       "protocol.rs",
       "roots.rs",
-      "bindings.rs"
+      "bindings.rs",
+      "signed_flow.rs",
+      "complete_flow.rs"
     ],
     "pure_only": true
   },
   "limits": [
-    "The 27 compile-only exports have no direct behavior-parity claim.",
+    "All 75 exports have sampled direct cases; this is not exhaustive branch coverage or a full protocol simulation.",
     "No circuit proof, ledger transaction, wallet, or simulator behavior applies to this pure-only closure.",
-    "Matching selected outputs do not establish protocol-wide compatibility between ledger 8.0.2 and 8.0.3."
+    "Matching selected outputs do not establish protocol-wide compatibility between ledger 8.0.2 and 8.0.3.",
+    "The signed flow validates native Jubjub/Schnorr logic in pure circuits; no generated ZK circuit proof or ledger application is involved."
   ]
 }

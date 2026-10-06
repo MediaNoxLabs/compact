@@ -124,6 +124,117 @@ fn verification_result() -> types::DigitalPassportVerification_ResultMessage {
         },
     }
 }
+
+fn final_response() -> types::ProtocolMessageEnvelope {
+    types::ProtocolMessageEnvelope {
+        messageId: b32(16),
+        respondsToMessageId: b32(12),
+        createdAt: u64(102),
+        ..response()
+    }
+}
+
+fn protocol_credential() -> types::Credential {
+    types::Credential {
+        version: u16(1),
+        schema: schema(),
+        issuerVerificationMethodRef: method(),
+        holderBinding: types::ExplicitHolderBinding {
+            holderVerificationMethodRef: method(),
+        },
+        issuedAt: u64(100),
+        claimCommitments: types::DigitalPassportClaimCommitments {
+            firstNameCommitment: b32(20),
+            lastNameCommitment: b32(21),
+            dateOfBirthCommitment: b32(22),
+            documentNumberCommitment: b32(23),
+            issuingStateCommitment: b32(24),
+        },
+        claimRoot: b32(25),
+        ..Default::default()
+    }
+}
+
+fn protocol_proof() -> types::Proof {
+    types::Proof {
+        signerVerificationMethodRef: method(),
+        createdAt: u64(101),
+        challengeHash: b32(13),
+        ..Default::default()
+    }
+}
+
+fn protocol_private_parts() -> types::DigitalPassportCredentialPrivateParts {
+    types::DigitalPassportCredentialPrivateParts {
+        claimValues: types::DigitalPassportClaimValues {
+            firstNameValuePadded: rt::FixedBytes::new(std::array::from_fn(|i| 30 + i as u8)),
+            lastNameValuePadded: rt::FixedBytes::new(std::array::from_fn(|i| 31 + i as u8)),
+            dateOfBirthDays: rt::BoundedUint::<4294967295>::new(12345).unwrap(),
+            documentNumberValue: b32(32),
+            issuingStateValue: b32(33),
+        },
+        openings: types::DigitalPassportOpenings {
+            firstNameOpening: b32(40),
+            lastNameOpening: b32(41),
+            dateOfBirthOpening: b32(42),
+            documentNumberOpening: b32(43),
+            issuingStateOpening: b32(44),
+        },
+    }
+}
+
+fn issuance_result() -> types::DigitalPassportIssuance_ResultMessage {
+    types::DigitalPassportIssuance_ResultMessage {
+        envelope: final_response(),
+        schema: schema(),
+        issuerVerificationMethodRef: method(),
+        holderBindingProfile: types::HolderBindingProfile::explicitDid,
+        body: types::DigitalPassportIssuanceResultBody {
+            credential: protocol_credential(),
+            credentialProof: protocol_proof(),
+            holderPublicKey: rt::JubjubPoint::identity(),
+            issuanceChallengeHash: b32(13),
+            privateParts: protocol_private_parts(),
+        },
+    }
+}
+
+fn verification_submission() -> types::DigitalPassportVerification_SubmissionMessage {
+    types::DigitalPassportVerification_SubmissionMessage {
+        envelope: response(),
+        schema: schema(),
+        issuerVerificationMethodRef: method(),
+        holderBindingProfile: types::HolderBindingProfile::explicitDid,
+        challengeHash: b32(14),
+        body: types::DigitalPassportVerificationSubmissionBody {
+            credential: protocol_credential(),
+            credentialProof: protocol_proof(),
+            presentation: types::Presentation {
+                version: u16(1),
+                schema: schema(),
+                credentialClaimRoot: b32(25),
+                issuerVerificationMethodRef: method(),
+                holderBinding: types::ExplicitHolderBinding {
+                    holderVerificationMethodRef: method(),
+                },
+                disclosed: types::DigitalPassportDisclosures {
+                    firstNameValuePadded: rt::FixedBytes::new(std::array::from_fn(|i| {
+                        50 + i as u8
+                    })),
+                    firstNameOpening: b32(51),
+                    lastNameValuePadded: rt::FixedBytes::new(std::array::from_fn(|i| 52 + i as u8)),
+                    lastNameOpening: b32(53),
+                    documentNumberValue: b32(54),
+                    documentNumberOpening: b32(55),
+                    issuingStateValue: b32(56),
+                    issuingStateOpening: b32(57),
+                    ..Default::default()
+                },
+            },
+            presentationProof: protocol_proof(),
+        },
+    }
+}
 fn assert_case(name: &str, result: Result<(), rt::CompactError>, rows: &[serde_json::Value]) {
     let row = rows.iter().find(|row| row["name"] == name).unwrap();
     if row["outcome"] == "ok" {
@@ -348,5 +459,209 @@ fn protocol_envelopes_and_wrappers_match_dual_typescript_capture() {
     assert_eq!(
         hex(pure::digitalPassportPresentationRequestBodyRoot(mapped).unwrap()),
         row("presentation_request_body_root", rows)["value"]
+    );
+}
+
+#[test]
+fn protocol_roundtrip_guards_match_dual_typescript_capture() {
+    let capture: serde_json::Value = serde_json::from_str(include_str!(
+        "../oracle/upstream-protocol-roundtrip-capture.json"
+    ))
+    .unwrap();
+    let rows = capture["rows"].as_array().unwrap();
+    assert_eq!(rows.len(), 20);
+    assert_case(
+        "generic_issuance_result_valid",
+        pure::DigitalPassportIssuance_assertValidResultMessage(issuance_result()),
+        rows,
+    );
+    assert_case(
+        "generic_issuance_result_initial",
+        pure::DigitalPassportIssuance_assertValidResultMessage(
+            types::DigitalPassportIssuance_ResultMessage {
+                envelope: initial(),
+                ..issuance_result()
+            },
+        ),
+        rows,
+    );
+    assert_case(
+        "generic_issuance_result_alignment",
+        pure::DigitalPassportIssuance_assertRequestResultAlignment(
+            issuance_request(),
+            issuance_result(),
+        ),
+        rows,
+    );
+    assert_case(
+        "generic_issuance_result_wrong_thread",
+        pure::DigitalPassportIssuance_assertRequestResultAlignment(
+            issuance_request(),
+            types::DigitalPassportIssuance_ResultMessage {
+                envelope: types::ProtocolMessageEnvelope {
+                    threadId: b32(88),
+                    ..final_response()
+                },
+                ..issuance_result()
+            },
+        ),
+        rows,
+    );
+    assert_case(
+        "generic_submission_valid",
+        pure::DigitalPassportVerification_assertValidSubmissionMessage(verification_submission()),
+        rows,
+    );
+    assert_case(
+        "generic_submission_initial",
+        pure::DigitalPassportVerification_assertValidSubmissionMessage(
+            types::DigitalPassportVerification_SubmissionMessage {
+                envelope: initial(),
+                ..verification_submission()
+            },
+        ),
+        rows,
+    );
+    assert_case(
+        "generic_submission_alignment",
+        pure::DigitalPassportVerification_assertRequestSubmissionAlignment(
+            verification_request(),
+            verification_submission(),
+        ),
+        rows,
+    );
+    assert_case(
+        "generic_submission_wrong_challenge",
+        pure::DigitalPassportVerification_assertRequestSubmissionAlignment(
+            verification_request(),
+            types::DigitalPassportVerification_SubmissionMessage {
+                challengeHash: b32(90),
+                ..verification_submission()
+            },
+        ),
+        rows,
+    );
+    assert_case(
+        "generic_result_alignment",
+        pure::DigitalPassportVerification_assertSubmissionResultAlignment(
+            verification_submission(),
+            types::DigitalPassportVerification_ResultMessage {
+                envelope: final_response(),
+                ..verification_result()
+            },
+        ),
+        rows,
+    );
+    assert_case(
+        "generic_result_wrong_previous",
+        pure::DigitalPassportVerification_assertSubmissionResultAlignment(
+            verification_submission(),
+            types::DigitalPassportVerification_ResultMessage {
+                envelope: types::ProtocolMessageEnvelope {
+                    respondsToMessageId: b32(89),
+                    ..final_response()
+                },
+                ..verification_result()
+            },
+        ),
+        rows,
+    );
+    assert_case(
+        "passport_offer_valid",
+        pure::assertValidDigitalPassportIssuanceOffer(offer()),
+        rows,
+    );
+    assert_case(
+        "passport_offer_bad_expiration",
+        pure::assertValidDigitalPassportIssuanceOffer(
+            types::DigitalPassportIssuance_OfferMessage {
+                body: types::DigitalPassportIssuanceOfferBody {
+                    defaultExpirationDays: u16(1),
+                    ..offer().body
+                },
+                ..offer()
+            },
+        ),
+        rows,
+    );
+    assert_case(
+        "passport_request_valid",
+        pure::assertValidDigitalPassportIssuanceRequest(issuance_request()),
+        rows,
+    );
+    assert_case(
+        "passport_request_missing_challenge",
+        pure::assertValidDigitalPassportIssuanceRequest(
+            types::DigitalPassportIssuance_RequestMessage {
+                body: types::DigitalPassportIssuanceRequestBody {
+                    holderChallengeHash: pure::noProtocolResponseReference().unwrap(),
+                    ..issuance_request().body
+                },
+                ..issuance_request()
+            },
+        ),
+        rows,
+    );
+    assert_case(
+        "passport_offer_request_match",
+        pure::assertDigitalPassportIssuanceRequestMatchesOffer(offer(), issuance_request()),
+        rows,
+    );
+    assert_case(
+        "passport_offer_request_unsupported_expiration",
+        pure::assertDigitalPassportIssuanceRequestMatchesOffer(
+            offer(),
+            types::DigitalPassportIssuance_RequestMessage {
+                body: types::DigitalPassportIssuanceRequestBody {
+                    requestExpiration: true,
+                    requestedExpirationDays: u16(1),
+                    ..issuance_request().body
+                },
+                ..issuance_request()
+            },
+        ),
+        rows,
+    );
+    assert_case(
+        "passport_verification_request_valid",
+        pure::assertValidDigitalPassportVerificationRequestMessage(verification_request()),
+        rows,
+    );
+    assert_case(
+        "passport_verification_request_missing_method",
+        pure::assertValidDigitalPassportVerificationRequestMessage(
+            types::DigitalPassportVerification_RequestMessage {
+                issuerVerificationMethodRef: types::VerificationMethodRef {
+                    methodId: rt::FixedBytes::new([0; 32]),
+                    ..method()
+                },
+                ..verification_request()
+            },
+        ),
+        rows,
+    );
+    assert_case(
+        "passport_verification_result_valid",
+        pure::assertValidDigitalPassportVerificationResultMessage(
+            types::DigitalPassportVerification_ResultMessage {
+                envelope: final_response(),
+                ..verification_result()
+            },
+        ),
+        rows,
+    );
+    assert_case(
+        "passport_verification_result_missing_root",
+        pure::assertValidDigitalPassportVerificationResultMessage(
+            types::DigitalPassportVerification_ResultMessage {
+                envelope: final_response(),
+                body: types::DigitalPassportVerificationResultBody {
+                    credentialRoot: pure::noProtocolResponseReference().unwrap(),
+                    ..verification_result().body
+                },
+                ..verification_result()
+            },
+        ),
+        rows,
     );
 }

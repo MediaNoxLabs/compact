@@ -1,0 +1,61 @@
+{
+  "profile": "upstream-0.31.1-ledger8.0.2",
+  "vectors": {
+    "issuanceScalar": "213717abe310081e8402b65cef4ff3b0924733bb6abed23f4625ed899c31b7c",
+    "presentationScalar": "21d536fd84f67d8c31ff9ba1fd66b9b05b2e6ee9c964f017a1f6491c52747ab",
+    "credentialBodyRoot": "d035ee391a309241427e571957fe1d3c89efcc258c0e1e4ce1abca697f08af45",
+    "presentationBodyRoot": "29c0d8531b49d1ca243c20e62d4414b01947cd132574726dddb0b80e816b3c40"
+  },
+  "rows": [
+    {
+      "name": "full_issuance_result_valid",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "full_issuance_result_private_tamper",
+      "outcome": "error",
+      "message": "failed assert: Private-parts first-name value does not match credential commitment"
+    },
+    {
+      "name": "full_issuance_result_matches_request",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "full_issuance_result_other_holder",
+      "outcome": "error",
+      "message": "failed assert: Digital-passport issuance result holder public key does not match the request"
+    },
+    {
+      "name": "full_verification_submission_valid",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "full_verification_submission_other_challenge",
+      "outcome": "error",
+      "message": "failed assert: Digital-passport verification submission challenge must match the presentation proof challenge"
+    },
+    {
+      "name": "full_submission_matches_request",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "full_submission_missing_disclosure",
+      "outcome": "error",
+      "message": "failed assert: Presentation request requires the last-name disclosure"
+    },
+    {
+      "name": "full_result_matches_submission",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "full_result_other_root",
+      "outcome": "error",
+      "message": "failed assert: Digital-passport verification result credential root does not match the submission"
+    }
+  ]
+}

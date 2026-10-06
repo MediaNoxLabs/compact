@@ -343,3 +343,112 @@ fn normalization_can_be_used_once_in_each_function_namespace() {
     assert!(emitted.contains("pub fn a_b()"));
     assert!(emitted.contains("pub fn a_b<"));
 }
+
+#[test]
+fn pure_parameter_aliases_keep_distinct_source_bindings() {
+    for names in [["r#foo", "foo"], ["foo", "r#foo"], ["a$b", "a_b"]] {
+        for selected in 0..2 {
+            let mut contract = empty();
+            let mut circuit = pure(
+                "choose",
+                12,
+                Type::Field,
+                Expr::Parameter {
+                    name: names[selected].into(),
+                },
+            );
+            circuit.parameters = names
+                .iter()
+                .map(|name| Parameter {
+                    name: (*name).into(),
+                    ty: Type::Field,
+                })
+                .collect();
+            contract.circuits.push(circuit);
+            let file = syn::parse_file(&render(&contract).unwrap()).unwrap();
+            let module = file
+                .items
+                .iter()
+                .find_map(|item| match item {
+                    syn::Item::Mod(module) if module.ident == "pure_circuits" => Some(module),
+                    _ => None,
+                })
+                .unwrap();
+            let function = module
+                .content
+                .as_ref()
+                .unwrap()
+                .1
+                .iter()
+                .find_map(|item| match item {
+                    syn::Item::Fn(function) if function.sig.ident == "choose" => Some(function),
+                    _ => None,
+                })
+                .unwrap();
+            let arguments = function
+                .sig
+                .inputs
+                .iter()
+                .map(|input| {
+                    let syn::FnArg::Typed(argument) = input else {
+                        panic!("ordinary parameter")
+                    };
+                    let syn::Pat::Ident(binding) = argument.pat.as_ref() else {
+                        panic!("named parameter")
+                    };
+                    binding.ident.to_string()
+                })
+                .collect::<Vec<_>>();
+            let semantic = |name: &str| name.strip_prefix("r#").unwrap_or(name).to_owned();
+            assert_ne!(
+                semantic(&arguments[0]),
+                semantic(&arguments[1]),
+                "{names:?}"
+            );
+            let syn::Stmt::Expr(syn::Expr::Call(result), _) = function.block.stmts.last().unwrap()
+            else {
+                panic!("pure result must return the selected parameter");
+            };
+            let syn::Expr::Path(value) = &result.args[0] else {
+                panic!("selected source binding")
+            };
+            assert_eq!(
+                value.path.get_ident().unwrap().to_string(),
+                arguments[selected]
+            );
+        }
+    }
+}
+
+#[test]
+fn parameter_allocation_preserves_original_validation_precedence() {
+    let mut contract = empty();
+    let mut circuit = pure(
+        "choose",
+        12,
+        Type::Field,
+        Expr::Parameter {
+            name: "missing".into(),
+        },
+    );
+    circuit.parameters = ["value", "value"]
+        .iter()
+        .map(|name| Parameter {
+            name: (*name).into(),
+            ty: Type::Field,
+        })
+        .collect();
+    contract.circuits.push(circuit);
+    assert_eq!(
+        render(&contract),
+        Err(located(12, RenderError::DuplicateParameter("value".into())))
+    );
+    contract.circuits[0].parameters[0].name = "bad-name".into();
+    assert_eq!(
+        render(&contract),
+        Err(located(
+            12,
+            RenderError::InvalidIdentifier("bad-name".into())
+        ))
+    );
+}

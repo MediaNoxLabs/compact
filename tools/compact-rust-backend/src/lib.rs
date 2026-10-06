@@ -283,7 +283,6 @@ pub(crate) fn located<T>(
 /// positional fallbacks; the underlying circuit still receives arguments in
 /// declaration order.
 pub(crate) fn public_parameter_idents(parameters: &[ir::Parameter]) -> Vec<syn::Ident> {
-    let mut used = HashSet::<String>::new();
     let reserved = [
         "self",
         "Self",
@@ -296,36 +295,65 @@ pub(crate) fn public_parameter_idents(parameters: &[ir::Parameter]) -> Vec<syn::
         "input",
         "recorded",
     ];
-    used.extend(reserved.into_iter().map(str::to_owned));
-    parameters
-        .iter()
-        .enumerate()
-        .map(|(index, parameter)| {
-            let candidate = ident(&parameter.name).ok().filter(|name| {
-                let spelling = name.to_string();
-                spelling != "_"
-                    && !used.contains(&spelling)
-                    && !used.contains(spelling.strip_prefix("r#").unwrap_or(&spelling))
-            });
-            let name = candidate.unwrap_or_else(|| {
-                let base = format!("__compact_param_{index}");
-                let mut fallback = base.clone();
-                let mut suffix = 1;
-                while used.contains(&fallback) {
-                    fallback = format!("{base}_{suffix}");
-                    suffix += 1;
-                }
-                syn::Ident::new(&fallback, Span::call_site())
-            });
-            used.insert(name.to_string());
-            name
-        })
-        .collect()
+    naming::parameter_idents(parameters, &reserved)
 }
 
 #[cfg(test)]
 mod public_parameter_name_tests {
     use super::{ir, public_parameter_idents};
+
+    fn allocated(names: &[&str]) -> Vec<String> {
+        let parameters = names
+            .iter()
+            .map(|name| ir::Parameter {
+                name: (*name).into(),
+                ty: ir::Type::Field,
+            })
+            .collect::<Vec<_>>();
+        public_parameter_idents(&parameters)
+            .into_iter()
+            .map(|name| name.to_string())
+            .collect()
+    }
+
+    #[test]
+    fn raw_and_plain_parameters_share_one_rust_binding_namespace() {
+        for names in [
+            ["r#foo", "foo"],
+            ["foo", "r#foo"],
+            ["type", "r#type"],
+            ["r#type", "type"],
+        ] {
+            let expected_first = if names[0] == "type" {
+                "r#type"
+            } else {
+                names[0]
+            };
+            assert_eq!(
+                allocated(&names),
+                [expected_first, "__compact_param_1"],
+                "{names:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn raw_fallback_names_and_reserved_parameters_cannot_alias() {
+        assert_eq!(
+            allocated(&[
+                "r#__compact_param_1",
+                "context",
+                "__compact_param_1_1",
+                "r#context"
+            ]),
+            [
+                "r#__compact_param_1",
+                "__compact_param_1_1",
+                "__compact_param_2",
+                "__compact_param_3"
+            ]
+        );
+    }
 
     #[test]
     fn preserves_source_names_and_allocates_unique_wrapper_fallbacks() {
@@ -2885,8 +2913,12 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
             let name = ident(&circuit.name)?;
             let mut parameters = HashMap::new();
             let mut args = Vec::<syn::FnArg>::new();
-            for parameter in &circuit.parameters {
-                let arg_name = ident(&parameter.name)?;
+            for (parameter, arg_name) in circuit
+                .parameters
+                .iter()
+                .zip(naming::parameter_idents(&circuit.parameters, &[]))
+            {
+                ident(&parameter.name)?;
                 if parameters
                     .insert(parameter.name.as_str(), (&parameter.ty, arg_name.clone()))
                     .is_some()

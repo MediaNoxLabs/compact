@@ -111,3 +111,38 @@ pub(crate) fn recorded_helper_ident(
         fallback.push('_');
     }
 }
+
+/// Allocate parameter identifiers within one Rust binding namespace.
+/// Callers select reserved local names; source binding keys remain unchanged.
+pub(crate) fn parameter_idents(
+    parameters: &[crate::ir::Parameter],
+    reserved: &[&str],
+) -> Vec<syn::Ident> {
+    let mut used = std::collections::HashSet::<String>::new();
+    used.extend(reserved.iter().map(|name| (*name).to_owned()));
+    parameters
+        .iter()
+        .enumerate()
+        .map(|(index, parameter)| {
+            let candidate = ident(&parameter.name).ok().filter(|name| {
+                let spelling = name.to_string();
+                spelling != "_"
+                    && !used.contains(&spelling)
+                    && !used.contains(spelling.strip_prefix("r#").unwrap_or(&spelling))
+            });
+            let name = candidate.unwrap_or_else(|| {
+                let base = format!("__compact_param_{index}");
+                let mut fallback = base.clone();
+                let mut suffix = 1;
+                while used.contains(&fallback) {
+                    fallback = format!("{base}_{suffix}");
+                    suffix += 1;
+                }
+                syn::Ident::new(&fallback, proc_macro2::Span::call_site())
+            });
+            let spelling = name.to_string();
+            used.insert(spelling.strip_prefix("r#").unwrap_or(&spelling).to_owned());
+            name
+        })
+        .collect()
+}

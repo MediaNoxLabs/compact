@@ -36,11 +36,19 @@ pub struct ContractLab<P> {
 
 fn empty_wallet(wallet: &WalletState<DefaultDB>) -> bool {
     let empty = WalletState::default();
-    wallet.coins == empty.coins
-        && wallet.pending_spends == empty.pending_spends
-        && wallet.pending_outputs == empty.pending_outputs
-        && wallet.merkle_tree == empty.merkle_tree
-        && wallet.first_free == empty.first_free
+    // No `..`: a new upstream wallet field needs an explicit plain-state policy.
+    let WalletState {
+        coins,
+        pending_spends,
+        pending_outputs,
+        merkle_tree,
+        first_free,
+    } = wallet;
+    coins == &empty.coins
+        && pending_spends == &empty.pending_spends
+        && pending_outputs == &empty.pending_outputs
+        && merkle_tree == &empty.merkle_tree
+        && first_free == &empty.first_free
 }
 fn plain<P>(context: &CircuitContext<P>) -> Result<(), LabError> {
     if context.circuit_zswap() != &CircuitZswapPlan::default()

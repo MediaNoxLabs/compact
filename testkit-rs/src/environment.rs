@@ -59,31 +59,66 @@ impl Environment {
         context
     }
     pub(crate) fn matches(&self, other: &Self) -> bool {
-        self.address == other.address
-            && self.block.tblock == other.block.tblock
-            && self.block.tblock_err == other.block.tblock_err
-            && self.block.parent_block_hash == other.block.parent_block_hash
-            && self.block.last_block_time == other.block.last_block_time
-            && self.coin_public_key == other.coin_public_key
-            && self.cost_model == other.cost_model
-            && self.query_gas_limit == other.query_gas_limit
-            && self.fixture_seed == other.fixture_seed
+        let Self {
+            address,
+            block,
+            coin_public_key,
+            cost_model,
+            query_gas_limit,
+            fixture_seed,
+        } = self;
+        address == &other.address
+            && same_block(block, &other.block)
+            && coin_public_key == &other.coin_public_key
+            && cost_model == &other.cost_model
+            && query_gas_limit == &other.query_gas_limit
+            && fixture_seed == &other.fixture_seed
     }
 }
 
 pub(crate) fn same_call(a: &CallContext<DefaultDB>, b: &CallContext<DefaultDB>) -> bool {
-    a.own_address == b.own_address
-        && a.tblock == b.tblock
-        && a.tblock_err == b.tblock_err
-        && a.parent_block_hash == b.parent_block_hash
-        && a.caller == b.caller
-        && a.balance == b.balance
-        && a.com_indices == b.com_indices
-        && a.last_block_time == b.last_block_time
+    let CallContext {
+        own_address,
+        tblock,
+        tblock_err,
+        parent_block_hash,
+        caller,
+        balance,
+        com_indices,
+        last_block_time,
+    } = a;
+    own_address == &b.own_address
+        && tblock == &b.tblock
+        && tblock_err == &b.tblock_err
+        && parent_block_hash == &b.parent_block_hash
+        && caller == &b.caller
+        && balance == &b.balance
+        && com_indices == &b.com_indices
+        && last_block_time == &b.last_block_time
 }
 pub(crate) fn same_initial(a: &QueryContext<DefaultDB>, b: &QueryContext<DefaultDB>) -> bool {
-    a.address == b.address
-        && a.state == b.state
-        && a.effects == b.effects
-        && same_call(&a.call_context, &b.call_context)
+    let QueryContext {
+        state,
+        effects,
+        address,
+        call_context,
+    } = a;
+    address == &b.address
+        && state == &b.state
+        && effects == &b.effects
+        && same_call(call_context, &b.call_context)
+}
+
+// Exhaustive patterns deliberately fail compilation on new upstream fields.
+fn same_block(a: &BlockContext, b: &BlockContext) -> bool {
+    let BlockContext {
+        tblock,
+        tblock_err,
+        parent_block_hash,
+        last_block_time,
+    } = a;
+    tblock == &b.tblock
+        && tblock_err == &b.tblock_err
+        && parent_block_hash == &b.parent_block_hash
+        && last_block_time == &b.last_block_time
 }

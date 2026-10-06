@@ -20,6 +20,7 @@
 //! its corresponding verifying VM instruction.
 
 mod kernel;
+mod local_boundary;
 mod zswap;
 
 use midnight_base_crypto::cost_model::RunningCost;
@@ -218,25 +219,9 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         let prior_gas_limit = self.state.context.gas_limit;
         let result = call(self.state.context)?;
         let next = &result.context;
-        let before_call = &prior_query.call_context;
-        let after_call = &next.query.call_context;
-        if prior_query.state != next.query.state
-            || prior_query.effects != next.query.effects
-            || prior_query.address != next.query.address
-            || before_call.own_address != after_call.own_address
-            || before_call.tblock != after_call.tblock
-            || before_call.tblock_err != after_call.tblock_err
-            || before_call.parent_block_hash != after_call.parent_block_hash
-            || before_call.caller != after_call.caller
-            || before_call.balance != after_call.balance
-            || before_call.com_indices != after_call.com_indices
-            || before_call.last_block_time != after_call.last_block_time
+        if !local_boundary::same_query(&prior_query, &next.query)
             || prior_circuit_zswap != next.circuit_zswap
-            || prior_zswap.coins != next.zswap_state.coins
-            || prior_zswap.pending_spends != next.zswap_state.pending_spends
-            || prior_zswap.pending_outputs != next.zswap_state.pending_outputs
-            || prior_zswap.merkle_tree != next.zswap_state.merkle_tree
-            || prior_zswap.first_free != next.zswap_state.first_free
+            || !local_boundary::same_wallet(&prior_zswap, &next.zswap_state)
             || prior_coin_key != next.own_coin_public_key().ok()
             || prior_cost_model != next.cost_model
             || prior_gas_limit != next.gas_limit

@@ -184,3 +184,150 @@ fn helper_error_is_propagated_without_constructing_a_recorded_result() {
         Err(CompactError::UnsignedOutOfRange { value: 9, max: 8 })
     ));
 }
+
+#[test]
+fn effects_only_kernel_claim_is_rejected_even_when_public_state_is_unchanged() {
+    let initial = context();
+    let before_state = initial.query.state.clone();
+    let before_effects = initial.query.effects.clone();
+    let outcome = RecordingFrame::new(initial).call_local(|c| {
+        let result = c.kernel_claim_zswap_nullifier(
+            midnight_compact_runtime::ledger::CoinNullifier(HashOutput([9; 32])),
+        )?;
+        assert_eq!(result.context.query.state, before_state);
+        assert_ne!(result.context.query.effects, before_effects);
+        Ok(result)
+    });
+    assert_boundary_refusal(outcome);
+}
+
+fn assert_boundary_refusal<T>(outcome: Result<(RecordingFrame<u64>, T), CompactError>) {
+    match outcome {
+        Err(CompactError::InvalidLedgerCell(message)) => assert_eq!(
+            message,
+            "local helper changed public or Zswap execution context"
+        ),
+        _ => panic!("expected the local-helper context rejection"),
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum WalletMutation {
+    Coins,
+    PendingSpends,
+    PendingOutputs,
+    MerkleTree,
+}
+fn reject_wallet_mutation(kind: WalletMutation) {
+    use midnight_coin_structure::coin::{Info, Nonce, Nullifier, QualifiedInfo, ShieldedTokenType};
+    let initial = context();
+    let before = initial.zswap_state.clone();
+    let state = initial.query.state.clone();
+    let effects = initial.query.effects.clone();
+    let coin = Info {
+        nonce: Nonce(HashOutput([1; 32])),
+        type_: ShieldedTokenType(HashOutput([2; 32])),
+        value: 7,
+    };
+    let qualified = QualifiedInfo {
+        nonce: coin.nonce,
+        type_: coin.type_,
+        value: coin.value,
+        mt_index: 3,
+    };
+    let nullifier = Nullifier(HashOutput([3; 32]));
+    let commitment = CoinCommitment(HashOutput([4; 32]));
+    let outcome = RecordingFrame::new(initial).call_local(|mut c| {
+        match kind {
+            WalletMutation::Coins => {
+                c.zswap_state.coins = c.zswap_state.coins.insert(nullifier, qualified);
+            }
+            WalletMutation::PendingSpends => {
+                c.zswap_state.pending_spends =
+                    c.zswap_state.pending_spends.insert(nullifier, qualified);
+            }
+            WalletMutation::PendingOutputs => {
+                c.zswap_state.pending_outputs =
+                    c.zswap_state.pending_outputs.insert(commitment, coin);
+            }
+            WalletMutation::MerkleTree => {
+                c.zswap_state.merkle_tree =
+                    c.zswap_state
+                        .merkle_tree
+                        .update_hash(0, HashOutput([5; 32]), ());
+            }
+        }
+        // Exactly one wallet field changes. In particular, do not increment
+        // first_free here: that already-tested guard must not mask these cases.
+        assert_eq!(
+            c.zswap_state.coins != before.coins,
+            kind == WalletMutation::Coins
+        );
+        assert_eq!(
+            c.zswap_state.pending_spends != before.pending_spends,
+            kind == WalletMutation::PendingSpends
+        );
+        assert_eq!(
+            c.zswap_state.pending_outputs != before.pending_outputs,
+            kind == WalletMutation::PendingOutputs
+        );
+        assert_eq!(
+            c.zswap_state.merkle_tree != before.merkle_tree,
+            kind == WalletMutation::MerkleTree
+        );
+        assert_eq!(c.zswap_state.first_free, before.first_free);
+        assert_eq!(c.query.state, state);
+        assert_eq!(c.query.effects, effects);
+        Ok(local(c))
+    });
+    assert_boundary_refusal(outcome);
+}
+#[test]
+fn wallet_coins_change_is_independently_rejected() {
+    reject_wallet_mutation(WalletMutation::Coins);
+}
+#[test]
+fn wallet_pending_spends_change_is_independently_rejected() {
+    reject_wallet_mutation(WalletMutation::PendingSpends);
+}
+#[test]
+fn wallet_pending_outputs_change_is_independently_rejected() {
+    reject_wallet_mutation(WalletMutation::PendingOutputs);
+}
+#[test]
+fn wallet_merkle_change_is_independently_rejected() {
+    reject_wallet_mutation(WalletMutation::MerkleTree);
+}
+#[test]
+fn local_metered_witness_preserves_private_output_and_actual_read_gas() {
+    use midnight_compact_runtime::context::CircuitFrame;
+    let initial = context();
+    let before = initial.query.clone();
+    let (query, _) = midnight_compact_runtime::ledger::query_cell_at_path::<bool, _>(
+        &before,
+        &[0],
+        initial.gas_limit,
+        &initial.cost_model,
+    )
+    .unwrap();
+    assert_ne!(query.gas_cost, RunningCost::ZERO);
+    let (frame, value) = RecordingFrame::new(initial)
+        .call_local(|c| {
+            let (frame, value) = CircuitFrame::new(c).try_witness_metered(|c, meter| {
+                Ok((c.private_state + 1, meter.read_cell::<bool>(&[0])?))
+            })?;
+            Ok(frame.finish(value))
+        })
+        .unwrap();
+    assert!(!value);
+    let recorded = frame.finish(value);
+    assert_eq!(recorded.execution.context.private_state, 8);
+    assert_eq!(
+        recorded.execution.private_transcript_outputs,
+        vec![AlignedValue::from(false)]
+    );
+    assert_eq!(recorded.execution.gas_cost, query.gas_cost);
+    assert_eq!(recorded.execution.context.query.state, before.state);
+    assert_eq!(recorded.execution.context.query.effects, before.effects);
+    assert!(recorded.public.verify_ops().is_empty());
+}

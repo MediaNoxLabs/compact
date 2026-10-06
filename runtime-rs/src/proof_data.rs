@@ -55,6 +55,18 @@ impl<D: DB> PartialProofData<D> {
         &self.private_transcript_outputs
     }
 
+    /// Fold only the transcript material from a completed nested circuit into
+    /// this active root call. The nested call's formal input/output and call
+    /// metadata are deliberately discarded: TypeScript executes local calls
+    /// against the root wrapper's one `PartialProofData` object, so they are
+    /// not separate proof records.
+    pub(crate) fn fold_nested(&mut self, nested: ProofData<D>) {
+        let (_, public_transcript, private_transcript_outputs, _) = nested.into_parts();
+        self.public_transcript.extend(public_transcript);
+        self.private_transcript_outputs
+            .extend(private_transcript_outputs);
+    }
+
     pub fn finalize(self, output: AlignedValue) -> ProofData<D> {
         ProofData {
             input: self.input,
@@ -129,6 +141,10 @@ impl PrivateTranscriptOutputs {
 
     pub fn into_vec(self) -> Vec<AlignedValue> {
         self.outputs
+    }
+
+    fn extend(&mut self, outputs: Self) {
+        self.outputs.extend(outputs.outputs);
     }
 }
 
@@ -227,6 +243,19 @@ impl<D: DB> CallProofDataTrace<D> {
 
     pub fn into_vec(self) -> Vec<CallProofData<D>> {
         self.calls
+    }
+
+    pub(crate) fn drain_from(
+        &mut self,
+        checkpoint: usize,
+    ) -> Result<Vec<CallProofData<D>>, CompactError> {
+        if checkpoint > self.calls.len() {
+            return Err(CompactError::ProofData(format!(
+                "nested-call proof-data checkpoint {checkpoint} exceeds trace length {}",
+                self.calls.len()
+            )));
+        }
+        Ok(self.calls.drain(checkpoint..).collect())
     }
 }
 
@@ -510,6 +539,83 @@ mod tests {
             trace.single_contract_call(),
             Err(CompactError::ProofData(_))
         ));
+    }
+
+    #[test]
+    fn nested_call_folding_keeps_prior_roots_and_only_absorbs_transcripts() {
+        let qctx = QueryContext::new(
+            crate::ChargedState::new(new_cell(0u8)),
+            ContractAddress::default(),
+        );
+        let make_call = |id: &str, input: u8, secret: u8, op, output: u8| {
+            let mut partial = PartialProofData::<DefaultDB>::new(AlignedValue::from(input));
+            partial.push_public_ops([op]);
+            partial.push_private_output(AlignedValue::from(secret));
+            CallProofData::new(
+                id,
+                ContractAddress::default(),
+                qctx.clone(),
+                qctx.clone(),
+                partial.finalize(AlignedValue::from(output)),
+            )
+        };
+
+        let prior = make_call("prior_root", 90, 91, Op::Eq, 92);
+        let nested = make_call("nested_helper", 80, 81, Op::Lt, 82);
+        let mut ctx = crate::CircuitContext::new(qctx.state.clone(), ());
+        ctx.call_proof_data_trace.push(prior.clone());
+        let checkpoint = ctx.call_proof_data_trace.len();
+        ctx.call_proof_data_trace.push(nested);
+
+        let mut root = PartialProofData::<DefaultDB>::new(AlignedValue::from(1u8));
+        root.push_public_ops([Op::Type]);
+        root.push_private_output(AlignedValue::from(2u8));
+        let ctx = ctx
+            .with_folded_nested_call_proof_data(checkpoint, ContractAddress::default(), &mut root)
+            .expect("fold nested call");
+
+        assert_eq!(ctx.call_proof_data_trace.len(), 1);
+        assert_eq!(
+            ctx.call_proof_data_trace.as_slice()[0].circuit_id,
+            "prior_root"
+        );
+        assert_eq!(root.input, AlignedValue::from(1u8));
+        assert!(matches!(
+            root.public_transcript.as_slice(),
+            [Op::Type, Op::Lt]
+        ));
+        assert_eq!(
+            root.private_transcript_outputs().as_slice(),
+            &[AlignedValue::from(2u8), AlignedValue::from(81u8)]
+        );
+    }
+
+    #[test]
+    fn cross_contract_nested_call_folding_fails_closed() {
+        let parent_address = ContractAddress::default();
+        let mut foreign_address = ContractAddress::default();
+        foreign_address.0 .0[0] = 1;
+        let foreign_qctx =
+            QueryContext::new(crate::ChargedState::new(new_cell(0u8)), foreign_address);
+        let foreign_call = CallProofData::new(
+            "foreign_helper",
+            foreign_address,
+            foreign_qctx.clone(),
+            foreign_qctx.clone(),
+            PartialProofData::<DefaultDB>::new(AlignedValue::from(1u8))
+                .finalize(AlignedValue::from(2u8)),
+        );
+        let mut ctx = crate::CircuitContext::new(foreign_qctx.state.clone(), ());
+        ctx.current_query_context = foreign_qctx;
+        ctx.call_proof_data_trace.push(foreign_call);
+
+        let mut root = PartialProofData::<DefaultDB>::new(AlignedValue::from(3u8));
+        root.push_public_ops([Op::Type]);
+        let result = ctx.with_folded_nested_call_proof_data(0, parent_address, &mut root);
+
+        assert!(matches!(result, Err(CompactError::ProofData(_))));
+        assert!(matches!(root.public_transcript.as_slice(), [Op::Type]));
+        assert!(root.private_transcript_outputs().is_empty());
     }
 
     #[test]

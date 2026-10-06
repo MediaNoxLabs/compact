@@ -323,11 +323,23 @@ circuit invocation in `CircuitContext::call_proof_data_trace`. Each call
 contains the actual circuit id, exact Compact-aligned formal input, ordered
 public transcript (`popeq` reads and writes in VM order), private witness
 outputs in source/witness-call order, exact primary output, and the initial and
-final query contexts needed by Ledger8 transaction construction. Use
-`single_contract_call()` when handing a single circuit invocation to a
-transaction builder; it fails closed if no call, or more than one call, was
-recorded. Private witness material is held in an opaque type that intentionally
-does not implement `Debug`, `Serialize`, or `Deserialize`.
+final query contexts needed by Ledger8 transaction construction.
+
+A locally called circuit does not create a second proof record. At the generated
+call site, its public ledger operations and private witness outputs are folded
+into the active exported/root record in execution order, matching the
+TypeScript emitter's shared `partialProofData` argument. The local call's
+formal input/output and metadata are discarded. This folding is recursive, so
+operations before and after deeper local calls retain source order. Folding
+validates the returned context and every nested record against the root contract
+address, and fails closed rather than absorbing foreign-contract proof material.
+Separate calls made by the Rust consumer remain separate top-level trace records.
+
+Use `single_contract_call()` when handing one exported invocation to a
+transaction builder; it fails closed if no call, or more than one genuinely
+sequential top-level call, was recorded. Private witness material is held in an
+opaque type that intentionally does not implement `Debug`, `Serialize`, or
+`Deserialize`.
 
 ### Witnesses
 

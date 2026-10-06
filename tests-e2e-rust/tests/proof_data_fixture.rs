@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use compact_contract_proof_data_fixture::{Contract, Witnesses};
+use compact_contract_proof_data_fixture::{ledger, Contract, Witnesses};
 use midnight_compact_runtime::*;
 use serde::Deserialize;
 
@@ -39,6 +39,8 @@ impl Witnesses<()> for ProofWitnesses {
 struct TsProofDataFixture {
     constructor: TsConstructorFixture,
     circuit: TsCircuitFixture,
+    #[serde(rename = "nestedCircuit")]
+    nested_circuit: TsCircuitFixture,
 }
 
 #[derive(Deserialize)]
@@ -238,4 +240,187 @@ fn generated_proof_data_matches_ts_reference_shape() {
     );
     assert_eq!(std_lib::decode_fr(&private[0]).unwrap(), Fr::from(5u64));
     assert_eq!(std_lib::decode_fr(&private[1]).unwrap(), Fr::from(7u64));
+}
+
+#[test]
+fn multi_level_conditional_call_transcripts_fold_into_one_ts_shaped_root() {
+    let ts = ts_fixture();
+    let contract: Contract<(), ProofWitnesses> = Contract::new(ProofWitnesses);
+    let init = contract
+        .initial_state(ctor_ctx(), Fr::from(11u64))
+        .expect("initial_state");
+    let ctx = CircuitContext::new(init.current_contract_state, ());
+    let initial_query_context = ctx.current_query_context.clone();
+    let result = contract
+        .nested_read_witness_write(
+            ctx,
+            Fr::from(16u64),
+            Fr::from(30u64),
+            true,
+            Fr::from(37u64),
+            Fr::from(40u64),
+        )
+        .expect("nested_read_witness_write");
+
+    let root = result
+        .context
+        .call_proof_data_trace
+        .single_contract_call()
+        .expect("one exported root proof record");
+    assert_eq!(root.circuit_id, "nested_read_witness_write");
+    assert_eq!(root.contract_address, &initial_query_context.address);
+    assert_eq!(
+        root.initial_query_context.address,
+        initial_query_context.address
+    );
+    assert_eq!(
+        root.initial_query_context.state,
+        initial_query_context.state
+    );
+    assert_eq!(
+        root.final_query_context.address,
+        result.context.current_query_context.address
+    );
+    assert_eq!(
+        root.final_query_context.state,
+        result.context.current_query_context.state
+    );
+    assert_eq!(
+        root.input,
+        &aligned_value_from_parts(&[
+            proof_aligned_value(&Fr::from(16u64)),
+            proof_aligned_value(&Fr::from(30u64)),
+            proof_aligned_value(&true),
+            proof_aligned_value(&Fr::from(37u64)),
+            proof_aligned_value(&Fr::from(40u64)),
+        ])
+    );
+    assert_eq!(root.output, &aligned_value_from_parts(&[]));
+    assert_eq!(rust_summary(root.input), ts.nested_circuit.input);
+    assert_eq!(rust_summary(root.output), ts.nested_circuit.output);
+
+    let tags: Vec<_> = root.public_transcript.iter().map(op_tag).collect();
+    assert_eq!(tags, ts.nested_circuit.public_transcript_tags);
+    assert_eq!(
+        tags,
+        [
+            "dup", "idx", "popeq", // outer read before the local call
+            "dup", "idx", "popeq", // conditional nested leaf read
+            "push", "push", "ins", // conditional nested leaf write
+            "dup", "idx", "popeq", // outer read after the local call
+            "push", "push", "ins", // outer write
+        ]
+    );
+    let popeq: Vec<_> = root
+        .public_transcript
+        .iter()
+        .filter_map(|op| match op {
+            Op::Popeq { result, .. } => Some(std_lib::decode_fr(result).unwrap()),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(popeq, [Fr::from(16u64), Fr::from(16u64), Fr::from(37u64)]);
+    assert_eq!(
+        root.private_transcript_outputs.as_slice(),
+        &[
+            proof_aligned_value(&Fr::from(5u64)),
+            proof_aligned_value(&Fr::from(7u64)),
+            proof_aligned_value(&Fr::from(5u64)),
+        ]
+    );
+    for (rust, expected) in root
+        .private_transcript_outputs
+        .as_slice()
+        .iter()
+        .zip(&ts.nested_circuit.private_transcript_outputs)
+    {
+        assert_eq!(rust_summary(rust), *expected);
+    }
+    assert_eq!(
+        ledger(&result.context.current_query_context.state)
+            .value()
+            .expect("value"),
+        Fr::from(50u64)
+    );
+}
+
+#[test]
+fn conditional_nested_call_only_folds_the_executed_branch() {
+    let contract: Contract<(), ProofWitnesses> = Contract::new(ProofWitnesses);
+    let init = contract
+        .initial_state(ctor_ctx(), Fr::from(11u64))
+        .expect("initial_state");
+    let result = contract
+        .nested_read_witness_write(
+            CircuitContext::new(init.current_contract_state, ()),
+            Fr::from(16u64),
+            Fr::from(30u64),
+            false,
+            Fr::from(16u64),
+            Fr::from(40u64),
+        )
+        .expect("nested_read_witness_write false branch");
+
+    let root = result
+        .context
+        .call_proof_data_trace
+        .single_contract_call()
+        .expect("one exported root proof record");
+    assert_eq!(
+        root.public_transcript
+            .iter()
+            .map(op_tag)
+            .collect::<Vec<_>>(),
+        [
+            "dup", "idx", "popeq", // outer read before the skipped call
+            "dup", "idx", "popeq", // outer read after the skipped call
+            "push", "push", "ins", // outer write
+        ]
+    );
+    assert_eq!(
+        root.private_transcript_outputs.as_slice(),
+        &[
+            proof_aligned_value(&Fr::from(5u64)),
+            proof_aligned_value(&Fr::from(5u64)),
+        ]
+    );
+    assert_eq!(
+        ledger(&result.context.current_query_context.state)
+            .value()
+            .expect("value"),
+        Fr::from(50u64)
+    );
+}
+
+#[test]
+fn sequential_exported_calls_remain_separate_and_fail_single_call_extraction() {
+    let contract: Contract<(), ProofWitnesses> = Contract::new(ProofWitnesses);
+    let init = contract
+        .initial_state(ctor_ctx(), Fr::from(11u64))
+        .expect("initial_state");
+    let first = contract
+        .read_witness_write(
+            CircuitContext::new(init.current_contract_state, ()),
+            Fr::from(16u64),
+            Fr::from(30u64),
+        )
+        .expect("first top-level call");
+    let second = contract
+        .read_witness_write(first.context, Fr::from(42u64), Fr::from(50u64))
+        .expect("second top-level call");
+
+    let trace = &second.context.call_proof_data_trace;
+    assert_eq!(trace.len(), 2);
+    assert_eq!(
+        trace
+            .as_slice()
+            .iter()
+            .map(|call| call.circuit_id.as_str())
+            .collect::<Vec<_>>(),
+        ["read_witness_write", "read_witness_write"]
+    );
+    assert!(matches!(
+        trace.single_contract_call(),
+        Err(CompactError::ProofData(_))
+    ));
 }

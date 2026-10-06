@@ -41,6 +41,38 @@ impl<PS, D> CircuitContext<PS, D>
 where
     D: DB,
 {
+    /// Fold calls finalized by one generated nested call into its caller's
+    /// active proof data, preserving the public/private transcript order at
+    /// the call site. Existing records before `checkpoint` are left alone, so
+    /// sequential top-level calls remain distinct. Nested input/output and
+    /// metadata are dropped, matching the TypeScript emitter's one shared
+    /// `PartialProofData` object per exported/root invocation. The expected
+    /// parent address is captured before the nested call moves the context, so
+    /// a returned foreign-contract context cannot authorize folding itself.
+    pub fn with_folded_nested_call_proof_data(
+        mut self,
+        checkpoint: usize,
+        expected_contract_address: ContractAddress,
+        parent_proof_data: &mut PartialProofData<D>,
+    ) -> Result<Self, crate::CompactError> {
+        let nested_calls = self.call_proof_data_trace.drain_from(checkpoint)?;
+        if self.current_query_context.address != expected_contract_address
+            || nested_calls.iter().any(|call| {
+                call.contract_address != expected_contract_address
+                    || call.initial_query_context.address != expected_contract_address
+                    || call.final_query_context.address != expected_contract_address
+            })
+        {
+            return Err(crate::CompactError::ProofData(
+                "cross-contract nested proof data cannot be folded into a root call".into(),
+            ));
+        }
+        for call in nested_calls {
+            parent_proof_data.fold_nested(call.proof_data);
+        }
+        Ok(self)
+    }
+
     /// Finalize and append one circuit-call proof-data record to this context.
     /// Generated wrappers call this after they have applied all ledger effects
     /// and encoded the circuit output.

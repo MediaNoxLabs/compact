@@ -708,13 +708,19 @@ where
             gas_limit: ctx.gas_limit.clone(),
             call_proof_data_trace: CallProofDataTrace::new(),
         };
+        let _proof_trace_checkpoint_9 = _cctx_9.call_proof_data_trace.len();
         let _cr_9 = self.assert_operator_distinct_from_auditor(_cctx_9, _carg_9_0)?;
-        let qctx = _cr_9.context.current_query_context;
-        let current_private_state = _cr_9.context.current_private_state;
-        let _zswap = _cr_9.context.current_zswap_local_state;
-        let _witness_ctx_66 =
+        let _nested_ctx_9 = _cr_9.context.with_folded_nested_call_proof_data(
+            _proof_trace_checkpoint_9,
+            __compact_initial_query_context.address,
+            &mut __compact_proof_data,
+        )?;
+        let qctx = _nested_ctx_9.current_query_context;
+        let current_private_state = _nested_ctx_9.current_private_state;
+        let _zswap = _nested_ctx_9.current_zswap_local_state;
+        let _witness_ctx_72 =
             WitnessContext::new(ledger(&qctx.state), current_private_state, &qctx);
-        let (current_private_state, now) = self.witnesses.current_timestamp(&_witness_ctx_66);
+        let (current_private_state, now) = self.witnesses.current_timestamp(&_witness_ctx_72);
         __compact_proof_data.push_private_output(proof_aligned_value(&now));
         let ops = OpProgramVerify::<DefaultDB>::new()
             .idx_at_index(1u8, true)
@@ -1092,12 +1098,22 @@ where
             aligned_value_from_parts(&[proof_aligned_value(&holder)]),
         );
         let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
+        let _proof_trace_checkpoint_1 = ctx.call_proof_data_trace.len();
         let _cr_1 = self.assert_writable(ctx)?;
-        let ctx = _cr_1.context;
+        let ctx = _cr_1.context.with_folded_nested_call_proof_data(
+            _proof_trace_checkpoint_1,
+            __compact_initial_query_context.address,
+            &mut __compact_proof_data,
+        )?;
         __gas_acc += _cr_1.gas_cost.clone();
-        let _cr_4 = self.record_write(ctx)?;
-        let ctx = _cr_4.context;
-        __gas_acc += _cr_4.gas_cost.clone();
+        let _proof_trace_checkpoint_9 = ctx.call_proof_data_trace.len();
+        let _cr_9 = self.record_write(ctx)?;
+        let ctx = _cr_9.context.with_folded_nested_call_proof_data(
+            _proof_trace_checkpoint_9,
+            __compact_initial_query_context.address,
+            &mut __compact_proof_data,
+        )?;
+        __gas_acc += _cr_9.gas_cost.clone();
         let ops = OpProgramVerify::<DefaultDB>::new()
             .idx_at_index(0u8, true)
             .push(false, new_cell(2u8))
@@ -1149,8 +1165,13 @@ where
         let disclosed_id = record_id.clone();
         let disclosed_record = record.clone();
         let disclosed_mutation = mutation.clone();
+        let _proof_trace_checkpoint_3 = ctx.call_proof_data_trace.len();
         let _cr_3 = self.assert_writable(ctx)?;
-        let ctx = _cr_3.context;
+        let ctx = _cr_3.context.with_folded_nested_call_proof_data(
+            _proof_trace_checkpoint_3,
+            __compact_initial_query_context.address,
+            &mut __compact_proof_data,
+        )?;
         __gas_acc += _cr_3.gas_cost.clone();
         compact_assert!(
             ((disclosed_mutation == RecordMutation::Insert)
@@ -1212,8 +1233,13 @@ where
             )?
         } else if (disclosed_mutation == RecordMutation::Insert) {
             let tmp = 1;
+            let _proof_trace_checkpoint_h0 = ctx.call_proof_data_trace.len();
             let _cr_h0 = self.record_exists(ctx.clone(), disclosed_id.clone())?;
-            let ctx = _cr_h0.context;
+            let ctx = _cr_h0.context.with_folded_nested_call_proof_data(
+                _proof_trace_checkpoint_h0,
+                __compact_initial_query_context.address,
+                &mut __compact_proof_data,
+            )?;
             compact_assert!((!(_cr_h0.result.clone())), "record already exists");
             let ops = OpProgramVerify::<DefaultDB>::new()
                 .idx_at_index(1u8, true)
@@ -1264,8 +1290,13 @@ where
             current_query_context: _results_7.context.clone(),
             ..ctx
         };
+        let _proof_trace_checkpoint_8 = ctx.call_proof_data_trace.len();
         let _cr_8 = self.record_write(ctx)?;
-        let ctx = _cr_8.context;
+        let ctx = _cr_8.context.with_folded_nested_call_proof_data(
+            _proof_trace_checkpoint_8,
+            __compact_initial_query_context.address,
+            &mut __compact_proof_data,
+        )?;
         __gas_acc += _cr_8.gas_cost.clone();
 
         Ok(CircuitResults {
@@ -1296,8 +1327,13 @@ where
         );
         let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
         let disclosed_id = record_id.clone();
+        let _proof_trace_checkpoint_2 = ctx.call_proof_data_trace.len();
         let _cr_2 = self.assert_writable(ctx)?;
-        let ctx = _cr_2.context;
+        let ctx = _cr_2.context.with_folded_nested_call_proof_data(
+            _proof_trace_checkpoint_2,
+            __compact_initial_query_context.address,
+            &mut __compact_proof_data,
+        )?;
         __gas_acc += _cr_2.gas_cost.clone();
         compact_assert!(
             {
@@ -1367,9 +1403,14 @@ where
             })),
             "record is still watched"
         );
-        let _cr_7 = self.record_write(ctx)?;
-        let ctx = _cr_7.context;
-        __gas_acc += _cr_7.gas_cost.clone();
+        let _proof_trace_checkpoint_12 = ctx.call_proof_data_trace.len();
+        let _cr_12 = self.record_write(ctx)?;
+        let ctx = _cr_12.context.with_folded_nested_call_proof_data(
+            _proof_trace_checkpoint_12,
+            __compact_initial_query_context.address,
+            &mut __compact_proof_data,
+        )?;
+        __gas_acc += _cr_12.gas_cost.clone();
         let ops = OpProgramVerify::<DefaultDB>::new()
             .idx_at_index(1u8, true)
             .idx_at_index(10u8, true)
@@ -1427,8 +1468,13 @@ where
         let disclosed_id = grant_id.clone();
         let disclosed_grant = grant.clone();
         let disclosed_mutation = mutation.clone();
+        let _proof_trace_checkpoint_3 = ctx.call_proof_data_trace.len();
         let _cr_3 = self.assert_writable(ctx)?;
-        let ctx = _cr_3.context;
+        let ctx = _cr_3.context.with_folded_nested_call_proof_data(
+            _proof_trace_checkpoint_3,
+            __compact_initial_query_context.address,
+            &mut __compact_proof_data,
+        )?;
         __gas_acc += _cr_3.gas_cost.clone();
         compact_assert!(
             ((disclosed_mutation == RecordMutation::Insert)
@@ -1488,8 +1534,13 @@ where
                 &ctx.cost_model,
             )?
         } else if (disclosed_mutation == RecordMutation::Insert) {
+            let _proof_trace_checkpoint_h0 = ctx.call_proof_data_trace.len();
             let _cr_h0 = self.record_exists(ctx.clone(), disclosed_id.clone())?;
-            let ctx = _cr_h0.context;
+            let ctx = _cr_h0.context.with_folded_nested_call_proof_data(
+                _proof_trace_checkpoint_h0,
+                __compact_initial_query_context.address,
+                &mut __compact_proof_data,
+            )?;
             compact_assert!((!(_cr_h0.result.clone())), "grant already exists");
             let ops = OpProgramVerify::<DefaultDB>::new().build();
             recorded_query_for_verify(
@@ -1535,8 +1586,13 @@ where
             current_query_context: _results_6.context.clone(),
             ..ctx
         };
+        let _proof_trace_checkpoint_7 = ctx.call_proof_data_trace.len();
         let _cr_7 = self.record_write(ctx)?;
-        let ctx = _cr_7.context;
+        let ctx = _cr_7.context.with_folded_nested_call_proof_data(
+            _proof_trace_checkpoint_7,
+            __compact_initial_query_context.address,
+            &mut __compact_proof_data,
+        )?;
         __gas_acc += _cr_7.gas_cost.clone();
 
         Ok(CircuitResults {
@@ -1571,8 +1627,13 @@ where
         let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
         let disclosed_id = record_id.clone();
         let disclosed_mutation = mutation.clone();
+        let _proof_trace_checkpoint_2 = ctx.call_proof_data_trace.len();
         let _cr_2 = self.assert_writable(ctx)?;
-        let ctx = _cr_2.context;
+        let ctx = _cr_2.context.with_folded_nested_call_proof_data(
+            _proof_trace_checkpoint_2,
+            __compact_initial_query_context.address,
+            &mut __compact_proof_data,
+        )?;
         __gas_acc += _cr_2.gas_cost.clone();
         compact_assert!(
             ((disclosed_mutation == ListMutation::Add)
@@ -1762,8 +1823,13 @@ where
             current_query_context: _if_results_4.context,
             ..ctx
         };
+        let _proof_trace_checkpoint_5 = ctx.call_proof_data_trace.len();
         let _cr_5 = self.record_write(ctx)?;
-        let ctx = _cr_5.context;
+        let ctx = _cr_5.context.with_folded_nested_call_proof_data(
+            _proof_trace_checkpoint_5,
+            __compact_initial_query_context.address,
+            &mut __compact_proof_data,
+        )?;
         __gas_acc += _cr_5.gas_cost.clone();
 
         Ok(CircuitResults {
@@ -1793,12 +1859,22 @@ where
             aligned_value_from_parts(&[proof_aligned_value(&value)]),
         );
         let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
+        let _proof_trace_checkpoint_1 = ctx.call_proof_data_trace.len();
         let _cr_1 = self.assert_writable(ctx)?;
-        let ctx = _cr_1.context;
+        let ctx = _cr_1.context.with_folded_nested_call_proof_data(
+            _proof_trace_checkpoint_1,
+            __compact_initial_query_context.address,
+            &mut __compact_proof_data,
+        )?;
         __gas_acc += _cr_1.gas_cost.clone();
-        let _cr_4 = self.record_write(ctx)?;
-        let ctx = _cr_4.context;
-        __gas_acc += _cr_4.gas_cost.clone();
+        let _proof_trace_checkpoint_9 = ctx.call_proof_data_trace.len();
+        let _cr_9 = self.record_write(ctx)?;
+        let ctx = _cr_9.context.with_folded_nested_call_proof_data(
+            _proof_trace_checkpoint_9,
+            __compact_initial_query_context.address,
+            &mut __compact_proof_data,
+        )?;
+        __gas_acc += _cr_9.gas_cost.clone();
         let ops = OpProgramVerify::<DefaultDB>::new()
             .idx_at_index(1u8, true)
             .idx_at_index(14u8, true)
@@ -2077,8 +2153,13 @@ where
             record.clone(),
             current_time,
         )?;
+        let _proof_trace_checkpoint_2 = ctx.call_proof_data_trace.len();
         let _cr_2 = self.record_write(ctx)?;
-        let ctx = _cr_2.context;
+        let ctx = _cr_2.context.with_folded_nested_call_proof_data(
+            _proof_trace_checkpoint_2,
+            __compact_initial_query_context.address,
+            &mut __compact_proof_data,
+        )?;
         __gas_acc += _cr_2.gas_cost.clone();
         let ops = OpProgramVerify::<DefaultDB>::new().build();
 
@@ -2144,8 +2225,13 @@ where
             },
             "registry is already closed"
         );
+        let _proof_trace_checkpoint_2 = ctx.call_proof_data_trace.len();
         let _cr_2 = self.record_write(ctx)?;
-        let ctx = _cr_2.context;
+        let ctx = _cr_2.context.with_folded_nested_call_proof_data(
+            _proof_trace_checkpoint_2,
+            __compact_initial_query_context.address,
+            &mut __compact_proof_data,
+        )?;
         __gas_acc += _cr_2.gas_cost.clone();
         let ops = OpProgramVerify::<DefaultDB>::new()
             .idx_at_index(1u8, true)

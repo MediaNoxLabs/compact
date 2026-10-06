@@ -124,8 +124,13 @@ where
             aligned_value_from_parts(&[proof_aligned_value(&v)]),
         );
         let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
+        let _proof_trace_checkpoint_1 = ctx.call_proof_data_trace.len();
         let _cr_1 = self.reset(ctx)?;
-        let ctx = _cr_1.context;
+        let ctx = _cr_1.context.with_folded_nested_call_proof_data(
+            _proof_trace_checkpoint_1,
+            __compact_initial_query_context.address,
+            &mut __compact_proof_data,
+        )?;
         __gas_acc += _cr_1.gas_cost.clone();
         let ops = OpProgramVerify::<DefaultDB>::new()
             .push(false, new_cell(0u8))

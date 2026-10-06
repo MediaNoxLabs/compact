@@ -190,6 +190,296 @@ where
             gas_cost: results.gas_cost,
         })
     }
+
+    pub(crate) fn nested_leaf_write(
+        &self,
+        ctx: CircuitContext<PS>,
+        expected: Fr,
+        middle: Fr,
+    ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "nested_leaf_write";
+        let mut __compact_proof_data =
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[
+                proof_aligned_value(&expected),
+                proof_aligned_value(&middle),
+            ]));
+        compact_assert!(
+            ({
+                let _gather_ops = OpProgramGather::<DefaultDB>::new()
+                    .dup(0)
+                    .idx_at_index(0u8, false)
+                    .popeq(false)
+                    .build();
+                let _gather_results = recorded_query_for_read(
+                    &mut __compact_proof_data,
+                    &ctx.current_query_context,
+                    &_gather_ops,
+                    None,
+                    &initial_cost_model(),
+                )
+                .map_err(|e| {
+                    CompactError::AssertionFailed(format!("ledger query failed: {:?}", e))
+                })?;
+                let _av = match _gather_results.events.last() {
+                    Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(
+                        av,
+                    )) => av,
+                    _ => {
+                        return Err(CompactError::AssertionFailed(
+                            "ledger: expected Read event".into(),
+                        ))
+                    }
+                };
+                midnight_compact_runtime::std_lib::decode_fr(_av)?
+            } == expected),
+            "unexpected value in nested leaf call"
+        );
+        let _witness_ctx_1 = WitnessContext::new(
+            ledger(&ctx.current_query_context.state),
+            ctx.current_private_state,
+            &ctx.current_query_context,
+        );
+        let (current_private_state, nested) = self.witnesses.second_secret(&_witness_ctx_1);
+        __compact_proof_data.push_private_output(proof_aligned_value(&nested));
+        let tmp = (middle) + (nested);
+        let ops = OpProgramVerify::<DefaultDB>::new()
+            .push(false, new_cell(0u8))
+            .push(true, new_cell(tmp.clone()))
+            .ins(false, 1)
+            .build();
+
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
+            &ctx.current_query_context,
+            &ops,
+            ctx.gas_limit.clone(),
+            &ctx.cost_model,
+        )?;
+
+        Ok(CircuitResults {
+            result: (),
+            context: CircuitContext {
+                current_query_context: results.context,
+                current_private_state,
+                ..ctx
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
+            gas_cost: results.gas_cost,
+        })
+    }
+
+    pub(crate) fn nested_witness_write(
+        &self,
+        ctx: CircuitContext<PS>,
+        expected: Fr,
+        middle: Fr,
+        take_nested: bool,
+    ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "nested_witness_write";
+        let mut __compact_proof_data =
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[
+                proof_aligned_value(&expected),
+                proof_aligned_value(&middle),
+                proof_aligned_value(&take_nested),
+            ]));
+        let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
+
+        let _if_results_0 = if take_nested {
+            let _proof_trace_checkpoint_arm0 = (ctx.clone()).call_proof_data_trace.len();
+            let _cr_arm0 = self.nested_leaf_write(ctx.clone(), expected, middle)?;
+            let _nested_ctx_arm0 = _cr_arm0.context.with_folded_nested_call_proof_data(
+                _proof_trace_checkpoint_arm0,
+                __compact_initial_query_context.address,
+                &mut __compact_proof_data,
+            )?;
+            __gas_acc += _cr_arm0.gas_cost.clone();
+            let _empty_ops = OpProgramVerify::<DefaultDB>::new().build();
+            recorded_query_for_verify(
+                &mut __compact_proof_data,
+                &_nested_ctx_arm0.current_query_context,
+                &_empty_ops,
+                ctx.gas_limit.clone(),
+                &ctx.cost_model,
+            )?
+        } else {
+            let ops = OpProgramVerify::<DefaultDB>::new().build();
+            recorded_query_for_verify(
+                &mut __compact_proof_data,
+                &ctx.current_query_context,
+                &ops,
+                ctx.gas_limit.clone(),
+                &ctx.cost_model,
+            )?
+        };
+        __gas_acc += _if_results_0.gas_cost.clone();
+        let ctx = CircuitContext {
+            current_query_context: _if_results_0.context,
+            ..ctx
+        };
+
+        Ok(CircuitResults {
+            result: (),
+            context: CircuitContext {
+                current_query_context: ctx.current_query_context,
+                ..ctx
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
+            gas_cost: __gas_acc,
+        })
+    }
+
+    pub fn nested_read_witness_write(
+        &self,
+        ctx: CircuitContext<PS>,
+        expected: Fr,
+        middle: Fr,
+        take_nested: bool,
+        after_nested: Fr,
+        next: Fr,
+    ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "nested_read_witness_write";
+        let mut __compact_proof_data =
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[
+                proof_aligned_value(&expected),
+                proof_aligned_value(&middle),
+                proof_aligned_value(&take_nested),
+                proof_aligned_value(&after_nested),
+                proof_aligned_value(&next),
+            ]));
+        let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
+        compact_assert!(
+            ({
+                let _gather_ops = OpProgramGather::<DefaultDB>::new()
+                    .dup(0)
+                    .idx_at_index(0u8, false)
+                    .popeq(false)
+                    .build();
+                let _gather_results = recorded_query_for_read(
+                    &mut __compact_proof_data,
+                    &ctx.current_query_context,
+                    &_gather_ops,
+                    None,
+                    &initial_cost_model(),
+                )
+                .map_err(|e| {
+                    CompactError::AssertionFailed(format!("ledger query failed: {:?}", e))
+                })?;
+                let _av = match _gather_results.events.last() {
+                    Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(
+                        av,
+                    )) => av,
+                    _ => {
+                        return Err(CompactError::AssertionFailed(
+                            "ledger: expected Read event".into(),
+                        ))
+                    }
+                };
+                midnight_compact_runtime::std_lib::decode_fr(_av)?
+            } == expected),
+            "unexpected value before nested call"
+        );
+        let _witness_ctx_2 = WitnessContext::new(
+            ledger(&ctx.current_query_context.state),
+            ctx.current_private_state,
+            &ctx.current_query_context,
+        );
+        let (current_private_state, before) = self.witnesses.first_secret(&_witness_ctx_2);
+        __compact_proof_data.push_private_output(proof_aligned_value(&before));
+        let ctx = CircuitContext {
+            current_private_state,
+            ..ctx
+        };
+        let _proof_trace_checkpoint_5 = ctx.call_proof_data_trace.len();
+        let _cr_5 = self.nested_witness_write(ctx, expected, middle, take_nested)?;
+        let ctx = _cr_5.context.with_folded_nested_call_proof_data(
+            _proof_trace_checkpoint_5,
+            __compact_initial_query_context.address,
+            &mut __compact_proof_data,
+        )?;
+        let current_private_state = ctx.current_private_state.clone();
+        __gas_acc += _cr_5.gas_cost.clone();
+        compact_assert!(
+            ({
+                let _gather_ops = OpProgramGather::<DefaultDB>::new()
+                    .dup(0)
+                    .idx_at_index(0u8, false)
+                    .popeq(false)
+                    .build();
+                let _gather_results = recorded_query_for_read(
+                    &mut __compact_proof_data,
+                    &ctx.current_query_context,
+                    &_gather_ops,
+                    None,
+                    &initial_cost_model(),
+                )
+                .map_err(|e| {
+                    CompactError::AssertionFailed(format!("ledger query failed: {:?}", e))
+                })?;
+                let _av = match _gather_results.events.last() {
+                    Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(
+                        av,
+                    )) => av,
+                    _ => {
+                        return Err(CompactError::AssertionFailed(
+                            "ledger: expected Read event".into(),
+                        ))
+                    }
+                };
+                midnight_compact_runtime::std_lib::decode_fr(_av)?
+            } == after_nested),
+            "unexpected value after nested call"
+        );
+        let _witness_ctx_16 = WitnessContext::new(
+            ledger(&ctx.current_query_context.state),
+            current_private_state,
+            &ctx.current_query_context,
+        );
+        let (current_private_state, after) = self.witnesses.first_secret(&_witness_ctx_16);
+        __compact_proof_data.push_private_output(proof_aligned_value(&after));
+        let tmp = ((next) + (before)) + (after);
+        let ops = OpProgramVerify::<DefaultDB>::new()
+            .push(false, new_cell(0u8))
+            .push(true, new_cell(tmp.clone()))
+            .ins(false, 1)
+            .build();
+
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
+            &ctx.current_query_context,
+            &ops,
+            ctx.gas_limit.clone(),
+            &ctx.cost_model,
+        )?;
+
+        Ok(CircuitResults {
+            result: (),
+            context: CircuitContext {
+                current_query_context: results.context,
+                current_private_state,
+                ..ctx
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
+            gas_cost: __gas_acc + results.gas_cost,
+        })
+    }
 }
 
 pub struct Ledger<'a, D: DB = DefaultDB> {

@@ -30,9 +30,10 @@
 //! unchanged.
 //!
 //! Algorithm matches `jubjub-schnorr/src/schnorr.compact`'s
-//! `schnorrVerify` exactly: Poseidon over
-//! `[ann_x, ann_y, pk_x, pk_y, ...msg]` then reduce modulo the Jubjub
-//! scalar order → check `g^s == announcement + pk^c`.
+//! `schnorrVerify` and midnight-did's `computeJubjubDigestChallenge`
+//! exactly: Poseidon over `[ann_x, ann_y, pk_x, pk_y, ...msg]`, reduce
+//! the challenge modulo 2^248 (keep the low 31 little-endian bytes),
+//! then check `g^s == announcement + pk^c`.
 
 use midnight_transient_crypto::curve::{embedded, EmbeddedFr, Fr};
 use midnight_transient_crypto::hash::transient_hash;
@@ -82,7 +83,10 @@ impl From<SchnorrSignature> for crate::Value {
 }
 
 /// Hash `(ann_x, ann_y, pk_x, pk_y, ...msg)` with the Poseidon-based
-/// transient hash and reduce modulo the Jubjub scalar field order.
+/// transient hash and reduce modulo 2^248, exactly as the Compact circuit
+/// and midnight-did's `computeJubjubDigestChallenge` do. Since 2^248 is
+/// smaller than the Jubjub scalar order, the low 31 little-endian bytes
+/// inject canonically into `EmbeddedFr`.
 fn compute_challenge(ann_x: Fr, ann_y: Fr, pk_x: Fr, pk_y: Fr, msg: &[Fr]) -> EmbeddedFr {
     let mut hash_input = Vec::with_capacity(4 + msg.len());
     hash_input.push(ann_x);
@@ -90,17 +94,16 @@ fn compute_challenge(ann_x: Fr, ann_y: Fr, pk_x: Fr, pk_y: Fr, msg: &[Fr]) -> Em
     hash_input.push(pk_x);
     hash_input.push(pk_y);
     hash_input.extend_from_slice(msg);
-    let hash = transient_hash(&hash_input);
-    fr_to_embedded_fr(hash)
+    let mut hash_bytes = transient_hash(&hash_input).as_le_bytes();
+    hash_bytes.resize(32, 0);
+    hash_bytes[31] = 0;
+    EmbeddedFr::from_le_bytes(&hash_bytes).expect("2^248-truncated challenge is below Jubjub r")
 }
 
-/// Reduce a BLS12-381 scalar `Fr` modulo the Jubjub scalar field order.
-/// `from_uniform_bytes` interprets a 64-byte buffer as a big integer
-/// and reduces — feeding the low 32 bytes mirrors what the matching
-/// circuit does via the `getSchnorrReduction` witness (the circuit
-/// must use a witness to expose the reduction as a constraint-friendly
-/// quotient/remainder pair; off-circuit we just take the modular
-/// reduction directly).
+/// Reduce an outer BLS12-381 scalar `Fr` modulo the Jubjub scalar order.
+/// Schnorr responses are scalar-field values carried in Compact's wider
+/// `Field` type, so response conversion uses mod-r reduction. This is
+/// intentionally different from the challenge's mod-2^248 truncation.
 fn fr_to_embedded_fr(fr: Fr) -> EmbeddedFr {
     let mut wide = [0u8; 64];
     wide[..32].copy_from_slice(&fr.as_le_bytes());
@@ -140,9 +143,9 @@ pub fn verify(pk: JubjubPoint, msg: &[Fr], sig: &SchnorrSignature) -> bool {
 
     let challenge = compute_challenge(ann_x, ann_y, pk_x, pk_y, msg);
     // Compact's `SchnorrSignature.response` is declared `Field` (Fr) —
-    // wider than the embedded scalar order. Reduce before the
-    // group-arithmetic check, matching what the in-circuit
-    // `getSchnorrReduction` witness would expose as (q, r).
+    // wider than the embedded scalar order. Reduce the response modulo r
+    // before the group-arithmetic check. `getSchnorrReduction` concerns the
+    // challenge's separate mod-2^248 reduction and is not used here.
     let response_embed = fr_to_embedded_fr(sig.response);
     let lhs = JubjubPoint::generator() * response_embed;
     let rhs = sig.announcement + pk * challenge;

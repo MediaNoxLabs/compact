@@ -395,13 +395,18 @@ where
                 proof_aligned_value(&pk),
             ]));
         let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
+        let _proof_trace_checkpoint_1 = ctx.call_proof_data_trace.len();
         let _cr_1 = midnight_compact_runtime::schnorr_verify_jubjub(
             ctx,
             digest,
             signature.clone(),
             pk.clone(),
         )?;
-        let ctx = _cr_1.context;
+        let ctx = _cr_1.context.with_folded_nested_call_proof_data(
+            _proof_trace_checkpoint_1,
+            __compact_initial_query_context.address,
+            &mut __compact_proof_data,
+        )?;
         __gas_acc += _cr_1.gas_cost.clone();
         let ops = OpProgramVerify::<DefaultDB>::new().build();
 
@@ -500,8 +505,13 @@ where
             };
             midnight_compact_runtime::std_lib::decode_jubjub_point(_av)?
         };
+        let _proof_trace_checkpoint_2 = ctx.call_proof_data_trace.len();
         let _cr_2 = self.schnorr_verify_digest(ctx, digest, signature.clone(), _carg_2_2)?;
-        let ctx = _cr_2.context;
+        let ctx = _cr_2.context.with_folded_nested_call_proof_data(
+            _proof_trace_checkpoint_2,
+            __compact_initial_query_context.address,
+            &mut __compact_proof_data,
+        )?;
         __gas_acc += _cr_2.gas_cost.clone();
         let ops = OpProgramVerify::<DefaultDB>::new().build();
 
@@ -600,8 +610,13 @@ where
             };
             midnight_compact_runtime::std_lib::decode_jubjub_point(_av)?
         };
+        let _proof_trace_checkpoint_2 = ctx.call_proof_data_trace.len();
         let _cr_2 = self.schnorr_verify_digest(ctx, digest, signature.clone(), _carg_2_2)?;
-        let ctx = _cr_2.context;
+        let ctx = _cr_2.context.with_folded_nested_call_proof_data(
+            _proof_trace_checkpoint_2,
+            __compact_initial_query_context.address,
+            &mut __compact_proof_data,
+        )?;
         __gas_acc += _cr_2.gas_cost.clone();
         let tmp = 1u16;
         let ops = OpProgramVerify::<DefaultDB>::new()

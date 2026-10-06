@@ -310,13 +310,23 @@
                          [(null? ys) acc]
                          [else (join (cdr ys)
                                      (string-append acc ", " (car ys)))]))]
-                    [cr-name (format "_cr_mid~a_~a" step ci)])
+                    [cr-name (format "_cr_mid~a_~a" step ci)]
+                    [checkpoint (format "_proof_trace_checkpoint_mid~a_~a" step ci)]
+                    [nested-ctx (format "_nested_ctx_mid~a_~a" step ci)])
+               (out (format "~alet ~a = (~a).call_proof_data_trace.len();\n"
+                            indent checkpoint owned-in))
                (out (format "~alet ~a = ~a(~a~a)?;\n"
                             indent cr-name (impure-call-target cname) owned-in arg-tail))
+               (out (format "~alet ~a = ~a.context.with_folded_nested_call_proof_data(\n"
+                            indent nested-ctx cr-name))
+               (out (format "~a    ~a,\n" indent checkpoint))
+               (out (format "~a    __compact_initial_query_context.address,\n" indent))
+               (out (format "~a    &mut __compact_proof_data,\n" indent))
+               (out (format "~a)?;\n" indent))
                (out (format "~a__gas_acc += ~a.gas_cost.clone();\n" indent cr-name))
                (loop (cdr xs) seen
-                     (format "&~a.context.current_query_context" cr-name)
-                     (format "~a.context" cr-name)
+                     (format "&~a.current_query_context" nested-ctx)
+                     nested-ctx
                      (fx+ ci 1)))]
             [else (loop (cdr xs) seen cur-qctx owned-in ci)])))
 
@@ -511,12 +521,15 @@
                                      (char=? (string-ref ctx-expr 0) #\&))
                                 (substring ctx-expr 1 (string-length ctx-expr))
                                 ctx-expr)]
-                           [ctx-for-call-name (format "_ctx_for_~a" step)])
+                           [ctx-for-call-name (format "_ctx_for_~a" step)]
+                           [checkpoint (format "_proof_trace_checkpoint_~a" step)])
                       ;; A-05: hoist any ctx-reading arg before the (moving)
                       ;; direct call — see hoist-ctx-args.
                       (let-values ([(hoist-lines arg-tail)
                                     (hoist-ctx-args arg-strs step)])
                         (for-each out hoist-lines)
+                        (out (format "        let ~a = ctx.call_proof_data_trace.len();\n"
+                                     checkpoint))
                         (cond
                           [direct?
                            (out (format "        let ~a = ~a(ctx~a)?;\n"
@@ -526,7 +539,12 @@
                                         ctx-for-call-name qc-src))
                            (out (format "        let ~a = ~a(~a~a)?;\n"
                                         cr-name (impure-call-target cname) ctx-for-call-name arg-tail))])
-                        (out (format "        let ctx = ~a.context;\n" cr-name))
+                        (out (format "        let ctx = ~a.context.with_folded_nested_call_proof_data(\n"
+                                     cr-name))
+                        (out (format "            ~a,\n" checkpoint))
+                        (out "            __compact_initial_query_context.address,\n")
+                        (out "            &mut __compact_proof_data,\n")
+                        (out "        )?;\n")
                         ;; A27: an impure cross-circuit call consumes gas; carry
                         ;; the callee's cost into the streaming accumulator so the
                         ;; circuit does not under-report gas for successful txs.
@@ -612,7 +630,8 @@
                            [cr-name (format "_cr_~a" step)]
                            [arg-strs
                             (call-args-rust (cadddr classified) cargs local-binds
-                                            native-id-ht witness-id-ht circuit-id-ht)])
+                                            native-id-ht witness-id-ht circuit-id-ht)]
+                           [checkpoint (format "_proof_trace_checkpoint_~a" step)])
                       ;; A15: when ctx-expr is `&_results_N.context` (after
                       ;; a pl-call) or any non-default form, rebind ctx
                       ;; first so the inner `self.<name>(ctx, ...)` sees
@@ -635,9 +654,16 @@
                       (let-values ([(hoist-lines arg-tail)
                                     (hoist-ctx-args arg-strs step)])
                         (for-each out hoist-lines)
+                        (out (format "        let ~a = ctx.call_proof_data_trace.len();\n"
+                                     checkpoint))
                         (out (format "        let ~a = ~a(ctx~a)?;\n"
                                      cr-name (impure-call-target cname) arg-tail))
-                        (out (format "        let ctx = ~a.context;\n" cr-name))
+                        (out (format "        let ctx = ~a.context.with_folded_nested_call_proof_data(\n"
+                                     cr-name))
+                        (out (format "            ~a,\n" checkpoint))
+                        (out "            __compact_initial_query_context.address,\n")
+                        (out "            &mut __compact_proof_data,\n")
+                        (out "        )?;\n")
                         ;; A27: accumulate the bare impure call's gas (e.g.
                         ;; recordUpdate() after a mutation) — otherwise the
                         ;; trailing helper's cost is dropped from the total.
@@ -970,15 +996,25 @@
                                                    [(null? xs) acc]
                                                    [else (join (cdr xs)
                                                                (string-append acc ", " (car xs)))]))]
-                                              [cr-name (format "_cr_arm~a" step)])
+                                              [cr-name (format "_cr_arm~a" step)]
+                                              [checkpoint (format "_proof_trace_checkpoint_arm~a" step)]
+                                              [nested-ctx (format "_nested_ctx_arm~a" step)])
+                                         (out (format "            let ~a = (~a).call_proof_data_trace.len();\n"
+                                                      checkpoint terminal-owned))
                                          (out (format "            let ~a = ~a(~a~a)?;\n"
                                                       cr-name (impure-call-target cname)
                                                       terminal-owned arg-tail))
+                                         (out (format "            let ~a = ~a.context.with_folded_nested_call_proof_data(\n"
+                                                      nested-ctx cr-name))
+                                         (out (format "                ~a,\n" checkpoint))
+                                         (out "                __compact_initial_query_context.address,\n")
+                                         (out "                &mut __compact_proof_data,\n")
+                                         (out "            )?;\n")
                                          (out (format "            __gas_acc += ~a.gas_cost.clone();\n"
                                                       cr-name))
                                          (out "            let _empty_ops = OpProgramVerify::<DefaultDB>::new().build();\n")
-                                         (out (format "            recorded_query_for_verify(&mut __compact_proof_data, &~a.context.current_query_context, &_empty_ops, ctx.gas_limit.clone(), &ctx.cost_model)?\n"
-                                                      cr-name)))]
+                                         (out (format "            recorded_query_for_verify(&mut __compact_proof_data, &~a.current_query_context, &_empty_ops, ctx.gas_limit.clone(), &ctx.cost_model)?\n"
+                                                      nested-ctx)))]
                                       [else
                                        (out "            let ops = OpProgramVerify::<DefaultDB>::new()\n")
                                        (for-each (lambda (l) (out (format "    ~a" l)))
@@ -1083,15 +1119,25 @@
                                                  [(null? xs) acc]
                                                  [else (join (cdr xs)
                                                              (string-append acc ", " (car xs)))]))]
-                                            [cr-name (format "_cr_arm~a_else" step)])
+                                            [cr-name (format "_cr_arm~a_else" step)]
+                                            [checkpoint (format "_proof_trace_checkpoint_arm~a_else" step)]
+                                            [nested-ctx (format "_nested_ctx_arm~a_else" step)])
+                                       (out (format "            let ~a = (~a).call_proof_data_trace.len();\n"
+                                                    checkpoint terminal-owned))
                                        (out (format "            let ~a = ~a(~a~a)?;\n"
                                                     cr-name (impure-call-target cname)
                                                     terminal-owned arg-tail))
+                                       (out (format "            let ~a = ~a.context.with_folded_nested_call_proof_data(\n"
+                                                    nested-ctx cr-name))
+                                       (out (format "                ~a,\n" checkpoint))
+                                       (out "                __compact_initial_query_context.address,\n")
+                                       (out "                &mut __compact_proof_data,\n")
+                                       (out "            )?;\n")
                                        (out (format "            __gas_acc += ~a.gas_cost.clone();\n"
                                                     cr-name))
                                        (out "            let _empty_ops = OpProgramVerify::<DefaultDB>::new().build();\n")
-                                       (out (format "            recorded_query_for_verify(&mut __compact_proof_data, &~a.context.current_query_context, &_empty_ops, ctx.gas_limit.clone(), &ctx.cost_model)?\n"
-                                                    cr-name)))]
+                                       (out (format "            recorded_query_for_verify(&mut __compact_proof_data, &~a.current_query_context, &_empty_ops, ctx.gas_limit.clone(), &ctx.cost_model)?\n"
+                                                    nested-ctx)))]
                                     [else
                                      (out "            let ops = OpProgramVerify::<DefaultDB>::new()\n")
                                      (for-each (lambda (l) (out (format "    ~a" l)))

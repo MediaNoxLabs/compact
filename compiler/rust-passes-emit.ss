@@ -1614,33 +1614,63 @@
                                  "ctx.empty_zswap_local_state.clone()"
                                  "_zswap")])
               (ctor-zswap-threaded? #t)
-              (list
-                (format "        let ~a = CircuitContext {\n" cctx)
-                (format "            current_private_state: ~a,\n" priv)
-                "            current_query_context: qctx,\n"
-                (format "            current_zswap_local_state: ~a,\n" zswap-in)
-                "            cost_model: ctx.cost_model.clone(),\n"
-                "            gas_limit: ctx.gas_limit.clone(),\n"
-                "            call_proof_data_trace: CallProofDataTrace::new(),\n"
-                "        };\n"
-                (format "        let ~a = ~a(~a~a)?;\n" cr-name target cctx arg-tail)
-                (format "        let qctx = ~a.context.current_query_context;\n" cr-name)
-                (format "        let current_private_state = ~a.context.current_private_state;\n"
-                        cr-name)
-                (format "        let _zswap = ~a.context.current_zswap_local_state;\n"
-                        cr-name)))
+              (let ([checkpoint (format "_proof_trace_checkpoint_~a" step)]
+                    [nested-ctx (format "_nested_ctx_~a" step)])
+                (list
+                  (format "        let ~a = CircuitContext {\n" cctx)
+                  (format "            current_private_state: ~a,\n" priv)
+                  "            current_query_context: qctx,\n"
+                  (format "            current_zswap_local_state: ~a,\n" zswap-in)
+                  "            cost_model: ctx.cost_model.clone(),\n"
+                  "            gas_limit: ctx.gas_limit.clone(),\n"
+                  "            call_proof_data_trace: CallProofDataTrace::new(),\n"
+                  "        };\n"
+                  (format "        let ~a = ~a.call_proof_data_trace.len();\n"
+                          checkpoint cctx)
+                  (format "        let ~a = ~a(~a~a)?;\n" cr-name target cctx arg-tail)
+                  (format "        let ~a = ~a.context.with_folded_nested_call_proof_data(\n"
+                          nested-ctx cr-name)
+                  (format "            ~a,\n" checkpoint)
+                  "            __compact_initial_query_context.address,\n"
+                  "            &mut __compact_proof_data,\n"
+                  "        )?;\n"
+                  (format "        let qctx = ~a.current_query_context;\n" nested-ctx)
+                  (format "        let current_private_state = ~a.current_private_state;\n"
+                          nested-ctx)
+                  (format "        let _zswap = ~a.current_zswap_local_state;\n"
+                          nested-ctx))))
             ;; 'circuit mode: ctx is a CircuitContext; hand it straight to the
-            ;; callee and rebind. A27: when the body accumulates gas, add the
-            ;; callee's cost so a pre-terminal helper (assert / recordUpdate)
-            ;; does not drop its gas from the final CircuitResults.
-            (if (circuit-gas-acc?)
-                (list
-                  (format "        let ~a = ~a(ctx~a)?;\n" cr-name target arg-tail)
-                  (format "        let ctx = ~a.context;\n" cr-name)
-                  (format "        __gas_acc += ~a.gas_cost.clone();\n" cr-name))
-                (list
-                  (format "        let ~a = ~a(ctx~a)?;\n" cr-name target arg-tail)
-                  (format "        let ctx = ~a.context;\n" cr-name)))))
+            ;; callee, fold the callee's transcript at this exact source-order
+            ;; position, and rebind. A27: when the body accumulates gas, add
+            ;; the callee's cost so a pre-terminal helper (assert /
+            ;; recordUpdate) does not drop its gas from CircuitResults.
+            (let* ([checkpoint (format "_proof_trace_checkpoint_~a" step)]
+                   [before-call
+                    (if witness-emitted?
+                        (list "        let ctx = CircuitContext { current_private_state, ..ctx };\n")
+                        '())]
+                   [after-call
+                    (if witness-emitted?
+                        (list "        let current_private_state = ctx.current_private_state.clone();\n")
+                        '())]
+                   [call-lines
+                    (list
+                      (format "        let ~a = ctx.call_proof_data_trace.len();\n" checkpoint)
+                      (format "        let ~a = ~a(ctx~a)?;\n" cr-name target arg-tail)
+                      (format "        let ctx = ~a.context.with_folded_nested_call_proof_data(\n"
+                              cr-name)
+                      (format "            ~a,\n" checkpoint)
+                      "            __compact_initial_query_context.address,\n"
+                      "            &mut __compact_proof_data,\n"
+                      "        )?;\n")])
+              (append before-call
+                      (append call-lines
+                              (append after-call
+                                      (if (circuit-gas-acc?)
+                                          (list
+                                            (format "        __gas_acc += ~a.gas_cost.clone();\n"
+                                                    cr-name))
+                                          '())))))))
 
       ;; cond-rust: render a boolean condition expression. Like
       ;; ctor-expr-rust but for `(call ...)` of an impure circuit

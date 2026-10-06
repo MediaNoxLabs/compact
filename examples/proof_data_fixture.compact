@@ -31,3 +31,34 @@ export circuit read_witness_write(expected: Field, next: Field): [] {
   const b = second_secret();
   value = disclose(next + a + b);
 }
+
+circuit nested_leaf_write(expected: Field, middle: Field): [] {
+  assert(value == expected, "unexpected value in nested leaf call");
+  const nested = second_secret();
+  value = disclose(middle + nested);
+}
+
+circuit nested_witness_write(
+  expected: Field,
+  middle: Field,
+  take_nested: Boolean,
+): [] {
+  if (take_nested) {
+    nested_leaf_write(expected, middle);
+  }
+}
+
+export circuit nested_read_witness_write(
+  expected: Field,
+  middle: Field,
+  take_nested: Boolean,
+  after_nested: Field,
+  next: Field,
+): [] {
+  assert(value == expected, "unexpected value before nested call");
+  const before = first_secret();
+  nested_witness_write(expected, middle, disclose(take_nested));
+  assert(value == after_nested, "unexpected value after nested call");
+  const after = first_secret();
+  value = disclose(next + before + after);
+}

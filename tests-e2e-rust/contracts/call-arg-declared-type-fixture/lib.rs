@@ -815,8 +815,13 @@ where
         let mut __compact_proof_data =
             PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[]));
         let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
+        let _proof_trace_checkpoint_1 = ctx.call_proof_data_trace.len();
         let _cr_1 = self.sum_vec_plus_cell(ctx, [Fr::from(0u64), Fr::from(1u64)])?;
-        let ctx = _cr_1.context;
+        let ctx = _cr_1.context.with_folded_nested_call_proof_data(
+            _proof_trace_checkpoint_1,
+            __compact_initial_query_context.address,
+            &mut __compact_proof_data,
+        )?;
         __gas_acc += _cr_1.gas_cost.clone();
         let r = _cr_1.result;
         let ops = OpProgramVerify::<DefaultDB>::new()
@@ -858,8 +863,13 @@ where
         let mut __compact_proof_data =
             PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[]));
         let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
+        let _proof_trace_checkpoint_1 = ctx.call_proof_data_trace.len();
         let _cr_1 = self.store_vec(ctx, [Fr::from(0u64), Fr::from(1u64)])?;
-        let ctx = _cr_1.context;
+        let ctx = _cr_1.context.with_folded_nested_call_proof_data(
+            _proof_trace_checkpoint_1,
+            __compact_initial_query_context.address,
+            &mut __compact_proof_data,
+        )?;
         __gas_acc += _cr_1.gas_cost.clone();
         let ops = OpProgramVerify::<DefaultDB>::new().build();
 
@@ -923,12 +933,18 @@ where
             };
             midnight_compact_runtime::std_lib::decode_bool(_av)?
         } {
+            let _proof_trace_checkpoint_arm0 = (ctx.clone()).call_proof_data_trace.len();
             let _cr_arm0 = self.store_vec(ctx.clone(), [Fr::from(0u64), Fr::from(1u64)])?;
+            let _nested_ctx_arm0 = _cr_arm0.context.with_folded_nested_call_proof_data(
+                _proof_trace_checkpoint_arm0,
+                __compact_initial_query_context.address,
+                &mut __compact_proof_data,
+            )?;
             __gas_acc += _cr_arm0.gas_cost.clone();
             let _empty_ops = OpProgramVerify::<DefaultDB>::new().build();
             recorded_query_for_verify(
                 &mut __compact_proof_data,
-                &_cr_arm0.context.current_query_context,
+                &_nested_ctx_arm0.current_query_context,
                 &_empty_ops,
                 ctx.gas_limit.clone(),
                 &ctx.cost_model,

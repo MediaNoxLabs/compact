@@ -9,7 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **`--target rust` constructor results now expose deployment proof data** — generated constructors finalize a stable `constructor` proof-data record with initial/final query contexts, exact Compact-aligned constructor inputs, ordered public transcript, private witness outputs, and empty aligned output for Ledger8 deployment construction. The existing circuit-call proof-data trace remains fail-closed and unchanged.
+- **`--target rust` constructor results now expose deployment proof data** — generated constructors finalize a stable `constructor` proof-data record with initial/final query contexts, exact Compact-aligned constructor inputs, ordered public transcript, private witness outputs, and empty aligned output for Ledger8 deployment construction.
+
+### Fixed
+
+- **Native Schnorr verification now matches Compact and midnight-did challenge semantics** — `compute_challenge` reduces the transient hash modulo 2^248 (the low 31 little-endian bytes), not modulo the Jubjub scalar order. An official TypeScript golden digest/signature with a nonzero discarded high byte is accepted, while its legacy mod-r response is rejected; the lossy generated `Uint<248>` witness remains unreachable.
+- **Nested generated circuit calls now contribute to one exported/root proof record** — at each local call site, generated Rust folds the child's ordered public ledger operations and private witness outputs into the active root `PartialProofData`, while discarding child formal input/output and metadata. Root formal input/output and initial/final contexts are retained. Separate top-level invocations remain separate trace records, so `single_contract_call()` still fails closed for a genuinely sequential multi-call trace; foreign-contract contexts are also rejected instead of folded. A TypeScript-backed fixture pins ledger and witness ordering across multi-level and conditional local calls.
 
 ## [Toolchain 0.31.123, language 0.23.103, runtime 0.16.101]
 

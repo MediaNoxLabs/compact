@@ -42,6 +42,20 @@ const ctx = cr.createCircuitContext(
   init.currentPrivateState,
 );
 const call = contract.circuits.read_witness_write(ctx, 16n, 30n);
+const nestedCtx = cr.createCircuitContext(
+  cr.dummyContractAddress(),
+  init.currentZswapLocalState,
+  init.currentContractState.data,
+  init.currentPrivateState,
+);
+const nestedCall = contract.circuits.nested_read_witness_write(
+  nestedCtx,
+  16n,
+  30n,
+  true,
+  37n,
+  40n,
+);
 
 const atomHex = (atom) => Buffer.from(atom.bytes ?? atom).toString('hex');
 const alignedSummary = (av) => ({
@@ -69,6 +83,15 @@ const fixture = {
     privateTranscriptOutputs: call.proofData.privateTranscriptOutputs.map(alignedSummary),
     publicTranscriptTags: call.proofData.publicTranscript.map(opTag),
     popeqValues,
+  },
+  nestedCircuit: {
+    input: alignedSummary(nestedCall.proofData.input),
+    output: alignedSummary(nestedCall.proofData.output),
+    privateTranscriptOutputs: nestedCall.proofData.privateTranscriptOutputs.map(alignedSummary),
+    publicTranscriptTags: nestedCall.proofData.publicTranscript.map(opTag),
+    popeqValues: nestedCall.proofData.publicTranscript
+      .filter((op) => Object.prototype.hasOwnProperty.call(op, 'popeq'))
+      .map((op) => alignedSummary(op.popeq.result)),
   },
 };
 process.stdout.write(JSON.stringify(fixture, null, 2) + '\n');

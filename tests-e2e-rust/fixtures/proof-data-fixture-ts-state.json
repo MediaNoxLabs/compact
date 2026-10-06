@@ -80,5 +80,96 @@
         ]
       }
     ]
+  },
+  "nestedCircuit": {
+    "input": {
+      "valueAtoms": [
+        "10",
+        "1e",
+        "01",
+        "25",
+        "28"
+      ],
+      "alignment": [
+        "{\"tag\":\"atom\",\"value\":{\"tag\":\"field\"}}",
+        "{\"tag\":\"atom\",\"value\":{\"tag\":\"field\"}}",
+        "{\"tag\":\"atom\",\"value\":{\"tag\":\"bytes\",\"length\":1}}",
+        "{\"tag\":\"atom\",\"value\":{\"tag\":\"field\"}}",
+        "{\"tag\":\"atom\",\"value\":{\"tag\":\"field\"}}"
+      ]
+    },
+    "output": {
+      "valueAtoms": [],
+      "alignment": []
+    },
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          "05"
+        ],
+        "alignment": [
+          "{\"tag\":\"atom\",\"value\":{\"tag\":\"field\"}}"
+        ]
+      },
+      {
+        "valueAtoms": [
+          "07"
+        ],
+        "alignment": [
+          "{\"tag\":\"atom\",\"value\":{\"tag\":\"field\"}}"
+        ]
+      },
+      {
+        "valueAtoms": [
+          "05"
+        ],
+        "alignment": [
+          "{\"tag\":\"atom\",\"value\":{\"tag\":\"field\"}}"
+        ]
+      }
+    ],
+    "publicTranscriptTags": [
+      "dup",
+      "idx",
+      "popeq",
+      "dup",
+      "idx",
+      "popeq",
+      "push",
+      "push",
+      "ins",
+      "dup",
+      "idx",
+      "popeq",
+      "push",
+      "push",
+      "ins"
+    ],
+    "popeqValues": [
+      {
+        "valueAtoms": [
+          "10"
+        ],
+        "alignment": [
+          "{\"tag\":\"atom\",\"value\":{\"tag\":\"field\"}}"
+        ]
+      },
+      {
+        "valueAtoms": [
+          "10"
+        ],
+        "alignment": [
+          "{\"tag\":\"atom\",\"value\":{\"tag\":\"field\"}}"
+        ]
+      },
+      {
+        "valueAtoms": [
+          "25"
+        ],
+        "alignment": [
+          "{\"tag\":\"atom\",\"value\":{\"tag\":\"field\"}}"
+        ]
+      }
+    ]
   }
 }

@@ -1409,14 +1409,21 @@
                      ;; absorbs the move so the extra clone is harmless.
                      [arm-context? (> (string-length indent) 8)]
                      [ctx-arg (if arm-context? "ctx.clone()" "ctx")]
+                    [checkpoint-name
+                     (format "_proof_trace_checkpoint_h~a" counter)]
+                    [checkpoint-line
+                     (format "~alet ~a = ctx.call_proof_data_trace.len();\n"
+                             indent checkpoint-name)]
                     [call-line
                      (format "~alet ~a = self.~a(~a~a)?;\n"
                              indent rust-name cname ctx-arg arg-tail)]
                     [ctx-line
-                     (format "~alet ctx = ~a.context;\n" indent rust-name)])
+                     (format "~alet ctx = ~a.context.with_folded_nested_call_proof_data(\n~a    ~a,\n~a    __compact_initial_query_context.address,\n~a    &mut __compact_proof_data,\n~a)?;\n"
+                             indent rust-name indent checkpoint-name indent indent indent)])
                (loop (cdr subs)
                      (+ counter 1)
-                     (cons ctx-line (cons call-line rev-lines))
+                     (cons ctx-line
+                           (cons call-line (cons checkpoint-line rev-lines)))
                      (cons (list function-name arg-exprs rust-name) binds)))])))
 
       ;; witness-call-bound: alist lookup for current-witness-call-binds.

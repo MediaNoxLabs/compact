@@ -35,31 +35,39 @@
     "branch-request-capture.json": "941e4979ad703457951bcea2dab0436dc91d63b2dbc2d5247bf8c734bf86a4c8",
     "upstream-request-capture.json": "0420670a23d917a2889609051a1c61716737f9cc12167c2c00891877efc3fc0c",
     "age-inputs.json": "f822c1ceecd4932685420a4ffaa91edfd4d0e746621c6183aa9e95fc261a7701",
-    "coverage.json": "fb9233c0cb975b2a3b28520984df1f63e087f15a95dd138e01785d88aaea01bf",
-    "replay.py": "dcaa2bbd6051eaa4c17970f70e5cfe8f2bdef7ab4ecee0be73d38d012757a71a",
+    "coverage.json": "336f09b7d2f8dd1342b2c46f9cfc8a3e3051dd054c117237cfdc644b3bc83bc6",
+    "replay.py": "c7c51a5129100025cc0836c9ad4a651ab095f68106a31a283da2965789dafea2",
     "capture-private-parts.mjs": "14f681ad5c342b0f8b805e28feb7a9d2ca8aba42a01ac59d35a51bdc4bb9471d",
     "branch-private-parts-capture.json": "191ea8d98b682364acb57e1a7e002beb2efb6b1c15fad20ebe1d02e48a5f1c76",
     "upstream-private-parts-capture.json": "fa9aa809c68d6e9571674a279fe54d86a65946aae1ce9a0ad4eb3bcf55fda6a5",
     "capture-protocol.mjs": "20f6dc080cdc6670df9d86bca474e574475b78c09d513c54f65e2e71505ac6be",
     "branch-protocol-capture.json": "1d49596552f37610976cce38856f1a9274c46bdcb762b8f791d171b16d67eedc",
-    "upstream-protocol-capture.json": "8e4ce3e907a04fb28774230717575557ec5a81c371b1b04eddd0d3d966d651f6"
+    "upstream-protocol-capture.json": "8e4ce3e907a04fb28774230717575557ec5a81c371b1b04eddd0d3d966d651f6",
+    "capture-roots.mjs": "bffdd9391d7fd8fa865a9f25eec082382ba39be3cb06513015e5eb96485f282e",
+    "upstream-roots-capture.json": "1438cfc386b7f9e8d080762094c90c1e6e0f49976e69aa9e335b821f93919157",
+    "branch-roots-capture.json": "2b579e5097a0fd006ebaf6b31316e971a10bcbb6ab71a6475c87ad6e273083de",
+    "capture-bindings.mjs": "80233e92adcb32d86251e2f73d52ac7e5878e76e0425b9aeaf9cdc54c882a3b4",
+    "upstream-bindings-capture.json": "e658a40355e20534e5a19a74afa060b07da0e7e3782feaa3f0ee073e69119b99",
+    "branch-bindings-capture.json": "9814268265e6060d7b28e69d1ab86f8bc903c5e05c18bc36314fc034580a0413"
   },
   "acceptance": {
     "export_count": 75,
-    "directly_compared_exports": 28,
-    "direct_cases": 96,
+    "directly_compared_exports": 48,
+    "direct_cases": 129,
     "branch_vs_upstream_rows_equal": true,
     "rust_direct_tests": [
       "pure_oracle.rs",
       "age_predicate.rs",
       "request_validation.rs",
       "private_parts.rs",
-      "protocol.rs"
+      "protocol.rs",
+      "roots.rs",
+      "bindings.rs"
     ],
     "pure_only": true
   },
   "limits": [
-    "The 47 compile-only exports have no direct behavior-parity claim.",
+    "The 27 compile-only exports have no direct behavior-parity claim.",
     "No circuit proof, ledger transaction, wallet, or simulator behavior applies to this pure-only closure.",
     "Matching selected outputs do not establish protocol-wide compatibility between ledger 8.0.2 and 8.0.3."
   ]

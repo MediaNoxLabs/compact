@@ -71,7 +71,9 @@ def main() -> None:
         for suffix, script in (("ts", "capture.mjs"), ("age", "capture-age.mjs"),
                                ("request", "capture-request.mjs"),
                                ("private-parts", "capture-private-parts.mjs"),
-                               ("protocol", "capture-protocol.mjs")):
+                               ("protocol", "capture-protocol.mjs"),
+                               ("roots", "capture-roots.mjs"),
+                               ("bindings", "capture-bindings.mjs")):
             actual = output / f"{suffix}.json"
             command = ["node", str(ORACLE / script), str(generated)]
             if suffix == "age":
@@ -80,7 +82,7 @@ def main() -> None:
             run(command)
             expected = ORACLE / f"{args.profile}-{suffix}-capture.json"
             assert json.loads(actual.read_text()) == json.loads(expected.read_text()), expected
-    print(f"{args.profile}: 96 exact cases across 28 exports match checked-in capture")
+    print(f"{args.profile}: 129 exact cases across 48 exports match checked-in capture")
 
 
 if __name__ == "__main__":

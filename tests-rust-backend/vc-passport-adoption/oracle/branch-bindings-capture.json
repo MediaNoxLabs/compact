@@ -1,0 +1,120 @@
+{
+  "profile": "branch-0.31.133-ledger8.0.3",
+  "rows": [
+    {
+      "name": "holder_valid",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "holder_missing_method",
+      "outcome": "error",
+      "message": "failed assert: Verification method reference must be set"
+    },
+    {
+      "name": "holder_match",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "holder_other_controller",
+      "outcome": "error",
+      "message": "failed assert: Presentation holder controller does not match credential holder binding"
+    },
+    {
+      "name": "holder_other_method",
+      "outcome": "error",
+      "message": "failed assert: Presentation holder method reference does not match credential holder binding"
+    },
+    {
+      "name": "holder_proof_match",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "holder_proof_other_controller",
+      "outcome": "error",
+      "message": "failed assert: Presentation proof signer must match holder binding"
+    },
+    {
+      "name": "holder_proof_other_method",
+      "outcome": "error",
+      "message": "failed assert: Presentation proof signer method reference must match holder binding"
+    },
+    {
+      "name": "registry_valid",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "registry_missing_id",
+      "outcome": "error",
+      "message": "failed assert: Status registry id must be set"
+    },
+    {
+      "name": "registry_missing_authority",
+      "outcome": "error",
+      "message": "failed assert: Verification method reference must be set"
+    },
+    {
+      "name": "status_valid",
+      "outcome": "ok",
+      "value": []
+    },
+    {
+      "name": "status_missing_handle",
+      "outcome": "error",
+      "message": "failed assert: Status handle commitment must be set"
+    },
+    {
+      "name": "status_missing_registry",
+      "outcome": "error",
+      "message": "failed assert: Status registry id must be set"
+    },
+    {
+      "name": "status_root_valid",
+      "outcome": "ok",
+      "value": "ed9fa85152f3561909248ee2654526274fc578d03f55c9a997d64bcf1e4dad84"
+    },
+    {
+      "name": "status_root_invalid",
+      "outcome": "error",
+      "message": "failed assert: Status handle commitment must be set"
+    },
+    {
+      "name": "issuer_scope_valid",
+      "outcome": "ok",
+      "value": "cec89796bcf187bbe583bc24c68c516939b538079cd46625cb4a55912c53c938"
+    },
+    {
+      "name": "issuer_scope_invalid",
+      "outcome": "error",
+      "message": "failed assert: Schema id must be set"
+    },
+    {
+      "name": "verify_identity_key",
+      "outcome": "error",
+      "message": "failed assert: Jubjub point must not be the identity point"
+    },
+    {
+      "name": "issuance_proof_identity_key",
+      "outcome": "error",
+      "message": "failed assert: Jubjub point must not be the identity point"
+    },
+    {
+      "name": "presentation_proof_identity_key",
+      "outcome": "error",
+      "message": "failed assert: Jubjub point must not be the identity point"
+    },
+    {
+      "name": "signer_proof_identity_key",
+      "outcome": "error",
+      "message": "failed assert: Jubjub point must not be the identity point"
+    },
+    {
+      "name": "verifier_proof_identity_key",
+      "outcome": "error",
+      "message": "failed assert: Jubjub point must not be the identity point"
+    }
+  ]
+}

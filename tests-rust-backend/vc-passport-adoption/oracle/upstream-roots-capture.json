@@ -1,0 +1,55 @@
+{
+  "profile": "upstream-0.31.1-ledger8.0.2",
+  "rows": [
+    {
+      "name": "credential_body_root_base",
+      "outcome": "ok",
+      "value": "45b85bc2af786f741cd94cbef575ddb3b1e90902ad9393a335b1c148fbeb8ecf"
+    },
+    {
+      "name": "credential_body_root_changed_issued_at",
+      "outcome": "ok",
+      "value": "d5fc1fbc9157667052501c926561f9b082ddc7c3b0b61534274aaa8c539cd398"
+    },
+    {
+      "name": "presentation_body_root_base",
+      "outcome": "ok",
+      "value": "9b9f66f1b19bf6eb27061a48ff2b493ed1d5f9d98c144dfefbc6f67a71fedc9b"
+    },
+    {
+      "name": "presentation_body_root_changed_disclosure",
+      "outcome": "ok",
+      "value": "b75983a5c45c93f361517f721008df1680161962987a30a2749c8a99656dd607"
+    },
+    {
+      "name": "issuance_payload_root",
+      "outcome": "ok",
+      "value": "e9ce6b985e5b953ee7ec9031b19748ecd37a0788820109ff0221fea5a75247d8"
+    },
+    {
+      "name": "presentation_payload_root",
+      "outcome": "ok",
+      "value": "c6432862cd909966d0db171cf5b7c47812dc5f88ca3a3fc1d1966011cb626aee"
+    },
+    {
+      "name": "issuance_challenge",
+      "outcome": "ok",
+      "value": "3ea120ef3df3e03347bb5a447e67a86e50f95cd92f15eaac18a34c5600ccea"
+    },
+    {
+      "name": "presentation_challenge",
+      "outcome": "ok",
+      "value": "b90eb14a50852bc6147817fcc906ccf696a06329eccedc3884eb4af8414cd9"
+    },
+    {
+      "name": "signer_authorization_challenge",
+      "outcome": "ok",
+      "value": "f21bc778bc5055278641bbc120ff377eb08f475c7aea8cada6a46e690330aa"
+    },
+    {
+      "name": "verifier_request_challenge",
+      "outcome": "ok",
+      "value": "3f6f3b50dde185742d8065ea30301e1df3e14465525915741fc1a7c6bd5922"
+    }
+  ]
+}

@@ -301,7 +301,7 @@ export function reduceModJubjubOrder(value: bigint): bigint {
 /**
  * Derives the Schnorr verifying key (public key) from a signing key.
  *
- * Equivalent to {@link ecMulGenerator}(signingKey).
+ * Equivalent to {@link ecMulGenerator}(reduceModJubjubOrder(signingKey)).
  */
 export function jubjubSchnorrVerifyingKey(signingKey: bigint): JubjubPoint {
   return ecMulGenerator(reduceModJubjubOrder(signingKey));
@@ -318,8 +318,13 @@ export function jubjubSchnorrVerifyingKey(signingKey: bigint): JubjubPoint {
  * - Announcement `R = r·G`
  * - Challenge `c = PoseidonHash(R.x, R.y, pk.x, pk.y, msg...)`
  * - Response `s = r + c·sk` (in the JubJub scalar field)
+ *
+ * @throws RangeError if the signing key is outside [0, JUBJUB_SCALAR_MODULUS).
  */
 export function jubjubSchnorrSign<A>(rtType: CompactType<A>, msg: A, signingKey: bigint): JubjubSchnorrSignature {
+  if (signingKey < 0n || signingKey >= JUBJUB_SCALAR_MODULUS) {
+    throw new RangeError('jubjubSchnorrSign: signing key must be in [0, JUBJUB_SCALAR_MODULUS)');
+  }
   const r = jubjubSampleScalar();
   const announcement = ecMulGenerator(r);
   const verifyingKey = ecMulGenerator(signingKey);

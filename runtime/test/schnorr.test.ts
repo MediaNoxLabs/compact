@@ -47,8 +47,8 @@ describe('JubJub sampler compatibility', () => {
   test('uses the pinned scalar order and retains the public alias', () => {
     expect(runtime.JUBJUB_SCALAR_MODULUS).toBe(0x0e7db4ea6533afa906673b0101343b00a6682093ccc81082d0970e5ed6f72cb7n);
     expect(runtime.sampleJubjubSchnorrSk).toBe(runtime.jubjubSampleScalar);
-    // The pinned primitive requires a canonical scalar, rather than reducing q.
-    expect(() => runtime.ecMulGenerator(runtime.JUBJUB_SCALAR_MODULUS)).toThrow();
+    // Providers differ on noncanonical inputs; this group-order relation uses
+    // canonical scalars supported by both the registry and Nix primitives.
     expect(runtime.ecAdd(runtime.ecMulGenerator(runtime.JUBJUB_SCALAR_MODULUS - 1n), runtime.ecMulGenerator(1n))).toEqual({
       x: 0n,
       y: 1n,
@@ -97,7 +97,7 @@ describe('signed JubJub scalar reduction', () => {
   test('keeps verifying-key reduction explicit and signing-key inputs canonical', () => {
     expect(runtime.jubjubSchnorrVerifyingKey(-1n)).toEqual(runtime.ecMulGenerator(q - 1n));
     for (const key of [-1n, q, q + 1n]) {
-      expect(() => runtime.jubjubSchnorrSign(msgType, sampleMsg(), key)).toThrow();
+      expect(() => runtime.jubjubSchnorrSign(msgType, sampleMsg(), key)).toThrow(RangeError);
     }
   });
 });

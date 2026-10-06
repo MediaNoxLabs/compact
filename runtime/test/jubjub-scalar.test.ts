@@ -19,7 +19,16 @@ vi.mock('@noble/hashes/utils.js', async (original) => ({
   ...(await original<typeof import('@noble/hashes/utils.js')>()),
   randomBytes: entropy.bytes,
 }));
-import { jubjubSampleScalar, sampleJubjubSchnorrSk, JUBJUB_SCALAR_MODULUS as q } from '../src/index.js';
+import {
+  jubjubSampleScalar,
+  sampleJubjubSchnorrSk,
+  JUBJUB_SCALAR_MODULUS as q,
+  jubjubSchnorrSign,
+  jubjubSchnorrVerify,
+  jubjubSchnorrVerifyingKey,
+  ecMulGenerator,
+  CompactTypeField,
+} from '../src/index.js';
 
 function littleEndian(value: bigint): Uint8Array {
   return Uint8Array.from({ length: 32 }, (_, i) => Number((value >> BigInt(8 * i)) & 255n));
@@ -58,5 +67,34 @@ describe('uniform JubJub scalar rejection sampling', () => {
     });
     expect(() => jubjubSampleScalar()).toThrow(error);
     expect(entropy.bytes).toHaveBeenCalledExactlyOnceWith(32);
+  });
+});
+
+describe('canonical Schnorr signing-key boundary', () => {
+  test.each([-1n, -q, q, q + 1n, -(1n << 512n), 1n << 512n])(
+    'rejects key %s before requesting entropy or encoding the message',
+    (key) => {
+      const messageType = {
+        alignment: vi.fn(() => []),
+        toValue: vi.fn(() => []),
+        fromValue: vi.fn(() => 0n),
+      };
+      expect(() => jubjubSchnorrSign(messageType, 42n, key)).toThrow(
+        new RangeError('jubjubSchnorrSign: signing key must be in [0, JUBJUB_SCALAR_MODULUS)'),
+      );
+      expect(entropy.bytes).not.toHaveBeenCalled();
+      expect(messageType.alignment).not.toHaveBeenCalled();
+      expect(messageType.toValue).not.toHaveBeenCalled();
+      expect(messageType.fromValue).not.toHaveBeenCalled();
+    },
+  );
+  test.each([0n, q - 1n])('signs with canonical boundary key %s and the supplied nonce', (key) => {
+    entropy.bytes.mockReturnValueOnce(littleEndian(1n));
+    const signature = jubjubSchnorrSign(CompactTypeField, 42n, key);
+    expect(entropy.bytes).toHaveBeenCalledExactlyOnceWith(32);
+    expect(signature.announcement).toEqual(ecMulGenerator(1n));
+    expect(signature.response).toBeGreaterThanOrEqual(0n);
+    expect(signature.response).toBeLessThan(q);
+    expect(jubjubSchnorrVerify(CompactTypeField, 42n, jubjubSchnorrVerifyingKey(key), signature)).toBe(true);
   });
 });

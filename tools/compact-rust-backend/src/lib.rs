@@ -3606,14 +3606,6 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
     };
 
     let runtime_abi = syn::LitInt::new(&RUNTIME_ABI_VERSION.to_string(), Span::call_site());
-    let type_declarations::TypeDeclarations {
-        module: types_module,
-        alias_exports,
-    } = type_declarations::render(
-        &struct_definitions,
-        &enum_definitions,
-        &contract.type_aliases,
-    )?;
     let initial_state: syn::Item = if constructor_uses_witness {
         syn::parse_quote! {
             pub fn initial_state<Private, W: TryWitnesses<Private>>(
@@ -3808,6 +3800,15 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
             }
         }
     });
+    let type_declarations::TypeDeclarations {
+        module: types_module,
+        alias_exports,
+    } = type_declarations::render(
+        &struct_definitions,
+        &enum_definitions,
+        &contract.type_aliases,
+        slots_module.is_some(),
+    )?;
     let public_state_view = (!public_state_getters.is_empty()).then(|| {
         quote! {
             /// Read-only projection of an existing ledger-8 public state.

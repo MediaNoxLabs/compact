@@ -53,6 +53,7 @@ pub(crate) fn render(
     struct_definitions: &BTreeMap<String, Vec<StructField>>,
     enum_definitions: &BTreeMap<String, Vec<String>>,
     aliases: &[TypeAlias],
+    has_ledger_slots_module: bool,
 ) -> Result<TypeDeclarations, RenderError> {
     let mut struct_items = Vec::<syn::Item>::new();
     let has_merkle_path = struct_definitions
@@ -114,6 +115,15 @@ pub(crate) fn render(
     let mut alias_reexports = Vec::new();
     for alias in aliases {
         located(alias.source.as_ref(), || {
+            let name = ident(&alias.name)?;
+            let rendered_name = name.to_string();
+            let normalized_name = rendered_name.strip_prefix("r#").unwrap_or(&rendered_name);
+            // Root alias reexports and the generated slots module share Rust's
+            // type namespace. A raw identifier or Compact `$` spelling cannot
+            // evade this collision, but a contract without slots owns the name.
+            if has_ledger_slots_module && normalized_name == "ledger_slots" {
+                return Err(RenderError::ConflictingTypeAlias(alias.name.clone()));
+            }
             if !alias_names.insert(alias.name.as_str())
                 || struct_definitions.contains_key(&alias.name)
                 || enum_definitions.contains_key(&alias.name)
@@ -124,7 +134,6 @@ pub(crate) fn render(
             {
                 return Err(RenderError::ConflictingTypeAlias(alias.name.clone()));
             }
-            let name = ident(&alias.name)?;
             let ty = declaration_type(&alias.ty)?;
             struct_items
                 .push(syn::parse_quote!(#[allow(non_camel_case_types)] pub type #name = #ty;));

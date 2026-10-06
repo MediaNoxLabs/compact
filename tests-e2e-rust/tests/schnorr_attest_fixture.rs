@@ -37,14 +37,16 @@ use compact_contract_schnorr_attest_fixture::{ledger, pure_circuits, Contract, L
 use midnight_compact_runtime::transient_crypto::curve::{embedded, EmbeddedFr};
 use midnight_compact_runtime::*;
 
-/// Deterministic stub witnesses.
+/// Deterministic witnesses for the generated Rust execution path.
 ///
 /// `get_schnorr_reduction` is declared by the Compact module but never
-/// reached: the module body is not lowered, so the generated code calls
-/// the runtime verifier instead of the in-circuit reduction. It is
-/// stubbed to satisfy the trait — and its presence in the trait is
-/// itself the check that a TUPLE-returning witness lowers to a Rust
-/// tuple return type.
+/// reached: the generic module body is not lowered, so the generated code
+/// calls the runtime verifier instead of the in-circuit reduction. The
+/// generated trait currently spells the Compact `[Uint<7>, Uint<248>]`
+/// result as `(u8, u128)`, which cannot carry the second component losslessly.
+/// That API mismatch is a dead surface, not a truncation strategy: this
+/// implementation panics so every executing test proves the witness stayed
+/// unreachable.
 struct StubWitnesses;
 
 impl Witnesses<()> for StubWitnesses {
@@ -53,7 +55,7 @@ impl Witnesses<()> for StubWitnesses {
         _ctx: &WitnessContext<Ledger<'a>, ()>,
         _challenge_hash: Fr,
     ) -> ((), (u8, u128)) {
-        ((), (0u8, 0u128))
+        panic!("dead get_schnorr_reduction witness was invoked")
     }
 
     fn local_attestor_key<'a>(&self, _ctx: &WitnessContext<Ledger<'a>, ()>) -> ((), JubjubPoint) {
@@ -74,7 +76,7 @@ impl Witnesses<()> for IdentityKeyWitnesses {
         _ctx: &WitnessContext<Ledger<'a>, ()>,
         _challenge_hash: Fr,
     ) -> ((), (u8, u128)) {
-        ((), (0u8, 0u128))
+        panic!("dead get_schnorr_reduction witness was invoked")
     }
 
     fn local_attestor_key<'a>(&self, _ctx: &WitnessContext<Ledger<'a>, ()>) -> ((), JubjubPoint) {
@@ -111,9 +113,9 @@ fn fr_to_embedded(fr: Fr) -> EmbeddedFr {
     EmbeddedFr(embedded::Scalar::from_bytes_wide(&wide))
 }
 
-/// `H(ann_x, ann_y, pk_x, pk_y, ...msg)` reduced into the Jubjub scalar
-/// field — the challenge both the circuit and the verifier compute.
-fn challenge(ann: JubjubPoint, pk: JubjubPoint, msg: &[Fr]) -> EmbeddedFr {
+/// The full-width `H(ann_x, ann_y, pk_x, pk_y, ...msg)` value, before
+/// reduction into the Jubjub scalar field.
+fn challenge_hash(ann: JubjubPoint, pk: JubjubPoint, msg: &[Fr]) -> Fr {
     let mut input = vec![
         ann.x().expect("announcement x"),
         ann.y().expect("announcement y"),
@@ -121,7 +123,12 @@ fn challenge(ann: JubjubPoint, pk: JubjubPoint, msg: &[Fr]) -> EmbeddedFr {
         pk.y().expect("public key y"),
     ];
     input.extend_from_slice(msg);
-    fr_to_embedded(transient_hash(&input))
+    transient_hash(&input)
+}
+
+/// The challenge both the circuit and the verifier compute.
+fn challenge(ann: JubjubPoint, pk: JubjubPoint, msg: &[Fr]) -> EmbeddedFr {
+    fr_to_embedded(challenge_hash(ann, pk, msg))
 }
 
 /// Produce a valid Schnorr signature over `msg`: `R = k*G`,
@@ -166,16 +173,62 @@ fn initial_state_binds_the_attestor_key() {
 /// must be accepted by the rewritten call. A rewrite that passed the
 /// wrong key, the wrong message, or a defaulted signature would still
 /// compile — and would fail here.
+///
+/// The fixed key, nonce, and message also pin a challenge with significant
+/// bytes above bit 128. This is the executable regression for the dead
+/// `Uint<248>` witness surface: the native verifier must consume the full
+/// transient hash rather than a generated `u128` or any truncation of it.
 #[test]
-fn valid_signature_is_accepted_and_counted() {
+fn valid_wide_challenge_signature_is_accepted_and_counted() {
     let contract = contract();
     let init = contract.initial_state(ctor_ctx()).expect("initial_state");
     let ctx = CircuitContext::new(init.current_contract_state, init.current_private_state);
 
     let msg = digest();
+    let signature = sign(&msg);
+    let public_key = JubjubPoint::generator() * secret_key();
+    let challenge_bytes = challenge_hash(signature.announcement, public_key, &msg).as_le_bytes();
+    assert_eq!(
+        hex::encode(&challenge_bytes),
+        "84d8175a6134f71644c7a1239c707ef5566f52986f9ad7d55a08114362e9186e",
+        "deterministic transient-hash challenge changed"
+    );
+    assert!(
+        challenge_bytes[16..].iter().any(|byte| *byte != 0),
+        "fixture challenge must not fit in 128 bits"
+    );
+
     let after = contract
-        .verify_attestation(ctx, msg, sign(&msg))
-        .expect("a valid signature must verify");
+        .verify_attestation(ctx, msg, signature)
+        .expect("a valid full-width-challenge signature must verify");
+
+    // PR #372 must retain the exact root input and must not invent a private
+    // output for the dead reduction witness. The trace also contains the
+    // generated local schnorr_verify_digest wrapper before the root call.
+    let calls = after.context.call_proof_data_trace.as_slice();
+    assert_eq!(
+        calls
+            .iter()
+            .map(|call| call.circuit_id.as_str())
+            .collect::<Vec<_>>(),
+        ["schnorr_verify_digest", "verify_attestation"]
+    );
+    assert!(calls
+        .iter()
+        .all(|call| call.proof_data.private_transcript_outputs().is_empty()));
+    let root_call = calls.last().expect("root proof data");
+    assert_eq!(
+        root_call.proof_data.input,
+        aligned_value_from_parts(&[proof_aligned_array(&msg), proof_aligned_value(&signature),])
+    );
+    assert_eq!(root_call.proof_data.output, aligned_value_from_parts(&[]));
+    assert!(
+        matches!(
+            after.context.call_proof_data_trace.single_contract_call(),
+            Err(CompactError::ProofData(_))
+        ),
+        "nested local-call proof data must fail closed until it is folded into the root call"
+    );
 
     // The mutating sibling runs the same rewritten call and then commits
     // a ledger write, so the routing has to leave the context usable.

@@ -8,6 +8,7 @@ pub mod ir;
 pub use capabilities::{
     RUST_CAPABILITY_SCHEMA_VERSION, RecordingStatus, RustCapabilityReport, RustCircuitCapability,
 };
+mod naming;
 mod native_frame;
 mod recorded;
 pub use recorded::{RecordingGap, RecordingGapCode};
@@ -42,6 +43,7 @@ use ir::{
     ComparisonOperator, ConstructorStep, Contract, CounterAmount, Expr, LedgerFieldKind,
     PureCircuit, SCHEMA_VERSION, StateAction, StatefulCircuit, StructField, Type,
 };
+use naming::{ident, validate_circuit_function_namespace};
 use proc_macro2::Span;
 use quote::quote;
 use serde_json::Value;
@@ -267,41 +269,6 @@ pub(crate) fn located<T>(
     work: impl FnOnce() -> Result<T, RenderError>,
 ) -> Result<T, RenderError> {
     work().map_err(|error| error.at(source))
-}
-
-fn ident(name: &str) -> Result<syn::Ident, RenderError> {
-    let rust_name = name.replace('$', "_");
-    syn::parse_str::<syn::Ident>(&rust_name)
-        .or_else(|_| syn::parse_str::<syn::Ident>(&format!("r#{rust_name}")))
-        .map_err(|_| RenderError::InvalidIdentifier(name.to_owned()))
-}
-
-fn validate_circuit_function_namespace<'a>(
-    declarations: impl IntoIterator<Item = (&'a str, Option<&'a ir::SourceLocation>)>,
-) -> Result<(), RenderError> {
-    let mut emitted = HashMap::<String, &'a str>::new();
-    for (name, source) in declarations {
-        located(source, || {
-            // `foo` and `r#foo` bind the same Rust name. Compare the
-            // semantic identifier after `ident` has normalized Compact `$`
-            // and escaped Rust keywords.
-            let rendered_identifier = ident(name)?.to_string();
-            let rust_identifier = rendered_identifier
-                .strip_prefix("r#")
-                .unwrap_or(&rendered_identifier)
-                .to_owned();
-            if let Some(first) = emitted.get(&rust_identifier) {
-                return Err(RenderError::ConflictingCircuitIdentifier {
-                    first: (*first).to_owned(),
-                    second: name.to_owned(),
-                    rust_identifier,
-                });
-            }
-            emitted.insert(rust_identifier, name);
-            Ok(())
-        })?;
-    }
-    Ok(())
 }
 
 /// Name public wrapper arguments after their Compact parameters. Wrapper

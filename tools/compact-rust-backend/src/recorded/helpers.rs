@@ -20,46 +20,7 @@ pub(super) fn helper_ident(
     name: &str,
     circuits: &HashMap<&str, &StatefulCircuit>,
 ) -> Result<syn::Ident, RenderError> {
-    let base = ident(&format!("__compact_recorded_body_{name}"))?;
-    let mut duplicate_base = false;
-    for other in circuits.keys() {
-        if ident(other)? == base {
-            duplicate_base = true;
-            break;
-        }
-        if *other != name && ident(&format!("__compact_recorded_body_{other}"))? == base {
-            duplicate_base = true;
-            break;
-        }
-    }
-    if !duplicate_base {
-        return Ok(base);
-    }
-
-    // A Compact declaration may itself use our preferred helper name. Use a
-    // stable index and the raw-name bytes so even `$`/`_` aliases stay distinct.
-    let mut ordered: Vec<_> = circuits.keys().copied().collect();
-    ordered.sort_unstable();
-    let index = ordered
-        .iter()
-        .position(|candidate| *candidate == name)
-        .ok_or_else(|| RenderError::UnknownCircuit(name.to_owned()))?;
-    let mut fallback = format!("__compact_recorded_body_{index}_x");
-    for byte in name.bytes() {
-        fallback.push_str(&format!("{byte:02x}"));
-    }
-    loop {
-        let candidate = ident(&fallback)?;
-        let occupied = circuits.keys().any(|other| {
-            ident(other).is_ok_and(|id| id == candidate)
-                || ident(&format!("__compact_recorded_body_{other}"))
-                    .is_ok_and(|id| id == candidate)
-        });
-        if !occupied {
-            return Ok(candidate);
-        }
-        fallback.push('_');
-    }
+    crate::naming::recorded_helper_ident(name, circuits)
 }
 
 fn collect_field_callees(value: &Expr, names: &mut HashSet<String>) {

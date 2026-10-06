@@ -97,18 +97,9 @@ pub mod ledger_contract {
     pub fn ping<Private>(
         context: runtime::context::CircuitContext<Private>,
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-        let mut total_cost = runtime::context::RunningCost::default();
-        let private_transcript_outputs = Vec::new();
-        let step = crate::ledger_slots::flag.write(context, true)?;
-        let context = step.context;
-        total_cost += step.gas_cost;
-        let result = ();
-        Ok(runtime::context::CircuitResult {
-            context,
-            result,
-            gas_cost: total_cost,
-            private_transcript_outputs,
-        })
+        let frame = runtime::context::CircuitFrame::new(context);
+        let (frame, ()) = frame.apply(|context| crate::ledger_slots::flag.write(context, true))?;
+        Ok(frame.finish(()))
     }
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {

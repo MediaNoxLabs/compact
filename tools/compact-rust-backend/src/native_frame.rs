@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! A conservative native frame lowering for unit circuits over Field Cells.
+//! Selective native frame lowering for witnessed Field Cells and simple Unit leaves.
 //!
 //! The typed IR remains authoritative. Unsupported shapes return `None` and
 //! use the existing general emitter; this path never rewrites rendered text.
@@ -22,8 +22,8 @@ use proc_macro2::Span;
 use std::collections::{HashMap, HashSet};
 
 use crate::ir::{
-    Expr, LedgerField, LedgerFieldKind, StateAction, StateReturn, StatefulCircuit, Type,
-    WitnessDeclaration,
+    CounterAmount, Expr, LedgerField, LedgerFieldKind, StateAction, StateReturn, StatefulCircuit,
+    Type, WitnessDeclaration,
 };
 use crate::stateful::circuit_uses_witness;
 use crate::{RenderError, expression_with_calls, ident};
@@ -220,12 +220,118 @@ fn append_action(
     }
 }
 
+/// Reuse runtime result ownership for two closed, parameterless native leaves.
+/// A miss (including malformed literals/names) leaves diagnostics to the general
+/// native emitter. No expression evaluator or source-name whitelist lives here.
+fn render_simple_leaf(
+    circuit: &StatefulCircuit,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+) -> Option<syn::Item> {
+    if !circuit.parameters.is_empty()
+        || circuit.result != Type::Unit
+        || circuit.return_value != StateReturn::Unit
+    {
+        return None;
+    }
+    let [action] = circuit.actions.as_slice() else {
+        return None;
+    };
+    let (field, index, expected, preparation, method, argument) = match action {
+        StateAction::CellWrite {
+            field,
+            index,
+            value: Expr::Boolean { value },
+        } => (
+            field,
+            *index,
+            LedgerFieldKind::Cell { ty: Type::Boolean },
+            None,
+            "write",
+            syn::parse_quote!(#value),
+        ),
+        StateAction::Let { bindings, action } => {
+            let [binding] = bindings.as_slice() else {
+                return None;
+            };
+            let expected = Type::Unsigned {
+                max: "65535".into(),
+            };
+            if binding.ty != expected {
+                return None;
+            }
+            let Expr::UnsignedLiteral { max, .. } = &binding.value else {
+                return None;
+            };
+            if max != "65535" {
+                return None;
+            }
+            let StateAction::CounterIncrement {
+                field,
+                index,
+                amount: CounterAmount::Parameter { name },
+            } = action.as_ref()
+            else {
+                return None;
+            };
+            if name != &binding.name {
+                return None;
+            }
+            ident(&binding.name).ok()?;
+            let (literal, ty) =
+                expression_with_calls(&binding.value, &HashMap::new(), &HashMap::new()).ok()?;
+            if ty != expected {
+                return None;
+            }
+            let preparation: syn::Stmt = syn::parse_quote!(
+                let __compact_action_local_0: runtime::BoundedUint<65535> = #literal;
+            );
+            (
+                field,
+                *index,
+                LedgerFieldKind::Counter,
+                Some(preparation),
+                "increment",
+                syn::parse_quote!(__compact_action_local_0.value() as u16),
+            )
+        }
+        _ => return None,
+    };
+    let declaration = ledger_fields.get(field.as_str())?;
+    if declaration.index != index || declaration.declaration != expected {
+        return None;
+    }
+    let slot = ident(&declaration.id).ok()?;
+    let argument: syn::Expr = argument;
+    let method = syn::Ident::new(method, Span::call_site());
+    let name = ident(&circuit.name).ok()?;
+    let visibility: syn::Visibility = if circuit.internal {
+        syn::parse_quote!(pub(crate))
+    } else {
+        syn::parse_quote!(pub)
+    };
+    Some(syn::parse_quote! {
+        #visibility fn #name<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
+            #preparation
+            let frame = runtime::context::CircuitFrame::new(context);
+            let (frame, ()) = frame.apply(|context| {
+                crate::ledger_slots::#slot.#method(context, #argument)
+            })?;
+            Ok(frame.finish(()))
+        }
+    })
+}
+
 pub(crate) fn render_if_supported(
     circuit: &StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,
     witnesses: &HashMap<&str, &WitnessDeclaration>,
     circuits: &HashMap<&str, &StatefulCircuit>,
 ) -> Result<Option<syn::Item>, RenderError> {
+    if let Some(item) = render_simple_leaf(circuit, ledger_fields) {
+        return Ok(Some(item));
+    }
     if circuit.result != Type::Unit
         || circuit.return_value != StateReturn::Unit
         || circuit
@@ -285,3 +391,6 @@ pub(crate) fn render_if_supported(
         }
     }))
 }
+
+#[cfg(test)]
+mod tests;

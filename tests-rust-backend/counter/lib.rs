@@ -79,22 +79,14 @@ pub mod ledger_contract {
     pub fn increment<Private>(
         context: runtime::context::CircuitContext<Private>,
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-        let mut total_cost = runtime::context::RunningCost::default();
-        let private_transcript_outputs = Vec::new();
         let __compact_action_local_0: runtime::BoundedUint<65535> =
             runtime::BoundedUint::<65535>::new(1u128)
                 .expect("Compact Uint literal fits its maximum");
-        let step = crate::ledger_slots::round
-            .increment(context, __compact_action_local_0.value() as u16)?;
-        let context = step.context;
-        total_cost += step.gas_cost;
-        let result = ();
-        Ok(runtime::context::CircuitResult {
-            context,
-            result,
-            gas_cost: total_cost,
-            private_transcript_outputs,
-        })
+        let frame = runtime::context::CircuitFrame::new(context);
+        let (frame, ()) = frame.apply(|context| {
+            crate::ledger_slots::round.increment(context, __compact_action_local_0.value() as u16)
+        })?;
+        Ok(frame.finish(()))
     }
     pub fn read_round<Private>(
         context: runtime::context::CircuitContext<Private>,

@@ -33,11 +33,403 @@ use crate::{
 use proc_macro2::Span;
 use std::collections::{HashMap, HashSet};
 
+/// Dispatch structural recursion before allocating operation-specific syntax temporaries.
+/// The small dispatcher keeps nested source expressions off the large operation frame.
 #[expect(
     clippy::too_many_arguments,
     reason = "state expression lowering threads typed declarations and ordered query effects explicitly"
 )]
 pub(crate) fn render_state_expression(
+    value: &Expr,
+    parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    statements: &mut Vec<syn::Stmt>,
+    next_temp: &mut usize,
+    circuits: &HashMap<&str, &PureCircuit>,
+    stateful_circuits: &HashMap<&str, &StatefulCircuit>,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+    query_effect: &mut bool,
+) -> Result<(syn::Expr, Type, bool), RenderError> {
+    match value {
+        Expr::Let { .. } | Expr::Sequence { .. } | Expr::If { .. } => render_control_expression(
+            value,
+            parameters,
+            witnesses,
+            statements,
+            next_temp,
+            circuits,
+            stateful_circuits,
+            ledger_fields,
+            query_effect,
+        ),
+        Expr::StructLiteral { .. }
+        | Expr::StructField { .. }
+        | Expr::Tuple { .. }
+        | Expr::TupleIndex { .. } => render_aggregate_expression(
+            value,
+            parameters,
+            witnesses,
+            statements,
+            next_temp,
+            circuits,
+            stateful_circuits,
+            ledger_fields,
+            query_effect,
+        ),
+        _ => render_operation_expression(
+            value,
+            parameters,
+            witnesses,
+            statements,
+            next_temp,
+            circuits,
+            stateful_circuits,
+            ledger_fields,
+            query_effect,
+        ),
+    }
+}
+
+/// Lower lexical control flow, preserving branch-local statements and binding scopes.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "state expression lowering threads typed declarations and ordered query effects explicitly"
+)]
+fn render_control_expression(
+    value: &Expr,
+    parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    statements: &mut Vec<syn::Stmt>,
+    next_temp: &mut usize,
+    circuits: &HashMap<&str, &PureCircuit>,
+    stateful_circuits: &HashMap<&str, &StatefulCircuit>,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+    query_effect: &mut bool,
+) -> Result<(syn::Expr, Type, bool), RenderError> {
+    match value {
+        Expr::Sequence { steps, value } => {
+            let mut witness_effect = false;
+            for step in steps {
+                let (rendered, ty, effect) = render_state_expression(
+                    step,
+                    parameters,
+                    witnesses,
+                    statements,
+                    next_temp,
+                    circuits,
+                    stateful_circuits,
+                    ledger_fields,
+                    query_effect,
+                )?;
+                statements.extend(discard_expression(rendered, &ty));
+                witness_effect |= effect;
+            }
+            let (rendered, ty, effect) = render_state_expression(
+                value,
+                parameters,
+                witnesses,
+                statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            Ok((rendered, ty, witness_effect || effect))
+        }
+        Expr::If {
+            condition,
+            then,
+            otherwise,
+        } => {
+            let evaluate_condition = condition_needs_statement(condition);
+            let (condition, condition_ty, condition_effect) = render_state_expression(
+                condition,
+                parameters,
+                witnesses,
+                statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            if condition_ty != Type::Boolean {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Boolean,
+                    actual: condition_ty,
+                });
+            }
+            if then == otherwise {
+                if evaluate_condition {
+                    statements.push(syn::parse_quote!(let _ = #condition;));
+                }
+                let (value, ty, effect) = render_state_expression(
+                    then,
+                    parameters,
+                    witnesses,
+                    statements,
+                    next_temp,
+                    circuits,
+                    stateful_circuits,
+                    ledger_fields,
+                    query_effect,
+                )?;
+                return Ok((value, ty, condition_effect || effect));
+            }
+            let mut then_statements = Vec::new();
+            let (then_value, then_ty, then_effect) = render_state_expression(
+                then,
+                parameters,
+                witnesses,
+                &mut then_statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            let mut else_statements = Vec::new();
+            let (else_value, else_ty, else_effect) = render_state_expression(
+                otherwise,
+                parameters,
+                witnesses,
+                &mut else_statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            if then_ty != else_ty {
+                return Err(RenderError::TypeMismatch {
+                    expected: then_ty,
+                    actual: else_ty,
+                });
+            }
+            // A block already evaluates to Unit without an explicit `()` tail.
+            // Remove only that syntax; effectful Unit-valued expressions remain.
+            let then_value = (!matches!(&then_value, syn::Expr::Tuple(t) if t.elems.is_empty()))
+                .then_some(then_value);
+            let else_value = (!matches!(&else_value, syn::Expr::Tuple(t) if t.elems.is_empty()))
+                .then_some(else_value);
+            let otherwise = (!else_statements.is_empty() || else_value.is_some())
+                .then(|| quote::quote!(else { #(#else_statements)* #else_value }));
+            Ok((
+                syn::parse_quote!(if #condition {
+                    #(#then_statements)*
+                    #then_value
+                } #otherwise),
+                then_ty,
+                condition_effect || then_effect || else_effect,
+            ))
+        }
+        Expr::Let { bindings, body } => {
+            let mut locals = parameters.clone();
+            let mut effect = false;
+            for binding in bindings {
+                ident(&binding.name)?;
+                let (rendered, actual, binding_effect) = render_state_expression(
+                    &binding.value,
+                    &locals,
+                    witnesses,
+                    statements,
+                    next_temp,
+                    circuits,
+                    stateful_circuits,
+                    ledger_fields,
+                    query_effect,
+                )?;
+                if actual != binding.ty {
+                    return Err(RenderError::TypeMismatch {
+                        expected: binding.ty.clone(),
+                        actual,
+                    });
+                }
+                let local_name = syn::Ident::new(
+                    &format!("__compact_expression_local_{}", *next_temp),
+                    Span::call_site(),
+                );
+                *next_temp += 1;
+                let ty = rust_type(&binding.ty)?;
+                statements.push(syn::parse_quote!(let #local_name: #ty = #rendered;));
+                locals.insert(binding.name.as_str(), (&binding.ty, local_name));
+                effect |= binding_effect;
+            }
+            let (rendered, ty, body_effect) = render_state_expression(
+                body,
+                &locals,
+                witnesses,
+                statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            Ok((rendered, ty, effect || body_effect))
+        }
+        _ => unreachable!("structural expression selected by dispatcher"),
+    }
+}
+
+/// Lower ordered aggregate construction and projections using the shared dispatcher.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "state expression lowering threads typed declarations and ordered query effects explicitly"
+)]
+fn render_aggregate_expression(
+    value: &Expr,
+    parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    statements: &mut Vec<syn::Stmt>,
+    next_temp: &mut usize,
+    circuits: &HashMap<&str, &PureCircuit>,
+    stateful_circuits: &HashMap<&str, &StatefulCircuit>,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+    query_effect: &mut bool,
+) -> Result<(syn::Expr, Type, bool), RenderError> {
+    match value {
+        Expr::StructLiteral { ty, fields } => {
+            let Type::Struct {
+                name,
+                fields: declarations,
+            } = ty
+            else {
+                return Err(RenderError::InvalidStructField("<literal>".into()));
+            };
+            if fields.len() != declarations.len() {
+                return Err(RenderError::InvalidStructField(name.clone()));
+            }
+            let mut members = Vec::<syn::FieldValue>::with_capacity(fields.len());
+            let mut witness_effect = false;
+            for (value, declaration) in fields.iter().zip(declarations) {
+                let (rendered, actual, effect) = render_state_expression(
+                    value,
+                    parameters,
+                    witnesses,
+                    statements,
+                    next_temp,
+                    circuits,
+                    stateful_circuits,
+                    ledger_fields,
+                    query_effect,
+                )?;
+                if actual != declaration.ty {
+                    return Err(RenderError::TypeMismatch {
+                        expected: declaration.ty.clone(),
+                        actual,
+                    });
+                }
+                let temporary = syn::Ident::new(
+                    &format!("__compact_struct_member_{}", *next_temp),
+                    Span::call_site(),
+                );
+                *next_temp += 1;
+                let member_ty = rust_type(&declaration.ty)?;
+                statements.push(syn::parse_quote!(let #temporary: #member_ty = #rendered;));
+                let member = ident(&declaration.name)?;
+                members.push(syn::parse_quote!(#member: #temporary));
+                witness_effect |= effect;
+            }
+            let name = ident(name)?;
+            Ok((
+                syn::parse_quote!(crate::types::#name {#(#members),*}),
+                ty.clone(),
+                witness_effect,
+            ))
+        }
+        Expr::StructField {
+            value,
+            field,
+            index,
+        } => {
+            let (value, ty, witness_effect) = render_state_expression(
+                value,
+                parameters,
+                witnesses,
+                statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            let Type::Struct { fields, .. } = ty else {
+                return Err(RenderError::InvalidStructField(field.clone()));
+            };
+            let declaration = fields
+                .get(*index)
+                .filter(|declaration| declaration.name == *field)
+                .ok_or_else(|| RenderError::InvalidStructField(field.clone()))?;
+            let name = ident(field)?;
+            let field_value = retained_value(syn::parse_quote!((#value).#name), &declaration.ty);
+            Ok((field_value, declaration.ty.clone(), witness_effect))
+        }
+        Expr::TupleIndex { value, index } => {
+            let (value, ty, witness_effect) = render_state_expression(
+                value,
+                parameters,
+                witnesses,
+                statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            let Type::Tuple { elements } = ty else {
+                return Err(RenderError::ExpectedTuple(ty));
+            };
+            let result = elements
+                .get(*index)
+                .ok_or(RenderError::InvalidTupleIndex(*index))?
+                .clone();
+            let index = syn::Index::from(*index);
+            Ok((syn::parse_quote!((#value).#index), result, witness_effect))
+        }
+        Expr::Tuple { elements } => {
+            let mut rendered_elements = Vec::<syn::Expr>::new();
+            let mut types = Vec::new();
+            let mut effect = false;
+            for element in elements {
+                let (rendered, ty, element_effect) = render_state_expression(
+                    element,
+                    parameters,
+                    witnesses,
+                    statements,
+                    next_temp,
+                    circuits,
+                    stateful_circuits,
+                    ledger_fields,
+                    query_effect,
+                )?;
+                let element_name = syn::Ident::new(
+                    &format!("__compact_element_{}", *next_temp),
+                    Span::call_site(),
+                );
+                *next_temp += 1;
+                statements.push(syn::parse_quote!(let #element_name = #rendered;));
+                rendered_elements.push(syn::parse_quote!(#element_name));
+                types.push(ty);
+                effect |= element_effect;
+            }
+            Ok((
+                syn::parse_quote!((#(#rendered_elements,)*)),
+                Type::Tuple { elements: types },
+                effect,
+            ))
+        }
+        _ => unreachable!("structural expression selected by dispatcher"),
+    }
+}
+
+/// Lower calls, queries, crypto and scalar operations; structural recursion is dispatched above.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "state expression lowering threads typed declarations and ordered query effects explicitly"
+)]
+fn render_operation_expression(
     value: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
     witnesses: &HashMap<&str, &WitnessDeclaration>,
@@ -174,104 +566,6 @@ pub(crate) fn render_state_expression(
                 },
                 false,
             ))
-        }
-        Expr::StructLiteral { ty, fields } => {
-            let Type::Struct {
-                name,
-                fields: declarations,
-            } = ty
-            else {
-                return Err(RenderError::InvalidStructField("<literal>".into()));
-            };
-            if fields.len() != declarations.len() {
-                return Err(RenderError::InvalidStructField(name.clone()));
-            }
-            let mut members = Vec::<syn::FieldValue>::with_capacity(fields.len());
-            let mut witness_effect = false;
-            for (value, declaration) in fields.iter().zip(declarations) {
-                let (rendered, actual, effect) = render_state_expression(
-                    value,
-                    parameters,
-                    witnesses,
-                    statements,
-                    next_temp,
-                    circuits,
-                    stateful_circuits,
-                    ledger_fields,
-                    query_effect,
-                )?;
-                if actual != declaration.ty {
-                    return Err(RenderError::TypeMismatch {
-                        expected: declaration.ty.clone(),
-                        actual,
-                    });
-                }
-                let temporary = syn::Ident::new(
-                    &format!("__compact_struct_member_{}", *next_temp),
-                    Span::call_site(),
-                );
-                *next_temp += 1;
-                let member_ty = rust_type(&declaration.ty)?;
-                statements.push(syn::parse_quote!(let #temporary: #member_ty = #rendered;));
-                let member = ident(&declaration.name)?;
-                members.push(syn::parse_quote!(#member: #temporary));
-                witness_effect |= effect;
-            }
-            let name = ident(name)?;
-            Ok((
-                syn::parse_quote!(crate::types::#name {#(#members),*}),
-                ty.clone(),
-                witness_effect,
-            ))
-        }
-        Expr::StructField {
-            value,
-            field,
-            index,
-        } => {
-            let (value, ty, witness_effect) = render_state_expression(
-                value,
-                parameters,
-                witnesses,
-                statements,
-                next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
-                query_effect,
-            )?;
-            let Type::Struct { fields, .. } = ty else {
-                return Err(RenderError::InvalidStructField(field.clone()));
-            };
-            let declaration = fields
-                .get(*index)
-                .filter(|declaration| declaration.name == *field)
-                .ok_or_else(|| RenderError::InvalidStructField(field.clone()))?;
-            let name = ident(field)?;
-            let field_value = retained_value(syn::parse_quote!((#value).#name), &declaration.ty);
-            Ok((field_value, declaration.ty.clone(), witness_effect))
-        }
-        Expr::TupleIndex { value, index } => {
-            let (value, ty, witness_effect) = render_state_expression(
-                value,
-                parameters,
-                witnesses,
-                statements,
-                next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
-                query_effect,
-            )?;
-            let Type::Tuple { elements } = ty else {
-                return Err(RenderError::ExpectedTuple(ty));
-            };
-            let result = elements
-                .get(*index)
-                .ok_or(RenderError::InvalidTupleIndex(*index))?
-                .clone();
-            let index = syn::Index::from(*index);
-            Ok((syn::parse_quote!((#value).#index), result, witness_effect))
         }
         Expr::SetMember {
             field,
@@ -1140,38 +1434,6 @@ pub(crate) fn render_state_expression(
             };
             Ok((rendered, Type::JubjubPoint, left_effect || right_effect))
         }
-        Expr::Tuple { elements } => {
-            let mut rendered_elements = Vec::<syn::Expr>::new();
-            let mut types = Vec::new();
-            let mut effect = false;
-            for element in elements {
-                let (rendered, ty, element_effect) = render_state_expression(
-                    element,
-                    parameters,
-                    witnesses,
-                    statements,
-                    next_temp,
-                    circuits,
-                    stateful_circuits,
-                    ledger_fields,
-                    query_effect,
-                )?;
-                let element_name = syn::Ident::new(
-                    &format!("__compact_element_{}", *next_temp),
-                    Span::call_site(),
-                );
-                *next_temp += 1;
-                statements.push(syn::parse_quote!(let #element_name = #rendered;));
-                rendered_elements.push(syn::parse_quote!(#element_name));
-                types.push(ty);
-                effect |= element_effect;
-            }
-            Ok((
-                syn::parse_quote!((#(#rendered_elements,)*)),
-                Type::Tuple { elements: types },
-                effect,
-            ))
-        }
         Expr::Assert { condition, message } => {
             let (condition, actual, effect) = render_state_expression(
                 condition,
@@ -1199,168 +1461,6 @@ pub(crate) fn render_state_expression(
                 Type::Unit,
                 effect,
             ))
-        }
-        Expr::Sequence { steps, value } => {
-            let mut witness_effect = false;
-            for step in steps {
-                let (rendered, ty, effect) = render_state_expression(
-                    step,
-                    parameters,
-                    witnesses,
-                    statements,
-                    next_temp,
-                    circuits,
-                    stateful_circuits,
-                    ledger_fields,
-                    query_effect,
-                )?;
-                statements.extend(discard_expression(rendered, &ty));
-                witness_effect |= effect;
-            }
-            let (rendered, ty, effect) = render_state_expression(
-                value,
-                parameters,
-                witnesses,
-                statements,
-                next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
-                query_effect,
-            )?;
-            Ok((rendered, ty, witness_effect || effect))
-        }
-        Expr::If {
-            condition,
-            then,
-            otherwise,
-        } => {
-            let evaluate_condition = condition_needs_statement(condition);
-            let (condition, condition_ty, condition_effect) = render_state_expression(
-                condition,
-                parameters,
-                witnesses,
-                statements,
-                next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
-                query_effect,
-            )?;
-            if condition_ty != Type::Boolean {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Boolean,
-                    actual: condition_ty,
-                });
-            }
-            if then == otherwise {
-                if evaluate_condition {
-                    statements.push(syn::parse_quote!(let _ = #condition;));
-                }
-                let (value, ty, effect) = render_state_expression(
-                    then,
-                    parameters,
-                    witnesses,
-                    statements,
-                    next_temp,
-                    circuits,
-                    stateful_circuits,
-                    ledger_fields,
-                    query_effect,
-                )?;
-                return Ok((value, ty, condition_effect || effect));
-            }
-            let mut then_statements = Vec::new();
-            let (then_value, then_ty, then_effect) = render_state_expression(
-                then,
-                parameters,
-                witnesses,
-                &mut then_statements,
-                next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
-                query_effect,
-            )?;
-            let mut else_statements = Vec::new();
-            let (else_value, else_ty, else_effect) = render_state_expression(
-                otherwise,
-                parameters,
-                witnesses,
-                &mut else_statements,
-                next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
-                query_effect,
-            )?;
-            if then_ty != else_ty {
-                return Err(RenderError::TypeMismatch {
-                    expected: then_ty,
-                    actual: else_ty,
-                });
-            }
-            // A block already evaluates to Unit without an explicit `()` tail.
-            // Remove only that syntax; effectful Unit-valued expressions remain.
-            let then_value = (!matches!(&then_value, syn::Expr::Tuple(t) if t.elems.is_empty()))
-                .then_some(then_value);
-            let else_value = (!matches!(&else_value, syn::Expr::Tuple(t) if t.elems.is_empty()))
-                .then_some(else_value);
-            let otherwise = (!else_statements.is_empty() || else_value.is_some())
-                .then(|| quote::quote!(else { #(#else_statements)* #else_value }));
-            Ok((
-                syn::parse_quote!(if #condition {
-                    #(#then_statements)*
-                    #then_value
-                } #otherwise),
-                then_ty,
-                condition_effect || then_effect || else_effect,
-            ))
-        }
-        Expr::Let { bindings, body } => {
-            let mut locals = parameters.clone();
-            let mut effect = false;
-            for binding in bindings {
-                ident(&binding.name)?;
-                let (rendered, actual, binding_effect) = render_state_expression(
-                    &binding.value,
-                    &locals,
-                    witnesses,
-                    statements,
-                    next_temp,
-                    circuits,
-                    stateful_circuits,
-                    ledger_fields,
-                    query_effect,
-                )?;
-                if actual != binding.ty {
-                    return Err(RenderError::TypeMismatch {
-                        expected: binding.ty.clone(),
-                        actual,
-                    });
-                }
-                let local_name = syn::Ident::new(
-                    &format!("__compact_expression_local_{}", *next_temp),
-                    Span::call_site(),
-                );
-                *next_temp += 1;
-                let ty = rust_type(&binding.ty)?;
-                statements.push(syn::parse_quote!(let #local_name: #ty = #rendered;));
-                locals.insert(binding.name.as_str(), (&binding.ty, local_name));
-                effect |= binding_effect;
-            }
-            let (rendered, ty, body_effect) = render_state_expression(
-                body,
-                &locals,
-                witnesses,
-                statements,
-                next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
-                query_effect,
-            )?;
-            Ok((rendered, ty, effect || body_effect))
         }
         Expr::Coerce { value, ty } => {
             let (rendered, actual, effect) = render_state_expression(

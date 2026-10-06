@@ -22,17 +22,10 @@ fn source() -> Value {
 }
 
 fn rendered(value: Value) -> compact_rust_backend::RenderedContract {
-    // This is the complete historical send fixture, whose expression nesting
-    // exceeds the default stack of Rust's test threads during rendering.
-    std::thread::Builder::new()
-        .stack_size(16 * 1024 * 1024)
-        .spawn(move || {
-            let contract: Contract = serde_json::from_value(value).unwrap();
-            render_with_capabilities(&contract).unwrap()
-        })
-        .unwrap()
-        .join()
-        .unwrap()
+    // Keep this historical nested source on the ordinary test worker: it is a
+    // regression control for recursive renderer stack use.
+    let contract: Contract = serde_json::from_value(value).unwrap();
+    render_with_capabilities(&contract).unwrap()
 }
 
 fn send_gap(value: Value) -> compact_rust_backend::RecordingGap {

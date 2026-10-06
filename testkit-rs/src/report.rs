@@ -31,6 +31,10 @@ impl ReplayReport {
     pub fn program(&self) -> &[Op<ResultModeVerify, DefaultDB>] {
         &self.program
     }
+    /// Cost of executing the sealed public Verify program as one VM query.
+    /// This excludes witness-only reads. Query grouping and write accounting
+    /// can also differ from execution, even when there are no witnesses.
+    /// Neither equality nor a universal ordering with execution gas is promised.
     pub fn gas(&self) -> RunningCost {
         self.gas
     }
@@ -71,7 +75,11 @@ impl<O> CallReport<O> {
     pub fn private_outputs(&self) -> &[AlignedValue] {
         &self.private_outputs
     }
-    /// Generated query-summed gas, including metered witness reads.
+    /// Sum of separately executed queries, including metered witness reads.
+    /// This is not the cost of replaying the concatenated public Verify program
+    /// as one query, nor a promise of an aggregate execution-gas budget check.
+    /// Subtracting replay gas does not generally measure witness cost: query
+    /// grouping and write accounting can differ independently of witnesses.
     pub fn execution_gas(&self) -> RunningCost {
         self.execution_gas
     }

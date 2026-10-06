@@ -20,8 +20,9 @@ use compact_rust_witness_conditional_fixture::ledger_contract as branches;
 use compact_rust_witnesses_oracle_fixture::ledger_contract as cell;
 use midnight_compact_testkit::runtime::{
     BoundedUint, CompactError, Field,
-    context::{ConstructorContext, WitnessContext},
-    ledger::read_root_cell,
+    context::{ConstructorContext, RunningCost, WitnessContext},
+    ledger::{query_cell_at_path, read_root_cell},
+    recording::RecordingFrame,
 };
 use midnight_compact_testkit::{ContractLab, LabError, WitnessScript};
 use serde_json::{Value, json};
@@ -133,6 +134,21 @@ fn witnessed_cell_matches_frozen_typescript_and_commits_owned_script() {
             initial,
         )
         .unwrap();
+        // Independent component queries for this one-read/one-write fixture.
+        // Equality of its gas delta to this read cost is not a general law.
+        let component_context = cell::initial_state(ConstructorContext::new(()))
+            .unwrap()
+            .into_circuit_context(lab.environment().address);
+        let (read, _) = query_cell_at_path::<Field, _>(
+            &component_context.query,
+            &[0],
+            None,
+            &lab.environment().cost_model,
+        )
+        .unwrap();
+        let write = component_context
+            .write_cell(0u8, Field::from(value))
+            .unwrap();
         let mut native = lab.fork();
         let n = native.native(|c| cell::pull(c, &CellWitness)).unwrap();
         let r = lab
@@ -141,6 +157,19 @@ fn witnessed_cell_matches_frozen_typescript_and_commits_owned_script() {
         assert_eq!(r.public_state(), n.public_state());
         assert_eq!(r.effects(), n.effects());
         assert_eq!(r.execution_gas(), n.execution_gas());
+        assert_eq!(r.execution_gas(), read.gas_cost + write.gas_cost);
+        let evidence = r.replay().unwrap();
+        let full = midnight_compact_testkit::runtime::ledger::QueryContext::new(
+            r.before().clone(),
+            lab.environment().address,
+        )
+        .query(evidence.program(), None, &lab.environment().cost_model)
+        .unwrap();
+        assert_eq!(evidence.gas(), full.gas_cost);
+        assert_eq!(full.context.state.get_ref(), r.public_state().get_ref());
+        assert_eq!(&full.context.effects, r.effects());
+        assert_eq!(evidence.gas(), write.gas_cost);
+        assert_eq!(r.execution_gas(), evidence.gas() + read.gas_cost);
         assert_eq!(
             json!(r.replay().unwrap().program()),
             row["publicTranscript"]
@@ -308,4 +337,73 @@ fn owned_forks_can_run_independently_on_normal_test_workers() {
     let results: Vec<_> = threads.into_iter().map(|t| t.join().unwrap()).collect();
     assert_ne!(results[0].public_state(), results[1].public_state());
     assert_ne!(lab.snapshot().public_state(), results[0].public_state());
+}
+
+#[test]
+fn query_grouping_changes_replay_cost_without_witnesses() {
+    // Runtime-frame control, not a new generated contract. Use the existing
+    // generated constructor, then compare separate queries with one full query.
+    for count in [1u64, 2] {
+        let initial = cell::initial_state(ConstructorContext::new(())).unwrap();
+        let mut lab = ContractLab::from_constructor(
+            support::identity_for(
+                include_bytes!("../../examples/rust_backend/witnesses_oracle.compact"),
+                include_bytes!("../../tests-rust-backend/witnesses-oracle/lib.rs"),
+            ),
+            support::environment(),
+            initial,
+        )
+        .unwrap();
+        let mut context = cell::initial_state(ConstructorContext::new(()))
+            .unwrap()
+            .into_circuit_context(lab.environment().address);
+        let mut components = RunningCost::ZERO;
+        for value in 42..42 + count {
+            let result = context.write_cell(0u8, Field::from(value)).unwrap();
+            components += result.gas_cost;
+            context = result.context;
+        }
+        let report = lab
+            .recorded(|c| {
+                let mut frame = RecordingFrame::new(c);
+                for value in 42..42 + count {
+                    frame = frame.write_cell(&[0u8], Field::from(value))?;
+                }
+                Ok(frame.finish(()))
+            })
+            .unwrap();
+        assert!(report.private_outputs().is_empty());
+        assert_eq!(report.execution_gas(), components);
+        assert_eq!(
+            report.public_state().get_ref(),
+            context.query.state.get_ref()
+        );
+        assert_eq!(report.effects(), &context.query.effects);
+        let evidence = report.replay().unwrap();
+        let replay = midnight_compact_testkit::runtime::ledger::QueryContext::new(
+            report.before().clone(),
+            lab.environment().address,
+        )
+        .query(evidence.program(), None, &lab.environment().cost_model)
+        .unwrap();
+        assert_eq!(evidence.gas(), replay.gas_cost);
+        assert_eq!(
+            replay.context.state.get_ref(),
+            report.public_state().get_ref()
+        );
+        assert_eq!(&replay.context.effects, report.effects());
+        if count == 1 {
+            assert_eq!(components, replay.gas_cost);
+        } else {
+            // Fixture-only arithmetic, deliberately no universal ordering claim.
+            let execution = json!(components);
+            let replay = json!(replay.gas_cost);
+            assert_eq!(execution["readTime"], replay["readTime"]);
+            assert_ne!(execution["computeTime"], replay["computeTime"]);
+            assert_eq!(execution["bytesWritten"], 76);
+            assert_eq!(execution["bytesDeleted"], 74);
+            assert_eq!(replay["bytesWritten"], 38);
+            assert_eq!(replay["bytesDeleted"], 36);
+        }
+    }
 }

@@ -277,13 +277,29 @@ fn script_mismatch_exhaustion_error_and_rollback_preserve_owned_checkpoint() {
         (1, Ok(secret.to_owned())),
         (2, Err(CompactError::AssertionFailed(secret.into()))),
     ]);
-    assert!(script.answer(9).is_err());
+    assert_eq!(
+        script.answer(9),
+        Err(CompactError::AssertionFailed(
+            "witness arguments differ from script".into()
+        ))
+    );
     assert_eq!(script.remaining(), 2);
     assert!(script.journal().is_empty());
     assert_eq!(script.answer(1).unwrap(), secret);
-    assert!(script.answer(2).is_err());
+    assert_eq!(
+        script.answer(2),
+        Err(CompactError::AssertionFailed(secret.into()))
+    );
+    assert_eq!(script.remaining(), 0);
     assert_eq!(script.journal(), &[1, 2]);
-    assert!(script.answer(2).is_err());
+    assert_eq!(
+        script.answer(2),
+        Err(CompactError::AssertionFailed(
+            "witness script exhausted".into()
+        ))
+    );
+    assert_eq!(script.remaining(), 0);
+    assert_eq!(script.journal(), &[1, 2]);
     assert!(!format!("{script:?}").contains(secret));
     let initial =
         counter::initial_state(ConstructorContext::new(WitnessScript::new([(1, Ok(4))]))).unwrap();
@@ -410,4 +426,108 @@ fn trusted_adapter_boundary_does_not_attest_transient_policy_changes() {
     assert_ne!(report.public_state(), before.public_state());
     assert_ne!(report.replay().unwrap().gas(), RunningCost::ZERO);
     assert_eq!(lab.environment().query_gas_limit, Some(RunningCost::ZERO));
+}
+
+#[test]
+fn script_failures_after_public_write_roll_back_and_require_explicit_inspection() {
+    for (answers, expected) in [
+        (
+            vec![(1, Ok(4)), (3, Ok(5))],
+            "witness arguments differ from script",
+        ),
+        (vec![(1, Ok(4))], "witness script exhausted"),
+        (
+            vec![
+                (1, Ok(4)),
+                (
+                    2,
+                    Err(CompactError::AssertionFailed("PRIVATE_SCRIPT_ERROR".into())),
+                ),
+            ],
+            "PRIVATE_SCRIPT_ERROR",
+        ),
+    ] {
+        for recorded in [false, true] {
+            let count = answers.len();
+            let initial = counter::initial_state(ConstructorContext::new(WitnessScript::new(
+                answers.clone(),
+            )))
+            .unwrap();
+            let mut lab =
+                ContractLab::from_constructor(support::identity(), support::environment(), initial)
+                    .unwrap();
+            let before = lab.snapshot();
+            let error = if recorded {
+                lab.recorded::<()>(|c| {
+                    let mut changed = counter::recorded::increment_by(c, BoundedUint::new(2)?)?;
+                    assert_ne!(
+                        changed.execution.context.query.state,
+                        *before.public_state()
+                    );
+                    assert_eq!(changed.execution.context.private_state.answer(1)?, 4);
+                    changed.execution.context.private_state.answer(2)?;
+                    panic!("script must fail")
+                })
+                .unwrap_err()
+            } else {
+                lab.native::<()>(|c| {
+                    let mut changed = counter::increment_by(c, BoundedUint::new(2)?)?;
+                    assert_ne!(changed.context.query.state, *before.public_state());
+                    assert_eq!(changed.context.private_state.answer(1)?, 4);
+                    changed.context.private_state.answer(2)?;
+                    panic!("script must fail")
+                })
+                .unwrap_err()
+            };
+            assert!(matches!(error, LabError::Execution(_)));
+            assert_eq!(
+                error.execution_error(),
+                Some(&CompactError::AssertionFailed(expected.into()))
+            );
+            assert_eq!(
+                format!("{error}"),
+                "circuit execution failed (details redacted)"
+            );
+            assert_eq!(format!("{error:?}"), error.to_string());
+            assert!(std::error::Error::source(&error).is_none());
+            assert_eq!(lab.snapshot().public_state(), before.public_state());
+            assert_eq!(lab.private_state().remaining(), count);
+            assert!(lab.private_state().journal().is_empty());
+        }
+    }
+}
+
+#[test]
+fn application_assertions_with_script_text_are_generic_redacted_execution_errors() {
+    for text in [
+        "witness script exhausted",
+        "witness arguments differ from script",
+    ] {
+        let mut lab = support::counter();
+        let before = lab.snapshot();
+        let error = lab
+            .native::<()>(|mut c| {
+                c.private_state.push("PRIVATE_APPLICATION_STATE".into());
+                Err(CompactError::AssertionFailed(text.into()))
+            })
+            .unwrap_err();
+        assert!(matches!(error, LabError::Execution(_)));
+        assert_eq!(
+            error.execution_error(),
+            Some(&CompactError::AssertionFailed(text.into()))
+        );
+        assert_eq!(
+            format!("{error:?}"),
+            "circuit execution failed (details redacted)"
+        );
+        assert_eq!(error.to_string(), format!("{error:?}"));
+        assert!(std::error::Error::source(&error).is_none());
+        assert_eq!(lab.snapshot().public_state(), before.public_state());
+        assert!(lab.private_state().is_empty());
+    }
+    let mut script = WitnessScript::new([("PRIVATE_ARGUMENT", Ok("PRIVATE_ANSWER"))]);
+    assert!(!format!("{script:?}").contains("PRIVATE_"));
+    assert_eq!(script.answer("PRIVATE_ARGUMENT"), Ok("PRIVATE_ANSWER"));
+    assert_eq!(script.journal(), &["PRIVATE_ARGUMENT"]);
+    assert!(!format!("{script:?}").contains("PRIVATE_"));
 }

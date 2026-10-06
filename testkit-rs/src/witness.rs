@@ -18,6 +18,11 @@ use std::{collections::VecDeque, fmt};
 
 /// Store this owned script inside the lab's private state so rollback/forks include it.
 /// Implement each generated TryWitnesses trait with an ordinary typed adapter.
+///
+/// Script failures cross that adapter as `CompactError`, just like application
+/// failures. A lab reports them as redacted execution errors. Inspect a known
+/// test failure deliberately with `LabError::execution_error()`; assertion text
+/// does not establish whether a script or the application produced the error.
 #[derive(Clone)]
 pub struct WitnessScript<A, R> {
     answers: VecDeque<(A, Result<R, CompactError>)>,
@@ -30,7 +35,10 @@ impl<A: PartialEq, R> WitnessScript<A, R> {
             journal: vec![],
         }
     }
-    /// Mismatched arguments leave the queue intact; accepted invocations consume one answer.
+    /// Mismatched arguments and exhaustion leave the queue and journal intact.
+    /// Accepted invocations consume one answer and journal the arguments, even
+    /// when the scripted answer is an error. A failed lab invocation rolls back
+    /// its owned working script together with the other owned private state.
     pub fn answer(&mut self, arguments: A) -> Result<R, CompactError> {
         let Some((expected, _)) = self.answers.front() else {
             return Err(CompactError::AssertionFailed(

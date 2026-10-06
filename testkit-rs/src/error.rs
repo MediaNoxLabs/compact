@@ -30,7 +30,10 @@ pub enum LabError {
     ReplayEffectsMismatch,
 }
 impl LabError {
-    /// Explicit access to a potentially private application error message.
+    /// Explicit access to a potentially private execution error, including errors
+    /// from witness adapters. Do not log this payload without reviewing it.
+    /// An assertion message alone cannot distinguish a script failure from an
+    /// application failure; this accessor does not attest the error's origin.
     pub fn execution_error(&self) -> Option<&CompactError> {
         match self {
             Self::Execution(error) => Some(error),

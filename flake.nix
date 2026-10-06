@@ -217,8 +217,10 @@
           });
 
           packages.compact-rust-cli = let
-            linking-pkgs = if pkgs.lib.hasSuffix "linux" system then pkgs.pkgsMusl else pkgs;
-          in linking-pkgs.rustPlatform.buildRustPackage {
+            # Cross to static musl with native build tools, avoiding a
+            # musl-hosted Rust/LLVM bootstrap just to package the Linux CLI.
+            linking-pkgs = if pkgs.lib.hasSuffix "linux" system then pkgs.pkgsStatic else pkgs;
+          in linking-pkgs.rustPlatform.buildRustPackage ({
             pname = "compact-rust-cli";
             version = "0.1.0";
             # The CLI build needs only its crate sources; local harness scripts
@@ -239,7 +241,25 @@
               cp -R ${./runtime-rs} $out/share/compactc/runtime-rs
               cp -R ${./runtime-rs-macros} $out/share/compactc/runtime-rs-macros
             '';
-          };
+          } // pkgs.lib.optionalAttrs (pkgs.lib.hasSuffix "linux" system) {
+            postFixup = ''
+              ${pkgs.buildPackages.binutils}/bin/readelf -lW "$out/bin/compactc" > "$TMPDIR/compact-rust-cli-program-headers" || exit 1
+              ${pkgs.buildPackages.binutils}/bin/readelf -dW "$out/bin/compactc" > "$TMPDIR/compact-rust-cli-dynamic-section" || exit 1
+              if ${pkgs.buildPackages.gnugrep}/bin/grep -Eq '(^|[[:space:]])INTERP([[:space:]]|$)' "$TMPDIR/compact-rust-cli-program-headers"; then
+                echo "compact-rust-cli must not require an ELF interpreter" >&2
+                exit 1
+              else
+                test "$?" -eq 1 || exit 1
+              fi
+              if ${pkgs.buildPackages.gnugrep}/bin/grep -Fq '(NEEDED)' "$TMPDIR/compact-rust-cli-dynamic-section"; then
+                echo "compact-rust-cli must not require shared libraries" >&2
+                exit 1
+              else
+                test "$?" -eq 1 || exit 1
+              fi
+              echo "compact-rust-cli: static ELF verified for ${system}"
+            '';
+          });
 
           packages.compactc = pkgs.stdenv.mkDerivation {
             name = "compactc";

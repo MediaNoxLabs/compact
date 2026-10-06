@@ -330,6 +330,13 @@ jobs:
         run: |
           nix develop .#compiler --command python3 -c 'import shutil, subprocess; print(shutil.which("cargo")); versions = [subprocess.check_output([tool, "--version"], text=True).strip() for tool in ("cargo", "rustc")]; print(*versions, sep="; "); assert all(version.split()[1] == "1.99.0" for version in versions)'
 
+      - name: Prepare verified built-in proof material
+        run: |
+          export MIDNIGHT_PP="$RUNNER_TEMP/compact-proof-parameters"
+          printf '%s\n' "MIDNIGHT_PP=$MIDNIGHT_PP" >> "$GITHUB_ENV"
+          cargo run --locked --offline -p compact-rust-proof-smoke -- --prepare-proof-material > "$RUNNER_TEMP/compact-proof-material.json"
+          cat "$RUNNER_TEMP/compact-proof-material.json"
+
       - name: Check and test native Rust backend
         run: |
           cargo fmt --all -- --check
@@ -358,6 +365,7 @@ jobs:
           path: |
             target/rust-runtime-release.json
             ${{ runner.temp }}/ledger-static-provenance.json
+            ${{ runner.temp }}/compact-proof-material.json
             target/package/midnight-compact-runtime-macros-*.crate
             target/package/midnight-compact-runtime-*.crate
           if-no-files-found: error

@@ -541,6 +541,26 @@ pinned in [`runtime-rs/Cargo.toml`](../../runtime-rs/Cargo.toml).
 
 ## Verify a backend change
 
+On a clean machine, prepare the built-in Zswap/Dust keys and their SRS before
+running proofs. Use the same `MIDNIGHT_PP` directory for preparation, contract
+key generation and proof execution:
+
+```sh
+export MIDNIGHT_PP="${XDG_CACHE_HOME:-$HOME/.cache}/midnight/zk-params"
+cargo fetch --locked
+cargo run --locked --offline -p compact-rust-proof-smoke -- --prepare-proof-material
+```
+
+Preparation uses Midnight's data provider and the pinned upstream expected
+hashes, including verification of existing cache entries. It derives the
+required SRS sizes from the verified built-in IR. An empty cache requires
+network access; Cargo's `--offline` flag only disables dependency downloads.
+Append `--verify-only` after `--prepare-proof-material` to check an existing
+cache without fetching or repairing missing or corrupt files.
+The existing synchronous proof resolvers require this material locally.
+`MIDNIGHT_LEDGER_TEST_STATIC_DIR` separately locates the ledger test fixtures
+used for fee funding; it does not replace the proof parameter cache.
+
 ```sh
 cargo fmt --all -- --check
 nix develop .#compiler --command env COMPACTC=compactc \

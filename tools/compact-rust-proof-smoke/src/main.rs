@@ -87,6 +87,7 @@ mod opaque_string_map;
 mod opaque_string_set;
 mod pair_hash_cell;
 mod persistent_commit;
+mod proof_material;
 mod pure_assert_call;
 mod pure_field_arguments;
 mod qualified_coin_cell;
@@ -1618,6 +1619,24 @@ fn main() -> Result<(), Box<dyn Error>> {
 fn run() -> Result<(), Box<dyn Error>> {
     let mut arguments = env::args_os().skip(1);
     let first = arguments.next();
+    if first.as_deref() == Some(OsStr::new("--prepare-proof-material")) {
+        let verify_only = match arguments.next().as_deref() {
+            None => false,
+            Some(value) if value == OsStr::new("--verify-only") => true,
+            _ => {
+                return Err(
+                    "usage: compact-rust-proof-smoke --prepare-proof-material [--verify-only]"
+                        .into(),
+                );
+            }
+        };
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --prepare-proof-material [--verify-only]".into(),
+            );
+        }
+        return proof_material::run(verify_only);
+    }
     if first.as_deref() == Some(OsStr::new("--mixed-width-recording")) {
         let root = arguments
             .next()

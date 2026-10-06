@@ -1,6 +1,7 @@
 //! Rust syntax construction from Compact's typed backend IR.
 
 mod capabilities;
+mod circuit_analysis;
 mod coin_shapes;
 pub mod ir;
 pub use capabilities::{

@@ -1,0 +1,310 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "controller",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "jubjub_point"
+        }
+      },
+      "source": {
+        "file": "point_guard.compact",
+        "line": 17,
+        "column": 1
+      }
+    },
+    {
+      "id": "recovery",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "jubjub_point"
+        }
+      },
+      "source": {
+        "file": "point_guard.compact",
+        "line": 18,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "changes",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "jubjub_point"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "if",
+            "condition": {
+              "kind": "not_equal",
+              "left": {
+                "kind": "jubjub_point_x",
+                "value": {
+                  "kind": "parameter",
+                  "name": "value"
+                }
+              },
+              "right": {
+                "kind": "jubjub_point_x",
+                "value": {
+                  "kind": "cell_read",
+                  "field": "controller",
+                  "index": 0
+                }
+              }
+            },
+            "then": {
+              "kind": "boolean",
+              "value": true
+            },
+            "otherwise": {
+              "kind": "not_equal",
+              "left": {
+                "kind": "jubjub_point_y",
+                "value": {
+                  "kind": "parameter",
+                  "name": "value"
+                }
+              },
+              "right": {
+                "kind": "jubjub_point_y",
+                "value": {
+                  "kind": "cell_read",
+                  "field": "controller",
+                  "index": 0
+                }
+              }
+            }
+          },
+          "message": "same controller"
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "point_guard.compact",
+        "line": 20,
+        "column": 1
+      }
+    },
+    {
+      "name": "distinct",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "jubjub_point"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "if",
+            "condition": {
+              "kind": "not_equal",
+              "left": {
+                "kind": "jubjub_point_x",
+                "value": {
+                  "kind": "parameter",
+                  "name": "value"
+                }
+              },
+              "right": {
+                "kind": "jubjub_point_x",
+                "value": {
+                  "kind": "cell_read",
+                  "field": "recovery",
+                  "index": 1
+                }
+              }
+            },
+            "then": {
+              "kind": "boolean",
+              "value": true
+            },
+            "otherwise": {
+              "kind": "not_equal",
+              "left": {
+                "kind": "jubjub_point_y",
+                "value": {
+                  "kind": "parameter",
+                  "name": "value"
+                }
+              },
+              "right": {
+                "kind": "jubjub_point_y",
+                "value": {
+                  "kind": "cell_read",
+                  "field": "recovery",
+                  "index": 1
+                }
+              }
+            }
+          },
+          "message": "same recovery"
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "point_guard.compact",
+        "line": 23,
+        "column": 1
+      }
+    },
+    {
+      "name": "check",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "jubjub_point"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "visible",
+              "ty": {
+                "kind": "jubjub_point"
+              },
+              "value": {
+                "kind": "parameter",
+                "name": "value"
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "circuit_call",
+                "name": "changes",
+                "arguments": [
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "visible"
+                    },
+                    "ty": {
+                      "kind": "jubjub_point"
+                    }
+                  }
+                ]
+              },
+              {
+                "kind": "circuit_call",
+                "name": "distinct",
+                "arguments": [
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "visible"
+                    },
+                    "ty": {
+                      "kind": "jubjub_point"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "point_guard.compact",
+        "line": 26,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": {
+    "parameters": [
+      {
+        "name": "a",
+        "ty": {
+          "kind": "jubjub_point"
+        }
+      },
+      {
+        "name": "b",
+        "ty": {
+          "kind": "jubjub_point"
+        }
+      }
+    ],
+    "steps": [
+      {
+        "kind": "cell_write",
+        "field": "controller",
+        "index": 0,
+        "value": {
+          "kind": "parameter",
+          "name": "a"
+        }
+      },
+      {
+        "kind": "cell_write",
+        "field": "recovery",
+        "index": 1,
+        "value": {
+          "kind": "parameter",
+          "name": "b"
+        }
+      }
+    ],
+    "source": {
+      "file": "point_guard.compact",
+      "line": 19,
+      "column": 1
+    }
+  }
+}

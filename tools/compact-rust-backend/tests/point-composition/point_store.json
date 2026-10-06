@@ -1,0 +1,258 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "key",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "jubjub_point"
+        }
+      },
+      "source": {
+        "file": "point_store.compact",
+        "line": 17,
+        "column": 1
+      }
+    },
+    {
+      "id": "active",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "boolean"
+        }
+      },
+      "source": {
+        "file": "point_store.compact",
+        "line": 18,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "put",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "jubjub_point"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "cell_write",
+          "field": "key",
+          "index": 0,
+          "value": {
+            "kind": "parameter",
+            "name": "value"
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "point_store.compact",
+        "line": 20,
+        "column": 1
+      }
+    },
+    {
+      "name": "through_helper",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "jubjub_point"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "circuit_call",
+          "name": "put",
+          "arguments": [
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "value"
+              },
+              "ty": {
+                "kind": "jubjub_point"
+              }
+            }
+          ]
+        }
+      ],
+      "source": {
+        "file": "point_store.compact",
+        "line": 21,
+        "column": 1
+      }
+    },
+    {
+      "name": "direct_control",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "jubjub_point"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "cell_write",
+          "field": "key",
+          "index": 0,
+          "value": {
+            "kind": "parameter",
+            "name": "value"
+          }
+        }
+      ],
+      "source": {
+        "file": "point_store.compact",
+        "line": 22,
+        "column": 1
+      }
+    },
+    {
+      "name": "guard",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "cell_read",
+            "field": "active",
+            "index": 1
+          },
+          "message": "inactive"
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "point_store.compact",
+        "line": 24,
+        "column": 1
+      }
+    },
+    {
+      "name": "guarded",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "jubjub_point"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "circuit_call",
+          "name": "guard",
+          "arguments": [
+          ]
+        },
+        {
+          "kind": "cell_write",
+          "field": "key",
+          "index": 0,
+          "value": {
+            "kind": "parameter",
+            "name": "value"
+          }
+        }
+      ],
+      "source": {
+        "file": "point_store.compact",
+        "line": 25,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": {
+    "parameters": [
+      {
+        "name": "initial",
+        "ty": {
+          "kind": "jubjub_point"
+        }
+      }
+    ],
+    "steps": [
+      {
+        "kind": "cell_write",
+        "field": "key",
+        "index": 0,
+        "value": {
+          "kind": "parameter",
+          "name": "initial"
+        }
+      },
+      {
+        "kind": "cell_write",
+        "field": "active",
+        "index": 1,
+        "value": {
+          "kind": "boolean",
+          "value": true
+        }
+      }
+    ],
+    "source": {
+      "file": "point_store.compact",
+      "line": 19,
+      "column": 1
+    }
+  }
+}

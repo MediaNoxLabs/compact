@@ -1,0 +1,29 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import CompactStandardLibrary;
+export ledger key: JubjubPoint;
+export ledger active: Boolean;
+witness authorize(message: Field): Boolean;
+constructor(initial: JubjubPoint) { key = disclose(initial); active = true; }
+struct Coordinates { x: Field; y: Field; }
+pure circuit digest(value: JubjubPoint): Field {
+  return transientHash<Coordinates>(Coordinates { x: jubjubPointX(value), y: jubjubPointY(value) });
+}
+circuit checked(message: Field): [] { assert(active, "inactive"); assert(disclose(authorize(message)), "unauthorized"); }
+export circuit update(value: JubjubPoint): [] { checked(digest(disclose(value))); key = disclose(value); }
+export circuit scalar_control(): [] { checked(1); active = false; }
+export circuit point_write_only(value: JubjubPoint): [] { checked(1); key = disclose(value); }
+export circuit pure_projection_only(value: JubjubPoint): [] { checked(digest(disclose(value))); active = false; }

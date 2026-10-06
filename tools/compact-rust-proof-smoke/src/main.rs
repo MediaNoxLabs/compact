@@ -106,6 +106,7 @@ mod struct_constructor_cell;
 mod did_deactivate;
 #[path = "../../../tests-rust-backend/did-adoption/support/witness.rs"]
 mod did_deactivate_support;
+mod did_point_lifecycle;
 mod terminal_lexical_return;
 #[path = "../../../tests-rust-backend/terminal-lexical-return-oracle/support/terminal.rs"]
 mod terminal_lexical_return_support;
@@ -2254,6 +2255,23 @@ fn run() -> Result<(), Box<dyn Error>> {
             Ok(Ok(())) => Ok(()),
             Ok(Err(error)) => Err(error.into()),
             Err(_) => Err("terminal lexical return proof thread panicked".into()),
+        };
+    }
+    if first.as_deref() == Some(OsStr::new("--did-point-lifecycle")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --did-point-lifecycle <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err("unexpected DID lifecycle argument".into());
+        }
+        let proof = std::thread::Builder::new()
+            .name("did-point-lifecycle-proof".into())
+            .stack_size(64 * 1024 * 1024)
+            .spawn(move || did_point_lifecycle::run(Path::new(&root)).map_err(|e| e.to_string()))?;
+        return match proof.join() {
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(error)) => Err(error.into()),
+            Err(_) => Err("DID lifecycle proof thread panicked".into()),
         };
     }
     if first.as_deref() == Some(OsStr::new("--did-deactivate")) {

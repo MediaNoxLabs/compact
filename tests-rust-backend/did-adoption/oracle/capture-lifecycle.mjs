@@ -19,11 +19,15 @@ import { pathToFileURL } from "node:url";
 import { readFileSync, realpathSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { createHash } from "node:crypto";
-import { captureCases } from "./lifecycle-cases.mjs";
+import { captureCases as defaultCaptureCases } from "./lifecycle-cases.mjs";
 import * as r from "../../../runtime/dist/index.js";
 const generated = process.argv[2];
-if (!generated || process.argv.length !== 3)
-  throw Error("expected generated DID contract/index.js");
+if (!generated || ![3, 4].includes(process.argv.length))
+  throw Error("expected generated DID contract/index.js [case-module.mjs]");
+const casesPath = process.argv[3];
+const casesModule = casesPath ? await import(pathToFileURL(resolve(casesPath)).href) : null;
+const captureCases = casesModule ? casesModule.captureCases : defaultCaptureCases;
+if (typeof captureCases !== "function") throw Error("case module must export captureCases");
 if (
   realpathSync(
     resolve(dirname(generated), "node_modules/@midnight-ntwrk/compact-runtime"),
@@ -232,13 +236,13 @@ const provenance = [
   "runtime/src/compact-types.ts",
   "examples/rust_backend/did_adoption/source-manifest.json",
   "tests-rust-backend/did-adoption/oracle/capture-lifecycle.mjs",
-  "tests-rust-backend/did-adoption/oracle/lifecycle-cases.mjs",
+  casesPath ?? "tests-rust-backend/did-adoption/oracle/lifecycle-cases.mjs",
 ].map((path) => ({ path, sha256: hash(path) }));
 process.stdout.write(
   JSON.stringify(
     json({
       scope:
-        "Native constructor-driven source calls; only deactivate separately has recorded/proof evidence",
+        casesPath ? "Native constructor-driven Point source calls; recording and proof evidence are separate" : "Native constructor-driven source calls; only deactivate separately has recorded/proof evidence",
       provenance,
       generatedJavaScriptSha256: hash(generated),
       runtimeJavaScriptSha256: hash("runtime/dist/built-ins.js"),

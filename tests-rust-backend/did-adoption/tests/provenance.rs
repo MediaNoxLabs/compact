@@ -44,7 +44,7 @@ fn hash_rows(rows: &Value) {
 }
 #[test]
 fn capture_source_and_reviewed_test_identities() {
-    for file in ["lifecycle.json", "pure.json"] {
+    for file in ["lifecycle.json", "pure.json", "point-lifecycle.json"] {
         hash_rows(&data(file)["provenance"]);
     }
     hash_rows(&data("reviewed-matrix.json")["artifacts"]);

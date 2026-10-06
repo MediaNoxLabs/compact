@@ -3436,7 +3436,7 @@
   "artifacts": [
     {
       "path": "tests-rust-backend/did-adoption/oracle/capture-lifecycle.mjs",
-      "sha256": "3931c8012e92ba46c8cebe5dbce8ff9106441d74e1285ff804f195150ddf268d"
+      "sha256": "1c5949508dab06dd92018de03df98eb7e1389f11b14df96e02e6d4e1a265e7b4"
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/capture-pure.mjs",
@@ -3448,11 +3448,11 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/lifecycle.json",
-      "sha256": "054d350b66c28b3b46b3f391db715c46cdee7f428c6cd7c6ebb9748a592bc6cc"
+      "sha256": "8b467259a1ec815ad0a532c09c065a979cb95f5dc1af15ee52645ea77e2f8feb"
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/pure.json",
-      "sha256": "bd9bdaff595260d43cf9a96ecafe329b05ca6046e0db75fcd65a5940530d1b0a"
+      "sha256": "b90d0293500958a50a8972f1dbd4d7ed2720f44277434a001f0de232ed14e467"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/codec.rs",
@@ -3473,6 +3473,32 @@
     {
       "path": "tests-rust-backend/did-adoption/tests/pure_apis.rs",
       "sha256": "60bcdde7de6565d312823824a03f1ee78518df673fe0b26605d3cd45256e80c6"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/oracle/point-lifecycle-cases.mjs",
+      "sha256": "3fd3cac40c116fa9822d14a78c2ff1c79e473897b5d6ca1e84e69b6a76874e72"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/oracle/point-lifecycle.json",
+      "sha256": "e0dddab06e624572bfd64fa546c6f914e26b724f0dea1cd9e51c92a8aeffaeb9"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/support/point_calls.rs",
+      "sha256": "8642d94d79b291c1798800529d2983c706fd9586d484df0abab267918e7637db"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/tests/point_recording.rs",
+      "sha256": "2944423a64129616286e6395a33e00af913006207f1cc11e170fd2e9214c1526"
     }
-  ]
+  ],
+  "amendment_0259": {
+    "scope": "Original rotateControllerKey and recoverControllerKey recording added; native and pure semantic captures unchanged. Three default-strict proofs follow actual original-data deployment. Constructor execution itself is not proved; stored id remains zero and distinct from deployed address.",
+    "historical_baseline": "The original ADR0255 scope, limits and stateful_export_summary remain the historical native acceptance baseline.",
+    "current_recorded_exports": [
+      "deactivate",
+      "recoverControllerKey",
+      "rotateControllerKey"
+    ],
+    "point_cases": 12
+  }
 }

@@ -3215,6 +3215,98 @@ pub mod ledger_contract {
             })?;
             Ok((frame, ()))
         }
+        fn __compact_recorded_body_assertControllerCanUpdate<
+            Private,
+            W: super::TryWitnesses<Private>,
+        >(
+            frame: runtime::recording::RecordingFrame<Private>,
+            witnesses: &W,
+            __compact_param_0: crate::types::SchnorrSignature,
+            __compact_param_1: runtime::BoundedUint<18446744073709551615>,
+            __compact_param_2: runtime::FixedVector<runtime::Field, 4>,
+        ) -> Result<(runtime::recording::RecordingFrame<Private>, ()), runtime::CompactError>
+        {
+            let __compact_plan_0: crate::types::SchnorrSignature = (__compact_param_0).clone();
+            let __compact_plan_1: runtime::BoundedUint<18446744073709551615> = __compact_param_1;
+            let __compact_plan_2: runtime::FixedVector<runtime::Field, 4> =
+                (__compact_param_2).clone();
+            let (frame, __compact_plan_3) = crate::ledger_slots::version.record_read(frame)?;
+            let __compact_plan_4: runtime::BoundedUint<18446744073709551615> =
+                runtime::BoundedUint::<18446744073709551615>::new(__compact_plan_3 as u128)?;
+            let __compact_plan_5: bool = __compact_plan_1 == __compact_plan_4;
+            if !__compact_plan_5 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Controller authorization version is stale".to_owned(),
+                ));
+            }
+            let __compact_plan_6: runtime::FixedVector<runtime::Field, 4> =
+                (__compact_plan_2).clone();
+            let __compact_plan_7: crate::types::SchnorrSignature = (__compact_plan_0).clone();
+            let (frame, __compact_plan_8): (_, runtime::JubjubPoint) =
+                crate::ledger_slots::controllerPublicKey.record_read(frame)?;
+            let __compact_plan_9: runtime::JubjubPoint = __compact_plan_8;
+            let (frame, ()) = frame.call_local(|context| {
+                super::schnorrVerifyDigest(
+                    context,
+                    witnesses,
+                    __compact_plan_6,
+                    __compact_plan_7,
+                    __compact_plan_9,
+                )
+            })?;
+            let (frame, __compact_plan_10): (_, bool) =
+                crate::ledger_slots::active.record_read(frame)?;
+            if !__compact_plan_10 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Contract is not active".to_owned(),
+                ));
+            }
+            Ok((frame, ()))
+        }
+        fn __compact_recorded_body_assertRecoveryCanUpdate<
+            Private,
+            W: super::TryWitnesses<Private>,
+        >(
+            frame: runtime::recording::RecordingFrame<Private>,
+            witnesses: &W,
+            __compact_param_0: crate::types::SchnorrSignature,
+            __compact_param_1: runtime::BoundedUint<18446744073709551615>,
+            __compact_param_2: runtime::FixedVector<runtime::Field, 4>,
+        ) -> Result<(runtime::recording::RecordingFrame<Private>, ()), runtime::CompactError>
+        {
+            let (frame, __compact_plan_0) = crate::ledger_slots::version.record_read(frame)?;
+            let __compact_plan_1: runtime::BoundedUint<18446744073709551615> =
+                runtime::BoundedUint::<18446744073709551615>::new(__compact_plan_0 as u128)?;
+            let __compact_plan_2: bool = __compact_param_1 == __compact_plan_1;
+            if !__compact_plan_2 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Recovery authorization version is stale".to_owned(),
+                ));
+            }
+            let __compact_plan_3: runtime::FixedVector<runtime::Field, 4> =
+                (__compact_param_2).clone();
+            let __compact_plan_4: crate::types::SchnorrSignature = (__compact_param_0).clone();
+            let (frame, __compact_plan_5): (_, runtime::JubjubPoint) =
+                crate::ledger_slots::recoveryAuthorityPublicKey.record_read(frame)?;
+            let __compact_plan_6: runtime::JubjubPoint = __compact_plan_5;
+            let (frame, ()) = frame.call_local(|context| {
+                super::schnorrVerifyDigest(
+                    context,
+                    witnesses,
+                    __compact_plan_3,
+                    __compact_plan_4,
+                    __compact_plan_6,
+                )
+            })?;
+            let (frame, __compact_plan_7): (_, bool) =
+                crate::ledger_slots::active.record_read(frame)?;
+            if !__compact_plan_7 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Contract is not active".to_owned(),
+                ));
+            }
+            Ok((frame, ()))
+        }
         fn __compact_recorded_body_recordUpdate<Private, W: super::TryWitnesses<Private>>(
             frame: runtime::recording::RecordingFrame<Private>,
             witnesses: &W,
@@ -3230,6 +3322,258 @@ pub mod ledger_contract {
             })?;
             let frame = crate::ledger_slots::updated.record_write(frame, __compact_witness_0)?;
             Ok((frame, ()))
+        }
+        pub fn rotateControllerKey<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::JubjubPoint,
+            __compact_param_1: crate::types::SchnorrSignature,
+            __compact_param_2: runtime::BoundedUint<18446744073709551615>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_plan_0: runtime::JubjubPoint = __compact_param_0;
+            let __compact_plan_1: crate::types::SchnorrSignature = (__compact_param_1).clone();
+            let __compact_plan_2: runtime::BoundedUint<18446744073709551615> = __compact_param_2;
+            let (frame, __compact_plan_3): (_, crate::types::ContractAddress) =
+                crate::ledger_slots::id.record_read(frame)?;
+            let __compact_plan_4: crate::types::ContractAddress = __compact_plan_3;
+            let __compact_plan_5: runtime::BoundedUint<18446744073709551615> = __compact_param_2;
+            let __compact_plan_6: runtime::JubjubPoint = __compact_plan_0;
+            let __compact_plan_7: runtime::FixedVector<runtime::Field, 4> =
+                crate::pure_circuits::rotateControllerKeyAuthorizationDigest(
+                    __compact_plan_4,
+                    __compact_plan_5,
+                    __compact_plan_6,
+                )?;
+            let __compact_plan_8: runtime::FixedVector<runtime::Field, 4> = __compact_plan_7;
+            let __compact_plan_9: crate::types::SchnorrSignature = (__compact_plan_1).clone();
+            let __compact_plan_10: runtime::BoundedUint<18446744073709551615> = __compact_plan_2;
+            let __compact_plan_11: runtime::FixedVector<runtime::Field, 4> =
+                (__compact_plan_8).clone();
+            let (frame, __compact_plan_12) = crate::ledger_slots::version.record_read(frame)?;
+            let __compact_plan_13: runtime::BoundedUint<18446744073709551615> =
+                runtime::BoundedUint::<18446744073709551615>::new(__compact_plan_12 as u128)?;
+            let __compact_plan_14: bool = __compact_plan_10 == __compact_plan_13;
+            if !__compact_plan_14 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Controller authorization version is stale".to_owned(),
+                ));
+            }
+            let __compact_plan_15: runtime::FixedVector<runtime::Field, 4> =
+                (__compact_plan_11).clone();
+            let __compact_plan_16: crate::types::SchnorrSignature = (__compact_plan_9).clone();
+            let (frame, __compact_plan_17): (_, runtime::JubjubPoint) =
+                crate::ledger_slots::controllerPublicKey.record_read(frame)?;
+            let __compact_plan_18: runtime::JubjubPoint = __compact_plan_17;
+            let (frame, ()) = frame.call_local(|context| {
+                super::schnorrVerifyDigest(
+                    context,
+                    witnesses,
+                    __compact_plan_15,
+                    __compact_plan_16,
+                    __compact_plan_18,
+                )
+            })?;
+            let (frame, __compact_plan_19): (_, bool) =
+                crate::ledger_slots::active.record_read(frame)?;
+            if !__compact_plan_19 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Contract is not active".to_owned(),
+                ));
+            }
+            let __compact_plan_20: runtime::JubjubPoint = __compact_plan_0;
+            let __compact_plan_21: runtime::Field = runtime::jubjub_point_x(__compact_plan_20);
+            let (frame, __compact_plan_22): (_, runtime::JubjubPoint) =
+                crate::ledger_slots::controllerPublicKey.record_read(frame)?;
+            let __compact_plan_23: runtime::Field = runtime::jubjub_point_x(__compact_plan_22);
+            let __compact_plan_24: bool = __compact_plan_21 != __compact_plan_23;
+            let (frame, __compact_plan_30): (_, bool) = if __compact_plan_24 {
+                let __compact_plan_25: bool = true;
+                (frame, __compact_plan_25)
+            } else {
+                let __compact_plan_26: runtime::Field = runtime::jubjub_point_y(__compact_plan_20);
+                let (frame, __compact_plan_27): (_, runtime::JubjubPoint) =
+                    crate::ledger_slots::controllerPublicKey.record_read(frame)?;
+                let __compact_plan_28: runtime::Field = runtime::jubjub_point_y(__compact_plan_27);
+                let __compact_plan_29: bool = __compact_plan_26 != __compact_plan_28;
+                (frame, __compact_plan_29)
+            };
+            if !__compact_plan_30 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "New controller key matches current controller key".to_owned(),
+                ));
+            }
+            let __compact_plan_31: runtime::JubjubPoint = __compact_plan_0;
+            let __compact_plan_32: runtime::Field = runtime::jubjub_point_x(__compact_plan_31);
+            let (frame, __compact_plan_33): (_, runtime::JubjubPoint) =
+                crate::ledger_slots::recoveryAuthorityPublicKey.record_read(frame)?;
+            let __compact_plan_34: runtime::Field = runtime::jubjub_point_x(__compact_plan_33);
+            let __compact_plan_35: bool = __compact_plan_32 != __compact_plan_34;
+            let (frame, __compact_plan_41): (_, bool) = if __compact_plan_35 {
+                let __compact_plan_36: bool = true;
+                (frame, __compact_plan_36)
+            } else {
+                let __compact_plan_37: runtime::Field = runtime::jubjub_point_y(__compact_plan_31);
+                let (frame, __compact_plan_38): (_, runtime::JubjubPoint) =
+                    crate::ledger_slots::recoveryAuthorityPublicKey.record_read(frame)?;
+                let __compact_plan_39: runtime::Field = runtime::jubjub_point_y(__compact_plan_38);
+                let __compact_plan_40: bool = __compact_plan_37 != __compact_plan_39;
+                (frame, __compact_plan_40)
+            };
+            if !__compact_plan_41 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "New controller key matches recovery authority key".to_owned(),
+                ));
+            }
+            let frame =
+                crate::ledger_slots::controllerPublicKey.record_write(frame, __compact_plan_0)?;
+            let __compact_plan_42: runtime::BoundedUint<65535> =
+                runtime::BoundedUint::<65535>::new(1u128)
+                    .expect("Compact Uint literal fits its maximum");
+            let __compact_plan_43: runtime::BoundedUint<65535> = __compact_plan_42;
+            let frame = crate::ledger_slots::operationCount
+                .record_increment(frame, (__compact_plan_43).value() as u16)?;
+            let __compact_plan_44: runtime::BoundedUint<65535> =
+                runtime::BoundedUint::<65535>::new(1u128)
+                    .expect("Compact Uint literal fits its maximum");
+            let __compact_plan_45: runtime::BoundedUint<65535> = __compact_plan_44;
+            let frame = crate::ledger_slots::version
+                .record_increment(frame, (__compact_plan_45).value() as u16)?;
+            let (frame, __compact_plan_46): (_, runtime::BoundedUint<18446744073709551615>) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.currentTimestamp(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            let __compact_plan_47: runtime::BoundedUint<18446744073709551615> = __compact_plan_46;
+            let frame = crate::ledger_slots::updated.record_write(frame, __compact_plan_47)?;
+            Ok(frame.finish(()))
+        }
+        pub fn recoverControllerKey<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::JubjubPoint,
+            __compact_param_1: crate::types::SchnorrSignature,
+            __compact_param_2: runtime::BoundedUint<18446744073709551615>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_plan_0: runtime::JubjubPoint = __compact_param_0;
+            let __compact_plan_1: crate::types::SchnorrSignature = (__compact_param_1).clone();
+            let __compact_plan_2: runtime::BoundedUint<18446744073709551615> = __compact_param_2;
+            let (frame, __compact_plan_3): (_, crate::types::ContractAddress) =
+                crate::ledger_slots::id.record_read(frame)?;
+            let __compact_plan_4: crate::types::ContractAddress = __compact_plan_3;
+            let __compact_plan_5: runtime::BoundedUint<18446744073709551615> = __compact_param_2;
+            let __compact_plan_6: runtime::JubjubPoint = __compact_plan_0;
+            let __compact_plan_7: runtime::FixedVector<runtime::Field, 4> =
+                crate::pure_circuits::recoverControllerKeyAuthorizationDigest(
+                    __compact_plan_4,
+                    __compact_plan_5,
+                    __compact_plan_6,
+                )?;
+            let __compact_plan_8: runtime::FixedVector<runtime::Field, 4> = __compact_plan_7;
+            let (frame, __compact_plan_9) = crate::ledger_slots::version.record_read(frame)?;
+            let __compact_plan_10: runtime::BoundedUint<18446744073709551615> =
+                runtime::BoundedUint::<18446744073709551615>::new(__compact_plan_9 as u128)?;
+            let __compact_plan_11: bool = __compact_plan_2 == __compact_plan_10;
+            if !__compact_plan_11 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Recovery authorization version is stale".to_owned(),
+                ));
+            }
+            let __compact_plan_12: runtime::FixedVector<runtime::Field, 4> =
+                (__compact_plan_8).clone();
+            let __compact_plan_13: crate::types::SchnorrSignature = (__compact_plan_1).clone();
+            let (frame, __compact_plan_14): (_, runtime::JubjubPoint) =
+                crate::ledger_slots::recoveryAuthorityPublicKey.record_read(frame)?;
+            let __compact_plan_15: runtime::JubjubPoint = __compact_plan_14;
+            let (frame, ()) = frame.call_local(|context| {
+                super::schnorrVerifyDigest(
+                    context,
+                    witnesses,
+                    __compact_plan_12,
+                    __compact_plan_13,
+                    __compact_plan_15,
+                )
+            })?;
+            let (frame, __compact_plan_16): (_, bool) =
+                crate::ledger_slots::active.record_read(frame)?;
+            if !__compact_plan_16 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Contract is not active".to_owned(),
+                ));
+            }
+            let __compact_plan_17: runtime::JubjubPoint = __compact_plan_0;
+            let __compact_plan_18: runtime::Field = runtime::jubjub_point_x(__compact_plan_17);
+            let (frame, __compact_plan_19): (_, runtime::JubjubPoint) =
+                crate::ledger_slots::controllerPublicKey.record_read(frame)?;
+            let __compact_plan_20: runtime::Field = runtime::jubjub_point_x(__compact_plan_19);
+            let __compact_plan_21: bool = __compact_plan_18 != __compact_plan_20;
+            let (frame, __compact_plan_27): (_, bool) = if __compact_plan_21 {
+                let __compact_plan_22: bool = true;
+                (frame, __compact_plan_22)
+            } else {
+                let __compact_plan_23: runtime::Field = runtime::jubjub_point_y(__compact_plan_17);
+                let (frame, __compact_plan_24): (_, runtime::JubjubPoint) =
+                    crate::ledger_slots::controllerPublicKey.record_read(frame)?;
+                let __compact_plan_25: runtime::Field = runtime::jubjub_point_y(__compact_plan_24);
+                let __compact_plan_26: bool = __compact_plan_23 != __compact_plan_25;
+                (frame, __compact_plan_26)
+            };
+            if !__compact_plan_27 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "New controller key matches current controller key".to_owned(),
+                ));
+            }
+            let __compact_plan_28: runtime::JubjubPoint = __compact_plan_0;
+            let __compact_plan_29: runtime::Field = runtime::jubjub_point_x(__compact_plan_28);
+            let (frame, __compact_plan_30): (_, runtime::JubjubPoint) =
+                crate::ledger_slots::recoveryAuthorityPublicKey.record_read(frame)?;
+            let __compact_plan_31: runtime::Field = runtime::jubjub_point_x(__compact_plan_30);
+            let __compact_plan_32: bool = __compact_plan_29 != __compact_plan_31;
+            let (frame, __compact_plan_38): (_, bool) = if __compact_plan_32 {
+                let __compact_plan_33: bool = true;
+                (frame, __compact_plan_33)
+            } else {
+                let __compact_plan_34: runtime::Field = runtime::jubjub_point_y(__compact_plan_28);
+                let (frame, __compact_plan_35): (_, runtime::JubjubPoint) =
+                    crate::ledger_slots::recoveryAuthorityPublicKey.record_read(frame)?;
+                let __compact_plan_36: runtime::Field = runtime::jubjub_point_y(__compact_plan_35);
+                let __compact_plan_37: bool = __compact_plan_34 != __compact_plan_36;
+                (frame, __compact_plan_37)
+            };
+            if !__compact_plan_38 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "New controller key matches recovery authority key".to_owned(),
+                ));
+            }
+            let frame =
+                crate::ledger_slots::controllerPublicKey.record_write(frame, __compact_plan_0)?;
+            let __compact_plan_39: runtime::BoundedUint<65535> =
+                runtime::BoundedUint::<65535>::new(1u128)
+                    .expect("Compact Uint literal fits its maximum");
+            let __compact_plan_40: runtime::BoundedUint<65535> = __compact_plan_39;
+            let frame = crate::ledger_slots::operationCount
+                .record_increment(frame, (__compact_plan_40).value() as u16)?;
+            let __compact_plan_41: runtime::BoundedUint<65535> =
+                runtime::BoundedUint::<65535>::new(1u128)
+                    .expect("Compact Uint literal fits its maximum");
+            let __compact_plan_42: runtime::BoundedUint<65535> = __compact_plan_41;
+            let frame = crate::ledger_slots::version
+                .record_increment(frame, (__compact_plan_42).value() as u16)?;
+            let (frame, __compact_plan_43): (_, runtime::BoundedUint<18446744073709551615>) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.currentTimestamp(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            let __compact_plan_44: runtime::BoundedUint<18446744073709551615> = __compact_plan_43;
+            let frame = crate::ledger_slots::updated.record_write(frame, __compact_plan_44)?;
+            Ok(frame.finish(()))
         }
         pub fn deactivate<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -3317,6 +3661,108 @@ pub mod ledger_contract {
             pub(super) witnesses: &'a W,
         }
         impl<W> BorrowedContract<'_, W> {
+            pub fn rotateControllerKey<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                newControllerPublicKey: runtime::JubjubPoint,
+                controllerSignature: crate::types::SchnorrSignature,
+                expectedVersion: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                rotateControllerKey(
+                    context,
+                    self.witnesses,
+                    newControllerPublicKey,
+                    controllerSignature,
+                    expectedVersion,
+                )
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn rotateControllerKey_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                newControllerPublicKey: runtime::JubjubPoint,
+                controllerSignature: crate::types::SchnorrSignature,
+                expectedVersion: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::concat(&[
+                    runtime::fab::AlignedValue::from(newControllerPublicKey),
+                    runtime::fab::AlignedValue::from((controllerSignature).clone()),
+                    runtime::fab::AlignedValue::from(expectedVersion),
+                ]);
+                let recorded = self.rotateControllerKey(
+                    observed.circuit_context(private_state),
+                    newControllerPublicKey,
+                    controllerSignature,
+                    expectedVersion,
+                )?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "rotateControllerKey",
+                    input,
+                ))
+            }
+            pub fn recoverControllerKey<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                newControllerPublicKey: runtime::JubjubPoint,
+                recoverySignature: crate::types::SchnorrSignature,
+                expectedVersion: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                recoverControllerKey(
+                    context,
+                    self.witnesses,
+                    newControllerPublicKey,
+                    recoverySignature,
+                    expectedVersion,
+                )
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn recoverControllerKey_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                newControllerPublicKey: runtime::JubjubPoint,
+                recoverySignature: crate::types::SchnorrSignature,
+                expectedVersion: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::concat(&[
+                    runtime::fab::AlignedValue::from(newControllerPublicKey),
+                    runtime::fab::AlignedValue::from((recoverySignature).clone()),
+                    runtime::fab::AlignedValue::from(expectedVersion),
+                ]);
+                let recorded = self.recoverControllerKey(
+                    observed.circuit_context(private_state),
+                    newControllerPublicKey,
+                    recoverySignature,
+                    expectedVersion,
+                )?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "recoverControllerKey",
+                    input,
+                ))
+            }
             pub fn deactivate<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,

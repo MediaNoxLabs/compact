@@ -12,7 +12,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//! Closed scalar Cell/Counter Unit composition; shared Plan owns evaluation.
+//! Closed typed Cell/Counter Unit composition; shared Plan owns evaluation.
 use super::*;
 
 #[derive(Clone, Copy)]
@@ -36,7 +36,7 @@ pub(super) fn value_type(ty: &Type) -> bool {
     }
 }
 pub(super) fn write_type(ty: &Type) -> bool {
-    *ty == Type::Boolean
+    matches!(ty, Type::Boolean | Type::JubjubPoint)
         || *ty
             == (Type::Unsigned {
                 max: u64::MAX.to_string(),
@@ -72,11 +72,18 @@ impl Audit<'_> {
             | Expr::BytesLiteral { .. }
             | Expr::UnsignedLiteral { .. } => true,
             Expr::Coerce { value, ty } => value_type(ty) && self.value(value, pure),
-            Expr::StructField { value, .. } => self.value(value, pure),
+            Expr::StructField { value, .. }
+            | Expr::JubjubPointX { value }
+            | Expr::JubjubPointY { value } => self.value(value, pure),
             Expr::StructLiteral { ty, fields } => {
                 value_type(ty) && fields.iter().all(|v| self.value(v, pure))
             }
             Expr::Equal { left, right } => self.value(left, pure) && self.value(right, pure),
+            // This profile only needs Field inequality in stateful guards.
+            // The shared typed leaf checks both actual operand types.
+            Expr::NotEqual { left, right } if !pure => {
+                self.value(left, false) && self.value(right, false)
+            }
             Expr::If {
                 condition,
                 then,
@@ -343,4 +350,42 @@ pub(super) fn lower<'a>(
         steps,
         result: syn::parse_quote!(()),
     })
+}
+
+impl Plan<'_> {
+    pub(super) fn composition_point_coordinate(
+        &mut self,
+        expression: &Expr,
+        input: &Expr,
+        scope: &Scope,
+        steps: &mut Vec<syn::Stmt>,
+    ) -> Option<TypedValue> {
+        let point = self.expression(input, scope, steps)?;
+        if point.ty != Type::JubjubPoint {
+            return None;
+        }
+        let point = point.value;
+        let value = match expression {
+            Expr::JubjubPointX { .. } => syn::parse_quote!(runtime::jubjub_point_x(#point)),
+            Expr::JubjubPointY { .. } => syn::parse_quote!(runtime::jubjub_point_y(#point)),
+            _ => return None,
+        };
+        self.bind(value, Type::Field, steps)
+    }
+
+    pub(super) fn composition_field_not_equal(
+        &mut self,
+        left: &Expr,
+        right: &Expr,
+        scope: &Scope,
+        steps: &mut Vec<syn::Stmt>,
+    ) -> Option<TypedValue> {
+        let left = self.expression(left, scope, steps)?;
+        let right = self.expression(right, scope, steps)?;
+        if left.ty != Type::Field || right.ty != Type::Field {
+            return None;
+        }
+        let (left, right) = (left.value, right.value);
+        self.bind(syn::parse_quote!(#left != #right), Type::Boolean, steps)
+    }
 }

@@ -533,6 +533,14 @@ impl Plan<'_> {
             {
                 self.funded_not_equal(left, right, scope, steps)
             }
+            Expr::NotEqual { left, right } if self.composition_calls.is_some() => {
+                self.composition_field_not_equal(left, right, scope, steps)
+            }
+            Expr::JubjubPointX { value } | Expr::JubjubPointY { value }
+                if self.composition_calls.is_some() =>
+            {
+                self.composition_point_coordinate(expression, value, scope, steps)
+            }
             Expr::UnsignedAdd { max, left, right }
                 if self.phase_reset || self.composite_domain.shielded_merge() =>
             {

@@ -1,0 +1,339 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "active",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "boolean"
+        }
+      },
+      "source": {
+        "file": "unit_composition_flat.compact",
+        "line": 18,
+        "column": 1
+      }
+    },
+    {
+      "id": "version",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "unit_composition_flat.compact",
+        "line": 19,
+        "column": 1
+      }
+    },
+    {
+      "id": "updated",
+      "index": 2,
+      "path": [
+        2
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "unsigned",
+          "max": "18446744073709551615"
+        }
+      },
+      "source": {
+        "file": "unit_composition_flat.compact",
+        "line": 20,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "now",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "18446744073709551615"
+      },
+      "source": {
+        "file": "unit_composition_flat.compact",
+        "line": 21,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "guard",
+      "parameters": [
+        {
+          "name": "expected",
+          "ty": {
+            "kind": "unsigned",
+            "max": "18446744073709551615"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "equal",
+            "left": {
+              "kind": "parameter",
+              "name": "expected"
+            },
+            "right": {
+              "kind": "counter_read",
+              "field": "version",
+              "index": 1
+            }
+          },
+          "message": "stale"
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "unit_composition_flat.compact",
+        "line": 23,
+        "column": 1
+      }
+    },
+    {
+      "name": "note",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_11",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "version",
+            "index": 1,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_11"
+            }
+          }
+        },
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_12",
+              "ty": {
+                "kind": "unsigned",
+                "max": "18446744073709551615"
+              },
+              "value": {
+                "kind": "witness_call",
+                "name": "now",
+                "arguments": [
+                ]
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "updated",
+            "index": 2,
+            "value": {
+              "kind": "parameter",
+              "name": "tmp_12"
+            }
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "unit_composition_flat.compact",
+        "line": 26,
+        "column": 1
+      }
+    },
+    {
+      "name": "close",
+      "parameters": [
+        {
+          "name": "expected",
+          "ty": {
+            "kind": "unsigned",
+            "max": "18446744073709551615"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "circuit_call",
+          "name": "guard",
+          "arguments": [
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "expected"
+              },
+              "ty": {
+                "kind": "unsigned",
+                "max": "18446744073709551615"
+              }
+            }
+          ]
+        },
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "cell_read",
+            "field": "active",
+            "index": 0
+          },
+          "message": "inactive"
+        },
+        {
+          "kind": "cell_write",
+          "field": "active",
+          "index": 0,
+          "value": {
+            "kind": "boolean",
+            "value": false
+          }
+        },
+        {
+          "kind": "circuit_call",
+          "name": "note",
+          "arguments": [
+          ]
+        }
+      ],
+      "source": {
+        "file": "unit_composition_flat.compact",
+        "line": 30,
+        "column": 1
+      }
+    },
+    {
+      "name": "maybeClose",
+      "parameters": [
+        {
+          "name": "take",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "expected",
+          "ty": {
+            "kind": "unsigned",
+            "max": "18446744073709551615"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "parameter",
+            "name": "take"
+          },
+          "then": {
+            "kind": "circuit_call",
+            "name": "close",
+            "arguments": [
+              {
+                "kind": "coerce",
+                "value": {
+                  "kind": "parameter",
+                  "name": "expected"
+                },
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "18446744073709551615"
+                }
+              }
+            ]
+          },
+          "otherwise": {
+            "kind": "sequence",
+            "actions": [
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "unit_composition_flat.compact",
+        "line": 37,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": {
+    "parameters": [
+    ],
+    "steps": [
+      {
+        "kind": "cell_write",
+        "field": "active",
+        "index": 0,
+        "value": {
+          "kind": "boolean",
+          "value": true
+        }
+      }
+    ],
+    "source": {
+      "file": "unit_composition_flat.compact",
+      "line": 22,
+      "column": 1
+    }
+  }
+}

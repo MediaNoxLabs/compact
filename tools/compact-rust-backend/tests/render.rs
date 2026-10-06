@@ -10446,8 +10446,11 @@ fn audited_schnorr_local_helper_requires_transitive_public_purity_and_typed_sour
         .unwrap()
         .actions
         .remove(0);
+    // The legacy audited-local profile still refuses this shape (its module test).
+    // Unit composition admits the actual key read and audited local verifier,
+    // without inventing the removed source guard.
     assert!(
-        !render_with_capabilities(&missing_guard)
+        render_with_capabilities(&missing_guard)
             .unwrap()
             .capabilities
             .circuits

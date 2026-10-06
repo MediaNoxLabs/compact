@@ -20,6 +20,7 @@ use super::*;
 use crate::coerce_expression;
 use crate::coin_shapes::{qualified_coin_type, shielded_coin_type, shielded_recipient_type};
 use crate::ir::{KernelClaimKind, ReturnPlan};
+mod composition;
 mod field_observations;
 mod funded_mint;
 mod guarded_deposit;
@@ -61,6 +62,7 @@ enum CompositeDomain {
     StartFunding,
     FieldObservations,
     TerminalReturns,
+    UnitComposition,
 }
 impl CompositeDomain {
     fn shielded_send(self) -> bool {
@@ -160,6 +162,7 @@ struct Plan<'a> {
     unit_actions: bool,
     phase_reset: bool,
     composite_domain: CompositeDomain,
+    composition_calls: Option<composition::Calls<'a>>,
     intent_effects: usize,
     intent_queries: usize,
     zswap_inputs: usize,
@@ -320,8 +323,10 @@ impl Plan<'_> {
 
     fn field(&self, field: &str, index: u8) -> Option<&LedgerField> {
         let declaration = *self.ledger.get(field)?;
-        (declaration.index == index && declaration.physical_path().len() == 1)
-            .then_some(declaration)
+        (declaration.index == index
+            && (declaration.physical_path().len() == 1
+                || (self.composition_calls.is_some() && composition::slot_path(declaration))))
+        .then_some(declaration)
     }
 
     fn qualified_cell_field(&self, field: &str, index: u8) -> Option<&LedgerField> {
@@ -344,7 +349,8 @@ impl Plan<'_> {
                 if self.read_only_assertions
                     || self.unit_actions
                     || self.phase_reset
-                    || self.composite_domain.shielded_helpers() =>
+                    || self.composite_domain.shielded_helpers()
+                    || self.composition_calls.is_some() =>
             {
                 Some(TypedValue {
                     ty: Type::Unit,
@@ -955,6 +961,7 @@ impl Plan<'_> {
                     return None;
                 }
                 if !cell_type(ty)
+                    && !(self.composition_calls.is_some() && composition::value_type(ty))
                     && !(matches!(
                         self.composite_domain,
                         CompositeDomain::GuardedShieldedDeposit
@@ -1085,6 +1092,47 @@ impl Plan<'_> {
         scope: &Scope,
         steps: &mut Vec<syn::Stmt>,
     ) -> Option<TypedValue> {
+        if let Some(calls) = &self.composition_calls {
+            let call = *calls.get(name)?;
+            return match call {
+                composition::AuditedCall::PureValue(callee) => {
+                    let args = self.arguments(arguments, &callee.parameters, scope, steps)?;
+                    let method = ident(name).ok()?;
+                    self.bind(
+                        syn::parse_quote!(crate::pure_circuits::#method(#(#args),*)?),
+                        callee.result.clone(),
+                        steps,
+                    )
+                }
+                composition::AuditedCall::LocalUnit(callee) => {
+                    let args = self.arguments(arguments, &callee.parameters, scope, steps)?;
+                    let method = ident(name).ok()?;
+                    let uses_witness =
+                        circuit_uses_witness(callee, self.stateful_circuits?, &mut HashSet::new())
+                            .ok()?;
+                    let witness_arg = uses_witness.then(|| syn::parse_quote!(witnesses));
+                    let mut call_args = vec![syn::parse_quote!(context)];
+                    call_args.extend(witness_arg);
+                    call_args.extend(args);
+                    steps.push(syn::parse_quote!(let (frame, ()) = frame.call_local(|context| super::#method(#(#call_args),*))?;));
+                    Some(TypedValue {
+                        ty: Type::Unit,
+                        value: syn::parse_quote!(()),
+                    })
+                }
+                composition::AuditedCall::RecordedUnit(callee) => self.inline_call(
+                    name,
+                    &callee.parameters,
+                    &callee.result,
+                    &Expr::Unit,
+                    &callee.actions,
+                    arguments,
+                    scope,
+                    steps,
+                    false,
+                ),
+            };
+        }
         let pure = self.pure.get(name).copied();
         let stateful = self
             .stateful_circuits
@@ -1558,6 +1606,7 @@ impl Plan<'_> {
                     && !(self.composite_domain == CompositeDomain::StartFunding
                         && start_funding::cell_type(ty))
                     && !(self.unit_actions && unit_actions::value_type(ty))
+                    && !(self.composition_calls.is_some() && composition::write_type(ty))
                     && !(self.phase_reset && phase_reset::cell_type(ty))
                     && !(ty == &Type::Field
                         && (self.effectful_field_cells
@@ -1701,7 +1750,9 @@ impl Plan<'_> {
                 }
             }
             StateAction::CircuitCall { name, arguments }
-                if (self.unit_actions && self.composite_domain.intents()) || self.phase_reset =>
+                if (self.unit_actions && self.composite_domain.intents())
+                    || self.phase_reset
+                    || self.composition_calls.is_some() =>
             {
                 let result = self.call(name, arguments, scope, steps)?;
                 if result.ty != Type::Unit
@@ -2058,6 +2109,7 @@ pub(super) fn lower_effectful<'a>(
         unit_actions: false,
         phase_reset: false,
         composite_domain: CompositeDomain::None,
+        composition_calls: None,
         intent_effects: 0,
         intent_queries: 0,
         zswap_inputs: 0,
@@ -2272,6 +2324,7 @@ pub(super) fn lower_context_query<'a>(
         unit_actions: false,
         phase_reset: false,
         composite_domain: CompositeDomain::None,
+        composition_calls: None,
         intent_effects: 0,
         intent_queries: 0,
         zswap_inputs: 0,
@@ -2571,6 +2624,7 @@ pub(super) fn lower_shielded_receive<'a>(
         unit_actions: true,
         phase_reset: false,
         composite_domain: CompositeDomain::ShieldedReceive,
+        composition_calls: None,
         intent_effects: 0,
         intent_queries: 0,
         zswap_inputs: 0,
@@ -2835,6 +2889,7 @@ fn shielded_plan<'a>(
         unit_actions: domain.singleton_bridge(),
         phase_reset: false,
         composite_domain: domain,
+        composition_calls: None,
         intent_effects: 0,
         intent_queries: 0,
         zswap_inputs: 0,
@@ -3024,6 +3079,7 @@ pub(super) fn lower_composite<'a>(
         unit_actions: false,
         phase_reset: false,
         composite_domain: domain,
+        composition_calls: None,
         intent_effects: 0,
         intent_queries: 0,
         zswap_inputs: 0,
@@ -3170,6 +3226,7 @@ pub(super) fn lower<'a>(
         unit_actions: false,
         phase_reset: false,
         composite_domain: CompositeDomain::None,
+        composition_calls: None,
         intent_effects: 0,
         intent_queries: 0,
         zswap_inputs: 0,
@@ -3718,6 +3775,7 @@ mod tests {
             unit_actions: false,
             phase_reset: false,
             composite_domain: CompositeDomain::None,
+            composition_calls: None,
             intent_effects: 0,
             intent_queries: 0,
             zswap_inputs: 0,
@@ -3812,6 +3870,7 @@ mod tests {
             unit_actions: false,
             phase_reset: false,
             composite_domain: CompositeDomain::None,
+            composition_calls: None,
             intent_effects: 0,
             intent_queries: 0,
             zswap_inputs: 0,
@@ -4394,4 +4453,14 @@ pub(super) fn lower_voting_commit<'a>(
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
 ) -> Option<TypedPlan> {
     voting_commit::lower(circuit, ledger, witnesses, pure, circuits)
+}
+
+pub(super) fn lower_unit_composition<'a>(
+    circuit: &StatefulCircuit,
+    ledger: &'a HashMap<&'a str, &'a LedgerField>,
+    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
+    pure: &'a HashMap<&'a str, &'a PureCircuit>,
+    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
+) -> Option<TypedPlan> {
+    composition::lower(circuit, ledger, witnesses, pure, circuits)
 }

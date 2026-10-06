@@ -65,7 +65,10 @@ SHIELDED_SEND_SOURCE_MANIFEST = Path(__file__).with_name(
     "parity_positive_shielded_send_sources.json")
 SHIELDED_MERGE_SOURCE_MANIFEST = Path(__file__).with_name(
     "parity_positive_shielded_merge_sources.json")
+UNIT_COMPOSITION_SOURCE_MANIFEST = Path(__file__).with_name(
+    "parity_positive_unit_composition_sources.json")
 POSITIVE_SOURCE_MANIFESTS = (
+    UNIT_COMPOSITION_SOURCE_MANIFEST,
     POSITIVE_SOURCE_MANIFEST, ADT_SET_SOURCE_MANIFEST,
     ADT_LIST_SOURCE_MANIFEST, ADT_LIST_VECTOR_FIELD_4_SOURCE_MANIFEST,
     ADT_LIST_BYTES_SOURCE_MANIFEST,

@@ -35,6 +35,8 @@ SOURCES = ROOT / "examples" / "rust_backend"
 FIXTURES = ROOT / "tests-rust-backend"
 BACKEND = ROOT / "target" / "debug" / "compact-rustc"
 EXTRA_SOURCES = {
+    SOURCES / "did_adoption" / "packages" / "contract" / "src" / "did.compact":
+        FIXTURES / "did-adoption" / "lib.rs",
     SOURCES / "vc_passport_adoption" / "src" / "digital-passport-credential.compact":
         FIXTURES / "vc-passport-adoption" / "lib.rs",
     ROOT / "test-center/test-contracts/coracle.compact": FIXTURES / "test-center-coracle/lib.rs",

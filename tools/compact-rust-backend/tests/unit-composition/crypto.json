@@ -1,0 +1,1315 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+    {
+      "name": "Verify_SchnorrSignature",
+      "ty": {
+        "kind": "struct",
+        "name": "SchnorrSignature",
+        "fields": [
+          {
+            "name": "announcement",
+            "ty": {
+              "kind": "jubjub_point"
+            }
+          },
+          {
+            "name": "response",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "source": {
+        "file": "schnorr.compact",
+        "line": 19,
+        "column": 3
+      }
+    }
+  ],
+  "ledger_fields": [
+    {
+      "id": "controller",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "jubjub_point"
+        }
+      },
+      "source": {
+        "file": "unit_composition_crypto.compact",
+        "line": 19,
+        "column": 1
+      }
+    },
+    {
+      "id": "active",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "boolean"
+        }
+      },
+      "source": {
+        "file": "unit_composition_crypto.compact",
+        "line": 20,
+        "column": 1
+      }
+    },
+    {
+      "id": "version",
+      "index": 2,
+      "path": [
+        2
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "unit_composition_crypto.compact",
+        "line": 21,
+        "column": 1
+      }
+    },
+    {
+      "id": "updated",
+      "index": 3,
+      "path": [
+        3
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "unsigned",
+          "max": "18446744073709551615"
+        }
+      },
+      "source": {
+        "file": "unit_composition_crypto.compact",
+        "line": 22,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "getSchnorrReduction",
+      "parameters": [
+        {
+          "name": "challengeHash",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "tuple",
+        "elements": [
+          {
+            "kind": "unsigned",
+            "max": "127"
+          },
+          {
+            "kind": "unsigned",
+            "max": "452312848583266388373324160190187140051835877600158453279131187530910662655"
+          }
+        ]
+      },
+      "source": {
+        "file": "schnorr.compact",
+        "line": 32,
+        "column": 3
+      }
+    },
+    {
+      "name": "now",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "18446744073709551615"
+      },
+      "source": {
+        "file": "unit_composition_crypto.compact",
+        "line": 23,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+    {
+      "name": "digest",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "expected",
+          "ty": {
+            "kind": "unsigned",
+            "max": "18446744073709551615"
+          }
+        }
+      ],
+      "result": {
+        "kind": "vector",
+        "length": 4,
+        "element": {
+          "kind": "field"
+        }
+      },
+      "body": {
+        "kind": "vector",
+        "element": {
+          "kind": "field"
+        },
+        "elements": [
+          {
+            "kind": "transient_hash",
+            "value": {
+              "kind": "struct_literal",
+              "ty": {
+                "kind": "struct",
+                "name": "Binding",
+                "fields": [
+                  {
+                    "name": "version",
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "18446744073709551615"
+                    }
+                  }
+                ]
+              },
+              "fields": [
+                {
+                  "kind": "parameter",
+                  "name": "expected"
+                }
+              ]
+            }
+          },
+          {
+            "kind": "field_literal",
+            "value": "1"
+          },
+          {
+            "kind": "field_literal",
+            "value": "2"
+          },
+          {
+            "kind": "field_literal",
+            "value": "3"
+          }
+        ]
+      },
+      "source": {
+        "file": "unit_composition_crypto.compact",
+        "line": 26,
+        "column": 1
+      }
+    }
+  ],
+  "stateful_circuits": [
+    {
+      "name": "schnorrVerify",
+      "parameters": [
+        {
+          "name": "msg",
+          "ty": {
+            "kind": "vector",
+            "length": 4,
+            "element": {
+              "kind": "field"
+            }
+          }
+        },
+        {
+          "name": "signature",
+          "ty": {
+            "kind": "struct",
+            "name": "SchnorrSignature",
+            "fields": [
+              {
+                "name": "announcement",
+                "ty": {
+                  "kind": "jubjub_point"
+                }
+              },
+              {
+                "name": "response",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "pk",
+          "ty": {
+            "kind": "jubjub_point"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "__compact_pattern_tmp2",
+              "ty": {
+                "kind": "struct",
+                "name": "SchnorrSignature",
+                "fields": [
+                  {
+                    "name": "announcement",
+                    "ty": {
+                      "kind": "jubjub_point"
+                    }
+                  },
+                  {
+                    "name": "response",
+                    "ty": {
+                      "kind": "field"
+                    }
+                  }
+                ]
+              },
+              "value": {
+                "kind": "parameter",
+                "name": "signature"
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "announcement",
+                "ty": {
+                  "kind": "jubjub_point"
+                },
+                "value": {
+                  "kind": "struct_field",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "__compact_pattern_tmp2"
+                  },
+                  "field": "announcement",
+                  "index": 0
+                }
+              }
+            ],
+            "action": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "response",
+                  "ty": {
+                    "kind": "field"
+                  },
+                  "value": {
+                    "kind": "struct_field",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "__compact_pattern_tmp2"
+                    },
+                    "field": "response",
+                    "index": 1
+                  }
+                }
+              ],
+              "action": {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "cFull",
+                    "ty": {
+                      "kind": "field"
+                    },
+                    "value": {
+                      "kind": "transient_hash",
+                      "value": {
+                        "kind": "struct_literal",
+                        "ty": {
+                          "kind": "struct",
+                          "name": "SchnorrHashInput",
+                          "fields": [
+                            {
+                              "name": "ann_x",
+                              "ty": {
+                                "kind": "field"
+                              }
+                            },
+                            {
+                              "name": "ann_y",
+                              "ty": {
+                                "kind": "field"
+                              }
+                            },
+                            {
+                              "name": "pk_x",
+                              "ty": {
+                                "kind": "field"
+                              }
+                            },
+                            {
+                              "name": "pk_y",
+                              "ty": {
+                                "kind": "field"
+                              }
+                            },
+                            {
+                              "name": "msg",
+                              "ty": {
+                                "kind": "vector",
+                                "length": 4,
+                                "element": {
+                                  "kind": "field"
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "fields": [
+                          {
+                            "kind": "jubjub_point_x",
+                            "value": {
+                              "kind": "parameter",
+                              "name": "announcement"
+                            }
+                          },
+                          {
+                            "kind": "jubjub_point_y",
+                            "value": {
+                              "kind": "parameter",
+                              "name": "announcement"
+                            }
+                          },
+                          {
+                            "kind": "jubjub_point_x",
+                            "value": {
+                              "kind": "parameter",
+                              "name": "pk"
+                            }
+                          },
+                          {
+                            "kind": "jubjub_point_y",
+                            "value": {
+                              "kind": "parameter",
+                              "name": "pk"
+                            }
+                          },
+                          {
+                            "kind": "parameter",
+                            "name": "msg"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "let",
+                  "bindings": [
+                    {
+                      "name": "TWO_248",
+                      "ty": {
+                        "kind": "field"
+                      },
+                      "value": {
+                        "kind": "field_literal",
+                        "value": "452312848583266388373324160190187140051835877600158453279131187530910662656"
+                      }
+                    }
+                  ],
+                  "action": {
+                    "kind": "let",
+                    "bindings": [
+                      {
+                        "name": "__compact_pattern_tmp1",
+                        "ty": {
+                          "kind": "tuple",
+                          "elements": [
+                            {
+                              "kind": "unsigned",
+                              "max": "127"
+                            },
+                            {
+                              "kind": "unsigned",
+                              "max": "452312848583266388373324160190187140051835877600158453279131187530910662655"
+                            }
+                          ]
+                        },
+                        "value": {
+                          "kind": "witness_call",
+                          "name": "getSchnorrReduction",
+                          "arguments": [
+                            {
+                              "kind": "coerce",
+                              "value": {
+                                "kind": "parameter",
+                                "name": "cFull"
+                              },
+                              "ty": {
+                                "kind": "field"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ],
+                    "action": {
+                      "kind": "let",
+                      "bindings": [
+                        {
+                          "name": "q",
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "127"
+                          },
+                          "value": {
+                            "kind": "tuple_index",
+                            "value": {
+                              "kind": "parameter",
+                              "name": "__compact_pattern_tmp1"
+                            },
+                            "index": 0
+                          }
+                        }
+                      ],
+                      "action": {
+                        "kind": "let",
+                        "bindings": [
+                          {
+                            "name": "cTruncated",
+                            "ty": {
+                              "kind": "unsigned",
+                              "max": "452312848583266388373324160190187140051835877600158453279131187530910662655"
+                            },
+                            "value": {
+                              "kind": "tuple_index",
+                              "value": {
+                                "kind": "parameter",
+                                "name": "__compact_pattern_tmp1"
+                              },
+                              "index": 1
+                            }
+                          }
+                        ],
+                        "action": {
+                          "kind": "sequence",
+                          "actions": [
+                            {
+                              "kind": "assert",
+                              "condition": {
+                                "kind": "let",
+                                "bindings": [
+                                  {
+                                    "name": "t_37",
+                                    "ty": {
+                                      "kind": "unsigned",
+                                      "max": "127"
+                                    },
+                                    "value": {
+                                      "kind": "parameter",
+                                      "name": "q"
+                                    }
+                                  }
+                                ],
+                                "body": {
+                                  "kind": "compare",
+                                  "operator": "less",
+                                  "left": {
+                                    "kind": "parameter",
+                                    "name": "t_37"
+                                  },
+                                  "right": {
+                                    "kind": "unsigned_literal",
+                                    "value": "116",
+                                    "max": "127"
+                                  }
+                                }
+                              },
+                              "message": "Schnorr quotient out of range"
+                            },
+                            {
+                              "kind": "assert",
+                              "condition": {
+                                "kind": "equal",
+                                "left": {
+                                  "kind": "add",
+                                  "left": {
+                                    "kind": "multiply",
+                                    "left": {
+                                      "kind": "field_cast",
+                                      "value": {
+                                        "kind": "parameter",
+                                        "name": "q"
+                                      }
+                                    },
+                                    "right": {
+                                      "kind": "parameter",
+                                      "name": "TWO_248"
+                                    }
+                                  },
+                                  "right": {
+                                    "kind": "field_cast",
+                                    "value": {
+                                      "kind": "parameter",
+                                      "name": "cTruncated"
+                                    }
+                                  }
+                                },
+                                "right": {
+                                  "kind": "parameter",
+                                  "name": "cFull"
+                                }
+                              },
+                              "message": "Invalid challenge reduction"
+                            },
+                            {
+                              "kind": "let",
+                              "bindings": [
+                                {
+                                  "name": "c",
+                                  "ty": {
+                                    "kind": "field"
+                                  },
+                                  "value": {
+                                    "kind": "field_cast",
+                                    "value": {
+                                      "kind": "parameter",
+                                      "name": "cTruncated"
+                                    }
+                                  }
+                                }
+                              ],
+                              "action": {
+                                "kind": "let",
+                                "bindings": [
+                                  {
+                                    "name": "lhs",
+                                    "ty": {
+                                      "kind": "jubjub_point"
+                                    },
+                                    "value": {
+                                      "kind": "ec_mul_generator",
+                                      "scalar": {
+                                        "kind": "parameter",
+                                        "name": "response"
+                                      }
+                                    }
+                                  }
+                                ],
+                                "action": {
+                                  "kind": "let",
+                                  "bindings": [
+                                    {
+                                      "name": "rhs",
+                                      "ty": {
+                                        "kind": "jubjub_point"
+                                      },
+                                      "value": {
+                                        "kind": "ec_add",
+                                        "left": {
+                                          "kind": "parameter",
+                                          "name": "announcement"
+                                        },
+                                        "right": {
+                                          "kind": "ec_mul",
+                                          "point": {
+                                            "kind": "parameter",
+                                            "name": "pk"
+                                          },
+                                          "scalar": {
+                                            "kind": "parameter",
+                                            "name": "c"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  ],
+                                  "action": {
+                                    "kind": "assert",
+                                    "condition": {
+                                      "kind": "if",
+                                      "condition": {
+                                        "kind": "equal",
+                                        "left": {
+                                          "kind": "jubjub_point_x",
+                                          "value": {
+                                            "kind": "parameter",
+                                            "name": "lhs"
+                                          }
+                                        },
+                                        "right": {
+                                          "kind": "jubjub_point_x",
+                                          "value": {
+                                            "kind": "parameter",
+                                            "name": "rhs"
+                                          }
+                                        }
+                                      },
+                                      "then": {
+                                        "kind": "equal",
+                                        "left": {
+                                          "kind": "jubjub_point_y",
+                                          "value": {
+                                            "kind": "parameter",
+                                            "name": "lhs"
+                                          }
+                                        },
+                                        "right": {
+                                          "kind": "jubjub_point_y",
+                                          "value": {
+                                            "kind": "parameter",
+                                            "name": "rhs"
+                                          }
+                                        }
+                                      },
+                                      "otherwise": {
+                                        "kind": "boolean",
+                                        "value": false
+                                      }
+                                    },
+                                    "message": "Invalid Jubjub Schnorr signature"
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "schnorr.compact",
+        "line": 34,
+        "column": 3
+      }
+    },
+    {
+      "name": "schnorrVerifyDigest",
+      "parameters": [
+        {
+          "name": "digest",
+          "ty": {
+            "kind": "vector",
+            "length": 4,
+            "element": {
+              "kind": "field"
+            }
+          }
+        },
+        {
+          "name": "signature",
+          "ty": {
+            "kind": "struct",
+            "name": "SchnorrSignature",
+            "fields": [
+              {
+                "name": "announcement",
+                "ty": {
+                  "kind": "jubjub_point"
+                }
+              },
+              {
+                "name": "response",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "pk",
+          "ty": {
+            "kind": "jubjub_point"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "circuit_call",
+          "name": "schnorrVerify",
+          "arguments": [
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "digest"
+              },
+              "ty": {
+                "kind": "vector",
+                "length": 4,
+                "element": {
+                  "kind": "field"
+                }
+              }
+            },
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "signature"
+              },
+              "ty": {
+                "kind": "struct",
+                "name": "SchnorrSignature",
+                "fields": [
+                  {
+                    "name": "announcement",
+                    "ty": {
+                      "kind": "jubjub_point"
+                    }
+                  },
+                  {
+                    "name": "response",
+                    "ty": {
+                      "kind": "field"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "pk"
+              },
+              "ty": {
+                "kind": "jubjub_point"
+              }
+            }
+          ]
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "schnorr.compact",
+        "line": 69,
+        "column": 3
+      }
+    },
+    {
+      "name": "authorize",
+      "parameters": [
+        {
+          "name": "signature",
+          "ty": {
+            "kind": "struct",
+            "name": "SchnorrSignature",
+            "fields": [
+              {
+                "name": "announcement",
+                "ty": {
+                  "kind": "jubjub_point"
+                }
+              },
+              {
+                "name": "response",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "expected",
+          "ty": {
+            "kind": "unsigned",
+            "max": "18446744073709551615"
+          }
+        },
+        {
+          "name": "message",
+          "ty": {
+            "kind": "vector",
+            "length": 4,
+            "element": {
+              "kind": "field"
+            }
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "equal",
+            "left": {
+              "kind": "parameter",
+              "name": "expected"
+            },
+            "right": {
+              "kind": "counter_read",
+              "field": "version",
+              "index": 2
+            }
+          },
+          "message": "stale"
+        },
+        {
+          "kind": "circuit_call",
+          "name": "schnorrVerifyDigest",
+          "arguments": [
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "message"
+              },
+              "ty": {
+                "kind": "vector",
+                "length": 4,
+                "element": {
+                  "kind": "field"
+                }
+              }
+            },
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "signature"
+              },
+              "ty": {
+                "kind": "struct",
+                "name": "SchnorrSignature",
+                "fields": [
+                  {
+                    "name": "announcement",
+                    "ty": {
+                      "kind": "jubjub_point"
+                    }
+                  },
+                  {
+                    "name": "response",
+                    "ty": {
+                      "kind": "field"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "cell_read",
+                "field": "controller",
+                "index": 0
+              },
+              "ty": {
+                "kind": "jubjub_point"
+              }
+            }
+          ]
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "unit_composition_crypto.compact",
+        "line": 29,
+        "column": 1
+      }
+    },
+    {
+      "name": "note",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_35",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "version",
+            "index": 2,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_35"
+            }
+          }
+        },
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_36",
+              "ty": {
+                "kind": "unsigned",
+                "max": "18446744073709551615"
+              },
+              "value": {
+                "kind": "witness_call",
+                "name": "now",
+                "arguments": [
+                ]
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "updated",
+            "index": 3,
+            "value": {
+              "kind": "parameter",
+              "name": "tmp_36"
+            }
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "unit_composition_crypto.compact",
+        "line": 33,
+        "column": 1
+      }
+    },
+    {
+      "name": "close",
+      "parameters": [
+        {
+          "name": "signature",
+          "ty": {
+            "kind": "struct",
+            "name": "SchnorrSignature",
+            "fields": [
+              {
+                "name": "announcement",
+                "ty": {
+                  "kind": "jubjub_point"
+                }
+              },
+              {
+                "name": "response",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "expected",
+          "ty": {
+            "kind": "unsigned",
+            "max": "18446744073709551615"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "circuit_call",
+          "name": "authorize",
+          "arguments": [
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "signature"
+              },
+              "ty": {
+                "kind": "struct",
+                "name": "SchnorrSignature",
+                "fields": [
+                  {
+                    "name": "announcement",
+                    "ty": {
+                      "kind": "jubjub_point"
+                    }
+                  },
+                  {
+                    "name": "response",
+                    "ty": {
+                      "kind": "field"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "expected"
+              },
+              "ty": {
+                "kind": "unsigned",
+                "max": "18446744073709551615"
+              }
+            },
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "call",
+                "name": "digest",
+                "arguments": [
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "expected"
+                    },
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "18446744073709551615"
+                    }
+                  }
+                ]
+              },
+              "ty": {
+                "kind": "vector",
+                "length": 4,
+                "element": {
+                  "kind": "field"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "cell_read",
+            "field": "active",
+            "index": 1
+          },
+          "message": "inactive"
+        },
+        {
+          "kind": "cell_write",
+          "field": "active",
+          "index": 1,
+          "value": {
+            "kind": "boolean",
+            "value": false
+          }
+        },
+        {
+          "kind": "circuit_call",
+          "name": "note",
+          "arguments": [
+          ]
+        }
+      ],
+      "source": {
+        "file": "unit_composition_crypto.compact",
+        "line": 34,
+        "column": 1
+      }
+    },
+    {
+      "name": "verifyOnly",
+      "parameters": [
+        {
+          "name": "signature",
+          "ty": {
+            "kind": "struct",
+            "name": "SchnorrSignature",
+            "fields": [
+              {
+                "name": "announcement",
+                "ty": {
+                  "kind": "jubjub_point"
+                }
+              },
+              {
+                "name": "response",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "expected",
+          "ty": {
+            "kind": "unsigned",
+            "max": "18446744073709551615"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "circuit_call",
+          "name": "authorize",
+          "arguments": [
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "signature"
+              },
+              "ty": {
+                "kind": "struct",
+                "name": "SchnorrSignature",
+                "fields": [
+                  {
+                    "name": "announcement",
+                    "ty": {
+                      "kind": "jubjub_point"
+                    }
+                  },
+                  {
+                    "name": "response",
+                    "ty": {
+                      "kind": "field"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "expected"
+              },
+              "ty": {
+                "kind": "unsigned",
+                "max": "18446744073709551615"
+              }
+            },
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "call",
+                "name": "digest",
+                "arguments": [
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "expected"
+                    },
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "18446744073709551615"
+                    }
+                  }
+                ]
+              },
+              "ty": {
+                "kind": "vector",
+                "length": 4,
+                "element": {
+                  "kind": "field"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "source": {
+        "file": "unit_composition_crypto.compact",
+        "line": 40,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": {
+    "parameters": [
+      {
+        "name": "key",
+        "ty": {
+          "kind": "jubjub_point"
+        }
+      }
+    ],
+    "steps": [
+      {
+        "kind": "cell_write",
+        "field": "controller",
+        "index": 0,
+        "value": {
+          "kind": "parameter",
+          "name": "key"
+        }
+      },
+      {
+        "kind": "cell_write",
+        "field": "active",
+        "index": 1,
+        "value": {
+          "kind": "boolean",
+          "value": true
+        }
+      }
+    ],
+    "source": {
+      "file": "unit_composition_crypto.compact",
+      "line": 25,
+      "column": 1
+    }
+  }
+}

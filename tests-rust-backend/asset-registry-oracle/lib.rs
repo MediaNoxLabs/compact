@@ -1711,16 +1711,38 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_recorded_bool_0): (_, bool) =
+            let (frame, __compact_plan_0): (_, bool) =
                 crate::ledger_slots::open.record_read(frame)?;
-            if !(__compact_recorded_bool_0) {
+            if !__compact_plan_0 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "registry is already closed".to_owned(),
                 ));
             }
-            let frame = crate::ledger_slots::open.record_write(frame, false)?;
-            let frame = crate::ledger_slots::frozen.record_write(frame, true)?;
-            let (frame, _) = __compact_recorded_body_recordWrite(frame, witnesses)?;
+            let __compact_plan_1: bool = false;
+            let frame = crate::ledger_slots::open.record_write(frame, __compact_plan_1)?;
+            let __compact_plan_2: bool = true;
+            let frame = crate::ledger_slots::frozen.record_write(frame, __compact_plan_2)?;
+            let __compact_plan_3: runtime::BoundedUint<65535> =
+                runtime::BoundedUint::<65535>::new(1u128)
+                    .expect("Compact Uint literal fits its maximum");
+            let __compact_plan_4: runtime::BoundedUint<65535> = __compact_plan_3;
+            let frame = crate::ledger_slots::writeCount
+                .record_increment(frame, (__compact_plan_4).value() as u16)?;
+            let __compact_plan_5: runtime::BoundedUint<65535> =
+                runtime::BoundedUint::<65535>::new(1u128)
+                    .expect("Compact Uint literal fits its maximum");
+            let __compact_plan_6: runtime::BoundedUint<65535> = __compact_plan_5;
+            let frame = crate::ledger_slots::revision
+                .record_increment(frame, (__compact_plan_6).value() as u16)?;
+            let (frame, __compact_plan_7): (_, runtime::BoundedUint<18446744073709551615>) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.currentTimestamp(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            let __compact_plan_8: runtime::BoundedUint<18446744073709551615> = __compact_plan_7;
+            let frame = crate::ledger_slots::updatedAt.record_write(frame, __compact_plan_8)?;
             Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.

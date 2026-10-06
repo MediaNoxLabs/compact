@@ -674,6 +674,38 @@
     "visibility": "internal"
   },
   {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertController",
+    "signature": "circuit assertController( signature: Schnorr_SchnorrSignature, expectedVersion: Uint<64>, digest: Vector<4, Field> ): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertControllerCanUpdate",
+    "signature": "circuit assertControllerCanUpdate( signature: Schnorr_SchnorrSignature, expectedVersion: Uint<64>, digest: Vector<4, Field> ): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertControllerPublicKeyChanges",
+    "signature": "circuit assertControllerPublicKeyChanges(newControllerPublicKey: JubjubPoint): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertControllerPublicKeyDistinctFromRecoveryAuthority",
+    "signature": "circuit assertControllerPublicKeyDistinctFromRecoveryAuthority(newControllerPublicKey: JubjubPoint): []",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/validation.compact",
     "module_path": [],
     "kind": "circuit",
@@ -714,6 +746,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertExistingVerificationMethodRelationsCompatible",
+    "signature": "circuit assertExistingVerificationMethodRelationsCompatible( methodId: Opaque<\"string\">, curve: CurveType ): []",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/guarded_assert_arith_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -736,6 +776,14 @@
     "name": "assertGrantNotFuture",
     "signature": "export pure circuit assertGrantNotFuture(grant: CustodyGrant, asOf: Uint<64>): []",
     "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertMapMutationDefined",
+    "signature": "circuit assertMapMutationDefined(mutation: MapMutation): []",
+    "visibility": "internal"
   },
   {
     "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/holder-bindings.compact",
@@ -906,6 +954,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertRecoveryCanUpdate",
+    "signature": "circuit assertRecoveryCanUpdate( signature: Schnorr_SchnorrSignature, expectedVersion: Uint<64>, digest: Vector<4, Field> ): []",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/holder-bindings.compact",
     "module_path": [],
     "kind": "circuit",
@@ -914,12 +970,28 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertSetMutationDefined",
+    "signature": "circuit assertSetMutationDefined(mutation: SetMutation): []",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/asset_registry_oracle.compact",
     "module_path": [],
     "kind": "circuit",
     "name": "assertStoredRecordFresh",
     "signature": "export circuit assertStoredRecordFresh( recordId: Opaque<\"string\">, policy: FreshnessPolicy, currentTime: Uint<64> ): []",
     "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertSupportedVerificationMethod",
+    "signature": "circuit assertSupportedVerificationMethod(verificationMethod: VerificationMethod): []",
+    "visibility": "internal"
   },
   {
     "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/holder-bindings.compact",
@@ -1170,6 +1242,22 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertVerificationMethodIsNotReferenced",
+    "signature": "circuit assertVerificationMethodIsNotReferenced(id: Opaque<\"string\">): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertVerificationMethodRelationCompatible",
+    "signature": "circuit assertVerificationMethodRelationCompatible( relation: VerificationMethodRelation, methodId: Opaque<\"string\"> ): []",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/holder-bindings.compact",
     "module_path": [],
     "kind": "circuit",
@@ -1200,6 +1288,14 @@
     "name": "attestationDigest",
     "signature": "export pure circuit attestationDigest( subject: Bytes<32>, epoch: Uint<64>, payloadHash: Field ): Vector<4, Field>",
     "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/unit_composition_crypto.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "authorize",
+    "signature": "circuit authorize(signature: Verify_SchnorrSignature, expected: Uint<64>, message: Vector<4, Field>): []",
+    "visibility": "internal"
   },
   {
     "source": "examples/election.compact",
@@ -1650,6 +1746,30 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/unit_composition_chunked.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "close",
+    "signature": "export circuit close(expected: Uint<64>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/unit_composition_flat.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "close",
+    "signature": "export circuit close(expected: Uint<64>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/unit_composition_crypto.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "close",
+    "signature": "export circuit close(signature: Verify_SchnorrSignature, expected: Uint<64>): []",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/literal_coercion_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -1962,6 +2082,30 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "controllerAuthorizationDigest",
+    "signature": "export pure circuit controllerAuthorizationDigest( contractId: ContractAddress, expectedVersion: Uint<64>, operationHash: Field, argsHash: Field ): Vector<4, Field>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "controllerNoArgsHash",
+    "signature": "circuit controllerNoArgsHash(): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "controllerOperationHash",
+    "signature": "circuit controllerOperationHash(name: Bytes<32>): Field",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/recorded_enum_cell.compact",
     "module_path": [],
     "kind": "circuit",
@@ -1991,6 +2135,22 @@
     "kind": "circuit",
     "name": "dateOfBirthCommitment",
     "signature": "export pure circuit dateOfBirthCommitment(dateOfBirthDays: Uint<32>, opening: Bytes<32>): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "deactivate",
+    "signature": "export circuit deactivate( controllerSignature: Schnorr_SchnorrSignature, expectedVersion: Uint<64> ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "deactivateAuthorizationDigest",
+    "signature": "export pure circuit deactivateAuthorizationDigest( contractId: ContractAddress, expectedVersion: Uint<64> ): Vector<4, Field>",
     "visibility": "export"
   },
   {
@@ -2064,6 +2224,14 @@
     "name": "differingUintWidths",
     "signature": "export pure circuit differingUintWidths(c: Boolean, a: Uint<8>, b: Uint<32>): Uint<32>",
     "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/unit_composition_crypto.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "digest",
+    "signature": "pure circuit digest(expected: Uint<64>): Vector<4, Field>",
+    "visibility": "internal"
   },
   {
     "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/claims.compact",
@@ -2578,6 +2746,22 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/unit_composition_chunked.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "guard",
+    "signature": "circuit guard(expected: Uint<64>): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/unit_composition_flat.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "guard",
+    "signature": "circuit guard(expected: Uint<64>): []",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/mixed_width_operand_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -3034,6 +3218,14 @@
     "visibility": "internal"
   },
   {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "insertVerificationMethodRelation",
+    "signature": "circuit insertVerificationMethodRelation( relation: VerificationMethodRelation, methodId: Opaque<\"string\"> ): []",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/qualified_coin_set_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -3080,6 +3272,14 @@
     "name": "invert",
     "signature": "export circuit invert(value: Boolean): Boolean",
     "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "isSigningVerificationMethodRelation",
+    "signature": "circuit isSigningVerificationMethodRelation(relation: VerificationMethodRelation): Boolean",
+    "visibility": "internal"
   },
   {
     "source": "test-center/test-contracts/coracle.compact",
@@ -3434,6 +3634,22 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/unit_composition_chunked.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "maybeClose",
+    "signature": "export circuit maybeClose(take: Boolean, expected: Uint<64>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/unit_composition_flat.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "maybeClose",
+    "signature": "export circuit maybeClose(take: Boolean, expected: Uint<64>): []",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/nested_collection_query_write.compact",
     "module_path": [],
     "kind": "circuit",
@@ -3680,6 +3896,30 @@
     "name": "not_equal_field",
     "signature": "export circuit not_equal_field(left: Field, right: Field): Boolean",
     "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/unit_composition_chunked.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "note",
+    "signature": "circuit note(): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/unit_composition_crypto.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "note",
+    "signature": "circuit note(): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/unit_composition_flat.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "note",
+    "signature": "circuit note(): []",
+    "visibility": "internal"
   },
   {
     "source": "examples/rust_backend/kernel_shielded_effects_oracle.compact",
@@ -4762,6 +5002,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "recordUpdate",
+    "signature": "circuit recordUpdate(): []",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/asset_registry_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -4783,6 +5031,22 @@
     "kind": "circuit",
     "name": "record_update",
     "signature": "export circuit record_update(value: Uint<64>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "recoverControllerKey",
+    "signature": "export circuit recoverControllerKey( newControllerPublicKey: JubjubPoint, recoverySignature: Schnorr_SchnorrSignature, expectedVersion: Uint<64> ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "recoverControllerKeyAuthorizationDigest",
+    "signature": "export pure circuit recoverControllerKeyAuthorizationDigest( contractId: ContractAddress, expectedVersion: Uint<64>, newControllerPublicKey: JubjubPoint ): Vector<4, Field>",
     "visibility": "export"
   },
   {
@@ -4856,6 +5120,62 @@
     "name": "removeRecord",
     "signature": "export circuit removeRecord(recordId: Opaque<\"string\">): []",
     "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "removeSchnorrJubjubVerificationMethod",
+    "signature": "export circuit removeSchnorrJubjubVerificationMethod( methodId: Opaque<\"string\">, controllerSignature: Schnorr_SchnorrSignature, expectedVersion: Uint<64> ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "removeSchnorrJubjubVerificationMethodAuthorizationDigest",
+    "signature": "export pure circuit removeSchnorrJubjubVerificationMethodAuthorizationDigest( contractId: ContractAddress, expectedVersion: Uint<64>, id: Opaque<\"string\"> ): Vector<4, Field>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "removeService",
+    "signature": "export circuit removeService( serviceId: Opaque<\"string\">, controllerSignature: Schnorr_SchnorrSignature, expectedVersion: Uint<64> ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "removeServiceAuthorizationDigest",
+    "signature": "export pure circuit removeServiceAuthorizationDigest( contractId: ContractAddress, expectedVersion: Uint<64>, id: Opaque<\"string\"> ): Vector<4, Field>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "removeVerificationMethod",
+    "signature": "export circuit removeVerificationMethod( methodId: Opaque<\"string\">, controllerSignature: Schnorr_SchnorrSignature, expectedVersion: Uint<64> ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "removeVerificationMethodAuthorizationDigest",
+    "signature": "export pure circuit removeVerificationMethodAuthorizationDigest( contractId: ContractAddress, expectedVersion: Uint<64>, id: Opaque<\"string\"> ): Vector<4, Field>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "removeVerificationMethodRelationFromLedger",
+    "signature": "circuit removeVerificationMethodRelationFromLedger( relation: VerificationMethodRelation, methodId: Opaque<\"string\"> ): []",
+    "visibility": "internal"
   },
   {
     "source": "examples/rust_backend/chunked_map.compact",
@@ -5106,6 +5426,30 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "rotateControllerKey",
+    "signature": "export circuit rotateControllerKey( newControllerPublicKey: JubjubPoint, controllerSignature: Schnorr_SchnorrSignature, expectedVersion: Uint<64> ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "rotateControllerKeyAuthorizationDigest",
+    "signature": "export pure circuit rotateControllerKeyAuthorizationDigest( contractId: ContractAddress, expectedVersion: Uint<64>, newControllerPublicKey: JubjubPoint ): Vector<4, Field>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/source_name_hygiene.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "round_trip",
+    "signature": "export circuit round_trip(value: Names): Names",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/chunked_set_observed.compact",
     "module_path": [],
     "kind": "circuit",
@@ -5338,6 +5682,22 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "setAlsoKnownAs",
+    "signature": "export circuit setAlsoKnownAs( value: Opaque<\"string\">, mutation: SetMutation, controllerSignature: Schnorr_SchnorrSignature, expectedVersion: Uint<64> ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "setAlsoKnownAsAuthorizationDigest",
+    "signature": "export pure circuit setAlsoKnownAsAuthorizationDigest( contractId: ContractAddress, expectedVersion: Uint<64>, value: Opaque<\"string\">, mutation: SetMutation ): Vector<4, Field>",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/asset_registry_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -5391,6 +5751,70 @@
     "kind": "circuit",
     "name": "setRemove",
     "signature": "export circuit setRemove(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "setSchnorrJubjubVerificationMethod",
+    "signature": "export circuit setSchnorrJubjubVerificationMethod( verificationMethod: SchnorrJubjubVerificationMethod, mutation: MapMutation, controllerSignature: Schnorr_SchnorrSignature, expectedVersion: Uint<64> ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "setSchnorrJubjubVerificationMethodAuthorizationDigest",
+    "signature": "export pure circuit setSchnorrJubjubVerificationMethodAuthorizationDigest( contractId: ContractAddress, expectedVersion: Uint<64>, verificationMethod: SchnorrJubjubVerificationMethod, mutation: MapMutation ): Vector<4, Field>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "setService",
+    "signature": "export circuit setService( service: Service, mutation: MapMutation, controllerSignature: Schnorr_SchnorrSignature, expectedVersion: Uint<64> ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "setServiceAuthorizationDigest",
+    "signature": "export pure circuit setServiceAuthorizationDigest( contractId: ContractAddress, expectedVersion: Uint<64>, service: Service, mutation: MapMutation ): Vector<4, Field>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "setVerificationMethod",
+    "signature": "export circuit setVerificationMethod( verificationMethod: VerificationMethod, mutation: MapMutation, controllerSignature: Schnorr_SchnorrSignature, expectedVersion: Uint<64> ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "setVerificationMethodAuthorizationDigest",
+    "signature": "export pure circuit setVerificationMethodAuthorizationDigest( contractId: ContractAddress, expectedVersion: Uint<64>, verificationMethod: VerificationMethod, mutation: MapMutation ): Vector<4, Field>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "setVerificationMethodRelation",
+    "signature": "export circuit setVerificationMethodRelation( relation: VerificationMethodRelation, methodId: Opaque<\"string\">, mutation: SetMutation, controllerSignature: Schnorr_SchnorrSignature, expectedVersion: Uint<64> ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "setVerificationMethodRelationAuthorizationDigest",
+    "signature": "export pure circuit setVerificationMethodRelationAuthorizationDigest( contractId: ContractAddress, expectedVersion: Uint<64>, relation: VerificationMethodRelation, methodId: Opaque<\"string\">, mutation: SetMutation ): Vector<4, Field>",
     "visibility": "export"
   },
   {
@@ -6554,6 +6978,22 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "verificationMethodExists",
+    "signature": "circuit verificationMethodExists(id: Opaque<\"string\">): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "verificationMethodRelationMember",
+    "signature": "circuit verificationMethodRelationMember( relation: VerificationMethodRelation, methodId: Opaque<\"string\"> ): Boolean",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/holder-bindings.compact",
     "module_path": [],
     "kind": "circuit",
@@ -6575,6 +7015,22 @@
     "kind": "circuit",
     "name": "verifyAttestation",
     "signature": "export circuit verifyAttestation( digest: Vector<4, Field>, signature: Schnorr_SchnorrSignature ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/unit_composition_crypto.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "verifyOnly",
+    "signature": "export circuit verifyOnly(signature: Verify_SchnorrSignature, expected: Uint<64>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "verifySchnorrJubjubDigestSignature",
+    "signature": "export circuit verifySchnorrJubjubDigestSignature( methodId: Opaque<\"string\">, digest: Vector<4, Field>, signature: Schnorr_SchnorrSignature ): []",
     "visibility": "export"
   },
   {
@@ -7098,6 +7554,14 @@
     "visibility": "internal"
   },
   {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/field_to_bytes32_oracle.compact",
     "module_path": [],
     "kind": "constructor",
@@ -7226,6 +7690,22 @@
     "visibility": "internal"
   },
   {
+    "source": "examples/rust_backend/unit_composition_chunked.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/unit_composition_flat.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/wide_field_literal.compact",
     "module_path": [],
     "kind": "constructor",
@@ -7295,6 +7775,14 @@
     "kind": "constructor",
     "name": "constructor",
     "signature": "constructor(initial_eligible_participants: Vector<5000, Maybe<Opaque<\"string\">>>)",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/unit_composition_crypto.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor(key: JubjubPoint)",
     "visibility": "internal"
   },
   {
@@ -7553,6 +8041,14 @@
     "visibility": "internal"
   },
   {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "currentTimestamp",
+    "signature": "witness currentTimestamp(): Uint<64>",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/assert_witness.compact",
     "module_path": [],
     "kind": "witness",
@@ -7769,11 +8265,27 @@
     "visibility": "internal"
   },
   {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "localControllerPublicKey",
+    "signature": "witness localControllerPublicKey(): JubjubPoint",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/asset_registry_oracle.compact",
     "module_path": [],
     "kind": "witness",
     "name": "localOperatorKey",
     "signature": "witness localOperatorKey(): JubjubPoint",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "localRecoveryAuthorityPublicKey",
+    "signature": "witness localRecoveryAuthorityPublicKey(): JubjubPoint",
     "visibility": "internal"
   },
   {
@@ -7958,6 +8470,30 @@
     "kind": "witness",
     "name": "next_value",
     "signature": "witness next_value(tag: Uint<8>): Uint<64>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/unit_composition_chunked.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "now",
+    "signature": "witness now(): Uint<64>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/unit_composition_crypto.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "now",
+    "signature": "witness now(): Uint<64>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/unit_composition_flat.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "now",
+    "signature": "witness now(): Uint<64>",
     "visibility": "internal"
   },
   {

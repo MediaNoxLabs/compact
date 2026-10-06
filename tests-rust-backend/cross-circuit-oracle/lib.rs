@@ -144,7 +144,10 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, _) = __compact_recorded_body_reset(frame)?;
+            let __compact_plan_0: runtime::BoundedUint<18446744073709551615> =
+                runtime::BoundedUint::<18446744073709551615>::new(0u128)
+                    .expect("Compact Uint literal fits its maximum");
+            let frame = crate::ledger_slots::n.record_write(frame, __compact_plan_0)?;
             let frame = crate::ledger_slots::n.record_write(frame, __compact_param_0)?;
             Ok(frame.finish(()))
         }

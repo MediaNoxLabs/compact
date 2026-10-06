@@ -146,3 +146,5 @@ compact-rust-shielded-receive-oracle-fixture = { path = "../../tests-rust-backen
 compact-rust-shielded-send-oracle-fixture = { path = "../../tests-rust-backend/shielded-send-oracle", features = ["ledger-transaction"] }
 
 compact-rust-field-observation-oracle-fixture = { path = "../../tests-rust-backend/field-observation-oracle", features = ["ledger-transaction"] }
+
+compact-rust-did-adoption-fixture = { path = "../../tests-rust-backend/did-adoption", features = ["ledger-transaction"] }

@@ -176,6 +176,25 @@ fn local_action(
     }
 }
 
+/// Audit the complete transitive native Unit helper before a call_local boundary.
+/// Native rendering remains responsible for its declared types and lexical scopes.
+pub(super) fn unit_helper(
+    circuit: &StatefulCircuit,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+) -> bool {
+    circuit.result == Type::Unit
+        && circuit.return_value == StateReturn::Unit
+        && circuit.actions.iter().all(|action| {
+            local_action(
+                action,
+                witnesses,
+                circuits,
+                &mut HashSet::from([circuit.name.clone()]),
+            )
+        })
+}
+
 fn uncoerced<'a>(value: &'a Expr, ty: &Type) -> Option<&'a Expr> {
     match value {
         Expr::Coerce { value, ty: actual } if actual == ty => Some(value),
@@ -347,4 +366,50 @@ pub(super) fn render(
         }
     };
     Ok(Some(RecordingOutcome::Supported(item)))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn legacy_schnorr_profile_still_requires_its_source_guard() {
+        let mut contract: crate::ir::Contract = serde_json::from_str(include_str!(
+            "../../tests/schnorr-attestation-schema13-ir.json"
+        ))
+        .unwrap();
+        contract.schema_version = crate::ir::SCHEMA_VERSION;
+        let fields = contract
+            .ledger_fields
+            .iter()
+            .map(|f| (f.id.as_str(), f))
+            .collect();
+        let witnesses = contract
+            .witnesses
+            .iter()
+            .map(|w| (w.name.as_str(), w))
+            .collect();
+        let circuits = contract
+            .stateful_circuits
+            .iter()
+            .map(|c| (c.name.as_str(), c))
+            .collect();
+        let original = contract
+            .stateful_circuits
+            .iter()
+            .find(|c| c.name == "verifyAttestation")
+            .unwrap();
+        assert!(
+            render(original, &fields, &witnesses, &circuits)
+                .unwrap()
+                .is_some()
+        );
+        let mut missing_guard = original.clone();
+        missing_guard.actions.remove(0);
+        assert!(
+            render(&missing_guard, &fields, &witnesses, &circuits)
+                .unwrap()
+                .is_none()
+        );
+    }
 }

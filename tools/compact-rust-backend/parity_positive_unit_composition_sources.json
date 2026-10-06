@@ -1,0 +1,303 @@
+{
+  "format_version": 1,
+  "suite": "ADR0251 typed Unit composition",
+  "purpose": "Typed flat/chunked and crypto composition plus original DID deactivate; eleven original stateful gaps retained. Recording availability is distinct from branch-level proof evidence.",
+  "positive_sources": [
+    {
+      "source": "examples/rust_backend/unit_composition_flat.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "cargo_check": true,
+      "proof_circuits": [
+        {
+          "name": "close",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "maybeClose",
+          "pure": false,
+          "proof": true
+        }
+      ],
+      "expected_recording_gaps": {},
+      "rust_fixture": "tests-rust-backend/unit-composition-flat/lib.rs",
+      "expected_capability_circuits": [
+        "close",
+        "maybeClose"
+      ],
+      "expected_recorded_circuits": [
+        "close",
+        "maybeClose"
+      ],
+      "pure_declarations": 0,
+      "exported_pure_declarations": 0
+    },
+    {
+      "source": "examples/rust_backend/unit_composition_chunked.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "cargo_check": true,
+      "proof_circuits": [
+        {
+          "name": "close",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "maybeClose",
+          "pure": false,
+          "proof": true
+        }
+      ],
+      "expected_recording_gaps": {},
+      "rust_fixture": "tests-rust-backend/unit-composition-chunked/lib.rs",
+      "expected_capability_circuits": [
+        "close",
+        "maybeClose"
+      ],
+      "expected_recorded_circuits": [
+        "close",
+        "maybeClose"
+      ],
+      "pure_declarations": 0,
+      "exported_pure_declarations": 0
+    },
+    {
+      "source": "examples/rust_backend/unit_composition_crypto.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "cargo_check": true,
+      "proof_circuits": [
+        {
+          "name": "close",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "verifyOnly",
+          "pure": false,
+          "proof": true
+        }
+      ],
+      "expected_recording_gaps": {},
+      "rust_fixture": "tests-rust-backend/unit-composition-crypto/lib.rs",
+      "expected_capability_circuits": [
+        "close",
+        "verifyOnly"
+      ],
+      "expected_recorded_circuits": [
+        "close",
+        "verifyOnly"
+      ],
+      "pure_declarations": 1,
+      "exported_pure_declarations": 0
+    },
+    {
+      "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "cargo_check": true,
+      "proof_circuits": [
+        {
+          "name": "controllerAuthorizationDigest",
+          "pure": true,
+          "proof": false
+        },
+        {
+          "name": "rotateControllerKeyAuthorizationDigest",
+          "pure": true,
+          "proof": false
+        },
+        {
+          "name": "recoverControllerKeyAuthorizationDigest",
+          "pure": true,
+          "proof": false
+        },
+        {
+          "name": "setAlsoKnownAsAuthorizationDigest",
+          "pure": true,
+          "proof": false
+        },
+        {
+          "name": "setVerificationMethodAuthorizationDigest",
+          "pure": true,
+          "proof": false
+        },
+        {
+          "name": "removeVerificationMethodAuthorizationDigest",
+          "pure": true,
+          "proof": false
+        },
+        {
+          "name": "setSchnorrJubjubVerificationMethodAuthorizationDigest",
+          "pure": true,
+          "proof": false
+        },
+        {
+          "name": "removeSchnorrJubjubVerificationMethodAuthorizationDigest",
+          "pure": true,
+          "proof": false
+        },
+        {
+          "name": "setVerificationMethodRelationAuthorizationDigest",
+          "pure": true,
+          "proof": false
+        },
+        {
+          "name": "setServiceAuthorizationDigest",
+          "pure": true,
+          "proof": false
+        },
+        {
+          "name": "removeServiceAuthorizationDigest",
+          "pure": true,
+          "proof": false
+        },
+        {
+          "name": "deactivateAuthorizationDigest",
+          "pure": true,
+          "proof": false
+        },
+        {
+          "name": "rotateControllerKey",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "recoverControllerKey",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "setAlsoKnownAs",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "setVerificationMethod",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "removeVerificationMethod",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "setSchnorrJubjubVerificationMethod",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "removeSchnorrJubjubVerificationMethod",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "verifySchnorrJubjubDigestSignature",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "setVerificationMethodRelation",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "setService",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "removeService",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "deactivate",
+          "pure": false,
+          "proof": true
+        }
+      ],
+      "expected_recording_gaps": {
+        "rotateControllerKey": {
+          "code": "unsupported_action",
+          "ir_node": "StateAction::Let",
+          "path": "actions[0]"
+        },
+        "recoverControllerKey": {
+          "code": "unsupported_action",
+          "ir_node": "StateAction::Let",
+          "path": "actions[0]"
+        },
+        "setAlsoKnownAs": {
+          "code": "unsupported_action",
+          "ir_node": "StateAction::CircuitCall",
+          "path": "actions[0].action.action.actions[0]"
+        },
+        "setVerificationMethod": {
+          "code": "unsupported_action",
+          "ir_node": "StateAction::Let",
+          "path": "actions[0]"
+        },
+        "removeVerificationMethod": {
+          "code": "unsupported_action",
+          "ir_node": "StateAction::CircuitCall",
+          "path": "actions[0].action.actions[0]"
+        },
+        "setSchnorrJubjubVerificationMethod": {
+          "code": "unsupported_action",
+          "ir_node": "StateAction::Let",
+          "path": "actions[0]"
+        },
+        "removeSchnorrJubjubVerificationMethod": {
+          "code": "unsupported_action",
+          "ir_node": "StateAction::CircuitCall",
+          "path": "actions[0].action.actions[0]"
+        },
+        "verifySchnorrJubjubDigestSignature": {
+          "code": "unsupported_action",
+          "ir_node": "StateAction::Let",
+          "path": "actions[0].actions[1].action.actions[1]"
+        },
+        "setVerificationMethodRelation": {
+          "code": "unsupported_action",
+          "ir_node": "StateAction::CircuitCall",
+          "path": "actions[0].action.action.action.actions[0]"
+        },
+        "setService": {
+          "code": "unsupported_action",
+          "ir_node": "StateAction::Let",
+          "path": "actions[0]"
+        },
+        "removeService": {
+          "code": "unsupported_action",
+          "ir_node": "StateAction::CircuitCall",
+          "path": "actions[0].action.actions[0]"
+        }
+      },
+      "rust_fixture": "tests-rust-backend/did-adoption/lib.rs",
+      "expected_capability_circuits": [
+        "rotateControllerKey",
+        "recoverControllerKey",
+        "setAlsoKnownAs",
+        "setVerificationMethod",
+        "removeVerificationMethod",
+        "setSchnorrJubjubVerificationMethod",
+        "removeSchnorrJubjubVerificationMethod",
+        "verifySchnorrJubjubDigestSignature",
+        "setVerificationMethodRelation",
+        "setService",
+        "removeService",
+        "deactivate"
+      ],
+      "expected_recorded_circuits": [
+        "deactivate"
+      ],
+      "pure_declarations": 12,
+      "exported_pure_declarations": 12
+    }
+  ],
+  "expected_rejections": []
+}

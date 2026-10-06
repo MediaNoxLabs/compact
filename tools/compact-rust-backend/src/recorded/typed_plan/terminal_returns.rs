@@ -196,6 +196,7 @@ pub(super) fn lower<'a>(
         unit_actions: false,
         phase_reset: false,
         composite_domain: CompositeDomain::TerminalReturns,
+        composition_calls: None,
         intent_effects: 0,
         intent_queries: 0,
         zswap_inputs: 0,

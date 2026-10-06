@@ -187,8 +187,18 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, _) = __compact_recorded_body_bump(frame)?;
-            let (frame, _) = __compact_recorded_body_bump(frame)?;
+            let __compact_plan_0: runtime::BoundedUint<65535> =
+                runtime::BoundedUint::<65535>::new(1u128)
+                    .expect("Compact Uint literal fits its maximum");
+            let __compact_plan_1: runtime::BoundedUint<65535> = __compact_plan_0;
+            let frame = crate::ledger_slots::count
+                .record_increment(frame, (__compact_plan_1).value() as u16)?;
+            let __compact_plan_2: runtime::BoundedUint<65535> =
+                runtime::BoundedUint::<65535>::new(1u128)
+                    .expect("Compact Uint literal fits its maximum");
+            let __compact_plan_3: runtime::BoundedUint<65535> = __compact_plan_2;
+            let frame = crate::ledger_slots::count
+                .record_increment(frame, (__compact_plan_3).value() as u16)?;
             Ok(frame.finish(()))
         }
         pub fn add<Private>(
@@ -206,10 +216,12 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_arg_0: runtime::BoundedUint<65535> = __compact_param_0;
-            let (frame, _) = __compact_recorded_body_add(frame, __compact_recorded_arg_0)?;
-            let __compact_recorded_arg_1: runtime::BoundedUint<65535> = __compact_param_0;
-            let (frame, _) = __compact_recorded_body_add(frame, __compact_recorded_arg_1)?;
+            let __compact_plan_0: runtime::BoundedUint<65535> = __compact_param_0;
+            let frame = crate::ledger_slots::count
+                .record_increment(frame, (__compact_plan_0).value() as u16)?;
+            let __compact_plan_1: runtime::BoundedUint<65535> = __compact_param_0;
+            let frame = crate::ledger_slots::count
+                .record_increment(frame, (__compact_plan_1).value() as u16)?;
             Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.

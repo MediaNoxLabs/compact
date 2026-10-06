@@ -1,7 +1,7 @@
 {
   "format_version": 1,
   "suite": "ADR0251 typed Unit composition",
-  "purpose": "Typed flat/chunked and crypto composition plus original DID deactivate; eleven original stateful gaps retained. Recording availability is distinct from branch-level proof evidence.",
+  "purpose": "Typed flat/chunked, crypto and repeated-helper composition plus original DID deactivate, rotateControllerKey, recoverControllerKey and setAlsoKnownAs; eight precise original stateful gaps retained. Recording availability is distinct from branch-level proof evidence.",
   "positive_sources": [
     {
       "source": "examples/rust_backend/unit_composition_flat.compact",
@@ -221,21 +221,6 @@
         }
       ],
       "expected_recording_gaps": {
-        "rotateControllerKey": {
-          "code": "unsupported_action",
-          "ir_node": "StateAction::Let",
-          "path": "actions[0]"
-        },
-        "recoverControllerKey": {
-          "code": "unsupported_action",
-          "ir_node": "StateAction::Let",
-          "path": "actions[0]"
-        },
-        "setAlsoKnownAs": {
-          "code": "unsupported_action",
-          "ir_node": "StateAction::CircuitCall",
-          "path": "actions[0].action.action.actions[0]"
-        },
         "setVerificationMethod": {
           "code": "unsupported_action",
           "ir_node": "StateAction::Let",
@@ -293,6 +278,9 @@
         "deactivate"
       ],
       "expected_recorded_circuits": [
+        "rotateControllerKey",
+        "recoverControllerKey",
+        "setAlsoKnownAs",
         "deactivate"
       ],
       "pure_declarations": 12,

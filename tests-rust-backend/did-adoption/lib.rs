@@ -3575,6 +3575,142 @@ pub mod ledger_contract {
             let frame = crate::ledger_slots::updated.record_write(frame, __compact_plan_44)?;
             Ok(frame.finish(()))
         }
+        pub fn setAlsoKnownAs<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::OpaqueString,
+            __compact_param_1: crate::types::SetMutation,
+            __compact_param_2: crate::types::SchnorrSignature,
+            __compact_param_3: runtime::BoundedUint<18446744073709551615>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_plan_0: crate::types::SetMutation = __compact_param_1;
+            let __compact_plan_1: runtime::OpaqueString = (__compact_param_0).clone();
+            let __compact_plan_2: crate::types::SchnorrSignature = (__compact_param_2).clone();
+            let __compact_plan_3: runtime::BoundedUint<18446744073709551615> = __compact_param_3;
+            let (frame, __compact_plan_4): (_, crate::types::ContractAddress) =
+                crate::ledger_slots::id.record_read(frame)?;
+            let __compact_plan_5: crate::types::ContractAddress = __compact_plan_4;
+            let __compact_plan_6: runtime::BoundedUint<18446744073709551615> = __compact_param_3;
+            let __compact_plan_7: runtime::OpaqueString = (__compact_plan_1).clone();
+            let __compact_plan_8: crate::types::SetMutation = __compact_plan_0;
+            let __compact_plan_9: runtime::FixedVector<runtime::Field, 4> =
+                crate::pure_circuits::setAlsoKnownAsAuthorizationDigest(
+                    __compact_plan_5,
+                    __compact_plan_6,
+                    __compact_plan_7,
+                    __compact_plan_8,
+                )?;
+            let __compact_plan_10: runtime::FixedVector<runtime::Field, 4> = __compact_plan_9;
+            let __compact_plan_11: crate::types::SchnorrSignature = (__compact_plan_2).clone();
+            let __compact_plan_12: runtime::BoundedUint<18446744073709551615> = __compact_plan_3;
+            let __compact_plan_13: runtime::FixedVector<runtime::Field, 4> =
+                (__compact_plan_10).clone();
+            let (frame, __compact_plan_14) = crate::ledger_slots::version.record_read(frame)?;
+            let __compact_plan_15: runtime::BoundedUint<18446744073709551615> =
+                runtime::BoundedUint::<18446744073709551615>::new(__compact_plan_14 as u128)?;
+            let __compact_plan_16: bool = __compact_plan_12 == __compact_plan_15;
+            if !__compact_plan_16 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Controller authorization version is stale".to_owned(),
+                ));
+            }
+            let __compact_plan_17: runtime::FixedVector<runtime::Field, 4> =
+                (__compact_plan_13).clone();
+            let __compact_plan_18: crate::types::SchnorrSignature = (__compact_plan_11).clone();
+            let (frame, __compact_plan_19): (_, runtime::JubjubPoint) =
+                crate::ledger_slots::controllerPublicKey.record_read(frame)?;
+            let __compact_plan_20: runtime::JubjubPoint = __compact_plan_19;
+            let (frame, ()) = frame.call_local(|context| {
+                super::schnorrVerifyDigest(
+                    context,
+                    witnesses,
+                    __compact_plan_17,
+                    __compact_plan_18,
+                    __compact_plan_20,
+                )
+            })?;
+            let (frame, __compact_plan_21): (_, bool) =
+                crate::ledger_slots::active.record_read(frame)?;
+            if !__compact_plan_21 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Contract is not active".to_owned(),
+                ));
+            }
+            let __compact_plan_22: crate::types::SetMutation = __compact_plan_0;
+            crate::pure_circuits::assertSetMutationDefined(__compact_plan_22)?;
+            let __compact_plan_23: crate::types::SetMutation = crate::types::SetMutation::Insert;
+            let __compact_plan_24: bool = __compact_plan_0 == __compact_plan_23;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform branch frames preserve ordered recording steps"
+            )]
+            let frame = if __compact_plan_24 {
+                let (frame, __compact_plan_25): (_, bool) = crate::ledger_slots::alsoKnownAs
+                    .record_member(frame, (__compact_plan_1).clone())?;
+                let (frame, __compact_plan_28): (_, bool) = if __compact_plan_25 {
+                    let __compact_plan_26: bool = false;
+                    (frame, __compact_plan_26)
+                } else {
+                    let __compact_plan_27: bool = true;
+                    (frame, __compact_plan_27)
+                };
+                if !__compact_plan_28 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "alsoKnownAs value already exists".to_owned(),
+                    ));
+                }
+                let frame = crate::ledger_slots::alsoKnownAs
+                    .record_insert(frame, (__compact_plan_1).clone())?;
+                frame
+            } else {
+                let __compact_plan_29: crate::types::SetMutation =
+                    crate::types::SetMutation::Remove;
+                let __compact_plan_30: bool = __compact_plan_0 == __compact_plan_29;
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform branch frames preserve ordered recording steps"
+                )]
+                let frame = if __compact_plan_30 {
+                    let (frame, __compact_plan_31): (_, bool) = crate::ledger_slots::alsoKnownAs
+                        .record_member(frame, (__compact_plan_1).clone())?;
+                    if !__compact_plan_31 {
+                        return Err(runtime::CompactError::AssertionFailed(
+                            "alsoKnownAs value does not exist".to_owned(),
+                        ));
+                    }
+                    let frame = crate::ledger_slots::alsoKnownAs
+                        .record_remove(frame, (__compact_plan_1).clone())?;
+                    frame
+                } else {
+                    frame
+                };
+                frame
+            };
+            let __compact_plan_32: runtime::BoundedUint<65535> =
+                runtime::BoundedUint::<65535>::new(1u128)
+                    .expect("Compact Uint literal fits its maximum");
+            let __compact_plan_33: runtime::BoundedUint<65535> = __compact_plan_32;
+            let frame = crate::ledger_slots::operationCount
+                .record_increment(frame, (__compact_plan_33).value() as u16)?;
+            let __compact_plan_34: runtime::BoundedUint<65535> =
+                runtime::BoundedUint::<65535>::new(1u128)
+                    .expect("Compact Uint literal fits its maximum");
+            let __compact_plan_35: runtime::BoundedUint<65535> = __compact_plan_34;
+            let frame = crate::ledger_slots::version
+                .record_increment(frame, (__compact_plan_35).value() as u16)?;
+            let (frame, __compact_plan_36): (_, runtime::BoundedUint<18446744073709551615>) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.currentTimestamp(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            let __compact_plan_37: runtime::BoundedUint<18446744073709551615> = __compact_plan_36;
+            let frame = crate::ledger_slots::updated.record_write(frame, __compact_plan_37)?;
+            Ok(frame.finish(()))
+        }
         pub fn deactivate<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
@@ -3760,6 +3896,62 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "recoverControllerKey",
+                    input,
+                ))
+            }
+            pub fn setAlsoKnownAs<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                value: runtime::OpaqueString,
+                mutation: crate::types::SetMutation,
+                controllerSignature: crate::types::SchnorrSignature,
+                expectedVersion: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                setAlsoKnownAs(
+                    context,
+                    self.witnesses,
+                    value,
+                    mutation,
+                    controllerSignature,
+                    expectedVersion,
+                )
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn setAlsoKnownAs_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                value: runtime::OpaqueString,
+                mutation: crate::types::SetMutation,
+                controllerSignature: crate::types::SchnorrSignature,
+                expectedVersion: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::concat(&[
+                    runtime::fab::AlignedValue::from((value).clone()),
+                    runtime::fab::AlignedValue::from(mutation),
+                    runtime::fab::AlignedValue::from((controllerSignature).clone()),
+                    runtime::fab::AlignedValue::from(expectedVersion),
+                ]);
+                let recorded = self.setAlsoKnownAs(
+                    observed.circuit_context(private_state),
+                    value,
+                    mutation,
+                    controllerSignature,
+                    expectedVersion,
+                )?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "setAlsoKnownAs",
                     input,
                 ))
             }

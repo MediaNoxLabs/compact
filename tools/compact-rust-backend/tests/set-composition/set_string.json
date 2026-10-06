@@ -1,0 +1,493 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "aliases",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "set",
+        "ty": {
+          "kind": "opaque_string"
+        }
+      },
+      "source": {
+        "file": "set_string.compact",
+        "line": 17,
+        "column": 1
+      }
+    },
+    {
+      "id": "count",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "set_string.compact",
+        "line": 18,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+    {
+      "name": "defined",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "m",
+          "ty": {
+            "kind": "enum",
+            "name": "Mutation",
+            "variants": [
+              "Undefined",
+              "Insert",
+              "Remove"
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "body": {
+        "kind": "sequence",
+        "steps": [
+          {
+            "kind": "assert",
+            "condition": {
+              "kind": "if",
+              "condition": {
+                "kind": "equal",
+                "left": {
+                  "kind": "parameter",
+                  "name": "m"
+                },
+                "right": {
+                  "kind": "enum_variant",
+                  "ty": {
+                    "kind": "enum",
+                    "name": "Mutation",
+                    "variants": [
+                      "Undefined",
+                      "Insert",
+                      "Remove"
+                    ]
+                  },
+                  "variant": "Insert"
+                }
+              },
+              "then": {
+                "kind": "boolean",
+                "value": true
+              },
+              "otherwise": {
+                "kind": "equal",
+                "left": {
+                  "kind": "parameter",
+                  "name": "m"
+                },
+                "right": {
+                  "kind": "enum_variant",
+                  "ty": {
+                    "kind": "enum",
+                    "name": "Mutation",
+                    "variants": [
+                      "Undefined",
+                      "Insert",
+                      "Remove"
+                    ]
+                  },
+                  "variant": "Remove"
+                }
+              }
+            },
+            "message": "undefined mutation"
+          }
+        ],
+        "value": {
+          "kind": "unit"
+        }
+      },
+      "source": {
+        "file": "set_string.compact",
+        "line": 20,
+        "column": 1
+      }
+    }
+  ],
+  "stateful_circuits": [
+    {
+      "name": "bump",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_11",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "count",
+            "index": 1,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_11"
+            }
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "set_string.compact",
+        "line": 23,
+        "column": 1
+      }
+    },
+    {
+      "name": "insert_control",
+      "parameters": [
+        {
+          "name": "v",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "set_insert",
+          "field": "aliases",
+          "index": 0,
+          "value": {
+            "kind": "parameter",
+            "name": "v"
+          }
+        }
+      ],
+      "source": {
+        "file": "set_string.compact",
+        "line": 24,
+        "column": 1
+      }
+    },
+    {
+      "name": "remove_control",
+      "parameters": [
+        {
+          "name": "v",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "set_remove",
+          "field": "aliases",
+          "index": 0,
+          "value": {
+            "kind": "parameter",
+            "name": "v"
+          }
+        }
+      ],
+      "source": {
+        "file": "set_string.compact",
+        "line": 25,
+        "column": 1
+      }
+    },
+    {
+      "name": "member_control",
+      "parameters": [
+        {
+          "name": "v",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        }
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "return_value": {
+        "kind": "set_member",
+        "field": "aliases",
+        "index": 0,
+        "value": {
+          "kind": "parameter",
+          "name": "v"
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "set_string.compact",
+        "line": 26,
+        "column": 1
+      }
+    },
+    {
+      "name": "mutate",
+      "parameters": [
+        {
+          "name": "v",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        },
+        {
+          "name": "m",
+          "ty": {
+            "kind": "enum",
+            "name": "Mutation",
+            "variants": [
+              "Undefined",
+              "Insert",
+              "Remove"
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "value",
+              "ty": {
+                "kind": "opaque_string"
+              },
+              "value": {
+                "kind": "parameter",
+                "name": "v"
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "mutation",
+                "ty": {
+                  "kind": "enum",
+                  "name": "Mutation",
+                  "variants": [
+                    "Undefined",
+                    "Insert",
+                    "Remove"
+                  ]
+                },
+                "value": {
+                  "kind": "parameter",
+                  "name": "m"
+                }
+              }
+            ],
+            "action": {
+              "kind": "sequence",
+              "actions": [
+                {
+                  "kind": "pure_call",
+                  "name": "defined",
+                  "arguments": [
+                    {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "mutation"
+                      },
+                      "ty": {
+                        "kind": "enum",
+                        "name": "Mutation",
+                        "variants": [
+                          "Undefined",
+                          "Insert",
+                          "Remove"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "if",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "parameter",
+                      "name": "mutation"
+                    },
+                    "right": {
+                      "kind": "enum_variant",
+                      "ty": {
+                        "kind": "enum",
+                        "name": "Mutation",
+                        "variants": [
+                          "Undefined",
+                          "Insert",
+                          "Remove"
+                        ]
+                      },
+                      "variant": "Insert"
+                    }
+                  },
+                  "then": {
+                    "kind": "sequence",
+                    "actions": [
+                      {
+                        "kind": "assert",
+                        "condition": {
+                          "kind": "if",
+                          "condition": {
+                            "kind": "set_member",
+                            "field": "aliases",
+                            "index": 0,
+                            "value": {
+                              "kind": "parameter",
+                              "name": "value"
+                            }
+                          },
+                          "then": {
+                            "kind": "boolean",
+                            "value": false
+                          },
+                          "otherwise": {
+                            "kind": "boolean",
+                            "value": true
+                          }
+                        },
+                        "message": "already present"
+                      },
+                      {
+                        "kind": "set_insert",
+                        "field": "aliases",
+                        "index": 0,
+                        "value": {
+                          "kind": "parameter",
+                          "name": "value"
+                        }
+                      }
+                    ]
+                  },
+                  "otherwise": {
+                    "kind": "if",
+                    "condition": {
+                      "kind": "equal",
+                      "left": {
+                        "kind": "parameter",
+                        "name": "mutation"
+                      },
+                      "right": {
+                        "kind": "enum_variant",
+                        "ty": {
+                          "kind": "enum",
+                          "name": "Mutation",
+                          "variants": [
+                            "Undefined",
+                            "Insert",
+                            "Remove"
+                          ]
+                        },
+                        "variant": "Remove"
+                      }
+                    },
+                    "then": {
+                      "kind": "sequence",
+                      "actions": [
+                        {
+                          "kind": "assert",
+                          "condition": {
+                            "kind": "set_member",
+                            "field": "aliases",
+                            "index": 0,
+                            "value": {
+                              "kind": "parameter",
+                              "name": "value"
+                            }
+                          },
+                          "message": "absent"
+                        },
+                        {
+                          "kind": "set_remove",
+                          "field": "aliases",
+                          "index": 0,
+                          "value": {
+                            "kind": "parameter",
+                            "name": "value"
+                          }
+                        }
+                      ]
+                    },
+                    "otherwise": {
+                      "kind": "sequence",
+                      "actions": [
+                      ]
+                    }
+                  }
+                },
+                {
+                  "kind": "circuit_call",
+                  "name": "bump",
+                  "arguments": [
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "set_string.compact",
+        "line": 27,
+        "column": 1
+      }
+    }
+  ]
+}

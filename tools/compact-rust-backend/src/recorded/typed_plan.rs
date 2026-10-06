@@ -969,7 +969,7 @@ impl Plan<'_> {
                     return None;
                 }
                 if !cell_type(ty)
-                    && !(self.composition_calls.is_some() && composition::value_type(ty))
+                    && !(self.composition_calls.is_some() && composition::observed_value_type(ty))
                     && !(matches!(
                         self.composite_domain,
                         CompositeDomain::GuardedShieldedDeposit
@@ -1009,7 +1009,10 @@ impl Plan<'_> {
                     return None;
                 };
                 let ty = ty.clone();
-                if !bytes32_key(&ty) && ty != qualified_coin_type() {
+                if !bytes32_key(&ty)
+                    && ty != qualified_coin_type()
+                    && !(self.composition_calls.is_some() && ty == Type::OpaqueString)
+                {
                     return None;
                 }
                 if ty == qualified_coin_type() {
@@ -1111,6 +1114,15 @@ impl Plan<'_> {
                         callee.result.clone(),
                         steps,
                     )
+                }
+                composition::AuditedCall::PureUnitGuard(callee) => {
+                    let args = self.arguments(arguments, &callee.parameters, scope, steps)?;
+                    let method = ident(name).ok()?;
+                    steps.push(syn::parse_quote!(crate::pure_circuits::#method(#(#args),*)?;));
+                    Some(TypedValue {
+                        ty: Type::Unit,
+                        value: syn::parse_quote!(()),
+                    })
                 }
                 composition::AuditedCall::LocalUnit(callee) => {
                     let args = self.arguments(arguments, &callee.parameters, scope, steps)?;
@@ -1757,6 +1769,18 @@ impl Plan<'_> {
                     return None;
                 }
             }
+            StateAction::PureCall { name, arguments } if self.composition_calls.is_some() => {
+                if !matches!(
+                    self.composition_calls.as_ref()?.get(name),
+                    Some(composition::AuditedCall::PureUnitGuard(_))
+                ) {
+                    return None;
+                }
+                let value = self.call(name, arguments, scope, steps)?;
+                if value.ty != Type::Unit {
+                    return None;
+                }
+            }
             StateAction::CircuitCall { name, arguments }
                 if (self.unit_actions && self.composite_domain.intents())
                     || self.phase_reset
@@ -1795,7 +1819,8 @@ impl Plan<'_> {
                         },
                     ) => self.tree_writes += 1,
                     (StateAction::SetInsert { .. }, LedgerFieldKind::Set { ty })
-                        if bytes32_key(ty) =>
+                        if bytes32_key(ty)
+                            || (self.composition_calls.is_some() && *ty == Type::OpaqueString) =>
                     {
                         self.set_writes += 1
                     }
@@ -1832,7 +1857,9 @@ impl Plan<'_> {
                 let LedgerFieldKind::Set { ty } = &self.field(field, *index)?.declaration else {
                     return None;
                 };
-                if *ty != qualified_coin_type() {
+                if *ty != qualified_coin_type()
+                    && !(self.composition_calls.is_some() && *ty == Type::OpaqueString)
+                {
                     return None;
                 }
                 let ty = ty.clone();
@@ -1843,7 +1870,11 @@ impl Plan<'_> {
                 let slot = ident(field).ok()?;
                 let value = value.value;
                 steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_remove(frame, #value)?;));
-                self.qualified_set_writes += 1;
+                if ty == qualified_coin_type() {
+                    self.qualified_set_writes += 1;
+                } else {
+                    self.set_writes += 1;
+                }
             }
             StateAction::SetReset { field, index } => {
                 let LedgerFieldKind::Set { ty } = &self.field(field, *index)?.declaration else {

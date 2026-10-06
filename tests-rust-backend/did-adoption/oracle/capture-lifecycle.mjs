@@ -28,6 +28,8 @@ const casesPath = process.argv[3];
 const casesModule = casesPath ? await import(pathToFileURL(resolve(casesPath)).href) : null;
 const captureCases = casesModule ? casesModule.captureCases : defaultCaptureCases;
 if (typeof captureCases !== "function") throw Error("case module must export captureCases");
+if (casesModule?.captureScope !== undefined && typeof casesModule.captureScope !== "string")
+  throw Error("case module captureScope must be a string");
 if (
   realpathSync(
     resolve(dirname(generated), "node_modules/@midnight-ntwrk/compact-runtime"),
@@ -242,7 +244,7 @@ process.stdout.write(
   JSON.stringify(
     json({
       scope:
-        casesPath ? "Native constructor-driven Point source calls; recording and proof evidence are separate" : "Native constructor-driven source calls; only deactivate separately has recorded/proof evidence",
+        casesPath ? (casesModule.captureScope ?? "Native constructor-driven Point source calls; recording and proof evidence are separate") : "Native constructor-driven source calls; only deactivate separately has recorded/proof evidence",
       provenance,
       generatedJavaScriptSha256: hash(generated),
       runtimeJavaScriptSha256: hash("runtime/dist/built-ins.js"),

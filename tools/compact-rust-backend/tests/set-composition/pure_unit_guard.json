@@ -1,0 +1,474 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "active",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "boolean"
+        }
+      },
+      "source": {
+        "file": "pure_unit_guard.compact",
+        "line": 17,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+    {
+      "name": "defined",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "m",
+          "ty": {
+            "kind": "enum",
+            "name": "Mutation",
+            "variants": [
+              "Undefined",
+              "Insert",
+              "Remove"
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "body": {
+        "kind": "sequence",
+        "steps": [
+          {
+            "kind": "assert",
+            "condition": {
+              "kind": "if",
+              "condition": {
+                "kind": "equal",
+                "left": {
+                  "kind": "parameter",
+                  "name": "m"
+                },
+                "right": {
+                  "kind": "enum_variant",
+                  "ty": {
+                    "kind": "enum",
+                    "name": "Mutation",
+                    "variants": [
+                      "Undefined",
+                      "Insert",
+                      "Remove"
+                    ]
+                  },
+                  "variant": "Insert"
+                }
+              },
+              "then": {
+                "kind": "boolean",
+                "value": true
+              },
+              "otherwise": {
+                "kind": "equal",
+                "left": {
+                  "kind": "parameter",
+                  "name": "m"
+                },
+                "right": {
+                  "kind": "enum_variant",
+                  "ty": {
+                    "kind": "enum",
+                    "name": "Mutation",
+                    "variants": [
+                      "Undefined",
+                      "Insert",
+                      "Remove"
+                    ]
+                  },
+                  "variant": "Remove"
+                }
+              }
+            },
+            "message": "undefined mutation"
+          }
+        ],
+        "value": {
+          "kind": "unit"
+        }
+      },
+      "source": {
+        "file": "pure_unit_guard.compact",
+        "line": 19,
+        "column": 1
+      }
+    },
+    {
+      "name": "localGuard",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "m",
+          "ty": {
+            "kind": "enum",
+            "name": "Mutation",
+            "variants": [
+              "Undefined",
+              "Insert",
+              "Remove"
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "body": {
+        "kind": "sequence",
+        "steps": [
+          {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "allowed",
+                "ty": {
+                  "kind": "boolean"
+                },
+                "value": {
+                  "kind": "if",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "parameter",
+                      "name": "m"
+                    },
+                    "right": {
+                      "kind": "enum_variant",
+                      "ty": {
+                        "kind": "enum",
+                        "name": "Mutation",
+                        "variants": [
+                          "Undefined",
+                          "Insert",
+                          "Remove"
+                        ]
+                      },
+                      "variant": "Insert"
+                    }
+                  },
+                  "then": {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "boolean",
+                      "value": true
+                    },
+                    "ty": {
+                      "kind": "boolean"
+                    }
+                  },
+                  "otherwise": {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "equal",
+                      "left": {
+                        "kind": "parameter",
+                        "name": "m"
+                      },
+                      "right": {
+                        "kind": "enum_variant",
+                        "ty": {
+                          "kind": "enum",
+                          "name": "Mutation",
+                          "variants": [
+                            "Undefined",
+                            "Insert",
+                            "Remove"
+                          ]
+                        },
+                        "variant": "Remove"
+                      }
+                    },
+                    "ty": {
+                      "kind": "boolean"
+                    }
+                  }
+                }
+              }
+            ],
+            "body": {
+              "kind": "assert",
+              "condition": {
+                "kind": "parameter",
+                "name": "allowed"
+              },
+              "message": "local undefined mutation"
+            }
+          }
+        ],
+        "value": {
+          "kind": "unit"
+        }
+      },
+      "source": {
+        "file": "pure_unit_guard.compact",
+        "line": 24,
+        "column": 1
+      }
+    },
+    {
+      "name": "transitiveGuard",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "m",
+          "ty": {
+            "kind": "enum",
+            "name": "Mutation",
+            "variants": [
+              "Undefined",
+              "Insert",
+              "Remove"
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "body": {
+        "kind": "sequence",
+        "steps": [
+          {
+            "kind": "call",
+            "name": "localGuard",
+            "arguments": [
+              {
+                "kind": "parameter",
+                "name": "m"
+              }
+            ]
+          }
+        ],
+        "value": {
+          "kind": "unit"
+        }
+      },
+      "source": {
+        "file": "pure_unit_guard.compact",
+        "line": 28,
+        "column": 1
+      }
+    }
+  ],
+  "stateful_circuits": [
+    {
+      "name": "update",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "cell_write",
+          "field": "active",
+          "index": 0,
+          "value": {
+            "kind": "boolean",
+            "value": true
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "pure_unit_guard.compact",
+        "line": 22,
+        "column": 1
+      }
+    },
+    {
+      "name": "run",
+      "parameters": [
+        {
+          "name": "m",
+          "ty": {
+            "kind": "enum",
+            "name": "Mutation",
+            "variants": [
+              "Undefined",
+              "Insert",
+              "Remove"
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "pure_call",
+          "name": "defined",
+          "arguments": [
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "m"
+              },
+              "ty": {
+                "kind": "enum",
+                "name": "Mutation",
+                "variants": [
+                  "Undefined",
+                  "Insert",
+                  "Remove"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "kind": "circuit_call",
+          "name": "update",
+          "arguments": [
+          ]
+        }
+      ],
+      "source": {
+        "file": "pure_unit_guard.compact",
+        "line": 23,
+        "column": 1
+      }
+    },
+    {
+      "name": "local_control",
+      "parameters": [
+        {
+          "name": "m",
+          "ty": {
+            "kind": "enum",
+            "name": "Mutation",
+            "variants": [
+              "Undefined",
+              "Insert",
+              "Remove"
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "pure_call",
+          "name": "localGuard",
+          "arguments": [
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "m"
+              },
+              "ty": {
+                "kind": "enum",
+                "name": "Mutation",
+                "variants": [
+                  "Undefined",
+                  "Insert",
+                  "Remove"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "kind": "circuit_call",
+          "name": "update",
+          "arguments": [
+          ]
+        }
+      ],
+      "source": {
+        "file": "pure_unit_guard.compact",
+        "line": 29,
+        "column": 1
+      }
+    },
+    {
+      "name": "transitive_control",
+      "parameters": [
+        {
+          "name": "m",
+          "ty": {
+            "kind": "enum",
+            "name": "Mutation",
+            "variants": [
+              "Undefined",
+              "Insert",
+              "Remove"
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "pure_call",
+          "name": "transitiveGuard",
+          "arguments": [
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "m"
+              },
+              "ty": {
+                "kind": "enum",
+                "name": "Mutation",
+                "variants": [
+                  "Undefined",
+                  "Insert",
+                  "Remove"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "kind": "circuit_call",
+          "name": "update",
+          "arguments": [
+          ]
+        }
+      ],
+      "source": {
+        "file": "pure_unit_guard.compact",
+        "line": 30,
+        "column": 1
+      }
+    }
+  ]
+}

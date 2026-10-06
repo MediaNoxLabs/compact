@@ -3436,7 +3436,7 @@
   "artifacts": [
     {
       "path": "tests-rust-backend/did-adoption/oracle/capture-lifecycle.mjs",
-      "sha256": "1c5949508dab06dd92018de03df98eb7e1389f11b14df96e02e6d4e1a265e7b4"
+      "sha256": "edc8157b6e0c85787e81cfd8edac2636f8c16975f597e1e5ca7eab3c5cab431a"
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/capture-pure.mjs",
@@ -3448,11 +3448,11 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/lifecycle.json",
-      "sha256": "8b467259a1ec815ad0a532c09c065a979cb95f5dc1af15ee52645ea77e2f8feb"
+      "sha256": "5e2d1ba9fc5594915aefa1cd922b69dec14cd0b5812db5a0430b48acf9b08fdc"
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/pure.json",
-      "sha256": "b90d0293500958a50a8972f1dbd4d7ed2720f44277434a001f0de232ed14e467"
+      "sha256": "0a0ac053e3e2fa173fa7e35113e7ca823a4c1525a58db83cb731ed0d225fb70a"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/codec.rs",
@@ -3480,7 +3480,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/point-lifecycle.json",
-      "sha256": "e0dddab06e624572bfd64fa546c6f914e26b724f0dea1cd9e51c92a8aeffaeb9"
+      "sha256": "23e8e303238fd9780f45d4b93e242f1e484d4d0bb1753435189ef360919e1970"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/point_calls.rs",
@@ -3489,6 +3489,22 @@
     {
       "path": "tests-rust-backend/did-adoption/tests/point_recording.rs",
       "sha256": "2944423a64129616286e6395a33e00af913006207f1cc11e170fd2e9214c1526"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/oracle/alias-lifecycle-cases.mjs",
+      "sha256": "cb3d5965f603d0e31c3f2ce95514e3b9a83fab8e63d6fa909d0468799dfb8967"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/oracle/alias-lifecycle.json",
+      "sha256": "483927d9d901f945f9fadf5221b9cda8635cf15c54067cd6f31259fc830ee9df"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/support/alias_calls.rs",
+      "sha256": "e158d5e9d9fac4fb324d66bf847b19cf6f0cf15940763e7f4388f156d8745bf3"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/tests/alias_recording.rs",
+      "sha256": "5152288e38d7fd4afa63307319dee3728431c3c6e73aa065c28971a0a91aec80"
     }
   ],
   "amendment_0259": {
@@ -3500,5 +3516,17 @@
       "rotateControllerKey"
     ],
     "point_cases": 12
+  },
+  "amendment_0265": {
+    "scope": "Original setAlsoKnownAs recording added; native and pure semantic captures unchanged. Two default-strict proofs follow actual original-data deployment and apply Unicode insert then remove; original constructor identity semantics unchanged.",
+    "historical_baseline": "Prior scope, limits, stateful_export_summary and ADR0259 amendment retain their historical scope.",
+    "current_recorded_exports": [
+      "deactivate",
+      "recoverControllerKey",
+      "rotateControllerKey",
+      "setAlsoKnownAs"
+    ],
+    "historical_alias_cases": 15,
+    "fresh_alias_sequence_cases_including_deactivate": 14
   }
 }

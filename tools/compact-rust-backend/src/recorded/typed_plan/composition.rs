@@ -18,21 +18,35 @@ use super::*;
 #[derive(Clone, Copy)]
 pub(super) enum AuditedCall<'a> {
     PureValue(&'a PureCircuit),
+    PureUnitGuard(&'a PureCircuit),
     LocalUnit(&'a StatefulCircuit),
     RecordedUnit(&'a StatefulCircuit),
 }
 pub(super) type Calls<'a> = HashMap<String, AuditedCall<'a>>;
 
-pub(super) fn value_type(ty: &Type) -> bool {
+// Preserve the Cell and witness signature domain independently from argument
+// and pure-helper values admitted by collection composition.
+pub(super) fn observed_value_type(ty: &Type) -> bool {
     match ty {
         Type::Boolean | Type::Field | Type::JubjubPoint | Type::Bytes { .. } => true,
         Type::Unsigned { max } => max.parse::<u64>().is_ok(),
+        Type::Struct { fields, .. } => fields.iter().all(|f| observed_value_type(&f.ty)),
+        Type::Tuple { elements } => {
+            !elements.is_empty() && elements.len() <= 8 && elements.iter().all(observed_value_type)
+        }
+        Type::Vector { element, .. } => observed_value_type(element),
+        _ => false,
+    }
+}
+pub(super) fn value_type(ty: &Type) -> bool {
+    match ty {
+        Type::OpaqueString | Type::Enum { .. } => true,
         Type::Struct { fields, .. } => fields.iter().all(|f| value_type(&f.ty)),
         Type::Tuple { elements } => {
             !elements.is_empty() && elements.len() <= 8 && elements.iter().all(value_type)
         }
         Type::Vector { element, .. } => value_type(element),
-        _ => false,
+        _ => observed_value_type(ty),
     }
 }
 pub(super) fn write_type(ty: &Type) -> bool {
@@ -70,7 +84,8 @@ impl Audit<'_> {
             | Expr::Boolean { .. }
             | Expr::FieldLiteral { .. }
             | Expr::BytesLiteral { .. }
-            | Expr::UnsignedLiteral { .. } => true,
+            | Expr::UnsignedLiteral { .. }
+            | Expr::EnumVariant { .. } => true,
             Expr::Coerce { value, ty } => value_type(ty) && self.value(value, pure),
             Expr::StructField { value, .. }
             | Expr::JubjubPointX { value }
@@ -103,12 +118,28 @@ impl Audit<'_> {
                 elements.iter().all(|v| self.value(v, true))
             }
             Expr::CellRead { field, index } if !pure => {
-                if !matches!(self.slot(field,*index).map(|f| &f.declaration), Some(LedgerFieldKind::Cell {ty}) if value_type(ty))
+                if !matches!(self.slot(field,*index).map(|f| &f.declaration), Some(LedgerFieldKind::Cell {ty}) if observed_value_type(ty))
                 {
                     return false;
                 }
                 self.public += 1;
                 true
+            }
+            Expr::SetMember {
+                field,
+                index,
+                value,
+            } if !pure => {
+                if !matches!(
+                    self.slot(field, *index).map(|f| &f.declaration),
+                    Some(LedgerFieldKind::Set {
+                        ty: Type::OpaqueString
+                    })
+                ) {
+                    return false;
+                }
+                self.public += 1;
+                self.value(value, false)
             }
             Expr::CounterRead { field, index } if !pure => {
                 if !matches!(
@@ -122,8 +153,8 @@ impl Audit<'_> {
             }
             Expr::WitnessCall { name, arguments } if !pure => {
                 self.witnesses.get(name.as_str()).is_some_and(|w| {
-                    value_type(&w.result)
-                        && w.parameters.iter().all(|p| value_type(&p.ty))
+                    observed_value_type(&w.result)
+                        && w.parameters.iter().all(|p| observed_value_type(&p.ty))
                         && w.parameters.len() == arguments.len()
                 }) && arguments.iter().all(|v| self.value(v, false))
             }
@@ -133,9 +164,41 @@ impl Audit<'_> {
             _ => false,
         }
     }
+    // Pure Unit guards have a statement-shaped grammar. Keep that capability
+    // separate from value helpers; the existing pure renderer checks all types.
+    fn unit_guard(&mut self, value: &Expr) -> bool {
+        match value {
+            Expr::Unit => true,
+            Expr::Sequence { steps, value } => {
+                steps.iter().all(|step| self.unit_guard(step)) && self.unit_guard(value)
+            }
+            Expr::Assert { condition, .. } => self.value(condition, true),
+            Expr::If {
+                condition,
+                then,
+                otherwise,
+            } => self.value(condition, true) && self.unit_guard(then) && self.unit_guard(otherwise),
+            Expr::Let { bindings, body } => {
+                bindings
+                    .iter()
+                    .all(|binding| value_type(&binding.ty) && self.value(&binding.value, true))
+                    && self.unit_guard(body)
+            }
+            Expr::Call { name, arguments } => {
+                arguments.iter().all(|argument| self.value(argument, true))
+                    && self.call(name, true)
+                    && matches!(self.calls.get(name), Some(AuditedCall::PureUnitGuard(_)))
+            }
+            _ => false,
+        }
+    }
     fn call(&mut self, name: &str, pure_only: bool) -> bool {
         if let Some(call) = self.calls.get(name) {
-            return !pure_only || matches!(call, AuditedCall::PureValue(_));
+            return !pure_only
+                || matches!(
+                    call,
+                    AuditedCall::PureValue(_) | AuditedCall::PureUnitGuard(_)
+                );
         }
         if !self.active.insert(name.to_owned()) {
             return false;
@@ -163,15 +226,23 @@ impl Audit<'_> {
                     })
                     .collect();
                 if parameters.len() != c.parameters.len()
-                    || !value_type(&c.result)
+                    || !(value_type(&c.result) || c.result == Type::Unit)
                     || !c.parameters.iter().all(|p| value_type(&p.ty))
-                    || !self.value(&c.body, true)
+                    || !(if c.result == Type::Unit {
+                        self.unit_guard(&c.body)
+                    } else {
+                        self.value(&c.body, true)
+                    })
                     || !matches!(expression_with_calls(&c.body,&parameters,self.pure),Ok((_,ty)) if ty==c.result)
                 {
                     false
                 } else {
-                    self.calls
-                        .insert(name.to_owned(), AuditedCall::PureValue(c));
+                    let call = if c.result == Type::Unit {
+                        AuditedCall::PureUnitGuard(c)
+                    } else {
+                        AuditedCall::PureValue(c)
+                    };
+                    self.calls.insert(name.to_owned(), call);
                     true
                 }
             }
@@ -234,6 +305,32 @@ impl Audit<'_> {
                 }
                 self.public += 1;
                 true // Literal/parameter operands remain checked by the shared typed Plan.
+            }
+            StateAction::SetInsert {
+                field,
+                index,
+                value,
+            }
+            | StateAction::SetRemove {
+                field,
+                index,
+                value,
+            } => {
+                if !matches!(
+                    self.slot(field, *index).map(|f| &f.declaration),
+                    Some(LedgerFieldKind::Set {
+                        ty: Type::OpaqueString
+                    })
+                ) {
+                    return false;
+                }
+                self.public += 1;
+                self.value(value, false)
+            }
+            StateAction::PureCall { name, arguments } => {
+                arguments.iter().all(|value| self.value(value, false))
+                    && self.call(name, true)
+                    && matches!(self.calls.get(name), Some(AuditedCall::PureUnitGuard(_)))
             }
             StateAction::CircuitCall { name, arguments } => {
                 arguments.iter().all(|v| self.value(v, false))

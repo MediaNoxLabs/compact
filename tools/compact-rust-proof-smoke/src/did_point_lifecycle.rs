@@ -19,6 +19,8 @@ use compact_rust_did_adoption_fixture::{
     ledger_contract as c, ledger_slots as slots, runtime as r, types,
 };
 use serde_json::{Value, json};
+#[path = "../../../tests-rust-backend/did-adoption/support/alias_calls.rs"]
+mod alias_calls;
 #[path = "../../../tests-rust-backend/did-adoption/support/codec.rs"]
 mod codec;
 #[path = "../../../tests-rust-backend/did-adoption/support/lifecycle_calls.rs"]
@@ -29,15 +31,44 @@ mod lifecycle_witness;
 mod point_calls;
 use lifecycle_witness::Witness;
 
+#[derive(Clone, Copy)]
+enum Lifecycle {
+    Points,
+    Aliases,
+}
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
-    let capture: Value = serde_json::from_str(include_str!(
-        "../../../tests-rust-backend/did-adoption/oracle/lifecycle.json"
-    ))?;
+    run_lifecycle(root, Lifecycle::Points)
+}
+pub(super) fn run_aliases(root: &Path) -> Result<(), Box<dyn Error>> {
+    run_lifecycle(root, Lifecycle::Aliases)
+}
+fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>> {
+    let (capture, scenario_id, calls, operations): (&str, &str, &[&str], &[&str]) = match lifecycle
+    {
+        Lifecycle::Points => (
+            include_str!("../../../tests-rust-backend/did-adoption/oracle/lifecycle.json"),
+            "authorization-lifecycle",
+            &["rotate", "recover", "deactivate"],
+            &["rotateControllerKey", "recoverControllerKey", "deactivate"],
+        ),
+        Lifecycle::Aliases => (
+            include_str!("../../../tests-rust-backend/did-adoption/oracle/alias-lifecycle.json"),
+            "alias-recording",
+            &["insert-unicode", "remove-unicode"],
+            &[
+                "rotateControllerKey",
+                "recoverControllerKey",
+                "deactivate",
+                "setAlsoKnownAs",
+            ],
+        ),
+    };
+    let capture: Value = serde_json::from_str(capture)?;
     let scenario = capture["scenarios"]
         .as_array()
         .unwrap()
         .iter()
-        .find(|s| s["id"] == "authorization-lifecycle")
+        .find(|s| s["id"] == scenario_id)
         .unwrap();
     let mut rng = StdRng::seed_from_u64(0x0259);
     let initial = c::initial_state(
@@ -50,8 +81,9 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
     if stored_id.bytes != r::FixedBytes::new([0; 32]) {
         return Err("original constructor id changed".into());
     }
+    let operation_names = operations;
     let mut operations = HashMap::new();
-    for name in ["rotateControllerKey", "recoverControllerKey", "deactivate"] {
+    for name in operation_names {
         let vk: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
             root.join(format!("keys/{name}.verifier")),
         )?))?;
@@ -112,7 +144,7 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
     println!(
         "DID original constructor data: actual default-strict Dust-funded deployment applied; stored zero id retained, distinct deployed address"
     );
-    for (number, id) in ["rotate", "recover", "deactivate"].into_iter().enumerate() {
+    for (number, &id) in calls.iter().enumerate() {
         let row = scenario["steps"]
             .as_array()
             .unwrap()
@@ -122,7 +154,8 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
         let name = match id {
             "rotate" => "rotateControllerKey",
             "recover" => "recoverControllerKey",
-            _ => "deactivate",
+            "deactivate" => "deactivate",
+            _ => "setAlsoKnownAs",
         };
         let prior = state
             .ledger
@@ -149,7 +182,11 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
             &Witness::new(row["options"].clone()),
             row,
         )?;
-        let recorded = point_calls::invoke_recorded(
+        let record = match lifecycle {
+            Lifecycle::Points => point_calls::invoke_recorded,
+            Lifecycle::Aliases => alias_calls::invoke_recorded,
+        };
+        let recorded = record(
             observed.circuit_context(private),
             &Witness::new(row["options"].clone()),
             row,
@@ -166,7 +203,14 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
             response: codec::field_hex(row["responseHex"].as_str().unwrap()),
         };
         let version = codec::version(row["version"].as_str().unwrap());
-        let input = if id == "deactivate" {
+        let input = if name == "setAlsoKnownAs" {
+            AlignedValue::from((
+                codec::string(&row["args"]["value"]),
+                codec::set(&row["args"]["mutation"]),
+                signature.clone(),
+                version,
+            ))
+        } else if id == "deactivate" {
             AlignedValue::from((signature.clone(), version))
         } else {
             AlignedValue::from((
@@ -195,9 +239,17 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
                 signature,
                 version,
             )?,
-            _ => facade
+            "deactivate" => facade
                 .recording()
                 .deactivate_call(&observed, private, signature, version)?,
+            _ => facade.recording().setAlsoKnownAs_call(
+                &observed,
+                private,
+                codec::string(&row["args"]["value"]),
+                codec::set(&row["args"]["mutation"]),
+                signature,
+                version,
+            )?,
         };
         let prepared = call.prepare(verifier.clone(), Fr::from(0u64))?;
         if format!("{manual:?}") != format!("{prepared:?}") {
@@ -278,15 +330,33 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
         .contract
         .get(&address)
         .ok_or("DID final state absent")?;
-    if slots::active.inspect(final_state.data.get_ref())?
-        || !slots::deactivated.inspect(final_state.data.get_ref())?
-        || slots::version.inspect(final_state.data.get_ref())? != 3
-        || slots::operationCount.inspect(final_state.data.get_ref())? != 3
-    {
-        return Err("final DID lifecycle fields differ".into());
+    let data = final_state.data.get_ref();
+    match lifecycle {
+        Lifecycle::Points => {
+            if slots::active.inspect(data)?
+                || !slots::deactivated.inspect(data)?
+                || slots::version.inspect(data)? != 3
+                || slots::operationCount.inspect(data)? != 3
+            {
+                return Err("final DID Point lifecycle fields differ".into());
+            }
+            println!(
+                "original DID deploy -> rotate -> recover -> deactivate: strict sequential acceptance; constructor execution not proved, stored-id semantics unchanged"
+            );
+        }
+        Lifecycle::Aliases => {
+            if !slots::active.inspect(data)?
+                || slots::deactivated.inspect(data)?
+                || slots::version.inspect(data)? != 2
+                || slots::operationCount.inspect(data)? != 2
+                || !slots::alsoKnownAs.inspect(data)?.is_empty()
+            {
+                return Err("final DID alias cycle fields differ".into());
+            }
+            println!(
+                "original DID deploy -> setAlsoKnownAs insert -> remove: strict sequential acceptance; constructor execution not proved, stored-id semantics unchanged"
+            );
+        }
     }
-    println!(
-        "original DID deploy -> rotate -> recover -> deactivate: strict sequential acceptance; constructor execution not proved, stored-id semantics unchanged"
-    );
     Ok(())
 }

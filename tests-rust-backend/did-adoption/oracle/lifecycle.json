@@ -11,7 +11,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/lib.rs",
-      "sha256": "3ca5ad66036aad74927320bf14ff029a8134f17fec365325bdfc685c0bc8261b"
+      "sha256": "aa24726764b07a0cbed458f87355b9a896a6de34dd1dee51050c29a1134366c2"
     },
     {
       "path": "runtime/src/built-ins.ts",
@@ -27,7 +27,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/capture-lifecycle.mjs",
-      "sha256": "1c5949508dab06dd92018de03df98eb7e1389f11b14df96e02e6d4e1a265e7b4"
+      "sha256": "edc8157b6e0c85787e81cfd8edac2636f8c16975f597e1e5ca7eab3c5cab431a"
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/lifecycle-cases.mjs",

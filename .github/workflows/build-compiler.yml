@@ -44,6 +44,9 @@ jobs:
         with:
           python-version: 3.13
 
+      - name: Fetch locked generated-consumer dependencies
+        run: cargo fetch --locked
+
       - name: Build compactc and run Rust consumers
         run: |
           compiler=$(nix build .#compactc --no-link --print-out-paths)

@@ -35,3 +35,5 @@ midnight-onchain-state = "=3.0.0"
 midnight-onchain-vm = "=3.0.0"
 midnight-serialize = "=1.0.0"
 midnight-storage = "=2.0.1"
+midnight-compact-testkit = { path = "../../testkit-rs" }
+sha2 = "0.10"

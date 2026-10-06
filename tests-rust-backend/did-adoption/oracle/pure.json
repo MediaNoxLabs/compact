@@ -1,0 +1,1915 @@
+{
+  "scope": "12 direct pure exports; finite argument/domain sensitivity, not a collision-resistance proof",
+  "provenance": [
+    {
+      "path": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+      "sha256": "632f34af543924edb185fe9c8eda54aa4ca0503b0b9e8ee3ff06ec470f6d7456"
+    },
+    {
+      "path": "examples/rust_backend/did_adoption/packages/jubjub-schnorr/src/schnorr.compact",
+      "sha256": "f072731d730d72f8b76b183df2c5187b233a0838d9462894cfb0a6d2f0f66bff"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/lib.rs",
+      "sha256": "dcdeafa92fc7d237080d28f5434e0c93efda53cc99a1fe57205754d24edee80a"
+    },
+    {
+      "path": "runtime/src/built-ins.ts",
+      "sha256": "860c07188480005ff3907213f04902fb388fb0b43ce61a4b09d38b79592f51be"
+    },
+    {
+      "path": "runtime/src/compact-types.ts",
+      "sha256": "7d3da5243377cc1fc1a07fe1622be095fe8c07dbf5b0929559807b6f3196a63b"
+    },
+    {
+      "path": "examples/rust_backend/did_adoption/source-manifest.json",
+      "sha256": "a5386c2d3cc8d2f3aa090599a6038efc638f36f20ede19a7067a1ba416610106"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/oracle/capture-pure.mjs",
+      "sha256": "202f0eeab673a1e96938b7a02fc71ce2e040ac015bdfaaa9c419d2e99a6b26d9"
+    }
+  ],
+  "generatedJavaScriptSha256": "9ae8d78cef694d99d985ac416e3bf17e5969125201a435d1c3332e5f60664338",
+  "runtimeJavaScriptSha256": "f6b1b8b0d4ecfd6458706fd3969babbb988879dd9c39618cc137c463a151781b",
+  "cases": [
+    {
+      "name": "controllerAuthorizationDigest",
+      "id": "base",
+      "args": {
+        "operationHash": "1",
+        "argsHash": "2"
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "0100000000000000000000000000000000000000000000000000000000000000",
+        "0200000000000000000000000000000000000000000000000000000000000000"
+      ]
+    },
+    {
+      "name": "controllerAuthorizationDigest",
+      "id": "version-one",
+      "args": {
+        "operationHash": "1",
+        "argsHash": "2"
+      },
+      "version": "1",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "2094e5decfa46cf47450ed02b5c40caacad2b477186698f1c251a972f052f137",
+        "0100000000000000000000000000000000000000000000000000000000000000",
+        "0200000000000000000000000000000000000000000000000000000000000000"
+      ]
+    },
+    {
+      "name": "controllerAuthorizationDigest",
+      "id": "version-max",
+      "args": {
+        "operationHash": "1",
+        "argsHash": "2"
+      },
+      "version": "18446744073709551615",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "9b7d8a2368104c0dfc56869f5385349dd5de35bb8259f70a40c1d4c627985a0c",
+        "0100000000000000000000000000000000000000000000000000000000000000",
+        "0200000000000000000000000000000000000000000000000000000000000000"
+      ]
+    },
+    {
+      "name": "controllerAuthorizationDigest",
+      "id": "other-address",
+      "args": {
+        "operationHash": "1",
+        "argsHash": "2"
+      },
+      "version": "0",
+      "addressByte": 17,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "56eb6db0e9c71799c91aeb4b89c232d0486fb046acc95bf202cf33d2d0631365",
+        "0100000000000000000000000000000000000000000000000000000000000000",
+        "0200000000000000000000000000000000000000000000000000000000000000"
+      ]
+    },
+    {
+      "name": "controllerAuthorizationDigest",
+      "id": "operation-changed",
+      "args": {
+        "operationHash": "7",
+        "argsHash": "2"
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "0700000000000000000000000000000000000000000000000000000000000000",
+        "0200000000000000000000000000000000000000000000000000000000000000"
+      ]
+    },
+    {
+      "name": "controllerAuthorizationDigest",
+      "id": "args-changed",
+      "args": {
+        "operationHash": "1",
+        "argsHash": "7"
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "0100000000000000000000000000000000000000000000000000000000000000",
+        "0700000000000000000000000000000000000000000000000000000000000000"
+      ]
+    },
+    {
+      "name": "rotateControllerKeyAuthorizationDigest",
+      "id": "base",
+      "args": {
+        "key": "1"
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "2a51a8c4718d05ddce9d913461161ed07237e4873d318e4563291cd8f8ec1a51",
+        "2bc07d9d07ae690812331b3340910ade748493f1efadb8693054beaeffd78c3f"
+      ]
+    },
+    {
+      "name": "rotateControllerKeyAuthorizationDigest",
+      "id": "version-one",
+      "args": {
+        "key": "1"
+      },
+      "version": "1",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "2094e5decfa46cf47450ed02b5c40caacad2b477186698f1c251a972f052f137",
+        "2a51a8c4718d05ddce9d913461161ed07237e4873d318e4563291cd8f8ec1a51",
+        "2bc07d9d07ae690812331b3340910ade748493f1efadb8693054beaeffd78c3f"
+      ]
+    },
+    {
+      "name": "rotateControllerKeyAuthorizationDigest",
+      "id": "version-max",
+      "args": {
+        "key": "1"
+      },
+      "version": "18446744073709551615",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "9b7d8a2368104c0dfc56869f5385349dd5de35bb8259f70a40c1d4c627985a0c",
+        "2a51a8c4718d05ddce9d913461161ed07237e4873d318e4563291cd8f8ec1a51",
+        "2bc07d9d07ae690812331b3340910ade748493f1efadb8693054beaeffd78c3f"
+      ]
+    },
+    {
+      "name": "rotateControllerKeyAuthorizationDigest",
+      "id": "other-address",
+      "args": {
+        "key": "1"
+      },
+      "version": "0",
+      "addressByte": 17,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "56eb6db0e9c71799c91aeb4b89c232d0486fb046acc95bf202cf33d2d0631365",
+        "2a51a8c4718d05ddce9d913461161ed07237e4873d318e4563291cd8f8ec1a51",
+        "2bc07d9d07ae690812331b3340910ade748493f1efadb8693054beaeffd78c3f"
+      ]
+    },
+    {
+      "name": "rotateControllerKeyAuthorizationDigest",
+      "id": "other-key",
+      "args": {
+        "key": "5"
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "2a51a8c4718d05ddce9d913461161ed07237e4873d318e4563291cd8f8ec1a51",
+        "da92ab4b945a41fbfec594347d2b4dd8b1bb40e5787c05080e32a2904569f770"
+      ]
+    },
+    {
+      "name": "recoverControllerKeyAuthorizationDigest",
+      "id": "base",
+      "args": {
+        "key": "1"
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "aee037cbf6c1aa78f30766f42fc6f063109aab48f290eeeeb68f7d180b187328",
+        "2bc07d9d07ae690812331b3340910ade748493f1efadb8693054beaeffd78c3f"
+      ]
+    },
+    {
+      "name": "recoverControllerKeyAuthorizationDigest",
+      "id": "version-one",
+      "args": {
+        "key": "1"
+      },
+      "version": "1",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "2094e5decfa46cf47450ed02b5c40caacad2b477186698f1c251a972f052f137",
+        "aee037cbf6c1aa78f30766f42fc6f063109aab48f290eeeeb68f7d180b187328",
+        "2bc07d9d07ae690812331b3340910ade748493f1efadb8693054beaeffd78c3f"
+      ]
+    },
+    {
+      "name": "recoverControllerKeyAuthorizationDigest",
+      "id": "version-max",
+      "args": {
+        "key": "1"
+      },
+      "version": "18446744073709551615",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "9b7d8a2368104c0dfc56869f5385349dd5de35bb8259f70a40c1d4c627985a0c",
+        "aee037cbf6c1aa78f30766f42fc6f063109aab48f290eeeeb68f7d180b187328",
+        "2bc07d9d07ae690812331b3340910ade748493f1efadb8693054beaeffd78c3f"
+      ]
+    },
+    {
+      "name": "recoverControllerKeyAuthorizationDigest",
+      "id": "other-address",
+      "args": {
+        "key": "1"
+      },
+      "version": "0",
+      "addressByte": 17,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "56eb6db0e9c71799c91aeb4b89c232d0486fb046acc95bf202cf33d2d0631365",
+        "aee037cbf6c1aa78f30766f42fc6f063109aab48f290eeeeb68f7d180b187328",
+        "2bc07d9d07ae690812331b3340910ade748493f1efadb8693054beaeffd78c3f"
+      ]
+    },
+    {
+      "name": "recoverControllerKeyAuthorizationDigest",
+      "id": "other-key",
+      "args": {
+        "key": "5"
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "aee037cbf6c1aa78f30766f42fc6f063109aab48f290eeeeb68f7d180b187328",
+        "da92ab4b945a41fbfec594347d2b4dd8b1bb40e5787c05080e32a2904569f770"
+      ]
+    },
+    {
+      "name": "setAlsoKnownAsAuthorizationDigest",
+      "id": "base",
+      "args": {
+        "value": "alias",
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "67d944819f5476763e8c470315d2d74640c230be5ab62a8ca07dda7d3de3492a",
+        "c77d5f7b4b4f51fe4ca0049dd008bec818b68036c32147ff9ae6df5ef67c2414"
+      ]
+    },
+    {
+      "name": "setAlsoKnownAsAuthorizationDigest",
+      "id": "version-one",
+      "args": {
+        "value": "alias",
+        "mutation": 1
+      },
+      "version": "1",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "2094e5decfa46cf47450ed02b5c40caacad2b477186698f1c251a972f052f137",
+        "67d944819f5476763e8c470315d2d74640c230be5ab62a8ca07dda7d3de3492a",
+        "c77d5f7b4b4f51fe4ca0049dd008bec818b68036c32147ff9ae6df5ef67c2414"
+      ]
+    },
+    {
+      "name": "setAlsoKnownAsAuthorizationDigest",
+      "id": "version-max",
+      "args": {
+        "value": "alias",
+        "mutation": 1
+      },
+      "version": "18446744073709551615",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "9b7d8a2368104c0dfc56869f5385349dd5de35bb8259f70a40c1d4c627985a0c",
+        "67d944819f5476763e8c470315d2d74640c230be5ab62a8ca07dda7d3de3492a",
+        "c77d5f7b4b4f51fe4ca0049dd008bec818b68036c32147ff9ae6df5ef67c2414"
+      ]
+    },
+    {
+      "name": "setAlsoKnownAsAuthorizationDigest",
+      "id": "other-address",
+      "args": {
+        "value": "alias",
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 17,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "56eb6db0e9c71799c91aeb4b89c232d0486fb046acc95bf202cf33d2d0631365",
+        "67d944819f5476763e8c470315d2d74640c230be5ab62a8ca07dda7d3de3492a",
+        "c77d5f7b4b4f51fe4ca0049dd008bec818b68036c32147ff9ae6df5ef67c2414"
+      ]
+    },
+    {
+      "name": "setAlsoKnownAsAuthorizationDigest",
+      "id": "mutation-0",
+      "args": {
+        "value": "alias",
+        "mutation": 0
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "67d944819f5476763e8c470315d2d74640c230be5ab62a8ca07dda7d3de3492a",
+        "d5d38c8b3e6187adb86361c1f7045f4ea2cbfe9f5af0c9696366928d66adbe53"
+      ]
+    },
+    {
+      "name": "setAlsoKnownAsAuthorizationDigest",
+      "id": "mutation-2",
+      "args": {
+        "value": "alias",
+        "mutation": 2
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "67d944819f5476763e8c470315d2d74640c230be5ab62a8ca07dda7d3de3492a",
+        "ebc87a336d8cec27eb5c0fdaccad70793d2c25dd634781958cdabff529a21751"
+      ]
+    },
+    {
+      "name": "setAlsoKnownAsAuthorizationDigest",
+      "id": "value-empty",
+      "args": {
+        "value": "",
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "67d944819f5476763e8c470315d2d74640c230be5ab62a8ca07dda7d3de3492a",
+        "d69ee4b3d57bf5e75d629c9ec74d344a984f306b8ecb8f9b590b1e463ae0dc0a"
+      ]
+    },
+    {
+      "name": "setAlsoKnownAsAuthorizationDigest",
+      "id": "value-unicode",
+      "args": {
+        "value": "日本語🗝️",
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "67d944819f5476763e8c470315d2d74640c230be5ab62a8ca07dda7d3de3492a",
+        "439f17dbc303257900bc7c0332bd9eb69c18ee958f4725d7390b975c2acf9b4e"
+      ]
+    },
+    {
+      "name": "setVerificationMethodAuthorizationDigest",
+      "id": "base",
+      "args": {
+        "method": {
+          "id": "key",
+          "typ": 1,
+          "publicKeyJwk": {
+            "kty": 3,
+            "crv": 0,
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "8247837481150914abefda3ffab1d169649b5ded8dc6338c58ac877f2944f711",
+        "0f6dbe9496081b6e447240965859ef043f5b083c9208f76f1433dc905368e557"
+      ]
+    },
+    {
+      "name": "setVerificationMethodAuthorizationDigest",
+      "id": "version-one",
+      "args": {
+        "method": {
+          "id": "key",
+          "typ": 1,
+          "publicKeyJwk": {
+            "kty": 3,
+            "crv": 0,
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "mutation": 1
+      },
+      "version": "1",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "2094e5decfa46cf47450ed02b5c40caacad2b477186698f1c251a972f052f137",
+        "8247837481150914abefda3ffab1d169649b5ded8dc6338c58ac877f2944f711",
+        "0f6dbe9496081b6e447240965859ef043f5b083c9208f76f1433dc905368e557"
+      ]
+    },
+    {
+      "name": "setVerificationMethodAuthorizationDigest",
+      "id": "version-max",
+      "args": {
+        "method": {
+          "id": "key",
+          "typ": 1,
+          "publicKeyJwk": {
+            "kty": 3,
+            "crv": 0,
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "mutation": 1
+      },
+      "version": "18446744073709551615",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "9b7d8a2368104c0dfc56869f5385349dd5de35bb8259f70a40c1d4c627985a0c",
+        "8247837481150914abefda3ffab1d169649b5ded8dc6338c58ac877f2944f711",
+        "0f6dbe9496081b6e447240965859ef043f5b083c9208f76f1433dc905368e557"
+      ]
+    },
+    {
+      "name": "setVerificationMethodAuthorizationDigest",
+      "id": "other-address",
+      "args": {
+        "method": {
+          "id": "key",
+          "typ": 1,
+          "publicKeyJwk": {
+            "kty": 3,
+            "crv": 0,
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 17,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "56eb6db0e9c71799c91aeb4b89c232d0486fb046acc95bf202cf33d2d0631365",
+        "8247837481150914abefda3ffab1d169649b5ded8dc6338c58ac877f2944f711",
+        "0f6dbe9496081b6e447240965859ef043f5b083c9208f76f1433dc905368e557"
+      ]
+    },
+    {
+      "name": "setVerificationMethodAuthorizationDigest",
+      "id": "mutation-0",
+      "args": {
+        "method": {
+          "id": "key",
+          "typ": 1,
+          "publicKeyJwk": {
+            "kty": 3,
+            "crv": 0,
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "mutation": 0
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "8247837481150914abefda3ffab1d169649b5ded8dc6338c58ac877f2944f711",
+        "4cec6024dae24f91043dfc3056923b940c127f249f784de2028a98df3769885b"
+      ]
+    },
+    {
+      "name": "setVerificationMethodAuthorizationDigest",
+      "id": "mutation-2",
+      "args": {
+        "method": {
+          "id": "key",
+          "typ": 1,
+          "publicKeyJwk": {
+            "kty": 3,
+            "crv": 0,
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "mutation": 2
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "8247837481150914abefda3ffab1d169649b5ded8dc6338c58ac877f2944f711",
+        "1cee40d7707c421a35496ac9e3dd672c095644d761e41365b72a6ddf37c76127"
+      ]
+    },
+    {
+      "name": "setVerificationMethodAuthorizationDigest",
+      "id": "method-id-empty",
+      "args": {
+        "method": {
+          "id": "",
+          "typ": 1,
+          "publicKeyJwk": {
+            "kty": 3,
+            "crv": 0,
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "8247837481150914abefda3ffab1d169649b5ded8dc6338c58ac877f2944f711",
+        "a07e219a786a4e5235c571a203d57ce7fe7d5feceb37bd87b37a630f216ae018"
+      ]
+    },
+    {
+      "name": "setVerificationMethodAuthorizationDigest",
+      "id": "method-id-unicode",
+      "args": {
+        "method": {
+          "id": "日本語🗝️",
+          "typ": 1,
+          "publicKeyJwk": {
+            "kty": 3,
+            "crv": 0,
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "8247837481150914abefda3ffab1d169649b5ded8dc6338c58ac877f2944f711",
+        "53de1e3a39a573cfb1dbba3a2be6be6d8e0fd08872349d0f4447549362d3c608"
+      ]
+    },
+    {
+      "name": "setVerificationMethodAuthorizationDigest",
+      "id": "method-type-undefined",
+      "args": {
+        "method": {
+          "id": "key",
+          "typ": 0,
+          "publicKeyJwk": {
+            "kty": 3,
+            "crv": 0,
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "8247837481150914abefda3ffab1d169649b5ded8dc6338c58ac877f2944f711",
+        "3c67cb50e66292de4d1eaa1bc93b176744b0abd02c2bf9082cf58e9bbf4f1127"
+      ]
+    },
+    {
+      "name": "setVerificationMethodAuthorizationDigest",
+      "id": "jwk-kty-0",
+      "args": {
+        "method": {
+          "id": "key",
+          "typ": 1,
+          "publicKeyJwk": {
+            "kty": 0,
+            "crv": 0,
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "8247837481150914abefda3ffab1d169649b5ded8dc6338c58ac877f2944f711",
+        "5f648440e9d362c33033566f2eaf045b854b79c3fc60cf3a2132f91bc563dd4e"
+      ]
+    },
+    {
+      "name": "setVerificationMethodAuthorizationDigest",
+      "id": "jwk-kty-1",
+      "args": {
+        "method": {
+          "id": "key",
+          "typ": 1,
+          "publicKeyJwk": {
+            "kty": 1,
+            "crv": 0,
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "8247837481150914abefda3ffab1d169649b5ded8dc6338c58ac877f2944f711",
+        "63362bc0c1e892bb53c6ed6193ea44d8bca56904c0573572795ee0925fd97064"
+      ]
+    },
+    {
+      "name": "setVerificationMethodAuthorizationDigest",
+      "id": "jwk-kty-2",
+      "args": {
+        "method": {
+          "id": "key",
+          "typ": 1,
+          "publicKeyJwk": {
+            "kty": 2,
+            "crv": 0,
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "8247837481150914abefda3ffab1d169649b5ded8dc6338c58ac877f2944f711",
+        "2d33e27b007209c8415155517696a009ed6d390c026a8b29cf112f80917a8910"
+      ]
+    },
+    {
+      "name": "setVerificationMethodAuthorizationDigest",
+      "id": "jwk-crv-1",
+      "args": {
+        "method": {
+          "id": "key",
+          "typ": 1,
+          "publicKeyJwk": {
+            "kty": 3,
+            "crv": 1,
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "8247837481150914abefda3ffab1d169649b5ded8dc6338c58ac877f2944f711",
+        "80b79e8f3c085c8be7cca9266f6c2242bd92ad3babd314f653f5fbc16c146352"
+      ]
+    },
+    {
+      "name": "setVerificationMethodAuthorizationDigest",
+      "id": "jwk-crv-2",
+      "args": {
+        "method": {
+          "id": "key",
+          "typ": 1,
+          "publicKeyJwk": {
+            "kty": 3,
+            "crv": 2,
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "8247837481150914abefda3ffab1d169649b5ded8dc6338c58ac877f2944f711",
+        "3623058723afa2bdef4b41269e736c1632c428896769e9f27215ef0d52d3d24c"
+      ]
+    },
+    {
+      "name": "setVerificationMethodAuthorizationDigest",
+      "id": "jwk-crv-3",
+      "args": {
+        "method": {
+          "id": "key",
+          "typ": 1,
+          "publicKeyJwk": {
+            "kty": 3,
+            "crv": 3,
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "8247837481150914abefda3ffab1d169649b5ded8dc6338c58ac877f2944f711",
+        "b55397ef87ac06f79a7556cbe7455a7e261e4ac2c6c4cc36755b6276f2e2e943"
+      ]
+    },
+    {
+      "name": "setVerificationMethodAuthorizationDigest",
+      "id": "jwk-crv-4",
+      "args": {
+        "method": {
+          "id": "key",
+          "typ": 1,
+          "publicKeyJwk": {
+            "kty": 3,
+            "crv": 4,
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "8247837481150914abefda3ffab1d169649b5ded8dc6338c58ac877f2944f711",
+        "8174128284c620e3d7c5f8d515f260b4d15fbbdc28c02178d3cc2e9358473c42"
+      ]
+    },
+    {
+      "name": "setVerificationMethodAuthorizationDigest",
+      "id": "jwk-crv-5",
+      "args": {
+        "method": {
+          "id": "key",
+          "typ": 1,
+          "publicKeyJwk": {
+            "kty": 3,
+            "crv": 5,
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "8247837481150914abefda3ffab1d169649b5ded8dc6338c58ac877f2944f711",
+        "02f8b079df01eaf3e79b37c07ddaa8885ba956c3c61414551e7012125ac5cd23"
+      ]
+    },
+    {
+      "name": "setVerificationMethodAuthorizationDigest",
+      "id": "jwk-crv-6",
+      "args": {
+        "method": {
+          "id": "key",
+          "typ": 1,
+          "publicKeyJwk": {
+            "kty": 3,
+            "crv": 6,
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "8247837481150914abefda3ffab1d169649b5ded8dc6338c58ac877f2944f711",
+        "5c92fa1eff9964f40012e29d88b00d8f2d28ffea701f05b0c86842f88104ed65"
+      ]
+    },
+    {
+      "name": "setVerificationMethodAuthorizationDigest",
+      "id": "jwk-x-",
+      "args": {
+        "method": {
+          "id": "key",
+          "typ": 1,
+          "publicKeyJwk": {
+            "kty": 3,
+            "crv": 0,
+            "x": "",
+            "y": "y"
+          }
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "8247837481150914abefda3ffab1d169649b5ded8dc6338c58ac877f2944f711",
+        "14bc7833f3475aea483cf1e55c2eb343793d11bb62143303ac885f83f4413f1b"
+      ]
+    },
+    {
+      "name": "setVerificationMethodAuthorizationDigest",
+      "id": "jwk-x-日本語🗝️",
+      "args": {
+        "method": {
+          "id": "key",
+          "typ": 1,
+          "publicKeyJwk": {
+            "kty": 3,
+            "crv": 0,
+            "x": "日本語🗝️",
+            "y": "y"
+          }
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "8247837481150914abefda3ffab1d169649b5ded8dc6338c58ac877f2944f711",
+        "aad178e0e537cfe257ac3583bec78e396beeefb4a476faf82bae06b039831f1c"
+      ]
+    },
+    {
+      "name": "setVerificationMethodAuthorizationDigest",
+      "id": "jwk-y-",
+      "args": {
+        "method": {
+          "id": "key",
+          "typ": 1,
+          "publicKeyJwk": {
+            "kty": 3,
+            "crv": 0,
+            "x": "x",
+            "y": ""
+          }
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "8247837481150914abefda3ffab1d169649b5ded8dc6338c58ac877f2944f711",
+        "7f13861471de08355634033803792dcbdaae31d42f65a44a7e79b842bb024461"
+      ]
+    },
+    {
+      "name": "setVerificationMethodAuthorizationDigest",
+      "id": "jwk-y-日本語🗝️",
+      "args": {
+        "method": {
+          "id": "key",
+          "typ": 1,
+          "publicKeyJwk": {
+            "kty": 3,
+            "crv": 0,
+            "x": "x",
+            "y": "日本語🗝️"
+          }
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "8247837481150914abefda3ffab1d169649b5ded8dc6338c58ac877f2944f711",
+        "948346e796a6a1068c6f325e0b6d7d8b37236d4d36250fe284b60e34f6a44960"
+      ]
+    },
+    {
+      "name": "removeVerificationMethodAuthorizationDigest",
+      "id": "base",
+      "args": {
+        "id": "key"
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "ec008d3d57bf9e32e7692d356effe1da30de0a9c4638b05caf41b9ba952e4826",
+        "90b11624fd7f1f05983cce868d762274f77776b5f166e8954ad7bf2a90335c73"
+      ]
+    },
+    {
+      "name": "removeVerificationMethodAuthorizationDigest",
+      "id": "version-one",
+      "args": {
+        "id": "key"
+      },
+      "version": "1",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "2094e5decfa46cf47450ed02b5c40caacad2b477186698f1c251a972f052f137",
+        "ec008d3d57bf9e32e7692d356effe1da30de0a9c4638b05caf41b9ba952e4826",
+        "90b11624fd7f1f05983cce868d762274f77776b5f166e8954ad7bf2a90335c73"
+      ]
+    },
+    {
+      "name": "removeVerificationMethodAuthorizationDigest",
+      "id": "version-max",
+      "args": {
+        "id": "key"
+      },
+      "version": "18446744073709551615",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "9b7d8a2368104c0dfc56869f5385349dd5de35bb8259f70a40c1d4c627985a0c",
+        "ec008d3d57bf9e32e7692d356effe1da30de0a9c4638b05caf41b9ba952e4826",
+        "90b11624fd7f1f05983cce868d762274f77776b5f166e8954ad7bf2a90335c73"
+      ]
+    },
+    {
+      "name": "removeVerificationMethodAuthorizationDigest",
+      "id": "other-address",
+      "args": {
+        "id": "key"
+      },
+      "version": "0",
+      "addressByte": 17,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "56eb6db0e9c71799c91aeb4b89c232d0486fb046acc95bf202cf33d2d0631365",
+        "ec008d3d57bf9e32e7692d356effe1da30de0a9c4638b05caf41b9ba952e4826",
+        "90b11624fd7f1f05983cce868d762274f77776b5f166e8954ad7bf2a90335c73"
+      ]
+    },
+    {
+      "name": "removeVerificationMethodAuthorizationDigest",
+      "id": "id-empty",
+      "args": {
+        "id": ""
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "ec008d3d57bf9e32e7692d356effe1da30de0a9c4638b05caf41b9ba952e4826",
+        "7af466f7035f09875c6e3817d3a329bbf7c204d23e6ebfcc9e0052d0dbbd4415"
+      ]
+    },
+    {
+      "name": "removeVerificationMethodAuthorizationDigest",
+      "id": "id-unicode",
+      "args": {
+        "id": "日本語🗝️"
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "ec008d3d57bf9e32e7692d356effe1da30de0a9c4638b05caf41b9ba952e4826",
+        "0b8552f6cc2b26ef6406d8b1011596654b29b19356d1342120d31a13b652b053"
+      ]
+    },
+    {
+      "name": "setSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "id": "base",
+      "args": {
+        "method": {
+          "id": "key",
+          "key": "1"
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "f8b548c3f61b97c4201d192b71fadcb6b43fdad846907deaa05e39c56e3ad55b",
+        "988dca8ec15db8953cebfb85111b95880cb8154d5285b5259fb6c6a2acca8747"
+      ]
+    },
+    {
+      "name": "setSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "id": "version-one",
+      "args": {
+        "method": {
+          "id": "key",
+          "key": "1"
+        },
+        "mutation": 1
+      },
+      "version": "1",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "2094e5decfa46cf47450ed02b5c40caacad2b477186698f1c251a972f052f137",
+        "f8b548c3f61b97c4201d192b71fadcb6b43fdad846907deaa05e39c56e3ad55b",
+        "988dca8ec15db8953cebfb85111b95880cb8154d5285b5259fb6c6a2acca8747"
+      ]
+    },
+    {
+      "name": "setSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "id": "version-max",
+      "args": {
+        "method": {
+          "id": "key",
+          "key": "1"
+        },
+        "mutation": 1
+      },
+      "version": "18446744073709551615",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "9b7d8a2368104c0dfc56869f5385349dd5de35bb8259f70a40c1d4c627985a0c",
+        "f8b548c3f61b97c4201d192b71fadcb6b43fdad846907deaa05e39c56e3ad55b",
+        "988dca8ec15db8953cebfb85111b95880cb8154d5285b5259fb6c6a2acca8747"
+      ]
+    },
+    {
+      "name": "setSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "id": "other-address",
+      "args": {
+        "method": {
+          "id": "key",
+          "key": "1"
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 17,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "56eb6db0e9c71799c91aeb4b89c232d0486fb046acc95bf202cf33d2d0631365",
+        "f8b548c3f61b97c4201d192b71fadcb6b43fdad846907deaa05e39c56e3ad55b",
+        "988dca8ec15db8953cebfb85111b95880cb8154d5285b5259fb6c6a2acca8747"
+      ]
+    },
+    {
+      "name": "setSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "id": "mutation-0",
+      "args": {
+        "method": {
+          "id": "key",
+          "key": "1"
+        },
+        "mutation": 0
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "f8b548c3f61b97c4201d192b71fadcb6b43fdad846907deaa05e39c56e3ad55b",
+        "f4b16473f67a40af02e0c3a697e672f8f5640eeccd5b5d9bcca704ace471083f"
+      ]
+    },
+    {
+      "name": "setSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "id": "mutation-2",
+      "args": {
+        "method": {
+          "id": "key",
+          "key": "1"
+        },
+        "mutation": 2
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "f8b548c3f61b97c4201d192b71fadcb6b43fdad846907deaa05e39c56e3ad55b",
+        "bbe7730e3cfddfc2a097eb1009571c3bd792d138cfdbe6b788d868b96c5afb52"
+      ]
+    },
+    {
+      "name": "setSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "id": "method-id-empty",
+      "args": {
+        "method": {
+          "id": "",
+          "key": "1"
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "f8b548c3f61b97c4201d192b71fadcb6b43fdad846907deaa05e39c56e3ad55b",
+        "9499bda947f2b4bc9bb25f61201b110f270d46981d5eaf2c1eced836b3bc923c"
+      ]
+    },
+    {
+      "name": "setSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "id": "method-id-unicode",
+      "args": {
+        "method": {
+          "id": "日本語🗝️",
+          "key": "1"
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "f8b548c3f61b97c4201d192b71fadcb6b43fdad846907deaa05e39c56e3ad55b",
+        "86b480d874a2b962490eb2ad57bbd6718c77c2e7d0db4178f0e511c560890603"
+      ]
+    },
+    {
+      "name": "setSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "id": "method-other-key",
+      "args": {
+        "method": {
+          "id": "key",
+          "key": "5"
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "f8b548c3f61b97c4201d192b71fadcb6b43fdad846907deaa05e39c56e3ad55b",
+        "bcc95bf0ee98c6b5cfbbe7c7275e18a0e46def5908ae652f323415d7e893b565"
+      ]
+    },
+    {
+      "name": "removeSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "id": "base",
+      "args": {
+        "id": "key"
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "336366fc34c6a092b01600ced2cc6955a506e59d72cfe1dec8956c928ee94a68",
+        "90b11624fd7f1f05983cce868d762274f77776b5f166e8954ad7bf2a90335c73"
+      ]
+    },
+    {
+      "name": "removeSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "id": "version-one",
+      "args": {
+        "id": "key"
+      },
+      "version": "1",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "2094e5decfa46cf47450ed02b5c40caacad2b477186698f1c251a972f052f137",
+        "336366fc34c6a092b01600ced2cc6955a506e59d72cfe1dec8956c928ee94a68",
+        "90b11624fd7f1f05983cce868d762274f77776b5f166e8954ad7bf2a90335c73"
+      ]
+    },
+    {
+      "name": "removeSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "id": "version-max",
+      "args": {
+        "id": "key"
+      },
+      "version": "18446744073709551615",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "9b7d8a2368104c0dfc56869f5385349dd5de35bb8259f70a40c1d4c627985a0c",
+        "336366fc34c6a092b01600ced2cc6955a506e59d72cfe1dec8956c928ee94a68",
+        "90b11624fd7f1f05983cce868d762274f77776b5f166e8954ad7bf2a90335c73"
+      ]
+    },
+    {
+      "name": "removeSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "id": "other-address",
+      "args": {
+        "id": "key"
+      },
+      "version": "0",
+      "addressByte": 17,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "56eb6db0e9c71799c91aeb4b89c232d0486fb046acc95bf202cf33d2d0631365",
+        "336366fc34c6a092b01600ced2cc6955a506e59d72cfe1dec8956c928ee94a68",
+        "90b11624fd7f1f05983cce868d762274f77776b5f166e8954ad7bf2a90335c73"
+      ]
+    },
+    {
+      "name": "removeSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "id": "id-empty",
+      "args": {
+        "id": ""
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "336366fc34c6a092b01600ced2cc6955a506e59d72cfe1dec8956c928ee94a68",
+        "7af466f7035f09875c6e3817d3a329bbf7c204d23e6ebfcc9e0052d0dbbd4415"
+      ]
+    },
+    {
+      "name": "removeSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "id": "id-unicode",
+      "args": {
+        "id": "日本語🗝️"
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "336366fc34c6a092b01600ced2cc6955a506e59d72cfe1dec8956c928ee94a68",
+        "0b8552f6cc2b26ef6406d8b1011596654b29b19356d1342120d31a13b652b053"
+      ]
+    },
+    {
+      "name": "setVerificationMethodRelationAuthorizationDigest",
+      "id": "base",
+      "args": {
+        "relation": 1,
+        "id": "key",
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "9aa8086f3ca3d6cef0185423a7faf3d08623f532154743e044a6177a36cdbe4e",
+        "d6c2bd0f419f71403503ce35f107f5139f8d94c68d3fea05f638973dd84a7521"
+      ]
+    },
+    {
+      "name": "setVerificationMethodRelationAuthorizationDigest",
+      "id": "version-one",
+      "args": {
+        "relation": 1,
+        "id": "key",
+        "mutation": 1
+      },
+      "version": "1",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "2094e5decfa46cf47450ed02b5c40caacad2b477186698f1c251a972f052f137",
+        "9aa8086f3ca3d6cef0185423a7faf3d08623f532154743e044a6177a36cdbe4e",
+        "d6c2bd0f419f71403503ce35f107f5139f8d94c68d3fea05f638973dd84a7521"
+      ]
+    },
+    {
+      "name": "setVerificationMethodRelationAuthorizationDigest",
+      "id": "version-max",
+      "args": {
+        "relation": 1,
+        "id": "key",
+        "mutation": 1
+      },
+      "version": "18446744073709551615",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "9b7d8a2368104c0dfc56869f5385349dd5de35bb8259f70a40c1d4c627985a0c",
+        "9aa8086f3ca3d6cef0185423a7faf3d08623f532154743e044a6177a36cdbe4e",
+        "d6c2bd0f419f71403503ce35f107f5139f8d94c68d3fea05f638973dd84a7521"
+      ]
+    },
+    {
+      "name": "setVerificationMethodRelationAuthorizationDigest",
+      "id": "other-address",
+      "args": {
+        "relation": 1,
+        "id": "key",
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 17,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "56eb6db0e9c71799c91aeb4b89c232d0486fb046acc95bf202cf33d2d0631365",
+        "9aa8086f3ca3d6cef0185423a7faf3d08623f532154743e044a6177a36cdbe4e",
+        "d6c2bd0f419f71403503ce35f107f5139f8d94c68d3fea05f638973dd84a7521"
+      ]
+    },
+    {
+      "name": "setVerificationMethodRelationAuthorizationDigest",
+      "id": "mutation-0",
+      "args": {
+        "relation": 1,
+        "id": "key",
+        "mutation": 0
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "9aa8086f3ca3d6cef0185423a7faf3d08623f532154743e044a6177a36cdbe4e",
+        "3597cb17ba5292376fd6133add47fc2f47224616fb896182fb0ecac134586351"
+      ]
+    },
+    {
+      "name": "setVerificationMethodRelationAuthorizationDigest",
+      "id": "mutation-2",
+      "args": {
+        "relation": 1,
+        "id": "key",
+        "mutation": 2
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "9aa8086f3ca3d6cef0185423a7faf3d08623f532154743e044a6177a36cdbe4e",
+        "d33aa04e5a04713abad106de45add09b8ae625e923ff6b096f189e4c21ceb340"
+      ]
+    },
+    {
+      "name": "setVerificationMethodRelationAuthorizationDigest",
+      "id": "id-empty",
+      "args": {
+        "relation": 1,
+        "id": "",
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "9aa8086f3ca3d6cef0185423a7faf3d08623f532154743e044a6177a36cdbe4e",
+        "662c2f7d27de59d993011d323345ebc5fcb36302050ee2cea1af0a3beb1f0d4c"
+      ]
+    },
+    {
+      "name": "setVerificationMethodRelationAuthorizationDigest",
+      "id": "id-unicode",
+      "args": {
+        "relation": 1,
+        "id": "日本語🗝️",
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "9aa8086f3ca3d6cef0185423a7faf3d08623f532154743e044a6177a36cdbe4e",
+        "91e0e181f2ca5b044342f39c30ed9f7c98fe64719778192471aae61c710b9314"
+      ]
+    },
+    {
+      "name": "setVerificationMethodRelationAuthorizationDigest",
+      "id": "relation-0",
+      "args": {
+        "relation": 0,
+        "id": "key",
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "9aa8086f3ca3d6cef0185423a7faf3d08623f532154743e044a6177a36cdbe4e",
+        "ca03742ca42b83b5d228aacc244c9e4b00e8ec7ced0330505cc336f1f35ecd67"
+      ]
+    },
+    {
+      "name": "setVerificationMethodRelationAuthorizationDigest",
+      "id": "relation-2",
+      "args": {
+        "relation": 2,
+        "id": "key",
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "9aa8086f3ca3d6cef0185423a7faf3d08623f532154743e044a6177a36cdbe4e",
+        "eac4423d6197898b4b531deae910144c0def204d810aa9a566806d9ca8142345"
+      ]
+    },
+    {
+      "name": "setVerificationMethodRelationAuthorizationDigest",
+      "id": "relation-3",
+      "args": {
+        "relation": 3,
+        "id": "key",
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "9aa8086f3ca3d6cef0185423a7faf3d08623f532154743e044a6177a36cdbe4e",
+        "16e1533ae99210e35cedb31498604298a32e1bebbdec81fc130b756766f0e413"
+      ]
+    },
+    {
+      "name": "setVerificationMethodRelationAuthorizationDigest",
+      "id": "relation-4",
+      "args": {
+        "relation": 4,
+        "id": "key",
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "9aa8086f3ca3d6cef0185423a7faf3d08623f532154743e044a6177a36cdbe4e",
+        "98d8c2b9e8983713b0f99277216af0e89e652e3ba34c1db6ac741a6e30073316"
+      ]
+    },
+    {
+      "name": "setVerificationMethodRelationAuthorizationDigest",
+      "id": "relation-5",
+      "args": {
+        "relation": 5,
+        "id": "key",
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "9aa8086f3ca3d6cef0185423a7faf3d08623f532154743e044a6177a36cdbe4e",
+        "75c64a7f2131e2cf651b403cba9da1f832c543918d82a7428ac47f99fcef3a5a"
+      ]
+    },
+    {
+      "name": "setServiceAuthorizationDigest",
+      "id": "base",
+      "args": {
+        "service": {
+          "id": "svc",
+          "typ": "LinkedDomains",
+          "serviceEndpoint": "https://example.invalid/δ"
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "a523075b21f5a86ad538977f047adf4599e7f16ad940347ea4e4133ad186ce1e",
+        "5d2360d963b8b43f5d2d18ca7137f21ebd005037387a47c0400018634242042b"
+      ]
+    },
+    {
+      "name": "setServiceAuthorizationDigest",
+      "id": "version-one",
+      "args": {
+        "service": {
+          "id": "svc",
+          "typ": "LinkedDomains",
+          "serviceEndpoint": "https://example.invalid/δ"
+        },
+        "mutation": 1
+      },
+      "version": "1",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "2094e5decfa46cf47450ed02b5c40caacad2b477186698f1c251a972f052f137",
+        "a523075b21f5a86ad538977f047adf4599e7f16ad940347ea4e4133ad186ce1e",
+        "5d2360d963b8b43f5d2d18ca7137f21ebd005037387a47c0400018634242042b"
+      ]
+    },
+    {
+      "name": "setServiceAuthorizationDigest",
+      "id": "version-max",
+      "args": {
+        "service": {
+          "id": "svc",
+          "typ": "LinkedDomains",
+          "serviceEndpoint": "https://example.invalid/δ"
+        },
+        "mutation": 1
+      },
+      "version": "18446744073709551615",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "9b7d8a2368104c0dfc56869f5385349dd5de35bb8259f70a40c1d4c627985a0c",
+        "a523075b21f5a86ad538977f047adf4599e7f16ad940347ea4e4133ad186ce1e",
+        "5d2360d963b8b43f5d2d18ca7137f21ebd005037387a47c0400018634242042b"
+      ]
+    },
+    {
+      "name": "setServiceAuthorizationDigest",
+      "id": "other-address",
+      "args": {
+        "service": {
+          "id": "svc",
+          "typ": "LinkedDomains",
+          "serviceEndpoint": "https://example.invalid/δ"
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 17,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "56eb6db0e9c71799c91aeb4b89c232d0486fb046acc95bf202cf33d2d0631365",
+        "a523075b21f5a86ad538977f047adf4599e7f16ad940347ea4e4133ad186ce1e",
+        "5d2360d963b8b43f5d2d18ca7137f21ebd005037387a47c0400018634242042b"
+      ]
+    },
+    {
+      "name": "setServiceAuthorizationDigest",
+      "id": "mutation-0",
+      "args": {
+        "service": {
+          "id": "svc",
+          "typ": "LinkedDomains",
+          "serviceEndpoint": "https://example.invalid/δ"
+        },
+        "mutation": 0
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "a523075b21f5a86ad538977f047adf4599e7f16ad940347ea4e4133ad186ce1e",
+        "16fb4ec8f03b084c6a71b12751f247d2f07dae91e321c40f0b220868d2c92a73"
+      ]
+    },
+    {
+      "name": "setServiceAuthorizationDigest",
+      "id": "mutation-2",
+      "args": {
+        "service": {
+          "id": "svc",
+          "typ": "LinkedDomains",
+          "serviceEndpoint": "https://example.invalid/δ"
+        },
+        "mutation": 2
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "a523075b21f5a86ad538977f047adf4599e7f16ad940347ea4e4133ad186ce1e",
+        "0ef0124370f5432e5fa241d5fb6ff6be572d14253724f8c1bbe4e8c417d00a29"
+      ]
+    },
+    {
+      "name": "setServiceAuthorizationDigest",
+      "id": "service-id-empty",
+      "args": {
+        "service": {
+          "id": "",
+          "typ": "LinkedDomains",
+          "serviceEndpoint": "https://example.invalid/δ"
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "a523075b21f5a86ad538977f047adf4599e7f16ad940347ea4e4133ad186ce1e",
+        "39a43c9081e3460541680346b342c443efb7395953e525be7a1c253dc3934258"
+      ]
+    },
+    {
+      "name": "setServiceAuthorizationDigest",
+      "id": "service-id-unicode",
+      "args": {
+        "service": {
+          "id": "日本語🗝️",
+          "typ": "LinkedDomains",
+          "serviceEndpoint": "https://example.invalid/δ"
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "a523075b21f5a86ad538977f047adf4599e7f16ad940347ea4e4133ad186ce1e",
+        "758e7c71487804aeb7edb5d31d3bb9122736d33550c447c4e83e4020274b9d62"
+      ]
+    },
+    {
+      "name": "setServiceAuthorizationDigest",
+      "id": "service-typ-empty",
+      "args": {
+        "service": {
+          "id": "svc",
+          "typ": "",
+          "serviceEndpoint": "https://example.invalid/δ"
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "a523075b21f5a86ad538977f047adf4599e7f16ad940347ea4e4133ad186ce1e",
+        "963875aa36580472aa4c767eaeba91bd71b1c114a398959138750bd84a960121"
+      ]
+    },
+    {
+      "name": "setServiceAuthorizationDigest",
+      "id": "service-typ-unicode",
+      "args": {
+        "service": {
+          "id": "svc",
+          "typ": "日本語🗝️",
+          "serviceEndpoint": "https://example.invalid/δ"
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "a523075b21f5a86ad538977f047adf4599e7f16ad940347ea4e4133ad186ce1e",
+        "e8c9f7bbdefb1be0d89e0e383b24806a8340df628b659edf3113aabd22909351"
+      ]
+    },
+    {
+      "name": "setServiceAuthorizationDigest",
+      "id": "service-serviceEndpoint-empty",
+      "args": {
+        "service": {
+          "id": "svc",
+          "typ": "LinkedDomains",
+          "serviceEndpoint": ""
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "a523075b21f5a86ad538977f047adf4599e7f16ad940347ea4e4133ad186ce1e",
+        "2c0be865ba973123844e93a05e10747339789f3a9aa185982d9626d416e8235c"
+      ]
+    },
+    {
+      "name": "setServiceAuthorizationDigest",
+      "id": "service-serviceEndpoint-unicode",
+      "args": {
+        "service": {
+          "id": "svc",
+          "typ": "LinkedDomains",
+          "serviceEndpoint": "日本語🗝️"
+        },
+        "mutation": 1
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "a523075b21f5a86ad538977f047adf4599e7f16ad940347ea4e4133ad186ce1e",
+        "c21d7820bbf7f14cd43973616e528afa3976fdcac4bb38f0b343efa53a02ec2a"
+      ]
+    },
+    {
+      "name": "removeServiceAuthorizationDigest",
+      "id": "base",
+      "args": {
+        "id": "svc"
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "5c311a111e1a25ad65df26a36e33a9b76225b0ce9e45ed0204affd04f351306a",
+        "df3e85c65e83485d23b65ea60103fd9ec2e1d22fb8f2c0b78b1ed08a7365374f"
+      ]
+    },
+    {
+      "name": "removeServiceAuthorizationDigest",
+      "id": "version-one",
+      "args": {
+        "id": "svc"
+      },
+      "version": "1",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "2094e5decfa46cf47450ed02b5c40caacad2b477186698f1c251a972f052f137",
+        "5c311a111e1a25ad65df26a36e33a9b76225b0ce9e45ed0204affd04f351306a",
+        "df3e85c65e83485d23b65ea60103fd9ec2e1d22fb8f2c0b78b1ed08a7365374f"
+      ]
+    },
+    {
+      "name": "removeServiceAuthorizationDigest",
+      "id": "version-max",
+      "args": {
+        "id": "svc"
+      },
+      "version": "18446744073709551615",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "9b7d8a2368104c0dfc56869f5385349dd5de35bb8259f70a40c1d4c627985a0c",
+        "5c311a111e1a25ad65df26a36e33a9b76225b0ce9e45ed0204affd04f351306a",
+        "df3e85c65e83485d23b65ea60103fd9ec2e1d22fb8f2c0b78b1ed08a7365374f"
+      ]
+    },
+    {
+      "name": "removeServiceAuthorizationDigest",
+      "id": "other-address",
+      "args": {
+        "id": "svc"
+      },
+      "version": "0",
+      "addressByte": 17,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "56eb6db0e9c71799c91aeb4b89c232d0486fb046acc95bf202cf33d2d0631365",
+        "5c311a111e1a25ad65df26a36e33a9b76225b0ce9e45ed0204affd04f351306a",
+        "df3e85c65e83485d23b65ea60103fd9ec2e1d22fb8f2c0b78b1ed08a7365374f"
+      ]
+    },
+    {
+      "name": "removeServiceAuthorizationDigest",
+      "id": "id-empty",
+      "args": {
+        "id": ""
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "5c311a111e1a25ad65df26a36e33a9b76225b0ce9e45ed0204affd04f351306a",
+        "7af466f7035f09875c6e3817d3a329bbf7c204d23e6ebfcc9e0052d0dbbd4415"
+      ]
+    },
+    {
+      "name": "removeServiceAuthorizationDigest",
+      "id": "id-unicode",
+      "args": {
+        "id": "日本語🗝️"
+      },
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "5c311a111e1a25ad65df26a36e33a9b76225b0ce9e45ed0204affd04f351306a",
+        "0b8552f6cc2b26ef6406d8b1011596654b29b19356d1342120d31a13b652b053"
+      ]
+    },
+    {
+      "name": "deactivateAuthorizationDigest",
+      "id": "base",
+      "args": {},
+      "version": "0",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "a069dbcc1e71cdd6fbbe7ba9f57ded3cc8c3a13e85fb672c2bff2cefe9353505",
+        "eb91bc3690944351f4b2060a5226bb333748e5f1a5dd6f062514aeb01c79b25f",
+        "0bfa398c1c00f9fd4d5a9b2b89facffc960353a76c51063814756f62fe8dcd70"
+      ]
+    },
+    {
+      "name": "deactivateAuthorizationDigest",
+      "id": "version-one",
+      "args": {},
+      "version": "1",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "2094e5decfa46cf47450ed02b5c40caacad2b477186698f1c251a972f052f137",
+        "eb91bc3690944351f4b2060a5226bb333748e5f1a5dd6f062514aeb01c79b25f",
+        "0bfa398c1c00f9fd4d5a9b2b89facffc960353a76c51063814756f62fe8dcd70"
+      ]
+    },
+    {
+      "name": "deactivateAuthorizationDigest",
+      "id": "version-max",
+      "args": {},
+      "version": "18446744073709551615",
+      "addressByte": 0,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "9b7d8a2368104c0dfc56869f5385349dd5de35bb8259f70a40c1d4c627985a0c",
+        "eb91bc3690944351f4b2060a5226bb333748e5f1a5dd6f062514aeb01c79b25f",
+        "0bfa398c1c00f9fd4d5a9b2b89facffc960353a76c51063814756f62fe8dcd70"
+      ]
+    },
+    {
+      "name": "deactivateAuthorizationDigest",
+      "id": "other-address",
+      "args": {},
+      "version": "0",
+      "addressByte": 17,
+      "resultHex": [
+        "aaca9d61f05f28d648a3294a7b7e7c7f01cbceda926e674a9c67f7ad0c3bb642",
+        "56eb6db0e9c71799c91aeb4b89c232d0486fb046acc95bf202cf33d2d0631365",
+        "eb91bc3690944351f4b2060a5226bb333748e5f1a5dd6f062514aeb01c79b25f",
+        "0bfa398c1c00f9fd4d5a9b2b89facffc960353a76c51063814756f62fe8dcd70"
+      ]
+    }
+  ]
+}

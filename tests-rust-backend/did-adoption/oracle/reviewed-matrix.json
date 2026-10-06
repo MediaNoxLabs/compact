@@ -1,0 +1,3478 @@
+{
+  "adr": "0255",
+  "scope": "Original pinned DID v0.7.0, IR20/ABI50. Test-only constructor-driven native and direct pure acceptance.",
+  "limits": [
+    "Native state progression is not proven ledger history or deployment/network acceptance.",
+    "Only deactivate has Rust recording and the previous strict proof uses explicitly seeded prior state.",
+    "Captured TS public programs are replayed independently; native Rust does not expose its complete query stream.",
+    "Native errors consume their execution context; committed snapshot rollback and witness/error order are compared, not native internal partial state.",
+    "External witness call records are not rolled back by ContractLab.",
+    "Constructor kernel.self is the dummy address; these tests do not resolve real deployed DID identity.",
+    "Finite curve/hash cases are not exhaustive cryptographic-domain or collision-resistance proofs."
+  ],
+  "constructors": [
+    {
+      "scenario": "constructor-only",
+      "outcome": "success",
+      "exact_error": null,
+      "witness_order": [
+        "controller",
+        "recovery",
+        "timestamp"
+      ]
+    },
+    {
+      "scenario": "constructor-controller-failure",
+      "outcome": "error",
+      "exact_error": "controller failure",
+      "witness_order": [
+        "controller"
+      ]
+    },
+    {
+      "scenario": "constructor-recovery-failure",
+      "outcome": "error",
+      "exact_error": "recovery failure",
+      "witness_order": [
+        "controller",
+        "recovery"
+      ]
+    },
+    {
+      "scenario": "constructor-timestamp-failure",
+      "outcome": "error",
+      "exact_error": "timestamp failure",
+      "witness_order": [
+        "controller",
+        "recovery",
+        "timestamp"
+      ]
+    },
+    {
+      "scenario": "constructor-equal-keys",
+      "outcome": "error",
+      "exact_error": "failed assert: New controller key matches recovery authority key",
+      "witness_order": [
+        "controller",
+        "recovery"
+      ]
+    },
+    {
+      "scenario": "constructor-zero-time",
+      "outcome": "success",
+      "exact_error": null,
+      "witness_order": [
+        "controller",
+        "recovery",
+        "timestamp"
+      ]
+    },
+    {
+      "scenario": "constructor-max-time",
+      "outcome": "success",
+      "exact_error": null,
+      "witness_order": [
+        "controller",
+        "recovery",
+        "timestamp"
+      ]
+    },
+    {
+      "scenario": "aliases-services",
+      "outcome": "success",
+      "exact_error": null,
+      "witness_order": [
+        "controller",
+        "recovery",
+        "timestamp"
+      ]
+    },
+    {
+      "scenario": "methods-relations",
+      "outcome": "success",
+      "exact_error": null,
+      "witness_order": [
+        "controller",
+        "recovery",
+        "timestamp"
+      ]
+    },
+    {
+      "scenario": "schnorr",
+      "outcome": "success",
+      "exact_error": null,
+      "witness_order": [
+        "controller",
+        "recovery",
+        "timestamp"
+      ]
+    },
+    {
+      "scenario": "authorization-lifecycle",
+      "outcome": "success",
+      "exact_error": null,
+      "witness_order": [
+        "controller",
+        "recovery",
+        "timestamp"
+      ]
+    }
+  ],
+  "stateful_export_summary": [
+    {
+      "export": "deactivate",
+      "native_success": 1,
+      "native_error": 1,
+      "recorded_capability": true
+    },
+    {
+      "export": "recoverControllerKey",
+      "native_success": 1,
+      "native_error": 3,
+      "recorded_capability": false
+    },
+    {
+      "export": "removeSchnorrJubjubVerificationMethod",
+      "native_success": 1,
+      "native_error": 2,
+      "recorded_capability": false
+    },
+    {
+      "export": "removeService",
+      "native_success": 1,
+      "native_error": 1,
+      "recorded_capability": false
+    },
+    {
+      "export": "removeVerificationMethod",
+      "native_success": 2,
+      "native_error": 10,
+      "recorded_capability": false
+    },
+    {
+      "export": "rotateControllerKey",
+      "native_success": 1,
+      "native_error": 2,
+      "recorded_capability": false
+    },
+    {
+      "export": "setAlsoKnownAs",
+      "native_success": 4,
+      "native_error": 11,
+      "recorded_capability": false
+    },
+    {
+      "export": "setSchnorrJubjubVerificationMethod",
+      "native_success": 2,
+      "native_error": 4,
+      "recorded_capability": false
+    },
+    {
+      "export": "setService",
+      "native_success": 2,
+      "native_error": 3,
+      "recorded_capability": false
+    },
+    {
+      "export": "setVerificationMethod",
+      "native_success": 9,
+      "native_error": 17,
+      "recorded_capability": false
+    },
+    {
+      "export": "setVerificationMethodRelation",
+      "native_success": 20,
+      "native_error": 19,
+      "recorded_capability": false
+    },
+    {
+      "export": "verifySchnorrJubjubDigestSignature",
+      "native_success": 2,
+      "native_error": 3,
+      "recorded_capability": false
+    }
+  ],
+  "lifecycle_cases": [
+    {
+      "case": "aliases-services/alias-insert",
+      "export": "setAlsoKnownAs",
+      "source_line": 613,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 9,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "aliases-services/alias-duplicate",
+      "export": "setAlsoKnownAs",
+      "source_line": 613,
+      "outcome": "error",
+      "exact_error": "failed assert: alsoKnownAs value already exists",
+      "successful_query_prefix": 5,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "aliases-services/alias-undefined",
+      "export": "setAlsoKnownAs",
+      "source_line": 613,
+      "outcome": "error",
+      "exact_error": "failed assert: Set mutation must be Insert or Remove",
+      "successful_query_prefix": 4,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "aliases-services/alias-missing-remove",
+      "export": "setAlsoKnownAs",
+      "source_line": 613,
+      "outcome": "error",
+      "exact_error": "failed assert: alsoKnownAs value does not exist",
+      "successful_query_prefix": 5,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "aliases-services/alias-remove",
+      "export": "setAlsoKnownAs",
+      "source_line": 613,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 9,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "aliases-services/alias-empty",
+      "export": "setAlsoKnownAs",
+      "source_line": 613,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 9,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "aliases-services/service-missing-update",
+      "export": "setService",
+      "source_line": 791,
+      "outcome": "error",
+      "exact_error": "failed assert: Service with a given id does not exist",
+      "successful_query_prefix": 5,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "aliases-services/service-insert",
+      "export": "setService",
+      "source_line": 791,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 9,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "aliases-services/service-duplicate",
+      "export": "setService",
+      "source_line": 791,
+      "outcome": "error",
+      "exact_error": "failed assert: Service with a given id already exists",
+      "successful_query_prefix": 5,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "aliases-services/service-undefined",
+      "export": "setService",
+      "source_line": 791,
+      "outcome": "error",
+      "exact_error": "failed assert: Map mutation must be Insert or Update",
+      "successful_query_prefix": 4,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "aliases-services/service-update",
+      "export": "setService",
+      "source_line": 791,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 10,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "aliases-services/service-missing-remove",
+      "export": "removeService",
+      "source_line": 816,
+      "outcome": "error",
+      "exact_error": "failed assert: Service with a given id does not exist",
+      "successful_query_prefix": 5,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "aliases-services/service-remove",
+      "export": "removeService",
+      "source_line": 816,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 9,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "aliases-services/late-timestamp-failure",
+      "export": "setAlsoKnownAs",
+      "source_line": 613,
+      "outcome": "error",
+      "exact_error": "timestamp failure",
+      "successful_query_prefix": 8,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "aliases-services/after-rollback-insert",
+      "export": "setAlsoKnownAs",
+      "source_line": 613,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 9,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "methods-relations/accept-ed",
+      "export": "setVerificationMethod",
+      "source_line": 638,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 10,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "methods-relations/accept-x",
+      "export": "setVerificationMethod",
+      "source_line": 638,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 10,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "methods-relations/accept-bls1",
+      "export": "setVerificationMethod",
+      "source_line": 638,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 10,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "methods-relations/accept-bls2",
+      "export": "setVerificationMethod",
+      "source_line": 638,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 10,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "methods-relations/accept-p256",
+      "export": "setVerificationMethod",
+      "source_line": 638,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 10,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "methods-relations/accept-secp",
+      "export": "setVerificationMethod",
+      "source_line": 638,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 10,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "methods-relations/reject-type",
+      "export": "setVerificationMethod",
+      "source_line": 638,
+      "outcome": "error",
+      "exact_error": "failed assert: Only JsonWebKey verification methods are supported",
+      "successful_query_prefix": 4,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/reject-rsa",
+      "export": "setVerificationMethod",
+      "source_line": 638,
+      "outcome": "error",
+      "exact_error": "failed assert: Only OKP (Ed25519/X25519/BLS12381G1/BLS12381G2) and EC (P-256/secp256k1) keys are supported",
+      "successful_query_prefix": 4,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/reject-oct",
+      "export": "setVerificationMethod",
+      "source_line": 638,
+      "outcome": "error",
+      "exact_error": "failed assert: Only OKP (Ed25519/X25519/BLS12381G1/BLS12381G2) and EC (P-256/secp256k1) keys are supported",
+      "successful_query_prefix": 4,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/reject-jubjub",
+      "export": "setVerificationMethod",
+      "source_line": 638,
+      "outcome": "error",
+      "exact_error": "failed assert: EC keys must use P-256 or secp256k1; use SchnorrJubjub methods for Jubjub",
+      "successful_query_prefix": 4,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/reject-ec-ed",
+      "export": "setVerificationMethod",
+      "source_line": 638,
+      "outcome": "error",
+      "exact_error": "failed assert: EC keys must use P-256 or secp256k1; use SchnorrJubjub methods for Jubjub",
+      "successful_query_prefix": 4,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/reject-okp-p256",
+      "export": "setVerificationMethod",
+      "source_line": 638,
+      "outcome": "error",
+      "exact_error": "failed assert: OKP keys must use Ed25519, X25519, BLS12381G1, or BLS12381G2",
+      "successful_query_prefix": 4,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/missing-update",
+      "export": "setVerificationMethod",
+      "source_line": 638,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method does not exist",
+      "successful_query_prefix": 5,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/undefined",
+      "export": "setVerificationMethod",
+      "source_line": 638,
+      "outcome": "error",
+      "exact_error": "failed assert: Map mutation must be Insert or Update",
+      "successful_query_prefix": 4,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/duplicate",
+      "export": "setVerificationMethod",
+      "source_line": 638,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method already exists",
+      "successful_query_prefix": 5,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/missing-remove",
+      "export": "removeVerificationMethod",
+      "source_line": 670,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method does not exist",
+      "successful_query_prefix": 5,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-1-insert",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 12,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-1-duplicate",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method relation already exists",
+      "successful_query_prefix": 6,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-1-blocks-removal",
+      "export": "removeVerificationMethod",
+      "source_line": 670,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method still referenced in authenticationRelation",
+      "successful_query_prefix": 6,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-1-blocks-update",
+      "export": "setVerificationMethod",
+      "source_line": 638,
+      "outcome": "error",
+      "exact_error": "failed assert: Existing signing verification relations cannot use X25519 verification methods",
+      "successful_query_prefix": 7,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-1-remove",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 10,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-1-missing-remove",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method relation does not exist",
+      "successful_query_prefix": 6,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-1-x25519-rejected",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "error",
+      "exact_error": "failed assert: Signing verification relations cannot use X25519 verification methods",
+      "successful_query_prefix": 8,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-2-insert",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 12,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-2-duplicate",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method relation already exists",
+      "successful_query_prefix": 6,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-2-blocks-removal",
+      "export": "removeVerificationMethod",
+      "source_line": 670,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method still referenced in assertionMethodRelation",
+      "successful_query_prefix": 7,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-2-blocks-update",
+      "export": "setVerificationMethod",
+      "source_line": 638,
+      "outcome": "error",
+      "exact_error": "failed assert: Existing signing verification relations cannot use X25519 verification methods",
+      "successful_query_prefix": 8,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-2-remove",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 10,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-2-missing-remove",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method relation does not exist",
+      "successful_query_prefix": 6,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-2-x25519-rejected",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "error",
+      "exact_error": "failed assert: Signing verification relations cannot use X25519 verification methods",
+      "successful_query_prefix": 8,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-3-insert",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 12,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-3-duplicate",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method relation already exists",
+      "successful_query_prefix": 6,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-3-blocks-removal",
+      "export": "removeVerificationMethod",
+      "source_line": 670,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method still referenced in keyAgreementRelation",
+      "successful_query_prefix": 8,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-3-blocks-update",
+      "export": "setVerificationMethod",
+      "source_line": 638,
+      "outcome": "error",
+      "exact_error": "failed assert: Existing KeyAgreement relation requires an X25519 verification method",
+      "successful_query_prefix": 6,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-3-remove",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 10,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-3-missing-remove",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method relation does not exist",
+      "successful_query_prefix": 6,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-4-insert",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 12,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-4-duplicate",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method relation already exists",
+      "successful_query_prefix": 6,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-4-blocks-removal",
+      "export": "removeVerificationMethod",
+      "source_line": 670,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method still referenced in capabilityInvocationRelation",
+      "successful_query_prefix": 9,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-4-blocks-update",
+      "export": "setVerificationMethod",
+      "source_line": 638,
+      "outcome": "error",
+      "exact_error": "failed assert: Existing signing verification relations cannot use X25519 verification methods",
+      "successful_query_prefix": 9,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-4-remove",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 10,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-4-missing-remove",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method relation does not exist",
+      "successful_query_prefix": 6,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-4-x25519-rejected",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "error",
+      "exact_error": "failed assert: Signing verification relations cannot use X25519 verification methods",
+      "successful_query_prefix": 8,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-5-insert",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 12,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-5-duplicate",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method relation already exists",
+      "successful_query_prefix": 6,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-5-blocks-removal",
+      "export": "removeVerificationMethod",
+      "source_line": 670,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method still referenced in capabilityDelegationRelation",
+      "successful_query_prefix": 10,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-5-blocks-update",
+      "export": "setVerificationMethod",
+      "source_line": 638,
+      "outcome": "error",
+      "exact_error": "failed assert: Existing signing verification relations cannot use X25519 verification methods",
+      "successful_query_prefix": 10,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-5-remove",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 10,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-5-missing-remove",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method relation does not exist",
+      "successful_query_prefix": 6,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/relation-5-x25519-rejected",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "error",
+      "exact_error": "failed assert: Signing verification relations cannot use X25519 verification methods",
+      "successful_query_prefix": 8,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/key-agreement-ed-rejected",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "error",
+      "exact_error": "failed assert: KeyAgreement requires an X25519 verification method",
+      "successful_query_prefix": 8,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/undefined-relation",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification relation must be defined",
+      "successful_query_prefix": 5,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/undefined-relation-missing-target-first",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method does not exist",
+      "successful_query_prefix": 6,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/undefined-relation-mutation-first",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "error",
+      "exact_error": "failed assert: Set mutation must be Insert or Remove",
+      "successful_query_prefix": 4,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/generic-update",
+      "export": "setVerificationMethod",
+      "source_line": 638,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 15,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "methods-relations/generic-remove",
+      "export": "removeVerificationMethod",
+      "source_line": 670,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 14,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "methods-relations/ordered-guards-method",
+      "export": "setVerificationMethod",
+      "source_line": 638,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 10,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "methods-relations/ordered-1-insert",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 12,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "methods-relations/ordered-2-insert",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 12,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "methods-relations/ordered-4-insert",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 12,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "methods-relations/ordered-5-insert",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 12,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "methods-relations/ordered-1-refusal",
+      "export": "removeVerificationMethod",
+      "source_line": 670,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method still referenced in authenticationRelation",
+      "successful_query_prefix": 6,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/ordered-1-remove",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 10,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "methods-relations/ordered-2-refusal",
+      "export": "removeVerificationMethod",
+      "source_line": 670,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method still referenced in assertionMethodRelation",
+      "successful_query_prefix": 7,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/ordered-2-remove",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 10,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "methods-relations/ordered-4-refusal",
+      "export": "removeVerificationMethod",
+      "source_line": 670,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method still referenced in capabilityInvocationRelation",
+      "successful_query_prefix": 9,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/ordered-4-remove",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 10,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "methods-relations/ordered-5-refusal",
+      "export": "removeVerificationMethod",
+      "source_line": 670,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method still referenced in capabilityDelegationRelation",
+      "successful_query_prefix": 10,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/ordered-5-remove",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 10,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "methods-relations/ordered-final-remove",
+      "export": "removeVerificationMethod",
+      "source_line": 670,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 14,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "methods-relations/mutation-before-invalid-type",
+      "export": "setVerificationMethod",
+      "source_line": 638,
+      "outcome": "error",
+      "exact_error": "failed assert: Map mutation must be Insert or Update",
+      "successful_query_prefix": 4,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "methods-relations/invalid-type-before-missing-update",
+      "export": "setVerificationMethod",
+      "source_line": 638,
+      "outcome": "error",
+      "exact_error": "failed assert: Only JsonWebKey verification methods are supported",
+      "successful_query_prefix": 4,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "schnorr/missing-read",
+      "export": "verifySchnorrJubjubDigestSignature",
+      "source_line": 742,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method does not exist",
+      "successful_query_prefix": 2,
+      "witness_order": [],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "schnorr/missing-update",
+      "export": "setSchnorrJubjubVerificationMethod",
+      "source_line": 688,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method does not exist",
+      "successful_query_prefix": 5,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "schnorr/undefined",
+      "export": "setSchnorrJubjubVerificationMethod",
+      "source_line": 688,
+      "outcome": "error",
+      "exact_error": "failed assert: Map mutation must be Insert or Update",
+      "successful_query_prefix": 4,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "schnorr/insert",
+      "export": "setSchnorrJubjubVerificationMethod",
+      "source_line": 688,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 10,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "schnorr/duplicate",
+      "export": "setSchnorrJubjubVerificationMethod",
+      "source_line": 688,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method already exists",
+      "successful_query_prefix": 6,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "schnorr/cross-map-duplicate",
+      "export": "setVerificationMethod",
+      "source_line": 638,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method already exists",
+      "successful_query_prefix": 6,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "schnorr/read-valid",
+      "export": "verifySchnorrJubjubDigestSignature",
+      "source_line": 742,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 3,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "schnorr/read-wrong-key",
+      "export": "verifySchnorrJubjubDigestSignature",
+      "source_line": 742,
+      "outcome": "error",
+      "exact_error": "failed assert: Invalid Jubjub Schnorr signature",
+      "successful_query_prefix": 3,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "schnorr/relation-insert",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 12,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "schnorr/referenced-removal",
+      "export": "removeSchnorrJubjubVerificationMethod",
+      "source_line": 718,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method still referenced in authenticationRelation",
+      "successful_query_prefix": 6,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "schnorr/key-agreement-needs-generic",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "error",
+      "exact_error": "failed assert: KeyAgreement requires an agreement verification method",
+      "successful_query_prefix": 8,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "schnorr/update",
+      "export": "setSchnorrJubjubVerificationMethod",
+      "source_line": 688,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 10,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "schnorr/read-updated",
+      "export": "verifySchnorrJubjubDigestSignature",
+      "source_line": 742,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 3,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "schnorr/relation-remove",
+      "export": "setVerificationMethodRelation",
+      "source_line": 754,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 11,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "schnorr/remove",
+      "export": "removeSchnorrJubjubVerificationMethod",
+      "source_line": 718,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 14,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "schnorr/missing-remove",
+      "export": "removeSchnorrJubjubVerificationMethod",
+      "source_line": 718,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method does not exist",
+      "successful_query_prefix": 5,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "schnorr/generic-insert",
+      "export": "setVerificationMethod",
+      "source_line": 638,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 10,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "schnorr/reverse-cross-map-duplicate",
+      "export": "setSchnorrJubjubVerificationMethod",
+      "source_line": 688,
+      "outcome": "error",
+      "exact_error": "failed assert: Verification method already exists",
+      "successful_query_prefix": 5,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "authorization-lifecycle/stale-before-signature",
+      "export": "setAlsoKnownAs",
+      "source_line": 613,
+      "outcome": "error",
+      "exact_error": "failed assert: Controller authorization version is stale",
+      "successful_query_prefix": 2,
+      "witness_order": [],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "authorization-lifecycle/bad-signature",
+      "export": "setAlsoKnownAs",
+      "source_line": 613,
+      "outcome": "error",
+      "exact_error": "failed assert: Invalid Jubjub Schnorr signature",
+      "successful_query_prefix": 3,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "authorization-lifecycle/reduction-error",
+      "export": "setAlsoKnownAs",
+      "source_line": 613,
+      "outcome": "error",
+      "exact_error": "reduction failure",
+      "successful_query_prefix": 3,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "authorization-lifecycle/same-controller",
+      "export": "rotateControllerKey",
+      "source_line": 577,
+      "outcome": "error",
+      "exact_error": "failed assert: New controller key matches current controller key",
+      "successful_query_prefix": 6,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "authorization-lifecycle/controller-equals-recovery",
+      "export": "rotateControllerKey",
+      "source_line": 577,
+      "outcome": "error",
+      "exact_error": "failed assert: New controller key matches recovery authority key",
+      "successful_query_prefix": 7,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "authorization-lifecycle/rotate",
+      "export": "rotateControllerKey",
+      "source_line": 577,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 10,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "authorization-lifecycle/old-controller-rejected",
+      "export": "setAlsoKnownAs",
+      "source_line": 613,
+      "outcome": "error",
+      "exact_error": "failed assert: Invalid Jubjub Schnorr signature",
+      "successful_query_prefix": 3,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "authorization-lifecycle/wrong-recovery-authority",
+      "export": "recoverControllerKey",
+      "source_line": 595,
+      "outcome": "error",
+      "exact_error": "failed assert: Invalid Jubjub Schnorr signature",
+      "successful_query_prefix": 3,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "authorization-lifecycle/recovery-same-current",
+      "export": "recoverControllerKey",
+      "source_line": 595,
+      "outcome": "error",
+      "exact_error": "failed assert: New controller key matches current controller key",
+      "successful_query_prefix": 6,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "authorization-lifecycle/recovery-equals-authority",
+      "export": "recoverControllerKey",
+      "source_line": 595,
+      "outcome": "error",
+      "exact_error": "failed assert: New controller key matches recovery authority key",
+      "successful_query_prefix": 7,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "authorization-lifecycle/recover",
+      "export": "recoverControllerKey",
+      "source_line": 595,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 10,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "authorization-lifecycle/deactivate",
+      "export": "deactivate",
+      "source_line": 833,
+      "outcome": "success",
+      "exact_error": null,
+      "successful_query_prefix": 9,
+      "witness_order": [
+        "reduction",
+        "timestamp"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact full state",
+        "private state",
+        "private transcript payload/order",
+        "query-summed gas",
+        "witness inputs/order",
+        "TS full program and per-query replay state/effects",
+        "source counter/key/time invariants"
+      ]
+    },
+    {
+      "case": "authorization-lifecycle/deactivate-again",
+      "export": "deactivate",
+      "source_line": 833,
+      "outcome": "error",
+      "exact_error": "failed assert: DID is already inactive",
+      "successful_query_prefix": 4,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "authorization-lifecycle/inactive-write",
+      "export": "setAlsoKnownAs",
+      "source_line": 613,
+      "outcome": "error",
+      "exact_error": "failed assert: Contract is not active",
+      "successful_query_prefix": 4,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "authorization-lifecycle/inactive-stale-first",
+      "export": "setAlsoKnownAs",
+      "source_line": 613,
+      "outcome": "error",
+      "exact_error": "failed assert: Controller authorization version is stale",
+      "successful_query_prefix": 2,
+      "witness_order": [],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "authorization-lifecycle/inactive-invalid-signature-first",
+      "export": "setAlsoKnownAs",
+      "source_line": 613,
+      "outcome": "error",
+      "exact_error": "failed assert: Invalid Jubjub Schnorr signature",
+      "successful_query_prefix": 3,
+      "witness_order": [
+        "reduction"
+      ],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    },
+    {
+      "case": "authorization-lifecycle/inactive-read-before-missing",
+      "export": "verifySchnorrJubjubDigestSignature",
+      "source_line": 742,
+      "outcome": "error",
+      "exact_error": "failed assert: Contract is not active",
+      "successful_query_prefix": 1,
+      "witness_order": [],
+      "state_start": "prior accepted call in constructor-driven scenario",
+      "asserted_dimensions": [
+        "exact source error",
+        "native committed public/private rollback",
+        "witness inputs/order",
+        "TS prefix replay and per-query gas"
+      ]
+    }
+  ],
+  "pure_export_summary": [
+    {
+      "export": "controllerAuthorizationDigest",
+      "direct_cases": 6
+    },
+    {
+      "export": "deactivateAuthorizationDigest",
+      "direct_cases": 4
+    },
+    {
+      "export": "recoverControllerKeyAuthorizationDigest",
+      "direct_cases": 5
+    },
+    {
+      "export": "removeSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "direct_cases": 6
+    },
+    {
+      "export": "removeServiceAuthorizationDigest",
+      "direct_cases": 6
+    },
+    {
+      "export": "removeVerificationMethodAuthorizationDigest",
+      "direct_cases": 6
+    },
+    {
+      "export": "rotateControllerKeyAuthorizationDigest",
+      "direct_cases": 5
+    },
+    {
+      "export": "setAlsoKnownAsAuthorizationDigest",
+      "direct_cases": 8
+    },
+    {
+      "export": "setSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "direct_cases": 9
+    },
+    {
+      "export": "setServiceAuthorizationDigest",
+      "direct_cases": 12
+    },
+    {
+      "export": "setVerificationMethodAuthorizationDigest",
+      "direct_cases": 22
+    },
+    {
+      "export": "setVerificationMethodRelationAuthorizationDigest",
+      "direct_cases": 13
+    }
+  ],
+  "pure_cases": [
+    {
+      "export": "controllerAuthorizationDigest",
+      "case": "base",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "controllerAuthorizationDigest",
+      "case": "version-one",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "controllerAuthorizationDigest",
+      "case": "version-max",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "controllerAuthorizationDigest",
+      "case": "other-address",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "controllerAuthorizationDigest",
+      "case": "operation-changed",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "controllerAuthorizationDigest",
+      "case": "args-changed",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "rotateControllerKeyAuthorizationDigest",
+      "case": "base",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "rotateControllerKeyAuthorizationDigest",
+      "case": "version-one",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "rotateControllerKeyAuthorizationDigest",
+      "case": "version-max",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "rotateControllerKeyAuthorizationDigest",
+      "case": "other-address",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "rotateControllerKeyAuthorizationDigest",
+      "case": "other-key",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "recoverControllerKeyAuthorizationDigest",
+      "case": "base",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "recoverControllerKeyAuthorizationDigest",
+      "case": "version-one",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "recoverControllerKeyAuthorizationDigest",
+      "case": "version-max",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "recoverControllerKeyAuthorizationDigest",
+      "case": "other-address",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "recoverControllerKeyAuthorizationDigest",
+      "case": "other-key",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setAlsoKnownAsAuthorizationDigest",
+      "case": "base",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setAlsoKnownAsAuthorizationDigest",
+      "case": "version-one",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setAlsoKnownAsAuthorizationDigest",
+      "case": "version-max",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setAlsoKnownAsAuthorizationDigest",
+      "case": "other-address",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setAlsoKnownAsAuthorizationDigest",
+      "case": "mutation-0",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setAlsoKnownAsAuthorizationDigest",
+      "case": "mutation-2",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setAlsoKnownAsAuthorizationDigest",
+      "case": "value-empty",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setAlsoKnownAsAuthorizationDigest",
+      "case": "value-unicode",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodAuthorizationDigest",
+      "case": "base",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodAuthorizationDigest",
+      "case": "version-one",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodAuthorizationDigest",
+      "case": "version-max",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodAuthorizationDigest",
+      "case": "other-address",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodAuthorizationDigest",
+      "case": "mutation-0",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodAuthorizationDigest",
+      "case": "mutation-2",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodAuthorizationDigest",
+      "case": "method-id-empty",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodAuthorizationDigest",
+      "case": "method-id-unicode",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodAuthorizationDigest",
+      "case": "method-type-undefined",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodAuthorizationDigest",
+      "case": "jwk-kty-0",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodAuthorizationDigest",
+      "case": "jwk-kty-1",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodAuthorizationDigest",
+      "case": "jwk-kty-2",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodAuthorizationDigest",
+      "case": "jwk-crv-1",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodAuthorizationDigest",
+      "case": "jwk-crv-2",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodAuthorizationDigest",
+      "case": "jwk-crv-3",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodAuthorizationDigest",
+      "case": "jwk-crv-4",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodAuthorizationDigest",
+      "case": "jwk-crv-5",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodAuthorizationDigest",
+      "case": "jwk-crv-6",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodAuthorizationDigest",
+      "case": "jwk-x-",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodAuthorizationDigest",
+      "case": "jwk-x-\u65e5\u672c\u8a9e\ud83d\udddd\ufe0f",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodAuthorizationDigest",
+      "case": "jwk-y-",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodAuthorizationDigest",
+      "case": "jwk-y-\u65e5\u672c\u8a9e\ud83d\udddd\ufe0f",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "removeVerificationMethodAuthorizationDigest",
+      "case": "base",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "removeVerificationMethodAuthorizationDigest",
+      "case": "version-one",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "removeVerificationMethodAuthorizationDigest",
+      "case": "version-max",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "removeVerificationMethodAuthorizationDigest",
+      "case": "other-address",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "removeVerificationMethodAuthorizationDigest",
+      "case": "id-empty",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "removeVerificationMethodAuthorizationDigest",
+      "case": "id-unicode",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "case": "base",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "case": "version-one",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "case": "version-max",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "case": "other-address",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "case": "mutation-0",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "case": "mutation-2",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "case": "method-id-empty",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "case": "method-id-unicode",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "case": "method-other-key",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "removeSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "case": "base",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "removeSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "case": "version-one",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "removeSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "case": "version-max",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "removeSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "case": "other-address",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "removeSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "case": "id-empty",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "removeSchnorrJubjubVerificationMethodAuthorizationDigest",
+      "case": "id-unicode",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodRelationAuthorizationDigest",
+      "case": "base",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodRelationAuthorizationDigest",
+      "case": "version-one",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodRelationAuthorizationDigest",
+      "case": "version-max",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodRelationAuthorizationDigest",
+      "case": "other-address",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodRelationAuthorizationDigest",
+      "case": "mutation-0",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodRelationAuthorizationDigest",
+      "case": "mutation-2",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodRelationAuthorizationDigest",
+      "case": "id-empty",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodRelationAuthorizationDigest",
+      "case": "id-unicode",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodRelationAuthorizationDigest",
+      "case": "relation-0",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodRelationAuthorizationDigest",
+      "case": "relation-2",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodRelationAuthorizationDigest",
+      "case": "relation-3",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodRelationAuthorizationDigest",
+      "case": "relation-4",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setVerificationMethodRelationAuthorizationDigest",
+      "case": "relation-5",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setServiceAuthorizationDigest",
+      "case": "base",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setServiceAuthorizationDigest",
+      "case": "version-one",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setServiceAuthorizationDigest",
+      "case": "version-max",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setServiceAuthorizationDigest",
+      "case": "other-address",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setServiceAuthorizationDigest",
+      "case": "mutation-0",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setServiceAuthorizationDigest",
+      "case": "mutation-2",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setServiceAuthorizationDigest",
+      "case": "service-id-empty",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setServiceAuthorizationDigest",
+      "case": "service-id-unicode",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setServiceAuthorizationDigest",
+      "case": "service-typ-empty",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setServiceAuthorizationDigest",
+      "case": "service-typ-unicode",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setServiceAuthorizationDigest",
+      "case": "service-serviceEndpoint-empty",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "setServiceAuthorizationDigest",
+      "case": "service-serviceEndpoint-unicode",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "removeServiceAuthorizationDigest",
+      "case": "base",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "removeServiceAuthorizationDigest",
+      "case": "version-one",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "removeServiceAuthorizationDigest",
+      "case": "version-max",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "removeServiceAuthorizationDigest",
+      "case": "other-address",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "removeServiceAuthorizationDigest",
+      "case": "id-empty",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "removeServiceAuthorizationDigest",
+      "case": "id-unicode",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "deactivateAuthorizationDigest",
+      "case": "base",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "deactivateAuthorizationDigest",
+      "case": "version-one",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "deactivateAuthorizationDigest",
+      "case": "version-max",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    },
+    {
+      "export": "deactivateAuthorizationDigest",
+      "case": "other-address",
+      "asserted_dimensions": [
+        "exact 4-Field independent TS vector",
+        "sampled argument/domain sensitivity"
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "tests-rust-backend/did-adoption/oracle/capture-lifecycle.mjs",
+      "sha256": "3931c8012e92ba46c8cebe5dbce8ff9106441d74e1285ff804f195150ddf268d"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/oracle/capture-pure.mjs",
+      "sha256": "202f0eeab673a1e96938b7a02fc71ce2e040ac015bdfaaa9c419d2e99a6b26d9"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/oracle/lifecycle-cases.mjs",
+      "sha256": "50c22a739e6b6cf69c875cd205476223d9b529a971b917a77241eace9ceafa9d"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/oracle/lifecycle.json",
+      "sha256": "054d350b66c28b3b46b3f391db715c46cdee7f428c6cd7c6ebb9748a592bc6cc"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/oracle/pure.json",
+      "sha256": "bd9bdaff595260d43cf9a96ecafe329b05ca6046e0db75fcd65a5940530d1b0a"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/support/codec.rs",
+      "sha256": "91695087c80d17f8d0f18968655eef31820044a8577ba0a5671e9e45ba0546ba"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/support/lifecycle_calls.rs",
+      "sha256": "b4a38835bfd9230aad0440f628190cb1c48de1b408892686efadf03a2fd50b19"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/support/lifecycle_witness.rs",
+      "sha256": "4f2d31d790096836439efce442f61f0b05952edc1daf0598a7d2b09373f92f69"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/tests/lifecycle.rs",
+      "sha256": "01cd34fab5ddf9f9ee18001b30ad954947f3eb9f755a299aed39bd7431f806ff"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/tests/pure_apis.rs",
+      "sha256": "60bcdde7de6565d312823824a03f1ee78518df673fe0b26605d3cd45256e80c6"
+    }
+  ]
+}

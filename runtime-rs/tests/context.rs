@@ -35,6 +35,7 @@ fn circuit_context_can_be_constructed() {
         current_zswap_local_state: ZswapLocalState::default(),
         cost_model: onchain_vm::cost_model::INITIAL_COST_MODEL,
         gas_limit: None,
+        call_proof_data_trace: CallProofDataTrace::new(),
     };
     let _ = ctx.cost_model;
 }
@@ -62,6 +63,7 @@ fn circuit_results_can_be_constructed() {
         current_zswap_local_state: ZswapLocalState::default(),
         cost_model: INITIAL_COST_MODEL,
         gas_limit: None,
+        call_proof_data_trace: CallProofDataTrace::new(),
     };
     let _: CircuitResults<(), ()> = CircuitResults {
         result: (),

@@ -111,7 +111,7 @@ pub use midnight_compact_runtime_macros::witnesses;
 
 // Encoding / alignment / value bus.
 pub use midnight_base_crypto::fab::{
-    Aligned, AlignedValue, Alignment, AlignmentAtom, Value, ValueAtom,
+    Aligned, AlignedValue, Alignment, AlignmentAtom, DynAligned, Value, ValueAtom,
 };
 
 // Field arithmetic + proof-system primitives.
@@ -209,6 +209,13 @@ pub use context::{CircuitContext, ConstructorContext};
 mod results;
 pub use results::{CircuitResults, ConstructorResult};
 
+pub mod proof_data;
+pub use proof_data::{
+    aligned_value_from_parts, gather_ops_to_public_transcript, proof_aligned_array,
+    proof_aligned_maybe_merkle_path, proof_aligned_merkle_path, proof_aligned_value, CallProofData,
+    CallProofDataTrace, PartialProofData, PrivateTranscriptOutputs, ProofData, SingleCallProof,
+};
+
 mod witness;
 pub use witness::{NoWitnesses, WitnessContext};
 
@@ -268,7 +275,9 @@ pub use builders::{
 };
 
 pub mod query;
-pub use query::{query_for_read, query_for_verify};
+pub use query::{
+    query_for_read, query_for_verify, recorded_query_for_read, recorded_query_for_verify,
+};
 
 pub mod op_builder;
 pub use op_builder::{OpProgramGather, OpProgramVerify};

@@ -19,8 +19,8 @@
 // `ConstructorContext<PS>` from @midnight-ntwrk/compact-runtime.
 
 use crate::{
-    ChargedState, ContractAddress, CostModel, DefaultDB, QueryContext, RunningCost,
-    ZswapLocalState, DB, INITIAL_COST_MODEL,
+    CallProofData, CallProofDataTrace, ChargedState, ContractAddress, CostModel, DefaultDB,
+    PartialProofData, QueryContext, RunningCost, ZswapLocalState, DB, INITIAL_COST_MODEL,
 };
 
 /// Context passed into each impure / provable circuit invocation.
@@ -34,17 +34,39 @@ where
     pub current_zswap_local_state: ZswapLocalState<D>,
     pub cost_model: CostModel,
     pub gas_limit: Option<RunningCost>,
+    pub call_proof_data_trace: CallProofDataTrace<D>,
 }
 
 impl<PS, D> CircuitContext<PS, D>
 where
     D: DB,
 {
-    /// Build a fresh `CircuitContext` from a contract state and a
-    /// private state. Mirrors the TS `createCircuitContext` helper:
-    /// instantiates a `QueryContext` against the dummy contract
-    /// address, an empty `ZswapLocalState`, the default
-    /// `INITIAL_COST_MODEL`, and no gas limit.
+    /// Finalize and append one circuit-call proof-data record to this context.
+    /// Generated wrappers call this after they have applied all ledger effects
+    /// and encoded the circuit output.
+    pub fn with_finalized_call_proof_data(
+        mut self,
+        circuit_id: impl Into<String>,
+        initial_query_context: QueryContext<D>,
+        partial_proof_data: PartialProofData<D>,
+        output: crate::AlignedValue,
+    ) -> Self {
+        let contract_address = initial_query_context.address;
+        let final_query_context = self.current_query_context.clone();
+        self.call_proof_data_trace.push(CallProofData::new(
+            circuit_id,
+            contract_address,
+            initial_query_context,
+            final_query_context,
+            partial_proof_data.finalize(output),
+        ));
+        self
+    }
+
+    /// Build a fresh `CircuitContext` from a contract state and a private
+    /// state. Mirrors the TS `createCircuitContext` helper: instantiates a
+    /// `QueryContext` against the dummy contract address, an empty
+    /// `ZswapLocalState`, the default `INITIAL_COST_MODEL`, and no gas limit.
     pub fn new(state: ChargedState<D>, private_state: PS) -> Self {
         Self {
             current_private_state: private_state,
@@ -52,6 +74,7 @@ where
             current_zswap_local_state: ZswapLocalState::default(),
             cost_model: INITIAL_COST_MODEL.clone(),
             gas_limit: None,
+            call_proof_data_trace: CallProofDataTrace::new(),
         }
     }
 }

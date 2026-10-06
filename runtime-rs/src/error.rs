@@ -33,6 +33,8 @@ pub enum CompactError {
     /// The VM rejected the assembled op program. Carries a debug-format
     /// rendering of the upstream `TranscriptRejected<D>`.
     TranscriptRejected(String),
+    /// Proof-data extraction or finalization failed.
+    ProofData(String),
 }
 
 impl fmt::Display for CompactError {
@@ -40,6 +42,7 @@ impl fmt::Display for CompactError {
         match self {
             Self::AssertionFailed(msg) => write!(f, "assertion failed: {msg}"),
             Self::TranscriptRejected(msg) => write!(f, "transcript rejected: {msg}"),
+            Self::ProofData(msg) => write!(f, "proof data error: {msg}"),
         }
     }
 }

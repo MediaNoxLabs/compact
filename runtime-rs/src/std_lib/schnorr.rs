@@ -60,6 +60,27 @@ pub struct SchnorrSignature {
     pub response: Fr,
 }
 
+impl crate::Aligned for SchnorrSignature {
+    fn alignment() -> crate::Alignment {
+        crate::Alignment::concat([
+            &<crate::JubjubPoint as crate::Aligned>::alignment(),
+            &<crate::Fr as crate::Aligned>::alignment(),
+        ])
+    }
+}
+
+impl From<SchnorrSignature> for crate::Value {
+    fn from(sig: SchnorrSignature) -> crate::Value {
+        crate::Value::concat(
+            [
+                crate::Value::from(sig.announcement),
+                crate::Value::from(sig.response),
+            ]
+            .iter(),
+        )
+    }
+}
+
 /// Hash `(ann_x, ann_y, pk_x, pk_y, ...msg)` with the Poseidon-based
 /// transient hash and reduce modulo the Jubjub scalar field order.
 fn compute_challenge(ann_x: Fr, ann_y: Fr, pk_x: Fr, pk_y: Fr, msg: &[Fr]) -> EmbeddedFr {

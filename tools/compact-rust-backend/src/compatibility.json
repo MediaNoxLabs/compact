@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "runtime_abi": 50,
+  "ir_schema": 20,
+  "capability_schema": 3,
+  "ledger_version": "ledger-8.0.3",
+  "rust_version": "1.88",
+  "runtime_package": "midnight-compact-runtime",
+  "runtime_version": "0.1.0",
+  "macros_package": "midnight-compact-runtime-macros",
+  "macros_version": "0.1.0",
+  "ledger_dependencies": {
+    "midnight-base-crypto": "=1.0.0",
+    "midnight-coin-structure": "=2.0.1",
+    "midnight-onchain-runtime": "=3.0.0",
+    "midnight-onchain-state": "=3.0.0",
+    "midnight-onchain-vm": "=3.0.0",
+    "midnight-serialize": "=1.0.0",
+    "midnight-storage": "=2.0.1",
+    "midnight-storage-core": "=1.1.0",
+    "midnight-transient-crypto": "=2.0.1",
+    "midnight-circuits": "=6.0.0",
+    "midnight-curves": "=0.2.0",
+    "midnight-proofs": "=0.7.0",
+    "midnight-zk-stdlib": "=1.0.0",
+    "midnight-zswap": "=8.0.3",
+    "midnight-ledger": "=8.0.3"
+  }
+}

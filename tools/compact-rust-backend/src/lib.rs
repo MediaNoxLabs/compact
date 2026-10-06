@@ -3,6 +3,7 @@
 mod capabilities;
 mod circuit_analysis;
 mod coin_shapes;
+pub mod compatibility;
 pub mod ir;
 pub use capabilities::{
     RUST_CAPABILITY_SCHEMA_VERSION, RecordingStatus, RustCapabilityReport, RustCircuitCapability,

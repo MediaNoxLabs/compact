@@ -23,7 +23,7 @@ description = "Native Compact semantics on Midnight ledger primitives"
 repository = "https://github.com/MediaNoxLabs/compact"
 homepage = "https://github.com/MediaNoxLabs/compact"
 readme = "README.md"
-include = ["Cargo.toml", "LICENSE", "README.md", "src/**", "tests/**"]
+include = ["Cargo.toml", "LICENSE", "README.md", "compatibility.json", "src/**", "tests/**"]
 
 [features]
 ledger-transaction = ["dep:midnight-ledger", "dep:rand"]

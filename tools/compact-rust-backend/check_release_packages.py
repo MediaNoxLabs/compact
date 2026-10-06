@@ -57,11 +57,41 @@ def candidate_tag(tag: str) -> None:
         raise RuntimeError(f"{tag}: tag does not point at HEAD")
 
 
+def compatibility_record() -> dict[str, object]:
+    """Validate source declarations, without claiming publication or attestation."""
+    record = json.loads((ROOT / "runtime-rs/compatibility.json").read_text())
+    expected = json.loads((ROOT / "tools/compact-rust-backend/src/compatibility.json").read_text())
+    if record != expected:
+        raise RuntimeError("runtime compatibility record differs from compiler requirements")
+    for directory, prefix in (("runtime-rs", "runtime"), ("runtime-rs-macros", "macros")):
+        package = tomllib.loads((ROOT / directory / "Cargo.toml").read_text())["package"]
+        for field, wanted in (("name", record[f"{prefix}_package"]),
+                              ("version", record[f"{prefix}_version"]),
+                              ("rust-version", record["rust_version"]), ("edition", "2024")):
+            if package.get(field) != wanted:
+                raise RuntimeError(f"{directory}: incompatible package {field}")
+    dependencies = tomllib.loads((ROOT / "runtime-rs/Cargo.toml").read_text())["dependencies"]
+    expected_dependencies = dict(record["ledger_dependencies"])
+    expected_dependencies[record["macros_package"]] = "=" + record["macros_version"]
+    for name, version in expected_dependencies.items():
+        dependency = dependencies.get(name)
+        actual = dependency.get("version") if isinstance(dependency, dict) else dependency
+        if actual != version:
+            raise RuntimeError(f"runtime compatibility dependency mismatch: {name}")
+    return record
+
+
+def package_directory() -> Path:
+    # Cargo owns target resolution, including CARGO_TARGET_DIR and Cargo config.
+    metadata = json.loads(output("cargo", "metadata", "--no-deps", "--format-version", "1"))
+    return Path(metadata["target_directory"]) / "package"
+
+
 def inspect_package(name: str) -> dict[str, object]:
     source_dir = ROOT / ("runtime-rs-macros" if name.endswith("-macros") else "runtime-rs")
     manifest = tomllib.loads((source_dir / "Cargo.toml").read_text())
     version = manifest["package"]["version"]
-    archive = ROOT / "target" / "package" / f"{name}-{version}.crate"
+    archive = package_directory() / f"{name}-{version}.crate"
     prefix = f"{name}-{version}/"
     with tarfile.open(archive, "r:gz") as package:
         members = package.getnames()
@@ -77,13 +107,20 @@ def inspect_package(name: str) -> dict[str, object]:
             dependency = tomllib.loads(packaged_manifest.read().decode())["dependencies"][
                 "midnight-compact-runtime-macros"
             ]
-            if dependency.get("version") != "=0.1.0" or "path" in dependency:
+            macro_version = tomllib.loads((MACROS / "Cargo.toml").read_text())["package"]["version"]
+            if dependency.get("version") != f"={macro_version}" or "path" in dependency:
                 raise RuntimeError(f"{archive}: macro dependency is not publishable")
-    print(f"checked {archive.relative_to(ROOT)} ({len(members)} entries)", flush=True)
+            if prefix + "compatibility.json" not in members:
+                raise RuntimeError(f"{archive}: missing compatibility.json")
+            record_file = package.extractfile(prefix + "compatibility.json")
+            if record_file is None or json.loads(record_file.read()) != compatibility_record():
+                raise RuntimeError(f"{archive}: compatibility record differs from source")
+    archive_label = archive.relative_to(ROOT).as_posix() if archive.is_relative_to(ROOT) else str(archive)
+    print(f"checked {archive_label} ({len(members)} entries)", flush=True)
     return {
         "name": name,
         "version": version,
-        "archive": archive.relative_to(ROOT).as_posix(),
+        "archive": archive_label,
         "sha256": digest(archive),
         "bytes": archive.stat().st_size,
         "entries": len(members),
@@ -105,6 +142,7 @@ def manifest(packages: list[dict[str, object]], tag: str | None) -> dict[str, ob
         },
         "locks": {path: digest(ROOT / path) for path in LOCKS},
         "packages": packages,
+        "compatibility": compatibility_record(),
         "verification": {
             "runtime_macro_patch": "local source patch for unpacked Cargo verification",
             "registry_publication": False,
@@ -160,6 +198,7 @@ def main() -> None:
     if args.candidate_tag:
         candidate_tag(args.candidate_tag)
 
+    compatibility_record()
     run("package", "-p", PACKAGES[0], "--allow-dirty")
     packages = [inspect_package(PACKAGES[0])]
 

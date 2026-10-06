@@ -25,7 +25,7 @@ use std::path::{Component, Path, PathBuf};
 use std::process::{self, Command};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use compact_rust_backend::{ir::Contract, render_with_proof_capabilities};
+use compact_rust_backend::{compatibility, ir::Contract, render_with_proof_capabilities};
 use fs2::FileExt;
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
@@ -199,6 +199,7 @@ fn crate_manifest(source: &Path, runtime: RuntimeDependency<'_>) -> Result<Strin
     package["name"] = value(package_name(source));
     package["version"] = value("0.1.0");
     package["edition"] = value("2024");
+    package["rust-version"] = value(compatibility::RUST_VERSION);
     package["publish"] = value(false);
     package["description"] = value(format!(
         "Rust contract generated from {}",
@@ -250,20 +251,6 @@ fn crate_manifest(source: &Path, runtime: RuntimeDependency<'_>) -> Result<Strin
     Ok(document.to_string())
 }
 
-fn shared_runtime_path(root: &Path) -> Result<PathBuf, Box<dyn Error>> {
-    let root = fs::canonicalize(root)?;
-    for package in ["runtime-rs", "runtime-rs-macros"] {
-        if !root.join(package).join("Cargo.toml").is_file() {
-            return Err(format!(
-                "shared Rust runtime root lacks {package}/Cargo.toml: {}",
-                root.display()
-            )
-            .into());
-        }
-    }
-    Ok(root.join("runtime-rs"))
-}
-
 fn runtime_source_root() -> Result<PathBuf, Box<dyn Error>> {
     if let Some(path) = env::var_os("COMPACT_RUST_RUNTIME_DIR") {
         let path = PathBuf::from(path);
@@ -280,7 +267,7 @@ fn runtime_source_root() -> Result<PathBuf, Box<dyn Error>> {
     // installer; Nix packages keep binaries under bin/. Both preserve share/.
     for prefix in [Some(directory), directory.parent()].into_iter().flatten() {
         let installed = prefix.join("share/compactc");
-        if installed.join("runtime-rs/Cargo.toml").is_file() {
+        if installed.try_exists()? {
             return Ok(installed);
         }
     }
@@ -291,22 +278,11 @@ fn runtime_source_root() -> Result<PathBuf, Box<dyn Error>> {
     Err("compactc cannot locate its Rust runtime sources; set COMPACT_RUST_RUNTIME_DIR".into())
 }
 
+#[cfg(test)]
 fn runtime_package_version() -> Result<String, Box<dyn Error>> {
-    let manifest = runtime_source_root()?.join("runtime-rs/Cargo.toml");
-    let document: DocumentMut = fs::read_to_string(&manifest)?.parse()?;
-    let package = document
-        .get("package")
-        .and_then(Item::as_table)
-        .ok_or("matching Rust runtime manifest has no [package] table")?;
-    if package.get("name").and_then(Item::as_str) != Some("midnight-compact-runtime") {
-        return Err("matching Rust runtime manifest has an unexpected package name".into());
-    }
-    let version = package
-        .get("version")
-        .and_then(Item::as_str)
-        .filter(|version| !version.is_empty())
-        .ok_or("matching Rust runtime manifest has no package version")?;
-    Ok(version.to_owned())
+    Ok(compatibility::validate_root(&runtime_source_root()?)?
+        .compatibility
+        .runtime_version)
 }
 
 fn write_source_file(source: &Path, destination: &Path) -> Result<(), Box<dyn Error>> {
@@ -338,14 +314,19 @@ fn copy_source_tree(source: &Path, destination: &Path) -> Result<(), Box<dyn Err
     Ok(())
 }
 
-fn copy_runtime_sources(contract_dir: &Path) -> Result<(), Box<dyn Error>> {
-    let root = runtime_source_root()?;
+fn copy_runtime_sources(root: &Path, contract_dir: &Path) -> Result<(), Box<dyn Error>> {
     for package in ["runtime-rs", "runtime-rs-macros"] {
         let source = root.join(package);
         let destination = contract_dir.join(package);
         fs::create_dir_all(&destination)?;
         for file in ["Cargo.toml", "README.md", "LICENSE"] {
             write_source_file(&source.join(file), &destination.join(file))?;
+        }
+        if package == "runtime-rs" {
+            write_source_file(
+                &source.join("compatibility.json"),
+                &destination.join("compatibility.json"),
+            )?;
         }
         copy_source_tree(&source.join("src"), &destination.join("src"))?;
     }
@@ -653,15 +634,14 @@ fn run() -> Result<i32, Box<dyn Error>> {
             "usage: compactc [--target ts|rust] [flags] <source.compact> <output-directory>".into(),
         );
     }
-    let shared_runtime = targets
-        .runtime_root
-        .as_deref()
-        .map(shared_runtime_path)
-        .transpose()?;
-    let registry_version = targets
-        .runtime_registry
-        .then(runtime_package_version)
-        .transpose()?;
+    let selected_root = match &targets.runtime_root {
+        Some(root) => root.clone(),
+        None => runtime_source_root()?,
+    };
+    // Fail before staging or frontend execution. An explicitly selected invalid
+    // root is never replaced with installed or checkout sources.
+    let selected = compatibility::validate_root(&selected_root)?;
+    let shared_runtime = selected.runtime_path();
     let source = PathBuf::from(args[args.len() - 2].clone());
     let output = PathBuf::from(args[args.len() - 1].clone());
     let staging = StagedOutput::new(&output)?;
@@ -731,14 +711,54 @@ fn run() -> Result<i32, Box<dyn Error>> {
         contract_dir.join("rust-capabilities.json"),
         serde_json::to_vec_pretty(&rendered.capabilities)?,
     )?;
-    let runtime = if let Some(version) = registry_version.as_deref() {
-        RuntimeDependency::Registry(version)
-    } else if let Some(runtime) = shared_runtime.as_deref() {
-        RuntimeDependency::Path(runtime)
+    let mode = if targets.runtime_registry {
+        "registry"
+    } else if targets.runtime_root.is_some() {
+        "shared-source"
     } else {
-        copy_runtime_sources(&contract_dir)?;
+        "bundled-source"
+    };
+    let runtime = if targets.runtime_registry {
+        RuntimeDependency::Registry(&selected.compatibility.runtime_version)
+    } else if targets.runtime_root.is_some() {
+        RuntimeDependency::Path(&shared_runtime)
+    } else {
+        copy_runtime_sources(selected.root(), &contract_dir)?;
         RuntimeDependency::Path(Path::new("runtime-rs"))
     };
+    // Bind the output record to the bytes actually copied/selected. Detect
+    // ordinary source edits during frontend generation before publication.
+    let checked_root = if mode == "bundled-source" {
+        contract_dir.as_path()
+    } else {
+        selected.root()
+    };
+    if compatibility::validate_root(checked_root)?.source_sha256 != selected.source_sha256 {
+        return Err(
+            "Rust runtime source changed during generation; output was not published".into(),
+        );
+    }
+    let frontend_manifest: Value = serde_json::from_slice(&fs::read(
+        staging.path().join("compiler/contract-manifest.json"),
+    )?)?;
+    let metadata = serde_json::json!({
+        "schema_version": 1,
+        "compatibility": selected.compatibility,
+        "distribution": mode,
+        "registry_publication_verified": false,
+        "source_sha256": selected.source_sha256,
+        "compiler": {
+            "rust_backend_package": env!("CARGO_PKG_VERSION"),
+            "compact": frontend_manifest.get("compiler-version"),
+            "language": frontend_manifest.get("language-version"),
+            "typescript_runtime": frontend_manifest.get("runtime-version"),
+        },
+        "assurance": "Developer mismatch checks and source fingerprints; not authenticated provenance or registry availability. Linked runtime ABI assertion remains required."
+    });
+    fs::write(
+        staging.path().join("compiler/rust-compatibility.json"),
+        serde_json::to_vec_pretty(&metadata)?,
+    )?;
     fs::write(
         contract_dir.join("Cargo.toml"),
         crate_manifest(&source, runtime)?,

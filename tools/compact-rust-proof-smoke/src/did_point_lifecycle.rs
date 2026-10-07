@@ -461,6 +461,12 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
         let sealed = proven.seal(StdRng::seed_from_u64(0x259a + number as u64));
         let balanced = async_runtime.block_on(state.balance_tx(rng.clone(), sealed, &resolver))?;
         let accepted_at = state.time;
+        super::did_public_interchange::capture_if_requested(
+            &balanced,
+            &state.ledger,
+            &state.context(),
+            name,
+        )?;
         let result = state.apply(&balanced, WellFormedStrictness::default())?;
         if !matches!(result, TransactionResult::Success(_)) {
             return Err(format!("DID {name} strict application failed: {result:?}").into());

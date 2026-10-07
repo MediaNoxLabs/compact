@@ -157,3 +157,19 @@ fn map_and_fold_inputs_keep_their_length_while_widening_unsigned_elements() {
         assert_eq!(fold_mapped_unsigned(input).unwrap().value(), values[1]);
     }
 }
+
+#[test]
+fn ignored_empty_vector_map_arguments_keep_field_and_boolean_element_types() {
+    use compact_rust_vector_widen_fixture::pure_circuits::{map_empty_booleans, map_empty_fields};
+
+    // Both outer callbacks ignore the empty vector produced by the inner map.
+    // Their constant results follow the Compact source, not a new TS capture.
+    assert_eq!(
+        map_empty_fields(FixedVector::new([Field::from(0_u64), Field::from(42_u64)])).unwrap(),
+        FixedVector::new([Field::from(1_u64); 2])
+    );
+    assert_eq!(
+        map_empty_booleans(FixedVector::new([false, true])).unwrap(),
+        FixedVector::new([true; 2])
+    );
+}

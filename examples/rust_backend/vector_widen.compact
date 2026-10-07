@@ -72,3 +72,14 @@ export pure circuit fold_mapped_unsigned(values: Vector<2, Uint<8>>): Uint<16> {
   return fold(last_unsigned, 0 as Uint<16>,
               map((value: Uint<16>): Uint<16> => value, values));
 }
+
+// Empty literals must retain their element type when no later use constrains it.
+export pure circuit map_empty_fields(values: Vector<2, Field>): Vector<2, Field> {
+  return map((ignored: Vector<0, Field>): Field => 1,
+             map((value: Field): Vector<0, Field> => [], values));
+}
+
+export pure circuit map_empty_booleans(values: Vector<2, Boolean>): Vector<2, Boolean> {
+  return map((ignored: Vector<0, Boolean>): Boolean => true,
+             map((value: Boolean): Vector<0, Boolean> => [], values));
+}

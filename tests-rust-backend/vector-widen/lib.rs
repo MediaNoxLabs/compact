@@ -316,4 +316,50 @@ pub mod pure_circuits {
             __compact_fold_accumulator
         })
     }
+    pub fn map_empty_fields(
+        values: runtime::FixedVector<runtime::Field, 2>,
+    ) -> Result<runtime::FixedVector<runtime::Field, 2>, runtime::CompactError> {
+        Ok({
+            let __compact_map_source = {
+                let __compact_map_source = values.clone();
+                let mut __compact_mapped = Vec::with_capacity(2);
+                for value in __compact_map_source.into_array() {
+                    __compact_mapped.push(runtime::FixedVector::<runtime::Field, 0>::new([]));
+                }
+                runtime::FixedVector::new(
+                    <[_; 2]>::try_from(__compact_mapped).expect("Vector map preserves its length"),
+                )
+            };
+            let mut __compact_mapped = Vec::with_capacity(2);
+            for ignored in __compact_map_source.into_array() {
+                __compact_mapped.push(runtime::Field::from(1u128));
+            }
+            runtime::FixedVector::new(
+                <[_; 2]>::try_from(__compact_mapped).expect("Vector map preserves its length"),
+            )
+        })
+    }
+    pub fn map_empty_booleans(
+        values: runtime::FixedVector<bool, 2>,
+    ) -> Result<runtime::FixedVector<bool, 2>, runtime::CompactError> {
+        Ok({
+            let __compact_map_source = {
+                let __compact_map_source = values.clone();
+                let mut __compact_mapped = Vec::with_capacity(2);
+                for value in __compact_map_source.into_array() {
+                    __compact_mapped.push(runtime::FixedVector::<bool, 0>::new([]));
+                }
+                runtime::FixedVector::new(
+                    <[_; 2]>::try_from(__compact_mapped).expect("Vector map preserves its length"),
+                )
+            };
+            let mut __compact_mapped = Vec::with_capacity(2);
+            for ignored in __compact_map_source.into_array() {
+                __compact_mapped.push(true);
+            }
+            runtime::FixedVector::new(
+                <[_; 2]>::try_from(__compact_mapped).expect("Vector map preserves its length"),
+            )
+        })
+    }
 }

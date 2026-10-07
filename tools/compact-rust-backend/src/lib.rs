@@ -1459,8 +1459,16 @@ fn pure_aggregate_expression(
                 values.push(rendered);
             }
             let length = elements.len();
+            let rendered = if values.is_empty() {
+                // An empty literal has no value from which Rust can infer its
+                // element type, including inside an ignored map argument.
+                let element = rust_type(element)?;
+                syn::parse_quote!(runtime::FixedVector::<#element, 0>::new([]))
+            } else {
+                syn::parse_quote!(runtime::FixedVector::new([#(#values),*]))
+            };
             Ok((
-                syn::parse_quote!(runtime::FixedVector::new([#(#values),*])),
+                rendered,
                 Type::Vector {
                     element: Box::new(element.clone()),
                     length,

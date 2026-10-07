@@ -499,3 +499,242 @@ fn pure_stateful_and_witness_calls_resolve_exact_argument_contracts() {
             .refused_before_effects(mismatch(Type::Field, Type::JubjubPoint));
     }
 }
+
+fn conditional(condition: Expr, then: Expr, otherwise: Expr) -> Expr {
+    Expr::If {
+        condition: Box::new(condition),
+        then: Box::new(then),
+        otherwise: Box::new(otherwise),
+    }
+}
+
+#[test]
+fn conditional_domains_and_equal_arm_failures_preserve_diagnostics() {
+    let declarations = Declarations::default();
+    declarations
+        .lower(conditional(
+            *parameter("boolean"),
+            *parameter("field"),
+            Expr::FieldLiteral { value: "1".into() },
+        ))
+        .accepted(Type::Field, false, false);
+    declarations
+        .lower(conditional(
+            *parameter("field"),
+            *parameter("field"),
+            *parameter("field"),
+        ))
+        .refused_before_effects(mismatch(Type::Boolean, Type::Field));
+    declarations
+        .lower(conditional(
+            *parameter("boolean"),
+            *parameter("field"),
+            *parameter("point"),
+        ))
+        .refused(mismatch(Type::Field, Type::JubjubPoint));
+    declarations
+        .lower(conditional(
+            *parameter("boolean"),
+            *parameter("absent"),
+            *parameter("absent"),
+        ))
+        .refused_before_effects(RenderError::UnknownParameter("absent".into()));
+}
+
+#[test]
+fn equal_branch_condition_keeps_one_witness_call_and_its_type_error() {
+    use syn::visit_mut::{self, VisitMut};
+    struct WitnessCalls(usize);
+    impl VisitMut for WitnessCalls {
+        fn visit_expr_method_call_mut(&mut self, expression: &mut syn::ExprMethodCall) {
+            if expression.method == "permit"
+                && matches!(expression.receiver.as_ref(), syn::Expr::Path(p) if p.path.is_ident("witnesses"))
+            {
+                self.0 += 1;
+            }
+            visit_mut::visit_expr_method_call_mut(self, expression);
+        }
+    }
+    let mut declarations = Declarations {
+        witnesses: vec![WitnessDeclaration {
+            source: None,
+            name: "permit".into(),
+            parameters: vec![],
+            result: Type::Boolean,
+        }],
+        ..Default::default()
+    };
+    let expression = conditional(
+        Expr::WitnessCall {
+            name: "permit".into(),
+            arguments: vec![],
+        },
+        *parameter("field"),
+        *parameter("field"),
+    );
+    let mut result = declarations.lower(expression.clone());
+    let mut calls = WitnessCalls(0);
+    for statement in &mut result.statements {
+        calls.visit_stmt_mut(statement);
+    }
+    if let Ok((expression, _, _)) = &mut result.result {
+        calls.visit_expr_mut(expression);
+    }
+    assert_eq!(
+        calls.0, 1,
+        "equal arms must neither erase nor repeat the condition witness"
+    );
+    result.accepted(Type::Field, true, false);
+    declarations.witnesses[0].result = Type::Field;
+    declarations
+        .lower(expression)
+        .refused(mismatch(Type::Boolean, Type::Field));
+}
+
+#[test]
+fn lexical_bindings_validate_annotations_shadowing_and_scope_exit() {
+    use crate::ir::LocalBinding;
+    let declarations = Declarations::default();
+    let binding = |name: &str, ty, value| LocalBinding {
+        name: name.into(),
+        ty,
+        value,
+    };
+    let shadow = Expr::Let {
+        bindings: vec![binding("field", Type::Boolean, *parameter("boolean"))],
+        body: parameter("field"),
+    };
+    declarations
+        .lower(shadow.clone())
+        .accepted(Type::Boolean, false, false);
+    declarations
+        .lower(Expr::Sequence {
+            steps: vec![shadow],
+            value: parameter("field"),
+        })
+        .accepted(Type::Field, false, false);
+    declarations
+        .lower(Expr::Let {
+            bindings: vec![
+                binding("first", Type::Field, *parameter("field")),
+                binding("second", Type::Field, *parameter("first")),
+            ],
+            body: parameter("second"),
+        })
+        .accepted(Type::Field, false, false);
+    declarations
+        .lower(Expr::Let {
+            bindings: vec![binding("local", Type::Field, *parameter("boolean"))],
+            body: parameter("local"),
+        })
+        .refused_before_effects(mismatch(Type::Field, Type::Boolean));
+    declarations
+        .lower(Expr::Sequence {
+            steps: vec![Expr::Let {
+                bindings: vec![binding("local", Type::Field, *parameter("field"))],
+                body: parameter("local"),
+            }],
+            value: parameter("local"),
+        })
+        .refused(RenderError::UnknownParameter("local".into()));
+}
+
+#[test]
+fn struct_projection_requires_matching_receiver_field_name_and_position() {
+    let declarations = Declarations::default();
+    let record = Type::Struct {
+        name: "Record".into(),
+        fields: vec![StructField {
+            name: "amount".into(),
+            ty: Type::Field,
+        }],
+    };
+    let value = Expr::StructLiteral {
+        ty: record.clone(),
+        fields: vec![*parameter("field")],
+    };
+    let project = |value, field: &str, index| Expr::StructField {
+        value: Box::new(value),
+        field: field.into(),
+        index,
+    };
+    declarations
+        .lower(value.clone())
+        .accepted(record, false, false);
+    declarations
+        .lower(project(value.clone(), "amount", 0))
+        .accepted(Type::Field, false, false);
+    declarations
+        .lower(project(*parameter("field"), "amount", 0))
+        .refused_before_effects(RenderError::InvalidStructField("amount".into()));
+    declarations
+        .lower(project(value.clone(), "different", 0))
+        .refused(RenderError::InvalidStructField("different".into()));
+    declarations
+        .lower(project(value, "amount", 1))
+        .refused(RenderError::InvalidStructField("amount".into()));
+}
+
+#[test]
+fn aggregate_construction_and_tuple_access_report_the_original_domain_error() {
+    let declarations = Declarations::default();
+    let record = Type::Struct {
+        name: "Record".into(),
+        fields: vec![StructField {
+            name: "amount".into(),
+            ty: Type::Field,
+        }],
+    };
+    declarations
+        .lower(Expr::StructLiteral {
+            ty: record.clone(),
+            fields: vec![*parameter("field")],
+        })
+        .accepted(record.clone(), false, false);
+    declarations
+        .lower(Expr::StructLiteral {
+            ty: Type::Field,
+            fields: vec![],
+        })
+        .refused_before_effects(RenderError::InvalidStructField("<literal>".into()));
+    declarations
+        .lower(Expr::StructLiteral {
+            ty: record.clone(),
+            fields: vec![],
+        })
+        .refused_before_effects(RenderError::InvalidStructField("Record".into()));
+    declarations
+        .lower(Expr::StructLiteral {
+            ty: record,
+            fields: vec![*parameter("boolean")],
+        })
+        .refused_before_effects(mismatch(Type::Field, Type::Boolean));
+    let tuple = Expr::Tuple {
+        elements: vec![*parameter("field"), *parameter("point")],
+    };
+    declarations.lower(tuple.clone()).accepted(
+        Type::Tuple {
+            elements: vec![Type::Field, Type::JubjubPoint],
+        },
+        false,
+        false,
+    );
+    declarations
+        .lower(Expr::TupleIndex {
+            value: Box::new(tuple.clone()),
+            index: 1,
+        })
+        .accepted(Type::JubjubPoint, false, false);
+    declarations
+        .lower(Expr::TupleIndex {
+            value: Box::new(tuple),
+            index: 2,
+        })
+        .refused(RenderError::InvalidTupleIndex(2));
+    declarations
+        .lower(Expr::TupleIndex {
+            value: parameter("field"),
+            index: 0,
+        })
+        .refused_before_effects(RenderError::ExpectedTuple(Type::Field));
+}

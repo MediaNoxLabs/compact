@@ -463,3 +463,98 @@ fn struct_hash_policy_refuses_effects_and_unsupported_cell_representations() {
         ty
     }));
 }
+
+#[test]
+fn paired_hash_locals_keep_annotations_and_lexical_shadowing() {
+    let good = circuit(
+        "hash",
+        vec![],
+        Type::Field,
+        Expr::Let {
+            bindings: vec![LocalBinding {
+                name: "p".into(),
+                ty: pair(),
+                value: pair_value(),
+            }],
+            body: Box::new(Expr::TransientHash {
+                value: Box::new(parameter("p")),
+            }),
+        },
+    );
+    assert!(closed_pure_field_pair_hash_call(
+        "hash",
+        &HashMap::from([("hash", &good)])
+    ));
+    let mut wrong = good.clone();
+    let Expr::Let { bindings, .. } = &mut wrong.body else {
+        unreachable!()
+    };
+    bindings[0].ty = Type::Field;
+    assert!(!closed_pure_field_pair_hash_call(
+        "hash",
+        &HashMap::from([("hash", &wrong)])
+    ));
+
+    let shadowed = PureCircuit {
+        body: Expr::Let {
+            bindings: vec![LocalBinding {
+                name: "p".into(),
+                ty: Type::Field,
+                value: field("1"),
+            }],
+            body: Box::new(good.body.clone()),
+        },
+        ..good.clone()
+    };
+    assert!(closed_pure_field_pair_hash_call(
+        "hash",
+        &HashMap::from([("hash", &shadowed)])
+    ));
+    let escaped = PureCircuit {
+        body: Expr::TransientHash {
+            value: Box::new(Expr::Tuple {
+                elements: vec![
+                    Expr::Let {
+                        bindings: vec![LocalBinding {
+                            name: "local".into(),
+                            ty: Type::Field,
+                            value: field("1"),
+                        }],
+                        body: Box::new(parameter("local")),
+                    },
+                    parameter("local"),
+                ],
+            }),
+        },
+        ..good
+    };
+    assert!(!closed_pure_field_pair_hash_call(
+        "hash",
+        &HashMap::from([("hash", &escaped)])
+    ));
+}
+
+#[test]
+fn paired_hash_helper_resolution_checks_root_and_nested_names() {
+    let leaf = circuit(
+        "leaf",
+        vec![declaration("p", pair())],
+        Type::Field,
+        Expr::TransientHash {
+            value: Box::new(parameter("p")),
+        },
+    );
+    let root = circuit(
+        "root",
+        vec![],
+        Type::Field,
+        call("leaf", vec![pair_value()]),
+    );
+    let declarations = HashMap::from([("root", &root), ("leaf", &leaf)]);
+    assert!(closed_pure_field_pair_hash_call("root", &declarations));
+    assert!(!closed_pure_field_pair_hash_call("missing", &declarations));
+    assert!(!closed_pure_field_pair_hash_call(
+        "root",
+        &HashMap::from([("root", &root)])
+    ));
+}

@@ -1473,7 +1473,7 @@ fn pure_aggregate_expression(
                     for #item_name in #source_name.into_array() {
                         #mapped.push(#body);
                     }
-                    runtime::FixedVector::new(#mapped.try_into().expect("Vector map preserves its length"))
+                    runtime::FixedVector::new(<[_; #length_lit]>::try_from(#mapped).expect("Vector map preserves its length"))
                 }),
                 Type::Vector {
                     element: Box::new(result.clone()),

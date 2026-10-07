@@ -116,9 +116,7 @@ pub mod ledger_contract {
                     )?)?);
                 }
                 runtime::FixedVector::new(
-                    __compact_mapped
-                        .try_into()
-                        .expect("Vector map preserves its length"),
+                    <[_; 3]>::try_from(__compact_mapped).expect("Vector map preserves its length"),
                 )
             };
             let step = context.write_cell(0, (__compact_constructor_local_0.clone()).clone())?;
@@ -158,9 +156,7 @@ pub mod ledger_contract {
                 __compact_mapped.push(x);
             }
             runtime::FixedVector::new(
-                __compact_mapped
-                    .try_into()
-                    .expect("Vector map preserves its length"),
+                <[_; 3]>::try_from(__compact_mapped).expect("Vector map preserves its length"),
             )
         };
         let step = crate::ledger_slots::doubled.write(context, __compact_action_local_0.clone())?;
@@ -208,9 +204,7 @@ pub mod ledger_contract {
                     __compact_mapped.push(x);
                 }
                 runtime::FixedVector::new(
-                    __compact_mapped
-                        .try_into()
-                        .expect("Vector map preserves its length"),
+                    <[_; 3]>::try_from(__compact_mapped).expect("Vector map preserves its length"),
                 )
             };
             let frame = crate::ledger_slots::doubled

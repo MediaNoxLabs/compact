@@ -30,3 +30,45 @@ export pure circuit hash_widened(values: Vector<2, Uint<8>>): Bytes<32> {
 export pure circuit hash_nested(values: Vector<2, Uint<8>>): Bytes<32> {
   return persistentHash<Vector<1, Vector<2, Field>>>([values]);
 }
+
+// Source-semantic regression controls for fallible unsigned coercion emission.
+export pure circuit widen_unsigned(values: Vector<2, Uint<8>>): Vector<2, Uint<16>> {
+  return values;
+}
+
+export pure circuit widen_unsigned_nested(values: Vector<2, Vector<2, Uint<8>>>): Vector<2, Vector<2, Uint<16>>> {
+  return values;
+}
+
+export pure circuit widen_unsigned_tuple(values: Vector<2, [Uint<8>, Uint<16>]>): Vector<2, [Uint<16>, Uint<32>]> {
+  return values;
+}
+
+export pure circuit widen_unsigned_to_wide(values: Vector<2, Uint<8>>): Vector<2, Uint<129>> {
+  return values;
+}
+
+export pure circuit widen_wide_unsigned(values: Vector<2, Uint<129>>): Vector<2, Uint<248>> {
+  return values;
+}
+
+export pure circuit widen_empty_unsigned(values: Vector<0, Uint<8>>): Vector<0, Uint<16>> {
+  return values;
+}
+
+export pure circuit map_unsigned(values: Vector<2, Uint<8>>): Vector<2, Uint<16>> {
+  return map((value: Uint<16>): Uint<16> => value, values);
+}
+
+pure circuit last_unsigned(accumulator: Uint<16>, item: Uint<16>): Uint<16> {
+  return item;
+}
+
+export pure circuit fold_unsigned(values: Vector<2, Uint<8>>): Uint<16> {
+  return fold(last_unsigned, 0 as Uint<16>, values);
+}
+
+export pure circuit fold_mapped_unsigned(values: Vector<2, Uint<8>>): Uint<16> {
+  return fold(last_unsigned, 0 as Uint<16>,
+              map((value: Uint<16>): Uint<16> => value, values));
+}

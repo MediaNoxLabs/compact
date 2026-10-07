@@ -266,3 +266,5 @@ fn aggregate_coercion_preserves_invalid_bound_diagnostics() {
         RenderError::InvalidUnsignedMaximum("01".into())
     );
 }
+
+mod vector_coercion;

@@ -71,4 +71,249 @@ pub mod pure_circuits {
             )
         }])))
     }
+    pub fn widen_unsigned(
+        values: runtime::FixedVector<runtime::BoundedUint<255>, 2>,
+    ) -> Result<runtime::FixedVector<runtime::BoundedUint<65535>, 2>, runtime::CompactError> {
+        Ok({
+            let __compact_cast_source_0 = values.clone();
+            let mut __compact_cast_values_0 = ::std::vec::Vec::with_capacity(2);
+            for __compact_cast_item_0 in __compact_cast_source_0.into_array() {
+                __compact_cast_values_0
+                    .push(runtime::cast_unsigned::<255, 65535>(__compact_cast_item_0)?);
+            }
+            runtime::FixedVector::new(
+                <[_; 2]>::try_from(__compact_cast_values_0)
+                    .expect("Vector coercion preserves its length"),
+            )
+        })
+    }
+    pub fn widen_unsigned_nested(
+        values: runtime::FixedVector<runtime::FixedVector<runtime::BoundedUint<255>, 2>, 2>,
+    ) -> Result<
+        runtime::FixedVector<runtime::FixedVector<runtime::BoundedUint<65535>, 2>, 2>,
+        runtime::CompactError,
+    > {
+        Ok({
+            let __compact_cast_source_0 = values.clone();
+            let mut __compact_cast_values_0 = ::std::vec::Vec::with_capacity(2);
+            for __compact_cast_item_0 in __compact_cast_source_0.into_array() {
+                __compact_cast_values_0.push({
+                    let __compact_cast_source_1 = __compact_cast_item_0;
+                    let mut __compact_cast_values_1 = ::std::vec::Vec::with_capacity(2);
+                    for __compact_cast_item_1 in __compact_cast_source_1.into_array() {
+                        __compact_cast_values_1
+                            .push(runtime::cast_unsigned::<255, 65535>(__compact_cast_item_1)?);
+                    }
+                    runtime::FixedVector::new(
+                        <[_; 2]>::try_from(__compact_cast_values_1)
+                            .expect("Vector coercion preserves its length"),
+                    )
+                });
+            }
+            runtime::FixedVector::new(
+                <[_; 2]>::try_from(__compact_cast_values_0)
+                    .expect("Vector coercion preserves its length"),
+            )
+        })
+    }
+    pub fn widen_unsigned_tuple(
+        values: runtime::FixedVector<(runtime::BoundedUint<255>, runtime::BoundedUint<65535>), 2>,
+    ) -> Result<
+        runtime::FixedVector<
+            (
+                runtime::BoundedUint<65535>,
+                runtime::BoundedUint<4294967295>,
+            ),
+            2,
+        >,
+        runtime::CompactError,
+    > {
+        Ok({
+            let __compact_cast_source_0 = values.clone();
+            let mut __compact_cast_values_0 = ::std::vec::Vec::with_capacity(2);
+            for __compact_cast_item_0 in __compact_cast_source_0.into_array() {
+                __compact_cast_values_0.push({
+                    let __compact_cast_source_1 = __compact_cast_item_0;
+                    let (__compact_cast_item_1_0, __compact_cast_item_1_1) =
+                        __compact_cast_source_1;
+                    (
+                        runtime::cast_unsigned::<255, 65535>(__compact_cast_item_1_0)?,
+                        runtime::cast_unsigned::<65535, 4294967295>(__compact_cast_item_1_1)?,
+                    )
+                });
+            }
+            runtime::FixedVector::new(
+                <[_; 2]>::try_from(__compact_cast_values_0)
+                    .expect("Vector coercion preserves its length"),
+            )
+        })
+    }
+    pub fn widen_unsigned_to_wide(
+        values: runtime::FixedVector<runtime::BoundedUint<255>, 2>,
+    ) -> Result<
+        runtime::FixedVector<
+            runtime::WideUint<1u128, 340282366920938463463374607431768211455u128>,
+            2,
+        >,
+        runtime::CompactError,
+    > {
+        Ok({
+            let __compact_cast_source_0 = values.clone();
+            let mut __compact_cast_values_0 = ::std::vec::Vec::with_capacity(2);
+            for __compact_cast_item_0 in __compact_cast_source_0.into_array() {
+                __compact_cast_values_0.push(<runtime::WideUint<
+                    1u128,
+                    340282366920938463463374607431768211455u128,
+                >>::from_le_bytes(
+                    &(__compact_cast_item_0).value().to_le_bytes()
+                )?);
+            }
+            runtime::FixedVector::new(
+                <[_; 2]>::try_from(__compact_cast_values_0)
+                    .expect("Vector coercion preserves its length"),
+            )
+        })
+    }
+    pub fn widen_wide_unsigned(
+        values: runtime::FixedVector<
+            runtime::WideUint<1u128, 340282366920938463463374607431768211455u128>,
+            2,
+        >,
+    ) -> Result<
+        runtime::FixedVector<
+            runtime::WideUint<
+                1329227995784915872903807060280344575u128,
+                340282366920938463463374607431768211455u128,
+            >,
+            2,
+        >,
+        runtime::CompactError,
+    > {
+        Ok({
+            let __compact_cast_source_0 = values.clone();
+            let mut __compact_cast_values_0 = ::std::vec::Vec::with_capacity(2);
+            for __compact_cast_item_0 in __compact_cast_source_0.into_array() {
+                __compact_cast_values_0.push(<runtime::WideUint<
+                    1329227995784915872903807060280344575u128,
+                    340282366920938463463374607431768211455u128,
+                >>::from_le_bytes(
+                    (__compact_cast_item_0).as_le_bytes()
+                )?);
+            }
+            runtime::FixedVector::new(
+                <[_; 2]>::try_from(__compact_cast_values_0)
+                    .expect("Vector coercion preserves its length"),
+            )
+        })
+    }
+    pub fn widen_empty_unsigned(
+        values: runtime::FixedVector<runtime::BoundedUint<255>, 0>,
+    ) -> Result<runtime::FixedVector<runtime::BoundedUint<65535>, 0>, runtime::CompactError> {
+        Ok({
+            let __compact_cast_source_0 = values.clone();
+            let mut __compact_cast_values_0 = ::std::vec::Vec::with_capacity(0);
+            for __compact_cast_item_0 in __compact_cast_source_0.into_array() {
+                __compact_cast_values_0
+                    .push(runtime::cast_unsigned::<255, 65535>(__compact_cast_item_0)?);
+            }
+            runtime::FixedVector::new(
+                <[_; 0]>::try_from(__compact_cast_values_0)
+                    .expect("Vector coercion preserves its length"),
+            )
+        })
+    }
+    pub fn map_unsigned(
+        values: runtime::FixedVector<runtime::BoundedUint<255>, 2>,
+    ) -> Result<runtime::FixedVector<runtime::BoundedUint<65535>, 2>, runtime::CompactError> {
+        Ok({
+            let __compact_map_source = {
+                let __compact_cast_source_0 = values.clone();
+                let mut __compact_cast_values_0 = ::std::vec::Vec::with_capacity(2);
+                for __compact_cast_item_0 in __compact_cast_source_0.into_array() {
+                    __compact_cast_values_0
+                        .push(runtime::cast_unsigned::<255, 65535>(__compact_cast_item_0)?);
+                }
+                runtime::FixedVector::new(
+                    <[_; 2]>::try_from(__compact_cast_values_0)
+                        .expect("Vector coercion preserves its length"),
+                )
+            };
+            let mut __compact_mapped = Vec::with_capacity(2);
+            for value in __compact_map_source.into_array() {
+                __compact_mapped.push(value);
+            }
+            runtime::FixedVector::new(
+                <[_; 2]>::try_from(__compact_mapped).expect("Vector map preserves its length"),
+            )
+        })
+    }
+    pub(crate) fn last_unsigned(
+        accumulator: runtime::BoundedUint<65535>,
+        item: runtime::BoundedUint<65535>,
+    ) -> Result<runtime::BoundedUint<65535>, runtime::CompactError> {
+        Ok(item)
+    }
+    pub fn fold_unsigned(
+        values: runtime::FixedVector<runtime::BoundedUint<255>, 2>,
+    ) -> Result<runtime::BoundedUint<65535>, runtime::CompactError> {
+        Ok({
+            let __compact_fold_source = {
+                let __compact_cast_source_0 = values.clone();
+                let mut __compact_cast_values_0 = ::std::vec::Vec::with_capacity(2);
+                for __compact_cast_item_0 in __compact_cast_source_0.into_array() {
+                    __compact_cast_values_0
+                        .push(runtime::cast_unsigned::<255, 65535>(__compact_cast_item_0)?);
+                }
+                runtime::FixedVector::new(
+                    <[_; 2]>::try_from(__compact_cast_values_0)
+                        .expect("Vector coercion preserves its length"),
+                )
+            };
+            let mut __compact_fold_accumulator = runtime::BoundedUint::<65535>::new(0u128)
+                .expect("Compact Uint literal fits its maximum");
+            for __compact_fold_item in __compact_fold_source.into_array() {
+                __compact_fold_accumulator = crate::pure_circuits::last_unsigned(
+                    __compact_fold_accumulator,
+                    __compact_fold_item,
+                )?;
+            }
+            __compact_fold_accumulator
+        })
+    }
+    pub fn fold_mapped_unsigned(
+        values: runtime::FixedVector<runtime::BoundedUint<255>, 2>,
+    ) -> Result<runtime::BoundedUint<65535>, runtime::CompactError> {
+        Ok({
+            let __compact_fold_source = {
+                let __compact_map_source = {
+                    let __compact_cast_source_0 = values.clone();
+                    let mut __compact_cast_values_0 = ::std::vec::Vec::with_capacity(2);
+                    for __compact_cast_item_0 in __compact_cast_source_0.into_array() {
+                        __compact_cast_values_0
+                            .push(runtime::cast_unsigned::<255, 65535>(__compact_cast_item_0)?);
+                    }
+                    runtime::FixedVector::new(
+                        <[_; 2]>::try_from(__compact_cast_values_0)
+                            .expect("Vector coercion preserves its length"),
+                    )
+                };
+                let mut __compact_mapped = Vec::with_capacity(2);
+                for value in __compact_map_source.into_array() {
+                    __compact_mapped.push(value);
+                }
+                runtime::FixedVector::new(
+                    <[_; 2]>::try_from(__compact_mapped).expect("Vector map preserves its length"),
+                )
+            };
+            let mut __compact_fold_accumulator = runtime::BoundedUint::<65535>::new(0u128)
+                .expect("Compact Uint literal fits its maximum");
+            for __compact_fold_item in __compact_fold_source.into_array() {
+                __compact_fold_accumulator = crate::pure_circuits::last_unsigned(
+                    __compact_fold_accumulator,
+                    __compact_fold_item,
+                )?;
+            }
+            __compact_fold_accumulator
+        })
+    }
 }

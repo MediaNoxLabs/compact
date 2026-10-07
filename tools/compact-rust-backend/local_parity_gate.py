@@ -269,7 +269,7 @@ def fixture_output(directory: Path, source: Path) -> Path:
 
 def run_required_proof_gates(directory: Path, snapshot: Path, environment: dict, receipt: dict,
                             *, command=None) -> None:
-    """Run every maintained DID proof gate; hash only successful typed receipts."""
+    """Run every maintained proof gate; hash only successful typed receipts."""
     command = run if command is None else command
     gates = (
         ("did-proof-lifecycles", "did_proof_gate.py", "did-proof", "did_proof_gate",
@@ -280,6 +280,8 @@ def run_required_proof_gates(directory: Path, snapshot: Path, environment: dict,
          "did_primitive_reducer_gate", "compact-did-primitive-reducer-gate/v1", "--output", "--target"),
         ("did-relation-proofs", "did_relation_gate.py", "did-relation-proofs",
          "did_relation_gate", "compact-did-relation-gate/v1", "--run-dir", "--cargo-target-dir"),
+        ("acc-jubjub-proofs", "acc_jubjub_gate.py", "acc-jubjub-proofs",
+         "acc_jubjub_gate", "compact-acc-jubjub-gate/v1", "--output", "--target"),
     )
     children = []
     for label, script, subdirectory, key, expected_format, output_flag, target_flag in gates:

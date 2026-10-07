@@ -162,3 +162,5 @@ compact-rust-did-relation-two-reducer-fixture = { path = "../../tests-rust-backe
 compact-rust-did-relation-four-reducer-fixture = { path = "../../tests-rust-backend/did-relation-four-reducer", features = ["ledger-transaction"] }
 compact-rust-did-relation-nested-reducer-fixture = { path = "../../tests-rust-backend/did-relation-nested-reducer", features = ["ledger-transaction"] }
 compact-rust-did-enum-map-reducer-fixture = { path = "../../tests-rust-backend/did-enum-map-reducer", features = ["ledger-transaction"] }
+
+compact-rust-jubjub-scalar-cell-fixture = { path = "../../tests-rust-backend/jubjub-scalar-cell", features = ["ledger-transaction"] }

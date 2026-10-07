@@ -1,0 +1,8 @@
+pragma language_version >= 0.23.0;
+import CompactStandardLibrary;
+export pure circuit generator(scalar: Field): JubjubPoint {
+  return ecMulGenerator(scalar as JubjubScalar);
+}
+export pure circuit multiply(point: JubjubPoint, scalar: Field): JubjubPoint {
+  return ecMul(point, scalar as JubjubScalar);
+}

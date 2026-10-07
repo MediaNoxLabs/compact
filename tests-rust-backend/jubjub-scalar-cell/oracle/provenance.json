@@ -1,0 +1,84 @@
+{
+  "format": "compact-acc-jubjub-reference/v1",
+  "acc_source_commit": "b9e1357c21855c0d5680299faa7ba66a673cc401",
+  "original_compiler": "0.35.0",
+  "compiler_archive_sha256": "5898b3d916b2b26f2c110b55a4a4121c22c88eefbd076994e8c3dd3e56c571fc",
+  "original_runtime": "0.20.0",
+  "oracle_packages": {
+    "source_lock_sha256": "a57a8056dfa3989a6fb237f0ff071b172f4864082173ba9c4274c09eac9bee51",
+    "packages": {
+      "node_modules/@midnight-ntwrk/compact-runtime": {
+        "version": "0.20.0",
+        "resolved": "https://registry.npmjs.org/@midnight-ntwrk/compact-runtime/-/compact-runtime-0.20.0.tgz",
+        "integrity": "sha512-vtwZ6PiqPy6sUHmXJlrv/3SyjEsKVdQaRroWowTGgu55CJlJXONUplHyst/dRVKe9C6sApveIo2FgbXoBMiMeQ==",
+        "license": "Apache-2.0",
+        "dependencies": {
+          "@midnightntwrk/onchain-runtime-v4": "^4.0.0-rc.3",
+          "@noble/curves": "^2.2.0",
+          "@noble/hashes": "^2.0.1",
+          "@types/object-inspect": "^1.8.1",
+          "object-inspect": "^1.12.3"
+        }
+      },
+      "node_modules/object-inspect": {
+        "version": "1.13.4",
+        "resolved": "https://registry.npmjs.org/object-inspect/-/object-inspect-1.13.4.tgz",
+        "integrity": "sha512-W67iLl4J2EXEGTbfeHCffrjDfitvLANg0UlX3wFUUSTx92KXRFegMHUVgSqE+wvhAbi4WqjGg9czysTV2Epbew==",
+        "license": "MIT",
+        "engines": {
+          "node": ">= 0.4"
+        },
+        "funding": {
+          "url": "https://github.com/sponsors/ljharb"
+        }
+      },
+      "node_modules/@types/object-inspect": {
+        "version": "1.13.0",
+        "resolved": "https://registry.npmjs.org/@types/object-inspect/-/object-inspect-1.13.0.tgz",
+        "integrity": "sha512-lwGTVESDDV+XsQ1pH4UifpJ1f7OtXzQ6QBOX2Afq2bM/T3oOt8hF6exJMjjIjtEWeAN2YAo25J7HxWh97CCz9w==",
+        "license": "MIT"
+      },
+      "node_modules/@noble/hashes": {
+        "version": "2.2.0",
+        "resolved": "https://registry.npmjs.org/@noble/hashes/-/hashes-2.2.0.tgz",
+        "integrity": "sha512-IYqDGiTXab6FniAgnSdZwgWbomxpy9FtYvLKs7wCUs2a8RkITG+DFGO1DM9cr+E3/RgADRpFjrKVaJ1z6sjtEg==",
+        "license": "MIT",
+        "engines": {
+          "node": ">= 20.19.0"
+        },
+        "funding": {
+          "url": "https://paulmillr.com/funding/"
+        }
+      },
+      "node_modules/@noble/curves": {
+        "version": "2.2.0",
+        "resolved": "https://registry.npmjs.org/@noble/curves/-/curves-2.2.0.tgz",
+        "integrity": "sha512-T/BoHgFXirb0ENSPBquzX0rcjXeM6Lo892a2jlYJkqk83LqZx0l1Of7DzlKJ6jkpvMrkHSnAcgb5JegL8SeIkQ==",
+        "license": "MIT",
+        "dependencies": {
+          "@noble/hashes": "2.2.0"
+        },
+        "engines": {
+          "node": ">= 20.19.0"
+        },
+        "funding": {
+          "url": "https://paulmillr.com/funding/"
+        }
+      },
+      "node_modules/@midnightntwrk/onchain-runtime-v4": {
+        "version": "4.0.0-rc.3",
+        "resolved": "https://registry.npmjs.org/@midnightntwrk/onchain-runtime-v4/-/onchain-runtime-v4-4.0.0-rc.3.tgz",
+        "integrity": "sha512-LAf4g3vgwtPqActbi5RAoZcfYduqnFqtsHN+i1s/Mcb5vi2yMbPmpSOJ0YCCIGb2S/qY7G5tQARHVD0PJyHSNA=="
+      }
+    }
+  },
+  "ledger8_runtime": "0.16.101",
+  "files_sha256": {
+    "examples/rust_backend/jubjub_scalar_cell.compact": "317ad54dd2b7d7d44ee0a56a411bd2d4dd7df7785769f47f3b4a0ee159171c01",
+    "tests-rust-backend/jubjub-scalar-cell/oracle/cases.json": "fc1f18b9177ebe946fcc595108faef29d0349488e1f92c06ed70a227d5fe1502",
+    "tests-rust-backend/jubjub-scalar-cell/oracle/boundaries.json": "b382524e215fa975e1a3094ed955016cdf83af36083df13377e1a1846a43fec0",
+    "tests-rust-backend/jubjub-scalar-cell/oracle/original.compact": "1ff5c3ab40b3b8c1707901d894737b89d2f745b17b61555ed2be296d906b539e"
+  },
+  "capture_receipt_sha256": "9366e20c6177e3df8ad975948152dde569e240155d3419afbaea6231590dbd71",
+  "scope": "Seven apply outputs from original0.35 pure cast functions plus original runtime ecAdd; complete stateful ledger8 TS observations. Two raw cases contrast canonical success/refusal. Pure scalar bridge only; no full ACC, foreign curve or constructor-proof claim."
+}

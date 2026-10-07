@@ -25,6 +25,7 @@ mod field_observations;
 mod funded_mint;
 mod guarded_deposit;
 mod immediate_send;
+mod jubjub_values;
 mod phase_reset;
 mod reset_payout;
 mod shielded_merge;
@@ -62,6 +63,7 @@ enum CompositeDomain {
     StartFunding,
     FieldObservations,
     TerminalReturns,
+    JubjubValues,
     UnitComposition,
 }
 impl CompositeDomain {
@@ -417,6 +419,10 @@ impl Plan<'_> {
             | Expr::Add { .. }
             | Expr::FieldCast { .. }
             | Expr::FieldToBytes32 { .. } => self.arithmetic_expression(expression, scope, steps),
+            Expr::JubjubScalarFromNative { .. }
+            | Expr::EcMulGenerator { .. }
+            | Expr::EcMul { .. }
+            | Expr::EcAdd { .. } => jubjub_values::expression(self, expression, scope, steps),
             Expr::PersistentCommit { .. }
             | Expr::PersistentHash { .. }
             | Expr::TransientCommit { .. }
@@ -1825,6 +1831,8 @@ impl Plan<'_> {
                     return None;
                 }
                 if !cell_type(ty)
+                    && !(self.composite_domain == CompositeDomain::JubjubValues
+                        && *ty == Type::JubjubPoint)
                     && !(self.composite_domain == CompositeDomain::ResetShieldedPayout
                         && reset_payout::write_type(ty))
                     && !(self.composite_domain == CompositeDomain::GuardedShieldedDeposit
@@ -4878,4 +4886,14 @@ pub(super) fn lower_unit_composition_checked<'a>(
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
 ) -> ProfileAttempt<TypedPlan, composition::CompositionRejection> {
     composition::lower_checked(circuit, ledger, witnesses, pure, circuits)
+}
+
+pub(super) fn lower_jubjub_values<'a>(
+    circuit: &StatefulCircuit,
+    ledger: &'a HashMap<&'a str, &'a LedgerField>,
+    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
+    pure: &'a HashMap<&'a str, &'a PureCircuit>,
+    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
+) -> Option<TypedPlan> {
+    jubjub_values::lower(circuit, ledger, witnesses, pure, circuits)
 }

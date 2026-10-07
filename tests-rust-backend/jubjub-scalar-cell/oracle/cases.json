@@ -1,0 +1,4250 @@
+{
+  "format": "compact-acc-jubjub-wrapper-capture/v1",
+  "kind": "acc-jubjub-cell",
+  "oracle": "original Compact0.35/runtime0.20 pure cast circuits plus original runtime ecAdd; supplied point generator(7)",
+  "cases": [
+    {
+      "id": "zero",
+      "operation": "apply",
+      "scalar": "0000000000000000000000000000000000000000000000000000000000000000",
+      "scalarDecimal": "0",
+      "point": {
+        "x": "d8b6b11fd5179b86e5e15ff573059744c8666738c1b59d8566a0018c63fbb069",
+        "y": "26c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018",
+        "fab": [
+          "d8b6b11fd5179b86e5e15ff573059744c8666738c1b59d8566a0018c63fbb069",
+          "26c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018"
+        ]
+      },
+      "oracleGenerator": {
+        "x": "0000000000000000000000000000000000000000000000000000000000000000",
+        "y": "0100000000000000000000000000000000000000000000000000000000000000",
+        "fab": [
+          "",
+          "01"
+        ]
+      },
+      "oracleProduct": {
+        "x": "0000000000000000000000000000000000000000000000000000000000000000",
+        "y": "0100000000000000000000000000000000000000000000000000000000000000",
+        "fab": [
+          "",
+          "01"
+        ]
+      },
+      "expected": {
+        "x": "0000000000000000000000000000000000000000000000000000000000000000",
+        "y": "0100000000000000000000000000000000000000000000000000000000000000",
+        "fab": [
+          "",
+          "01"
+        ]
+      },
+      "result": {
+        "x": "0000000000000000000000000000000000000000000000000000000000000000",
+        "y": "0100000000000000000000000000000000000000000000000000000000000000",
+        "fab": [
+          "",
+          "01"
+        ]
+      },
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a480018824001c2414104000401040408010404080403040c00041008010404146803042c58010403040108010404010401040118824001c24141000018146170706c79000400081c2000042408010404289003043f800f03be27ed599576bbe79998cc43a82db64a3b7bc6c9a8901aca9f693eb0010000100c72617708302000043408010404389003043f80a42188edd24581088a5bf76196b244b0f3495fb6d95cd725beaf870a17a299d04020202020202020202c20202020203c200802081408201840201003000400",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a480018824001c2414104000401040408010404080403040c00041008010404146803042c58010403040108010404010401040118824001c24141000018146170706c79000400081c2000042408010404289003043f800f03be27ed599576bbe79998cc43a82db64a3b7bc6c9a8901aca9f693eb0010000100c72617708302000043408010404389003043f80a42188edd24581088a5bf76196b244b0f3495fb6d95cd725beaf870a17a299d04020202020202020202c20202020203c200802081408201840201003000400",
+      "privateBefore": 17,
+      "privateAfter": 17,
+      "effectsBefore": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": [],
+        "unshieldedMints": [],
+        "unshieldedInputs": [],
+        "unshieldedOutputs": [],
+        "claimedUnshieldedSpends": []
+      },
+      "effectsAfter": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": [],
+        "unshieldedMints": [],
+        "unshieldedInputs": [],
+        "unshieldedOutputs": [],
+        "claimedUnshieldedSpends": []
+      },
+      "publicTranscript": [
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [],
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  },
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": [],
+      "publicInput": {
+        "value": [
+          [
+            216,
+            182,
+            177,
+            31,
+            213,
+            23,
+            155,
+            134,
+            229,
+            225,
+            95,
+            245,
+            115,
+            5,
+            151,
+            68,
+            200,
+            102,
+            103,
+            56,
+            193,
+            181,
+            157,
+            133,
+            102,
+            160,
+            1,
+            140,
+            99,
+            251,
+            176,
+            105
+          ],
+          [
+            38,
+            198,
+            156,
+            196,
+            146,
+            225,
+            55,
+            163,
+            138,
+            178,
+            157,
+            128,
+            115,
+            135,
+            204,
+            215,
+            0,
+            33,
+            171,
+            20,
+            60,
+            32,
+            142,
+            209,
+            33,
+            233,
+            125,
+            146,
+            207,
+            12,
+            16,
+            24
+          ],
+          []
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      },
+      "publicOutput": {
+        "value": [
+          [],
+          [
+            1
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      },
+      "queries": [
+        {
+          "readTime": "85000000",
+          "computeTime": "1168248299",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      ],
+      "totalGas": {
+        "readTime": "85000000",
+        "computeTime": "1168248299",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "queryTrace": [
+        {
+          "program": [
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "push": {
+                "storage": true,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [],
+                      [
+                        1
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      },
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "ins": {
+                "cached": false,
+                "n": 1
+              }
+            }
+          ],
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1168248299",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "events": [],
+          "beforeEffects": {
+            "claimedNullifiers": [],
+            "claimedShieldedReceives": [],
+            "claimedShieldedSpends": [],
+            "claimedContractCalls": [],
+            "shieldedMints": [],
+            "unshieldedMints": [],
+            "unshieldedInputs": [],
+            "unshieldedOutputs": [],
+            "claimedUnshieldedSpends": []
+          },
+          "afterEffects": {
+            "claimedNullifiers": [],
+            "claimedShieldedReceives": [],
+            "claimedShieldedSpends": [],
+            "claimedContractCalls": [],
+            "shieldedMints": [],
+            "unshieldedMints": [],
+            "unshieldedInputs": [],
+            "unshieldedOutputs": [],
+            "claimedUnshieldedSpends": []
+          }
+        }
+      ],
+      "witnessInputs": []
+    },
+    {
+      "id": "one",
+      "operation": "apply",
+      "scalar": "0100000000000000000000000000000000000000000000000000000000000000",
+      "scalarDecimal": "1",
+      "point": {
+        "x": "d8b6b11fd5179b86e5e15ff573059744c8666738c1b59d8566a0018c63fbb069",
+        "y": "26c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018",
+        "fab": [
+          "d8b6b11fd5179b86e5e15ff573059744c8666738c1b59d8566a0018c63fbb069",
+          "26c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018"
+        ]
+      },
+      "oracleGenerator": {
+        "x": "e56fd518a3fe2d515f37be7f655c3104eef572b1e37ed35ea31c123a67c4a53e",
+        "y": "cb550cd538ea0cc1138480408e6eaab9b36c613f0dd3f7784fdb6eea837b1357",
+        "fab": [
+          "e56fd518a3fe2d515f37be7f655c3104eef572b1e37ed35ea31c123a67c4a53e",
+          "cb550cd538ea0cc1138480408e6eaab9b36c613f0dd3f7784fdb6eea837b1357"
+        ]
+      },
+      "oracleProduct": {
+        "x": "d8b6b11fd5179b86e5e15ff573059744c8666738c1b59d8566a0018c63fbb069",
+        "y": "26c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018",
+        "fab": [
+          "d8b6b11fd5179b86e5e15ff573059744c8666738c1b59d8566a0018c63fbb069",
+          "26c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018"
+        ]
+      },
+      "expected": {
+        "x": "e999b2af3a323650c358675458909f8f4f5638245885bd17800ba3a6fc3a5f5c",
+        "y": "11bbe753a524e8b88ccdc3fca6553b5603e2d343b31deeb5668e3a3f3959ae0a",
+        "fab": [
+          "e999b2af3a323650c358675458909f8f4f5638245885bd17800ba3a6fc3a5f5c",
+          "11bbe753a524e8b88ccdc3fca6553b5603e2d343b31deeb5668e3a3f3959ae0a"
+        ]
+      },
+      "result": {
+        "x": "e999b2af3a323650c358675458909f8f4f5638245885bd17800ba3a6fc3a5f5c",
+        "y": "11bbe753a524e8b88ccdc3fca6553b5603e2d343b31deeb5668e3a3f3959ae0a",
+        "fab": [
+          "e999b2af3a323650c358675458909f8f4f5638245885bd17800ba3a6fc3a5f5c",
+          "11bbe753a524e8b88ccdc3fca6553b5603e2d343b31deeb5668e3a3f3959ae0a"
+        ]
+      },
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a480018824001c2414104000401040408010404080403040c00041008010404146803042c58010403040108010404010401040118824001c24141000018146170706c79000400081c2000042408010404289003043f800f03be27ed599576bbe79998cc43a82db64a3b7bc6c9a8901aca9f693eb0010000100c72617708302000043408010404389003043f80a42188edd24581088a5bf76196b244b0f3495fb6d95cd725beaf870a17a299d04020202020202020202c20202020203c200802081408201840201003000400",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a48002101826001e999b2af3a323650c358675458909f8f4f5638245885bd17800ba3a6fc3a5f5c600111bbe753a524e8b88ccdc3fca6553b5603e2d343b31deeb5668e3a3f3959ae0ac2414104000401040408010404080403040c000410080104041479010304b2650101040304010801040401040104012101826001e999b2af3a323650c358675458909f8f4f5638245885bd17800ba3a6fc3a5f5c600111bbe753a524e8b88ccdc3fca6553b5603e2d343b31deeb5668e3a3f3959ae0ac24141000018146170706c79000400081c2000042408010404289003043f800f03be27ed599576bbe79998cc43a82db64a3b7bc6c9a8901aca9f693eb0010000100c72617708302000043408010404389003043f80a42188edd24581088a5bf76196b244b0f3495fb6d95cd725beaf870a17a299d04020202020202020202c20202020203c200802081408201840201003000400",
+      "privateBefore": 17,
+      "privateAfter": 17,
+      "effectsBefore": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": [],
+        "unshieldedMints": [],
+        "unshieldedInputs": [],
+        "unshieldedOutputs": [],
+        "claimedUnshieldedSpends": []
+      },
+      "effectsAfter": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": [],
+        "unshieldedMints": [],
+        "unshieldedInputs": [],
+        "unshieldedOutputs": [],
+        "claimedUnshieldedSpends": []
+      },
+      "publicTranscript": [
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    233,
+                    153,
+                    178,
+                    175,
+                    58,
+                    50,
+                    54,
+                    80,
+                    195,
+                    88,
+                    103,
+                    84,
+                    88,
+                    144,
+                    159,
+                    143,
+                    79,
+                    86,
+                    56,
+                    36,
+                    88,
+                    133,
+                    189,
+                    23,
+                    128,
+                    11,
+                    163,
+                    166,
+                    252,
+                    58,
+                    95,
+                    92
+                  ],
+                  [
+                    17,
+                    187,
+                    231,
+                    83,
+                    165,
+                    36,
+                    232,
+                    184,
+                    140,
+                    205,
+                    195,
+                    252,
+                    166,
+                    85,
+                    59,
+                    86,
+                    3,
+                    226,
+                    211,
+                    67,
+                    179,
+                    29,
+                    238,
+                    181,
+                    102,
+                    142,
+                    58,
+                    63,
+                    57,
+                    89,
+                    174,
+                    10
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  },
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": [],
+      "publicInput": {
+        "value": [
+          [
+            216,
+            182,
+            177,
+            31,
+            213,
+            23,
+            155,
+            134,
+            229,
+            225,
+            95,
+            245,
+            115,
+            5,
+            151,
+            68,
+            200,
+            102,
+            103,
+            56,
+            193,
+            181,
+            157,
+            133,
+            102,
+            160,
+            1,
+            140,
+            99,
+            251,
+            176,
+            105
+          ],
+          [
+            38,
+            198,
+            156,
+            196,
+            146,
+            225,
+            55,
+            163,
+            138,
+            178,
+            157,
+            128,
+            115,
+            135,
+            204,
+            215,
+            0,
+            33,
+            171,
+            20,
+            60,
+            32,
+            142,
+            209,
+            33,
+            233,
+            125,
+            146,
+            207,
+            12,
+            16,
+            24
+          ],
+          [
+            1
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      },
+      "publicOutput": {
+        "value": [
+          [
+            233,
+            153,
+            178,
+            175,
+            58,
+            50,
+            54,
+            80,
+            195,
+            88,
+            103,
+            84,
+            88,
+            144,
+            159,
+            143,
+            79,
+            86,
+            56,
+            36,
+            88,
+            133,
+            189,
+            23,
+            128,
+            11,
+            163,
+            166,
+            252,
+            58,
+            95,
+            92
+          ],
+          [
+            17,
+            187,
+            231,
+            83,
+            165,
+            36,
+            232,
+            184,
+            140,
+            205,
+            195,
+            252,
+            166,
+            85,
+            59,
+            86,
+            3,
+            226,
+            211,
+            67,
+            179,
+            29,
+            238,
+            181,
+            102,
+            142,
+            58,
+            63,
+            57,
+            89,
+            174,
+            10
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      },
+      "queries": [
+        {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "178",
+          "bytesDeleted": "44"
+        }
+      ],
+      "totalGas": {
+        "readTime": "85000000",
+        "computeTime": "1233942932",
+        "bytesWritten": "178",
+        "bytesDeleted": "44"
+      },
+      "queryTrace": [
+        {
+          "program": [
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "push": {
+                "storage": true,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        233,
+                        153,
+                        178,
+                        175,
+                        58,
+                        50,
+                        54,
+                        80,
+                        195,
+                        88,
+                        103,
+                        84,
+                        88,
+                        144,
+                        159,
+                        143,
+                        79,
+                        86,
+                        56,
+                        36,
+                        88,
+                        133,
+                        189,
+                        23,
+                        128,
+                        11,
+                        163,
+                        166,
+                        252,
+                        58,
+                        95,
+                        92
+                      ],
+                      [
+                        17,
+                        187,
+                        231,
+                        83,
+                        165,
+                        36,
+                        232,
+                        184,
+                        140,
+                        205,
+                        195,
+                        252,
+                        166,
+                        85,
+                        59,
+                        86,
+                        3,
+                        226,
+                        211,
+                        67,
+                        179,
+                        29,
+                        238,
+                        181,
+                        102,
+                        142,
+                        58,
+                        63,
+                        57,
+                        89,
+                        174,
+                        10
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      },
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "ins": {
+                "cached": false,
+                "n": 1
+              }
+            }
+          ],
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1233942932",
+            "bytesWritten": "178",
+            "bytesDeleted": "44"
+          },
+          "events": [],
+          "beforeEffects": {
+            "claimedNullifiers": [],
+            "claimedShieldedReceives": [],
+            "claimedShieldedSpends": [],
+            "claimedContractCalls": [],
+            "shieldedMints": [],
+            "unshieldedMints": [],
+            "unshieldedInputs": [],
+            "unshieldedOutputs": [],
+            "claimedUnshieldedSpends": []
+          },
+          "afterEffects": {
+            "claimedNullifiers": [],
+            "claimedShieldedReceives": [],
+            "claimedShieldedSpends": [],
+            "claimedContractCalls": [],
+            "shieldedMints": [],
+            "unshieldedMints": [],
+            "unshieldedInputs": [],
+            "unshieldedOutputs": [],
+            "claimedUnshieldedSpends": []
+          }
+        }
+      ],
+      "witnessInputs": []
+    },
+    {
+      "id": "eight",
+      "operation": "apply",
+      "scalar": "0800000000000000000000000000000000000000000000000000000000000000",
+      "scalarDecimal": "8",
+      "point": {
+        "x": "d8b6b11fd5179b86e5e15ff573059744c8666738c1b59d8566a0018c63fbb069",
+        "y": "26c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018",
+        "fab": [
+          "d8b6b11fd5179b86e5e15ff573059744c8666738c1b59d8566a0018c63fbb069",
+          "26c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018"
+        ]
+      },
+      "oracleGenerator": {
+        "x": "e999b2af3a323650c358675458909f8f4f5638245885bd17800ba3a6fc3a5f5c",
+        "y": "11bbe753a524e8b88ccdc3fca6553b5603e2d343b31deeb5668e3a3f3959ae0a",
+        "fab": [
+          "e999b2af3a323650c358675458909f8f4f5638245885bd17800ba3a6fc3a5f5c",
+          "11bbe753a524e8b88ccdc3fca6553b5603e2d343b31deeb5668e3a3f3959ae0a"
+        ]
+      },
+      "oracleProduct": {
+        "x": "5558a0958515fa1017b17ede142906b6b7170f16fd1436a589e9f0816d5f1065",
+        "y": "841c1123ececce584fea8b6109c0fdc3e11b2374e732f0561537dbe5ddd10f24",
+        "fab": [
+          "5558a0958515fa1017b17ede142906b6b7170f16fd1436a589e9f0816d5f1065",
+          "841c1123ececce584fea8b6109c0fdc3e11b2374e732f0561537dbe5ddd10f24"
+        ]
+      },
+      "expected": {
+        "x": "cf3ab9c6a55e62f0753abc62b87d9d0d2d877c38826c4049fb7a3082d2891a4e",
+        "y": "d4215d26f190186944dbadc866f9db37996ee085c1094223bcfbe1d95494c667",
+        "fab": [
+          "cf3ab9c6a55e62f0753abc62b87d9d0d2d877c38826c4049fb7a3082d2891a4e",
+          "d4215d26f190186944dbadc866f9db37996ee085c1094223bcfbe1d95494c667"
+        ]
+      },
+      "result": {
+        "x": "cf3ab9c6a55e62f0753abc62b87d9d0d2d877c38826c4049fb7a3082d2891a4e",
+        "y": "d4215d26f190186944dbadc866f9db37996ee085c1094223bcfbe1d95494c667",
+        "fab": [
+          "cf3ab9c6a55e62f0753abc62b87d9d0d2d877c38826c4049fb7a3082d2891a4e",
+          "d4215d26f190186944dbadc866f9db37996ee085c1094223bcfbe1d95494c667"
+        ]
+      },
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a480018824001c2414104000401040408010404080403040c00041008010404146803042c58010403040108010404010401040118824001c24141000018146170706c79000400081c2000042408010404289003043f800f03be27ed599576bbe79998cc43a82db64a3b7bc6c9a8901aca9f693eb0010000100c72617708302000043408010404389003043f80a42188edd24581088a5bf76196b244b0f3495fb6d95cd725beaf870a17a299d04020202020202020202c20202020203c200802081408201840201003000400",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a48002101826001cf3ab9c6a55e62f0753abc62b87d9d0d2d877c38826c4049fb7a3082d2891a4e6001d4215d26f190186944dbadc866f9db37996ee085c1094223bcfbe1d95494c667c2414104000401040408010404080403040c000410080104041479010304b2650101040304010801040401040104012101826001cf3ab9c6a55e62f0753abc62b87d9d0d2d877c38826c4049fb7a3082d2891a4e6001d4215d26f190186944dbadc866f9db37996ee085c1094223bcfbe1d95494c667c24141000018146170706c79000400081c2000042408010404289003043f800f03be27ed599576bbe79998cc43a82db64a3b7bc6c9a8901aca9f693eb0010000100c72617708302000043408010404389003043f80a42188edd24581088a5bf76196b244b0f3495fb6d95cd725beaf870a17a299d04020202020202020202c20202020203c200802081408201840201003000400",
+      "privateBefore": 17,
+      "privateAfter": 17,
+      "effectsBefore": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": [],
+        "unshieldedMints": [],
+        "unshieldedInputs": [],
+        "unshieldedOutputs": [],
+        "claimedUnshieldedSpends": []
+      },
+      "effectsAfter": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": [],
+        "unshieldedMints": [],
+        "unshieldedInputs": [],
+        "unshieldedOutputs": [],
+        "claimedUnshieldedSpends": []
+      },
+      "publicTranscript": [
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    207,
+                    58,
+                    185,
+                    198,
+                    165,
+                    94,
+                    98,
+                    240,
+                    117,
+                    58,
+                    188,
+                    98,
+                    184,
+                    125,
+                    157,
+                    13,
+                    45,
+                    135,
+                    124,
+                    56,
+                    130,
+                    108,
+                    64,
+                    73,
+                    251,
+                    122,
+                    48,
+                    130,
+                    210,
+                    137,
+                    26,
+                    78
+                  ],
+                  [
+                    212,
+                    33,
+                    93,
+                    38,
+                    241,
+                    144,
+                    24,
+                    105,
+                    68,
+                    219,
+                    173,
+                    200,
+                    102,
+                    249,
+                    219,
+                    55,
+                    153,
+                    110,
+                    224,
+                    133,
+                    193,
+                    9,
+                    66,
+                    35,
+                    188,
+                    251,
+                    225,
+                    217,
+                    84,
+                    148,
+                    198,
+                    103
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  },
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": [],
+      "publicInput": {
+        "value": [
+          [
+            216,
+            182,
+            177,
+            31,
+            213,
+            23,
+            155,
+            134,
+            229,
+            225,
+            95,
+            245,
+            115,
+            5,
+            151,
+            68,
+            200,
+            102,
+            103,
+            56,
+            193,
+            181,
+            157,
+            133,
+            102,
+            160,
+            1,
+            140,
+            99,
+            251,
+            176,
+            105
+          ],
+          [
+            38,
+            198,
+            156,
+            196,
+            146,
+            225,
+            55,
+            163,
+            138,
+            178,
+            157,
+            128,
+            115,
+            135,
+            204,
+            215,
+            0,
+            33,
+            171,
+            20,
+            60,
+            32,
+            142,
+            209,
+            33,
+            233,
+            125,
+            146,
+            207,
+            12,
+            16,
+            24
+          ],
+          [
+            8
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      },
+      "publicOutput": {
+        "value": [
+          [
+            207,
+            58,
+            185,
+            198,
+            165,
+            94,
+            98,
+            240,
+            117,
+            58,
+            188,
+            98,
+            184,
+            125,
+            157,
+            13,
+            45,
+            135,
+            124,
+            56,
+            130,
+            108,
+            64,
+            73,
+            251,
+            122,
+            48,
+            130,
+            210,
+            137,
+            26,
+            78
+          ],
+          [
+            212,
+            33,
+            93,
+            38,
+            241,
+            144,
+            24,
+            105,
+            68,
+            219,
+            173,
+            200,
+            102,
+            249,
+            219,
+            55,
+            153,
+            110,
+            224,
+            133,
+            193,
+            9,
+            66,
+            35,
+            188,
+            251,
+            225,
+            217,
+            84,
+            148,
+            198,
+            103
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      },
+      "queries": [
+        {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "178",
+          "bytesDeleted": "44"
+        }
+      ],
+      "totalGas": {
+        "readTime": "85000000",
+        "computeTime": "1233942932",
+        "bytesWritten": "178",
+        "bytesDeleted": "44"
+      },
+      "queryTrace": [
+        {
+          "program": [
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "push": {
+                "storage": true,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        207,
+                        58,
+                        185,
+                        198,
+                        165,
+                        94,
+                        98,
+                        240,
+                        117,
+                        58,
+                        188,
+                        98,
+                        184,
+                        125,
+                        157,
+                        13,
+                        45,
+                        135,
+                        124,
+                        56,
+                        130,
+                        108,
+                        64,
+                        73,
+                        251,
+                        122,
+                        48,
+                        130,
+                        210,
+                        137,
+                        26,
+                        78
+                      ],
+                      [
+                        212,
+                        33,
+                        93,
+                        38,
+                        241,
+                        144,
+                        24,
+                        105,
+                        68,
+                        219,
+                        173,
+                        200,
+                        102,
+                        249,
+                        219,
+                        55,
+                        153,
+                        110,
+                        224,
+                        133,
+                        193,
+                        9,
+                        66,
+                        35,
+                        188,
+                        251,
+                        225,
+                        217,
+                        84,
+                        148,
+                        198,
+                        103
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      },
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "ins": {
+                "cached": false,
+                "n": 1
+              }
+            }
+          ],
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1233942932",
+            "bytesWritten": "178",
+            "bytesDeleted": "44"
+          },
+          "events": [],
+          "beforeEffects": {
+            "claimedNullifiers": [],
+            "claimedShieldedReceives": [],
+            "claimedShieldedSpends": [],
+            "claimedContractCalls": [],
+            "shieldedMints": [],
+            "unshieldedMints": [],
+            "unshieldedInputs": [],
+            "unshieldedOutputs": [],
+            "claimedUnshieldedSpends": []
+          },
+          "afterEffects": {
+            "claimedNullifiers": [],
+            "claimedShieldedReceives": [],
+            "claimedShieldedSpends": [],
+            "claimedContractCalls": [],
+            "shieldedMints": [],
+            "unshieldedMints": [],
+            "unshieldedInputs": [],
+            "unshieldedOutputs": [],
+            "claimedUnshieldedSpends": []
+          }
+        }
+      ],
+      "witnessInputs": []
+    },
+    {
+      "id": "q_minus_one",
+      "operation": "apply",
+      "scalar": "b62cf7d65e0e97d08210c8cc932068a6003b3401013b6706a9af3365eab47d0e",
+      "scalarDecimal": "6554484396890773809930967563523245729705921265872317281365359162392183254198",
+      "point": {
+        "x": "d8b6b11fd5179b86e5e15ff573059744c8666738c1b59d8566a0018c63fbb069",
+        "y": "26c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018",
+        "fab": [
+          "d8b6b11fd5179b86e5e15ff573059744c8666738c1b59d8566a0018c63fbb069",
+          "26c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018"
+        ]
+      },
+      "oracleGenerator": {
+        "x": "1c902ae75b01d2ae9f2440809d478c4f17e22e58245966d4a4608befebe24735",
+        "y": "cb550cd538ea0cc1138480408e6eaab9b36c613f0dd3f7784fdb6eea837b1357",
+        "fab": [
+          "1c902ae75b01d2ae9f2440809d478c4f17e22e58245966d4a4608befebe24735",
+          "cb550cd538ea0cc1138480408e6eaab9b36c613f0dd3f7784fdb6eea837b1357"
+        ]
+      },
+      "oracleProduct": {
+        "x": "29494ee029e86479197a9e0a8f9e260f3d713ad146229cade1dc9b9defab3c0a",
+        "y": "26c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018",
+        "fab": [
+          "29494ee029e86479197a9e0a8f9e260f3d713ad146229cade1dc9b9defab3c0a",
+          "26c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018"
+        ]
+      },
+      "expected": {
+        "x": "18664d50c4cdc9af3b0397abaa131ec4b58169e5af527c1bc871fa82566c8e17",
+        "y": "11bbe753a524e8b88ccdc3fca6553b5603e2d343b31deeb5668e3a3f3959ae0a",
+        "fab": [
+          "18664d50c4cdc9af3b0397abaa131ec4b58169e5af527c1bc871fa82566c8e17",
+          "11bbe753a524e8b88ccdc3fca6553b5603e2d343b31deeb5668e3a3f3959ae0a"
+        ]
+      },
+      "result": {
+        "x": "18664d50c4cdc9af3b0397abaa131ec4b58169e5af527c1bc871fa82566c8e17",
+        "y": "11bbe753a524e8b88ccdc3fca6553b5603e2d343b31deeb5668e3a3f3959ae0a",
+        "fab": [
+          "18664d50c4cdc9af3b0397abaa131ec4b58169e5af527c1bc871fa82566c8e17",
+          "11bbe753a524e8b88ccdc3fca6553b5603e2d343b31deeb5668e3a3f3959ae0a"
+        ]
+      },
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a480018824001c2414104000401040408010404080403040c00041008010404146803042c58010403040108010404010401040118824001c24141000018146170706c79000400081c2000042408010404289003043f800f03be27ed599576bbe79998cc43a82db64a3b7bc6c9a8901aca9f693eb0010000100c72617708302000043408010404389003043f80a42188edd24581088a5bf76196b244b0f3495fb6d95cd725beaf870a17a299d04020202020202020202c20202020203c200802081408201840201003000400",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a4800210182600118664d50c4cdc9af3b0397abaa131ec4b58169e5af527c1bc871fa82566c8e17600111bbe753a524e8b88ccdc3fca6553b5603e2d343b31deeb5668e3a3f3959ae0ac2414104000401040408010404080403040c000410080104041479010304b265010104030401080104040104010401210182600118664d50c4cdc9af3b0397abaa131ec4b58169e5af527c1bc871fa82566c8e17600111bbe753a524e8b88ccdc3fca6553b5603e2d343b31deeb5668e3a3f3959ae0ac24141000018146170706c79000400081c2000042408010404289003043f800f03be27ed599576bbe79998cc43a82db64a3b7bc6c9a8901aca9f693eb0010000100c72617708302000043408010404389003043f80a42188edd24581088a5bf76196b244b0f3495fb6d95cd725beaf870a17a299d04020202020202020202c20202020203c200802081408201840201003000400",
+      "privateBefore": 17,
+      "privateAfter": 17,
+      "effectsBefore": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": [],
+        "unshieldedMints": [],
+        "unshieldedInputs": [],
+        "unshieldedOutputs": [],
+        "claimedUnshieldedSpends": []
+      },
+      "effectsAfter": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": [],
+        "unshieldedMints": [],
+        "unshieldedInputs": [],
+        "unshieldedOutputs": [],
+        "claimedUnshieldedSpends": []
+      },
+      "publicTranscript": [
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    24,
+                    102,
+                    77,
+                    80,
+                    196,
+                    205,
+                    201,
+                    175,
+                    59,
+                    3,
+                    151,
+                    171,
+                    170,
+                    19,
+                    30,
+                    196,
+                    181,
+                    129,
+                    105,
+                    229,
+                    175,
+                    82,
+                    124,
+                    27,
+                    200,
+                    113,
+                    250,
+                    130,
+                    86,
+                    108,
+                    142,
+                    23
+                  ],
+                  [
+                    17,
+                    187,
+                    231,
+                    83,
+                    165,
+                    36,
+                    232,
+                    184,
+                    140,
+                    205,
+                    195,
+                    252,
+                    166,
+                    85,
+                    59,
+                    86,
+                    3,
+                    226,
+                    211,
+                    67,
+                    179,
+                    29,
+                    238,
+                    181,
+                    102,
+                    142,
+                    58,
+                    63,
+                    57,
+                    89,
+                    174,
+                    10
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  },
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": [],
+      "publicInput": {
+        "value": [
+          [
+            216,
+            182,
+            177,
+            31,
+            213,
+            23,
+            155,
+            134,
+            229,
+            225,
+            95,
+            245,
+            115,
+            5,
+            151,
+            68,
+            200,
+            102,
+            103,
+            56,
+            193,
+            181,
+            157,
+            133,
+            102,
+            160,
+            1,
+            140,
+            99,
+            251,
+            176,
+            105
+          ],
+          [
+            38,
+            198,
+            156,
+            196,
+            146,
+            225,
+            55,
+            163,
+            138,
+            178,
+            157,
+            128,
+            115,
+            135,
+            204,
+            215,
+            0,
+            33,
+            171,
+            20,
+            60,
+            32,
+            142,
+            209,
+            33,
+            233,
+            125,
+            146,
+            207,
+            12,
+            16,
+            24
+          ],
+          [
+            182,
+            44,
+            247,
+            214,
+            94,
+            14,
+            151,
+            208,
+            130,
+            16,
+            200,
+            204,
+            147,
+            32,
+            104,
+            166,
+            0,
+            59,
+            52,
+            1,
+            1,
+            59,
+            103,
+            6,
+            169,
+            175,
+            51,
+            101,
+            234,
+            180,
+            125,
+            14
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      },
+      "publicOutput": {
+        "value": [
+          [
+            24,
+            102,
+            77,
+            80,
+            196,
+            205,
+            201,
+            175,
+            59,
+            3,
+            151,
+            171,
+            170,
+            19,
+            30,
+            196,
+            181,
+            129,
+            105,
+            229,
+            175,
+            82,
+            124,
+            27,
+            200,
+            113,
+            250,
+            130,
+            86,
+            108,
+            142,
+            23
+          ],
+          [
+            17,
+            187,
+            231,
+            83,
+            165,
+            36,
+            232,
+            184,
+            140,
+            205,
+            195,
+            252,
+            166,
+            85,
+            59,
+            86,
+            3,
+            226,
+            211,
+            67,
+            179,
+            29,
+            238,
+            181,
+            102,
+            142,
+            58,
+            63,
+            57,
+            89,
+            174,
+            10
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      },
+      "queries": [
+        {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "178",
+          "bytesDeleted": "44"
+        }
+      ],
+      "totalGas": {
+        "readTime": "85000000",
+        "computeTime": "1233942932",
+        "bytesWritten": "178",
+        "bytesDeleted": "44"
+      },
+      "queryTrace": [
+        {
+          "program": [
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "push": {
+                "storage": true,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        24,
+                        102,
+                        77,
+                        80,
+                        196,
+                        205,
+                        201,
+                        175,
+                        59,
+                        3,
+                        151,
+                        171,
+                        170,
+                        19,
+                        30,
+                        196,
+                        181,
+                        129,
+                        105,
+                        229,
+                        175,
+                        82,
+                        124,
+                        27,
+                        200,
+                        113,
+                        250,
+                        130,
+                        86,
+                        108,
+                        142,
+                        23
+                      ],
+                      [
+                        17,
+                        187,
+                        231,
+                        83,
+                        165,
+                        36,
+                        232,
+                        184,
+                        140,
+                        205,
+                        195,
+                        252,
+                        166,
+                        85,
+                        59,
+                        86,
+                        3,
+                        226,
+                        211,
+                        67,
+                        179,
+                        29,
+                        238,
+                        181,
+                        102,
+                        142,
+                        58,
+                        63,
+                        57,
+                        89,
+                        174,
+                        10
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      },
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "ins": {
+                "cached": false,
+                "n": 1
+              }
+            }
+          ],
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1233942932",
+            "bytesWritten": "178",
+            "bytesDeleted": "44"
+          },
+          "events": [],
+          "beforeEffects": {
+            "claimedNullifiers": [],
+            "claimedShieldedReceives": [],
+            "claimedShieldedSpends": [],
+            "claimedContractCalls": [],
+            "shieldedMints": [],
+            "unshieldedMints": [],
+            "unshieldedInputs": [],
+            "unshieldedOutputs": [],
+            "claimedUnshieldedSpends": []
+          },
+          "afterEffects": {
+            "claimedNullifiers": [],
+            "claimedShieldedReceives": [],
+            "claimedShieldedSpends": [],
+            "claimedContractCalls": [],
+            "shieldedMints": [],
+            "unshieldedMints": [],
+            "unshieldedInputs": [],
+            "unshieldedOutputs": [],
+            "claimedUnshieldedSpends": []
+          }
+        }
+      ],
+      "witnessInputs": []
+    },
+    {
+      "id": "q",
+      "operation": "apply",
+      "scalar": "b72cf7d65e0e97d08210c8cc932068a6003b3401013b6706a9af3365eab47d0e",
+      "scalarDecimal": "6554484396890773809930967563523245729705921265872317281365359162392183254199",
+      "point": {
+        "x": "d8b6b11fd5179b86e5e15ff573059744c8666738c1b59d8566a0018c63fbb069",
+        "y": "26c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018",
+        "fab": [
+          "d8b6b11fd5179b86e5e15ff573059744c8666738c1b59d8566a0018c63fbb069",
+          "26c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018"
+        ]
+      },
+      "oracleGenerator": {
+        "x": "0000000000000000000000000000000000000000000000000000000000000000",
+        "y": "0100000000000000000000000000000000000000000000000000000000000000",
+        "fab": [
+          "",
+          "01"
+        ]
+      },
+      "oracleProduct": {
+        "x": "0000000000000000000000000000000000000000000000000000000000000000",
+        "y": "0100000000000000000000000000000000000000000000000000000000000000",
+        "fab": [
+          "",
+          "01"
+        ]
+      },
+      "expected": {
+        "x": "0000000000000000000000000000000000000000000000000000000000000000",
+        "y": "0100000000000000000000000000000000000000000000000000000000000000",
+        "fab": [
+          "",
+          "01"
+        ]
+      },
+      "result": {
+        "x": "0000000000000000000000000000000000000000000000000000000000000000",
+        "y": "0100000000000000000000000000000000000000000000000000000000000000",
+        "fab": [
+          "",
+          "01"
+        ]
+      },
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a480018824001c2414104000401040408010404080403040c00041008010404146803042c58010403040108010404010401040118824001c24141000018146170706c79000400081c2000042408010404289003043f800f03be27ed599576bbe79998cc43a82db64a3b7bc6c9a8901aca9f693eb0010000100c72617708302000043408010404389003043f80a42188edd24581088a5bf76196b244b0f3495fb6d95cd725beaf870a17a299d04020202020202020202c20202020203c200802081408201840201003000400",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a480018824001c2414104000401040408010404080403040c00041008010404146803042c58010403040108010404010401040118824001c24141000018146170706c79000400081c2000042408010404289003043f800f03be27ed599576bbe79998cc43a82db64a3b7bc6c9a8901aca9f693eb0010000100c72617708302000043408010404389003043f80a42188edd24581088a5bf76196b244b0f3495fb6d95cd725beaf870a17a299d04020202020202020202c20202020203c200802081408201840201003000400",
+      "privateBefore": 17,
+      "privateAfter": 17,
+      "effectsBefore": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": [],
+        "unshieldedMints": [],
+        "unshieldedInputs": [],
+        "unshieldedOutputs": [],
+        "claimedUnshieldedSpends": []
+      },
+      "effectsAfter": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": [],
+        "unshieldedMints": [],
+        "unshieldedInputs": [],
+        "unshieldedOutputs": [],
+        "claimedUnshieldedSpends": []
+      },
+      "publicTranscript": [
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [],
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  },
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": [],
+      "publicInput": {
+        "value": [
+          [
+            216,
+            182,
+            177,
+            31,
+            213,
+            23,
+            155,
+            134,
+            229,
+            225,
+            95,
+            245,
+            115,
+            5,
+            151,
+            68,
+            200,
+            102,
+            103,
+            56,
+            193,
+            181,
+            157,
+            133,
+            102,
+            160,
+            1,
+            140,
+            99,
+            251,
+            176,
+            105
+          ],
+          [
+            38,
+            198,
+            156,
+            196,
+            146,
+            225,
+            55,
+            163,
+            138,
+            178,
+            157,
+            128,
+            115,
+            135,
+            204,
+            215,
+            0,
+            33,
+            171,
+            20,
+            60,
+            32,
+            142,
+            209,
+            33,
+            233,
+            125,
+            146,
+            207,
+            12,
+            16,
+            24
+          ],
+          [
+            183,
+            44,
+            247,
+            214,
+            94,
+            14,
+            151,
+            208,
+            130,
+            16,
+            200,
+            204,
+            147,
+            32,
+            104,
+            166,
+            0,
+            59,
+            52,
+            1,
+            1,
+            59,
+            103,
+            6,
+            169,
+            175,
+            51,
+            101,
+            234,
+            180,
+            125,
+            14
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      },
+      "publicOutput": {
+        "value": [
+          [],
+          [
+            1
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      },
+      "queries": [
+        {
+          "readTime": "85000000",
+          "computeTime": "1168248299",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      ],
+      "totalGas": {
+        "readTime": "85000000",
+        "computeTime": "1168248299",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "queryTrace": [
+        {
+          "program": [
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "push": {
+                "storage": true,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [],
+                      [
+                        1
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      },
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "ins": {
+                "cached": false,
+                "n": 1
+              }
+            }
+          ],
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1168248299",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "events": [],
+          "beforeEffects": {
+            "claimedNullifiers": [],
+            "claimedShieldedReceives": [],
+            "claimedShieldedSpends": [],
+            "claimedContractCalls": [],
+            "shieldedMints": [],
+            "unshieldedMints": [],
+            "unshieldedInputs": [],
+            "unshieldedOutputs": [],
+            "claimedUnshieldedSpends": []
+          },
+          "afterEffects": {
+            "claimedNullifiers": [],
+            "claimedShieldedReceives": [],
+            "claimedShieldedSpends": [],
+            "claimedContractCalls": [],
+            "shieldedMints": [],
+            "unshieldedMints": [],
+            "unshieldedInputs": [],
+            "unshieldedOutputs": [],
+            "claimedUnshieldedSpends": []
+          }
+        }
+      ],
+      "witnessInputs": []
+    },
+    {
+      "id": "q_plus_one",
+      "operation": "apply",
+      "scalar": "b82cf7d65e0e97d08210c8cc932068a6003b3401013b6706a9af3365eab47d0e",
+      "scalarDecimal": "6554484396890773809930967563523245729705921265872317281365359162392183254200",
+      "point": {
+        "x": "d8b6b11fd5179b86e5e15ff573059744c8666738c1b59d8566a0018c63fbb069",
+        "y": "26c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018",
+        "fab": [
+          "d8b6b11fd5179b86e5e15ff573059744c8666738c1b59d8566a0018c63fbb069",
+          "26c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018"
+        ]
+      },
+      "oracleGenerator": {
+        "x": "e56fd518a3fe2d515f37be7f655c3104eef572b1e37ed35ea31c123a67c4a53e",
+        "y": "cb550cd538ea0cc1138480408e6eaab9b36c613f0dd3f7784fdb6eea837b1357",
+        "fab": [
+          "e56fd518a3fe2d515f37be7f655c3104eef572b1e37ed35ea31c123a67c4a53e",
+          "cb550cd538ea0cc1138480408e6eaab9b36c613f0dd3f7784fdb6eea837b1357"
+        ]
+      },
+      "oracleProduct": {
+        "x": "d8b6b11fd5179b86e5e15ff573059744c8666738c1b59d8566a0018c63fbb069",
+        "y": "26c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018",
+        "fab": [
+          "d8b6b11fd5179b86e5e15ff573059744c8666738c1b59d8566a0018c63fbb069",
+          "26c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018"
+        ]
+      },
+      "expected": {
+        "x": "e999b2af3a323650c358675458909f8f4f5638245885bd17800ba3a6fc3a5f5c",
+        "y": "11bbe753a524e8b88ccdc3fca6553b5603e2d343b31deeb5668e3a3f3959ae0a",
+        "fab": [
+          "e999b2af3a323650c358675458909f8f4f5638245885bd17800ba3a6fc3a5f5c",
+          "11bbe753a524e8b88ccdc3fca6553b5603e2d343b31deeb5668e3a3f3959ae0a"
+        ]
+      },
+      "result": {
+        "x": "e999b2af3a323650c358675458909f8f4f5638245885bd17800ba3a6fc3a5f5c",
+        "y": "11bbe753a524e8b88ccdc3fca6553b5603e2d343b31deeb5668e3a3f3959ae0a",
+        "fab": [
+          "e999b2af3a323650c358675458909f8f4f5638245885bd17800ba3a6fc3a5f5c",
+          "11bbe753a524e8b88ccdc3fca6553b5603e2d343b31deeb5668e3a3f3959ae0a"
+        ]
+      },
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a480018824001c2414104000401040408010404080403040c00041008010404146803042c58010403040108010404010401040118824001c24141000018146170706c79000400081c2000042408010404289003043f800f03be27ed599576bbe79998cc43a82db64a3b7bc6c9a8901aca9f693eb0010000100c72617708302000043408010404389003043f80a42188edd24581088a5bf76196b244b0f3495fb6d95cd725beaf870a17a299d04020202020202020202c20202020203c200802081408201840201003000400",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a48002101826001e999b2af3a323650c358675458909f8f4f5638245885bd17800ba3a6fc3a5f5c600111bbe753a524e8b88ccdc3fca6553b5603e2d343b31deeb5668e3a3f3959ae0ac2414104000401040408010404080403040c000410080104041479010304b2650101040304010801040401040104012101826001e999b2af3a323650c358675458909f8f4f5638245885bd17800ba3a6fc3a5f5c600111bbe753a524e8b88ccdc3fca6553b5603e2d343b31deeb5668e3a3f3959ae0ac24141000018146170706c79000400081c2000042408010404289003043f800f03be27ed599576bbe79998cc43a82db64a3b7bc6c9a8901aca9f693eb0010000100c72617708302000043408010404389003043f80a42188edd24581088a5bf76196b244b0f3495fb6d95cd725beaf870a17a299d04020202020202020202c20202020203c200802081408201840201003000400",
+      "privateBefore": 17,
+      "privateAfter": 17,
+      "effectsBefore": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": [],
+        "unshieldedMints": [],
+        "unshieldedInputs": [],
+        "unshieldedOutputs": [],
+        "claimedUnshieldedSpends": []
+      },
+      "effectsAfter": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": [],
+        "unshieldedMints": [],
+        "unshieldedInputs": [],
+        "unshieldedOutputs": [],
+        "claimedUnshieldedSpends": []
+      },
+      "publicTranscript": [
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    233,
+                    153,
+                    178,
+                    175,
+                    58,
+                    50,
+                    54,
+                    80,
+                    195,
+                    88,
+                    103,
+                    84,
+                    88,
+                    144,
+                    159,
+                    143,
+                    79,
+                    86,
+                    56,
+                    36,
+                    88,
+                    133,
+                    189,
+                    23,
+                    128,
+                    11,
+                    163,
+                    166,
+                    252,
+                    58,
+                    95,
+                    92
+                  ],
+                  [
+                    17,
+                    187,
+                    231,
+                    83,
+                    165,
+                    36,
+                    232,
+                    184,
+                    140,
+                    205,
+                    195,
+                    252,
+                    166,
+                    85,
+                    59,
+                    86,
+                    3,
+                    226,
+                    211,
+                    67,
+                    179,
+                    29,
+                    238,
+                    181,
+                    102,
+                    142,
+                    58,
+                    63,
+                    57,
+                    89,
+                    174,
+                    10
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  },
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": [],
+      "publicInput": {
+        "value": [
+          [
+            216,
+            182,
+            177,
+            31,
+            213,
+            23,
+            155,
+            134,
+            229,
+            225,
+            95,
+            245,
+            115,
+            5,
+            151,
+            68,
+            200,
+            102,
+            103,
+            56,
+            193,
+            181,
+            157,
+            133,
+            102,
+            160,
+            1,
+            140,
+            99,
+            251,
+            176,
+            105
+          ],
+          [
+            38,
+            198,
+            156,
+            196,
+            146,
+            225,
+            55,
+            163,
+            138,
+            178,
+            157,
+            128,
+            115,
+            135,
+            204,
+            215,
+            0,
+            33,
+            171,
+            20,
+            60,
+            32,
+            142,
+            209,
+            33,
+            233,
+            125,
+            146,
+            207,
+            12,
+            16,
+            24
+          ],
+          [
+            184,
+            44,
+            247,
+            214,
+            94,
+            14,
+            151,
+            208,
+            130,
+            16,
+            200,
+            204,
+            147,
+            32,
+            104,
+            166,
+            0,
+            59,
+            52,
+            1,
+            1,
+            59,
+            103,
+            6,
+            169,
+            175,
+            51,
+            101,
+            234,
+            180,
+            125,
+            14
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      },
+      "publicOutput": {
+        "value": [
+          [
+            233,
+            153,
+            178,
+            175,
+            58,
+            50,
+            54,
+            80,
+            195,
+            88,
+            103,
+            84,
+            88,
+            144,
+            159,
+            143,
+            79,
+            86,
+            56,
+            36,
+            88,
+            133,
+            189,
+            23,
+            128,
+            11,
+            163,
+            166,
+            252,
+            58,
+            95,
+            92
+          ],
+          [
+            17,
+            187,
+            231,
+            83,
+            165,
+            36,
+            232,
+            184,
+            140,
+            205,
+            195,
+            252,
+            166,
+            85,
+            59,
+            86,
+            3,
+            226,
+            211,
+            67,
+            179,
+            29,
+            238,
+            181,
+            102,
+            142,
+            58,
+            63,
+            57,
+            89,
+            174,
+            10
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      },
+      "queries": [
+        {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "178",
+          "bytesDeleted": "44"
+        }
+      ],
+      "totalGas": {
+        "readTime": "85000000",
+        "computeTime": "1233942932",
+        "bytesWritten": "178",
+        "bytesDeleted": "44"
+      },
+      "queryTrace": [
+        {
+          "program": [
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "push": {
+                "storage": true,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        233,
+                        153,
+                        178,
+                        175,
+                        58,
+                        50,
+                        54,
+                        80,
+                        195,
+                        88,
+                        103,
+                        84,
+                        88,
+                        144,
+                        159,
+                        143,
+                        79,
+                        86,
+                        56,
+                        36,
+                        88,
+                        133,
+                        189,
+                        23,
+                        128,
+                        11,
+                        163,
+                        166,
+                        252,
+                        58,
+                        95,
+                        92
+                      ],
+                      [
+                        17,
+                        187,
+                        231,
+                        83,
+                        165,
+                        36,
+                        232,
+                        184,
+                        140,
+                        205,
+                        195,
+                        252,
+                        166,
+                        85,
+                        59,
+                        86,
+                        3,
+                        226,
+                        211,
+                        67,
+                        179,
+                        29,
+                        238,
+                        181,
+                        102,
+                        142,
+                        58,
+                        63,
+                        57,
+                        89,
+                        174,
+                        10
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      },
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "ins": {
+                "cached": false,
+                "n": 1
+              }
+            }
+          ],
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1233942932",
+            "bytesWritten": "178",
+            "bytesDeleted": "44"
+          },
+          "events": [],
+          "beforeEffects": {
+            "claimedNullifiers": [],
+            "claimedShieldedReceives": [],
+            "claimedShieldedSpends": [],
+            "claimedContractCalls": [],
+            "shieldedMints": [],
+            "unshieldedMints": [],
+            "unshieldedInputs": [],
+            "unshieldedOutputs": [],
+            "claimedUnshieldedSpends": []
+          },
+          "afterEffects": {
+            "claimedNullifiers": [],
+            "claimedShieldedReceives": [],
+            "claimedShieldedSpends": [],
+            "claimedContractCalls": [],
+            "shieldedMints": [],
+            "unshieldedMints": [],
+            "unshieldedInputs": [],
+            "unshieldedOutputs": [],
+            "claimedUnshieldedSpends": []
+          }
+        }
+      ],
+      "witnessInputs": []
+    },
+    {
+      "id": "native_max",
+      "operation": "apply",
+      "scalar": "00000000fffffffffe5bfeff02a4bd5305d8a10908d83933487d9d2953a7ed73",
+      "scalarDecimal": "52435875175126190479447740508185965837690552500527637822603658699938581184512",
+      "point": {
+        "x": "d8b6b11fd5179b86e5e15ff573059744c8666738c1b59d8566a0018c63fbb069",
+        "y": "26c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018",
+        "fab": [
+          "d8b6b11fd5179b86e5e15ff573059744c8666738c1b59d8566a0018c63fbb069",
+          "26c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018"
+        ]
+      },
+      "oracleGenerator": {
+        "x": "7b93952bdc10e48ac451598a65182bf71e0de912f2f2f96a3ab6e1deca25116c",
+        "y": "94b4e03ac556254786faca105066353de0a0279b655d01667527e27f3e489319",
+        "fab": [
+          "7b93952bdc10e48ac451598a65182bf71e0de912f2f2f96a3ab6e1deca25116c",
+          "94b4e03ac556254786faca105066353de0a0279b655d01667527e27f3e489319"
+        ]
+      },
+      "oracleProduct": {
+        "x": "99db467945e17c933bc478ecd4eabb21b15702eb0fc4068091033f72ea00735b",
+        "y": "c954a63f7ae77a2877b0d17e2e20f59350c24cc3f6fa18880fd9253acbfb4348",
+        "fab": [
+          "99db467945e17c933bc478ecd4eabb21b15702eb0fc4068091033f72ea00735b",
+          "c954a63f7ae77a2877b0d17e2e20f59350c24cc3f6fa18880fd9253acbfb4348"
+        ]
+      },
+      "expected": {
+        "x": "9be365845d4da7e12c016ba5a015e714976170f8b8e0314aa825abd138f0441e",
+        "y": "f48dbedfd8bb768ec97c5c3cce8687d35a8a144d18e1d4d19c9f255ce2da2959",
+        "fab": [
+          "9be365845d4da7e12c016ba5a015e714976170f8b8e0314aa825abd138f0441e",
+          "f48dbedfd8bb768ec97c5c3cce8687d35a8a144d18e1d4d19c9f255ce2da2959"
+        ]
+      },
+      "result": {
+        "x": "9be365845d4da7e12c016ba5a015e714976170f8b8e0314aa825abd138f0441e",
+        "y": "f48dbedfd8bb768ec97c5c3cce8687d35a8a144d18e1d4d19c9f255ce2da2959",
+        "fab": [
+          "9be365845d4da7e12c016ba5a015e714976170f8b8e0314aa825abd138f0441e",
+          "f48dbedfd8bb768ec97c5c3cce8687d35a8a144d18e1d4d19c9f255ce2da2959"
+        ]
+      },
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a480018824001c2414104000401040408010404080403040c00041008010404146803042c58010403040108010404010401040118824001c24141000018146170706c79000400081c2000042408010404289003043f800f03be27ed599576bbe79998cc43a82db64a3b7bc6c9a8901aca9f693eb0010000100c72617708302000043408010404389003043f80a42188edd24581088a5bf76196b244b0f3495fb6d95cd725beaf870a17a299d04020202020202020202c20202020203c200802081408201840201003000400",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a480021018260019be365845d4da7e12c016ba5a015e714976170f8b8e0314aa825abd138f0441e6001f48dbedfd8bb768ec97c5c3cce8687d35a8a144d18e1d4d19c9f255ce2da2959c2414104000401040408010404080403040c000410080104041479010304b26501010403040108010404010401040121018260019be365845d4da7e12c016ba5a015e714976170f8b8e0314aa825abd138f0441e6001f48dbedfd8bb768ec97c5c3cce8687d35a8a144d18e1d4d19c9f255ce2da2959c24141000018146170706c79000400081c2000042408010404289003043f800f03be27ed599576bbe79998cc43a82db64a3b7bc6c9a8901aca9f693eb0010000100c72617708302000043408010404389003043f80a42188edd24581088a5bf76196b244b0f3495fb6d95cd725beaf870a17a299d04020202020202020202c20202020203c200802081408201840201003000400",
+      "privateBefore": 17,
+      "privateAfter": 17,
+      "effectsBefore": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": [],
+        "unshieldedMints": [],
+        "unshieldedInputs": [],
+        "unshieldedOutputs": [],
+        "claimedUnshieldedSpends": []
+      },
+      "effectsAfter": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": [],
+        "unshieldedMints": [],
+        "unshieldedInputs": [],
+        "unshieldedOutputs": [],
+        "claimedUnshieldedSpends": []
+      },
+      "publicTranscript": [
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    155,
+                    227,
+                    101,
+                    132,
+                    93,
+                    77,
+                    167,
+                    225,
+                    44,
+                    1,
+                    107,
+                    165,
+                    160,
+                    21,
+                    231,
+                    20,
+                    151,
+                    97,
+                    112,
+                    248,
+                    184,
+                    224,
+                    49,
+                    74,
+                    168,
+                    37,
+                    171,
+                    209,
+                    56,
+                    240,
+                    68,
+                    30
+                  ],
+                  [
+                    244,
+                    141,
+                    190,
+                    223,
+                    216,
+                    187,
+                    118,
+                    142,
+                    201,
+                    124,
+                    92,
+                    60,
+                    206,
+                    134,
+                    135,
+                    211,
+                    90,
+                    138,
+                    20,
+                    77,
+                    24,
+                    225,
+                    212,
+                    209,
+                    156,
+                    159,
+                    37,
+                    92,
+                    226,
+                    218,
+                    41,
+                    89
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  },
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": [],
+      "publicInput": {
+        "value": [
+          [
+            216,
+            182,
+            177,
+            31,
+            213,
+            23,
+            155,
+            134,
+            229,
+            225,
+            95,
+            245,
+            115,
+            5,
+            151,
+            68,
+            200,
+            102,
+            103,
+            56,
+            193,
+            181,
+            157,
+            133,
+            102,
+            160,
+            1,
+            140,
+            99,
+            251,
+            176,
+            105
+          ],
+          [
+            38,
+            198,
+            156,
+            196,
+            146,
+            225,
+            55,
+            163,
+            138,
+            178,
+            157,
+            128,
+            115,
+            135,
+            204,
+            215,
+            0,
+            33,
+            171,
+            20,
+            60,
+            32,
+            142,
+            209,
+            33,
+            233,
+            125,
+            146,
+            207,
+            12,
+            16,
+            24
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            255,
+            255,
+            255,
+            255,
+            254,
+            91,
+            254,
+            255,
+            2,
+            164,
+            189,
+            83,
+            5,
+            216,
+            161,
+            9,
+            8,
+            216,
+            57,
+            51,
+            72,
+            125,
+            157,
+            41,
+            83,
+            167,
+            237,
+            115
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      },
+      "publicOutput": {
+        "value": [
+          [
+            155,
+            227,
+            101,
+            132,
+            93,
+            77,
+            167,
+            225,
+            44,
+            1,
+            107,
+            165,
+            160,
+            21,
+            231,
+            20,
+            151,
+            97,
+            112,
+            248,
+            184,
+            224,
+            49,
+            74,
+            168,
+            37,
+            171,
+            209,
+            56,
+            240,
+            68,
+            30
+          ],
+          [
+            244,
+            141,
+            190,
+            223,
+            216,
+            187,
+            118,
+            142,
+            201,
+            124,
+            92,
+            60,
+            206,
+            134,
+            135,
+            211,
+            90,
+            138,
+            20,
+            77,
+            24,
+            225,
+            212,
+            209,
+            156,
+            159,
+            37,
+            92,
+            226,
+            218,
+            41,
+            89
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      },
+      "queries": [
+        {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "178",
+          "bytesDeleted": "44"
+        }
+      ],
+      "totalGas": {
+        "readTime": "85000000",
+        "computeTime": "1233942932",
+        "bytesWritten": "178",
+        "bytesDeleted": "44"
+      },
+      "queryTrace": [
+        {
+          "program": [
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "push": {
+                "storage": true,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        155,
+                        227,
+                        101,
+                        132,
+                        93,
+                        77,
+                        167,
+                        225,
+                        44,
+                        1,
+                        107,
+                        165,
+                        160,
+                        21,
+                        231,
+                        20,
+                        151,
+                        97,
+                        112,
+                        248,
+                        184,
+                        224,
+                        49,
+                        74,
+                        168,
+                        37,
+                        171,
+                        209,
+                        56,
+                        240,
+                        68,
+                        30
+                      ],
+                      [
+                        244,
+                        141,
+                        190,
+                        223,
+                        216,
+                        187,
+                        118,
+                        142,
+                        201,
+                        124,
+                        92,
+                        60,
+                        206,
+                        134,
+                        135,
+                        211,
+                        90,
+                        138,
+                        20,
+                        77,
+                        24,
+                        225,
+                        212,
+                        209,
+                        156,
+                        159,
+                        37,
+                        92,
+                        226,
+                        218,
+                        41,
+                        89
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      },
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "ins": {
+                "cached": false,
+                "n": 1
+              }
+            }
+          ],
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1233942932",
+            "bytesWritten": "178",
+            "bytesDeleted": "44"
+          },
+          "events": [],
+          "beforeEffects": {
+            "claimedNullifiers": [],
+            "claimedShieldedReceives": [],
+            "claimedShieldedSpends": [],
+            "claimedContractCalls": [],
+            "shieldedMints": [],
+            "unshieldedMints": [],
+            "unshieldedInputs": [],
+            "unshieldedOutputs": [],
+            "claimedUnshieldedSpends": []
+          },
+          "afterEffects": {
+            "claimedNullifiers": [],
+            "claimedShieldedReceives": [],
+            "claimedShieldedSpends": [],
+            "claimedContractCalls": [],
+            "shieldedMints": [],
+            "unshieldedMints": [],
+            "unshieldedInputs": [],
+            "unshieldedOutputs": [],
+            "claimedUnshieldedSpends": []
+          }
+        }
+      ],
+      "witnessInputs": []
+    }
+  ],
+  "refusals": [
+    {
+      "id": "raw-q-generator",
+      "error": "Error: failed to decode for built-in type EmbeddedFr after successful typecheck",
+      "queries": [],
+      "scope": "raw canonical primitive; no wrapper call or accepted mutation"
+    },
+    {
+      "id": "raw-q-point",
+      "error": "Error: failed to decode for built-in type EmbeddedFr after successful typecheck",
+      "queries": [],
+      "scope": "raw canonical primitive; no wrapper call or accepted mutation"
+    },
+    {
+      "id": "negative",
+      "error": "CompactError: type error: apply argument 2 (argument 3 as invoked from Typescript) at jubjub_scalar_cell.compact line 5 char 1; expected value of type Field but received -1n",
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a480018824001c2414104000401040408010404080403040c00041008010404146803042c58010403040108010404010401040118824001c24141000018146170706c79000400081c2000042408010404289003043f800f03be27ed599576bbe79998cc43a82db64a3b7bc6c9a8901aca9f693eb0010000100c72617708302000043408010404389003043f80a42188edd24581088a5bf76196b244b0f3495fb6d95cd725beaf870a17a299d04020202020202020202c20202020203c200802081408201840201003000400",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a480018824001c2414104000401040408010404080403040c00041008010404146803042c58010403040108010404010401040118824001c24141000018146170706c79000400081c2000042408010404289003043f800f03be27ed599576bbe79998cc43a82db64a3b7bc6c9a8901aca9f693eb0010000100c72617708302000043408010404389003043f80a42188edd24581088a5bf76196b244b0f3495fb6d95cd725beaf870a17a299d04020202020202020202c20202020203c200802081408201840201003000400",
+      "privateBefore": 17,
+      "privateAfter": 17,
+      "queries": [],
+      "scope": "ledger8 TypeScript wrapper input validation"
+    },
+    {
+      "id": "native-modulus",
+      "error": "CompactError: type error: apply argument 2 (argument 3 as invoked from Typescript) at jubjub_scalar_cell.compact line 5 char 1; expected value of type Field but received 52435875175126190479447740508185965837690552500527637822603658699938581184513n",
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a480018824001c2414104000401040408010404080403040c00041008010404146803042c58010403040108010404010401040118824001c24141000018146170706c79000400081c2000042408010404289003043f800f03be27ed599576bbe79998cc43a82db64a3b7bc6c9a8901aca9f693eb0010000100c72617708302000043408010404389003043f80a42188edd24581088a5bf76196b244b0f3495fb6d95cd725beaf870a17a299d04020202020202020202c20202020203c200802081408201840201003000400",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a480018824001c2414104000401040408010404080403040c00041008010404146803042c58010403040108010404010401040118824001c24141000018146170706c79000400081c2000042408010404289003043f800f03be27ed599576bbe79998cc43a82db64a3b7bc6c9a8901aca9f693eb0010000100c72617708302000043408010404389003043f80a42188edd24581088a5bf76196b244b0f3495fb6d95cd725beaf870a17a299d04020202020202020202c20202020203c200802081408201840201003000400",
+      "privateBefore": 17,
+      "privateAfter": 17,
+      "queries": [],
+      "scope": "ledger8 TypeScript wrapper input validation"
+    },
+    {
+      "id": "number-not-bigint",
+      "error": "CompactError: type error: apply argument 2 (argument 3 as invoked from Typescript) at jubjub_scalar_cell.compact line 5 char 1; expected value of type Field but received 1",
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a480018824001c2414104000401040408010404080403040c00041008010404146803042c58010403040108010404010401040118824001c24141000018146170706c79000400081c2000042408010404289003043f800f03be27ed599576bbe79998cc43a82db64a3b7bc6c9a8901aca9f693eb0010000100c72617708302000043408010404389003043f80a42188edd24581088a5bf76196b244b0f3495fb6d95cd725beaf870a17a299d04020202020202020202c20202020203c200802081408201840201003000400",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a480018824001c2414104000401040408010404080403040c00041008010404146803042c58010403040108010404010401040118824001c24141000018146170706c79000400081c2000042408010404289003043f800f03be27ed599576bbe79998cc43a82db64a3b7bc6c9a8901aca9f693eb0010000100c72617708302000043408010404389003043f80a42188edd24581088a5bf76196b244b0f3495fb6d95cd725beaf870a17a299d04020202020202020202c20202020203c200802081408201840201003000400",
+      "privateBefore": 17,
+      "privateAfter": 17,
+      "queries": [],
+      "scope": "ledger8 TypeScript wrapper input validation"
+    }
+  ],
+  "rawCases": [
+    {
+      "id": "raw-q_minus_one",
+      "operation": "raw",
+      "scalar": "b62cf7d65e0e97d08210c8cc932068a6003b3401013b6706a9af3365eab47d0e",
+      "scalarDecimal": "6554484396890773809930967563523245729705921265872317281365359162392183254198",
+      "point": {
+        "x": "d8b6b11fd5179b86e5e15ff573059744c8666738c1b59d8566a0018c63fbb069",
+        "y": "26c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018",
+        "fab": [
+          "d8b6b11fd5179b86e5e15ff573059744c8666738c1b59d8566a0018c63fbb069",
+          "26c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018"
+        ]
+      },
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a480018824001c2414104000401040408010404080403040c00041008010404146803042c58010403040108010404010401040118824001c24141000018146170706c79000400081c2000042408010404289003043f800f03be27ed599576bbe79998cc43a82db64a3b7bc6c9a8901aca9f693eb0010000100c72617708302000043408010404389003043f80a42188edd24581088a5bf76196b244b0f3495fb6d95cd725beaf870a17a299d04020202020202020202c20202020203c200802081408201840201003000400",
+      "privateBefore": 17,
+      "effectsBefore": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": [],
+        "unshieldedMints": [],
+        "unshieldedInputs": [],
+        "unshieldedOutputs": [],
+        "claimedUnshieldedSpends": []
+      },
+      "witnessInputs": [],
+      "queries": [
+        {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "178",
+          "bytesDeleted": "44"
+        }
+      ],
+      "queryTrace": [
+        {
+          "program": [
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "push": {
+                "storage": true,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        41,
+                        73,
+                        78,
+                        224,
+                        41,
+                        232,
+                        100,
+                        121,
+                        25,
+                        122,
+                        158,
+                        10,
+                        143,
+                        158,
+                        38,
+                        15,
+                        61,
+                        113,
+                        58,
+                        209,
+                        70,
+                        34,
+                        156,
+                        173,
+                        225,
+                        220,
+                        155,
+                        157,
+                        239,
+                        171,
+                        60,
+                        10
+                      ],
+                      [
+                        38,
+                        198,
+                        156,
+                        196,
+                        146,
+                        225,
+                        55,
+                        163,
+                        138,
+                        178,
+                        157,
+                        128,
+                        115,
+                        135,
+                        204,
+                        215,
+                        0,
+                        33,
+                        171,
+                        20,
+                        60,
+                        32,
+                        142,
+                        209,
+                        33,
+                        233,
+                        125,
+                        146,
+                        207,
+                        12,
+                        16,
+                        24
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      },
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "ins": {
+                "cached": false,
+                "n": 1
+              }
+            }
+          ],
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1233942932",
+            "bytesWritten": "178",
+            "bytesDeleted": "44"
+          },
+          "events": [],
+          "beforeEffects": {
+            "claimedNullifiers": [],
+            "claimedShieldedReceives": [],
+            "claimedShieldedSpends": [],
+            "claimedContractCalls": [],
+            "shieldedMints": [],
+            "unshieldedMints": [],
+            "unshieldedInputs": [],
+            "unshieldedOutputs": [],
+            "claimedUnshieldedSpends": []
+          },
+          "afterEffects": {
+            "claimedNullifiers": [],
+            "claimedShieldedReceives": [],
+            "claimedShieldedSpends": [],
+            "claimedContractCalls": [],
+            "shieldedMints": [],
+            "unshieldedMints": [],
+            "unshieldedInputs": [],
+            "unshieldedOutputs": [],
+            "claimedUnshieldedSpends": []
+          }
+        }
+      ],
+      "expected": {
+        "x": "29494ee029e86479197a9e0a8f9e260f3d713ad146229cade1dc9b9defab3c0a",
+        "y": "26c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018",
+        "fab": [
+          "29494ee029e86479197a9e0a8f9e260f3d713ad146229cade1dc9b9defab3c0a",
+          "26c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018"
+        ]
+      },
+      "result": {
+        "x": "29494ee029e86479197a9e0a8f9e260f3d713ad146229cade1dc9b9defab3c0a",
+        "y": "26c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018",
+        "fab": [
+          "29494ee029e86479197a9e0a8f9e260f3d713ad146229cade1dc9b9defab3c0a",
+          "26c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018"
+        ]
+      },
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a4800210182600129494ee029e86479197a9e0a8f9e260f3d713ad146229cade1dc9b9defab3c0a600126c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018c2414104000401040408010404080403040c000410080104041479010304b265010104030401080104040104010401210182600129494ee029e86479197a9e0a8f9e260f3d713ad146229cade1dc9b9defab3c0a600126c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018c24141000018146170706c79000400081c2000042408010404289003043f800f03be27ed599576bbe79998cc43a82db64a3b7bc6c9a8901aca9f693eb0010000100c72617708302000043408010404389003043f80a42188edd24581088a5bf76196b244b0f3495fb6d95cd725beaf870a17a299d04020202020202020202c20202020203c200802081408201840201003000400",
+      "privateAfter": 17,
+      "effectsAfter": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": [],
+        "unshieldedMints": [],
+        "unshieldedInputs": [],
+        "unshieldedOutputs": [],
+        "claimedUnshieldedSpends": []
+      },
+      "publicTranscript": [
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    41,
+                    73,
+                    78,
+                    224,
+                    41,
+                    232,
+                    100,
+                    121,
+                    25,
+                    122,
+                    158,
+                    10,
+                    143,
+                    158,
+                    38,
+                    15,
+                    61,
+                    113,
+                    58,
+                    209,
+                    70,
+                    34,
+                    156,
+                    173,
+                    225,
+                    220,
+                    155,
+                    157,
+                    239,
+                    171,
+                    60,
+                    10
+                  ],
+                  [
+                    38,
+                    198,
+                    156,
+                    196,
+                    146,
+                    225,
+                    55,
+                    163,
+                    138,
+                    178,
+                    157,
+                    128,
+                    115,
+                    135,
+                    204,
+                    215,
+                    0,
+                    33,
+                    171,
+                    20,
+                    60,
+                    32,
+                    142,
+                    209,
+                    33,
+                    233,
+                    125,
+                    146,
+                    207,
+                    12,
+                    16,
+                    24
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  },
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": [],
+      "publicInput": {
+        "value": [
+          [
+            216,
+            182,
+            177,
+            31,
+            213,
+            23,
+            155,
+            134,
+            229,
+            225,
+            95,
+            245,
+            115,
+            5,
+            151,
+            68,
+            200,
+            102,
+            103,
+            56,
+            193,
+            181,
+            157,
+            133,
+            102,
+            160,
+            1,
+            140,
+            99,
+            251,
+            176,
+            105
+          ],
+          [
+            38,
+            198,
+            156,
+            196,
+            146,
+            225,
+            55,
+            163,
+            138,
+            178,
+            157,
+            128,
+            115,
+            135,
+            204,
+            215,
+            0,
+            33,
+            171,
+            20,
+            60,
+            32,
+            142,
+            209,
+            33,
+            233,
+            125,
+            146,
+            207,
+            12,
+            16,
+            24
+          ],
+          [
+            182,
+            44,
+            247,
+            214,
+            94,
+            14,
+            151,
+            208,
+            130,
+            16,
+            200,
+            204,
+            147,
+            32,
+            104,
+            166,
+            0,
+            59,
+            52,
+            1,
+            1,
+            59,
+            103,
+            6,
+            169,
+            175,
+            51,
+            101,
+            234,
+            180,
+            125,
+            14
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      },
+      "publicOutput": {
+        "value": [
+          [
+            41,
+            73,
+            78,
+            224,
+            41,
+            232,
+            100,
+            121,
+            25,
+            122,
+            158,
+            10,
+            143,
+            158,
+            38,
+            15,
+            61,
+            113,
+            58,
+            209,
+            70,
+            34,
+            156,
+            173,
+            225,
+            220,
+            155,
+            157,
+            239,
+            171,
+            60,
+            10
+          ],
+          [
+            38,
+            198,
+            156,
+            196,
+            146,
+            225,
+            55,
+            163,
+            138,
+            178,
+            157,
+            128,
+            115,
+            135,
+            204,
+            215,
+            0,
+            33,
+            171,
+            20,
+            60,
+            32,
+            142,
+            209,
+            33,
+            233,
+            125,
+            146,
+            207,
+            12,
+            16,
+            24
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      },
+      "totalGas": {
+        "readTime": "85000000",
+        "computeTime": "1233942932",
+        "bytesWritten": "178",
+        "bytesDeleted": "44"
+      }
+    },
+    {
+      "id": "raw-q",
+      "operation": "raw",
+      "scalar": "b72cf7d65e0e97d08210c8cc932068a6003b3401013b6706a9af3365eab47d0e",
+      "scalarDecimal": "6554484396890773809930967563523245729705921265872317281365359162392183254199",
+      "point": {
+        "x": "d8b6b11fd5179b86e5e15ff573059744c8666738c1b59d8566a0018c63fbb069",
+        "y": "26c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018",
+        "fab": [
+          "d8b6b11fd5179b86e5e15ff573059744c8666738c1b59d8566a0018c63fbb069",
+          "26c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018"
+        ]
+      },
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a480018824001c2414104000401040408010404080403040c00041008010404146803042c58010403040108010404010401040118824001c24141000018146170706c79000400081c2000042408010404289003043f800f03be27ed599576bbe79998cc43a82db64a3b7bc6c9a8901aca9f693eb0010000100c72617708302000043408010404389003043f80a42188edd24581088a5bf76196b244b0f3495fb6d95cd725beaf870a17a299d04020202020202020202c20202020203c200802081408201840201003000400",
+      "privateBefore": 17,
+      "effectsBefore": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": [],
+        "unshieldedMints": [],
+        "unshieldedInputs": [],
+        "unshieldedOutputs": [],
+        "claimedUnshieldedSpends": []
+      },
+      "witnessInputs": [],
+      "queries": [],
+      "queryTrace": [],
+      "error": "Error: failed to decode for built-in type EmbeddedFr after successful typecheck",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a480018824001c2414104000401040408010404080403040c00041008010404146803042c58010403040108010404010401040118824001c24141000018146170706c79000400081c2000042408010404289003043f800f03be27ed599576bbe79998cc43a82db64a3b7bc6c9a8901aca9f693eb0010000100c72617708302000043408010404389003043f80a42188edd24581088a5bf76196b244b0f3495fb6d95cd725beaf870a17a299d04020202020202020202c20202020203c200802081408201840201003000400",
+      "privateAfter": 17,
+      "effectsAfter": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": [],
+        "unshieldedMints": [],
+        "unshieldedInputs": [],
+        "unshieldedOutputs": [],
+        "claimedUnshieldedSpends": []
+      }
+    }
+  ]
+}

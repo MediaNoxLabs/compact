@@ -9,6 +9,7 @@ mod resource_limits;
 pub use capabilities::{
     RUST_CAPABILITY_SCHEMA_VERSION, RecordingStatus, RustCapabilityReport, RustCircuitCapability,
 };
+mod jubjub_value;
 mod naming;
 mod native_frame;
 mod recorded;
@@ -1818,20 +1819,9 @@ fn pure_crypto_expression(
             Ok((syn::parse_quote!(#operation(#value)), Type::Field))
         }
         Expr::EcAdd { left, right } => {
-            let (left, left_ty) = expression_with_calls(left, parameters, circuits)?;
-            let (right, right_ty) = expression_with_calls(right, parameters, circuits)?;
-            for actual in [left_ty, right_ty] {
-                if actual != Type::JubjubPoint {
-                    return Err(RenderError::TypeMismatch {
-                        expected: Type::JubjubPoint,
-                        actual,
-                    });
-                }
-            }
-            Ok((
-                syn::parse_quote!(runtime::ec_add(#left, #right)),
-                Type::JubjubPoint,
-            ))
+            let left = expression_with_calls(left, parameters, circuits)?;
+            let right = expression_with_calls(right, parameters, circuits)?;
+            jubjub_value::Operation::Add(left, right).lower()
         }
         Expr::ConstructJubjubPoint { x, y } => {
             let (x, x_ty) = expression_with_calls(x, parameters, circuits)?;
@@ -1863,50 +1853,17 @@ fn pure_crypto_expression(
             ))
         }
         Expr::EcMul { point, scalar } => {
-            let (point, point_ty) = expression_with_calls(point, parameters, circuits)?;
-            let (scalar, scalar_ty) = expression_with_calls(scalar, parameters, circuits)?;
-            if point_ty != Type::JubjubPoint {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::JubjubPoint,
-                    actual: point_ty,
-                });
-            }
-            if scalar_ty != Type::Field {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Field,
-                    actual: scalar_ty,
-                });
-            }
-            Ok((
-                syn::parse_quote!(runtime::ec_mul(#point, #scalar)?),
-                Type::JubjubPoint,
-            ))
+            let point = expression_with_calls(point, parameters, circuits)?;
+            let scalar = expression_with_calls(scalar, parameters, circuits)?;
+            jubjub_value::Operation::Multiply(point, scalar).lower()
         }
         Expr::EcMulGenerator { scalar } => {
-            let (scalar, actual) = expression_with_calls(scalar, parameters, circuits)?;
-            if actual != Type::Field {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Field,
-                    actual,
-                });
-            }
-            Ok((
-                syn::parse_quote!(runtime::ec_mul_generator(#scalar)?),
-                Type::JubjubPoint,
-            ))
+            let scalar = expression_with_calls(scalar, parameters, circuits)?;
+            jubjub_value::Operation::Generator(scalar).lower()
         }
         Expr::JubjubScalarFromNative { value } => {
-            let (value, actual) = expression_with_calls(value, parameters, circuits)?;
-            if actual != Type::Field {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Field,
-                    actual,
-                });
-            }
-            Ok((
-                syn::parse_quote!(runtime::jubjub_scalar_from_native(#value)),
-                Type::Field,
-            ))
+            let value = expression_with_calls(value, parameters, circuits)?;
+            jubjub_value::Operation::Reduce(value).lower()
         }
         _ => unreachable!("private pure-expression dispatcher selects this family"),
     }

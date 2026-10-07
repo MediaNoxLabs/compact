@@ -1,0 +1,17 @@
+pragma language_version >= 0.23.0;
+import CompactStandardLibrary;
+export ledger result: JubjubPoint;
+constructor() { result = ecMulGenerator(0); }
+export circuit apply(point: JubjubPoint, scalar: Field): JubjubPoint {
+  const reduced = jubjubScalarFromNative(scalar);
+  const value = ecAdd(ecMulGenerator(reduced), ecMul(point, reduced));
+  result = disclose(value);
+  return value;
+}
+
+// Deliberately omit reduction so raw noncanonical inputs must be refused.
+export circuit raw(point: JubjubPoint, scalar: Field): JubjubPoint {
+  const value = ecMul(point, scalar);
+  result = disclose(value);
+  return value;
+}

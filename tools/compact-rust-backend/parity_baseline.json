@@ -586,6 +586,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/jubjub_scalar_cell.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "apply",
+    "signature": "export circuit apply(point: JubjubPoint, scalar: Field): JubjubPoint",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/witness_argument.compact",
     "module_path": [],
     "kind": "circuit",
@@ -4906,6 +4914,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/jubjub_scalar_cell.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "raw",
+    "signature": "export circuit raw(point: JubjubPoint, scalar: Field): JubjubPoint",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/constructor_assert_sequence.compact",
     "module_path": [],
     "kind": "circuit",
@@ -8043,6 +8059,14 @@
   },
   {
     "source": "examples/rust_backend/inline_type_scope_oracle.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/jubjub_scalar_cell.compact",
     "module_path": [],
     "kind": "constructor",
     "name": "constructor",

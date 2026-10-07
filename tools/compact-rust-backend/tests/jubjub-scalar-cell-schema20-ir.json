@@ -1,0 +1,242 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "result",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "jubjub_point"
+        }
+      },
+      "source": {
+        "file": "jubjub_scalar_cell.compact",
+        "line": 3,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "apply",
+      "parameters": [
+        {
+          "name": "point",
+          "ty": {
+            "kind": "jubjub_point"
+          }
+        },
+        {
+          "name": "scalar",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "jubjub_point"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "parameter",
+          "name": "value"
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "reduced",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "jubjub_scalar_from_native",
+                "value": {
+                  "kind": "parameter",
+                  "name": "scalar"
+                }
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "value",
+                    "ty": {
+                      "kind": "jubjub_point"
+                    },
+                    "value": {
+                      "kind": "ec_add",
+                      "left": {
+                        "kind": "ec_mul_generator",
+                        "scalar": {
+                          "kind": "parameter",
+                          "name": "reduced"
+                        }
+                      },
+                      "right": {
+                        "kind": "ec_mul",
+                        "point": {
+                          "kind": "parameter",
+                          "name": "point"
+                        },
+                        "scalar": {
+                          "kind": "parameter",
+                          "name": "reduced"
+                        }
+                      }
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "sequence",
+                  "actions": [
+                    {
+                      "kind": "cell_write",
+                      "field": "result",
+                      "index": 0,
+                      "value": {
+                        "kind": "parameter",
+                        "name": "value"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "jubjub_scalar_cell.compact",
+        "line": 5,
+        "column": 1
+      }
+    },
+    {
+      "name": "raw",
+      "parameters": [
+        {
+          "name": "point",
+          "ty": {
+            "kind": "jubjub_point"
+          }
+        },
+        {
+          "name": "scalar",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "jubjub_point"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "parameter",
+          "name": "value"
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "value",
+              "ty": {
+                "kind": "jubjub_point"
+              },
+              "value": {
+                "kind": "ec_mul",
+                "point": {
+                  "kind": "parameter",
+                  "name": "point"
+                },
+                "scalar": {
+                  "kind": "parameter",
+                  "name": "scalar"
+                }
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "cell_write",
+                "field": "result",
+                "index": 0,
+                "value": {
+                  "kind": "parameter",
+                  "name": "value"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "jubjub_scalar_cell.compact",
+        "line": 13,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": {
+    "parameters": [
+    ],
+    "steps": [
+      {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "tmp_0",
+            "ty": {
+              "kind": "jubjub_point"
+            },
+            "value": {
+              "kind": "ec_mul_generator",
+              "scalar": {
+                "kind": "field_literal",
+                "value": "0"
+              }
+            }
+          }
+        ],
+        "step": {
+          "kind": "cell_write",
+          "field": "result",
+          "index": 0,
+          "value": {
+            "kind": "parameter",
+            "name": "tmp_0"
+          }
+        }
+      }
+    ],
+    "source": {
+      "file": "jubjub_scalar_cell.compact",
+      "line": 4,
+      "column": 1
+    }
+  }
+}

@@ -320,6 +320,12 @@ pub(super) fn frame_cost(node: Node<'_>) -> [usize; 4] {
                 | E::UnsignedMultiply { .. } => 34,
             };
             let typed = match e {
+                // Typed Jubjub dispatch plus ordered operand closure; the shared
+                // syntax helper runs only after recursive operands have returned.
+                E::EcAdd { .. }
+                | E::EcMul { .. }
+                | E::EcMulGenerator { .. }
+                | E::JubjubScalarFromNative { .. } => 14,
                 E::Sequence { .. } | E::Assert { .. } | E::Let { .. } | E::If { .. } => 14,
                 E::Call { .. } => 21,
                 E::StructField { .. } | E::StructLiteral { .. } | E::Tuple { .. } => 7,
@@ -371,12 +377,8 @@ pub(super) fn frame_cost(node: Node<'_>) -> [usize; 4] {
                 | E::Compare { .. }
                 | E::Keccak256 { .. }
                 | E::HashToCurve { .. }
-                | E::EcAdd { .. }
                 | E::ConstructJubjubPoint { .. }
                 | E::EcNeg { .. }
-                | E::EcMul { .. }
-                | E::EcMulGenerator { .. }
-                | E::JubjubScalarFromNative { .. }
                 | E::WitnessCall { .. }
                 | E::KernelClaim { .. }
                 | E::KernelMintShielded { .. }

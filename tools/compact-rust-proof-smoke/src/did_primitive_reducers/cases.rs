@@ -21,6 +21,8 @@ use r::{
     transaction::ObservedContractState,
 };
 use std::error::Error;
+#[path = "cases/acc.rs"]
+mod acc;
 #[path = "cases/aliases.rs"]
 mod aliases;
 #[path = "cases/maps.rs"]
@@ -30,7 +32,7 @@ mod points;
 #[path = "cases/relations.rs"]
 mod relations;
 pub type Failure = Box<dyn Error>;
-pub type Recorded = RecordedCircuitResult<u64, ()>;
+pub type Recorded = RecordedCircuitResult<u64, AlignedValue>;
 pub struct Case {
     pub id: &'static str,
     pub operation: &'static str,
@@ -45,6 +47,7 @@ pub struct Fixture {
 }
 pub fn fixture(kind: &str) -> Result<Fixture, Failure> {
     match kind {
+        "acc-jubjub-cell" => Ok(acc::fixture()),
         "point-digest" | "point-guard" => points::fixture(kind),
         "alias-set" | "alias-digest" | "alias-guard" => aliases::fixture(kind),
         "service-map" | "point-map" | "nested-map" | "enum-map" => maps::fixture(kind),
@@ -52,12 +55,13 @@ pub fn fixture(kind: &str) -> Result<Fixture, Failure> {
         _ => Err("unknown reducer".into()),
     }
 }
-fn pair(
-    native: CircuitResult<u64, ()>,
-    recorded: Recorded,
+fn pair<Output: PartialEq + Into<AlignedValue>>(
+    native: CircuitResult<u64, Output>,
+    recorded: RecordedCircuitResult<u64, Output>,
     input: AlignedValue,
 ) -> Result<(Recorded, AlignedValue), Failure> {
-    if native.context.query.state != recorded.execution.context.query.state
+    if native.result != recorded.execution.result
+        || native.context.query.state != recorded.execution.context.query.state
         || native.context.query.effects != recorded.execution.context.query.effects
         || native.context.private_state != recorded.execution.context.private_state
         || native.gas_cost != recorded.execution.gas_cost
@@ -65,7 +69,25 @@ fn pair(
     {
         return Err("native recorded mismatch".into());
     }
-    Ok((recorded, input))
+    let RecordedCircuitResult { execution, public } = recorded;
+    let CircuitResult {
+        context,
+        result,
+        gas_cost,
+        private_transcript_outputs,
+    } = execution;
+    Ok((
+        RecordedCircuitResult {
+            execution: CircuitResult {
+                context,
+                result: result.into(),
+                gas_cost,
+                private_transcript_outputs,
+            },
+            public,
+        },
+        input,
+    ))
 }
 fn point(n: u64) -> Result<r::JubjubPoint, Failure> {
     Ok(r::ec_mul_generator(r::Field::from(n))?)

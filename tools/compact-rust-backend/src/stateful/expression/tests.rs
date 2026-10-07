@@ -740,3 +740,5 @@ fn aggregate_construction_and_tuple_access_report_the_original_domain_error() {
 }
 
 mod collection_queries;
+
+mod effect_domains;

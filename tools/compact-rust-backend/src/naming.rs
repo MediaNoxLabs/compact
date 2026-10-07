@@ -27,8 +27,8 @@ pub(crate) fn ident(name: &str) -> Result<syn::Ident, RenderError> {
         .map_err(|_| RenderError::InvalidIdentifier(name.to_owned()))
 }
 
-/// The name by which Rust resolves a function, without its optional raw prefix.
-fn semantic_function_name(name: &str) -> Result<String, RenderError> {
+/// The name by which Rust resolves an identifier, without its optional raw prefix.
+pub(crate) fn semantic_identifier(name: &str) -> Result<String, RenderError> {
     let rendered = ident(name)?.to_string();
     Ok(rendered.strip_prefix("r#").unwrap_or(&rendered).to_owned())
 }
@@ -41,7 +41,7 @@ pub(crate) fn validate_circuit_function_namespace<'a>(
         located(source, || {
             // `foo` and `r#foo` bind the same Rust name. Compare after Compact
             // `$` normalization and any Rust keyword escaping.
-            let rust_identifier = semantic_function_name(name)?;
+            let rust_identifier = semantic_identifier(name)?;
             if let Some(first) = emitted.get(&rust_identifier) {
                 return Err(RenderError::ConflictingCircuitIdentifier {
                     first: (*first).to_owned(),
@@ -57,7 +57,7 @@ pub(crate) fn validate_circuit_function_namespace<'a>(
 }
 
 fn recorded_body_candidate(name: &str) -> Result<syn::Ident, RenderError> {
-    let semantic = semantic_function_name(name)?;
+    let semantic = semantic_identifier(name)?;
     ident(&format!("__compact_recorded_body_{semantic}"))
 }
 
@@ -66,15 +66,15 @@ pub(crate) fn recorded_helper_ident(
     circuits: &HashMap<&str, &StatefulCircuit>,
 ) -> Result<syn::Ident, RenderError> {
     let base = recorded_body_candidate(name)?;
-    let base_name = semantic_function_name(&base.to_string())?;
+    let base_name = semantic_identifier(&base.to_string())?;
     let mut duplicate_base = false;
     for other in circuits.keys() {
-        if semantic_function_name(other)? == base_name {
+        if semantic_identifier(other)? == base_name {
             duplicate_base = true;
             break;
         }
         if *other != name
-            && semantic_function_name(&recorded_body_candidate(other)?.to_string())? == base_name
+            && semantic_identifier(&recorded_body_candidate(other)?.to_string())? == base_name
         {
             duplicate_base = true;
             break;
@@ -98,11 +98,11 @@ pub(crate) fn recorded_helper_ident(
     }
     loop {
         let candidate = ident(&fallback)?;
-        let candidate_name = semantic_function_name(&candidate.to_string())?;
+        let candidate_name = semantic_identifier(&candidate.to_string())?;
         let occupied = circuits.keys().any(|other| {
-            semantic_function_name(other).is_ok_and(|name| name == candidate_name)
+            semantic_identifier(other).is_ok_and(|name| name == candidate_name)
                 || recorded_body_candidate(other)
-                    .and_then(|id| semantic_function_name(&id.to_string()))
+                    .and_then(|id| semantic_identifier(&id.to_string()))
                     .is_ok_and(|name| name == candidate_name)
         });
         if !occupied {

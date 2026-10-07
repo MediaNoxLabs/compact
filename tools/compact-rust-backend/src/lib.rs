@@ -46,7 +46,7 @@ use ir::{
     ComparisonOperator, ConstructorStep, Contract, CounterAmount, Expr, LedgerFieldKind,
     PureCircuit, SCHEMA_VERSION, StateAction, StatefulCircuit, StructField, Type,
 };
-use naming::{ident, validate_circuit_function_namespace};
+use naming::{ident, semantic_identifier, validate_circuit_function_namespace};
 use proc_macro2::Span;
 use quote::quote;
 use serde_json::Value;
@@ -417,6 +417,22 @@ mod public_parameter_name_tests {
     }
 }
 
+// Repeated references to one raw source type are valid. Distinct source names
+// must not collapse into the same Rust type when `$`/raw spellings normalize.
+fn has_named_type_collision(
+    name: &str,
+    structs: &BTreeMap<String, Vec<StructField>>,
+    enums: &BTreeMap<String, Vec<String>>,
+) -> Result<bool, RenderError> {
+    let emitted = semantic_identifier(name)?;
+    for other in structs.keys().chain(enums.keys()) {
+        if other != name && semantic_identifier(other)? == emitted {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
 fn collect_named_types(
     ty: &Type,
     structs: &mut BTreeMap<String, Vec<StructField>>,
@@ -433,6 +449,9 @@ fn collect_named_types(
                     return Err(RenderError::ConflictingStruct(name.clone()));
                 }
             } else {
+                if has_named_type_collision(name, structs, enums)? {
+                    return Err(RenderError::ConflictingStruct(name.clone()));
+                }
                 let mut names = HashSet::new();
                 for field in fields {
                     ident(&field.name)?;
@@ -466,6 +485,9 @@ fn collect_named_types(
                     return Err(RenderError::ConflictingEnum(name.clone()));
                 }
             } else {
+                if has_named_type_collision(name, structs, enums)? {
+                    return Err(RenderError::ConflictingEnum(name.clone()));
+                }
                 enums.insert(name.clone(), variants.clone());
             }
         }
@@ -3103,6 +3125,14 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
     let mut recorded_methods = Vec::new();
     let mut borrowed_recorded_methods = Vec::new();
     let mut witnessed_recorded = false;
+    // Optional facade helpers share the emitted Rust method namespace with
+    // source exports, including Compact `$` and Rust raw-identifier spellings.
+    let exported_method_names = contract
+        .stateful_circuits
+        .iter()
+        .filter(|circuit| !circuit.internal)
+        .map(|circuit| semantic_identifier(&circuit.name))
+        .collect::<Result<HashSet<_>, _>>()?;
     for circuit in &contract.stateful_circuits {
         located(circuit.source.as_ref(), || {
             stateful_items.push(stateful::render_stateful_circuit(
@@ -3141,10 +3171,7 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
             let call_name = format!("{}_call", circuit.name);
             let recording_unavailable = recorded.gap().cloned();
             let observed_call = recorded.is_supported()
-                && !contract
-                    .stateful_circuits
-                    .iter()
-                    .any(|other| !other.internal && other.name == call_name);
+                && !exported_method_names.contains(&semantic_identifier(&call_name)?);
             if !circuit.internal {
                 proof_capabilities.push(RustCircuitCapability {
                     name: circuit.name.clone(),
@@ -3384,6 +3411,18 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
         }
     };
     let borrowed_recorded_handle = witnessed_recorded.then(|| {
+        // A source circuit named `recording` owns that inherent method name.
+        // Retain access to the witnessed handle through a standard trait, so
+        // no additional source-level method name needs to be reserved.
+        let borrowed_from_contract = exported_method_names.contains("recording").then(|| {
+            quote! {
+                impl<'a, W> ::core::convert::From<&'a super::Contract<W>> for BorrowedContract<'a, W> {
+                    fn from(contract: &'a super::Contract<W>) -> Self {
+                        Self { witnesses: &contract.witnesses }
+                    }
+                }
+            }
+        });
         quote! {
             /// A recording handle with access to the contract's witnesses.
             pub struct BorrowedContract<'a, W> {
@@ -3392,6 +3431,7 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
             impl<W> BorrowedContract<'_, W> {
                 #(#borrowed_recorded_methods)*
             }
+            #borrowed_from_contract
         }
     });
     let recorded_module: Option<syn::Item> = if recorded_items.is_empty() {
@@ -3415,18 +3455,16 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
         (!recorded_items.is_empty()).then(|| quote!(pub recording: recorded::Contract,));
     let recording_init =
         (!recorded_items.is_empty()).then(|| quote!(recording: recorded::Contract,));
-    let recording_name_is_exported = contract
-        .stateful_circuits
-        .iter()
-        .any(|circuit| !circuit.internal && circuit.name == "recording");
-    let recording_method: Option<syn::ImplItemFn> = if witnessed_recorded {
+    let recording_method: Option<syn::ImplItemFn> = if exported_method_names.contains("recording") {
+        None
+    } else if witnessed_recorded {
         Some(syn::parse_quote! {
             /// Borrow the contract's witnesses for a replayable circuit call.
             pub fn recording(&self) -> recorded::BorrowedContract<'_, W> {
                 recorded::BorrowedContract { witnesses: &self.witnesses }
             }
         })
-    } else if !recorded_items.is_empty() && !recording_name_is_exported {
+    } else if !recorded_items.is_empty() {
         Some(syn::parse_quote! {
             /// Access replayable circuit calls for this contract.
             pub fn recording(&self) -> &recorded::Contract {
@@ -3553,6 +3591,14 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
             }
         }
     });
+    // Exported aliases can be the only path to a named type. Collect their
+    // bodies before namespace admission so references cannot remain missing
+    // or silently resolve to a different alias with the same Rust spelling.
+    for alias in &contract.type_aliases {
+        located(alias.source.as_ref(), || {
+            collect_named_types(&alias.ty, &mut struct_definitions, &mut enum_definitions)
+        })?;
+    }
     let type_declarations::TypeDeclarations {
         module: types_module,
         alias_exports,

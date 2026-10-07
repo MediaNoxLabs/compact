@@ -16,6 +16,7 @@
 //! Public source types and their representation derives, isolated from support names.
 
 use crate::ir::{StructField, Type, TypeAlias};
+use crate::naming::semantic_identifier;
 use crate::{RenderError, ident, is_compact_struct_instantiation, located, rust_type};
 use proc_macro2::Span;
 use std::collections::{BTreeMap, HashSet};
@@ -111,24 +112,27 @@ pub(crate) fn render(
             pub enum #name { #(#variants),* }
         });
     }
+    let named_types = struct_definitions
+        .keys()
+        .chain(enum_definitions.keys())
+        .map(|name| semantic_identifier(name))
+        .collect::<Result<HashSet<_>, _>>()?;
     let mut alias_names = HashSet::new();
     let mut alias_reexports = Vec::new();
     for alias in aliases {
         located(alias.source.as_ref(), || {
             let name = ident(&alias.name)?;
-            let rendered_name = name.to_string();
-            let normalized_name = rendered_name.strip_prefix("r#").unwrap_or(&rendered_name);
+            let normalized_name = semantic_identifier(&alias.name)?;
             // Root alias reexports and the generated slots module share Rust's
             // type namespace. A raw identifier or Compact `$` spelling cannot
             // evade this collision, but a contract without slots owns the name.
             if has_ledger_slots_module && normalized_name == "ledger_slots" {
                 return Err(RenderError::ConflictingTypeAlias(alias.name.clone()));
             }
-            if !alias_names.insert(alias.name.as_str())
-                || struct_definitions.contains_key(&alias.name)
-                || enum_definitions.contains_key(&alias.name)
+            if !alias_names.insert(normalized_name.clone())
+                || named_types.contains(&normalized_name)
                 || matches!(
-                    alias.name.as_str(),
+                    normalized_name.as_str(),
                     "runtime" | "types" | "pure_circuits" | "ledger_contract"
                 )
             {

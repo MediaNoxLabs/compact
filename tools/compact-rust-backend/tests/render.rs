@@ -5989,6 +5989,7 @@ fn witnessed_field_cell_and_nested_call_use_native_frame() {
     let source = render(&contract).unwrap();
     syn::parse_file(&source).unwrap();
     assert!(source.contains("pub fn recording(&self) -> recorded::BorrowedContract<'_, W>"));
+    assert!(!source.contains("::core::convert::From<&'a super::Contract<W>>"));
     assert_eq!(source.matches("CircuitFrame::new(context)").count(), 2);
     assert!(source.contains("meter: &'a runtime::context::WitnessReadMeter<'a>"));
     assert!(source.contains("crate::ledger_slots::cell.witness_read(self.meter)"));
@@ -5999,6 +6000,47 @@ fn witnessed_field_cell_and_nested_call_use_native_frame() {
     assert!(source.contains(".apply(|context|"));
     assert!(source.contains("self::inner(context, witnesses"));
     assert!(source.contains("Ok(frame.finish(()))"));
+
+    // `$` is valid Compact syntax; `r#` cases exercise the typed IR only.
+    for name in ["recording", "r#recording"] {
+        let mut collision = contract.clone();
+        collision.stateful_circuits[1].name = name.into();
+        let rendered = render(&collision).unwrap();
+        assert!(!rendered.contains("pub fn recording(&self)"), "{name}");
+        assert!(rendered.contains(&format!("pub fn {name}<Private>(")));
+        assert!(rendered.contains("pub recording: recorded::Contract"));
+        assert!(rendered.contains("::core::convert::From<&'a super::Contract<W>>"));
+        assert!(rendered.contains("witnesses: &contract.witnesses"));
+
+        // A private-IR circuit named `from` (a Compact keyword) cannot prevent
+        // fully qualified trait construction of the witnessed handle.
+        let mut from = collision.stateful_circuits[1].clone();
+        from.name = "from".into();
+        collision.stateful_circuits.push(from);
+        let rendered = render(&collision).unwrap();
+        syn::parse_file(&rendered).unwrap();
+        assert!(rendered.contains("pub fn from<Private>("));
+        assert!(rendered.contains("::core::convert::From<&'a super::Contract<W>>"));
+    }
+    for name in ["outer_call", "outer$call", "r#outer_call"] {
+        let mut collision = contract.clone();
+        let mut exported = collision.stateful_circuits[1].clone();
+        exported.name = name.into();
+        collision.stateful_circuits.push(exported);
+        let rendered = render_with_capabilities(&collision).unwrap();
+        assert!(!rendered.source.contains("pub fn outer_call<'observed"));
+        assert!(!rendered.capabilities.circuits[0].observed_call);
+        assert_eq!(
+            rendered.capabilities.circuits[0]
+                .observed_call_unavailable
+                .as_ref()
+                .unwrap()
+                .code
+                .as_str(),
+            "name_collision"
+        );
+        assert!(rendered.capabilities.circuits[1].observed_call);
+    }
 
     let mut two_parameter_witness = contract.clone();
     two_parameter_witness.stateful_circuits[1]
@@ -6307,11 +6349,13 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
     assert!(source.contains("runtime::transaction::RecordedCall::new("));
     assert!(source.contains("\"increment\","));
 
-    let mut recording_circuit = contract.clone();
-    recording_circuit.stateful_circuits[0].name = "recording".into();
-    let source = render(&recording_circuit).unwrap();
-    assert!(source.contains("pub fn recording<Private>("));
-    assert!(!source.contains("pub fn recording(&self) -> &recorded::Contract"));
+    for name in ["recording", "r#recording"] {
+        let mut recording_circuit = contract.clone();
+        recording_circuit.stateful_circuits[0].name = name.into();
+        let source = render(&recording_circuit).unwrap();
+        assert!(source.contains(&format!("pub fn {name}<Private>(")));
+        assert!(!source.contains("pub fn recording(&self) -> &recorded::Contract"));
+    }
 
     contract.stateful_circuits[0].actions[0] = StateAction::CounterDecrement {
         field: "round".into(),
@@ -7547,44 +7591,48 @@ fn counter_parameter_requires_uint16_and_a_known_name() {
             >= 4
     );
 
-    let mut collision = two_parameters.clone();
-    let mut exported = collision.stateful_circuits[0].clone();
-    exported.name = "increment_by_call".into();
-    exported.parameters.clear();
-    exported.actions[0] = StateAction::CounterIncrement {
-        field: "round".into(),
-        index: 0,
-        amount: CounterAmount::Literal { value: 1 },
-    };
-    collision.stateful_circuits.push(exported);
-    let rendered = render_with_capabilities(&collision).unwrap();
-    assert!(
-        !rendered
-            .source
-            .contains("pub fn increment_by_call<'observed")
-    );
-    assert_eq!(
-        rendered
-            .capabilities
-            .circuits
-            .iter()
-            .map(|circuit| (
-                circuit.name.as_str(),
-                circuit.recorded,
-                circuit.observed_call
-            ))
-            .collect::<Vec<_>>(),
-        [
-            ("increment_by", true, false),
-            ("increment_by_call", true, true)
-        ]
-    );
-    let gap = rendered.capabilities.circuits[0]
-        .observed_call_unavailable
-        .as_ref()
-        .unwrap();
-    assert_eq!(gap.code.as_str(), "name_collision");
-    assert_eq!(gap.path, "name");
+    // A Rust raw spelling is accepted only through the typed IR.
+    for collision_name in [
+        "increment_by_call",
+        "increment_by$call",
+        "r#increment_by_call",
+    ] {
+        let mut collision = two_parameters.clone();
+        let mut exported = collision.stateful_circuits[0].clone();
+        exported.name = collision_name.into();
+        exported.parameters.clear();
+        exported.actions[0] = StateAction::CounterIncrement {
+            field: "round".into(),
+            index: 0,
+            amount: CounterAmount::Literal { value: 1 },
+        };
+        collision.stateful_circuits.push(exported);
+        let rendered = render_with_capabilities(&collision).unwrap();
+        assert!(
+            !rendered
+                .source
+                .contains("pub fn increment_by_call<'observed")
+        );
+        assert_eq!(
+            rendered
+                .capabilities
+                .circuits
+                .iter()
+                .map(|circuit| (
+                    circuit.name.as_str(),
+                    circuit.recorded,
+                    circuit.observed_call
+                ))
+                .collect::<Vec<_>>(),
+            [("increment_by", true, false), (collision_name, true, true)]
+        );
+        let gap = rendered.capabilities.circuits[0]
+            .observed_call_unavailable
+            .as_ref()
+            .unwrap();
+        assert_eq!(gap.code.as_str(), "name_collision");
+        assert_eq!(gap.path, "name");
+    }
 
     contract.stateful_circuits[0].parameters[0].ty = Type::Unsigned { max: "255".into() };
     assert_eq!(

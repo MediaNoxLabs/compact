@@ -27,15 +27,54 @@ fn validate_context(
     Ok(())
 }
 
+fn validate_case(scenario: &str, case: &str, operation: &str) -> Result<(), &'static str> {
+    if matches!(
+        (scenario, case, operation),
+        ("points", "rotate", "rotateControllerKey")
+            | ("points", "recover", "recoverControllerKey")
+            | ("points", "deactivate", "deactivate")
+            | (
+                "aliases",
+                "insert-unicode" | "remove-unicode",
+                "setAlsoKnownAs"
+            )
+            | (
+                "services",
+                "insert-unicode" | "update-empty-fields",
+                "setService"
+            )
+            | ("services", "remove-unicode", "removeService")
+            | (
+                "schnorr-methods",
+                "insert-unicode" | "update-point",
+                "setSchnorrJubjubVerificationMethod"
+            )
+            | (
+                "schnorr-methods",
+                "remove-unicode",
+                "removeSchnorrJubjubVerificationMethod"
+            )
+            | (
+                "jwk-methods",
+                "insert-unicode" | "update-jwk",
+                "setVerificationMethod"
+            )
+            | ("jwk-methods", "remove-unicode", "removeVerificationMethod")
+    ) {
+        Ok(())
+    } else {
+        Err("public DID interchange case is outside the reviewed matrix")
+    }
+}
+
 pub(super) fn capture_if_requested(
     transaction: &PublicTransaction,
     before: &LedgerState<DefaultDB>,
     context: &TransactionContext<DefaultDB>,
+    scenario: &str,
+    case: &str,
     operation: &str,
 ) -> Result<(), Box<dyn Error>> {
-    if operation != "rotateControllerKey" {
-        return Ok(());
-    }
     let Some(directory) = env::var_os("COMPACT_DID_PUBLIC_INTERCHANGE") else {
         return Ok(());
     };
@@ -43,6 +82,7 @@ pub(super) fn capture_if_requested(
     if !directory.is_absolute() {
         return Err("public DID interchange requires an absolute new directory".into());
     }
+    validate_case(scenario, case, operation)?;
     validate_context(before, context)?;
     // Capture the exact apply result, before TestState::apply performs its post-block step.
     let verified = transaction.well_formed(
@@ -56,7 +96,13 @@ pub(super) fn capture_if_requested(
     }
     // Never replace an earlier receipt or write TestState, proof preimages, wallet keys,
     // witness/private-state payloads or RNG state. These concrete types are public.
+    fs::create_dir_all(&directory)?;
+    let directory = directory.join(format!("{scenario}--{case}"));
     fs::create_dir(&directory)?;
+    write_public(
+        &directory.join("producer-initial-parameters.bin"),
+        &INITIAL_PARAMETERS,
+    )?;
     write_public(&directory.join("transaction.bin"), transaction)?;
     write_public(&directory.join("ledger-before.bin"), before)?;
     write_public(&directory.join("ledger-after.bin"), &after)?;
@@ -64,7 +110,9 @@ pub(super) fn capture_if_requested(
     fs::write(
         directory.join("context.json"),
         serde_json::to_vec_pretty(&serde_json::json!({
-            "format": "compact-did-public-interchange/v1",
+            "format": "compact-did-public-interchange/v2",
+            "scenario": scenario,
+            "case": case,
             "producer_ledger": "8.0.3",
             "operation": operation,
             "network_id": before.network_id,
@@ -119,5 +167,23 @@ mod tests {
             validate_context(&ledger, &context),
             Err("public DID interchange reference state differs from pre-ledger")
         );
+    }
+    #[test]
+    fn reviewed_case_identity_rejects_cross_scenario_and_unknown_operations() {
+        assert_eq!(
+            validate_case("services", "update-empty-fields", "setService"),
+            Ok(())
+        );
+        for (scenario, case, operation) in [
+            ("services", "update-empty-fields", "removeService"),
+            ("aliases", "update-empty-fields", "setAlsoKnownAs"),
+            ("../escape", "rotate", "rotateControllerKey"),
+            ("points", "rotate", "unknown"),
+        ] {
+            assert_eq!(
+                validate_case(scenario, case, operation),
+                Err("public DID interchange case is outside the reviewed matrix")
+            );
+        }
     }
 }

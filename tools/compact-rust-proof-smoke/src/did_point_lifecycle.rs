@@ -465,6 +465,14 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
             &balanced,
             &state.ledger,
             &state.context(),
+            match lifecycle {
+                Lifecycle::Points => "points",
+                Lifecycle::Aliases => "aliases",
+                Lifecycle::Services => "services",
+                Lifecycle::SchnorrMethods => "schnorr-methods",
+                Lifecycle::JwkMethods => "jwk-methods",
+            },
+            id,
             name,
         )?;
         let result = state.apply(&balanced, WellFormedStrictness::default())?;

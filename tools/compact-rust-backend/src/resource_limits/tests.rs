@@ -380,3 +380,278 @@ fn literal_buffer_exact_and_one_over() {
         Kind::LiteralBytes
     );
 }
+
+fn constructor_assertion(message: &str) -> Contract {
+    use crate::ir::{Constructor, ConstructorStep, Expr};
+    let mut contract = fixture(0, 0);
+    contract.constructor = Some(Constructor {
+        source: None,
+        parameters: vec![],
+        steps: vec![ConstructorStep::Assert {
+            condition: Expr::Boolean { value: true },
+            message: message.into(),
+        }],
+    });
+    contract
+}
+
+#[test]
+fn constructor_assertion_counts_utf8_bytes_at_the_exact_string_boundary() {
+    // No identifiers or other text occur in this constructor. These three
+    // Unicode scalars occupy 2 + 4 + 3 bytes, independently of the visitor.
+    let exact = constructor_assertion("é🌙界");
+    crate::render(&exact).expect("supported constructor assertion");
+    let limits = Limits {
+        strings: 9,
+        ..Limits::CENSUS
+    };
+    assert_eq!(measure(&exact, limits).unwrap().string_bytes, 9);
+    let excess = constructor_assertion("é🌙界!");
+    let error = measure(&excess, limits).unwrap_err();
+    assert_eq!(
+        (error.resource, error.limit, error.observed),
+        (Kind::StringBytes, 9, 10)
+    );
+}
+
+#[test]
+fn commitment_accounts_for_literal_bytes_in_each_operand() {
+    use crate::ir::{Expr, Type};
+    let make = |value_len, opening_len| {
+        let mut contract = nested_expression("hash", 0, false);
+        let circuit = &mut contract.circuits[0];
+        circuit.parameters.clear();
+        circuit.result = Type::Bytes { length: 32 };
+        circuit.body = Expr::PersistentCommit {
+            value: Box::new(Expr::BytesLiteral {
+                bytes: vec![0; value_len],
+            }),
+            opening: Box::new(Expr::BytesLiteral {
+                bytes: vec![0; opening_len],
+            }),
+        };
+        contract
+    };
+    let exact = make(3, 32);
+    crate::render(&exact).expect("supported commitment with a 32-byte opening");
+    let limits = Limits {
+        literal_bytes: 35,
+        ..Limits::CENSUS
+    };
+    assert_eq!(measure(&exact, limits).unwrap().literal_bytes, 35);
+    // Both additions must count. The 33-byte opening is a scanner-only input:
+    // public semantic lowering still owns its separate opening-type refusal.
+    for excess in [make(4, 32), make(3, 33)] {
+        let error = measure(&excess, limits).unwrap_err();
+        assert_eq!(
+            (error.resource, error.limit, error.observed),
+            (Kind::LiteralBytes, 35, 36)
+        );
+    }
+}
+
+#[test]
+fn nested_commitment_and_ec_operands_cannot_escape_depth_accounting() {
+    use crate::ir::{Expr, Type};
+    let field = || Expr::FieldLiteral { value: "7".into() };
+    let wrap = |mut value: Expr, point: bool, count| {
+        for _ in 0..count {
+            value = if point {
+                Expr::EcNeg {
+                    value: Box::new(value),
+                }
+            } else {
+                Expr::TransientHash {
+                    value: Box::new(value),
+                }
+            };
+        }
+        value
+    };
+    for (ec, second) in [(false, false), (false, true), (true, false), (true, true)] {
+        let make = |nested| {
+            let mut contract = nested_expression("hash", 0, false);
+            let circuit = &mut contract.circuits[0];
+            circuit.parameters.clear();
+            circuit.result = if ec { Type::JubjubPoint } else { Type::Field };
+            let mut first = if ec {
+                Expr::EcMulGenerator {
+                    scalar: Box::new(field()),
+                }
+            } else {
+                field()
+            };
+            let mut last = field();
+            if nested {
+                if second {
+                    // The EC point starts one level deeper than the scalar.
+                    last = wrap(last, false, if ec { 4 } else { 3 });
+                } else {
+                    first = wrap(first, ec, 3);
+                }
+            }
+            circuit.body = if ec {
+                Expr::EcMul {
+                    point: Box::new(first),
+                    scalar: Box::new(last),
+                }
+            } else {
+                Expr::TransientCommit {
+                    value: Box::new(first),
+                    opening: Box::new(last),
+                }
+            };
+            contract
+        };
+        let shallow = make(false);
+        let nested = make(true);
+        crate::render(&shallow).expect("supported shallow crypto expression");
+        crate::render(&nested).expect("supported nested crypto expression");
+        let depth = measure(&shallow, Limits::CENSUS).unwrap().syntax_depth;
+        let exact = Limits {
+            syntax_depth: depth + 3,
+            ..Limits::CENSUS
+        };
+        assert_eq!(measure(&nested, exact).unwrap().syntax_depth, depth + 3);
+        let short = Limits {
+            syntax_depth: depth + 2,
+            ..exact
+        };
+        assert!(measure(&shallow, short).is_ok());
+        let error = measure(&nested, short).unwrap_err();
+        assert_eq!(
+            (error.resource, error.limit, error.observed),
+            (Kind::SyntaxDepth, depth + 2, depth + 3),
+            "ec={ec}, second_operand={second}"
+        );
+    }
+}
+
+#[test]
+fn collection_returns_and_list_actions_count_slot_and_expression_payloads() {
+    use crate::ir::{Expr, LedgerField, LedgerFieldKind, StateAction, StateReturn, Type};
+    // These are the same typed shapes used by existing Set-member, Map-lookup
+    // and List-push renderer tests. No new recorded profile is being admitted.
+    for carrier in ["set", "map", "list"] {
+        let make = |field: &str, literal: &str| {
+            let mut contract = fixture(1, 0);
+            let value = Expr::FieldLiteral {
+                value: literal.into(),
+            };
+            contract.ledger_fields.push(LedgerField {
+                source: None,
+                id: field.into(),
+                index: 0,
+                path: vec![],
+                declaration: match carrier {
+                    "set" => LedgerFieldKind::Set { ty: Type::Field },
+                    "map" => LedgerFieldKind::Map {
+                        key: Type::Field,
+                        value: Type::Field,
+                    },
+                    _ => LedgerFieldKind::List { ty: Type::Field },
+                },
+            });
+            let circuit = &mut contract.stateful_circuits[0];
+            circuit.name = "read".into();
+            circuit.actions.clear();
+            match carrier {
+                "set" => {
+                    circuit.result = Type::Boolean;
+                    circuit.return_value = StateReturn::SetMember {
+                        field: field.into(),
+                        index: 0,
+                        value,
+                    };
+                }
+                "map" => {
+                    circuit.result = Type::Field;
+                    circuit.return_value = StateReturn::MapLookup {
+                        field: field.into(),
+                        index: 0,
+                        key: value,
+                    };
+                }
+                _ => circuit.actions.push(StateAction::ListPushFront {
+                    field: field.into(),
+                    index: 0,
+                    value,
+                }),
+            }
+            contract
+        };
+        // "read" (4), declared "store" (5), referenced "store" (5), "7" (1).
+        let exact = make("store", "7");
+        crate::render(&exact).expect("supported collection carrier");
+        let limits = Limits {
+            strings: 15,
+            ..Limits::CENSUS
+        };
+        assert_eq!(measure(&exact, limits).unwrap().string_bytes, 15);
+        let error = measure(&make("store", "17"), limits).unwrap_err();
+        assert_eq!(
+            (error.resource, error.limit, error.observed),
+            (Kind::StringBytes, 15, 16),
+            "{carrier} expression text"
+        );
+        // A renamed slot must account for both its declaration and its use.
+        let renamed = make("stores", "7");
+        crate::render(&renamed).expect("consistent slot rename");
+        let exact_rename = Limits {
+            strings: 17,
+            ..limits
+        };
+        assert_eq!(measure(&renamed, exact_rename).unwrap().string_bytes, 17);
+        let error = measure(
+            &renamed,
+            Limits {
+                strings: 16,
+                ..limits
+            },
+        )
+        .unwrap_err();
+        assert_eq!(
+            (error.resource, error.limit, error.observed),
+            (Kind::StringBytes, 16, 17),
+            "{carrier} declared and referenced slot"
+        );
+    }
+}
+
+#[test]
+fn all_public_render_entries_preserve_resource_error_fields_and_display() {
+    let metadata = json!({"circuits": []});
+    let small = constructor_assertion("bounded");
+    crate::render(&small).unwrap();
+    crate::render_with_capabilities(&small).unwrap();
+    crate::render_with_proof_capabilities(&small, &metadata).unwrap();
+
+    let limit = Limits::DEFAULT.strings;
+    let large = constructor_assertion(&"x".repeat(limit + 1));
+    let errors = [
+        crate::render(&large).unwrap_err(),
+        crate::render_with_capabilities(&large)
+            .err()
+            .expect("resource failure"),
+        crate::render_with_proof_capabilities(&large, &metadata)
+            .err()
+            .expect("resource failure"),
+    ];
+    for error in errors {
+        assert_eq!(
+            error,
+            crate::RenderError::ResourceLimit {
+                resource: "string_bytes",
+                limit,
+                observed: limit + 1,
+            }
+        );
+        assert_eq!(
+            error.to_string(),
+            format!(
+                "compiler resource string_bytes exceeds {limit} (observed {})",
+                limit + 1
+            )
+        );
+    }
+}

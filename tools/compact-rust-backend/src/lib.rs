@@ -1103,106 +1103,209 @@ fn unit_statements(
     }
 }
 
+// Recursive dispatch owns selection only; families retain exact original arms.
+// Keep recursive dispatch small; each helper retains one operation family.
 fn expression_with_calls(
     expr: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
     circuits: &HashMap<&str, &PureCircuit>,
 ) -> Result<(syn::Expr, Type), RenderError> {
     match expr {
-        Expr::Unit => Ok((syn::parse_quote!(()), Type::Unit)),
-        Expr::Default { ty } => {
-            let rendered_type = rust_type(ty)?;
-            Ok((
-                syn::parse_quote!(<#rendered_type as Default>::default()),
-                ty.clone(),
-            ))
+        Expr::Unit => pure_leaf_expression(expr, parameters, circuits),
+        Expr::Default { .. } => pure_leaf_expression(expr, parameters, circuits),
+        Expr::Boolean { .. } => pure_leaf_expression(expr, parameters, circuits),
+        Expr::FieldLiteral { .. } => pure_leaf_expression(expr, parameters, circuits),
+        Expr::BytesLiteral { .. } => pure_leaf_expression(expr, parameters, circuits),
+        Expr::UnsignedLiteral { .. } => pure_leaf_expression(expr, parameters, circuits),
+        Expr::Parameter { .. } => pure_leaf_expression(expr, parameters, circuits),
+        Expr::EnumVariant { .. } => pure_leaf_expression(expr, parameters, circuits),
+        Expr::StructField { .. } => pure_aggregate_expression(expr, parameters, circuits),
+        Expr::TupleIndex { .. } => pure_aggregate_expression(expr, parameters, circuits),
+        Expr::StructLiteral { .. } => pure_aggregate_expression(expr, parameters, circuits),
+        Expr::Assert { .. } => pure_control_expression(expr, parameters, circuits),
+        Expr::Sequence { .. } => pure_control_expression(expr, parameters, circuits),
+        Expr::Tuple { .. } => pure_aggregate_expression(expr, parameters, circuits),
+        Expr::Vector { .. } => pure_aggregate_expression(expr, parameters, circuits),
+        Expr::VectorMap { .. } => pure_aggregate_expression(expr, parameters, circuits),
+        Expr::VectorFoldCall { .. } => pure_aggregate_expression(expr, parameters, circuits),
+        Expr::If { .. } => pure_control_expression(expr, parameters, circuits),
+        Expr::Let { .. } => pure_control_expression(expr, parameters, circuits),
+        Expr::Call { .. } => pure_aggregate_expression(expr, parameters, circuits),
+        Expr::TransientHash { .. } => pure_crypto_expression(expr, parameters, circuits),
+        Expr::TransientCommit { .. } => pure_crypto_expression(expr, parameters, circuits),
+        Expr::PersistentHash { .. } => pure_crypto_expression(expr, parameters, circuits),
+        Expr::Keccak256 { .. } => pure_crypto_expression(expr, parameters, circuits),
+        Expr::PersistentCommit { .. } => pure_crypto_expression(expr, parameters, circuits),
+        Expr::DegradeToTransient { .. } => pure_crypto_expression(expr, parameters, circuits),
+        Expr::UpgradeFromTransient { .. } => pure_crypto_expression(expr, parameters, circuits),
+        Expr::HashToCurve { .. } => pure_crypto_expression(expr, parameters, circuits),
+        Expr::JubjubPointX { .. } | Expr::JubjubPointY { .. } => {
+            pure_crypto_expression(expr, parameters, circuits)
         }
-        Expr::Boolean { value } => Ok((syn::parse_quote!(#value), Type::Boolean)),
-        Expr::FieldLiteral { value } => {
-            let bytes = field_literal_bytes(value)?;
-            if let Ok(parsed) = value.parse::<u128>() {
-                let value = syn::LitInt::new(&format!("{parsed}u128"), Span::call_site());
-                return Ok((syn::parse_quote!(runtime::Field::from(#value)), Type::Field));
-            }
-            let bytes = bytes
-                .iter()
-                .map(|byte| syn::LitInt::new(&format!("{byte}u8"), Span::call_site()))
-                .collect::<Vec<_>>();
-            Ok((
-                syn::parse_quote!(runtime::Field::from_le_bytes(&[#(#bytes),*]).expect("validated Compact Field literal")),
-                Type::Field,
-            ))
+        Expr::EcAdd { .. } => pure_crypto_expression(expr, parameters, circuits),
+        Expr::ConstructJubjubPoint { .. } => pure_crypto_expression(expr, parameters, circuits),
+        Expr::EcNeg { .. } => pure_crypto_expression(expr, parameters, circuits),
+        Expr::EcMul { .. } => pure_crypto_expression(expr, parameters, circuits),
+        Expr::EcMulGenerator { .. } => pure_crypto_expression(expr, parameters, circuits),
+        Expr::JubjubScalarFromNative { .. } => pure_crypto_expression(expr, parameters, circuits),
+        Expr::WitnessCall { .. }
+        | Expr::KernelClaim { .. }
+        | Expr::KernelMintShielded { .. }
+        | Expr::CreateZswapInput { .. }
+        | Expr::CreateZswapOutput { .. }
+        | Expr::NativeWitnessCall { .. }
+        | Expr::SetMember { .. }
+        | Expr::MapMember { .. }
+        | Expr::MapLookup { .. }
+        | Expr::MerkleCheckRoot { .. }
+        | Expr::HistoricMerkleCheckRoot { .. }
+        | Expr::SetIsEmpty { .. }
+        | Expr::SetSize { .. }
+        | Expr::MapIsEmpty { .. }
+        | Expr::ListLength { .. }
+        | Expr::ListIsEmpty { .. }
+        | Expr::ListHead { .. }
+        | Expr::CellRead { .. }
+        | Expr::CounterRead { .. }
+        | Expr::CounterLessThan { .. }
+        | Expr::KernelSelf { .. } => pure_leaf_expression(expr, parameters, circuits),
+        Expr::FieldCast { .. } => pure_conversion_expression(expr, parameters, circuits),
+        Expr::FieldToBytes32 { .. } => pure_conversion_expression(expr, parameters, circuits),
+        Expr::Coerce { .. } => pure_conversion_expression(expr, parameters, circuits),
+        Expr::UnsignedCast { .. } => pure_conversion_expression(expr, parameters, circuits),
+        Expr::UnsignedAdd { .. }
+        | Expr::UnsignedSubtract { .. }
+        | Expr::UnsignedMultiply { .. } => pure_arithmetic_expression(expr, parameters, circuits),
+        Expr::Add { .. } | Expr::Subtract { .. } | Expr::Multiply { .. } => {
+            pure_arithmetic_expression(expr, parameters, circuits)
         }
-        Expr::BytesLiteral { bytes } => {
-            let values = bytes
-                .iter()
-                .map(|value| syn::LitInt::new(&format!("{value}u8"), Span::call_site()))
-                .collect::<Vec<_>>();
-            Ok((
-                syn::parse_quote!(runtime::FixedBytes::new([#(#values),*])),
-                Type::Bytes {
-                    length: bytes.len(),
-                },
-            ))
+        Expr::Equal { .. } | Expr::NotEqual { .. } => {
+            pure_arithmetic_expression(expr, parameters, circuits)
         }
-        Expr::UnsignedLiteral { value, max } => {
-            let maximum = unsigned_maximum(max)?;
-            let bytes =
-                field_literal_bytes(value).map_err(|_| RenderError::InvalidUnsignedLiteral {
-                    value: value.clone(),
-                    max: max.clone(),
-                })?;
-            let low = u128::from_le_bytes(bytes[..16].try_into().expect("low limb"));
-            let high = u128::from_le_bytes(bytes[16..].try_into().expect("high limb"));
-            let maximum_limbs = match maximum {
-                UnsignedMaximum::Small(maximum) => (0, maximum),
-                UnsignedMaximum::Wide { high, low } => (high, low),
-            };
-            if (high, low) > maximum_limbs {
-                return Err(RenderError::InvalidUnsignedLiteral {
-                    value: value.clone(),
-                    max: max.clone(),
+        Expr::Compare { .. } => pure_arithmetic_expression(expr, parameters, circuits),
+    }
+}
+
+fn pure_control_expression(
+    expr: &Expr,
+    parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    circuits: &HashMap<&str, &PureCircuit>,
+) -> Result<(syn::Expr, Type), RenderError> {
+    match expr {
+        Expr::Assert { condition, message } => {
+            let (condition, actual) = expression_with_calls(condition, parameters, circuits)?;
+            if actual != Type::Boolean {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Boolean,
+                    actual,
                 });
             }
-            let rendered: syn::Expr = match maximum {
-                UnsignedMaximum::Small(_) => {
-                    let max_lit = syn::LitInt::new(max, Span::call_site());
-                    let value_lit = syn::LitInt::new(&format!("{value}u128"), Span::call_site());
-                    syn::parse_quote!(runtime::BoundedUint::<#max_lit>::new(#value_lit).expect("Compact Uint literal fits its maximum"))
-                }
-                UnsignedMaximum::Wide { high, low } => {
-                    let ty = wide_uint_type(high, low);
-                    let bytes = bytes[..31]
-                        .iter()
-                        .map(|byte| syn::LitInt::new(&format!("{byte}u8"), Span::call_site()))
-                        .collect::<Vec<_>>();
-                    syn::parse_quote!(<#ty>::from_le_bytes(&[#(#bytes),*]).expect("Compact Uint literal fits its maximum"))
-                }
-            };
-            Ok((rendered, Type::Unsigned { max: max.clone() }))
+            let (prefix, condition) = lift_block_condition(condition, parameters);
+            Ok((
+                syn::parse_quote!({
+                    #(#prefix)*
+                    if !(#condition) {
+                        return Err(runtime::CompactError::AssertionFailed(#message.to_owned()));
+                    }
+                }),
+                Type::Unit,
+            ))
         }
-        Expr::Parameter { name } => {
-            let (ty, rust_name) = parameters
-                .get(name.as_str())
-                .ok_or_else(|| RenderError::UnknownParameter(name.clone()))?;
-            let value = if copy_type(ty) {
-                syn::parse_quote!(#rust_name)
-            } else {
-                syn::parse_quote!(#rust_name.clone())
-            };
-            Ok((value, (*ty).clone()))
-        }
-        Expr::EnumVariant { ty, variant } => {
-            let Type::Enum { variants, .. } = ty else {
-                return Err(RenderError::InvalidEnumVariant(variant.clone()));
-            };
-            if !variants.contains(variant) {
-                return Err(RenderError::InvalidEnumVariant(variant.clone()));
+        Expr::Sequence { steps, value } => {
+            let mut statements = Vec::<syn::Stmt>::new();
+            for step in steps {
+                let (_, actual) = expression_with_calls(step, parameters, circuits)?;
+                if actual != Type::Unit {
+                    return Err(RenderError::TypeMismatch {
+                        expected: Type::Unit,
+                        actual,
+                    });
+                }
+                statements.extend(unit_statements(step, parameters, circuits)?);
             }
-            let rust_ty = rust_type(ty)?;
-            let rust_variant = ident(variant)?;
-            Ok((syn::parse_quote!(#rust_ty::#rust_variant), ty.clone()))
+            let (value, ty) = expression_with_calls(value, parameters, circuits)?;
+            Ok((syn::parse_quote!({ #(#statements)* #value }), ty))
         }
+        Expr::If {
+            condition,
+            then,
+            otherwise,
+        } => {
+            let evaluate_condition = condition_needs_statement(condition);
+            let (condition, condition_ty) = expression_with_calls(condition, parameters, circuits)?;
+            if condition_ty != Type::Boolean {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Boolean,
+                    actual: condition_ty,
+                });
+            }
+            let (mut prefix, condition) = lift_block_condition(condition, parameters);
+            if then == otherwise {
+                let (value, ty) = expression_with_calls(then, parameters, circuits)?;
+                if evaluate_condition && prefix.is_empty() {
+                    prefix.push(syn::parse_quote!(let _ = #condition;));
+                }
+                return Ok((
+                    if prefix.is_empty() {
+                        value
+                    } else {
+                        syn::parse_quote!({ #(#prefix)* #value })
+                    },
+                    ty,
+                ));
+            }
+            let (then, then_ty) = expression_with_calls(then, parameters, circuits)?;
+            let (otherwise, otherwise_ty) = expression_with_calls(otherwise, parameters, circuits)?;
+            if then_ty != otherwise_ty {
+                return Err(RenderError::TypeMismatch {
+                    expected: then_ty,
+                    actual: otherwise_ty,
+                });
+            }
+            let conditional: syn::Expr =
+                syn::parse_quote!(if #condition { #then } else { #otherwise });
+            Ok((
+                if prefix.is_empty() {
+                    conditional
+                } else {
+                    syn::parse_quote!({ #(#prefix)* #conditional })
+                },
+                then_ty,
+            ))
+        }
+        Expr::Let { bindings, body } => {
+            let mut locals = parameters.clone();
+            let mut statements = Vec::<syn::Stmt>::new();
+            for binding in bindings {
+                ident(&binding.name)?;
+                let (value, actual) = expression_with_calls(&binding.value, &locals, circuits)?;
+                if actual != binding.ty {
+                    return Err(RenderError::TypeMismatch {
+                        expected: binding.ty.clone(),
+                        actual,
+                    });
+                }
+                let local_ty = rust_type(&binding.ty)?;
+                let local_name = syn::Ident::new(
+                    &format!("__compact_local_{}", binding.name),
+                    Span::call_site(),
+                );
+                statements.push(syn::parse_quote!(let #local_name: #local_ty = #value;));
+                locals.insert(binding.name.as_str(), (&binding.ty, local_name));
+            }
+            let (body, body_ty) = expression_with_calls(body, &locals, circuits)?;
+            Ok((syn::parse_quote!({ #(#statements)* #body }), body_ty))
+        }
+        _ => unreachable!("private pure-expression dispatcher selects this family"),
+    }
+}
+
+fn pure_aggregate_expression(
+    expr: &Expr,
+    parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    circuits: &HashMap<&str, &PureCircuit>,
+) -> Result<(syn::Expr, Type), RenderError> {
+    match expr {
         Expr::StructField {
             value,
             field,
@@ -1273,40 +1376,6 @@ fn expression_with_calls(
                 syn::parse_quote!(crate::types::#name { #(#field_values),* }),
                 ty.clone(),
             ))
-        }
-        Expr::Assert { condition, message } => {
-            let (condition, actual) = expression_with_calls(condition, parameters, circuits)?;
-            if actual != Type::Boolean {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Boolean,
-                    actual,
-                });
-            }
-            let (prefix, condition) = lift_block_condition(condition, parameters);
-            Ok((
-                syn::parse_quote!({
-                    #(#prefix)*
-                    if !(#condition) {
-                        return Err(runtime::CompactError::AssertionFailed(#message.to_owned()));
-                    }
-                }),
-                Type::Unit,
-            ))
-        }
-        Expr::Sequence { steps, value } => {
-            let mut statements = Vec::<syn::Stmt>::new();
-            for step in steps {
-                let (_, actual) = expression_with_calls(step, parameters, circuits)?;
-                if actual != Type::Unit {
-                    return Err(RenderError::TypeMismatch {
-                        expected: Type::Unit,
-                        actual,
-                    });
-                }
-                statements.extend(unit_statements(step, parameters, circuits)?);
-            }
-            let (value, ty) = expression_with_calls(value, parameters, circuits)?;
-            Ok((syn::parse_quote!({ #(#statements)* #value }), ty))
         }
         Expr::Tuple { elements } => {
             let (exprs, types): (Vec<_>, Vec<_>) = elements
@@ -1436,76 +1505,6 @@ fn expression_with_calls(
                 accumulator.clone(),
             ))
         }
-        Expr::If {
-            condition,
-            then,
-            otherwise,
-        } => {
-            let evaluate_condition = condition_needs_statement(condition);
-            let (condition, condition_ty) = expression_with_calls(condition, parameters, circuits)?;
-            if condition_ty != Type::Boolean {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Boolean,
-                    actual: condition_ty,
-                });
-            }
-            let (mut prefix, condition) = lift_block_condition(condition, parameters);
-            if then == otherwise {
-                let (value, ty) = expression_with_calls(then, parameters, circuits)?;
-                if evaluate_condition && prefix.is_empty() {
-                    prefix.push(syn::parse_quote!(let _ = #condition;));
-                }
-                return Ok((
-                    if prefix.is_empty() {
-                        value
-                    } else {
-                        syn::parse_quote!({ #(#prefix)* #value })
-                    },
-                    ty,
-                ));
-            }
-            let (then, then_ty) = expression_with_calls(then, parameters, circuits)?;
-            let (otherwise, otherwise_ty) = expression_with_calls(otherwise, parameters, circuits)?;
-            if then_ty != otherwise_ty {
-                return Err(RenderError::TypeMismatch {
-                    expected: then_ty,
-                    actual: otherwise_ty,
-                });
-            }
-            let conditional: syn::Expr =
-                syn::parse_quote!(if #condition { #then } else { #otherwise });
-            Ok((
-                if prefix.is_empty() {
-                    conditional
-                } else {
-                    syn::parse_quote!({ #(#prefix)* #conditional })
-                },
-                then_ty,
-            ))
-        }
-        Expr::Let { bindings, body } => {
-            let mut locals = parameters.clone();
-            let mut statements = Vec::<syn::Stmt>::new();
-            for binding in bindings {
-                ident(&binding.name)?;
-                let (value, actual) = expression_with_calls(&binding.value, &locals, circuits)?;
-                if actual != binding.ty {
-                    return Err(RenderError::TypeMismatch {
-                        expected: binding.ty.clone(),
-                        actual,
-                    });
-                }
-                let local_ty = rust_type(&binding.ty)?;
-                let local_name = syn::Ident::new(
-                    &format!("__compact_local_{}", binding.name),
-                    Span::call_site(),
-                );
-                statements.push(syn::parse_quote!(let #local_name: #local_ty = #value;));
-                locals.insert(binding.name.as_str(), (&binding.ty, local_name));
-            }
-            let (body, body_ty) = expression_with_calls(body, &locals, circuits)?;
-            Ok((syn::parse_quote!({ #(#statements)* #body }), body_ty))
-        }
         Expr::Call { name, arguments } => {
             let circuit = circuits
                 .get(name.as_str())
@@ -1534,6 +1533,173 @@ fn expression_with_calls(
                 circuit.result.clone(),
             ))
         }
+        _ => unreachable!("private pure-expression dispatcher selects this family"),
+    }
+}
+
+fn pure_conversion_expression(
+    expr: &Expr,
+    parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    circuits: &HashMap<&str, &PureCircuit>,
+) -> Result<(syn::Expr, Type), RenderError> {
+    match expr {
+        Expr::FieldCast { value } => {
+            let (value, actual) = expression_with_calls(value, parameters, circuits)?;
+            let Type::Unsigned { max } = &actual else {
+                return Err(RenderError::ExpectedUnsigned(actual));
+            };
+            let rendered = match unsigned_maximum(max)? {
+                UnsignedMaximum::Small(_) => {
+                    syn::parse_quote!(runtime::Field::from((#value).value()))
+                }
+                UnsignedMaximum::Wide { .. } => syn::parse_quote!((#value).as_field()),
+            };
+            Ok((rendered, Type::Field))
+        }
+        Expr::FieldToBytes32 { value } => {
+            let (value, actual) = expression_with_calls(value, parameters, circuits)?;
+            if actual != Type::Field {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Field,
+                    actual,
+                });
+            }
+            Ok((field_to_bytes_32_syntax(value), Type::Bytes { length: 32 }))
+        }
+        Expr::Coerce { value, ty } => {
+            let (value, actual) = expression_with_calls(value, parameters, circuits)?;
+            Ok((coerce_expression(value, &actual, ty, 0)?, ty.clone()))
+        }
+        Expr::UnsignedCast { max, value } => {
+            unsigned_maximum(max)?;
+            let (value, actual) = expression_with_calls(value, parameters, circuits)?;
+            let Type::Unsigned { max: source_max } = actual else {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Unsigned { max: max.clone() },
+                    actual,
+                });
+            };
+            Ok((
+                unsigned_cast_syntax(value, &source_max, max)?,
+                Type::Unsigned { max: max.clone() },
+            ))
+        }
+        _ => unreachable!("private pure-expression dispatcher selects this family"),
+    }
+}
+
+fn pure_arithmetic_expression(
+    expr: &Expr,
+    parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    circuits: &HashMap<&str, &PureCircuit>,
+) -> Result<(syn::Expr, Type), RenderError> {
+    match expr {
+        Expr::UnsignedAdd { max, left, right }
+        | Expr::UnsignedSubtract { max, left, right }
+        | Expr::UnsignedMultiply { max, left, right } => {
+            let (left, left_type) = expression_with_calls(left, parameters, circuits)?;
+            let (right, right_type) = expression_with_calls(right, parameters, circuits)?;
+            let Type::Unsigned { max: left_max } = left_type else {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Unsigned { max: max.clone() },
+                    actual: left_type,
+                });
+            };
+            let Type::Unsigned { max: right_max } = right_type else {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Unsigned { max: max.clone() },
+                    actual: right_type,
+                });
+            };
+            Ok((
+                unsigned_arithmetic_syntax(expr, left, right, &left_max, &right_max, max)?,
+                Type::Unsigned { max: max.clone() },
+            ))
+        }
+        Expr::Add { left, right }
+        | Expr::Subtract { left, right }
+        | Expr::Multiply { left, right } => {
+            let (left, left_type) = expression_with_calls(left, parameters, circuits)?;
+            let (right, right_type) = expression_with_calls(right, parameters, circuits)?;
+            if left_type != Type::Field {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Field,
+                    actual: left_type,
+                });
+            }
+            if right_type != Type::Field {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Field,
+                    actual: right_type,
+                });
+            }
+            let op = match expr {
+                Expr::Add { .. } => syn::BinOp::Add(syn::token::Plus::default()),
+                Expr::Subtract { .. } => syn::BinOp::Sub(syn::token::Minus::default()),
+                Expr::Multiply { .. } => syn::BinOp::Mul(syn::token::Star::default()),
+                _ => unreachable!(),
+            };
+            Ok((
+                syn::Expr::Binary(syn::ExprBinary {
+                    attrs: vec![],
+                    left: Box::new(left),
+                    op,
+                    right: Box::new(right),
+                }),
+                Type::Field,
+            ))
+        }
+        Expr::Equal { left, right } | Expr::NotEqual { left, right } => {
+            let (left, left_ty) = expression_with_calls(left, parameters, circuits)?;
+            let (right, right_ty) = expression_with_calls(right, parameters, circuits)?;
+            if right_ty != left_ty {
+                return Err(RenderError::TypeMismatch {
+                    expected: left_ty,
+                    actual: right_ty,
+                });
+            }
+            let rendered = if matches!(expr, Expr::Equal { .. }) {
+                syn::parse_quote!(#left == #right)
+            } else {
+                syn::parse_quote!(#left != #right)
+            };
+            Ok((rendered, Type::Boolean))
+        }
+        Expr::Compare {
+            operator,
+            left,
+            right,
+        } => {
+            let (left, left_ty) = expression_with_calls(left, parameters, circuits)?;
+            let (right, right_ty) = expression_with_calls(right, parameters, circuits)?;
+            for actual in [left_ty, right_ty] {
+                let Type::Unsigned { max } = &actual else {
+                    return Err(RenderError::ExpectedUnsigned(actual));
+                };
+                if matches!(unsigned_maximum(max)?, UnsignedMaximum::Wide { .. }) {
+                    return Err(RenderError::InvalidUnsignedMaximum(max.clone()));
+                }
+            }
+            let rendered = match operator {
+                ComparisonOperator::Less => syn::parse_quote!(#left.value() < #right.value()),
+                ComparisonOperator::LessEqual => syn::parse_quote!(#left.value() <= #right.value()),
+                ComparisonOperator::Greater => syn::parse_quote!(#left.value() > #right.value()),
+                ComparisonOperator::GreaterEqual => {
+                    syn::parse_quote!(#left.value() >= #right.value())
+                }
+            };
+            Ok((rendered, Type::Boolean))
+        }
+        _ => unreachable!("private pure-expression dispatcher selects this family"),
+    }
+}
+
+fn pure_crypto_expression(
+    expr: &Expr,
+    parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    circuits: &HashMap<&str, &PureCircuit>,
+) -> Result<(syn::Expr, Type), RenderError> {
+    match expr {
         Expr::TransientHash { value } => {
             let (value, _) = expression_with_calls(value, parameters, circuits)?;
             Ok((
@@ -1722,6 +1888,110 @@ fn expression_with_calls(
                 Type::Field,
             ))
         }
+        _ => unreachable!("private pure-expression dispatcher selects this family"),
+    }
+}
+
+fn pure_leaf_expression(
+    expr: &Expr,
+    parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    _circuits: &HashMap<&str, &PureCircuit>,
+) -> Result<(syn::Expr, Type), RenderError> {
+    match expr {
+        Expr::Unit => Ok((syn::parse_quote!(()), Type::Unit)),
+        Expr::Default { ty } => {
+            let rendered_type = rust_type(ty)?;
+            Ok((
+                syn::parse_quote!(<#rendered_type as Default>::default()),
+                ty.clone(),
+            ))
+        }
+        Expr::Boolean { value } => Ok((syn::parse_quote!(#value), Type::Boolean)),
+        Expr::FieldLiteral { value } => {
+            let bytes = field_literal_bytes(value)?;
+            if let Ok(parsed) = value.parse::<u128>() {
+                let value = syn::LitInt::new(&format!("{parsed}u128"), Span::call_site());
+                return Ok((syn::parse_quote!(runtime::Field::from(#value)), Type::Field));
+            }
+            let bytes = bytes
+                .iter()
+                .map(|byte| syn::LitInt::new(&format!("{byte}u8"), Span::call_site()))
+                .collect::<Vec<_>>();
+            Ok((
+                syn::parse_quote!(runtime::Field::from_le_bytes(&[#(#bytes),*]).expect("validated Compact Field literal")),
+                Type::Field,
+            ))
+        }
+        Expr::BytesLiteral { bytes } => {
+            let values = bytes
+                .iter()
+                .map(|value| syn::LitInt::new(&format!("{value}u8"), Span::call_site()))
+                .collect::<Vec<_>>();
+            Ok((
+                syn::parse_quote!(runtime::FixedBytes::new([#(#values),*])),
+                Type::Bytes {
+                    length: bytes.len(),
+                },
+            ))
+        }
+        Expr::UnsignedLiteral { value, max } => {
+            let maximum = unsigned_maximum(max)?;
+            let bytes =
+                field_literal_bytes(value).map_err(|_| RenderError::InvalidUnsignedLiteral {
+                    value: value.clone(),
+                    max: max.clone(),
+                })?;
+            let low = u128::from_le_bytes(bytes[..16].try_into().expect("low limb"));
+            let high = u128::from_le_bytes(bytes[16..].try_into().expect("high limb"));
+            let maximum_limbs = match maximum {
+                UnsignedMaximum::Small(maximum) => (0, maximum),
+                UnsignedMaximum::Wide { high, low } => (high, low),
+            };
+            if (high, low) > maximum_limbs {
+                return Err(RenderError::InvalidUnsignedLiteral {
+                    value: value.clone(),
+                    max: max.clone(),
+                });
+            }
+            let rendered: syn::Expr = match maximum {
+                UnsignedMaximum::Small(_) => {
+                    let max_lit = syn::LitInt::new(max, Span::call_site());
+                    let value_lit = syn::LitInt::new(&format!("{value}u128"), Span::call_site());
+                    syn::parse_quote!(runtime::BoundedUint::<#max_lit>::new(#value_lit).expect("Compact Uint literal fits its maximum"))
+                }
+                UnsignedMaximum::Wide { high, low } => {
+                    let ty = wide_uint_type(high, low);
+                    let bytes = bytes[..31]
+                        .iter()
+                        .map(|byte| syn::LitInt::new(&format!("{byte}u8"), Span::call_site()))
+                        .collect::<Vec<_>>();
+                    syn::parse_quote!(<#ty>::from_le_bytes(&[#(#bytes),*]).expect("Compact Uint literal fits its maximum"))
+                }
+            };
+            Ok((rendered, Type::Unsigned { max: max.clone() }))
+        }
+        Expr::Parameter { name } => {
+            let (ty, rust_name) = parameters
+                .get(name.as_str())
+                .ok_or_else(|| RenderError::UnknownParameter(name.clone()))?;
+            let value = if copy_type(ty) {
+                syn::parse_quote!(#rust_name)
+            } else {
+                syn::parse_quote!(#rust_name.clone())
+            };
+            Ok((value, (*ty).clone()))
+        }
+        Expr::EnumVariant { ty, variant } => {
+            let Type::Enum { variants, .. } = ty else {
+                return Err(RenderError::InvalidEnumVariant(variant.clone()));
+            };
+            if !variants.contains(variant) {
+                return Err(RenderError::InvalidEnumVariant(variant.clone()));
+            }
+            let rust_ty = rust_type(ty)?;
+            let rust_variant = ident(variant)?;
+            Ok((syn::parse_quote!(#rust_ty::#rust_variant), ty.clone()))
+        }
         Expr::WitnessCall { .. }
         | Expr::KernelClaim { .. }
         | Expr::KernelMintShielded { .. }
@@ -1743,143 +2013,7 @@ fn expression_with_calls(
         | Expr::CounterRead { .. }
         | Expr::CounterLessThan { .. }
         | Expr::KernelSelf { .. } => Err(RenderError::EffectfulExpression),
-        Expr::FieldCast { value } => {
-            let (value, actual) = expression_with_calls(value, parameters, circuits)?;
-            let Type::Unsigned { max } = &actual else {
-                return Err(RenderError::ExpectedUnsigned(actual));
-            };
-            let rendered = match unsigned_maximum(max)? {
-                UnsignedMaximum::Small(_) => {
-                    syn::parse_quote!(runtime::Field::from((#value).value()))
-                }
-                UnsignedMaximum::Wide { .. } => syn::parse_quote!((#value).as_field()),
-            };
-            Ok((rendered, Type::Field))
-        }
-        Expr::FieldToBytes32 { value } => {
-            let (value, actual) = expression_with_calls(value, parameters, circuits)?;
-            if actual != Type::Field {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Field,
-                    actual,
-                });
-            }
-            Ok((field_to_bytes_32_syntax(value), Type::Bytes { length: 32 }))
-        }
-        Expr::Coerce { value, ty } => {
-            let (value, actual) = expression_with_calls(value, parameters, circuits)?;
-            Ok((coerce_expression(value, &actual, ty, 0)?, ty.clone()))
-        }
-        Expr::UnsignedCast { max, value } => {
-            unsigned_maximum(max)?;
-            let (value, actual) = expression_with_calls(value, parameters, circuits)?;
-            let Type::Unsigned { max: source_max } = actual else {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Unsigned { max: max.clone() },
-                    actual,
-                });
-            };
-            Ok((
-                unsigned_cast_syntax(value, &source_max, max)?,
-                Type::Unsigned { max: max.clone() },
-            ))
-        }
-        Expr::UnsignedAdd { max, left, right }
-        | Expr::UnsignedSubtract { max, left, right }
-        | Expr::UnsignedMultiply { max, left, right } => {
-            let (left, left_type) = expression_with_calls(left, parameters, circuits)?;
-            let (right, right_type) = expression_with_calls(right, parameters, circuits)?;
-            let Type::Unsigned { max: left_max } = left_type else {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Unsigned { max: max.clone() },
-                    actual: left_type,
-                });
-            };
-            let Type::Unsigned { max: right_max } = right_type else {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Unsigned { max: max.clone() },
-                    actual: right_type,
-                });
-            };
-            Ok((
-                unsigned_arithmetic_syntax(expr, left, right, &left_max, &right_max, max)?,
-                Type::Unsigned { max: max.clone() },
-            ))
-        }
-        Expr::Add { left, right }
-        | Expr::Subtract { left, right }
-        | Expr::Multiply { left, right } => {
-            let (left, left_type) = expression_with_calls(left, parameters, circuits)?;
-            let (right, right_type) = expression_with_calls(right, parameters, circuits)?;
-            if left_type != Type::Field {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Field,
-                    actual: left_type,
-                });
-            }
-            if right_type != Type::Field {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Field,
-                    actual: right_type,
-                });
-            }
-            let op = match expr {
-                Expr::Add { .. } => syn::BinOp::Add(syn::token::Plus::default()),
-                Expr::Subtract { .. } => syn::BinOp::Sub(syn::token::Minus::default()),
-                Expr::Multiply { .. } => syn::BinOp::Mul(syn::token::Star::default()),
-                _ => unreachable!(),
-            };
-            Ok((
-                syn::Expr::Binary(syn::ExprBinary {
-                    attrs: vec![],
-                    left: Box::new(left),
-                    op,
-                    right: Box::new(right),
-                }),
-                Type::Field,
-            ))
-        }
-        Expr::Equal { left, right } | Expr::NotEqual { left, right } => {
-            let (left, left_ty) = expression_with_calls(left, parameters, circuits)?;
-            let (right, right_ty) = expression_with_calls(right, parameters, circuits)?;
-            if right_ty != left_ty {
-                return Err(RenderError::TypeMismatch {
-                    expected: left_ty,
-                    actual: right_ty,
-                });
-            }
-            let rendered = if matches!(expr, Expr::Equal { .. }) {
-                syn::parse_quote!(#left == #right)
-            } else {
-                syn::parse_quote!(#left != #right)
-            };
-            Ok((rendered, Type::Boolean))
-        }
-        Expr::Compare {
-            operator,
-            left,
-            right,
-        } => {
-            let (left, left_ty) = expression_with_calls(left, parameters, circuits)?;
-            let (right, right_ty) = expression_with_calls(right, parameters, circuits)?;
-            for actual in [left_ty, right_ty] {
-                let Type::Unsigned { max } = &actual else {
-                    return Err(RenderError::ExpectedUnsigned(actual));
-                };
-                if matches!(unsigned_maximum(max)?, UnsignedMaximum::Wide { .. }) {
-                    return Err(RenderError::InvalidUnsignedMaximum(max.clone()));
-                }
-            }
-            let rendered = match operator {
-                ComparisonOperator::Less => syn::parse_quote!(#left.value() < #right.value()),
-                ComparisonOperator::LessEqual => syn::parse_quote!(#left.value() <= #right.value()),
-                ComparisonOperator::Greater => syn::parse_quote!(#left.value() > #right.value()),
-                ComparisonOperator::GreaterEqual => {
-                    syn::parse_quote!(#left.value() >= #right.value())
-                }
-            };
-            Ok((rendered, Type::Boolean))
-        }
+        _ => unreachable!("private pure-expression dispatcher selects this family"),
     }
 }
 

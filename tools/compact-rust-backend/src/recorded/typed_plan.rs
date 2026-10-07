@@ -364,6 +364,7 @@ impl Plan<'_> {
         )
     }
 
+    // Recursion returns through this small dispatcher; helpers keep the same Plan and scope.
     fn expression(
         &mut self,
         expression: &Expr,
@@ -371,18 +372,66 @@ impl Plan<'_> {
         steps: &mut Vec<syn::Stmt>,
     ) -> Option<TypedValue> {
         match expression {
-            Expr::Unit
-                if self.read_only_assertions
-                    || self.unit_actions
-                    || self.phase_reset
-                    || self.composite_domain.shielded_helpers()
-                    || self.composition_calls.is_some() =>
-            {
-                Some(TypedValue {
-                    ty: Type::Unit,
-                    value: syn::parse_quote!(()),
-                })
+            Expr::Sequence { .. } | Expr::Assert { .. } | Expr::Let { .. } | Expr::If { .. } => {
+                self.control_expression(expression, scope, steps)
             }
+            Expr::StructLiteral { .. } | Expr::StructField { .. } | Expr::Tuple { .. } => {
+                self.aggregate_expression(expression, scope, steps)
+            }
+            Expr::UnsignedCast { .. }
+            | Expr::UnsignedMultiply { .. }
+            | Expr::NotEqual { .. }
+            | Expr::JubjubPointX { .. }
+            | Expr::JubjubPointY { .. }
+            | Expr::UnsignedAdd { .. }
+            | Expr::UnsignedSubtract { .. }
+            | Expr::Coerce { .. }
+            | Expr::Equal { .. }
+            | Expr::Add { .. }
+            | Expr::FieldCast { .. }
+            | Expr::FieldToBytes32 { .. } => self.arithmetic_expression(expression, scope, steps),
+            Expr::PersistentCommit { .. }
+            | Expr::PersistentHash { .. }
+            | Expr::TransientCommit { .. }
+            | Expr::DegradeToTransient { .. }
+            | Expr::TransientHash { .. }
+            | Expr::UpgradeFromTransient { .. } => self.crypto_expression(expression, scope, steps),
+            Expr::CounterLessThan { .. }
+            | Expr::CounterRead { .. }
+            | Expr::CellRead { .. }
+            | Expr::SetMember { .. }
+            | Expr::MapMember { .. }
+            | Expr::SetSize { .. }
+            | Expr::SetIsEmpty { .. }
+            | Expr::HistoricMerkleCheckRoot { .. }
+            | Expr::MerkleCheckRoot { .. } => self.observation_expression(expression, scope, steps),
+            Expr::KernelMintShielded { .. }
+            | Expr::CreateZswapInput { .. }
+            | Expr::CreateZswapOutput { .. }
+            | Expr::KernelClaim { .. }
+            | Expr::KernelSelf { .. }
+            | Expr::WitnessCall { .. }
+            | Expr::NativeWitnessCall { .. }
+            | Expr::Call { .. } => self.effect_expression(expression, scope, steps),
+            Expr::Unit
+            | Expr::Parameter { .. }
+            | Expr::Boolean { .. }
+            | Expr::BytesLiteral { .. }
+            | Expr::EnumVariant { .. }
+            | Expr::FieldLiteral { .. }
+            | Expr::UnsignedLiteral { .. }
+            | Expr::Default { .. } => self.leaf_expression(expression, scope, steps),
+            _ => None,
+        }
+    }
+
+    fn control_expression(
+        &mut self,
+        expression: &Expr,
+        scope: &Scope,
+        steps: &mut Vec<syn::Stmt>,
+    ) -> Option<TypedValue> {
+        match expression {
             Expr::Sequence {
                 steps: expressions,
                 value,
@@ -421,29 +470,60 @@ impl Plan<'_> {
                     value: syn::parse_quote!(()),
                 })
             }
-            Expr::Parameter { name } => {
-                let value = scope.get(name)?;
+            Expr::Let { bindings, body } => {
+                let scoped = self.bindings(bindings, scope, steps)?;
+                self.expression(body, &scoped, steps)
+            }
+            Expr::If {
+                condition,
+                then,
+                otherwise,
+            } => {
+                let condition = self.expression(condition, scope, steps)?;
+                if condition.ty != Type::Boolean {
+                    return None;
+                }
+                let mut then_steps = Vec::new();
+                let then = self.expression(then, scope, &mut then_steps)?;
+                let mut else_steps = Vec::new();
+                let otherwise = self.expression(otherwise, scope, &mut else_steps)?;
+                if then.ty != otherwise.ty
+                    || (!self.composite_domain.values()
+                        && !(self.unit_actions && then.ty == Type::Unit)
+                        && then.ty != Type::Boolean
+                        && !(self.scalar_arguments && then.ty == (Type::Bytes { length: 32 })))
+                {
+                    return None;
+                }
+                let result_ty = then.ty.clone();
+                let rust_ty = rust_type(&result_ty).ok()?;
+                let name = self.fresh();
+                let (condition, then, otherwise) = (condition.value, then.value, otherwise.value);
+                steps.push(syn::parse_quote! {
+                    let (frame, #name): (_, #rust_ty) = if #condition {
+                        #(#then_steps)*
+                        (frame, #then)
+                    } else {
+                        #(#else_steps)*
+                        (frame, #otherwise)
+                    };
+                });
                 Some(TypedValue {
-                    ty: value.ty.clone(),
-                    value: retained_value(value.value.clone(), &value.ty),
+                    ty: result_ty,
+                    value: syn::parse_quote!(#name),
                 })
             }
-            Expr::Boolean { .. }
-            | Expr::BytesLiteral { .. }
-            | Expr::EnumVariant { .. }
-            | Expr::FieldLiteral { .. }
-            | Expr::UnsignedLiteral { .. } => {
-                let (value, ty) =
-                    expression_with_calls(expression, &HashMap::new(), &HashMap::new()).ok()?;
-                self.bind(value, ty, steps)
-            }
-            Expr::Default {
-                ty: Type::Struct { .. },
-            } => {
-                let (value, ty) =
-                    expression_with_calls(expression, &HashMap::new(), &HashMap::new()).ok()?;
-                self.bind(value, ty, steps)
-            }
+            _ => None,
+        }
+    }
+
+    fn aggregate_expression(
+        &mut self,
+        expression: &Expr,
+        scope: &Scope,
+        steps: &mut Vec<syn::Stmt>,
+    ) -> Option<TypedValue> {
+        match expression {
             Expr::StructLiteral {
                 ty: ty @ Type::Struct { fields, .. },
                 fields: values,
@@ -465,52 +545,53 @@ impl Plan<'_> {
                     steps,
                 )
             }
-            Expr::KernelMintShielded { domain, amount }
-                if self.composite_domain == CompositeDomain::FundedShieldedMint =>
-            {
-                self.funded_mint(expression, domain, amount, scope, steps)
-            }
-            Expr::CreateZswapInput { .. }
-            | Expr::CreateZswapOutput { .. }
-            | Expr::KernelClaim { .. }
-                if self.composite_domain.intents() =>
-            {
-                let operands: Vec<&Expr> = match expression {
-                    Expr::CreateZswapInput { coin } => vec![coin],
-                    Expr::CreateZswapOutput { coin, recipient } => vec![coin, recipient],
-                    Expr::KernelClaim { value, .. } => vec![value],
-                    _ => unreachable!(),
+            Expr::StructField {
+                value,
+                field,
+                index,
+            } => {
+                let value = self.expression(value, scope, steps)?;
+                let Type::Struct { fields, .. } = value.ty else {
+                    return None;
                 };
-                let operands = operands
-                    .into_iter()
-                    .map(|operand| {
-                        let value = self.expression(operand, scope, steps)?;
-                        Some((value.ty, value.value))
-                    })
-                    .collect::<Option<Vec<_>>>()?;
-                let effect = intent_effect::emit(expression, &operands)?;
-                self.intent_effects += usize::from(effect.intent);
-                self.intent_queries += usize::from(effect.public_query);
-                self.zswap_inputs +=
-                    usize::from(matches!(expression, Expr::CreateZswapInput { .. }));
-                self.zswap_outputs +=
-                    usize::from(matches!(expression, Expr::CreateZswapOutput { .. }));
-                steps.push(effect.statement);
-                self.bind(syn::parse_quote!(()), Type::Unit, steps)
+                let member = fields.get(*index)?;
+                if member.name != *field {
+                    return None;
+                }
+                let name = ident(field).ok()?;
+                let source = value.value;
+                let projected = retained_value(syn::parse_quote!((#source).#name), &member.ty);
+                self.bind(projected, member.ty.clone(), steps)
             }
-            Expr::KernelSelf { ty } if *ty == contract_address_type() => {
-                self.kernel_self_reads += 1;
-                let rust_ty = rust_type(ty).ok()?;
-                let observed = self.fresh();
-                steps.push(syn::parse_quote!(let (frame, #observed) = frame.kernel_self()?;));
+            Expr::Tuple { elements }
+                if self.context_query
+                    || self.scalar_body_depth > 0
+                    || self.unit_actions
+                    || self.composite_domain.shielded_helpers() =>
+            {
+                let values = elements
+                    .iter()
+                    .map(|element| self.expression(element, scope, steps))
+                    .collect::<Option<Vec<_>>>()?;
+                let types = values.iter().map(|v| v.ty.clone()).collect();
+                let values: Vec<_> = values.into_iter().map(|v| v.value).collect();
                 self.bind(
-                    syn::parse_quote!(#rust_ty {
-                        bytes: runtime::ledger::contract_address_bytes(&#observed)
-                    }),
-                    ty.clone(),
+                    syn::parse_quote!((#(#values,)*)),
+                    Type::Tuple { elements: types },
                     steps,
                 )
             }
+            _ => None,
+        }
+    }
+
+    fn arithmetic_expression(
+        &mut self,
+        expression: &Expr,
+        scope: &Scope,
+        steps: &mut Vec<syn::Stmt>,
+    ) -> Option<TypedValue> {
+        match expression {
             Expr::UnsignedCast { value, max }
                 if self.composite_domain.values() || self.phase_reset =>
             {
@@ -626,28 +707,6 @@ impl Plan<'_> {
                 let converted = coerce_expression(value.value, &value.ty, ty, 0).ok()?;
                 self.bind(converted, ty.clone(), steps)
             }
-            Expr::StructField {
-                value,
-                field,
-                index,
-            } => {
-                let value = self.expression(value, scope, steps)?;
-                let Type::Struct { fields, .. } = value.ty else {
-                    return None;
-                };
-                let member = fields.get(*index)?;
-                if member.name != *field {
-                    return None;
-                }
-                let name = ident(field).ok()?;
-                let source = value.value;
-                let projected = retained_value(syn::parse_quote!((#source).#name), &member.ty);
-                self.bind(projected, member.ty.clone(), steps)
-            }
-            Expr::Let { bindings, body } => {
-                let scoped = self.bindings(bindings, scope, steps)?;
-                self.expression(body, &scoped, steps)
-            }
             Expr::Equal { left, right } => {
                 let left = self.expression(left, scope, steps)?;
                 let right = self.expression(right, scope, steps)?;
@@ -668,134 +727,50 @@ impl Plan<'_> {
                 let (left, right) = (left.value, right.value);
                 self.bind(syn::parse_quote!(#left + #right), Type::Field, steps)
             }
-            Expr::If {
-                condition,
-                then,
-                otherwise,
-            } => {
-                let condition = self.expression(condition, scope, steps)?;
-                if condition.ty != Type::Boolean {
+            Expr::FieldCast { value } => {
+                let value = self.expression(value, scope, steps)?;
+                let Type::Unsigned { max } = &value.ty else {
+                    return None;
+                };
+                if if self.effectful_field_cells {
+                    !matches!(
+                        crate::unsigned_maximum(max).ok()?,
+                        crate::UnsignedMaximum::Small(_)
+                    )
+                } else {
+                    max != "18446744073709551615"
+                } {
                     return None;
                 }
-                let mut then_steps = Vec::new();
-                let then = self.expression(then, scope, &mut then_steps)?;
-                let mut else_steps = Vec::new();
-                let otherwise = self.expression(otherwise, scope, &mut else_steps)?;
-                if then.ty != otherwise.ty
-                    || (!self.composite_domain.values()
-                        && !(self.unit_actions && then.ty == Type::Unit)
-                        && then.ty != Type::Boolean
-                        && !(self.scalar_arguments && then.ty == (Type::Bytes { length: 32 })))
-                {
-                    return None;
-                }
-                let result_ty = then.ty.clone();
-                let rust_ty = rust_type(&result_ty).ok()?;
-                let name = self.fresh();
-                let (condition, then, otherwise) = (condition.value, then.value, otherwise.value);
-                steps.push(syn::parse_quote! {
-                    let (frame, #name): (_, #rust_ty) = if #condition {
-                        #(#then_steps)*
-                        (frame, #then)
-                    } else {
-                        #(#else_steps)*
-                        (frame, #otherwise)
-                    };
-                });
-                Some(TypedValue {
-                    ty: result_ty,
-                    value: syn::parse_quote!(#name),
-                })
-            }
-            Expr::WitnessCall { name, arguments } => {
-                let declaration = *self.witnesses.get(name.as_str())?;
-                if self.composite_domain == CompositeDomain::ResetShieldedPayout {
-                    return None;
-                }
-                if self.composite_domain == CompositeDomain::GuardedShieldedDeposit
-                    && (declaration.result != (Type::Bytes { length: 32 })
-                        || !declaration.parameters.is_empty())
-                {
-                    return None;
-                }
-                if self.composite_domain == CompositeDomain::ShieldedPayout
-                    && declaration.result != (Type::Bytes { length: 32 })
-                {
-                    return None;
-                }
-                if self.composite_domain == CompositeDomain::ActionfulShieldedPayout
-                    && !shielded_payout::witness_type(&declaration.result)
-                {
-                    return None;
-                }
-                if self.composite_domain == CompositeDomain::StartFunding
-                    && !start_funding::witness_type(&declaration.result)
-                {
-                    return None;
-                }
-                if arguments.len() != declaration.parameters.len()
-                    || !(matches!(declaration.result, Type::Unit | Type::OpaqueBytes)
-                        || recordable_cell_type(&declaration.result))
-                {
-                    return None;
-                }
-                let args = self.arguments(arguments, &declaration.parameters, scope, steps)?;
-                let method = ident(name).ok()?;
-                self.witness_calls += 1;
-                let observed = self.fresh();
-                let ty = rust_type(&declaration.result).ok()?;
-                steps.push(syn::parse_quote! {
-                    let (frame, #observed): (_, #ty) = frame.try_witness_metered(|context, meter| {
-                        witnesses.#method(context.witness_context_with(super::LedgerView {
-                            state: context.query.state.get_ref(), meter,
-                        }), #(#args),*)
-                    })?;
-                });
-                Some(TypedValue {
-                    ty: declaration.result.clone(),
-                    value: syn::parse_quote!(#observed),
-                })
-            }
-            Expr::NativeWitnessCall {
-                builtin: builtin @ crate::ir::NativeWitnessBuiltin::OwnPublicKey,
-            } if matches!(
-                self.composite_domain,
-                CompositeDomain::ShieldedPayout
-                    | CompositeDomain::ActionfulShieldedPayout
-                    | CompositeDomain::FundedShieldedMint
-                    | CompositeDomain::ResetShieldedPayout
-            ) =>
-            {
-                let ty = builtin.result_type();
-                let rust_ty = rust_type(&ty).ok()?;
-                let observed = self.fresh();
-                steps.push(
-                    syn::parse_quote!(let (frame, #observed) = frame.own_coin_public_key()?;),
-                );
+                let value = value.value;
                 self.bind(
-                    syn::parse_quote!(#rust_ty { bytes: runtime::FixedBytes::new(#observed) }),
-                    ty,
+                    syn::parse_quote!(runtime::Field::from((#value).value())),
+                    Type::Field,
                     steps,
                 )
             }
-            Expr::Tuple { elements }
-                if self.context_query
-                    || self.scalar_body_depth > 0
-                    || self.unit_actions
-                    || self.composite_domain.shielded_helpers() =>
-            {
-                let values = elements
-                    .iter()
-                    .map(|element| self.expression(element, scope, steps))
-                    .collect::<Option<Vec<_>>>()?;
-                let types = values.iter().map(|v| v.ty.clone()).collect();
-                let values: Vec<_> = values.into_iter().map(|v| v.value).collect();
+            Expr::FieldToBytes32 { value } => {
+                let value = self.expression(value, scope, steps)?;
+                if value.ty != Type::Field {
+                    return None;
+                }
                 self.bind(
-                    syn::parse_quote!((#(#values,)*)),
-                    Type::Tuple { elements: types },
+                    crate::field_to_bytes_32_syntax(value.value),
+                    Type::Bytes { length: 32 },
                     steps,
                 )
             }
+            _ => None,
+        }
+    }
+
+    fn crypto_expression(
+        &mut self,
+        expression: &Expr,
+        scope: &Scope,
+        steps: &mut Vec<syn::Stmt>,
+    ) -> Option<TypedValue> {
+        match expression {
             Expr::PersistentCommit { value, opening } if self.context_query => {
                 let value = self.expression(value, scope, steps)?;
                 let opening = self.expression(opening, scope, steps)?;
@@ -886,7 +861,17 @@ impl Plan<'_> {
                     steps,
                 )
             }
-            Expr::Call { name, arguments } => self.call(name, arguments, scope, steps),
+            _ => None,
+        }
+    }
+
+    fn observation_expression(
+        &mut self,
+        expression: &Expr,
+        scope: &Scope,
+        steps: &mut Vec<syn::Stmt>,
+    ) -> Option<TypedValue> {
+        match expression {
             Expr::CounterLessThan {
                 field,
                 index,
@@ -922,39 +907,6 @@ impl Plan<'_> {
                     self.scalar_counter_reads += 1;
                 }
                 self.bind(syn::parse_quote!(runtime::BoundedUint::<18446744073709551615>::new(#observed as u128)?), Type::Unsigned { max: "18446744073709551615".into() }, steps)
-            }
-            Expr::FieldCast { value } => {
-                let value = self.expression(value, scope, steps)?;
-                let Type::Unsigned { max } = &value.ty else {
-                    return None;
-                };
-                if if self.effectful_field_cells {
-                    !matches!(
-                        crate::unsigned_maximum(max).ok()?,
-                        crate::UnsignedMaximum::Small(_)
-                    )
-                } else {
-                    max != "18446744073709551615"
-                } {
-                    return None;
-                }
-                let value = value.value;
-                self.bind(
-                    syn::parse_quote!(runtime::Field::from((#value).value())),
-                    Type::Field,
-                    steps,
-                )
-            }
-            Expr::FieldToBytes32 { value } => {
-                let value = self.expression(value, scope, steps)?;
-                if value.ty != Type::Field {
-                    return None;
-                }
-                self.bind(
-                    crate::field_to_bytes_32_syntax(value.value),
-                    Type::Bytes { length: 32 },
-                    steps,
-                )
             }
             Expr::CellRead { field, index } => {
                 let declaration = self.field(field, *index)?;
@@ -1118,6 +1070,181 @@ impl Plan<'_> {
                     Type::Boolean,
                     steps,
                 )
+            }
+            _ => None,
+        }
+    }
+
+    fn effect_expression(
+        &mut self,
+        expression: &Expr,
+        scope: &Scope,
+        steps: &mut Vec<syn::Stmt>,
+    ) -> Option<TypedValue> {
+        match expression {
+            Expr::KernelMintShielded { domain, amount }
+                if self.composite_domain == CompositeDomain::FundedShieldedMint =>
+            {
+                self.funded_mint(expression, domain, amount, scope, steps)
+            }
+            Expr::CreateZswapInput { .. }
+            | Expr::CreateZswapOutput { .. }
+            | Expr::KernelClaim { .. }
+                if self.composite_domain.intents() =>
+            {
+                let operands: Vec<&Expr> = match expression {
+                    Expr::CreateZswapInput { coin } => vec![coin],
+                    Expr::CreateZswapOutput { coin, recipient } => vec![coin, recipient],
+                    Expr::KernelClaim { value, .. } => vec![value],
+                    _ => unreachable!(),
+                };
+                let operands = operands
+                    .into_iter()
+                    .map(|operand| {
+                        let value = self.expression(operand, scope, steps)?;
+                        Some((value.ty, value.value))
+                    })
+                    .collect::<Option<Vec<_>>>()?;
+                let effect = intent_effect::emit(expression, &operands)?;
+                self.intent_effects += usize::from(effect.intent);
+                self.intent_queries += usize::from(effect.public_query);
+                self.zswap_inputs +=
+                    usize::from(matches!(expression, Expr::CreateZswapInput { .. }));
+                self.zswap_outputs +=
+                    usize::from(matches!(expression, Expr::CreateZswapOutput { .. }));
+                steps.push(effect.statement);
+                self.bind(syn::parse_quote!(()), Type::Unit, steps)
+            }
+            Expr::KernelSelf { ty } if *ty == contract_address_type() => {
+                self.kernel_self_reads += 1;
+                let rust_ty = rust_type(ty).ok()?;
+                let observed = self.fresh();
+                steps.push(syn::parse_quote!(let (frame, #observed) = frame.kernel_self()?;));
+                self.bind(
+                    syn::parse_quote!(#rust_ty {
+                        bytes: runtime::ledger::contract_address_bytes(&#observed)
+                    }),
+                    ty.clone(),
+                    steps,
+                )
+            }
+            Expr::WitnessCall { name, arguments } => {
+                let declaration = *self.witnesses.get(name.as_str())?;
+                if self.composite_domain == CompositeDomain::ResetShieldedPayout {
+                    return None;
+                }
+                if self.composite_domain == CompositeDomain::GuardedShieldedDeposit
+                    && (declaration.result != (Type::Bytes { length: 32 })
+                        || !declaration.parameters.is_empty())
+                {
+                    return None;
+                }
+                if self.composite_domain == CompositeDomain::ShieldedPayout
+                    && declaration.result != (Type::Bytes { length: 32 })
+                {
+                    return None;
+                }
+                if self.composite_domain == CompositeDomain::ActionfulShieldedPayout
+                    && !shielded_payout::witness_type(&declaration.result)
+                {
+                    return None;
+                }
+                if self.composite_domain == CompositeDomain::StartFunding
+                    && !start_funding::witness_type(&declaration.result)
+                {
+                    return None;
+                }
+                if arguments.len() != declaration.parameters.len()
+                    || !(matches!(declaration.result, Type::Unit | Type::OpaqueBytes)
+                        || recordable_cell_type(&declaration.result))
+                {
+                    return None;
+                }
+                let args = self.arguments(arguments, &declaration.parameters, scope, steps)?;
+                let method = ident(name).ok()?;
+                self.witness_calls += 1;
+                let observed = self.fresh();
+                let ty = rust_type(&declaration.result).ok()?;
+                steps.push(syn::parse_quote! {
+                    let (frame, #observed): (_, #ty) = frame.try_witness_metered(|context, meter| {
+                        witnesses.#method(context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(), meter,
+                        }), #(#args),*)
+                    })?;
+                });
+                Some(TypedValue {
+                    ty: declaration.result.clone(),
+                    value: syn::parse_quote!(#observed),
+                })
+            }
+            Expr::NativeWitnessCall {
+                builtin: builtin @ crate::ir::NativeWitnessBuiltin::OwnPublicKey,
+            } if matches!(
+                self.composite_domain,
+                CompositeDomain::ShieldedPayout
+                    | CompositeDomain::ActionfulShieldedPayout
+                    | CompositeDomain::FundedShieldedMint
+                    | CompositeDomain::ResetShieldedPayout
+            ) =>
+            {
+                let ty = builtin.result_type();
+                let rust_ty = rust_type(&ty).ok()?;
+                let observed = self.fresh();
+                steps.push(
+                    syn::parse_quote!(let (frame, #observed) = frame.own_coin_public_key()?;),
+                );
+                self.bind(
+                    syn::parse_quote!(#rust_ty { bytes: runtime::FixedBytes::new(#observed) }),
+                    ty,
+                    steps,
+                )
+            }
+            Expr::Call { name, arguments } => self.call(name, arguments, scope, steps),
+            _ => None,
+        }
+    }
+
+    fn leaf_expression(
+        &mut self,
+        expression: &Expr,
+        scope: &Scope,
+        steps: &mut Vec<syn::Stmt>,
+    ) -> Option<TypedValue> {
+        match expression {
+            Expr::Unit
+                if self.read_only_assertions
+                    || self.unit_actions
+                    || self.phase_reset
+                    || self.composite_domain.shielded_helpers()
+                    || self.composition_calls.is_some() =>
+            {
+                Some(TypedValue {
+                    ty: Type::Unit,
+                    value: syn::parse_quote!(()),
+                })
+            }
+            Expr::Parameter { name } => {
+                let value = scope.get(name)?;
+                Some(TypedValue {
+                    ty: value.ty.clone(),
+                    value: retained_value(value.value.clone(), &value.ty),
+                })
+            }
+            Expr::Boolean { .. }
+            | Expr::BytesLiteral { .. }
+            | Expr::EnumVariant { .. }
+            | Expr::FieldLiteral { .. }
+            | Expr::UnsignedLiteral { .. } => {
+                let (value, ty) =
+                    expression_with_calls(expression, &HashMap::new(), &HashMap::new()).ok()?;
+                self.bind(value, ty, steps)
+            }
+            Expr::Default {
+                ty: Type::Struct { .. },
+            } => {
+                let (value, ty) =
+                    expression_with_calls(expression, &HashMap::new(), &HashMap::new()).ok()?;
+                self.bind(value, ty, steps)
             }
             _ => None,
         }

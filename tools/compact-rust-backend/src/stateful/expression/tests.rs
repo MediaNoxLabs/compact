@@ -738,3 +738,5 @@ fn aggregate_construction_and_tuple_access_report_the_original_domain_error() {
         })
         .refused_before_effects(RenderError::ExpectedTuple(Type::Field));
 }
+
+mod collection_queries;

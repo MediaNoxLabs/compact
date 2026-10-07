@@ -100,7 +100,8 @@ pub(super) fn flat_string_point_map(declaration: &LedgerFieldKind) -> bool {
 // Map mutation serializes the declared value. Reuse the generated CellValue
 // implementations for checked named products, including nested products and
 // enums, while excluding container and unreviewed scalar leaves. Key-only
-// membership outside the read-only Boolean helper keeps its older flat bound.
+// membership of nested products outside the read-only Boolean helper is
+// allowed only on the same declared Map mutated by this composition.
 fn checked_product_value(ty: &Type) -> bool {
     match ty {
         Type::Struct { fields, .. } => {
@@ -121,6 +122,62 @@ pub(super) fn slot_path(field: &LedgerField) -> bool {
     // Retain that complete declared path rather than reconstructing an index.
     path.first() == Some(&field.index) && (1..=2).contains(&path.len())
 }
+/// Failure evidence stays private: capability JSON retains its existing schema.
+#[derive(Debug)]
+pub(in crate::recorded) struct CompositionRejection {
+    pub(super) gap: RecordingGap,
+    root_action: Option<usize>,
+    precision: RejectionPrecision,
+    phase: RejectionPhase,
+}
+#[derive(Debug, PartialEq, Eq)]
+enum RejectionPrecision {
+    ConcreteNode,
+    EnclosingAction,
+    Obligation,
+}
+#[derive(Debug, PartialEq, Eq)]
+enum RejectionPhase {
+    PolicyAudit,
+    TypedLowering,
+    FinalObligation,
+}
+
+impl CompositionRejection {
+    /// Refine only the same root action's coarse legacy refusal. Never inspect
+    /// diagnostic path/detail text, or override an earlier concrete error.
+    pub(in crate::recorded) fn refine_action(
+        &self,
+        ordinal: usize,
+        legacy_precision: super::super::LegacyActionPrecision,
+        gap: RecordingGap,
+    ) -> RecordingGap {
+        if legacy_precision == super::super::LegacyActionPrecision::Coarse
+            && self.root_action == Some(ordinal)
+            && self.precision == RejectionPrecision::ConcreteNode
+            && self.phase == RejectionPhase::PolicyAudit
+            && gap.code == super::super::RecordingGapCode::UnsupportedAction
+        {
+            self.gap.clone()
+        } else {
+            gap
+        }
+    }
+    fn obligation(detail: &str, no_effect: bool) -> Self {
+        let mut gap = RecordingGap::no_effect();
+        if !no_effect {
+            gap.code = super::super::RecordingGapCode::RecordingUnavailable;
+        }
+        gap.detail = detail.to_owned();
+        Self {
+            gap,
+            root_action: None,
+            precision: RejectionPrecision::Obligation,
+            phase: RejectionPhase::FinalObligation,
+        }
+    }
+}
+
 struct Audit<'a> {
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
     witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
@@ -133,6 +190,8 @@ struct Audit<'a> {
     nested_product_map_members: HashSet<(String, u8)>,
     product_map_written_fields: HashSet<(String, u8)>,
     read_only_boolean_depth: usize,
+    root_action: usize,
+    failure: Option<CompositionRejection>,
 }
 impl Audit<'_> {
     fn slot(&self, name: &str, index: u8) -> Option<&LedgerField> {
@@ -141,7 +200,24 @@ impl Audit<'_> {
             .copied()
             .filter(|f| f.index == index && slot_path(f))
     }
-    fn value(&mut self, value: &Expr, pure: bool) -> bool {
+    fn reject(&mut self, gap: RecordingGap) {
+        if self.failure.is_none() {
+            self.failure = Some(CompositionRejection {
+                gap,
+                root_action: Some(self.root_action),
+                precision: RejectionPrecision::ConcreteNode,
+                phase: RejectionPhase::PolicyAudit,
+            });
+        }
+    }
+    fn value(&mut self, value: &Expr, pure: bool, path: &str) -> bool {
+        let accepted = self.value_inner(value, pure, path);
+        if !accepted {
+            self.reject(RecordingGap::expression(value, path.to_owned()));
+        }
+        accepted
+    }
+    fn value_inner(&mut self, value: &Expr, pure: bool, path: &str) -> bool {
         match value {
             Expr::Parameter { .. }
             | Expr::Boolean { .. }
@@ -149,37 +225,52 @@ impl Audit<'_> {
             | Expr::BytesLiteral { .. }
             | Expr::UnsignedLiteral { .. }
             | Expr::EnumVariant { .. } => true,
-            Expr::Coerce { value, ty } => value_type(ty) && self.value(value, pure),
+            Expr::Coerce { value, ty } => {
+                value_type(ty) && self.value(value, pure, &format!("{path}.value"))
+            }
             Expr::StructField { value, .. }
             | Expr::JubjubPointX { value }
-            | Expr::JubjubPointY { value } => self.value(value, pure),
+            | Expr::JubjubPointY { value } => self.value(value, pure, &format!("{path}.value")),
             Expr::StructLiteral { ty, fields } => {
-                value_type(ty) && fields.iter().all(|v| self.value(v, pure))
+                value_type(ty)
+                    && fields
+                        .iter()
+                        .enumerate()
+                        .all(|(i, v)| self.value(v, pure, &format!("{path}.fields[{i}]")))
             }
-            Expr::Equal { left, right } => self.value(left, pure) && self.value(right, pure),
+            Expr::Equal { left, right } => {
+                self.value(left, pure, &format!("{path}.left"))
+                    && self.value(right, pure, &format!("{path}.right"))
+            }
             // This profile admits Field and declared Enum inequality in
             // stateful guards. The shared typed leaf checks both operands.
             Expr::NotEqual { left, right } if !pure => {
-                self.value(left, false) && self.value(right, false)
+                self.value(left, false, &format!("{path}.left"))
+                    && self.value(right, false, &format!("{path}.right"))
             }
             Expr::If {
                 condition,
                 then,
                 otherwise,
             } => {
-                self.value(condition, pure) && self.value(then, pure) && self.value(otherwise, pure)
+                self.value(condition, pure, &format!("{path}.condition"))
+                    && self.value(then, pure, &format!("{path}.then"))
+                    && self.value(otherwise, pure, &format!("{path}.otherwise"))
             }
             Expr::Let { bindings, body } => {
-                bindings
-                    .iter()
-                    .all(|b| value_type(&b.ty) && self.value(&b.value, pure))
-                    && self.value(body, pure)
+                bindings.iter().enumerate().all(|(i, b)| {
+                    value_type(&b.ty)
+                        && self.value(&b.value, pure, &format!("{path}.bindings[{i}].value"))
+                }) && self.value(body, pure, &format!("{path}.body"))
             }
             // Pure helpers use their existing typed renderer, not a second hash evaluator.
-            Expr::TransientHash { value } if pure => self.value(value, true),
-            Expr::Vector { elements, .. } | Expr::Tuple { elements } if pure => {
-                elements.iter().all(|v| self.value(v, true))
+            Expr::TransientHash { value } if pure => {
+                self.value(value, true, &format!("{path}.value"))
             }
+            Expr::Vector { elements, .. } | Expr::Tuple { elements } if pure => elements
+                .iter()
+                .enumerate()
+                .all(|(i, v)| self.value(v, true, &format!("{path}.elements[{i}]"))),
             Expr::CellRead { field, index } if !pure && self.read_only_boolean_depth == 0 => {
                 if !matches!(self.slot(field,*index).map(|f| &f.declaration), Some(LedgerFieldKind::Cell {ty}) if observed_value_type(ty))
                 {
@@ -202,7 +293,7 @@ impl Audit<'_> {
                     return false;
                 }
                 self.public += 1;
-                self.value(value, false)
+                self.value(value, false, &format!("{path}.value"))
             }
             Expr::MapMember { field, index, key } if !pure => {
                 let Some(slot) = self.slot(field, *index) else {
@@ -215,14 +306,12 @@ impl Audit<'_> {
                 {
                     return false;
                 }
-                if self.read_only_boolean_depth == 0
-                    && !flat_string_point_map(&slot.declaration)
-                {
+                if self.read_only_boolean_depth == 0 && !flat_string_point_map(&slot.declaration) {
                     self.nested_product_map_members
                         .insert((field.clone(), *index));
                 }
                 self.public += 1;
-                self.value(key, false)
+                self.value(key, false, &format!("{path}.key"))
             }
             Expr::CounterRead { field, index } if !pure && self.read_only_boolean_depth == 0 => {
                 if !matches!(
@@ -239,43 +328,68 @@ impl Audit<'_> {
                     observed_value_type(&w.result)
                         && w.parameters.iter().all(|p| observed_value_type(&p.ty))
                         && w.parameters.len() == arguments.len()
-                }) && arguments.iter().all(|v| self.value(v, false))
+                }) && arguments
+                    .iter()
+                    .enumerate()
+                    .all(|(i, v)| self.value(v, false, &format!("{path}.arguments[{i}]")))
             }
             Expr::Call { name, arguments } => {
-                arguments.iter().all(|v| self.value(v, pure)) && self.call(name, pure)
+                arguments
+                    .iter()
+                    .enumerate()
+                    .all(|(i, v)| self.value(v, pure, &format!("{path}.arguments[{i}]")))
+                    && self.call(name, pure, path)
             }
             _ => false,
         }
     }
     // Pure Unit guards have a statement-shaped grammar. Keep that capability
     // separate from value helpers; the existing pure renderer checks all types.
-    fn unit_guard(&mut self, value: &Expr) -> bool {
+    fn unit_guard(&mut self, value: &Expr, path: &str) -> bool {
+        let accepted = self.unit_guard_inner(value, path);
+        if !accepted {
+            self.reject(RecordingGap::expression(value, path.to_owned()));
+        }
+        accepted
+    }
+    fn unit_guard_inner(&mut self, value: &Expr, path: &str) -> bool {
         match value {
             Expr::Unit => true,
             Expr::Sequence { steps, value } => {
-                steps.iter().all(|step| self.unit_guard(step)) && self.unit_guard(value)
+                steps
+                    .iter()
+                    .enumerate()
+                    .all(|(i, step)| self.unit_guard(step, &format!("{path}.steps[{i}]")))
+                    && self.unit_guard(value, &format!("{path}.value"))
             }
-            Expr::Assert { condition, .. } => self.value(condition, true),
+            Expr::Assert { condition, .. } => {
+                self.value(condition, true, &format!("{path}.condition"))
+            }
             Expr::If {
                 condition,
                 then,
                 otherwise,
-            } => self.value(condition, true) && self.unit_guard(then) && self.unit_guard(otherwise),
+            } => {
+                self.value(condition, true, &format!("{path}.condition"))
+                    && self.unit_guard(then, &format!("{path}.then"))
+                    && self.unit_guard(otherwise, &format!("{path}.otherwise"))
+            }
             Expr::Let { bindings, body } => {
-                bindings
-                    .iter()
-                    .all(|binding| value_type(&binding.ty) && self.value(&binding.value, true))
-                    && self.unit_guard(body)
+                bindings.iter().enumerate().all(|(i, binding)| {
+                    value_type(&binding.ty)
+                        && self.value(&binding.value, true, &format!("{path}.bindings[{i}].value"))
+                }) && self.unit_guard(body, &format!("{path}.body"))
             }
             Expr::Call { name, arguments } => {
-                arguments.iter().all(|argument| self.value(argument, true))
-                    && self.call(name, true)
+                arguments.iter().enumerate().all(|(i, argument)| {
+                    self.value(argument, true, &format!("{path}.arguments[{i}]"))
+                }) && self.call(name, true, path)
                     && matches!(self.calls.get(name), Some(AuditedCall::PureUnitGuard(_)))
             }
             _ => false,
         }
     }
-    fn call(&mut self, name: &str, pure_only: bool) -> bool {
+    fn call(&mut self, name: &str, pure_only: bool, path: &str) -> bool {
         if let Some(call) = self.calls.get(name) {
             return if pure_only {
                 matches!(
@@ -292,6 +406,7 @@ impl Audit<'_> {
             };
         }
         if !self.active.insert(name.to_owned()) {
+            self.declaration_rejection(name, path, "recursive helper call");
             return false;
         }
         let accepted = match (
@@ -320,9 +435,9 @@ impl Audit<'_> {
                     || !(value_type(&c.result) || c.result == Type::Unit)
                     || !c.parameters.iter().all(|p| value_type(&p.ty))
                     || !(if c.result == Type::Unit {
-                        self.unit_guard(&c.body)
+                        self.unit_guard(&c.body, &format!("{path}.callee[{name:?}].body"))
                     } else {
-                        self.value(&c.body, true)
+                        self.value(&c.body, true, &format!("{path}.callee[{name:?}].body"))
                     })
                     || !matches!(expression_with_calls(&c.body,&parameters,self.pure),Ok((_,ty)) if ty==c.result)
                 {
@@ -348,7 +463,12 @@ impl Audit<'_> {
                     self.calls
                         .insert(name.to_owned(), AuditedCall::LocalUnit(c));
                     true
-                } else if c.actions.iter().all(|a| self.action(a)) {
+                } else if c
+                    .actions
+                    .iter()
+                    .enumerate()
+                    .all(|(i, a)| self.action(a, &format!("{path}.callee[{name:?}].actions[{i}]")))
+                {
                     self.calls
                         .insert(name.to_owned(), AuditedCall::RecordedUnit(c));
                     true
@@ -373,7 +493,11 @@ impl Audit<'_> {
                     return false;
                 };
                 self.read_only_boolean_depth += 1;
-                let accepted = self.value(&value, false);
+                let accepted = self.value(
+                    &value,
+                    false,
+                    &format!("{path}.callee[{name:?}].return_value"),
+                );
                 self.read_only_boolean_depth -= 1;
                 if accepted {
                     self.calls
@@ -384,23 +508,54 @@ impl Audit<'_> {
             _ => false,
         };
         self.active.remove(name);
+        if !accepted {
+            self.declaration_rejection(
+                name,
+                path,
+                "helper declaration or signature is outside Unit composition",
+            );
+        }
         accepted
     }
-    fn action(&mut self, a: &StateAction) -> bool {
+    fn declaration_rejection(&mut self, name: &str, path: &str, detail: &str) {
+        self.reject(RecordingGap {
+            code: super::super::RecordingGapCode::RecordingUnavailable,
+            ir_node: "CircuitDeclaration".to_owned(),
+            path: path.to_owned(),
+            detail: format!("{detail}: {name:?}"),
+        });
+    }
+    fn action(&mut self, a: &StateAction, path: &str) -> bool {
+        let accepted = self.action_inner(a, path);
+        if !accepted {
+            self.reject(RecordingGap::action(a, path.to_owned()));
+        }
+        accepted
+    }
+    fn action_inner(&mut self, a: &StateAction, path: &str) -> bool {
         match a {
-            StateAction::Sequence { actions } => actions.iter().all(|a| self.action(a)),
+            StateAction::Sequence { actions } => actions
+                .iter()
+                .enumerate()
+                .all(|(i, a)| self.action(a, &format!("{path}.actions[{i}]"))),
             StateAction::Let { bindings, action } => {
-                bindings
-                    .iter()
-                    .all(|b| value_type(&b.ty) && self.value(&b.value, false))
-                    && self.action(action)
+                bindings.iter().enumerate().all(|(i, b)| {
+                    value_type(&b.ty)
+                        && self.value(&b.value, false, &format!("{path}.bindings[{i}].value"))
+                }) && self.action(action, &format!("{path}.action"))
             }
             StateAction::If {
                 condition,
                 then,
                 otherwise,
-            } => self.value(condition, false) && self.action(then) && self.action(otherwise),
-            StateAction::Assert { condition, .. } => self.value(condition, false),
+            } => {
+                self.value(condition, false, &format!("{path}.condition"))
+                    && self.action(then, &format!("{path}.then"))
+                    && self.action(otherwise, &format!("{path}.otherwise"))
+            }
+            StateAction::Assert { condition, .. } => {
+                self.value(condition, false, &format!("{path}.condition"))
+            }
             StateAction::CellWrite {
                 field,
                 index,
@@ -411,7 +566,7 @@ impl Audit<'_> {
                     return false;
                 }
                 self.public += 1;
-                self.value(value, false)
+                self.value(value, false, &format!("{path}.value"))
             }
             StateAction::CounterIncrement { field, index, .. } => {
                 if !matches!(
@@ -442,7 +597,7 @@ impl Audit<'_> {
                     return false;
                 }
                 self.public += 1;
-                self.value(value, false)
+                self.value(value, false, &format!("{path}.value"))
             }
             StateAction::MapInsert {
                 field,
@@ -460,7 +615,8 @@ impl Audit<'_> {
                 self.product_map_writes += 1;
                 self.product_map_written_fields
                     .insert((field.clone(), *index));
-                self.value(key, false) && self.value(value, false)
+                self.value(key, false, &format!("{path}.key"))
+                    && self.value(value, false, &format!("{path}.value"))
             }
             StateAction::MapRemove { field, index, key } => {
                 if !self
@@ -473,16 +629,22 @@ impl Audit<'_> {
                 self.product_map_writes += 1;
                 self.product_map_written_fields
                     .insert((field.clone(), *index));
-                self.value(key, false)
+                self.value(key, false, &format!("{path}.key"))
             }
             StateAction::PureCall { name, arguments } => {
-                arguments.iter().all(|value| self.value(value, false))
-                    && self.call(name, true)
+                arguments
+                    .iter()
+                    .enumerate()
+                    .all(|(i, value)| self.value(value, false, &format!("{path}.arguments[{i}]")))
+                    && self.call(name, true, path)
                     && matches!(self.calls.get(name), Some(AuditedCall::PureUnitGuard(_)))
             }
             StateAction::CircuitCall { name, arguments } => {
-                arguments.iter().all(|v| self.value(v, false))
-                    && self.call(name, false)
+                arguments
+                    .iter()
+                    .enumerate()
+                    .all(|(i, v)| self.value(v, false, &format!("{path}.arguments[{i}]")))
+                    && self.call(name, false, path)
                     && matches!(
                         self.calls.get(name),
                         Some(AuditedCall::LocalUnit(_) | AuditedCall::RecordedUnit(_))
@@ -493,18 +655,18 @@ impl Audit<'_> {
     }
 }
 
-pub(super) fn lower<'a>(
+pub(super) fn lower_checked<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
     witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
     pure: &'a HashMap<&'a str, &'a PureCircuit>,
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
-) -> Option<TypedPlan> {
+) -> ProfileAttempt<TypedPlan, CompositionRejection> {
     if circuit.result != Type::Unit
         || circuit.return_value != StateReturn::Unit
         || !circuit.parameters.iter().all(|p| value_type(&p.ty))
     {
-        return None;
+        return ProfileAttempt::NotApplicable;
     }
     let mut audit = Audit {
         ledger,
@@ -518,24 +680,47 @@ pub(super) fn lower<'a>(
         nested_product_map_members: HashSet::new(),
         product_map_written_fields: HashSet::new(),
         read_only_boolean_depth: 0,
+        root_action: 0,
+        failure: None,
     };
-    if !circuit.actions.iter().all(|a| audit.action(a))
-        || audit.public == 0
-        || !audit.calls.values().any(|call| {
-            matches!(
-                call,
-                AuditedCall::LocalUnit(_) | AuditedCall::RecordedUnit(_)
-            )
-        })
-        // A read-only Boolean Map helper is part of this Map-mutation profile;
-        // other existing collection profiles retain their prior recorder.
-        || (audit.calls.values().any(|call| matches!(call, AuditedCall::ReadOnlyBoolean(_)))
-            && audit.product_map_writes == 0)
+    for (index, action) in circuit.actions.iter().enumerate() {
+        audit.root_action = index;
+        if !audit.action(action, &format!("actions[{index}]")) {
+            return ProfileAttempt::Rejected(
+                audit.failure.expect("failed audit records its location"),
+            );
+        }
+    }
+    if audit.public == 0 {
+        return ProfileAttempt::Rejected(CompositionRejection::obligation(
+            "Unit composition has no replayable ledger read or write",
+            true,
+        ));
+    }
+    if !audit.calls.values().any(|call| {
+        matches!(
+            call,
+            AuditedCall::LocalUnit(_) | AuditedCall::RecordedUnit(_)
+        )
+    }) {
+        return ProfileAttempt::Rejected(CompositionRejection::obligation(
+            "Unit composition requires an audited stateful Unit helper",
+            false,
+        ));
+    }
+    if (audit
+        .calls
+        .values()
+        .any(|call| matches!(call, AuditedCall::ReadOnlyBoolean(_)))
+        && audit.product_map_writes == 0)
         || !audit
             .nested_product_map_members
             .is_subset(&audit.product_map_written_fields)
     {
-        return None;
+        return ProfileAttempt::Rejected(CompositionRejection::obligation(
+            "Map membership requires the declared Map mutation domain",
+            false,
+        ));
     }
     let mut plan = Plan {
         ledger,
@@ -596,13 +781,23 @@ pub(super) fn lower<'a>(
         })
         .collect();
     if scope.len() != circuit.parameters.len() {
-        return None;
+        return ProfileAttempt::Rejected(CompositionRejection::obligation(
+            "duplicate Unit composition parameter binding",
+            false,
+        ));
     }
     let mut steps = Vec::new();
-    for action in &circuit.actions {
-        plan.action(action, &scope, &mut steps)?;
+    for (index, action) in circuit.actions.iter().enumerate() {
+        if plan.action(action, &scope, &mut steps).is_none() {
+            return ProfileAttempt::Rejected(CompositionRejection {
+                gap: RecordingGap::action(action, format!("actions[{index}]")),
+                root_action: Some(index),
+                precision: RejectionPrecision::EnclosingAction,
+                phase: RejectionPhase::TypedLowering,
+            });
+        }
     }
-    Some(TypedPlan {
+    ProfileAttempt::Admitted(TypedPlan {
         steps,
         result: syn::parse_quote!(()),
     })
@@ -645,3 +840,6 @@ impl Plan<'_> {
         self.bind(syn::parse_quote!(#left != #right), Type::Boolean, steps)
     }
 }
+
+#[cfg(test)]
+mod tests;

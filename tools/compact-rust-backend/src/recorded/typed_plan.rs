@@ -4699,12 +4699,12 @@ pub(super) fn lower_voting_commit<'a>(
     voting_commit::lower(circuit, ledger, witnesses, pure, circuits)
 }
 
-pub(super) fn lower_unit_composition<'a>(
+pub(super) fn lower_unit_composition_checked<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
     witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
     pure: &'a HashMap<&'a str, &'a PureCircuit>,
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
-) -> Option<TypedPlan> {
-    composition::lower(circuit, ledger, witnesses, pure, circuits)
+) -> ProfileAttempt<TypedPlan, composition::CompositionRejection> {
+    composition::lower_checked(circuit, ledger, witnesses, pure, circuits)
 }

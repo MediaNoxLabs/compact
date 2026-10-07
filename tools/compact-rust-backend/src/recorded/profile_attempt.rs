@@ -13,17 +13,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! A closed recording profile may decline a circuit or reject its audited body.
+//! Rejection belongs to one bounded domain, not to global IR validity.
+//! A later independent profile may still admit a complete plan.
 
 use super::RecordingGap;
 
-pub(super) enum ProfileAttempt<T> {
+pub(super) enum ProfileAttempt<T, E = RecordingGap> {
     NotApplicable,
-    Rejected(RecordingGap),
+    Rejected(E),
     Admitted(T),
 }
 
-impl<T> ProfileAttempt<T> {
+impl<T, E> ProfileAttempt<T, E> {
     pub(super) fn into_option(self) -> Option<T> {
         match self {
             Self::Admitted(value) => Some(value),

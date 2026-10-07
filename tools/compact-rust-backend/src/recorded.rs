@@ -197,6 +197,15 @@ impl<T> RecordingOutcome<T> {
     }
 }
 
+// Only a direct root call dispatch/argument refusal is coarse enough to refine.
+// Recursive action diagnostics retain their original concrete failure. This
+// private provenance is never inferred from serialized gap strings.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum LegacyActionPrecision {
+    Concrete,
+    Coarse,
+}
+
 fn unavailable_action(action: &StateAction, path: &str) -> RecordingOutcome<()> {
     RecordingOutcome::Unsupported(RecordingGap::action(action, path.to_owned()))
 }
@@ -3181,6 +3190,7 @@ fn render_recorded_item(
                         steps,
                         next_temp,
                         visiting,
+                        &mut LegacyActionPrecision::Concrete,
                     )?
                     .is_supported()
                     {
@@ -4107,6 +4117,7 @@ fn render_recorded_item(
         steps: &mut Vec<syn::Stmt>,
         next_temp: &mut usize,
         visiting: &mut HashSet<String>,
+        failure_precision: &mut LegacyActionPrecision,
     ) -> Result<RecordingOutcome<()>, RenderError> {
         match action {
             StateAction::Sequence { actions } => {
@@ -4124,6 +4135,7 @@ fn render_recorded_item(
                         steps,
                         next_temp,
                         visiting,
+                        &mut LegacyActionPrecision::Concrete,
                     )? {
                         return Ok(RecordingOutcome::Unsupported(gap));
                     }
@@ -4223,6 +4235,7 @@ fn render_recorded_item(
                     &mut then_steps,
                     next_temp,
                     visiting,
+                    &mut LegacyActionPrecision::Concrete,
                 )? {
                     return Ok(RecordingOutcome::Unsupported(gap));
                 }
@@ -4240,6 +4253,7 @@ fn render_recorded_item(
                     &mut otherwise_steps,
                     next_temp,
                     visiting,
+                    &mut LegacyActionPrecision::Concrete,
                 )? {
                     return Ok(RecordingOutcome::Unsupported(gap));
                 }
@@ -4367,6 +4381,7 @@ fn render_recorded_item(
                         steps,
                         next_temp,
                         visiting,
+                        &mut LegacyActionPrecision::Concrete,
                     )?;
                     if let RecordingOutcome::Unsupported(_) = first {
                         return Ok(first);
@@ -4384,6 +4399,7 @@ fn render_recorded_item(
                         steps,
                         next_temp,
                         visiting,
+                        &mut LegacyActionPrecision::Concrete,
                     );
                 }
                 if let [vector_binding] = bindings.as_slice()
@@ -4424,6 +4440,7 @@ fn render_recorded_item(
                         steps,
                         next_temp,
                         visiting,
+                        &mut LegacyActionPrecision::Concrete,
                     );
                 }
                 if let [unsigned_binding] = bindings.as_slice()
@@ -4480,6 +4497,7 @@ fn render_recorded_item(
                         steps,
                         next_temp,
                         visiting,
+                        &mut LegacyActionPrecision::Concrete,
                     );
                 }
                 if let [point_binding] = bindings.as_slice()
@@ -4534,6 +4552,7 @@ fn render_recorded_item(
                         steps,
                         next_temp,
                         visiting,
+                        &mut LegacyActionPrecision::Concrete,
                     );
                 }
                 // Preserve the typed Uint<4> local and its immediate Field
@@ -4611,6 +4630,7 @@ fn render_recorded_item(
                         steps,
                         next_temp,
                         visiting,
+                        &mut LegacyActionPrecision::Concrete,
                     )?;
                     if let RecordingOutcome::Unsupported(_) = first {
                         return Ok(first);
@@ -4629,6 +4649,7 @@ fn render_recorded_item(
                             steps,
                             next_temp,
                             visiting,
+                            &mut LegacyActionPrecision::Concrete,
                         );
                     }
                     return Ok(RecordingOutcome::Supported(()));
@@ -4722,6 +4743,7 @@ fn render_recorded_item(
                         steps,
                         next_temp,
                         visiting,
+                        &mut LegacyActionPrecision::Concrete,
                     );
                 }
                 // Keep a pure one-field constructor's exact result type at
@@ -4805,6 +4827,7 @@ fn render_recorded_item(
                         steps,
                         next_temp,
                         visiting,
+                        &mut LegacyActionPrecision::Concrete,
                     );
                 }
                 let mut scoped = locals.clone();
@@ -5560,6 +5583,7 @@ fn render_recorded_item(
                     steps,
                     next_temp,
                     visiting,
+                    &mut LegacyActionPrecision::Concrete,
                 )
             }
             StateAction::Assert { condition, message } => {
@@ -5646,6 +5670,7 @@ fn render_recorded_item(
                     .get(name.as_str())
                     .ok_or_else(|| RenderError::UnsupportedStatefulCall(name.clone()))?;
                 if callee.result != Type::Unit || callee.return_value != StateReturn::Unit {
+                    *failure_precision = LegacyActionPrecision::Coarse;
                     return Ok(unavailable_action(action, path));
                 }
                 if arguments.len() != callee.parameters.len() {
@@ -5671,6 +5696,7 @@ fn render_recorded_item(
                             visiting,
                         )?;
                         let Some(value) = value else {
+                            *failure_precision = LegacyActionPrecision::Coarse;
                             return Ok(unavailable_action(action, path));
                         };
                         let arg = syn::Ident::new(
@@ -5723,6 +5749,7 @@ fn render_recorded_item(
                     };
                     let Some(value) = value else {
                         visiting.remove(name);
+                        *failure_precision = LegacyActionPrecision::Coarse;
                         return Ok(unavailable_action(action, path));
                     };
                     let arg = syn::Ident::new(
@@ -5748,6 +5775,7 @@ fn render_recorded_item(
                         steps,
                         next_temp,
                         visiting,
+                        &mut LegacyActionPrecision::Concrete,
                     )? {
                         failure = Some(gap);
                         break;
@@ -6407,6 +6435,7 @@ fn render_recorded_item(
     // profile can still admit the same circuit. Retain it only for a coarse
     // generic return gap after every existing profile has declined.
     let mut shielded_send_rejection = None;
+    let mut composition_rejection = None;
     let mut organizer_steps = if let Some(plan) = effectful_plan {
         typed_result = Some(plan.result);
         Some(plan.steps)
@@ -6568,13 +6597,20 @@ fn render_recorded_item(
                     )
                 })
                 .or_else(|| {
-                    typed_plan::lower_unit_composition(
+                    match typed_plan::lower_unit_composition_checked(
                         circuit,
                         ledger_fields,
                         witnesses,
                         pure_circuits,
                         circuits,
-                    )
+                    ) {
+                        ProfileAttempt::Admitted(plan) => Some(plan),
+                        ProfileAttempt::Rejected(rejection) => {
+                            composition_rejection = Some(rejection);
+                            None
+                        }
+                        ProfileAttempt::NotApplicable => None,
+                    }
                 })
                 .or_else(|| zswap_plan::lower(circuit, ledger_fields, circuits, witnesses))
     {
@@ -6688,6 +6724,7 @@ fn render_recorded_item(
                 &mut steps,
                 &mut next_temp,
                 &mut visiting,
+                &mut LegacyActionPrecision::Concrete,
             )? {
                 return Ok(RecordingOutcome::Unsupported(gap));
             }
@@ -6697,6 +6734,7 @@ fn render_recorded_item(
                 if guarded_pure_call && index == 0 {
                     continue;
                 }
+                let mut legacy_precision = LegacyActionPrecision::Concrete;
                 if let RecordingOutcome::Unsupported(gap) = append_steps(
                     action,
                     &format!("actions[{index}]"),
@@ -6710,7 +6748,12 @@ fn render_recorded_item(
                     &mut steps,
                     &mut next_temp,
                     &mut visiting,
+                    &mut legacy_precision,
                 )? {
+                    let gap = composition_rejection.as_ref().map_or_else(
+                        || gap.clone(),
+                        |rejection| rejection.refine_action(index, legacy_precision, gap.clone()),
+                    );
                     return Ok(RecordingOutcome::Unsupported(gap));
                 }
             }

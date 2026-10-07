@@ -69,7 +69,8 @@
     "specification/src/Semantics/Static/Coverage.agda": "0494b91d8b5a9173a9a2ba1e139a197814e9476fa55ba483bea9fd4e191db174",
     "Cargo.lock": "08b39446a045133bb8da3445559e3e9a1d59ea14cac93f67db585a5485a51841",
     "runtime-rs/Cargo.toml": "bca116a67835118171aa2d195f6505ff8f453a69af903712176d5c4f93854f20",
-    "tools/compact-rust-backend/src/compatibility.json": "5a24458240b7f96f10e08dc79c284fb6eba67f21446a0f746888dfd85cc17bcd"
+    "tools/compact-rust-backend/src/compatibility.json": "5a24458240b7f96f10e08dc79c284fb6eba67f21446a0f746888dfd85cc17bcd",
+    "tests-rust-backend/boolean-logic/tests/conformance.rs": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064"
   },
   "grammar_inventory": {
     "format_version": 1,
@@ -4550,7 +4551,8 @@
         "Family assignment accounts for scope; normative sentences and combinations outside seed requirements remain undecomposed. Recording availability and compiler proof requirement do not establish executed proof."
       ],
       "evidence_ids": [
-        "E-boolean-history"
+        "E-boolean-history",
+        "E-boolean-native-ADR0348"
       ]
     },
     {
@@ -6283,10 +6285,41 @@
           "line": 63,
           "sha256": "e7d1e48427d0f452a371e8dbd938f2fd4024714e250107d78d5a1ffbc4a1deef",
           "test_name": "normalized_boolean_conditionals_preserve_short_circuit_witness_effects"
+        },
+        {
+          "path": "tests-rust-backend/boolean-logic/tests/conformance.rs",
+          "line": 157,
+          "sha256": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
+          "test_name": "pure_boolean_truth_tables_are_complete"
+        },
+        {
+          "path": "tests-rust-backend/boolean-logic/tests/conformance.rs",
+          "line": 173,
+          "sha256": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
+          "test_name": "witnessed_truth_tables_preserve_selected_values_and_private_state"
+        },
+        {
+          "path": "tests-rust-backend/boolean-logic/tests/conformance.rs",
+          "line": 202,
+          "sha256": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
+          "test_name": "binary_witness_refusals_halt_selected_evaluation_and_skip_unselected_rhs"
+        },
+        {
+          "path": "tests-rust-backend/boolean-logic/tests/conformance.rs",
+          "line": 242,
+          "sha256": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
+          "test_name": "negation_evaluates_each_operand_once_and_preserves_refusal"
+        },
+        {
+          "path": "tests-rust-backend/boolean-logic/tests/conformance.rs",
+          "line": 262,
+          "sha256": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
+          "test_name": "branching_and_negation_use_witness_answers_not_arguments"
         }
       ],
       "evidence_ids": [
-        "E-boolean-history"
+        "E-boolean-history",
+        "E-boolean-native-ADR0348"
       ],
       "support": {
         "frontend": "source-reviewed",
@@ -6299,9 +6332,10 @@
       },
       "formal": "not-established",
       "remaining_obligations": [
-        "Pure pairs exercised:(true,false),(false,false). Missing pure(false,true),(true,true); witnessed skip/take selected cases exist, but right-error suppression/left-refusal cases are not joined."
+        "Native finite Boolean cases accepted in ADR0348. Source typing, composition beyond this fixture and recording/observed/proof behavior retain separate obligations."
       ],
-      "assertion_scope": "One executed test contains both the pure call/assert loop at lines 63\u201372 and subsequent witnessed checks; its name does not restrict it to witnessed calls."
+      "assertion_scope": "One executed test contains both the pure call/assert loop at lines 63\u201372 and subsequent witnessed checks; its name does not restrict it to witnessed calls.",
+      "observed_native_scope": "All four pure OR pairs and identity-witness pairs; first-call refusal, selected second-call refusal and skipped second-call refusal. Inverted-answer controls establish use of returned witness value."
     },
     {
       "id": "B03",
@@ -6343,10 +6377,41 @@
           "line": 63,
           "sha256": "e7d1e48427d0f452a371e8dbd938f2fd4024714e250107d78d5a1ffbc4a1deef",
           "test_name": "normalized_boolean_conditionals_preserve_short_circuit_witness_effects"
+        },
+        {
+          "path": "tests-rust-backend/boolean-logic/tests/conformance.rs",
+          "line": 157,
+          "sha256": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
+          "test_name": "pure_boolean_truth_tables_are_complete"
+        },
+        {
+          "path": "tests-rust-backend/boolean-logic/tests/conformance.rs",
+          "line": 173,
+          "sha256": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
+          "test_name": "witnessed_truth_tables_preserve_selected_values_and_private_state"
+        },
+        {
+          "path": "tests-rust-backend/boolean-logic/tests/conformance.rs",
+          "line": 202,
+          "sha256": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
+          "test_name": "binary_witness_refusals_halt_selected_evaluation_and_skip_unselected_rhs"
+        },
+        {
+          "path": "tests-rust-backend/boolean-logic/tests/conformance.rs",
+          "line": 242,
+          "sha256": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
+          "test_name": "negation_evaluates_each_operand_once_and_preserves_refusal"
+        },
+        {
+          "path": "tests-rust-backend/boolean-logic/tests/conformance.rs",
+          "line": 262,
+          "sha256": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
+          "test_name": "branching_and_negation_use_witness_answers_not_arguments"
         }
       ],
       "evidence_ids": [
-        "E-boolean-history"
+        "E-boolean-history",
+        "E-boolean-native-ADR0348"
       ],
       "support": {
         "frontend": "source-reviewed",
@@ -6359,9 +6424,10 @@
       },
       "formal": "not-established",
       "remaining_obligations": [
-        "Pure pairs exercised:(true,true),(false,true). Missing pure(true,false),(false,false); selected witnessed skip/take not a universal ordered-effect claim. Right-error suppression remains unjoined."
+        "Native finite Boolean cases accepted in ADR0348. Source typing, composition beyond this fixture and recording/observed/proof behavior retain separate obligations."
       ],
-      "assertion_scope": "One executed test contains both the pure call/assert loop at lines 63\u201372 and subsequent witnessed checks; its name does not restrict it to witnessed calls."
+      "assertion_scope": "One executed test contains both the pure call/assert loop at lines 63\u201372 and subsequent witnessed checks; its name does not restrict it to witnessed calls.",
+      "observed_native_scope": "All four pure AND pairs and identity-witness pairs; first-call refusal, selected second-call refusal and skipped second-call refusal. Inverted-answer controls establish use of returned witness value."
     },
     {
       "id": "B04",
@@ -6403,10 +6469,29 @@
           "line": 63,
           "sha256": "e7d1e48427d0f452a371e8dbd938f2fd4024714e250107d78d5a1ffbc4a1deef",
           "test_name": "normalized_boolean_conditionals_preserve_short_circuit_witness_effects"
+        },
+        {
+          "path": "tests-rust-backend/boolean-logic/tests/conformance.rs",
+          "line": 157,
+          "sha256": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
+          "test_name": "pure_boolean_truth_tables_are_complete"
+        },
+        {
+          "path": "tests-rust-backend/boolean-logic/tests/conformance.rs",
+          "line": 242,
+          "sha256": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
+          "test_name": "negation_evaluates_each_operand_once_and_preserves_refusal"
+        },
+        {
+          "path": "tests-rust-backend/boolean-logic/tests/conformance.rs",
+          "line": 262,
+          "sha256": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
+          "test_name": "branching_and_negation_use_witness_answers_not_arguments"
         }
       ],
       "evidence_ids": [
-        "E-boolean-history"
+        "E-boolean-history",
+        "E-boolean-native-ADR0348"
       ],
       "support": {
         "frontend": "source-reviewed",
@@ -6419,7 +6504,7 @@
       },
       "formal": "historical-static-rule-presence-only; no current conformance or backend theorem",
       "remaining_obligations": [
-        "Both pure values asserted; witnessed true case asserted. Non-Boolean source refusal, witnessed false and operand-refusal requirements remain unjoined."
+        "Non-Boolean source refusal remains unjoined. Recording/observed/proof behavior and other operand compositions retain separate obligations."
       ],
       "formal_rule_sources": [
         {
@@ -6429,7 +6514,8 @@
         }
       ],
       "formal_limit": "Only a related historical static typing rule is identified, not evaluation/failure/recording/proof correspondence.",
-      "assertion_scope": "One executed test contains both the pure call/assert loop at lines 63\u201372 and subsequent witnessed checks; its name does not restrict it to witnessed calls."
+      "assertion_scope": "One executed test contains both the pure call/assert loop at lines 63\u201372 and subsequent witnessed checks; its name does not restrict it to witnessed calls.",
+      "observed_native_scope": "Both pure and witnessed values, both witnessed operand refusals, and inverted-answer cases execute with exactly one callback on the operand."
     },
     {
       "id": "B05",
@@ -6640,10 +6726,23 @@
           "line": 262,
           "sha256": "dfc8d1c2d1fa184d36ef29c5ab94535017f95dc672214589171f4360432e0e7c",
           "test_name": "equal_arms_preserve_true_false_and_refused_witness_effects"
+        },
+        {
+          "path": "tests-rust-backend/boolean-logic/tests/conformance.rs",
+          "line": 202,
+          "sha256": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
+          "test_name": "binary_witness_refusals_halt_selected_evaluation_and_skip_unselected_rhs"
+        },
+        {
+          "path": "tests-rust-backend/boolean-logic/tests/conformance.rs",
+          "line": 242,
+          "sha256": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
+          "test_name": "negation_evaluates_each_operand_once_and_preserves_refusal"
         }
       ],
       "evidence_ids": [
-        "E-equal-arm-effects"
+        "E-equal-arm-effects",
+        "E-boolean-native-ADR0348"
       ],
       "support": {
         "frontend": "source-reviewed",
@@ -6656,8 +6755,9 @@
       },
       "formal": "not-established",
       "remaining_obligations": [
-        "Equal-arm witness refusal is one condition-failure control. Selected-arm versus skipped-arm errors through source&&/||/?: require explicit separate joins; no arbitrary external-effect rollback claim."
-      ]
+        "Ternary selected/skipped arm errors, Compact assertion failures beyond witness refusal, arbitrary external-effect rollback and recorded/proof behavior remain unqualified."
+      ],
+      "observed_native_scope": "Generated source &&/|| and ! preserve exact witness refusal and stop callback evaluation at the failed operand; skipped RHS refuses if called but is not called."
     },
     {
       "id": "B09",
@@ -6896,6 +6996,71 @@
         }
       ],
       "qualification": "Native equal-arm true/false/refusal guard calls once, output/private-state/transcript checks; these exports intentionally have no recorded/proof-ready API."
+    },
+    {
+      "id": "E-boolean-native-ADR0348",
+      "strength": "executed-native-finite-specification-cases",
+      "log": {
+        "artifact_location": "/tmp/rust030-adr0348/tests.log",
+        "sha256": "1b7f28bcfccde1937448237b69b0cbcc70bb2b48a3bcd3e6d7b0225c2de1c507",
+        "optional_local_provenance": true,
+        "required_for_portable_check": false
+      },
+      "tests": [
+        {
+          "path": "tests-rust-backend/boolean-logic/tests/conformance.rs",
+          "line": 157,
+          "sha256": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
+          "test_name": "pure_boolean_truth_tables_are_complete"
+        },
+        {
+          "path": "tests-rust-backend/boolean-logic/tests/conformance.rs",
+          "line": 173,
+          "sha256": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
+          "test_name": "witnessed_truth_tables_preserve_selected_values_and_private_state"
+        },
+        {
+          "path": "tests-rust-backend/boolean-logic/tests/conformance.rs",
+          "line": 202,
+          "sha256": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
+          "test_name": "binary_witness_refusals_halt_selected_evaluation_and_skip_unselected_rhs"
+        },
+        {
+          "path": "tests-rust-backend/boolean-logic/tests/conformance.rs",
+          "line": 242,
+          "sha256": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
+          "test_name": "negation_evaluates_each_operand_once_and_preserves_refusal"
+        },
+        {
+          "path": "tests-rust-backend/boolean-logic/tests/conformance.rs",
+          "line": 262,
+          "sha256": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
+          "test_name": "branching_and_negation_use_witness_answers_not_arguments"
+        }
+      ],
+      "source_closure": [
+        {
+          "path": "examples/rust_backend/boolean_logic.compact",
+          "line": 1,
+          "sha256": "bd6fc3c9da25a8d1ee201b0d8028fb789cdffcdab8b6a4d23038ad119fcb3b31"
+        },
+        {
+          "path": "tests-rust-backend/boolean-logic/lib.rs",
+          "line": 1,
+          "sha256": "89b4fe8001fac2b198aa73118de3c162cfa75b44366428b722dd5533746455f1"
+        },
+        {
+          "path": "Cargo.lock",
+          "line": 1,
+          "sha256": "08b39446a045133bb8da3445559e3e9a1d59ea14cac93f67db585a5485a51841"
+        },
+        {
+          "path": "tests-rust-backend/boolean-logic/Cargo.toml",
+          "line": 1,
+          "sha256": "b7f214bee46e7af419b5023be037e864fb354a449269b8b46e5148ea8611509c"
+        }
+      ],
+      "qualification": "Rust 1.99.0 locked/offline native execution of checked-in generated crate: all pure AND/OR pairs and NOT values; identity witness successes, selected/skipped/first-call refusals, and six inverted-answer controls. Explicit callback/private-state and canonical transcript assertions. No fresh compiler regeneration, TS run, recording/replay/proof or formal theorem; no failed-context/rollback claim."
     }
   ],
   "formal_artifacts": [

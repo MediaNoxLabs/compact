@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //! Optional public-only interchange fixture for a separately qualified ledger reader.
 use super::*;
+use midnight_ledger::structure::ContractAction;
 use midnight_serialize::{Serializable, Tagged};
 
 type PublicTransaction = Transaction<Signature, ProofMarker, PureGeneratorPedersen, DefaultDB>;
@@ -60,11 +61,62 @@ fn validate_case(scenario: &str, case: &str, operation: &str) -> Result<(), &'st
                 "setVerificationMethod"
             )
             | ("jwk-methods", "remove-unicode", "removeVerificationMethod")
+            | ("digest", "insert", "setSchnorrJubjubVerificationMethod")
+            | ("digest", "read-valid", "verifySchnorrJubjubDigestSignature")
     ) {
         Ok(())
     } else {
         Err("public DID interchange case is outside the reviewed matrix")
     }
+}
+
+fn require_unchanged_contract(
+    before: &ContractState<DefaultDB>,
+    after: &ContractState<DefaultDB>,
+) -> Result<(), Box<dyn Error>> {
+    let mut before_bytes = Vec::new();
+    let mut after_bytes = Vec::new();
+    tagged_serialize(before, &mut before_bytes)?;
+    tagged_serialize(after, &mut after_bytes)?;
+    if before_bytes != after_bytes {
+        return Err("read-only DID digest call changed serialized contract state".into());
+    }
+    Ok(())
+}
+
+fn validate_read_only_digest(
+    transaction: &PublicTransaction,
+    before: &LedgerState<DefaultDB>,
+    after: &LedgerState<DefaultDB>,
+) -> Result<(), Box<dyn Error>> {
+    let Transaction::Standard(standard) = transaction else {
+        return Err("read-only DID digest requires a standard transaction".into());
+    };
+    let mut calls = 0;
+    for entry in standard.intents.iter() {
+        for action in entry.1.actions.iter_deref() {
+            if let ContractAction::Call(call) = action {
+                calls += 1;
+                if call.entry_point.0 != b"verifySchnorrJubjubDigestSignature" {
+                    return Err("read-only DID digest operation differs".into());
+                }
+                require_unchanged_contract(
+                    before
+                        .contract
+                        .get(&call.address)
+                        .ok_or("missing before contract")?,
+                    after
+                        .contract
+                        .get(&call.address)
+                        .ok_or("missing after contract")?,
+                )?;
+            }
+        }
+    }
+    if calls != 1 {
+        return Err("read-only DID digest requires exactly one call".into());
+    }
+    Ok(())
 }
 
 pub(super) fn capture_if_requested(
@@ -94,6 +146,10 @@ pub(super) fn capture_if_requested(
     if !matches!(result, TransactionResult::Success(_)) {
         return Err("public DID interchange transaction did not apply strictly".into());
     }
+    let read_only_digest = scenario == "digest" && case == "read-valid";
+    if read_only_digest {
+        validate_read_only_digest(transaction, before, &after)?;
+    }
     // Never replace an earlier receipt or write TestState, proof preimages, wallet keys,
     // witness/private-state payloads or RNG state. These concrete types are public.
     fs::create_dir_all(&directory)?;
@@ -107,23 +163,27 @@ pub(super) fn capture_if_requested(
     write_public(&directory.join("ledger-before.bin"), before)?;
     write_public(&directory.join("ledger-after.bin"), &after)?;
     write_public(&directory.join("block-context.bin"), &context.block_context)?;
+    let mut metadata = serde_json::json!({
+        "format": "compact-did-public-interchange/v2",
+        "scenario": scenario,
+        "case": case,
+        "producer_ledger": "8.0.3",
+        "operation": operation,
+        "network_id": before.network_id,
+        "whitelist": null,
+        "block_context": context.block_context,
+        "strictness": "default",
+        "constructor_data_deployed": true,
+        "constructor_execution_proved": false,
+        "post_block_update_included": false,
+        "private_material_exported": false,
+    });
+    if read_only_digest {
+        metadata["read_only_contract_unchanged"] = serde_json::json!(true);
+    }
     fs::write(
         directory.join("context.json"),
-        serde_json::to_vec_pretty(&serde_json::json!({
-            "format": "compact-did-public-interchange/v2",
-            "scenario": scenario,
-            "case": case,
-            "producer_ledger": "8.0.3",
-            "operation": operation,
-            "network_id": before.network_id,
-            "whitelist": null,
-            "block_context": context.block_context,
-            "strictness": "default",
-            "constructor_data_deployed": true,
-            "constructor_execution_proved": false,
-            "post_block_update_included": false,
-            "private_material_exported": false,
-        }))?,
+        serde_json::to_vec_pretty(&metadata)?,
     )?;
     println!("public DID interchange written to {}", directory.display());
     Ok(())
@@ -184,6 +244,80 @@ mod tests {
                 validate_case(scenario, case, operation),
                 Err("public DID interchange case is outside the reviewed matrix")
             );
+        }
+    }
+    #[test]
+    fn digest_rows_are_exact_and_do_not_cross_operations() {
+        assert_eq!(
+            validate_case("digest", "insert", "setSchnorrJubjubVerificationMethod"),
+            Ok(())
+        );
+        assert_eq!(
+            validate_case("digest", "read-valid", "verifySchnorrJubjubDigestSignature"),
+            Ok(())
+        );
+        for (case, operation) in [
+            ("insert", "verifySchnorrJubjubDigestSignature"),
+            ("read-valid", "setSchnorrJubjubVerificationMethod"),
+            ("read-invalid", "verifySchnorrJubjubDigestSignature"),
+        ] {
+            assert!(validate_case("digest", case, operation).is_err());
+        }
+    }
+    #[test]
+    fn read_only_guard_compares_complete_serialized_contract_state() {
+        let state = |flag| {
+            ContractState::new(
+                midnight_compact_runtime::ledger::contract_state(vec![
+                    midnight_compact_runtime::ledger::constructor_cell(flag),
+                ])
+                .get_ref()
+                .clone(),
+                Default::default(),
+                ContractMaintenanceAuthority::default(),
+            )
+        };
+        let before = state(true);
+        require_unchanged_contract(&before, &before.clone()).unwrap();
+        assert!(require_unchanged_contract(&before, &state(false)).is_err());
+        let mut changed_operation = before.clone();
+        changed_operation.operations = changed_operation.operations.insert(
+            EntryPointBuf(b"extra".to_vec()),
+            ContractOperation::new(None),
+        );
+        assert!(require_unchanged_contract(&before, &changed_operation).is_err());
+    }
+    #[test]
+    fn prior_fourteen_reviewed_rows_remain_allowed() {
+        for (scenario, case, operation) in [
+            ("points", "rotate", "rotateControllerKey"),
+            ("points", "recover", "recoverControllerKey"),
+            ("points", "deactivate", "deactivate"),
+            ("aliases", "insert-unicode", "setAlsoKnownAs"),
+            ("aliases", "remove-unicode", "setAlsoKnownAs"),
+            ("services", "insert-unicode", "setService"),
+            ("services", "update-empty-fields", "setService"),
+            ("services", "remove-unicode", "removeService"),
+            (
+                "schnorr-methods",
+                "insert-unicode",
+                "setSchnorrJubjubVerificationMethod",
+            ),
+            (
+                "schnorr-methods",
+                "update-point",
+                "setSchnorrJubjubVerificationMethod",
+            ),
+            (
+                "schnorr-methods",
+                "remove-unicode",
+                "removeSchnorrJubjubVerificationMethod",
+            ),
+            ("jwk-methods", "insert-unicode", "setVerificationMethod"),
+            ("jwk-methods", "update-jwk", "setVerificationMethod"),
+            ("jwk-methods", "remove-unicode", "removeVerificationMethod"),
+        ] {
+            assert_eq!(validate_case(scenario, case, operation), Ok(()));
         }
     }
 }

@@ -36,27 +36,52 @@
       ;; scalar, upstream `Fr`); `(tfield (field-scalar (curve-jubjub)))`
       ;; is the 0.33 `JubjubScalar` builtin (the embedded curve's scalar
       ;; field, upstream `EmbeddedFr`, re-exported as
-      ;; `midnight_compact_runtime::JubjubScalar`). The secp256k1 field/base
-      ;; variants only arise behind --feature-zkir-v3, which --target rust
-      ;; rejects up front (passes.ss); reaching them here is refused with a
-      ;; named diagnostic all the same.
+      ;; `midnight_compact_runtime::JubjubScalar`). Every other curve's
+      ;; field/base variants — secp256k1, curve25519, secp256r1 — are
+      ;; declared only in zkir-v3-natives.ss, so they arise solely behind
+      ;; --feature-zkir-v3, which --target rust rejects up front
+      ;; (passes.ss). Verified by probe: through --target rust every curve
+      ;; type but the jubjub pair is `unbound identifier` at the front end.
+      ;; Reaching them here is refused with a named diagnostic all the same.
+      ;; curve-type-name: the Compact surface prefix of a Curve-Type, used to
+      ;; name the offending type in a `zkir-v3-type` diagnostic. Total by
+      ;; construction: when the grammar grows a curve — as it did with
+      ;; curve25519 and secp256r1 — the sites below keep producing a named
+      ;; diagnostic instead of a nanopass "no matching clause" internal error.
+      (define (curve-type-name ctype)
+        (nanopass-case (Ltypescript Curve-Type) ctype
+          [(curve-curve25519) "Curve25519"]
+          [(curve-jubjub) "Jubjub"]
+          [(curve-secp256k1) "Secp256k1"]
+          [(curve-secp256r1) "Secp256r1"]
+          ;; A curve the grammar grows after this was written: the name is
+          ;; wrong but the diagnostic is still named, located and greppable,
+          ;; which is the property an internal error loses.
+          [else "UnknownCurve"]))
+
       (define (field-type-rust ftype)
         (nanopass-case (Ltypescript Field-Type) ftype
           [(field-native) "Fr"]
           [(field-scalar ,ctype)
            (nanopass-case (Ltypescript Curve-Type) ctype
              [(curve-jubjub) "JubjubScalar"]
-             [(curve-secp256k1)
+             [else
               (rust-feature-error #f 'zkir-v3-type
-                "Secp256k1Scalar has no Rust lowering (a ZKIR v3 type)")])]
+                (format "~aScalar has no Rust lowering (a ZKIR v3 type)"
+                        (curve-type-name ctype)))])]
+          ;; Every base field is refused, jubjub included, so this needs no
+          ;; inner dispatch — only the curve's name differs.
           [(field-base ,ctype)
-           (nanopass-case (Ltypescript Curve-Type) ctype
-             [(curve-jubjub)
-              (rust-feature-error #f 'zkir-v3-type
-                "JubjubBase has no Rust lowering (a ZKIR v3 type)")]
-             [(curve-secp256k1)
-              (rust-feature-error #f 'zkir-v3-type
-                "Secp256k1Base has no Rust lowering (a ZKIR v3 type)")])]))
+           (rust-feature-error #f 'zkir-v3-type
+             (format "~aBase has no Rust lowering (a ZKIR v3 type)"
+                     (curve-type-name ctype)))]
+          ;; Total today — native, scalar and base are the whole grammar —
+          ;; but Field-Type is a set upstream grows, so a fourth qualifier
+          ;; must land as a named diagnostic rather than a nanopass "no
+          ;; matching clause" internal error.
+          [else
+           (rust-feature-error #f 'zkir-v3-type
+             "this field qualifier has no Rust lowering")]))
 
       ;; field-type-native?: #t when the Field-Type is Compact's plain
       ;; `Field` (the native BLS12-381 scalar, Rust `Fr`).
@@ -81,13 +106,14 @@
           [(tpoint ,src ,ctype)
            ;; 0.33: curve points are builtin types. `JubjubPoint` (the
            ;; embedded curve, upstream `EmbeddedGroupAffine`) was
-           ;; previously spelled `topaque "JubjubPoint"`; the secp256k1
-           ;; point only arises behind --feature-zkir-v3.
+           ;; previously spelled `topaque "JubjubPoint"`; every other
+           ;; curve's point arises only behind --feature-zkir-v3.
            (nanopass-case (Ltypescript Curve-Type) ctype
              [(curve-jubjub) "JubjubPoint"]
-             [(curve-secp256k1)
+             [else
               (rust-feature-error src 'zkir-v3-type
-                "Secp256k1Point has no Rust lowering (a ZKIR v3 type)")])]
+                (format "~aPoint has no Rust lowering (a ZKIR v3 type)"
+                        (curve-type-name ctype)))])]
           [(tboolean ,src) "bool"]
           [(tunsigned ,src ,nat) (uint-rust-width nat)]
           [(tbytes ,src ,len) (format "[u8; ~a]" len)]

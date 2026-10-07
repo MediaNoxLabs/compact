@@ -5,6 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Toolchain 0.34.122, language 0.26.105, runtime 0.19.105] — curve and field dispatches in the Rust emitter stay total (2026-10-01)
+
+### Fixed
+
+- Four `nanopass-case` forms in `compiler/rust-passes-types.ss` dispatched on
+  `Curve-Type` or `Field-Type` with no `else` arm. Upstream grew `Curve-Type`
+  from two variants to four (curve25519 in #781, secp256r1 in #778) and the
+  matches did not follow, so a further variant would surface as a nanopass
+  "no matching clause" **internal compiler error** rather than the named
+  `rust-feature-error` the backend's contract promises. Each now carries an
+  `else` naming the offending curve, which also removes two nested dispatches.
+
+  **No contract could reach these arms, before or after.** Three independent
+  barriers sit above them, all verified by probe against a compiler built from
+  this tree:
+
+  1. the non-jubjub curve types are declared only in `zkir-v3-natives.ss`, so
+     `--target rust` reports `unbound identifier` for `Secp256k1Point`,
+     `Curve25519Point` and `Secp256r1Point` alike, while the jubjub pair
+     compiles;
+  2. `analysis-passes/infer-types.ss` asserts such a type requires
+     `--feature-zkir-v3`;
+  3. `passes.ss` refuses `--target rust` together with `--feature-zkir-v3`.
+
+  This is hardening against the day the last of those is lifted — its own
+  diagnostic says "not supported **yet**".
+
+### Added
+
+- `tests-e2e-rust/tests/emitter_exhaustiveness.rs` fails if any
+  `nanopass-case` over `Curve-Type` or `Field-Type` in
+  `compiler/rust-passes*.ss` loses its `else` arm. These are small closed sets
+  that upstream grows, and a match that is total today becomes a latent
+  internal error the moment a variant lands. Verified red on the unfixed tree
+  (naming all four sites) and green on the fixed one.
+
+  The `else` arms deliberately get no rejection-corpus entry: unreachable
+  behind the three barriers above, a probe could not reach the guard and would
+  pass for an unrelated reason.
+
+### Changed
+
+- `docs/rust-backend-limitations.md`: the rejection-site count said **54** but
+  the page's own `grep` recipe reports **55** (`rust-passes-emit.ss` has 33,
+  not 32). Every other per-file count and the 40 distinct kinds were exact.
+
 ## [Toolchain 0.34.121, language 0.26.105, runtime 0.19.105] — the Rust backend pins the Rust runtime, not the npm package (2026-10-01)
 
 ### Fixed

@@ -27,6 +27,8 @@ import tarfile
 import tempfile
 import tomllib
 
+from consumer_safety import check_consumer_safety
+
 
 ROOT = Path(__file__).resolve().parents[2]
 CONTRACTS = (
@@ -275,6 +277,7 @@ def main() -> None:
         environment.setdefault("CARGO_INCREMENTAL", "0")
         environment.setdefault("CARGO_BUILD_JOBS", "2")
         run(["cargo", "test", "--offline", "--quiet"], cwd=consumer, env=environment)
+        check_consumer_safety(consumer, environment)
         compile_rejections = {
             "wrong_set_key": (
                 'use compact_contract_set_boolean as set;\n'

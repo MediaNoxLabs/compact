@@ -34,56 +34,10 @@ ROOT = Path(__file__).resolve().parents[2]
 SOURCES = ROOT / "examples" / "rust_backend"
 FIXTURES = ROOT / "tests-rust-backend"
 BACKEND = ROOT / "target" / "debug" / "compact-rustc"
-EXTRA_SOURCES = {
-    ROOT / "tools/compact-rust-backend/tests/point-composition/point_digest.compact": FIXTURES / "did-point-digest-reducer" / "lib.rs",
-    ROOT / "tools/compact-rust-backend/tests/point-composition/point_guard.compact": FIXTURES / "did-point-guard-reducer" / "lib.rs",
-    ROOT / "tools/compact-rust-backend/tests/set-composition/set_string.compact": FIXTURES / "did-alias-set-reducer" / "lib.rs",
-    ROOT / "tools/compact-rust-backend/tests/set-composition/opaque_digest.compact": FIXTURES / "did-alias-digest-reducer" / "lib.rs",
-    ROOT / "tools/compact-rust-backend/tests/set-composition/pure_unit_guard.compact": FIXTURES / "did-alias-guard-reducer" / "lib.rs",
-    ROOT / "tools/compact-rust-backend/tests/map-composition/service_mutation.compact": FIXTURES / "did-service-map-reducer" / "lib.rs",
-    ROOT / "tools/compact-rust-backend/tests/map-point-composition/point_nested.compact": FIXTURES / "did-point-map-reducer" / "lib.rs",
-    ROOT / "tools/compact-rust-backend/tests/map-nested-product/nested-enum.compact": FIXTURES / "did-nested-map-reducer" / "lib.rs",
-    ROOT / "tools/compact-rust-backend/tests/map-nested-product/nested-enum-wide.compact": FIXTURES / "did-enum-map-reducer" / "lib.rs",
+import fixture_inventory
 
-    SOURCES / "did_digest_read_reducer" / "contract.compact":
-        FIXTURES / "did-digest-read-reducer" / "lib.rs",
-    SOURCES / "did_adoption" / "packages" / "contract" / "src" / "did.compact":
-        FIXTURES / "did-adoption" / "lib.rs",
-    SOURCES / "vc_passport_adoption" / "src" / "digital-passport-credential.compact":
-        FIXTURES / "vc-passport-adoption" / "lib.rs",
-    ROOT / "test-center/test-contracts/coracle.compact": FIXTURES / "test-center-coracle/lib.rs",
-    ROOT / "test-center/test-contracts/micro-dao.compact": FIXTURES / "test-center-micro-dao/lib.rs",
-    SOURCES / "digital-passport-credential" / "src" / "digital-passport-credential.compact":
-        FIXTURES / "passport-dogfood" / "lib.rs",
-    ROOT / "examples" / "bugs" / "pm-19252" / "example_ten.compact":
-        FIXTURES / "pm-19252-own-public-key" / "lib.rs",
-    ROOT / "examples" / "adt" / "tests" / "set_enum.compact":
-        FIXTURES / "adt-set-enum" / "lib.rs",
-    ROOT / "examples" / "adt" / "tests" / "set_vector.compact":
-        FIXTURES / "adt-set-vector" / "lib.rs",
-    ROOT / "examples" / "adt" / "tests" / "set_qualified_coin_info.compact":
-        FIXTURES / "adt-set-qualified-coin-info" / "lib.rs",
-    ROOT / "examples" / "adt" / "tests" / "list_field.compact":
-        FIXTURES / "adt-list-field" / "lib.rs",
-    ROOT / "examples" / "adt" / "tests" / "list_enum.compact":
-        FIXTURES / "adt-list-enum" / "lib.rs",
-    ROOT / "test-center" / "test-contracts" / "counter.compact":
-        FIXTURES / "test-center-counter" / "lib.rs",
-    ROOT / "test-center" / "test-contracts" / "bboard.compact":
-        FIXTURES / "test-center-bboard" / "lib.rs",
-    ROOT / "test-center" / "test-contracts" / "welcome.compact":
-        FIXTURES / "test-center-welcome" / "lib.rs",
-    ROOT / "examples" / "adt" / "tests" / "list_vector_field_4.compact":
-        FIXTURES / "adt-list-vector-field-4" / "lib.rs",
-    ROOT / "examples" / "adt" / "tests" / "list_bytes.compact":
-        FIXTURES / "adt-list-bytes" / "lib.rs",
-    ROOT / "examples/bugs/pm-19252/example_seven.compact":
-        FIXTURES / "pm-19252-unused-read-seven" / "lib.rs",
-    ROOT / "examples/bugs/pm-19252/example_eight_a.compact":
-        FIXTURES / "pm-19252-unused-read-eight-a" / "lib.rs",
-    ROOT / "examples/bugs/pm-19252/example_eight_b.compact":
-        FIXTURES / "pm-19252-unused-read-eight-b" / "lib.rs",
-}
+# Compatibility alias for existing evidence scripts. The mapping is owned once.
+EXTRA_SOURCES = fixture_inventory.extra_sources(ROOT)
 
 
 def run(command: list[str], *, cwd: Path = ROOT) -> subprocess.CompletedProcess[str]:
@@ -107,11 +61,7 @@ def main() -> int:
     checked = 0
     changed = []
     failures = []
-    source_fixtures = [
-        (source, FIXTURES / source.stem.replace("_", "-") / "lib.rs")
-        for source in SOURCES.glob("*.compact")
-    ]
-    source_fixtures.extend(EXTRA_SOURCES.items())
+    source_fixtures = list(fixture_inventory.fixture_map(ROOT).items())
     if args.only:
         selected = set(args.only)
         source_fixtures = [(source, fixture) for source, fixture in source_fixtures

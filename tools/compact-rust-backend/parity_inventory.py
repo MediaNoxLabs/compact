@@ -200,6 +200,9 @@ def source_paths(root: Path, extra_dirs: list[Path] | None = None) -> list[Path]
     if ORACLE_MANIFEST.is_file() and root.resolve() == ROOT.resolve():
         manifest = json.loads(ORACLE_MANIFEST.read_text())
         paths.update(root / item["source"] for item in manifest["fixtures"])
+    if root.resolve() == ROOT.resolve():
+        import fixture_inventory
+        paths.update(fixture_inventory.fixture_map(root))
     scope = positive_scope(root)
     if scope:
         paths.update(root / item["source"] for item in scope["positive_sources"])

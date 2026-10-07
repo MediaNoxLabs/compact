@@ -506,6 +506,14 @@
     "visibility": "internal"
   },
   {
+    "source": "tools/compact-rust-backend/tests/map-nested-product/nested-enum.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "allowed",
+    "signature": "circuit allowed(method: Method): []",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/pure_circuit_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -1394,6 +1402,46 @@
     "visibility": "export"
   },
   {
+    "source": "tools/compact-rust-backend/tests/map-composition/service_mutation.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "bump",
+    "signature": "circuit bump(): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "tools/compact-rust-backend/tests/map-nested-product/nested-enum-wide.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "bump",
+    "signature": "circuit bump(): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "tools/compact-rust-backend/tests/map-nested-product/nested-enum.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "bump",
+    "signature": "circuit bump(): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "tools/compact-rust-backend/tests/map-point-composition/point_nested.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "bump",
+    "signature": "circuit bump(): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "tools/compact-rust-backend/tests/set-composition/set_string.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "bump",
+    "signature": "circuit bump(): []",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/stateful_circuit_call.compact",
     "module_path": [],
     "kind": "circuit",
@@ -1479,6 +1527,22 @@
     "kind": "circuit",
     "name": "cash_out",
     "signature": "circuit cash_out(): ShieldedCoinInfo",
+    "visibility": "export"
+  },
+  {
+    "source": "tools/compact-rust-backend/tests/point-composition/point_guard.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "changes",
+    "signature": "circuit changes(value: JubjubPoint): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "tools/compact-rust-backend/tests/point-composition/point_guard.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "check",
+    "signature": "export circuit check(value: JubjubPoint): []",
     "visibility": "export"
   },
   {
@@ -1584,6 +1648,22 @@
     "name": "check_witness_merkle",
     "signature": "export circuit check_witness_merkle(): Boolean",
     "visibility": "export"
+  },
+  {
+    "source": "tools/compact-rust-backend/tests/point-composition/point_digest.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "checked",
+    "signature": "circuit checked(message: Field): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "tools/compact-rust-backend/tests/set-composition/opaque_digest.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "checked",
+    "signature": "circuit checked(message: Field): []",
+    "visibility": "internal"
   },
   {
     "source": "examples/rust_backend/stateful_assert_oracle.compact",
@@ -2162,6 +2242,30 @@
     "visibility": "export"
   },
   {
+    "source": "tools/compact-rust-backend/tests/map-composition/service_mutation.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "defined",
+    "signature": "circuit defined(m: Mutation): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "tools/compact-rust-backend/tests/set-composition/pure_unit_guard.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "defined",
+    "signature": "circuit defined(m: Mutation): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "tools/compact-rust-backend/tests/set-composition/set_string.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "defined",
+    "signature": "circuit defined(m: Mutation): []",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/persistent_hash.compact",
     "module_path": [],
     "kind": "circuit",
@@ -2234,6 +2338,22 @@
     "visibility": "internal"
   },
   {
+    "source": "tools/compact-rust-backend/tests/point-composition/point_digest.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "digest",
+    "signature": "pure circuit digest(value: JubjubPoint): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "tools/compact-rust-backend/tests/set-composition/opaque_digest.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "digest",
+    "signature": "pure circuit digest(value: Opaque<\"string\">, mutation: Mutation): Field",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/claims.compact",
     "module_path": [],
     "kind": "circuit",
@@ -2290,6 +2410,14 @@
     "visibility": "export"
   },
   {
+    "source": "tools/compact-rust-backend/tests/point-composition/point_guard.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "distinct",
+    "signature": "circuit distinct(value: JubjubPoint): []",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/canonical_output_order_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -2335,6 +2463,14 @@
     "kind": "circuit",
     "name": "double_increment",
     "signature": "export pure circuit double_increment(value: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "tools/compact-rust-backend/tests/map-nested-product/nested-enum-wide.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "drop",
+    "signature": "export circuit drop(id: Opaque<\"string\">): []",
     "visibility": "export"
   },
   {
@@ -2504,6 +2640,14 @@
     "name": "equal_pair",
     "signature": "export circuit equal_pair(left: Vector<2, Field>, right: Vector<2, Field>): Boolean",
     "visibility": "export"
+  },
+  {
+    "source": "tools/compact-rust-backend/tests/map-point-composition/point_nested.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "exists",
+    "signature": "circuit exists(id: Opaque<\"string\">): Boolean",
+    "visibility": "internal"
   },
   {
     "source": "examples/rust_backend/call_arg_declared_type.compact",
@@ -3242,6 +3386,14 @@
     "visibility": "export"
   },
   {
+    "source": "tools/compact-rust-backend/tests/set-composition/set_string.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "insert_control",
+    "signature": "export circuit insert_control(v: Opaque<\"string\">): []",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/chunked_set_observed.compact",
     "module_path": [],
     "kind": "circuit",
@@ -3546,6 +3698,22 @@
     "visibility": "export"
   },
   {
+    "source": "tools/compact-rust-backend/tests/set-composition/pure_unit_guard.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "localGuard",
+    "signature": "circuit localGuard(m: Mutation): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "tools/compact-rust-backend/tests/set-composition/pure_unit_guard.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "local_control",
+    "signature": "export circuit local_control(m: Mutation): []",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/witness_conditional.compact",
     "module_path": [],
     "kind": "circuit",
@@ -3658,6 +3826,14 @@
     "visibility": "export"
   },
   {
+    "source": "tools/compact-rust-backend/tests/set-composition/set_string.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "member_control",
+    "signature": "export circuit member_control(v: Opaque<\"string\">): Boolean",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/nested_collection_query_write.compact",
     "module_path": [],
     "kind": "circuit",
@@ -3759,6 +3935,14 @@
     "kind": "circuit",
     "name": "multiply_uint",
     "signature": "export circuit multiply_uint(left: Uint<8>, right: Uint<8>): Uint<16>",
+    "visibility": "export"
+  },
+  {
+    "source": "tools/compact-rust-backend/tests/set-composition/set_string.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "mutate",
+    "signature": "export circuit mutate(v: Opaque<\"string\">, m: Mutation): []",
     "visibility": "export"
   },
   {
@@ -4258,6 +4442,14 @@
     "visibility": "export"
   },
   {
+    "source": "tools/compact-rust-backend/tests/point-composition/point_digest.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "point_write_only",
+    "signature": "export circuit point_write_only(value: JubjubPoint): []",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/witness_jubjub.compact",
     "module_path": [],
     "kind": "circuit",
@@ -4530,6 +4722,14 @@
     "visibility": "export"
   },
   {
+    "source": "tools/compact-rust-backend/tests/point-composition/point_digest.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "pure_projection_only",
+    "signature": "export circuit pure_projection_only(value: JubjubPoint): []",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/stateful_struct_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -4607,6 +4807,14 @@
     "kind": "circuit",
     "name": "put",
     "signature": "export circuit put(key: Opaque<\"string\">, value: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "tools/compact-rust-backend/tests/map-nested-product/nested-enum-wide.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "put",
+    "signature": "export circuit put(value: Container): []",
     "visibility": "export"
   },
   {
@@ -5114,6 +5322,22 @@
     "visibility": "export"
   },
   {
+    "source": "tools/compact-rust-backend/tests/map-nested-product/nested-enum.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "remove",
+    "signature": "export circuit remove(id: Opaque<\"string\">): []",
+    "visibility": "export"
+  },
+  {
+    "source": "tools/compact-rust-backend/tests/map-point-composition/point_nested.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "remove",
+    "signature": "export circuit remove(id: Opaque<\"string\">): []",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/set_boolean.compact",
     "module_path": [],
     "kind": "circuit",
@@ -5186,6 +5410,14 @@
     "visibility": "internal"
   },
   {
+    "source": "tools/compact-rust-backend/tests/set-composition/set_string.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "remove_control",
+    "signature": "export circuit remove_control(v: Opaque<\"string\">): []",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/chunked_map.compact",
     "module_path": [],
     "kind": "circuit",
@@ -5199,6 +5431,14 @@
     "kind": "circuit",
     "name": "remove_key",
     "signature": "export circuit remove_key(key: Boolean): []",
+    "visibility": "export"
+  },
+  {
+    "source": "tools/compact-rust-backend/tests/map-composition/service_mutation.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "remove_service",
+    "signature": "export circuit remove_service(id: Opaque<\"string\">): []",
     "visibility": "export"
   },
   {
@@ -5490,6 +5730,22 @@
     "visibility": "export"
   },
   {
+    "source": "tools/compact-rust-backend/tests/set-composition/pure_unit_guard.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "run",
+    "signature": "export circuit run(m: Mutation): []",
+    "visibility": "export"
+  },
+  {
+    "source": "tools/compact-rust-backend/tests/set-composition/opaque_digest.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "run",
+    "signature": "export circuit run(value: Opaque<\"string\">, mutation: Mutation): []",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/struct_collision_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -5568,6 +5824,14 @@
     "name": "scalarHelper",
     "signature": "circuit scalarHelper(v: Field): Boolean",
     "visibility": "internal"
+  },
+  {
+    "source": "tools/compact-rust-backend/tests/point-composition/point_digest.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "scalar_control",
+    "signature": "export circuit scalar_control(): []",
+    "visibility": "export"
   },
   {
     "source": "examples/rust_backend/witness_jubjub.compact",
@@ -5927,6 +6191,14 @@
     "kind": "circuit",
     "name": "set_record",
     "signature": "export circuit set_record(value: Pair): []",
+    "visibility": "export"
+  },
+  {
+    "source": "tools/compact-rust-backend/tests/map-composition/service_mutation.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "set_service",
+    "signature": "export circuit set_service(service: Service, m: Mutation): []",
     "visibility": "export"
   },
   {
@@ -6778,6 +7050,22 @@
     "visibility": "export"
   },
   {
+    "source": "tools/compact-rust-backend/tests/set-composition/pure_unit_guard.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "transitiveGuard",
+    "signature": "circuit transitiveGuard(m: Mutation): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "tools/compact-rust-backend/tests/set-composition/pure_unit_guard.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "transitive_control",
+    "signature": "export circuit transitive_control(m: Mutation): []",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/assert_parity_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -6930,6 +7218,22 @@
     "visibility": "export"
   },
   {
+    "source": "tools/compact-rust-backend/tests/set-composition/pure_unit_guard.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "update",
+    "signature": "circuit update(): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "tools/compact-rust-backend/tests/point-composition/point_digest.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "update",
+    "signature": "export circuit update(value: JubjubPoint): []",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/witness_hash.compact",
     "module_path": [],
     "kind": "circuit",
@@ -6943,6 +7247,22 @@
     "kind": "circuit",
     "name": "upgrade_field",
     "signature": "export circuit upgrade_field(value: Field): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "tools/compact-rust-backend/tests/map-nested-product/nested-enum.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "upsert",
+    "signature": "export circuit upsert(method: Method, update: Boolean): []",
+    "visibility": "export"
+  },
+  {
+    "source": "tools/compact-rust-backend/tests/map-point-composition/point_nested.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "upsert",
+    "signature": "export circuit upsert(method: PointMethod, update: Boolean): []",
     "visibility": "export"
   },
   {
@@ -7026,12 +7346,28 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/did_digest_read_reducer/contract.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "verify",
+    "signature": "export circuit verify(id: Opaque<\"string\">, expected: JubjubPoint): []",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/schnorr_attest_oracle.compact",
     "module_path": [],
     "kind": "circuit",
     "name": "verifyAttestation",
     "signature": "export circuit verifyAttestation( digest: Vector<4, Field>, signature: Schnorr_SchnorrSignature ): []",
     "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_digest_read_reducer/contract.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "verifyLocal",
+    "signature": "circuit verifyLocal(expected: JubjubPoint, actual: JubjubPoint): []",
+    "visibility": "internal"
   },
   {
     "source": "examples/rust_backend/unit_composition_crypto.compact",
@@ -7762,6 +8098,14 @@
     "visibility": "internal"
   },
   {
+    "source": "tools/compact-rust-backend/tests/point-composition/point_guard.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor(a: JubjubPoint, b: JubjubPoint)",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/election_oracle.compact",
     "module_path": [],
     "kind": "constructor",
@@ -7799,6 +8143,22 @@
     "kind": "constructor",
     "name": "constructor",
     "signature": "constructor(first: Field, second: Field)",
+    "visibility": "internal"
+  },
+  {
+    "source": "tools/compact-rust-backend/tests/point-composition/point_digest.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor(initial: JubjubPoint)",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/did_digest_read_reducer/contract.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor(initialId: Opaque<\"string\">, initialKey: JubjubPoint)",
     "visibility": "internal"
   },
   {
@@ -7977,11 +8337,35 @@
     "visibility": "module_export"
   },
   {
+    "source": "examples/rust_backend/did_digest_read_reducer/contract.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "admitted",
+    "signature": "witness admitted(): Boolean",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/repeated_unit_helper.compact",
     "module_path": [],
     "kind": "witness",
     "name": "argument",
     "signature": "witness argument(label: Uint<64>): Uint<64>",
+    "visibility": "internal"
+  },
+  {
+    "source": "tools/compact-rust-backend/tests/set-composition/opaque_digest.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "authorize",
+    "signature": "witness authorize(digest: Field): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "tools/compact-rust-backend/tests/point-composition/point_digest.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "authorize",
+    "signature": "witness authorize(message: Field): Boolean",
     "visibility": "internal"
   },
   {

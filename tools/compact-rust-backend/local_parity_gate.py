@@ -38,46 +38,14 @@ import tomllib
 
 sys.dont_write_bytecode = True
 import parity_inventory as inventory
+import fixture_inventory
 
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCES = ROOT / "examples/rust_backend"
 FIXTURES = ROOT / "tests-rust-backend"
-EXTRA = {
-    SOURCES / "did_adoption/packages/contract/src/did.compact": FIXTURES / "did-adoption/lib.rs",
-    ROOT / "test-center/test-contracts/coracle.compact": FIXTURES / "test-center-coracle/lib.rs",
-    ROOT / "test-center/test-contracts/micro-dao.compact": FIXTURES / "test-center-micro-dao/lib.rs",
-    SOURCES / "digital-passport-credential/src/digital-passport-credential.compact":
-        FIXTURES / "passport-dogfood/lib.rs",
-    ROOT / "examples/bugs/pm-19252/example_ten.compact":
-        FIXTURES / "pm-19252-own-public-key/lib.rs",
-    ROOT / "examples/adt/tests/set_enum.compact":
-        FIXTURES / "adt-set-enum/lib.rs",
-    ROOT / "examples/adt/tests/set_vector.compact":
-        FIXTURES / "adt-set-vector/lib.rs",
-    ROOT / "examples/adt/tests/set_qualified_coin_info.compact":
-        FIXTURES / "adt-set-qualified-coin-info/lib.rs",
-    ROOT / "examples/adt/tests/list_field.compact":
-        FIXTURES / "adt-list-field/lib.rs",
-    ROOT / "examples/adt/tests/list_enum.compact":
-        FIXTURES / "adt-list-enum/lib.rs",
-    ROOT / "test-center/test-contracts/counter.compact":
-        FIXTURES / "test-center-counter/lib.rs",
-    ROOT / "test-center/test-contracts/bboard.compact":
-        FIXTURES / "test-center-bboard/lib.rs",
-    ROOT / "test-center/test-contracts/welcome.compact":
-        FIXTURES / "test-center-welcome/lib.rs",
-    ROOT / "examples/adt/tests/list_vector_field_4.compact":
-        FIXTURES / "adt-list-vector-field-4/lib.rs",
-    ROOT / "examples/adt/tests/list_bytes.compact":
-        FIXTURES / "adt-list-bytes/lib.rs",
-    ROOT / "examples/bugs/pm-19252/example_seven.compact":
-        FIXTURES / "pm-19252-unused-read-seven" / "lib.rs",
-    ROOT / "examples/bugs/pm-19252/example_eight_a.compact":
-        FIXTURES / "pm-19252-unused-read-eight-a" / "lib.rs",
-    ROOT / "examples/bugs/pm-19252/example_eight_b.compact":
-        FIXTURES / "pm-19252-unused-read-eight-b" / "lib.rs",
-}
+# Compatibility alias; registration belongs to fixture_inventory.
+EXTRA = fixture_inventory.extra_sources(ROOT)
 
 
 class GateError(Exception):
@@ -103,10 +71,7 @@ def dirty_paths() -> list[str]:
 
 
 def fixture_map() -> dict[Path, Path]:
-    mapping = {source.resolve(): FIXTURES / source.stem.replace("_", "-") / "lib.rs"
-               for source in SOURCES.glob("*.compact")}
-    mapping.update({source.resolve(): fixture for source, fixture in EXTRA.items()})
-    return mapping
+    return fixture_inventory.fixture_map(ROOT)
 
 
 def generated_library_has_no_test_hooks(source: str) -> bool:
@@ -297,6 +262,41 @@ def compare_baseline(contracts: list[dict], selected: set[str], full: bool) -> N
         raise GateError("selected Compact declaration identities differ from parity_baseline.json")
 
 
+def fixture_output(directory: Path, source: Path) -> Path:
+    """Keep same-stem entrypoints in distinct, deterministic artifact roots."""
+    return directory / "compiled" / Path(inventory.relative_source(source, ROOT)).with_suffix("")
+
+
+def run_required_proof_gates(directory: Path, snapshot: Path, environment: dict, receipt: dict,
+                            *, command=None) -> None:
+    """Run every maintained DID proof gate; hash only successful typed receipts."""
+    command = run if command is None else command
+    gates = (
+        ("did-proof-lifecycles", "did_proof_gate.py", "did-proof", "did_proof_gate",
+         "compact-did-proof-gate/v1", "--run-dir", "--cargo-target-dir"),
+        ("did-digest-reducer-proof", "did_digest_reducer_gate.py", "did-digest-reducer-proof",
+         "did_digest_reducer_gate", "compact-did-digest-reducer-gate/v1", "--run-dir", "--cargo-target-dir"),
+        ("did-primitive-reducer-proofs", "did_primitive_reducer_gate.py", "did-primitive-reducer-proofs",
+         "did_primitive_reducer_gate", "compact-did-primitive-reducer-gate/v1", "--output", "--target"),
+    )
+    children = []
+    for label, script, subdirectory, key, expected_format, output_flag, target_flag in gates:
+        child = directory / subdirectory
+        command([sys.executable, str(ROOT / "tools/compact-rust-backend" / script),
+                 "--compiler", str(snapshot), "--scheme", str(directory / "bin/compactc-scheme"),
+                 target_flag, environment["CARGO_TARGET_DIR"], output_flag, str(child)],
+                label, directory, receipt, env=environment)
+        path = child / "receipt.json"
+        value = json.loads(path.read_text())
+        if not isinstance(value, dict) or value.get("format") != expected_format or value.get("status") != "passed":
+            raise GateError(f"{label}: missing successful expected child receipt")
+        receipt[key] = {"path": str(path), "sha256": sha256(path)}
+        children.append(receipt[key])
+    for child in children:
+        if sha256(Path(child["path"])) != child["sha256"]:
+            raise GateError("required proof receipt changed during orchestration")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", action="append", default=[],
@@ -373,7 +373,7 @@ def main() -> int:
         packages = []
         for source, fixture in selected:
             relative = inventory.relative_source(source, ROOT)
-            output = directory / "compiled" / source.stem
+            output = fixture_output(directory, source)
             run([str(snapshot), "--target", "rust", "--skip-zk", "--rust-runtime-root",
                  str(ROOT), str(source), str(output)], f"compile-{source.stem}", directory,
                 receipt, env=environment)
@@ -489,14 +489,7 @@ def main() -> int:
             run([sys.executable, str(ROOT / "tools/compact-rust-backend/check_compactc_target.py"),
                  "--consumer", "--proof"], "consumer-proof-ledger", directory, receipt,
                 env=environment)
-            did_directory = directory / "did-proof"
-            run([sys.executable, str(ROOT / "tools/compact-rust-backend/did_proof_gate.py"),
-                 "--compiler", str(snapshot), "--scheme", str(directory / "bin/compactc-scheme"),
-                 "--cargo-target-dir", environment["CARGO_TARGET_DIR"],
-                 "--run-dir", str(did_directory)], "did-proof-lifecycles", directory, receipt,
-                env=environment)
-            did_receipt = did_directory / "receipt.json"
-            receipt["did_proof_gate"] = {"path": str(did_receipt), "sha256": sha256(did_receipt)}
+            run_required_proof_gates(directory, snapshot, environment, receipt)
         elif not args.skip_cargo:
             run(["cargo", "+1.99.0", "test", "--locked", *sum((["-p", name] for name in packages), [])],
                 "selected-cargo-tests", directory, receipt, env=environment)

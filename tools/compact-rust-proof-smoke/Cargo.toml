@@ -115,7 +115,7 @@ midnight-curves = "=0.2.0"
 midnight-proofs = "=0.7.0"
 midnight-zk-stdlib = "=1.0.0"
 midnight-storage-core = "=1.1.0"
-rand = "=0.8.5"
+rand = "=0.8.6"
 rand_chacha = "=0.3.1"
 futures-executor = "=0.3.32"
 tokio = { version = "=1.50.0", features = ["rt"] }

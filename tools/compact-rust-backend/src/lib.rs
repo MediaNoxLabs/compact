@@ -5,6 +5,7 @@ mod circuit_analysis;
 mod coin_shapes;
 pub mod compatibility;
 pub mod ir;
+mod resource_limits;
 pub use capabilities::{
     RUST_CAPABILITY_SCHEMA_VERSION, RecordingStatus, RustCapabilityReport, RustCircuitCapability,
 };
@@ -77,6 +78,13 @@ pub(crate) fn ledger_path_expr(field: &ir::LedgerField) -> syn::Expr {
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum RenderError {
+    /// Bounded compiler support policy was exceeded. The resource label and
+    /// Display text are human diagnostics, not a machine-readable protocol.
+    ResourceLimit {
+        resource: &'static str,
+        limit: usize,
+        observed: usize,
+    },
     Located {
         location: ir::SourceLocation,
         error: Box<RenderError>,
@@ -138,6 +146,14 @@ pub enum RenderError {
 impl fmt::Display for RenderError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::ResourceLimit {
+                resource,
+                limit,
+                observed,
+            } => write!(
+                f,
+                "compiler resource {resource} exceeds {limit} (observed {observed})"
+            ),
             Self::Located { location, error } => write!(
                 f,
                 "{} line {} char {}: {}",
@@ -2853,6 +2869,8 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
     if contract.schema_version != SCHEMA_VERSION {
         return Err(RenderError::SchemaVersion(contract.schema_version));
     }
+
+    resource_limits::validate(contract)?;
 
     // Build callable lookup maps only after checking their keys. Otherwise a
     // later declaration silently replaces an earlier one in a HashMap, and a

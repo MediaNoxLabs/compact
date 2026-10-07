@@ -16,6 +16,9 @@
 //! The public Compact compiler command. Chez owns analysis and proof artifacts;
 //! the Rust backend owns Rust syntax and the generated crate's package boundary.
 
+#[path = "../bin_support/input.rs"]
+mod input;
+
 use std::env;
 use std::error::Error;
 use std::ffi::{OsStr, OsString};
@@ -705,11 +708,12 @@ fn run() -> Result<i32, Box<dyn Error>> {
     }
 
     let contract_dir = staging.path().join("contract");
-    let ir: Contract =
-        serde_json::from_slice(&fs::read(contract_dir.join("compact-rust-ir.json"))?)?;
-    let contract_info: Value = serde_json::from_slice(&fs::read(
+    let ir: Contract = serde_json::from_slice(&input::read(fs::File::open(
+        contract_dir.join("compact-rust-ir.json"),
+    )?)?)?;
+    let contract_info: Value = serde_json::from_slice(&input::read(fs::File::open(
         staging.path().join("compiler/contract-info.json"),
-    )?)?;
+    )?)?)?;
     let rendered = render_with_proof_capabilities(&ir, &contract_info)?;
     if targets.require_recording {
         let unavailable = rendered

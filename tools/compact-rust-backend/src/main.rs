@@ -14,15 +14,23 @@
 // limitations under the License.
 
 use std::error::Error;
-use std::io::{self, Read};
+use std::io;
+
+#[path = "bin_support/input.rs"]
+mod input;
 use std::process;
 
 use compact_rust_backend::{ir::Contract, render};
 
 fn run() -> Result<(), Box<dyn Error>> {
-    let mut input = String::new();
-    io::stdin().read_to_string(&mut input)?;
-    let contract: Contract = serde_json::from_str(&input)?;
+    let bytes = input::read(io::stdin().lock())?;
+    let text = String::from_utf8(bytes).map_err(|_| {
+        io::Error::new(
+            io::ErrorKind::InvalidData,
+            "stream did not contain valid UTF-8",
+        )
+    })?;
+    let contract: Contract = serde_json::from_str(&text)?;
     print!("{}", render(&contract)?);
     Ok(())
 }

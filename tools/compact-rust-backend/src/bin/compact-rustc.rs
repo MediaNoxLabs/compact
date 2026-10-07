@@ -18,6 +18,9 @@
 //! `COMPACTC` selects the compiler executable. It defaults to `compactc` on
 //! PATH. Process arguments are passed directly, without shell interpolation.
 
+#[path = "../bin_support/input.rs"]
+mod input;
+
 use std::env;
 use std::error::Error;
 use std::fs;
@@ -53,7 +56,7 @@ fn run() -> Result<(), Box<dyn Error>> {
 
     let contract_dir = output.join("contract");
     let ir_path = contract_dir.join("compact-rust-ir.json");
-    let ir: Contract = serde_json::from_slice(&fs::read(&ir_path)?)?;
+    let ir: Contract = serde_json::from_slice(&input::read(fs::File::open(&ir_path)?)?)?;
     let rust = render(&ir)?;
     fs::write(contract_dir.join("lib.rs"), rust)?;
     Ok(())

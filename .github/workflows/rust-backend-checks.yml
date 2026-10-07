@@ -7,6 +7,24 @@ name: Rust Backend Checks
 
 on:
   workflow_dispatch:
+  # Bootstrap and stabilize this branch before the workflow reaches default.
+  push:
+    branches: [codex/rust-backend-ast]
+    paths:
+      - '**/*.rs'
+      - 'runtime-rs/**'
+      - 'runtime-rs-macros/**'
+      - 'testkit-rs/**'
+      - 'tools/compact-rust-backend/**'
+      - 'tests-rust-backend/**'
+      - 'examples/rust_backend/**'
+      - '**/Cargo.toml'
+      - '**/Cargo.lock'
+      - '.cargo/**'
+      - 'rust-toolchain*'
+      - 'rustfmt.toml'
+      - '.rustfmt.toml'
+      - '.github/workflows/rust-backend-checks.yml'
   pull_request:
     paths:
       - '**/*.rs'

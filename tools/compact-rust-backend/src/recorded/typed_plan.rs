@@ -560,7 +560,7 @@ impl Plan<'_> {
                 self.funded_not_equal(left, right, scope, steps)
             }
             Expr::NotEqual { left, right } if self.composition_calls.is_some() => {
-                self.composition_field_not_equal(left, right, scope, steps)
+                self.composition_scalar_not_equal(left, right, scope, steps)
             }
             Expr::JubjubPointX { value } | Expr::JubjubPointY { value }
                 if self.composition_calls.is_some() =>
@@ -1933,7 +1933,7 @@ impl Plan<'_> {
                     return None;
                 };
                 if *key_ty != Type::OpaqueString
-                    || !composition::flat_string_point_product(value_ty)
+                    || !composition::checked_product_map(&self.field(field, *index)?.declaration)
                 {
                     return None;
                 }
@@ -1951,7 +1951,7 @@ impl Plan<'_> {
                 steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_insert(frame, #key, #value)?;));
             }
             StateAction::MapRemove { field, index, key } if self.composition_calls.is_some() => {
-                if !composition::flat_string_point_map(&self.field(field, *index)?.declaration) {
+                if !composition::checked_product_map(&self.field(field, *index)?.declaration) {
                     return None;
                 }
                 let key = self.expression(key, scope, steps)?;

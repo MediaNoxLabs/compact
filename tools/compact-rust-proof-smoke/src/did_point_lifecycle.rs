@@ -23,6 +23,8 @@ use serde_json::{Value, json};
 mod alias_calls;
 #[path = "../../../tests-rust-backend/did-adoption/support/codec.rs"]
 mod codec;
+#[path = "../../../tests-rust-backend/did-adoption/support/jwk_method_calls.rs"]
+mod jwk_method_calls;
 #[path = "../../../tests-rust-backend/did-adoption/support/lifecycle_calls.rs"]
 mod lifecycle_calls;
 #[path = "../../../tests-rust-backend/did-adoption/support/lifecycle_witness.rs"]
@@ -41,6 +43,7 @@ enum Lifecycle {
     Aliases,
     Services,
     SchnorrMethods,
+    JwkMethods,
 }
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
     run_lifecycle(root, Lifecycle::Points)
@@ -53,6 +56,9 @@ pub(super) fn run_services(root: &Path) -> Result<(), Box<dyn Error>> {
 }
 pub(super) fn run_schnorr_methods(root: &Path) -> Result<(), Box<dyn Error>> {
     run_lifecycle(root, Lifecycle::SchnorrMethods)
+}
+pub(super) fn run_jwk_methods(root: &Path) -> Result<(), Box<dyn Error>> {
+    run_lifecycle(root, Lifecycle::JwkMethods)
 }
 fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>> {
     let (capture, scenario_id, calls, operations): (&str, &str, &[&str], &[&str]) = match lifecycle
@@ -102,6 +108,25 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
                 "removeService",
                 "setSchnorrJubjubVerificationMethod",
                 "removeSchnorrJubjubVerificationMethod",
+            ],
+        ),
+        Lifecycle::JwkMethods => (
+            include_str!(
+                "../../../tests-rust-backend/did-adoption/oracle/jwk-method-lifecycle.json"
+            ),
+            "jwk-method-recording",
+            &["insert-unicode", "update-jwk", "remove-unicode"],
+            &[
+                "rotateControllerKey",
+                "recoverControllerKey",
+                "deactivate",
+                "setAlsoKnownAs",
+                "setService",
+                "removeService",
+                "setSchnorrJubjubVerificationMethod",
+                "removeSchnorrJubjubVerificationMethod",
+                "setVerificationMethod",
+                "removeVerificationMethod",
             ],
         ),
     };
@@ -210,6 +235,12 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
             "remove-unicode" if matches!(lifecycle, Lifecycle::SchnorrMethods) => {
                 "removeSchnorrJubjubVerificationMethod"
             }
+            "insert-unicode" | "update-jwk" if matches!(lifecycle, Lifecycle::JwkMethods) => {
+                "setVerificationMethod"
+            }
+            "remove-unicode" if matches!(lifecycle, Lifecycle::JwkMethods) => {
+                "removeVerificationMethod"
+            }
             _ => "setAlsoKnownAs",
         };
         let prior = state
@@ -242,6 +273,7 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
             Lifecycle::Aliases => alias_calls::invoke_recorded,
             Lifecycle::Services => service_calls::invoke_recorded,
             Lifecycle::SchnorrMethods => schnorr_method_calls::invoke_recorded,
+            Lifecycle::JwkMethods => jwk_method_calls::invoke_recorded,
         };
         let recorded = record(
             observed.circuit_context(private),
@@ -260,7 +292,20 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
             response: codec::field_hex(row["responseHex"].as_str().unwrap()),
         };
         let version = codec::version(row["version"].as_str().unwrap());
-        let input = if name == "setSchnorrJubjubVerificationMethod" {
+        let input = if name == "setVerificationMethod" {
+            AlignedValue::from((
+                codec::method(&row["args"]["method"]),
+                codec::map(&row["args"]["mutation"]),
+                signature.clone(),
+                version,
+            ))
+        } else if name == "removeVerificationMethod" {
+            AlignedValue::from((
+                codec::string(&row["args"]["id"]),
+                signature.clone(),
+                version,
+            ))
+        } else if name == "setSchnorrJubjubVerificationMethod" {
             AlignedValue::from((
                 codec::schnorr(&row["args"]["method"]),
                 codec::map(&row["args"]["mutation"]),
@@ -365,6 +410,25 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
                     signature,
                     version,
                 )?,
+            "insert-unicode" | "update-jwk" if matches!(lifecycle, Lifecycle::JwkMethods) => {
+                facade.recording().setVerificationMethod_call(
+                    &observed,
+                    private,
+                    codec::method(&row["args"]["method"]),
+                    codec::map(&row["args"]["mutation"]),
+                    signature,
+                    version,
+                )?
+            }
+            "remove-unicode" if matches!(lifecycle, Lifecycle::JwkMethods) => {
+                facade.recording().removeVerificationMethod_call(
+                    &observed,
+                    private,
+                    codec::string(&row["args"]["id"]),
+                    signature,
+                    version,
+                )?
+            }
             _ => facade.recording().setAlsoKnownAs_call(
                 &observed,
                 private,
@@ -515,12 +579,26 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
                 "original DID deploy -> Schnorr method insert -> update -> remove: strict sequential acceptance; constructor execution not proved, stored-id semantics unchanged"
             );
         }
+        Lifecycle::JwkMethods => {
+            if !slots::active.inspect(data)?
+                || slots::deactivated.inspect(data)?
+                || slots::version.inspect(data)? != 3
+                || slots::operationCount.inspect(data)? != 3
+                || !slots::verificationMethods.inspect(data)?.is_empty()
+            {
+                return Err("final DID JWK method lifecycle fields differ".into());
+            }
+            println!(
+                "original DID deploy -> JWK method insert -> update -> remove: strict sequential acceptance; constructor execution not proved, stored-id semantics unchanged"
+            );
+        }
     }
     let (scenario, selector) = match lifecycle {
         Lifecycle::Points => ("points", "--did-point-lifecycle"),
         Lifecycle::Aliases => ("aliases", "--did-alias-lifecycle"),
         Lifecycle::Services => ("services", "--did-service-lifecycle"),
         Lifecycle::SchnorrMethods => ("schnorr-methods", "--did-schnorr-method-lifecycle"),
+        Lifecycle::JwkMethods => ("jwk-methods", "--did-jwk-method-lifecycle"),
     };
     let final_state_file = format!("did-{scenario}-final-state.bin");
     let mut public_state = Vec::new();

@@ -1,0 +1,18 @@
+import CompactStandardLibrary;
+export enum Curve { X, Y }
+export struct Method { id: Opaque<"string">, curve: Curve }
+export ledger methods: Map<Opaque<"string">, Method>;
+export ledger count: Counter;
+circuit bump(): [] { count.increment(1); }
+export circuit put(method: Method): [] {
+  const value = disclose(method);
+  assert(value.curve == Curve.X, "curve");
+  methods.insert(value.id, value);
+  bump();
+}
+export circuit remove(id: Opaque<"string">): [] {
+  const key = disclose(id);
+  assert(methods.member(key), "missing");
+  methods.remove(key);
+  bump();
+}

@@ -81,10 +81,15 @@ fn service_and_arbitrary_nonempty_flat_string_products_record() {
 }
 
 #[test]
-fn empty_mixed_and_nested_map_values_remain_native_only() {
-    for name in ["empty", "mixed", "nested"] {
+fn empty_and_unsupported_mixed_map_values_remain_native_only() {
+    for name in ["empty", "mixed"] {
         assert!(!recorded(fixture(name), "put"), "{name}");
     }
+}
+
+#[test]
+fn nonempty_nested_string_product_records() {
+    assert!(recorded(fixture("nested"), "put"));
 }
 
 #[test]

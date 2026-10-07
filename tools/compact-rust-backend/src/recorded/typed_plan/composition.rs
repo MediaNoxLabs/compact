@@ -96,6 +96,25 @@ pub(super) fn flat_string_point_map(declaration: &LedgerFieldKind) -> bool {
     matches!(declaration, LedgerFieldKind::Map { key: Type::OpaqueString, value }
         if flat_string_point_product(value))
 }
+
+// Map mutation serializes the declared value. Reuse the generated CellValue
+// implementations for checked named products, including nested products and
+// enums, while excluding container and unreviewed scalar leaves. Key-only
+// membership outside the read-only Boolean helper keeps its older flat bound.
+fn checked_product_value(ty: &Type) -> bool {
+    match ty {
+        Type::Struct { fields, .. } => {
+            !fields.is_empty() && fields.iter().all(|field| checked_product_value(&field.ty))
+        }
+        Type::OpaqueString | Type::JubjubPoint | Type::Enum { .. } => true,
+        _ => false,
+    }
+}
+
+pub(super) fn checked_product_map(declaration: &LedgerFieldKind) -> bool {
+    matches!(declaration, LedgerFieldKind::Map { key: Type::OpaqueString, value }
+        if matches!(value, Type::Struct { .. }) && checked_product_value(value))
+}
 pub(super) fn slot_path(field: &LedgerField) -> bool {
     let path = field.physical_path();
     // The contract-level ledger validator owns physical layout/uniqueness.
@@ -110,7 +129,9 @@ struct Audit<'a> {
     active: HashSet<String>,
     calls: Calls<'a>,
     public: usize,
-    flat_product_map_writes: usize,
+    product_map_writes: usize,
+    nested_product_map_members: HashSet<(String, u8)>,
+    product_map_written_fields: HashSet<(String, u8)>,
     read_only_boolean_depth: usize,
 }
 impl Audit<'_> {
@@ -136,8 +157,8 @@ impl Audit<'_> {
                 value_type(ty) && fields.iter().all(|v| self.value(v, pure))
             }
             Expr::Equal { left, right } => self.value(left, pure) && self.value(right, pure),
-            // This profile only needs Field inequality in stateful guards.
-            // The shared typed leaf checks both actual operand types.
+            // This profile admits Field and declared Enum inequality in
+            // stateful guards. The shared typed leaf checks both operands.
             Expr::NotEqual { left, right } if !pure => {
                 self.value(left, false) && self.value(right, false)
             }
@@ -184,12 +205,21 @@ impl Audit<'_> {
                 self.value(value, false)
             }
             Expr::MapMember { field, index, key } if !pure => {
-                if !self.slot(field, *index).is_some_and(|slot| {
-                    string_key_map(&slot.declaration)
-                        && (self.read_only_boolean_depth > 0
-                            || flat_string_point_map(&slot.declaration))
-                }) {
+                let Some(slot) = self.slot(field, *index) else {
                     return false;
+                };
+                if !string_key_map(&slot.declaration)
+                    || !(self.read_only_boolean_depth > 0
+                        || flat_string_point_map(&slot.declaration)
+                        || checked_product_map(&slot.declaration))
+                {
+                    return false;
+                }
+                if self.read_only_boolean_depth == 0
+                    && !flat_string_point_map(&slot.declaration)
+                {
+                    self.nested_product_map_members
+                        .insert((field.clone(), *index));
                 }
                 self.public += 1;
                 self.value(key, false)
@@ -422,23 +452,27 @@ impl Audit<'_> {
             } => {
                 if !self
                     .slot(field, *index)
-                    .is_some_and(|slot| flat_string_point_map(&slot.declaration))
+                    .is_some_and(|slot| checked_product_map(&slot.declaration))
                 {
                     return false;
                 }
                 self.public += 1;
-                self.flat_product_map_writes += 1;
+                self.product_map_writes += 1;
+                self.product_map_written_fields
+                    .insert((field.clone(), *index));
                 self.value(key, false) && self.value(value, false)
             }
             StateAction::MapRemove { field, index, key } => {
                 if !self
                     .slot(field, *index)
-                    .is_some_and(|slot| flat_string_point_map(&slot.declaration))
+                    .is_some_and(|slot| checked_product_map(&slot.declaration))
                 {
                     return false;
                 }
                 self.public += 1;
-                self.flat_product_map_writes += 1;
+                self.product_map_writes += 1;
+                self.product_map_written_fields
+                    .insert((field.clone(), *index));
                 self.value(key, false)
             }
             StateAction::PureCall { name, arguments } => {
@@ -480,7 +514,9 @@ pub(super) fn lower<'a>(
         active: HashSet::from([circuit.name.clone()]),
         calls: HashMap::new(),
         public: 0,
-        flat_product_map_writes: 0,
+        product_map_writes: 0,
+        nested_product_map_members: HashSet::new(),
+        product_map_written_fields: HashSet::new(),
         read_only_boolean_depth: 0,
     };
     if !circuit.actions.iter().all(|a| audit.action(a))
@@ -494,7 +530,10 @@ pub(super) fn lower<'a>(
         // A read-only Boolean Map helper is part of this Map-mutation profile;
         // other existing collection profiles retain their prior recorder.
         || (audit.calls.values().any(|call| matches!(call, AuditedCall::ReadOnlyBoolean(_)))
-            && audit.flat_product_map_writes == 0)
+            && audit.product_map_writes == 0)
+        || !audit
+            .nested_product_map_members
+            .is_subset(&audit.product_map_written_fields)
     {
         return None;
     }
@@ -590,7 +629,7 @@ impl Plan<'_> {
         self.bind(value, Type::Field, steps)
     }
 
-    pub(super) fn composition_field_not_equal(
+    pub(super) fn composition_scalar_not_equal(
         &mut self,
         left: &Expr,
         right: &Expr,
@@ -599,7 +638,7 @@ impl Plan<'_> {
     ) -> Option<TypedValue> {
         let left = self.expression(left, scope, steps)?;
         let right = self.expression(right, scope, steps)?;
-        if left.ty != Type::Field || right.ty != Type::Field {
+        if left.ty != right.ty || !matches!(left.ty, Type::Field | Type::Enum { .. }) {
             return None;
         }
         let (left, right) = (left.value, right.value);

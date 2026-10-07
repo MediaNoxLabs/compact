@@ -1,0 +1,640 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "methods",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "map",
+        "key": {
+          "kind": "opaque_string"
+        },
+        "value": {
+          "kind": "struct",
+          "name": "Method",
+          "fields": [
+            {
+              "name": "id",
+              "ty": {
+                "kind": "opaque_string"
+              }
+            },
+            {
+              "name": "jwk",
+              "ty": {
+                "kind": "struct",
+                "name": "Jwk",
+                "fields": [
+                  {
+                    "name": "kty",
+                    "ty": {
+                      "kind": "enum",
+                      "name": "KeyKind",
+                      "variants": [
+                        "A",
+                        "B"
+                      ]
+                    }
+                  },
+                  {
+                    "name": "x",
+                    "ty": {
+                      "kind": "opaque_string"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "nested-enum-crud.compact",
+        "line": 5,
+        "column": 1
+      }
+    },
+    {
+      "id": "count",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "nested-enum-crud.compact",
+        "line": 6,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+    {
+      "name": "allowed",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "method",
+          "ty": {
+            "kind": "struct",
+            "name": "Method",
+            "fields": [
+              {
+                "name": "id",
+                "ty": {
+                  "kind": "opaque_string"
+                }
+              },
+              {
+                "name": "jwk",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Jwk",
+                  "fields": [
+                    {
+                      "name": "kty",
+                      "ty": {
+                        "kind": "enum",
+                        "name": "KeyKind",
+                        "variants": [
+                          "A",
+                          "B"
+                        ]
+                      }
+                    },
+                    {
+                      "name": "x",
+                      "ty": {
+                        "kind": "opaque_string"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "body": {
+        "kind": "sequence",
+        "steps": [
+          {
+            "kind": "assert",
+            "condition": {
+              "kind": "equal",
+              "left": {
+                "kind": "struct_field",
+                "value": {
+                  "kind": "struct_field",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "method"
+                  },
+                  "field": "jwk",
+                  "index": 1
+                },
+                "field": "kty",
+                "index": 0
+              },
+              "right": {
+                "kind": "enum_variant",
+                "ty": {
+                  "kind": "enum",
+                  "name": "KeyKind",
+                  "variants": [
+                    "A",
+                    "B"
+                  ]
+                },
+                "variant": "A"
+              }
+            },
+            "message": "kind"
+          }
+        ],
+        "value": {
+          "kind": "unit"
+        }
+      },
+      "source": {
+        "file": "nested-enum-crud.compact",
+        "line": 7,
+        "column": 1
+      }
+    }
+  ],
+  "stateful_circuits": [
+    {
+      "name": "bump",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_14",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "count",
+            "index": 1,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_14"
+            }
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "nested-enum-crud.compact",
+        "line": 8,
+        "column": 1
+      }
+    },
+    {
+      "name": "upsert",
+      "parameters": [
+        {
+          "name": "method",
+          "ty": {
+            "kind": "struct",
+            "name": "Method",
+            "fields": [
+              {
+                "name": "id",
+                "ty": {
+                  "kind": "opaque_string"
+                }
+              },
+              {
+                "name": "jwk",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Jwk",
+                  "fields": [
+                    {
+                      "name": "kty",
+                      "ty": {
+                        "kind": "enum",
+                        "name": "KeyKind",
+                        "variants": [
+                          "A",
+                          "B"
+                        ]
+                      }
+                    },
+                    {
+                      "name": "x",
+                      "ty": {
+                        "kind": "opaque_string"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "update",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "m",
+              "ty": {
+                "kind": "struct",
+                "name": "Method",
+                "fields": [
+                  {
+                    "name": "id",
+                    "ty": {
+                      "kind": "opaque_string"
+                    }
+                  },
+                  {
+                    "name": "jwk",
+                    "ty": {
+                      "kind": "struct",
+                      "name": "Jwk",
+                      "fields": [
+                        {
+                          "name": "kty",
+                          "ty": {
+                            "kind": "enum",
+                            "name": "KeyKind",
+                            "variants": [
+                              "A",
+                              "B"
+                            ]
+                          }
+                        },
+                        {
+                          "name": "x",
+                          "ty": {
+                            "kind": "opaque_string"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "value": {
+                "kind": "parameter",
+                "name": "method"
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "u",
+                "ty": {
+                  "kind": "boolean"
+                },
+                "value": {
+                  "kind": "parameter",
+                  "name": "update"
+                }
+              }
+            ],
+            "action": {
+              "kind": "sequence",
+              "actions": [
+                {
+                  "kind": "pure_call",
+                  "name": "allowed",
+                  "arguments": [
+                    {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "m"
+                      },
+                      "ty": {
+                        "kind": "struct",
+                        "name": "Method",
+                        "fields": [
+                          {
+                            "name": "id",
+                            "ty": {
+                              "kind": "opaque_string"
+                            }
+                          },
+                          {
+                            "name": "jwk",
+                            "ty": {
+                              "kind": "struct",
+                              "name": "Jwk",
+                              "fields": [
+                                {
+                                  "name": "kty",
+                                  "ty": {
+                                    "kind": "enum",
+                                    "name": "KeyKind",
+                                    "variants": [
+                                      "A",
+                                      "B"
+                                    ]
+                                  }
+                                },
+                                {
+                                  "name": "x",
+                                  "ty": {
+                                    "kind": "opaque_string"
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "if",
+                  "condition": {
+                    "kind": "parameter",
+                    "name": "u"
+                  },
+                  "then": {
+                    "kind": "sequence",
+                    "actions": [
+                      {
+                        "kind": "assert",
+                        "condition": {
+                          "kind": "let",
+                          "bindings": [
+                            {
+                              "name": "tmp_12",
+                              "ty": {
+                                "kind": "opaque_string"
+                              },
+                              "value": {
+                                "kind": "struct_field",
+                                "value": {
+                                  "kind": "parameter",
+                                  "name": "m"
+                                },
+                                "field": "id",
+                                "index": 0
+                              }
+                            }
+                          ],
+                          "body": {
+                            "kind": "map_member",
+                            "field": "methods",
+                            "index": 0,
+                            "key": {
+                              "kind": "parameter",
+                              "name": "tmp_12"
+                            }
+                          }
+                        },
+                        "message": "missing"
+                      },
+                      {
+                        "kind": "let",
+                        "bindings": [
+                          {
+                            "name": "tmp_11",
+                            "ty": {
+                              "kind": "opaque_string"
+                            },
+                            "value": {
+                              "kind": "struct_field",
+                              "value": {
+                                "kind": "parameter",
+                                "name": "m"
+                              },
+                              "field": "id",
+                              "index": 0
+                            }
+                          }
+                        ],
+                        "action": {
+                          "kind": "map_remove",
+                          "field": "methods",
+                          "index": 0,
+                          "key": {
+                            "kind": "parameter",
+                            "name": "tmp_11"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "otherwise": {
+                    "kind": "assert",
+                    "condition": {
+                      "kind": "if",
+                      "condition": {
+                        "kind": "let",
+                        "bindings": [
+                          {
+                            "name": "tmp_13",
+                            "ty": {
+                              "kind": "opaque_string"
+                            },
+                            "value": {
+                              "kind": "struct_field",
+                              "value": {
+                                "kind": "parameter",
+                                "name": "m"
+                              },
+                              "field": "id",
+                              "index": 0
+                            }
+                          }
+                        ],
+                        "body": {
+                          "kind": "map_member",
+                          "field": "methods",
+                          "index": 0,
+                          "key": {
+                            "kind": "parameter",
+                            "name": "tmp_13"
+                          }
+                        }
+                      },
+                      "then": {
+                        "kind": "boolean",
+                        "value": false
+                      },
+                      "otherwise": {
+                        "kind": "boolean",
+                        "value": true
+                      }
+                    },
+                    "message": "duplicate"
+                  }
+                },
+                {
+                  "kind": "let",
+                  "bindings": [
+                    {
+                      "name": "tmp_10",
+                      "ty": {
+                        "kind": "opaque_string"
+                      },
+                      "value": {
+                        "kind": "struct_field",
+                        "value": {
+                          "kind": "parameter",
+                          "name": "m"
+                        },
+                        "field": "id",
+                        "index": 0
+                      }
+                    }
+                  ],
+                  "action": {
+                    "kind": "map_insert",
+                    "field": "methods",
+                    "index": 0,
+                    "key": {
+                      "kind": "parameter",
+                      "name": "tmp_10"
+                    },
+                    "value": {
+                      "kind": "parameter",
+                      "name": "m"
+                    }
+                  }
+                },
+                {
+                  "kind": "circuit_call",
+                  "name": "bump",
+                  "arguments": [
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "nested-enum-crud.compact",
+        "line": 9,
+        "column": 1
+      }
+    },
+    {
+      "name": "remove",
+      "parameters": [
+        {
+          "name": "id",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "k",
+              "ty": {
+                "kind": "opaque_string"
+              },
+              "value": {
+                "kind": "parameter",
+                "name": "id"
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "assert",
+                "condition": {
+                  "kind": "map_member",
+                  "field": "methods",
+                  "index": 0,
+                  "key": {
+                    "kind": "parameter",
+                    "name": "k"
+                  }
+                },
+                "message": "missing"
+              },
+              {
+                "kind": "map_remove",
+                "field": "methods",
+                "index": 0,
+                "key": {
+                  "kind": "parameter",
+                  "name": "k"
+                }
+              },
+              {
+                "kind": "circuit_call",
+                "name": "bump",
+                "arguments": [
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "nested-enum-crud.compact",
+        "line": 22,
+        "column": 1
+      }
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+import CompactStandardLibrary;
+export enum KeyKind { A, B }
+export struct Jwk { kty: KeyKind, x: Opaque<"string"> }
+export struct Method { id: Opaque<"string">, jwk: Jwk }
+export ledger methods: Map<Opaque<"string">, Method>;
+export ledger count: Counter;
+circuit allowed(method: Method): [] { assert(method.jwk.kty == KeyKind.A, "kind"); }
+circuit bump(): [] { count.increment(1); }
+export circuit upsert(method: Method, update: Boolean): [] {
+  const m = disclose(method);
+  const u = disclose(update);
+  allowed(m);
+  if (u) {
+    assert(methods.member(m.id), "missing");
+    methods.remove(m.id);
+  } else {
+    assert(!methods.member(m.id), "duplicate");
+  }
+  methods.insert(m.id, m);
+  bump();
+}
+export circuit remove(id: Opaque<"string">): [] {
+  const k = disclose(id);
+  assert(methods.member(k), "missing");
+  methods.remove(k);
+  bump();
+}

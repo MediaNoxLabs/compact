@@ -1,0 +1,19 @@
+import CompactStandardLibrary;
+export enum Kind { A, B, C }
+export struct Leaf { curve: Kind, label: Opaque<"string">, point: JubjubPoint }
+export struct Container { nested: Leaf, id: Opaque<"string">, choice: Kind }
+export ledger entries: Map<Opaque<"string">, Container>;
+export ledger count: Counter;
+circuit bump(): [] { count.increment(1); }
+export circuit put(value: Container): [] {
+  const disclosed = disclose(value);
+  assert(disclosed.nested.curve != Kind.C, "curve");
+  entries.insert(disclosed.id, disclosed);
+  bump();
+}
+export circuit drop(id: Opaque<"string">): [] {
+  const key = disclose(id);
+  assert(entries.member(key), "missing");
+  entries.remove(key);
+  bump();
+}

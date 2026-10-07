@@ -83,14 +83,13 @@ fn renamed_three_and_four_field_scalar_products_record_without_name_or_arity_gat
 }
 
 #[test]
-fn nested_and_empty_map_mutation_remain_outside_scalar_product_domain() {
-    for source in [
-        include_str!("map-composition/nested_map.json"),
-        include_str!("map-composition/empty_map.json"),
-    ] {
-        let value: Value = serde_json::from_str(source).unwrap();
-        assert!(!recorded(value, "put"));
-    }
+fn nested_string_product_records_and_empty_product_remains_outside_domain() {
+    let nested: Value =
+        serde_json::from_str(include_str!("map-composition/nested_map.json")).unwrap();
+    assert!(recorded(nested, "put"));
+    let empty: Value =
+        serde_json::from_str(include_str!("map-composition/empty_map.json")).unwrap();
+    assert!(!recorded(empty, "put"));
 }
 
 #[test]
@@ -127,18 +126,28 @@ fn boolean_helper_rejects_hidden_witness_queries_and_effects() {
 
 #[test]
 fn nested_value_membership_is_bounded_to_an_audited_boolean_helper() {
-    let mut value = fixture();
-    let root = circuit(&mut value, "upsert");
-    let original = root["actions"][0].clone();
-    root["actions"] = json!([{
-        "kind":"let",
-        "bindings":[{"name":"hidden", "ty":{"kind":"boolean"}, "value":{
-            "kind":"map_member", "field":"nestedMethods", "index":1,
-            "key":{"kind":"struct_field", "value":{"kind":"parameter","name":"method"}, "field":"id", "index":0}
-        }}],
-        "action":original
-    }]);
-    assert!(!recorded(value, "upsert"));
+    for unselected in [false, true] {
+        let mut value = fixture();
+        let root = circuit(&mut value, "upsert");
+        let original = root["actions"][0].clone();
+        let hidden = json!({
+            "kind":"let",
+            "bindings":[{"name":"hidden", "ty":{"kind":"boolean"}, "value":{
+                "kind":"map_member", "field":"nestedMethods", "index":1,
+                "key":{"kind":"struct_field", "value":{"kind":"parameter","name":"method"}, "field":"id", "index":0}
+            }}],
+            "action":{"kind":"sequence","actions":[]}
+        });
+        root["actions"] = if unselected {
+            json!([{"kind":"if", "condition":{"kind":"boolean","value":false},
+                    "then":hidden,"otherwise":original}])
+        } else {
+            let mut hidden = hidden;
+            hidden["action"] = original;
+            json!([hidden])
+        };
+        assert!(!recorded(value, "upsert"), "unselected={unselected}");
+    }
 }
 
 #[test]

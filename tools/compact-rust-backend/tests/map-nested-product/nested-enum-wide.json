@@ -1,0 +1,445 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "entries",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "map",
+        "key": {
+          "kind": "opaque_string"
+        },
+        "value": {
+          "kind": "struct",
+          "name": "Container",
+          "fields": [
+            {
+              "name": "nested",
+              "ty": {
+                "kind": "struct",
+                "name": "Leaf",
+                "fields": [
+                  {
+                    "name": "curve",
+                    "ty": {
+                      "kind": "enum",
+                      "name": "Kind",
+                      "variants": [
+                        "A",
+                        "B",
+                        "C"
+                      ]
+                    }
+                  },
+                  {
+                    "name": "label",
+                    "ty": {
+                      "kind": "opaque_string"
+                    }
+                  },
+                  {
+                    "name": "point",
+                    "ty": {
+                      "kind": "jubjub_point"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "name": "id",
+              "ty": {
+                "kind": "opaque_string"
+              }
+            },
+            {
+              "name": "choice",
+              "ty": {
+                "kind": "enum",
+                "name": "Kind",
+                "variants": [
+                  "A",
+                  "B",
+                  "C"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "nested-enum-wide.compact",
+        "line": 5,
+        "column": 1
+      }
+    },
+    {
+      "id": "count",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "nested-enum-wide.compact",
+        "line": 6,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "bump",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_5",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "count",
+            "index": 1,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_5"
+            }
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "nested-enum-wide.compact",
+        "line": 7,
+        "column": 1
+      }
+    },
+    {
+      "name": "put",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "struct",
+            "name": "Container",
+            "fields": [
+              {
+                "name": "nested",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Leaf",
+                  "fields": [
+                    {
+                      "name": "curve",
+                      "ty": {
+                        "kind": "enum",
+                        "name": "Kind",
+                        "variants": [
+                          "A",
+                          "B",
+                          "C"
+                        ]
+                      }
+                    },
+                    {
+                      "name": "label",
+                      "ty": {
+                        "kind": "opaque_string"
+                      }
+                    },
+                    {
+                      "name": "point",
+                      "ty": {
+                        "kind": "jubjub_point"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "id",
+                "ty": {
+                  "kind": "opaque_string"
+                }
+              },
+              {
+                "name": "choice",
+                "ty": {
+                  "kind": "enum",
+                  "name": "Kind",
+                  "variants": [
+                    "A",
+                    "B",
+                    "C"
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "disclosed",
+              "ty": {
+                "kind": "struct",
+                "name": "Container",
+                "fields": [
+                  {
+                    "name": "nested",
+                    "ty": {
+                      "kind": "struct",
+                      "name": "Leaf",
+                      "fields": [
+                        {
+                          "name": "curve",
+                          "ty": {
+                            "kind": "enum",
+                            "name": "Kind",
+                            "variants": [
+                              "A",
+                              "B",
+                              "C"
+                            ]
+                          }
+                        },
+                        {
+                          "name": "label",
+                          "ty": {
+                            "kind": "opaque_string"
+                          }
+                        },
+                        {
+                          "name": "point",
+                          "ty": {
+                            "kind": "jubjub_point"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "id",
+                    "ty": {
+                      "kind": "opaque_string"
+                    }
+                  },
+                  {
+                    "name": "choice",
+                    "ty": {
+                      "kind": "enum",
+                      "name": "Kind",
+                      "variants": [
+                        "A",
+                        "B",
+                        "C"
+                      ]
+                    }
+                  }
+                ]
+              },
+              "value": {
+                "kind": "parameter",
+                "name": "value"
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "assert",
+                "condition": {
+                  "kind": "not_equal",
+                  "left": {
+                    "kind": "struct_field",
+                    "value": {
+                      "kind": "struct_field",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "disclosed"
+                      },
+                      "field": "nested",
+                      "index": 0
+                    },
+                    "field": "curve",
+                    "index": 0
+                  },
+                  "right": {
+                    "kind": "enum_variant",
+                    "ty": {
+                      "kind": "enum",
+                      "name": "Kind",
+                      "variants": [
+                        "A",
+                        "B",
+                        "C"
+                      ]
+                    },
+                    "variant": "C"
+                  }
+                },
+                "message": "curve"
+              },
+              {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "tmp_4",
+                    "ty": {
+                      "kind": "opaque_string"
+                    },
+                    "value": {
+                      "kind": "struct_field",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "disclosed"
+                      },
+                      "field": "id",
+                      "index": 1
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "map_insert",
+                  "field": "entries",
+                  "index": 0,
+                  "key": {
+                    "kind": "parameter",
+                    "name": "tmp_4"
+                  },
+                  "value": {
+                    "kind": "parameter",
+                    "name": "disclosed"
+                  }
+                }
+              },
+              {
+                "kind": "circuit_call",
+                "name": "bump",
+                "arguments": [
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "nested-enum-wide.compact",
+        "line": 8,
+        "column": 1
+      }
+    },
+    {
+      "name": "drop",
+      "parameters": [
+        {
+          "name": "id",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "key",
+              "ty": {
+                "kind": "opaque_string"
+              },
+              "value": {
+                "kind": "parameter",
+                "name": "id"
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "assert",
+                "condition": {
+                  "kind": "map_member",
+                  "field": "entries",
+                  "index": 0,
+                  "key": {
+                    "kind": "parameter",
+                    "name": "key"
+                  }
+                },
+                "message": "missing"
+              },
+              {
+                "kind": "map_remove",
+                "field": "entries",
+                "index": 0,
+                "key": {
+                  "kind": "parameter",
+                  "name": "key"
+                }
+              },
+              {
+                "kind": "circuit_call",
+                "name": "bump",
+                "arguments": [
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "nested-enum-wide.compact",
+        "line": 14,
+        "column": 1
+      }
+    }
+  ]
+}

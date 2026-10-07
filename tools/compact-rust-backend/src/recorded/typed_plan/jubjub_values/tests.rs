@@ -230,3 +230,87 @@ fn nested_jubjub_reduction_and_points_on_default_worker() {
         assert!(result.capabilities.circuits[0].recorded);
     }
 }
+
+#[test]
+fn point_profile_requires_a_write_and_a_declared_supported_shape() {
+    assert!(planned(&source()).is_some());
+    for case in [
+        "no_write",
+        "unit_return",
+        "parameter_type",
+        "missing_slot",
+        "cell_read",
+    ] {
+        let mut v = source();
+        match case {
+            "no_write" => {
+                v["stateful_circuits"][0]["actions"] = json!([]);
+                v["stateful_circuits"][0]["return_value"]["value"] =
+                    json!({"kind":"parameter","name":"point"});
+            }
+            "unit_return" => v["stateful_circuits"][0]["return_value"] = json!({"kind":"unit"}),
+            "parameter_type" => {
+                v["stateful_circuits"][0]["parameters"][1]["ty"] = json!({"kind":"boolean"})
+            }
+            "missing_slot" => v["ledger_fields"] = json!([]),
+            "cell_read" => assert!(first(
+                &mut v["stateful_circuits"][0]["actions"],
+                "cell_write",
+                &|x| {
+                    x["value"] = json!({"kind":"cell_read","field":"result","index":0});
+                }
+            )),
+            _ => unreachable!(),
+        }
+        assert!(planned(&v).is_none(), "{case}");
+    }
+}
+
+#[test]
+fn expression_local_shadowing_is_scoped_to_the_written_value() {
+    let expression = |name: &str| {
+        json!({
+            "kind":"let",
+            "bindings":[{"name":name,"ty":{"kind":"field"},"value":{
+                "kind":"jubjub_scalar_from_native","value":{"kind":"parameter","name":"scalar"}
+            }}],
+            "body":{"kind":"ec_mul_generator","scalar":{"kind":"parameter","name":name}}
+        })
+    };
+    let with_value = |value: Value| {
+        let mut v = source();
+        v["stateful_circuits"][0]["actions"] = json!([
+            {"kind":"cell_write","field":"result","index":0,"value":value}
+        ]);
+        v["stateful_circuits"][0]["return_value"]["value"] =
+            json!({"kind":"parameter","name":"point"});
+        v
+    };
+    let emitted = |plan: TypedPlan| {
+        let steps = plan.steps;
+        let result = plan.result;
+        quote::quote!(#(#steps)* #result).to_string()
+    };
+    let baseline = with_value(expression("local"));
+    assert_eq!(
+        emitted(planned(&baseline).unwrap()),
+        emitted(planned(&with_value(expression("scalar"))).unwrap())
+    );
+    let mut escaped = baseline.clone();
+    escaped["stateful_circuits"][0]["return_value"]["value"] =
+        json!({"kind":"parameter","name":"local"});
+    assert!(planned(&escaped).is_none());
+    let mut mistyped = baseline;
+    mistyped["stateful_circuits"][0]["actions"][0]["value"]["bindings"][0]["ty"] =
+        json!({"kind":"jubjub_point"});
+    assert!(planned(&mistyped).is_none());
+}
+
+#[test]
+fn point_result_annotation_does_not_override_the_actual_return_type() {
+    let mut v = source();
+    assert!(planned(&v).is_some());
+    v["stateful_circuits"][0]["return_value"]["value"] =
+        json!({"kind":"parameter","name":"scalar"});
+    assert!(planned(&v).is_none());
+}

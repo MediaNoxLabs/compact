@@ -2051,3 +2051,6 @@ fn render_crypto_operation(
             .map(|(rendered, ty)| (rendered, ty, false)),
     }
 }
+
+#[cfg(test)]
+mod tests;

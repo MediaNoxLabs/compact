@@ -1,0 +1,37 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import CompactStandardLibrary;
+export ledger padding_00: Field;
+export ledger padding_01: Field;
+export ledger padding_02: Field;
+export ledger padding_03: Field;
+export ledger padding_04: Field;
+export ledger padding_05: Field;
+export ledger padding_06: Field;
+export ledger padding_07: Field;
+export ledger padding_08: Field;
+export ledger padding_09: Field;
+export ledger padding_10: Field;
+export ledger padding_11: Field;
+export ledger padding_12: Field;
+export ledger padding_13: Field;
+export ledger padding_14: Field;
+export ledger padding_15: Field;
+export ledger pot: Set<QualifiedShieldedCoinInfo>;
+export circuit insert_coin(coin: ShieldedCoinInfo, recipient: Either<ZswapCoinPublicKey, ContractAddress>): [] {
+  pot.insertCoin(disclose(coin), disclose(recipient));
+}
+export circuit contains(coin: QualifiedShieldedCoinInfo): Boolean { return pot.member(disclose(coin)); }

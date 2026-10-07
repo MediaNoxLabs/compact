@@ -198,7 +198,7 @@ fn qualified_coin_set_checks_operand_before_commitment_lookup() {
     let mut query = empty_query_context();
     let coin = coin_info_from_compact(FixedBytes([1; 32]), FixedBytes([2; 32]), 3);
     let recipient = coin_recipient_from_compact(true, FixedBytes([3; 32]), FixedBytes([0; 32]));
-    for length in [16, 255, 256] {
+    for length in [7, 16, 255, 256] {
         assert!(
             matches!(qualified_coin_set_insert_program::<QualifiedCell, DefaultDB>(
             &query, &vec![0; length], coin, recipient.clone()),
@@ -208,18 +208,17 @@ fn qualified_coin_set_checks_operand_before_commitment_lookup() {
     let commitment = coin.commitment(&recipient);
     query.call_context.com_indices = query.call_context.com_indices.insert(commitment, 0);
     let program = qualified_coin_set_insert_program::<QualifiedCell, DefaultDB>(
-        &query, &[0; 15], coin, recipient,
+        &query, &[0; 6], coin, recipient,
     )
     .unwrap();
+    assert!(matches!(program[1], Op::Dup { n: 14 }));
+    assert_eq!(program[1].field_vec(), vec![Field::from(0x3e_u64)]);
     assert!(matches!(
         program.last(),
-        Some(Op::Ins {
-            cached: true,
-            n: 15
-        })
+        Some(Op::Ins { cached: true, n: 6 })
     ));
     assert_eq!(
         program.last().unwrap().field_vec(),
-        vec![Field::from(0xaf_u64)]
+        vec![Field::from(0xa6_u64)]
     );
 }

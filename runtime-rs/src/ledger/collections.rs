@@ -801,6 +801,12 @@ pub(crate) fn qualified_coin_set_insert_program<T: CellValue, D: DB>(
 ) -> Result<Vec<Op<ResultModeVerify, D>>, CompactError> {
     let insert_depth =
         super::checked_path_operand::<D>(path.len(), 0).map_err(super::query_rejected)?;
+    // The initial stack is [context, effects, state]. Idx retains two entries
+    // per path key, so the context moves to depth 2 * path.len() + 2. The
+    // already checked insertion depth is at most 15: doubling cannot overflow
+    // usize, and the shared check enforces Dup's same four-bit operand bound.
+    let context_depth = super::checked_path_operand::<D>(usize::from(insert_depth) * 2, 2)
+        .map_err(super::query_rejected)?;
     let commitment = super::qualified_coin_commitment::<T, D>(context, &coin, &recipient)?;
     Ok(vec![
         Op::Idx {
@@ -808,7 +814,7 @@ pub(crate) fn qualified_coin_set_insert_program<T: CellValue, D: DB>(
             push_path: true,
             path: path_keys(path).into(),
         },
-        Op::Dup { n: 4 },
+        Op::Dup { n: context_depth },
         Op::Push {
             storage: false,
             value: StateValue::from(AlignedValue::from(commitment)),

@@ -2658,6 +2658,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/witness_effect_order.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "equal_result",
+    "signature": "export circuit equal_result(value: Field): Field",
+    "visibility": "export"
+  },
+  {
     "source": "tools/compact-rust-backend/tests/map-point-composition/point_nested.compact",
     "module_path": [],
     "kind": "circuit",
@@ -2751,6 +2759,22 @@
     "kind": "circuit",
     "name": "flow",
     "signature": "export circuit flow(input: QualifiedShieldedCoinInfo, coin: ShieldedCoinInfo, recipient: Either<ZswapCoinPublicKey, ContractAddress>, selected: Boolean): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/vector_widen.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "fold_mapped_unsigned",
+    "signature": "export pure circuit fold_mapped_unsigned(values: Vector<2, Uint<8>>): Uint<16>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/vector_widen.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "fold_unsigned",
+    "signature": "export pure circuit fold_unsigned(values: Vector<2, Uint<8>>): Uint<16>",
     "visibility": "export"
   },
   {
@@ -3682,6 +3706,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/vector_widen.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "last_unsigned",
+    "signature": "pure circuit last_unsigned(accumulator: Uint<16>, item: Uint<16>): Uint<16>",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/uint_compare.compact",
     "module_path": [],
     "kind": "circuit",
@@ -3818,11 +3850,51 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/vector_widen.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "map_empty_booleans",
+    "signature": "export pure circuit map_empty_booleans(values: Vector<2, Boolean>): Vector<2, Boolean>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/vector_widen.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "map_empty_fields",
+    "signature": "export pure circuit map_empty_fields(values: Vector<2, Field>): Vector<2, Field>",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/nested_collection_query_write.compact",
     "module_path": [],
     "kind": "circuit",
     "name": "map_empty_flag",
     "signature": "export circuit map_empty_flag(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_effect_order.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "map_lookup",
+    "signature": "export circuit map_lookup(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_effect_order.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "map_member",
+    "signature": "export circuit map_member(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/vector_widen.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "map_unsigned",
+    "signature": "export pure circuit map_unsigned(values: Vector<2, Uint<8>>): Vector<2, Uint<16>>",
     "visibility": "export"
   },
   {
@@ -6250,6 +6322,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/witness_effect_order.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "set_member",
+    "signature": "export circuit set_member(): Boolean",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/vector_tuple_cell.compact",
     "module_path": [],
     "kind": "circuit",
@@ -7674,6 +7754,54 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/vector_widen.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "widen_empty_unsigned",
+    "signature": "export pure circuit widen_empty_unsigned(values: Vector<0, Uint<8>>): Vector<0, Uint<16>>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/vector_widen.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "widen_unsigned",
+    "signature": "export pure circuit widen_unsigned(values: Vector<2, Uint<8>>): Vector<2, Uint<16>>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/vector_widen.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "widen_unsigned_nested",
+    "signature": "export pure circuit widen_unsigned_nested(values: Vector<2, Vector<2, Uint<8>>>): Vector<2, Vector<2, Uint<16>>>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/vector_widen.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "widen_unsigned_to_wide",
+    "signature": "export pure circuit widen_unsigned_to_wide(values: Vector<2, Uint<8>>): Vector<2, Uint<129>>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/vector_widen.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "widen_unsigned_tuple",
+    "signature": "export pure circuit widen_unsigned_tuple(values: Vector<2, [Uint<8>, Uint<16>]>): Vector<2, [Uint<16>, Uint<32>]>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/vector_widen.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "widen_wide_unsigned",
+    "signature": "export pure circuit widen_wide_unsigned(values: Vector<2, Uint<129>>): Vector<2, Uint<248>>",
+    "visibility": "export"
+  },
+  {
     "source": "test-center/test-contracts/coracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -8179,6 +8307,14 @@
   },
   {
     "source": "examples/rust_backend/wide_field_literal.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witness_effect_order.compact",
     "module_path": [],
     "kind": "constructor",
     "name": "constructor",
@@ -8705,6 +8841,14 @@
     "visibility": "internal"
   },
   {
+    "source": "examples/rust_backend/witness_effect_order.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "gate",
+    "signature": "witness gate(): Boolean",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/witness_ledger_map.compact",
     "module_path": [],
     "kind": "witness",
@@ -8766,6 +8910,14 @@
     "kind": "witness",
     "name": "inspect_tags",
     "signature": "witness inspect_tags(): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witness_effect_order.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "key",
+    "signature": "witness key(): Field",
     "visibility": "internal"
   },
   {

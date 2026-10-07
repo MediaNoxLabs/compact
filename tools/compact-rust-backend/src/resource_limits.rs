@@ -249,3 +249,6 @@ mod tests;
 
 #[cfg(test)]
 mod pure_cycles;
+
+#[cfg(test)]
+mod seeded_graph_tests;

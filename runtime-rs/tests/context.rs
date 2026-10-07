@@ -35,6 +35,7 @@ fn circuit_context_can_be_constructed() {
         current_zswap_local_state: ZswapLocalState::default(),
         cost_model: onchain_vm::cost_model::INITIAL_COST_MODEL,
         gas_limit: None,
+        call_proof_data_trace: CallProofDataTrace::new(),
     };
     let _ = ctx.cost_model;
 }
@@ -62,6 +63,7 @@ fn circuit_results_can_be_constructed() {
         current_zswap_local_state: ZswapLocalState::default(),
         cost_model: INITIAL_COST_MODEL,
         gas_limit: None,
+        call_proof_data_trace: CallProofDataTrace::new(),
     };
     let _: CircuitResults<(), ()> = CircuitResults {
         result: (),
@@ -72,9 +74,20 @@ fn circuit_results_can_be_constructed() {
 
 #[test]
 fn constructor_result_can_be_constructed() {
+    let qctx = QueryContext::new(
+        ChargedState::new(StateValue::Null),
+        ContractAddress::default(),
+    );
     let _: ConstructorResult<()> = ConstructorResult {
         current_contract_state: ChargedState::new(StateValue::Null),
         current_private_state: (),
         current_zswap_local_state: ZswapLocalState::default(),
+        constructor_proof_data: ConstructorProofData::new(
+            "constructor",
+            qctx.clone(),
+            qctx,
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[]))
+                .finalize(aligned_value_from_parts(&[])),
+        ),
     };
 }

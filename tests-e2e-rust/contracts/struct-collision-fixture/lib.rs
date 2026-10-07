@@ -29,7 +29,7 @@
 use midnight_compact_runtime::*;
 use std::marker::PhantomData;
 
-midnight_compact_runtime::check_runtime_version!("0.16.100");
+midnight_compact_runtime::check_runtime_version!("0.16.102");
 
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct Rec_1 {
@@ -348,6 +348,10 @@ where
         let sv = new_array(vec![new_cell(Fr::default()), new_cell(Fr::default())]);
         let state = ChargedState::new(sv);
         let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());
+        let __compact_initial_query_context = qctx.clone();
+        let __compact_constructor_id = "constructor";
+        let mut __compact_proof_data =
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[]));
         let tmp = Fr::from(0u64);
         let tmp_0 = Fr::from(0u64);
         let ops = OpProgramVerify::<DefaultDB>::new()
@@ -359,12 +363,25 @@ where
             .ins(false, 1)
             .build();
 
-        let results = query_for_verify(&qctx, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?;
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
+            &qctx,
+            &ops,
+            ctx.gas_limit.clone(),
+            &ctx.cost_model,
+        )?;
+        let __compact_constructor_proof_data = ConstructorProofData::new(
+            __compact_constructor_id,
+            __compact_initial_query_context,
+            results.context.clone(),
+            __compact_proof_data.finalize(aligned_value_from_parts(&[])),
+        );
 
         Ok(ConstructorResult {
             current_contract_state: results.context.state,
             current_private_state: ctx.initial_private_state,
             current_zswap_local_state: ctx.empty_zswap_local_state,
+            constructor_proof_data: __compact_constructor_proof_data,
         })
     }
 
@@ -373,6 +390,11 @@ where
         ctx: CircuitContext<PS>,
         x: Fr,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "run_alpha";
+        let mut __compact_proof_data = PartialProofData::<DefaultDB>::new(
+            aligned_value_from_parts(&[proof_aligned_value(&x)]),
+        );
         let r = pure_circuits::make_alpha(x)?;
         let tmp = r.alpha.clone();
         let ops = OpProgramVerify::<DefaultDB>::new()
@@ -381,7 +403,8 @@ where
             .ins(false, 1)
             .build();
 
-        let results = query_for_verify(
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
             &ctx.current_query_context,
             &ops,
             ctx.gas_limit.clone(),
@@ -393,7 +416,13 @@ where
             context: CircuitContext {
                 current_query_context: results.context,
                 ..ctx
-            },
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
             gas_cost: results.gas_cost,
         })
     }
@@ -403,6 +432,11 @@ where
         ctx: CircuitContext<PS>,
         y: Fr,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "run_beta";
+        let mut __compact_proof_data = PartialProofData::<DefaultDB>::new(
+            aligned_value_from_parts(&[proof_aligned_value(&y)]),
+        );
         let r = pure_circuits::make_beta(y)?;
         let tmp = r.beta.clone();
         let ops = OpProgramVerify::<DefaultDB>::new()
@@ -411,7 +445,8 @@ where
             .ins(false, 1)
             .build();
 
-        let results = query_for_verify(
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
             &ctx.current_query_context,
             &ops,
             ctx.gas_limit.clone(),
@@ -423,7 +458,13 @@ where
             context: CircuitContext {
                 current_query_context: results.context,
                 ..ctx
-            },
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
             gas_cost: results.gas_cost,
         })
     }

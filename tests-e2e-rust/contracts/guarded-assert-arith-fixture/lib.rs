@@ -29,7 +29,7 @@
 use midnight_compact_runtime::*;
 use std::marker::PhantomData;
 
-midnight_compact_runtime::check_runtime_version!("0.16.100");
+midnight_compact_runtime::check_runtime_version!("0.16.102");
 
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct StatusProof {
@@ -257,10 +257,21 @@ where
         let sv = new_array(vec![new_cell(0u64)]);
         let state = ChargedState::new(sv);
         let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());
+        let __compact_initial_query_context = qctx.clone();
+        let __compact_constructor_id = "constructor";
+        let mut __compact_proof_data =
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[]));
+        let __compact_constructor_proof_data = ConstructorProofData::new(
+            __compact_constructor_id,
+            __compact_initial_query_context,
+            qctx.clone(),
+            __compact_proof_data.finalize(aligned_value_from_parts(&[])),
+        );
         Ok(ConstructorResult {
             current_contract_state: qctx.state,
             current_private_state: ctx.initial_private_state,
             current_zswap_local_state: ctx.empty_zswap_local_state,
+            constructor_proof_data: __compact_constructor_proof_data,
         })
     }
 
@@ -271,6 +282,14 @@ where
         attestation: Attestation,
         current_time: u64,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "record_fresh_enough";
+        let mut __compact_proof_data =
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[
+                proof_aligned_value(&policy),
+                proof_aligned_value(&attestation),
+                proof_aligned_value(&current_time),
+            ]));
         let _ =
             pure_circuits::assert_fresh_enough(policy.clone(), attestation.clone(), current_time)?;
         let tmp = 1u16;
@@ -280,7 +299,8 @@ where
             .ins(true, 1)
             .build();
 
-        let results = query_for_verify(
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
             &ctx.current_query_context,
             &ops,
             ctx.gas_limit.clone(),
@@ -292,7 +312,13 @@ where
             context: CircuitContext {
                 current_query_context: results.context,
                 ..ctx
-            },
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
             gas_cost: results.gas_cost,
         })
     }

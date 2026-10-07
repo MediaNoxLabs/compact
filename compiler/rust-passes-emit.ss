@@ -142,7 +142,18 @@
                   ;; named `ContractAddress` does not
                   ;; shadow the upstream coin-structure type required by
                   ;; QueryContext::new.
-                  (out "        let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());\n"))]
+                  (out "        let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());\n")
+                  (out "        let __compact_initial_query_context = qctx.clone();\n")
+                  (out "        let __compact_constructor_id = \"constructor\";\n")
+                  (out "        let mut __compact_proof_data = PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[")
+                  (let loop ([args ctor-arg*] [first? #t])
+                    (unless (null? args)
+                      (nanopass-case (Ltypescript Argument) (car args)
+                        [(,var-name ,type)
+                         (unless first? (out ", "))
+                         (out (proof-value-rust type (camel->snake (id-sym var-name))))])
+                      (loop (cdr args) #f)))
+                  (out "]));\n"))]
                ;; J2: emit the constructor body if we have one and its shape
                ;; matches. Fall back to the K1-only return otherwise (counter has
                ;; no constructor body, so it lands here naturally).
@@ -215,10 +226,12 @@
               "no walker shape matched the constructor body; ~a"
               "emitting the default scaffold here would silently discard every constructor write"))
           (unless emitted?
+            (emit-constructor-proof-data-local "qctx")
             (out "        Ok(ConstructorResult {\n")
             (out "            current_contract_state: qctx.state,\n")
             (out "            current_private_state: ctx.initial_private_state,\n")
             (out "            current_zswap_local_state: ctx.empty_zswap_local_state,\n")
+            (out "            constructor_proof_data: __compact_constructor_proof_data,\n")
             (out "        })\n")))
         (out "    }\n\n"))
 
@@ -234,6 +247,21 @@
                             (camel->snake (id-sym var-name))
                             (type-rust type)))]))
           arg*))
+
+
+      ;; emit-proof-data-preamble: initialise per-wrapper proof-data buffers.
+      (define (emit-proof-data-preamble function-name arg*)
+        (out "        let __compact_initial_query_context = ctx.current_query_context.clone();\n")
+        (out (format "        let __compact_circuit_id = ~s;\n" (format "~a" (id->rust-name function-name))))
+        (out "        let mut __compact_proof_data = PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[")
+        (let loop ([args arg*] [first? #t])
+          (unless (null? args)
+            (nanopass-case (Ltypescript Argument) (car args)
+              [(,var-name ,type)
+               (unless first? (out ", "))
+               (out (proof-value-rust type (camel->snake (id-sym var-name))))])
+            (loop (cdr args) #f)))
+        (out "]));\n"))
 
       ;; unit-type?: returns #t if a Type IR node is the empty tuple `()`
       ;; (Compact's `Void` / Ltypescript `(ttuple src)` with no element
@@ -1333,7 +1361,7 @@
                         (for-each out lines)
                         (out "            .build();\n")
                         (out "\n")
-                        (out "        let results = query_for_verify(\n")
+                        (out "        let results = recorded_query_for_verify(&mut __compact_proof_data,\n")
                         (out "            &ctx.current_query_context,\n")
                         (out "            &ops,\n")
                         (out "            ctx.gas_limit.clone(),\n")
@@ -1345,7 +1373,12 @@
                         (out "            context: CircuitContext {\n")
                         (out "                current_query_context: results.context,\n")
                         (out "                ..ctx\n")
-                        (out "            },\n")
+                        (out "            }.with_finalized_call_proof_data(\n")
+            (out "                __compact_circuit_id,\n")
+            (out "                __compact_initial_query_context,\n")
+            (out "                __compact_proof_data,\n")
+            (out "                aligned_value_from_parts(&[]),\n")
+            (out "            ),\n")
                         (out "            gas_cost: results.gas_cost,\n")
                         (out "        })\n")
                         #t]))]))])]))
@@ -1391,7 +1424,12 @@
              (out "        };\n")
              (out "        Ok(CircuitResults {\n")
              (out "            result,\n")
-             (out "            context: ctx,\n")
+             (out "            context: ctx.with_finalized_call_proof_data(\n")
+              (out "                __compact_circuit_id,\n")
+              (out "                __compact_initial_query_context,\n")
+              (out "                __compact_proof_data,\n")
+              (out (format "                ~a,\n" (proof-value-rust return-type "result")))
+              (out "            ),\n")
              (out "            gas_cost: midnight_compact_runtime::RunningCost::default(),\n")
              (out "        })\n")
              #t])))
@@ -1440,7 +1478,12 @@
              (out (format "        let result = ~a;\n" else-str))
              (out "        Ok(CircuitResults {\n")
              (out "            result,\n")
-             (out "            context: ctx,\n")
+             (out "            context: ctx.with_finalized_call_proof_data(\n")
+              (out "                __compact_circuit_id,\n")
+              (out "                __compact_initial_query_context,\n")
+              (out "                __compact_proof_data,\n")
+              (out (format "                ~a,\n" (proof-value-rust return-type "result")))
+              (out "            ),\n")
              (out "            gas_cost: midnight_compact_runtime::RunningCost::default(),\n")
              (out "        })\n")
              #t]
@@ -1463,7 +1506,12 @@
                   (loop (cdr xs) #f)]))
              (out "        Ok(CircuitResults {\n")
              (out "            result,\n")
-             (out "            context: ctx,\n")
+             (out "            context: ctx.with_finalized_call_proof_data(\n")
+              (out "                __compact_circuit_id,\n")
+              (out "                __compact_initial_query_context,\n")
+              (out "                __compact_proof_data,\n")
+              (out (format "                ~a,\n" (proof-value-rust return-type "result")))
+              (out "            ),\n")
              (out "            gas_cost: midnight_compact_runtime::RunningCost::default(),\n")
              (out "        })\n")
              #t])))
@@ -1566,32 +1614,63 @@
                                  "ctx.empty_zswap_local_state.clone()"
                                  "_zswap")])
               (ctor-zswap-threaded? #t)
-              (list
-                (format "        let ~a = CircuitContext {\n" cctx)
-                (format "            current_private_state: ~a,\n" priv)
-                "            current_query_context: qctx,\n"
-                (format "            current_zswap_local_state: ~a,\n" zswap-in)
-                "            cost_model: ctx.cost_model.clone(),\n"
-                "            gas_limit: ctx.gas_limit.clone(),\n"
-                "        };\n"
-                (format "        let ~a = ~a(~a~a)?;\n" cr-name target cctx arg-tail)
-                (format "        let qctx = ~a.context.current_query_context;\n" cr-name)
-                (format "        let current_private_state = ~a.context.current_private_state;\n"
-                        cr-name)
-                (format "        let _zswap = ~a.context.current_zswap_local_state;\n"
-                        cr-name)))
+              (let ([checkpoint (format "_proof_trace_checkpoint_~a" step)]
+                    [nested-ctx (format "_nested_ctx_~a" step)])
+                (list
+                  (format "        let ~a = CircuitContext {\n" cctx)
+                  (format "            current_private_state: ~a,\n" priv)
+                  "            current_query_context: qctx,\n"
+                  (format "            current_zswap_local_state: ~a,\n" zswap-in)
+                  "            cost_model: ctx.cost_model.clone(),\n"
+                  "            gas_limit: ctx.gas_limit.clone(),\n"
+                  "            call_proof_data_trace: CallProofDataTrace::new(),\n"
+                  "        };\n"
+                  (format "        let ~a = ~a.call_proof_data_trace.len();\n"
+                          checkpoint cctx)
+                  (format "        let ~a = ~a(~a~a)?;\n" cr-name target cctx arg-tail)
+                  (format "        let ~a = ~a.context.with_folded_nested_call_proof_data(\n"
+                          nested-ctx cr-name)
+                  (format "            ~a,\n" checkpoint)
+                  "            __compact_initial_query_context.address,\n"
+                  "            &mut __compact_proof_data,\n"
+                  "        )?;\n"
+                  (format "        let qctx = ~a.current_query_context;\n" nested-ctx)
+                  (format "        let current_private_state = ~a.current_private_state;\n"
+                          nested-ctx)
+                  (format "        let _zswap = ~a.current_zswap_local_state;\n"
+                          nested-ctx))))
             ;; 'circuit mode: ctx is a CircuitContext; hand it straight to the
-            ;; callee and rebind. A27: when the body accumulates gas, add the
-            ;; callee's cost so a pre-terminal helper (assert / recordUpdate)
-            ;; does not drop its gas from the final CircuitResults.
-            (if (circuit-gas-acc?)
-                (list
-                  (format "        let ~a = ~a(ctx~a)?;\n" cr-name target arg-tail)
-                  (format "        let ctx = ~a.context;\n" cr-name)
-                  (format "        __gas_acc += ~a.gas_cost.clone();\n" cr-name))
-                (list
-                  (format "        let ~a = ~a(ctx~a)?;\n" cr-name target arg-tail)
-                  (format "        let ctx = ~a.context;\n" cr-name)))))
+            ;; callee, fold the callee's transcript at this exact source-order
+            ;; position, and rebind. A27: when the body accumulates gas, add
+            ;; the callee's cost so a pre-terminal helper (assert /
+            ;; recordUpdate) does not drop its gas from CircuitResults.
+            (let* ([checkpoint (format "_proof_trace_checkpoint_~a" step)]
+                   [before-call
+                    (if witness-emitted?
+                        (list "        let ctx = CircuitContext { current_private_state, ..ctx };\n")
+                        '())]
+                   [after-call
+                    (if witness-emitted?
+                        (list "        let current_private_state = ctx.current_private_state.clone();\n")
+                        '())]
+                   [call-lines
+                    (list
+                      (format "        let ~a = ctx.call_proof_data_trace.len();\n" checkpoint)
+                      (format "        let ~a = ~a(ctx~a)?;\n" cr-name target arg-tail)
+                      (format "        let ctx = ~a.context.with_folded_nested_call_proof_data(\n"
+                              cr-name)
+                      (format "            ~a,\n" checkpoint)
+                      "            __compact_initial_query_context.address,\n"
+                      "            &mut __compact_proof_data,\n"
+                      "        )?;\n")])
+              (append before-call
+                      (append call-lines
+                              (append after-call
+                                      (if (circuit-gas-acc?)
+                                          (list
+                                            (format "        __gas_acc += ~a.gas_cost.clone();\n"
+                                                    cr-name))
+                                          '())))))))
 
       ;; cond-rust: render a boolean condition expression. Like
       ;; ctor-expr-rust but for `(call ...)` of an impure circuit
@@ -1674,6 +1753,7 @@
                           [current-value-types (make-eq-hashtable)]
                           [current-witness-id-ht witness-id-ht]
                           [current-circuit-id-ht circuit-id-ht])
+           (emit-proof-data-preamble function-name arg*)
            (let ([emitted?
                   (or
                     ;; I3b/4: single if-expression body returning non-unit.
@@ -2531,7 +2611,8 @@
             idx-lines
             "                .popeq(true)\n"
             "                .build();\n"
-            "            let _gather_results = query_for_read(\n"
+            "            let _gather_results = recorded_query_for_read(\n"
+                          "                &mut __compact_proof_data,\n"
             "                " (current-qctx-ref) ",\n"
             "                &_gather_ops,\n"
             "                None,\n"
@@ -2617,7 +2698,8 @@
                            idx-lines
                            "                .popeq(true)\n"
                            "                .build();\n"
-                           "            let _gather_results = query_for_read(\n"
+                           "            let _gather_results = recorded_query_for_read(\n"
+                          "                &mut __compact_proof_data,\n"
                            "                " (current-qctx-ref) ",\n"
                            "                &_gather_ops,\n"
                            "                None,\n"
@@ -2673,7 +2755,8 @@
                           "            let _gather_ops = OpProgramGather::<DefaultDB>::new()\n"
                           (apply string-append lines)
                           "                .build();\n"
-                          "            let _gather_results = query_for_read(\n"
+                          "            let _gather_results = recorded_query_for_read(\n"
+                          "                &mut __compact_proof_data,\n"
                           "                " (current-qctx-ref) ",\n"
                           "                &_gather_ops,\n"
                           "                None,\n"

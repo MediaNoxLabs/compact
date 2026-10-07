@@ -13,7 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::{ChargedState, CircuitContext, DefaultDB, RunningCost, ZswapLocalState, DB};
+use crate::{
+    ChargedState, CircuitContext, ConstructorProofData, DefaultDB, RunningCost, ZswapLocalState, DB,
+};
 
 /// Return of a provable / impure circuit. Mirrors the TS
 /// `CircuitResults<PS, R>` from @midnight-ntwrk/compact-runtime.
@@ -36,4 +38,5 @@ where
     pub current_contract_state: ChargedState<D>,
     pub current_private_state: PS,
     pub current_zswap_local_state: ZswapLocalState<D>,
+    pub constructor_proof_data: ConstructorProofData<D>,
 }

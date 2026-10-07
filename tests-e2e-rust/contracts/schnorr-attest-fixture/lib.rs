@@ -29,7 +29,7 @@
 use midnight_compact_runtime::*;
 use std::marker::PhantomData;
 
-midnight_compact_runtime::check_runtime_version!("0.16.100");
+midnight_compact_runtime::check_runtime_version!("0.16.102");
 
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct SchnorrHashInput {
@@ -340,9 +340,14 @@ where
         ]);
         let state = ChargedState::new(sv);
         let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());
+        let __compact_initial_query_context = qctx.clone();
+        let __compact_constructor_id = "constructor";
+        let mut __compact_proof_data =
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[]));
         let _witness_ctx_0 =
             WitnessContext::new(ledger(&qctx.state), ctx.initial_private_state, &qctx);
         let (current_private_state, tmp) = self.witnesses.local_attestor_key(&_witness_ctx_0);
+        __compact_proof_data.push_private_output(proof_aligned_value(&tmp));
         let ops = OpProgramVerify::<DefaultDB>::new()
             .push(false, new_cell(2u8))
             .push(true, new_cell(true))
@@ -352,12 +357,25 @@ where
             .ins(false, 1)
             .build();
 
-        let results = query_for_verify(&qctx, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?;
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
+            &qctx,
+            &ops,
+            ctx.gas_limit.clone(),
+            &ctx.cost_model,
+        )?;
+        let __compact_constructor_proof_data = ConstructorProofData::new(
+            __compact_constructor_id,
+            __compact_initial_query_context,
+            results.context.clone(),
+            __compact_proof_data.finalize(aligned_value_from_parts(&[])),
+        );
 
         Ok(ConstructorResult {
             current_contract_state: results.context.state,
             current_private_state,
             current_zswap_local_state: ctx.empty_zswap_local_state,
+            constructor_proof_data: __compact_constructor_proof_data,
         })
     }
 
@@ -368,18 +386,32 @@ where
         signature: midnight_compact_runtime::SchnorrSignature,
         pk: JubjubPoint,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "schnorr_verify_digest";
+        let mut __compact_proof_data =
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[
+                proof_aligned_array(&digest),
+                proof_aligned_value(&signature),
+                proof_aligned_value(&pk),
+            ]));
         let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
+        let _proof_trace_checkpoint_1 = ctx.call_proof_data_trace.len();
         let _cr_1 = midnight_compact_runtime::schnorr_verify_jubjub(
             ctx,
             digest,
             signature.clone(),
             pk.clone(),
         )?;
-        let ctx = _cr_1.context;
+        let ctx = _cr_1.context.with_folded_nested_call_proof_data(
+            _proof_trace_checkpoint_1,
+            __compact_initial_query_context.address,
+            &mut __compact_proof_data,
+        )?;
         __gas_acc += _cr_1.gas_cost.clone();
         let ops = OpProgramVerify::<DefaultDB>::new().build();
 
-        let results = query_for_verify(
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
             &ctx.current_query_context,
             &ops,
             ctx.gas_limit.clone(),
@@ -391,7 +423,13 @@ where
             context: CircuitContext {
                 current_query_context: results.context,
                 ..ctx
-            },
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
             gas_cost: __gas_acc + results.gas_cost,
         })
     }
@@ -402,6 +440,13 @@ where
         digest: [Fr; 4],
         signature: midnight_compact_runtime::SchnorrSignature,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "verify_attestation";
+        let mut __compact_proof_data =
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[
+                proof_aligned_array(&digest),
+                proof_aligned_value(&signature),
+            ]));
         let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
         compact_assert!(
             {
@@ -410,7 +455,8 @@ where
                     .idx_at_index(2u8, false)
                     .popeq(false)
                     .build();
-                let _gather_results = query_for_read(
+                let _gather_results = recorded_query_for_read(
+                    &mut __compact_proof_data,
                     &ctx.current_query_context,
                     &_gather_ops,
                     None,
@@ -439,7 +485,8 @@ where
                 .idx_at_index(0u8, false)
                 .popeq(false)
                 .build();
-            let _gather_results = query_for_read(
+            let _gather_results = recorded_query_for_read(
+                &mut __compact_proof_data,
                 &ctx.current_query_context,
                 &_gather_ops,
                 None,
@@ -458,12 +505,18 @@ where
             };
             midnight_compact_runtime::std_lib::decode_jubjub_point(_av)?
         };
+        let _proof_trace_checkpoint_2 = ctx.call_proof_data_trace.len();
         let _cr_2 = self.schnorr_verify_digest(ctx, digest, signature.clone(), _carg_2_2)?;
-        let ctx = _cr_2.context;
+        let ctx = _cr_2.context.with_folded_nested_call_proof_data(
+            _proof_trace_checkpoint_2,
+            __compact_initial_query_context.address,
+            &mut __compact_proof_data,
+        )?;
         __gas_acc += _cr_2.gas_cost.clone();
         let ops = OpProgramVerify::<DefaultDB>::new().build();
 
-        let results = query_for_verify(
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
             &ctx.current_query_context,
             &ops,
             ctx.gas_limit.clone(),
@@ -475,7 +528,13 @@ where
             context: CircuitContext {
                 current_query_context: results.context,
                 ..ctx
-            },
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
             gas_cost: __gas_acc + results.gas_cost,
         })
     }
@@ -486,6 +545,13 @@ where
         digest: [Fr; 4],
         signature: midnight_compact_runtime::SchnorrSignature,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "accept_attestation";
+        let mut __compact_proof_data =
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[
+                proof_aligned_array(&digest),
+                proof_aligned_value(&signature),
+            ]));
         let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
         compact_assert!(
             {
@@ -494,7 +560,8 @@ where
                     .idx_at_index(2u8, false)
                     .popeq(false)
                     .build();
-                let _gather_results = query_for_read(
+                let _gather_results = recorded_query_for_read(
+                    &mut __compact_proof_data,
                     &ctx.current_query_context,
                     &_gather_ops,
                     None,
@@ -523,7 +590,8 @@ where
                 .idx_at_index(0u8, false)
                 .popeq(false)
                 .build();
-            let _gather_results = query_for_read(
+            let _gather_results = recorded_query_for_read(
+                &mut __compact_proof_data,
                 &ctx.current_query_context,
                 &_gather_ops,
                 None,
@@ -542,8 +610,13 @@ where
             };
             midnight_compact_runtime::std_lib::decode_jubjub_point(_av)?
         };
+        let _proof_trace_checkpoint_2 = ctx.call_proof_data_trace.len();
         let _cr_2 = self.schnorr_verify_digest(ctx, digest, signature.clone(), _carg_2_2)?;
-        let ctx = _cr_2.context;
+        let ctx = _cr_2.context.with_folded_nested_call_proof_data(
+            _proof_trace_checkpoint_2,
+            __compact_initial_query_context.address,
+            &mut __compact_proof_data,
+        )?;
         __gas_acc += _cr_2.gas_cost.clone();
         let tmp = 1u16;
         let ops = OpProgramVerify::<DefaultDB>::new()
@@ -552,7 +625,8 @@ where
             .ins(true, 1)
             .build();
 
-        let results = query_for_verify(
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
             &ctx.current_query_context,
             &ops,
             ctx.gas_limit.clone(),
@@ -564,7 +638,13 @@ where
             context: CircuitContext {
                 current_query_context: results.context,
                 ..ctx
-            },
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
             gas_cost: __gas_acc + results.gas_cost,
         })
     }

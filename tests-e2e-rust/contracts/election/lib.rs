@@ -29,7 +29,7 @@
 use midnight_compact_runtime::*;
 use std::marker::PhantomData;
 
-midnight_compact_runtime::check_runtime_version!("0.16.100");
+midnight_compact_runtime::check_runtime_version!("0.16.102");
 
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct MerkleTreeDigest {
@@ -337,18 +337,36 @@ where
         ]);
         let state = ChargedState::new(sv);
         let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());
+        let __compact_initial_query_context = qctx.clone();
+        let __compact_constructor_id = "constructor";
+        let mut __compact_proof_data = PartialProofData::<DefaultDB>::new(
+            aligned_value_from_parts(&[proof_aligned_array(&authority_init)]),
+        );
         let ops = OpProgramVerify::<DefaultDB>::new()
             .push(false, new_cell(0u8))
             .push(true, new_cell(authority_init))
             .ins(false, 1)
             .build();
 
-        let results = query_for_verify(&qctx, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?;
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
+            &qctx,
+            &ops,
+            ctx.gas_limit.clone(),
+            &ctx.cost_model,
+        )?;
+        let __compact_constructor_proof_data = ConstructorProofData::new(
+            __compact_constructor_id,
+            __compact_initial_query_context,
+            results.context.clone(),
+            __compact_proof_data.finalize(aligned_value_from_parts(&[])),
+        );
 
         Ok(ConstructorResult {
             current_contract_state: results.context.state,
             current_private_state: ctx.initial_private_state,
             current_zswap_local_state: ctx.empty_zswap_local_state,
+            constructor_proof_data: __compact_constructor_proof_data,
         })
     }
 
@@ -357,6 +375,11 @@ where
         ctx: CircuitContext<PS>,
         ballot: PermissibleVotes,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "vote_commit";
+        let mut __compact_proof_data = PartialProofData::<DefaultDB>::new(
+            aligned_value_from_parts(&[proof_aligned_value(&ballot)]),
+        );
         let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
         let _witness_ctx_h0 = WitnessContext::new(
             ledger(&ctx.current_query_context.state),
@@ -365,6 +388,7 @@ where
         );
         let (current_private_state, _w_private_state_0) =
             self.witnesses.private_state(&_witness_ctx_h0);
+        __compact_proof_data.push_private_output(proof_aligned_value(&_w_private_state_0));
         compact_assert!(
             (({
                 let _gather_ops = OpProgramGather::<DefaultDB>::new()
@@ -372,7 +396,8 @@ where
                     .idx_at_index(1u8, false)
                     .popeq(false)
                     .build();
-                let _gather_results = query_for_read(
+                let _gather_results = recorded_query_for_read(
+                    &mut __compact_proof_data,
                     &ctx.current_query_context,
                     &_gather_ops,
                     None,
@@ -396,20 +421,20 @@ where
                 && (_w_private_state_0 == PrivateState::initial)),
             "In illegal state for committing"
         );
-        let _witness_ctx_2 = WitnessContext::new(
+        let _witness_ctx_3 = WitnessContext::new(
             ledger(&ctx.current_query_context.state),
             current_private_state,
             &ctx.current_query_context,
         );
         let (current_private_state, _) = self
             .witnesses
-            .private_vote_record(&_witness_ctx_2, ballot.clone());
-        let _witness_ctx_4 = WitnessContext::new(
+            .private_vote_record(&_witness_ctx_3, ballot.clone());
+        let _witness_ctx_5 = WitnessContext::new(
             ledger(&ctx.current_query_context.state),
             current_private_state,
             &ctx.current_query_context,
         );
-        let (current_private_state, sk) = self.witnesses.private_secret_key(&_witness_ctx_4);
+        let (current_private_state, sk) = self.witnesses.private_secret_key(&_witness_ctx_5);
         let com_nul = pure_circuits::commitment_nullifier(sk)?;
         compact_assert!(
             (!({
@@ -420,7 +445,8 @@ where
                     .member()
                     .popeq(true)
                     .build();
-                let _gather_results = query_for_read(
+                let _gather_results = recorded_query_for_read(
+                    &mut __compact_proof_data,
                     &ctx.current_query_context,
                     &_gather_ops,
                     None,
@@ -444,14 +470,14 @@ where
             "Unexpected attempt to double use of nullifier"
         );
         let pk = pure_circuits::public_key(sk)?;
-        let _witness_ctx_8 = WitnessContext::new(
+        let _witness_ctx_9 = WitnessContext::new(
             ledger(&ctx.current_query_context.state),
             current_private_state,
             &ctx.current_query_context,
         );
         let (current_private_state, path) = self
             .witnesses
-            .context_eligible_voters_path_of(&_witness_ctx_8, pk);
+            .context_eligible_voters_path_of(&_witness_ctx_9, pk);
         let tmp = midnight_compact_runtime::std_lib::merkle_tree_path_root(path.value.clone());
         compact_assert!(
             ((path.is_some && {
@@ -464,7 +490,8 @@ where
                     .eq()
                     .popeq(true)
                     .build();
-                let _gather_results = query_for_read(
+                let _gather_results = recorded_query_for_read(
+                    &mut __compact_proof_data,
                     &ctx.current_query_context,
                     &_gather_ops,
                     None,
@@ -489,7 +516,7 @@ where
         );
         let cm = pure_circuits::commit_with_sk(pure_circuits::ballot_repr(ballot.clone())?, sk)?;
 
-        let _ops_12 = OpProgramVerify::<DefaultDB>::new()
+        let _ops_13 = OpProgramVerify::<DefaultDB>::new()
             .idx_at_index(5u8, true)
             .idx_at_index(0u8, true)
             .dup(2)
@@ -504,42 +531,50 @@ where
             .addi(1)
             .ins(true, 2)
             .build();
-        let _results_12 = query_for_verify(
+        let _results_13 = recorded_query_for_verify(
+            &mut __compact_proof_data,
             &ctx.current_query_context,
-            &_ops_12,
+            &_ops_13,
             ctx.gas_limit.clone(),
             &ctx.cost_model,
         )?;
-        __gas_acc += _results_12.gas_cost.clone();
+        __gas_acc += _results_13.gas_cost.clone();
 
-        let _ops_13 = OpProgramVerify::<DefaultDB>::new()
+        let _ops_14 = OpProgramVerify::<DefaultDB>::new()
             .idx_at_index(7u8, true)
             .push(false, new_cell(com_nul))
             .push(true, StateValue::Null)
             .ins(false, 1)
             .ins(true, 1)
             .build();
-        let _results_13 = query_for_verify(
-            &_results_12.context,
-            &_ops_13,
+        let _results_14 = recorded_query_for_verify(
+            &mut __compact_proof_data,
+            &_results_13.context,
+            &_ops_14,
             ctx.gas_limit.clone(),
             &ctx.cost_model,
         )?;
-        __gas_acc += _results_13.gas_cost.clone();
-        let _witness_ctx_14 = WitnessContext::new(
-            ledger(&_results_13.context.state),
+        __gas_acc += _results_14.gas_cost.clone();
+        let _witness_ctx_15 = WitnessContext::new(
+            ledger(&_results_14.context.state),
             current_private_state,
-            &_results_13.context,
+            &_results_14.context,
         );
-        let (current_private_state, _) = self.witnesses.private_state_advance(&_witness_ctx_14);
+        let (current_private_state, _) = self.witnesses.private_state_advance(&_witness_ctx_15);
 
         Ok(CircuitResults {
             result: (),
             context: CircuitContext {
-                current_query_context: _results_13.context,
+                current_query_context: _results_14.context,
                 current_private_state,
                 ..ctx
-            },
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
             gas_cost: __gas_acc,
         })
     }
@@ -548,6 +583,10 @@ where
         &self,
         ctx: CircuitContext<PS>,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "vote_reveal";
+        let mut __compact_proof_data =
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[]));
         let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
         let _witness_ctx_h0 = WitnessContext::new(
             ledger(&ctx.current_query_context.state),
@@ -556,6 +595,7 @@ where
         );
         let (current_private_state, _w_private_state_0) =
             self.witnesses.private_state(&_witness_ctx_h0);
+        __compact_proof_data.push_private_output(proof_aligned_value(&_w_private_state_0));
         compact_assert!(
             (({
                 let _gather_ops = OpProgramGather::<DefaultDB>::new()
@@ -563,7 +603,8 @@ where
                     .idx_at_index(1u8, false)
                     .popeq(false)
                     .build();
-                let _gather_results = query_for_read(
+                let _gather_results = recorded_query_for_read(
+                    &mut __compact_proof_data,
                     &ctx.current_query_context,
                     &_gather_ops,
                     None,
@@ -587,12 +628,12 @@ where
                 && (_w_private_state_0 == PrivateState::committed)),
             "In illegal state for revealing"
         );
-        let _witness_ctx_2 = WitnessContext::new(
+        let _witness_ctx_3 = WitnessContext::new(
             ledger(&ctx.current_query_context.state),
             current_private_state,
             &ctx.current_query_context,
         );
-        let (current_private_state, sk) = self.witnesses.private_secret_key(&_witness_ctx_2);
+        let (current_private_state, sk) = self.witnesses.private_secret_key(&_witness_ctx_3);
         let rev_nul = pure_circuits::reveal_nullifier(sk)?;
         compact_assert!(
             (!({
@@ -603,7 +644,8 @@ where
                     .member()
                     .popeq(true)
                     .build();
-                let _gather_results = query_for_read(
+                let _gather_results = recorded_query_for_read(
+                    &mut __compact_proof_data,
                     &ctx.current_query_context,
                     &_gather_ops,
                     None,
@@ -626,21 +668,21 @@ where
             })),
             "Attempted to double vote"
         );
-        let _witness_ctx_5 = WitnessContext::new(
+        let _witness_ctx_6 = WitnessContext::new(
             ledger(&ctx.current_query_context.state),
             current_private_state,
             &ctx.current_query_context,
         );
-        let (current_private_state, vote) = self.witnesses.private_vote(&_witness_ctx_5);
+        let (current_private_state, vote) = self.witnesses.private_vote(&_witness_ctx_6);
         let cm = pure_circuits::commit_with_sk(pure_circuits::ballot_repr(vote.clone())?, sk)?;
-        let _witness_ctx_8 = WitnessContext::new(
+        let _witness_ctx_9 = WitnessContext::new(
             ledger(&ctx.current_query_context.state),
             current_private_state,
             &ctx.current_query_context,
         );
         let (current_private_state, path) = self
             .witnesses
-            .context_committed_votes_path_of(&_witness_ctx_8, cm);
+            .context_committed_votes_path_of(&_witness_ctx_9, cm);
         let tmp = midnight_compact_runtime::std_lib::merkle_tree_path_root(path.value.clone());
         compact_assert!(
             ((path.is_some && {
@@ -653,7 +695,8 @@ where
                     .eq()
                     .popeq(true)
                     .build();
-                let _gather_results = query_for_read(
+                let _gather_results = recorded_query_for_read(
+                    &mut __compact_proof_data,
                     &ctx.current_query_context,
                     &_gather_ops,
                     None,
@@ -677,13 +720,14 @@ where
             "Attempted to reveal incorrectly"
         );
 
-        let _if_results_11 = if (vote == PermissibleVotes::yes) {
+        let _if_results_12 = if (vote == PermissibleVotes::yes) {
             let ops = OpProgramVerify::<DefaultDB>::new()
                 .idx_at_index(3u8, true)
                 .addi(1)
                 .ins(true, 1)
                 .build();
-            query_for_verify(
+            recorded_query_for_verify(
+                &mut __compact_proof_data,
                 &ctx.current_query_context,
                 &ops,
                 ctx.gas_limit.clone(),
@@ -695,54 +739,67 @@ where
                 .addi(1)
                 .ins(true, 1)
                 .build();
-            query_for_verify(
+            recorded_query_for_verify(
+                &mut __compact_proof_data,
                 &ctx.current_query_context,
                 &ops,
                 ctx.gas_limit.clone(),
                 &ctx.cost_model,
             )?
         };
-        __gas_acc += _if_results_11.gas_cost.clone();
+        __gas_acc += _if_results_12.gas_cost.clone();
 
-        let _ops_12 = OpProgramVerify::<DefaultDB>::new()
+        let _ops_13 = OpProgramVerify::<DefaultDB>::new()
             .idx_at_index(8u8, true)
             .push(false, new_cell(rev_nul))
             .push(true, StateValue::Null)
             .ins(false, 1)
             .ins(true, 1)
             .build();
-        let _results_12 = query_for_verify(
-            &_if_results_11.context,
-            &_ops_12,
+        let _results_13 = recorded_query_for_verify(
+            &mut __compact_proof_data,
+            &_if_results_12.context,
+            &_ops_13,
             ctx.gas_limit.clone(),
             &ctx.cost_model,
         )?;
-        __gas_acc += _results_12.gas_cost.clone();
-        let _witness_ctx_13 = WitnessContext::new(
-            ledger(&_results_12.context.state),
+        __gas_acc += _results_13.gas_cost.clone();
+        let _witness_ctx_14 = WitnessContext::new(
+            ledger(&_results_13.context.state),
             current_private_state,
-            &_results_12.context,
+            &_results_13.context,
         );
-        let (current_private_state, _) = self.witnesses.private_state_advance(&_witness_ctx_13);
+        let (current_private_state, _) = self.witnesses.private_state_advance(&_witness_ctx_14);
 
         Ok(CircuitResults {
             result: (),
             context: CircuitContext {
-                current_query_context: _results_12.context,
+                current_query_context: _results_13.context,
                 current_private_state,
                 ..ctx
-            },
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
             gas_cost: __gas_acc,
         })
     }
 
     pub fn advance(&self, ctx: CircuitContext<PS>) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "advance";
+        let mut __compact_proof_data =
+            PartialProofData::<DefaultDB>::new(aligned_value_from_parts(&[]));
         let _witness_ctx_0 = WitnessContext::new(
             ledger(&ctx.current_query_context.state),
             ctx.current_private_state,
             &ctx.current_query_context,
         );
         let (current_private_state, sk) = self.witnesses.private_secret_key(&_witness_ctx_0);
+        __compact_proof_data.push_private_output(proof_aligned_array(&sk));
         let apk = pure_circuits::public_key(sk)?;
         compact_assert!(
             (apk == {
@@ -751,7 +808,8 @@ where
                     .idx_at_index(0u8, false)
                     .popeq(false)
                     .build();
-                let _gather_results = query_for_read(
+                let _gather_results = recorded_query_for_read(
+                    &mut __compact_proof_data,
                     &ctx.current_query_context,
                     &_gather_ops,
                     None,
@@ -781,7 +839,8 @@ where
                     .idx_at_index(2u8, false)
                     .popeq(true)
                     .build();
-                let _gather_results = query_for_read(
+                let _gather_results = recorded_query_for_read(
+                    &mut __compact_proof_data,
                     &ctx.current_query_context,
                     &_gather_ops,
                     None,
@@ -810,7 +869,8 @@ where
                 .idx_at_index(1u8, false)
                 .popeq(true)
                 .build();
-            let _gather_results = query_for_read(
+            let _gather_results = recorded_query_for_read(
+                &mut __compact_proof_data,
                 &ctx.current_query_context,
                 &_gather_ops,
                 None,
@@ -835,7 +895,8 @@ where
             .ins(false, 1)
             .build();
 
-        let results = query_for_verify(
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
             &ctx.current_query_context,
             &ops,
             ctx.gas_limit.clone(),
@@ -848,7 +909,13 @@ where
                 current_query_context: results.context,
                 current_private_state,
                 ..ctx
-            },
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
             gas_cost: results.gas_cost,
         })
     }
@@ -858,12 +925,18 @@ where
         ctx: CircuitContext<PS>,
         t: midnight_compact_runtime::std_lib::OpaqueString,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "set_topic";
+        let mut __compact_proof_data = PartialProofData::<DefaultDB>::new(
+            aligned_value_from_parts(&[proof_aligned_value(&t)]),
+        );
         let _witness_ctx_0 = WitnessContext::new(
             ledger(&ctx.current_query_context.state),
             ctx.current_private_state,
             &ctx.current_query_context,
         );
         let (current_private_state, sk) = self.witnesses.private_secret_key(&_witness_ctx_0);
+        __compact_proof_data.push_private_output(proof_aligned_array(&sk));
         let apk = pure_circuits::public_key(sk)?;
         compact_assert!(
             (apk == {
@@ -872,7 +945,8 @@ where
                     .idx_at_index(0u8, false)
                     .popeq(false)
                     .build();
-                let _gather_results = query_for_read(
+                let _gather_results = recorded_query_for_read(
+                    &mut __compact_proof_data,
                     &ctx.current_query_context,
                     &_gather_ops,
                     None,
@@ -902,7 +976,8 @@ where
                     .idx_at_index(1u8, false)
                     .popeq(false)
                     .build();
-                let _gather_results = query_for_read(
+                let _gather_results = recorded_query_for_read(
+                    &mut __compact_proof_data,
                     &ctx.current_query_context,
                     &_gather_ops,
                     None,
@@ -935,7 +1010,8 @@ where
             .ins(false, 1)
             .build();
 
-        let results = query_for_verify(
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
             &ctx.current_query_context,
             &ops,
             ctx.gas_limit.clone(),
@@ -948,7 +1024,13 @@ where
                 current_query_context: results.context,
                 current_private_state,
                 ..ctx
-            },
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
             gas_cost: results.gas_cost,
         })
     }
@@ -958,6 +1040,11 @@ where
         ctx: CircuitContext<PS>,
         pk: [u8; 32],
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let __compact_initial_query_context = ctx.current_query_context.clone();
+        let __compact_circuit_id = "add_voter";
+        let mut __compact_proof_data = PartialProofData::<DefaultDB>::new(
+            aligned_value_from_parts(&[proof_aligned_array(&pk)]),
+        );
         let _witness_ctx_h0 = WitnessContext::new(
             ledger(&ctx.current_query_context.state),
             ctx.current_private_state,
@@ -966,16 +1053,20 @@ where
         let (current_private_state, _w_context_eligible_voters_path_of_0) = self
             .witnesses
             .context_eligible_voters_path_of(&_witness_ctx_h0, pk);
+        __compact_proof_data.push_private_output(proof_aligned_maybe_merkle_path(
+            &_w_context_eligible_voters_path_of_0,
+        ));
         compact_assert!(
             (!(_w_context_eligible_voters_path_of_0.is_some)),
             "Attempted to add a voter twice"
         );
-        let _witness_ctx_3 = WitnessContext::new(
+        let _witness_ctx_4 = WitnessContext::new(
             ledger(&ctx.current_query_context.state),
             current_private_state,
             &ctx.current_query_context,
         );
-        let (current_private_state, sk) = self.witnesses.private_secret_key(&_witness_ctx_3);
+        let (current_private_state, sk) = self.witnesses.private_secret_key(&_witness_ctx_4);
+        __compact_proof_data.push_private_output(proof_aligned_array(&sk));
         let apk = pure_circuits::public_key(sk)?;
         compact_assert!(
             (apk == {
@@ -984,7 +1075,8 @@ where
                     .idx_at_index(0u8, false)
                     .popeq(false)
                     .build();
-                let _gather_results = query_for_read(
+                let _gather_results = recorded_query_for_read(
+                    &mut __compact_proof_data,
                     &ctx.current_query_context,
                     &_gather_ops,
                     None,
@@ -1014,7 +1106,8 @@ where
                     .idx_at_index(1u8, false)
                     .popeq(false)
                     .build();
-                let _gather_results = query_for_read(
+                let _gather_results = recorded_query_for_read(
+                    &mut __compact_proof_data,
                     &ctx.current_query_context,
                     &_gather_ops,
                     None,
@@ -1053,7 +1146,8 @@ where
             .ins(true, 2)
             .build();
 
-        let results = query_for_verify(
+        let results = recorded_query_for_verify(
+            &mut __compact_proof_data,
             &ctx.current_query_context,
             &ops,
             ctx.gas_limit.clone(),
@@ -1066,7 +1160,13 @@ where
                 current_query_context: results.context,
                 current_private_state,
                 ..ctx
-            },
+            }
+            .with_finalized_call_proof_data(
+                __compact_circuit_id,
+                __compact_initial_query_context,
+                __compact_proof_data,
+                aligned_value_from_parts(&[]),
+            ),
             gas_cost: results.gas_cost,
         })
     }

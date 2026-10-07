@@ -115,6 +115,7 @@ fn reset_and_set_accumulates_callee_gas() {
         current_zswap_local_state: ZswapLocalState::default(),
         cost_model: INITIAL_COST_MODEL.clone(),
         gas_limit: None,
+        call_proof_data_trace: CallProofDataTrace::new(),
     };
 
     let reset_gas = contract.reset(make_cctx()).expect("reset").gas_cost;

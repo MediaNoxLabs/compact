@@ -19,8 +19,8 @@
 // `ConstructorContext<PS>` from @midnight-ntwrk/compact-runtime.
 
 use crate::{
-    ChargedState, ContractAddress, CostModel, DefaultDB, QueryContext, RunningCost,
-    ZswapLocalState, DB, INITIAL_COST_MODEL,
+    CallProofData, CallProofDataTrace, ChargedState, ContractAddress, CostModel, DefaultDB,
+    PartialProofData, QueryContext, RunningCost, ZswapLocalState, DB, INITIAL_COST_MODEL,
 };
 
 /// Context passed into each impure / provable circuit invocation.
@@ -34,17 +34,71 @@ where
     pub current_zswap_local_state: ZswapLocalState<D>,
     pub cost_model: CostModel,
     pub gas_limit: Option<RunningCost>,
+    pub call_proof_data_trace: CallProofDataTrace<D>,
 }
 
 impl<PS, D> CircuitContext<PS, D>
 where
     D: DB,
 {
-    /// Build a fresh `CircuitContext` from a contract state and a
-    /// private state. Mirrors the TS `createCircuitContext` helper:
-    /// instantiates a `QueryContext` against the dummy contract
-    /// address, an empty `ZswapLocalState`, the default
-    /// `INITIAL_COST_MODEL`, and no gas limit.
+    /// Fold calls finalized by one generated nested call into its caller's
+    /// active proof data, preserving the public/private transcript order at
+    /// the call site. Existing records before `checkpoint` are left alone, so
+    /// sequential top-level calls remain distinct. Nested input/output and
+    /// metadata are dropped, matching the TypeScript emitter's one shared
+    /// `PartialProofData` object per exported/root invocation. The expected
+    /// parent address is captured before the nested call moves the context, so
+    /// a returned foreign-contract context cannot authorize folding itself.
+    pub fn with_folded_nested_call_proof_data(
+        mut self,
+        checkpoint: usize,
+        expected_contract_address: ContractAddress,
+        parent_proof_data: &mut PartialProofData<D>,
+    ) -> Result<Self, crate::CompactError> {
+        let nested_calls = self.call_proof_data_trace.drain_from(checkpoint)?;
+        if self.current_query_context.address != expected_contract_address
+            || nested_calls.iter().any(|call| {
+                call.contract_address != expected_contract_address
+                    || call.initial_query_context.address != expected_contract_address
+                    || call.final_query_context.address != expected_contract_address
+            })
+        {
+            return Err(crate::CompactError::ProofData(
+                "cross-contract nested proof data cannot be folded into a root call".into(),
+            ));
+        }
+        for call in nested_calls {
+            parent_proof_data.fold_nested(call.proof_data);
+        }
+        Ok(self)
+    }
+
+    /// Finalize and append one circuit-call proof-data record to this context.
+    /// Generated wrappers call this after they have applied all ledger effects
+    /// and encoded the circuit output.
+    pub fn with_finalized_call_proof_data(
+        mut self,
+        circuit_id: impl Into<String>,
+        initial_query_context: QueryContext<D>,
+        partial_proof_data: PartialProofData<D>,
+        output: crate::AlignedValue,
+    ) -> Self {
+        let contract_address = initial_query_context.address;
+        let final_query_context = self.current_query_context.clone();
+        self.call_proof_data_trace.push(CallProofData::new(
+            circuit_id,
+            contract_address,
+            initial_query_context,
+            final_query_context,
+            partial_proof_data.finalize(output),
+        ));
+        self
+    }
+
+    /// Build a fresh `CircuitContext` from a contract state and a private
+    /// state. Mirrors the TS `createCircuitContext` helper: instantiates a
+    /// `QueryContext` against the dummy contract address, an empty
+    /// `ZswapLocalState`, the default `INITIAL_COST_MODEL`, and no gas limit.
     pub fn new(state: ChargedState<D>, private_state: PS) -> Self {
         Self {
             current_private_state: private_state,
@@ -52,6 +106,7 @@ where
             current_zswap_local_state: ZswapLocalState::default(),
             cost_model: INITIAL_COST_MODEL.clone(),
             gas_limit: None,
+            call_proof_data_trace: CallProofDataTrace::new(),
         }
     }
 }

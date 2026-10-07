@@ -1,0 +1,64 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import CompactStandardLibrary;
+
+witness first_secret(): Field;
+witness second_secret(): Field;
+
+export ledger value: Field;
+
+constructor(initial: Field) {
+  const seed = first_secret();
+  value = disclose(initial + seed);
+}
+
+export circuit read_witness_write(expected: Field, next: Field): [] {
+  assert(value == expected, "unexpected value before write");
+  const a = first_secret();
+  const b = second_secret();
+  value = disclose(next + a + b);
+}
+
+circuit nested_leaf_write(expected: Field, middle: Field): [] {
+  assert(value == expected, "unexpected value in nested leaf call");
+  const nested = second_secret();
+  value = disclose(middle + nested);
+}
+
+circuit nested_witness_write(
+  expected: Field,
+  middle: Field,
+  take_nested: Boolean,
+): [] {
+  if (take_nested) {
+    nested_leaf_write(expected, middle);
+  }
+}
+
+export circuit nested_read_witness_write(
+  expected: Field,
+  middle: Field,
+  take_nested: Boolean,
+  after_nested: Field,
+  next: Field,
+): [] {
+  assert(value == expected, "unexpected value before nested call");
+  const before = first_secret();
+  nested_witness_write(expected, middle, disclose(take_nested));
+  assert(value == after_nested, "unexpected value after nested call");
+  const after = first_secret();
+  value = disclose(next + before + after);
+}

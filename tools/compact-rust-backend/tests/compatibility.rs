@@ -24,7 +24,10 @@ static NEXT: AtomicU64 = AtomicU64::new(0);
 struct Root(PathBuf);
 impl Root {
     fn new() -> Self {
-        let root = Self(std::env::temp_dir().join(format!(
+        Self::new_in(&std::env::temp_dir())
+    }
+    fn new_in(parent: &Path) -> Self {
+        let root = Self(parent.join(format!(
             "compact-compatibility-{}-{}",
             std::process::id(),
             NEXT.fetch_add(1, Ordering::Relaxed)
@@ -348,12 +351,16 @@ printf '\n// ordinary source edit during generation\n' >> "$SELECTED_RUNTIME_SRC
 
 #[test]
 fn broken_installed_root_does_not_fall_back_to_build_checkout() {
-    let root = Root::new();
+    let built = fs::canonicalize(env!("CARGO_BIN_EXE_compactc")).unwrap();
+    // Keep the installed link on the compiler's filesystem. Linking the
+    // completed binary avoids opening a fresh executable inode for writing
+    // while other test threads launch processes.
+    let root = Root::new_in(built.parent().unwrap());
     let bin = root.0.join("installed/bin");
     fs::create_dir_all(&bin).unwrap();
     fs::create_dir_all(root.0.join("installed/share/compactc")).unwrap();
     let executable = bin.join("compactc");
-    fs::copy(env!("CARGO_BIN_EXE_compactc"), &executable).unwrap();
+    fs::hard_link(&built, &executable).unwrap();
     let output = root.0.join("existing");
     fs::create_dir(&output).unwrap();
     fs::write(output.join("sentinel"), b"keep").unwrap();

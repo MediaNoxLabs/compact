@@ -1,0 +1,210 @@
+# This file is part of Compact.
+# Copyright (C) 2026 Midnight Foundation
+# SPDX-License-Identifier: Apache-2.0
+# Bounded Rust feedback only. Compiler regeneration, adoption proofs, wallet
+# handoff and release qualification remain in their existing full gates.
+name: Rust Backend Checks
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '**/*.rs'
+      - 'runtime-rs/**'
+      - 'runtime-rs-macros/**'
+      - 'testkit-rs/**'
+      - 'tools/compact-rust-backend/**'
+      - 'tests-rust-backend/**'
+      - 'examples/rust_backend/**'
+      - '**/Cargo.toml'
+      - '**/Cargo.lock'
+      - '.cargo/**'
+      - 'rust-toolchain*'
+      - 'rustfmt.toml'
+      - '.rustfmt.toml'
+      - '.github/workflows/rust-backend-checks.yml'
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_TERM_COLOR: never
+  # Keep debug assertions/overflow checks and normal worker stack limits.
+  CARGO_PROFILE_DEV_DEBUG: 0
+  CARGO_PROFILE_TEST_DEBUG: 0
+  CARGO_BUILD_JOBS: 4
+
+jobs:
+  checks:
+    name: Rust / ${{ matrix.lane }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - lane: core owners
+            key: core
+            toolchain: 1.99.0
+            components: rustfmt, clippy
+          - lane: MSRV backend and Jubjub consumer
+            key: msrv
+            toolchain: 1.88.0
+            components: ''
+    env:
+      RUSTUP_TOOLCHAIN: ${{ matrix.toolchain }}
+      RUST_CHECK_LANE: ${{ matrix.key }}
+      CARGO_TARGET_DIR: ${{ github.workspace }}/target/rust-bounded
+      RUST_CHECK_RECEIPTS: ${{ github.workspace }}/rust-check-receipts
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install exact Rust toolchain
+        uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          components: ${{ matrix.components }}
+
+      - name: Record source and toolchain
+        id: provenance
+        run: |
+          mkdir -p "$RUST_CHECK_RECEIPTS"
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib, subprocess
+          out = pathlib.Path(os.environ['RUST_CHECK_RECEIPTS'])
+          run = lambda *args: subprocess.check_output(args, text=True).strip()
+          expected = os.environ['RUSTUP_TOOLCHAIN']
+          for tool in ('rustc', 'cargo'):
+              assert run(tool, '--version').split()[1] == expected
+          receipt = {
+              'format': 'compact-rust-bounded-checks/v1',
+              'source_commit': run('git', 'rev-parse', 'HEAD'),
+              'source_tree': run('git', 'rev-parse', 'HEAD^{tree}'),
+              'event_sha': os.environ['GITHUB_SHA'],
+              'lane': os.environ['RUST_CHECK_LANE'],
+              'rustc': run('rustc', '-Vv'), 'cargo': run('cargo', '-V'),
+              'features': 'all-features',
+              'profile': 'dev/test; debug=0; incremental=0; default assertions and overflow checks',
+              'locks': {p: hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest()
+                        for p in ('Cargo.lock', 'tools/compact-rust-backend/Cargo.lock')},
+              'qualification': 'bounded Rust checks; no compiler regeneration, proof or network qualification',
+          }
+          (out / 'source.json').write_text(json.dumps(receipt, indent=2) + '\n')
+          PY
+          cp .github/workflows/rust-backend-checks.yml "$RUST_CHECK_RECEIPTS/workflow.yml"
+
+      - name: Cache locked dependency downloads
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: rust-bounded-${{ runner.os }}-${{ runner.arch }}-${{ matrix.toolchain }}-${{ matrix.key }}-all-features-nodebug-downloads-${{ hashFiles('Cargo.lock', 'tools/compact-rust-backend/Cargo.lock') }}
+
+      - name: Cache bounded compilation
+        id: build-cache
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ${{ env.CARGO_TARGET_DIR }}
+          key: rust-bounded-v1-${{ runner.os }}-${{ runner.arch }}-${{ matrix.toolchain }}-${{ matrix.key }}-all-features-nodebug-${{ hashFiles('Cargo.lock', 'tools/compact-rust-backend/Cargo.lock', '.cargo/**', '.github/workflows/rust-backend-checks.yml') }}-${{ github.sha }}
+          restore-keys: |
+            rust-bounded-v1-${{ runner.os }}-${{ runner.arch }}-${{ matrix.toolchain }}-${{ matrix.key }}-all-features-nodebug-${{ hashFiles('Cargo.lock', 'tools/compact-rust-backend/Cargo.lock', '.cargo/**', '.github/workflows/rust-backend-checks.yml') }}-
+
+      - name: Fetch locked workspace dependencies
+        id: fetch
+        run: cargo fetch --locked 2>&1 | tee "$RUST_CHECK_RECEIPTS/fetch.log"
+
+      - name: Check workspace formatting
+        if: matrix.key == 'core'
+        id: format
+        run: cargo fmt --all -- --check 2>&1 | tee "$RUST_CHECK_RECEIPTS/format.log"
+
+      - name: Test the four Rust owners
+        if: matrix.key == 'core'
+        id: tests
+        run: |
+          cargo test --locked --offline --all-features \
+            -p compact-rust-backend -p midnight-compact-runtime \
+            -p midnight-compact-runtime-macros -p midnight-compact-testkit \
+            2>&1 | tee "$RUST_CHECK_RECEIPTS/tests.log"
+
+      - name: Lint the four Rust owners
+        if: matrix.key == 'core'
+        id: clippy
+        run: |
+          cargo clippy --locked --offline --all-targets --all-features \
+            -p compact-rust-backend -p midnight-compact-runtime \
+            -p midnight-compact-runtime-macros -p midnight-compact-testkit \
+            -- -D warnings 2>&1 | tee "$RUST_CHECK_RECEIPTS/clippy.log"
+
+      - name: Compile backend and generated Jubjub consumer on Rust 1.88
+        if: matrix.key == 'msrv'
+        id: msrv_workspace
+        run: |
+          cargo check --locked --offline --all-features \
+            -p compact-rust-backend -p compact-rust-jubjub-scalar-cell-fixture \
+            2>&1 | tee "$RUST_CHECK_RECEIPTS/msrv-workspace.log"
+
+      - name: Compile standalone backend on Rust 1.88
+        if: matrix.key == 'msrv'
+        id: msrv_standalone
+        run: |
+          standalone="$RUNNER_TEMP/compact-rust-backend-standalone"
+          mkdir -p "$standalone"
+          cp tools/compact-rust-backend/{Cargo.toml,Cargo.lock,README.md} "$standalone/"
+          cp -R tools/compact-rust-backend/src "$standalone/"
+          cargo fetch --locked --manifest-path "$standalone/Cargo.toml" \
+            2>&1 | tee "$RUST_CHECK_RECEIPTS/msrv-standalone-fetch.log"
+          cargo check --locked --offline --all-features --manifest-path "$standalone/Cargo.toml" \
+            2>&1 | tee "$RUST_CHECK_RECEIPTS/msrv-standalone.log"
+          cmp tools/compact-rust-backend/Cargo.lock "$standalone/Cargo.lock"
+
+      - name: Retain explicit check outcomes and verify unchanged locks
+        if: always() && steps.provenance.outcome == 'success'
+        env:
+          CHECK_OUTCOMES: ${{ toJSON(steps) }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib, subprocess
+          out = pathlib.Path(os.environ['RUST_CHECK_RECEIPTS'])
+          source = json.loads((out / 'source.json').read_text())
+          checks = json.loads(os.environ['CHECK_OUTCOMES'])
+          locks_unchanged = all(hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest() == digest
+                                for p, digest in source['locks'].items())
+          required = (['fetch', 'format', 'tests', 'clippy'] if source['lane'] == 'core'
+                      else ['fetch', 'msrv_workspace', 'msrv_standalone'])
+          passed = locks_unchanged and all(checks.get(p, {}).get('outcome') == 'success' for p in required)
+          result = {'status': 'passed' if passed else 'failed_or_incomplete',
+                    'checks': checks, 'locks_unchanged': locks_unchanged,
+                    'artifacts': {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
+                                  for p in sorted(out.iterdir()) if p.is_file()}}
+          (out / 'result.json').write_text(json.dumps(result, indent=2) + '\n')
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
+              summary.write(f"## Rust {source['lane']}: {result['status']}\n\n")
+              summary.write(f"Source `{source['source_commit']}`; Rust `{os.environ['RUSTUP_TOOLCHAIN']}`.\n\n")
+              summary.write(source['qualification'] + '.\n')
+          assert locks_unchanged, 'Cargo lock changed during checks'
+          PY
+
+      - name: Upload bounded check receipts
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: rust-bounded-${{ matrix.key }}-${{ github.sha }}
+          path: ${{ env.RUST_CHECK_RECEIPTS }}
+          if-no-files-found: warn
+          retention-days: 14

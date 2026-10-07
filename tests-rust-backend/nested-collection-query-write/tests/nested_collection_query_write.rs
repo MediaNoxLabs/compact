@@ -14,8 +14,8 @@
 // limitations under the License.
 
 use compact_rust_nested_collection_query_write_fixture::ledger_contract::{
-    check_map_empty, check_member, check_set_empty, initial_state, map_empty_flag, member_flag,
-    recorded, seed, set_empty_flag,
+    PublicStateView, check_map_empty, check_member, check_set_empty, initial_state, map_empty_flag,
+    member_flag, recorded, seed, set_empty_flag,
 };
 #[path = "../../boolean_observation_assertions.rs"]
 mod boolean_observation_assertions;
@@ -145,6 +145,10 @@ fn nested_queries_write_booleans_with_typescript_parity() {
     ))
     .unwrap();
     let constructor = initial_state(ConstructorContext::new(())).unwrap();
+    let initial = PublicStateView::from(&constructor);
+    assert!(!initial.memberFlag().unwrap());
+    assert!(!initial.setEmptyFlag().unwrap());
+    assert!(!initial.mapEmptyFlag().unwrap());
     let mut context = constructor.into_circuit_context(ContractAddress::default());
     context = check_member(context, Field::from(42_u64)).unwrap().context;
     context = check_set_empty(context).unwrap().context;

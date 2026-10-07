@@ -14,7 +14,7 @@
 // limitations under the License.
 
 use compact_rust_observed_composite_keys_fixture::ledger_contract::{
-    self, Contract, initial_state,
+    self, Contract, PublicStateView, initial_state,
 };
 use compact_rust_observed_composite_keys_fixture::types::CompositeKey;
 use midnight_base_crypto::fab::{AlignmentSegment, ValueAtom};
@@ -222,25 +222,46 @@ fn vector_tuple_and_nested_struct_recorded_set_inserts_replay() {
         pair,
     };
     let context = || {
-        initial_state(ConstructorContext::new(()))
-            .unwrap()
-            .into_circuit_context(address)
+        let initial = initial_state(ConstructorContext::new(())).unwrap();
+        let view = PublicStateView::from(&initial);
+        assert!(view.vectorKeys().unwrap().is_empty());
+        assert!(view.tupleKeys().unwrap().is_empty());
+        assert!(view.structKeys().unwrap().is_empty());
+        assert!(view.sums().unwrap().is_empty());
+        initial.into_circuit_context(address)
     };
-    check_recorded(
-        "vector",
-        ledger_contract::insert_vector(context(), vector.clone()).unwrap(),
-        contract.recording.insert_vector(context(), vector).unwrap(),
-    );
-    check_recorded(
-        "tuple",
-        ledger_contract::insert_tuple(context(), pair).unwrap(),
-        contract.recording.insert_tuple(context(), pair).unwrap(),
-    );
-    check_recorded(
-        "struct",
-        ledger_contract::insert_struct(context(), key.clone()).unwrap(),
-        contract.recording.insert_struct(context(), key).unwrap(),
-    );
+    let vector_native = ledger_contract::insert_vector(context(), vector.clone()).unwrap();
+    let vector_recorded = contract
+        .recording
+        .insert_vector(context(), vector.clone())
+        .unwrap();
+    for result in [&vector_native, &vector_recorded.execution] {
+        let keys = PublicStateView::from(result).vectorKeys().unwrap();
+        assert!(keys.member(vector.clone()));
+        assert_eq!(keys.size().unwrap().value(), 1);
+    }
+    check_recorded("vector", vector_native, vector_recorded);
+
+    let tuple_native = ledger_contract::insert_tuple(context(), pair).unwrap();
+    let tuple_recorded = contract.recording.insert_tuple(context(), pair).unwrap();
+    for result in [&tuple_native, &tuple_recorded.execution] {
+        let keys = PublicStateView::from(result).tupleKeys().unwrap();
+        assert!(keys.member(pair));
+        assert_eq!(keys.size().unwrap().value(), 1);
+    }
+    check_recorded("tuple", tuple_native, tuple_recorded);
+
+    let struct_native = ledger_contract::insert_struct(context(), key.clone()).unwrap();
+    let struct_recorded = contract
+        .recording
+        .insert_struct(context(), key.clone())
+        .unwrap();
+    for result in [&struct_native, &struct_recorded.execution] {
+        let keys = PublicStateView::from(result).structKeys().unwrap();
+        assert!(keys.member(key.clone()));
+        assert_eq!(keys.size().unwrap().value(), 1);
+    }
+    check_recorded("struct", struct_native, struct_recorded);
     let tuple_native = ledger_contract::roundtrip_tuple(context(), pair).unwrap();
     let tuple_recorded = contract.recording.roundtrip_tuple(context(), pair).unwrap();
     assert!(!tuple_native.result && !tuple_recorded.execution.result);
@@ -256,9 +277,25 @@ fn vector_tuple_and_nested_struct_recorded_set_inserts_replay() {
         .unwrap();
     assert!(!struct_native.result && !struct_recorded.execution.result);
     check_recorded("structRoundtrip", struct_native, struct_recorded);
-    check_recorded(
-        "twelve",
-        ledger_contract::record_twelve(
+    let twelve_native = ledger_contract::record_twelve(
+        context(),
+        1_u64.into(),
+        2_u64.into(),
+        3_u64.into(),
+        4_u64.into(),
+        5_u64.into(),
+        6_u64.into(),
+        7_u64.into(),
+        8_u64.into(),
+        9_u64.into(),
+        10_u64.into(),
+        11_u64.into(),
+        12_u64.into(),
+    )
+    .unwrap();
+    let twelve_recorded = contract
+        .recording
+        .record_twelve(
             context(),
             1_u64.into(),
             2_u64.into(),
@@ -273,24 +310,11 @@ fn vector_tuple_and_nested_struct_recorded_set_inserts_replay() {
             11_u64.into(),
             12_u64.into(),
         )
-        .unwrap(),
-        contract
-            .recording
-            .record_twelve(
-                context(),
-                1_u64.into(),
-                2_u64.into(),
-                3_u64.into(),
-                4_u64.into(),
-                5_u64.into(),
-                6_u64.into(),
-                7_u64.into(),
-                8_u64.into(),
-                9_u64.into(),
-                10_u64.into(),
-                11_u64.into(),
-                12_u64.into(),
-            )
-            .unwrap(),
-    );
+        .unwrap();
+    for result in [&twelve_native, &twelve_recorded.execution] {
+        let sums = PublicStateView::from(result).sums().unwrap();
+        assert!(sums.member(Field::from(78_u64)));
+        assert_eq!(sums.size().unwrap().value(), 1);
+    }
+    check_recorded("twelve", twelve_native, twelve_recorded);
 }

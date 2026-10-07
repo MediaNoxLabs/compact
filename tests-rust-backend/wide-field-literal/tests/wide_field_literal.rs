@@ -15,6 +15,7 @@
 
 use compact_rust_wide_field_literal_fixture::ledger_contract::{initial_state, read_large};
 use compact_rust_wide_field_literal_fixture::pure_circuits::constant;
+use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::ConstructorContext;
 use midnight_compact_runtime::ledger::{ContractAddress, DefaultDB, StateValue};
 use midnight_onchain_state::state::{
@@ -22,6 +23,7 @@ use midnight_onchain_state::state::{
 };
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
+use num_bigint::BigUint;
 
 fn state_hex(state: StateValue<DefaultDB>) -> String {
     let operations: HashMap<EntryPointBuf, ContractOperation, DefaultDB> = HashMap::new();
@@ -47,11 +49,17 @@ fn wide_field_literal_matches_typescript_state_and_pure_result() {
         state_hex(constructor.ledger_state.get_ref().clone()),
         oracle["initialHex"]
     );
+    let expected_decimal =
+        "819310549611346726241370945440405716213240158234039660170669895299022906775";
+    let expected = Field::from_le_bytes(
+        &BigUint::parse_bytes(expected_decimal.as_bytes(), 10)
+            .unwrap()
+            .to_bytes_le(),
+    )
+    .unwrap();
     let read = read_large(constructor.into_circuit_context(ContractAddress::default())).unwrap();
-    assert_eq!(read.result, constant().unwrap());
+    assert_eq!(read.result, expected);
+    assert_eq!(constant().unwrap(), expected);
     assert_eq!(oracle["constant"], oracle["read"]);
-    assert_eq!(
-        oracle["read"],
-        "819310549611346726241370945440405716213240158234039660170669895299022906775"
-    );
+    assert_eq!(oracle["read"], expected_decimal);
 }

@@ -13,7 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use compact_rust_field_cast_uint128_fixture::ledger_contract::{initial_state, recorded, save};
+use compact_rust_field_cast_uint128_fixture::ledger_contract::{
+    PublicStateView, initial_state, recorded, save,
+};
 use compact_rust_field_cast_uint128_fixture::pure_circuits::as_field;
 use midnight_compact_runtime::context::ConstructorContext;
 use midnight_compact_runtime::ledger::{ContractAddress, DefaultDB, StateValue};
@@ -83,6 +85,10 @@ fn uint128_to_field_cast_preserves_high_bits_and_matches_typescript() {
     let context = initial_state(ConstructorContext::new(()))
         .unwrap()
         .into_circuit_context(ContractAddress::default());
+    assert_eq!(
+        PublicStateView::from(&context).stored().unwrap(),
+        Field::from(0_u64)
+    );
     let saved = save(context, input).unwrap();
     assert_eq!(saved.result, expected);
     assert_eq!(oracle["returned"], value.to_string());

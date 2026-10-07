@@ -46,7 +46,9 @@
           (langs)
           (vm)
           (pass-helpers)
-          (runtime-version))
+          ;; The Rust backend pins the *Rust* runtime crate, which versions
+          ;; independently of the npm package `(runtime-version)` reports.
+          (rust-runtime-version))
 
   (define-pass print-rust : Ltypescript (ir) -> Ltypescript ()
     (definitions

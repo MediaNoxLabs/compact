@@ -232,11 +232,13 @@
 
           packages.compactc = pkgs.stdenv.mkDerivation {
             name = "compactc";
-            version = "0.34.120"; # NB: also update compiler-version in compiler/compiler-version.ss
+            version = "0.34.121"; # NB: also update compiler-version in compiler/compiler-version.ss
             src = inclusive.lib.inclusive ./. [
               ./compiler
               ./examples
               ./flake.nix
+              ./runtime-rs/Cargo.toml
+              ./runtime-rs/extract-version.ss
               ./runtime/extract-version.ss
               ./runtime/package.json
               ./srcMaps
@@ -316,6 +318,8 @@
               ./compiler
               ./examples
               ./flake.nix
+              ./runtime-rs/Cargo.toml
+              ./runtime-rs/extract-version.ss
               ./runtime/extract-version.ss
               ./runtime/package.json
               ./srcMaps
@@ -460,7 +464,7 @@
             '';
             yarnOfflineCache = pkgs.fetchYarnDeps {
               yarnLock = ./editor-support/vsc/compact/yarn.lock;
-              hash = "sha256-L2hhFEZphJTLzEFYVYNBHS+7oFVbMe822ybQgDuWmKo=";
+              hash = "sha256-cxIAar2VZaK14PgDqbBw+VNrvZGtE+/PyDfMRtcwgGc=";
             };
             # NB: nodejs is needed here so that patchShebangs (invoked by
             # yarnConfigHook) can rewrite `#!/usr/bin/env node` shebangs,

@@ -55,8 +55,12 @@ fn first_kind_mut<'a>(value: &'a mut Value, kind: &str) -> Option<&'a mut Value>
         return Some(value);
     }
     match value {
-        Value::Array(values) => values.iter_mut().find_map(|value| first_kind_mut(value, kind)),
-        Value::Object(values) => values.values_mut().find_map(|value| first_kind_mut(value, kind)),
+        Value::Array(values) => values
+            .iter_mut()
+            .find_map(|value| first_kind_mut(value, kind)),
+        Value::Object(values) => values
+            .values_mut()
+            .find_map(|value| first_kind_mut(value, kind)),
         _ => None,
     }
 }
@@ -88,14 +92,14 @@ fn nested_product_mutation_requires_exact_declared_value_and_key_slot() {
                 circuit(&mut value, "upsert")["parameters"][0]["ty"]["name"] = json!("Twin")
             }
             "nested_name" => {
-                circuit(&mut value, "upsert")["parameters"][0]["ty"]["fields"][1]["ty"]
-                    ["name"] = json!("TwinJwk")
+                circuit(&mut value, "upsert")["parameters"][0]["ty"]["fields"][1]["ty"]["name"] =
+                    json!("TwinJwk")
             }
             "key" => value["ledger_fields"][0]["declaration"]["key"] = json!({"kind":"field"}),
             "slot" => value["ledger_fields"][0]["path"] = json!([9]),
             "empty_child" => {
-                value["ledger_fields"][0]["declaration"]["value"]["fields"][1]["ty"]
-                    ["fields"] = json!([])
+                value["ledger_fields"][0]["declaration"]["value"]["fields"][1]["ty"]["fields"] =
+                    json!([])
             }
             _ => unreachable!(),
         }
@@ -109,8 +113,9 @@ fn nested_product_helper_audit_rejects_hidden_effects_cycle_and_wrong_enum_type(
         let mut value = fixture("nested");
         match mutation {
             "hidden_branch" => {
-                let sequence = first_kind_mut(&mut circuit(&mut value, "upsert")["actions"], "sequence")
-                    .unwrap();
+                let sequence =
+                    first_kind_mut(&mut circuit(&mut value, "upsert")["actions"], "sequence")
+                        .unwrap();
                 sequence["actions"].as_array_mut().unwrap().push(json!({
                     "kind":"if", "condition":{"kind":"boolean","value":false},
                     "then":{"kind":"map_reset","field":"methods","index":0},
@@ -118,23 +123,30 @@ fn nested_product_helper_audit_rejects_hidden_effects_cycle_and_wrong_enum_type(
                 }));
             }
             "helper_cycle" => circuit(&mut value, "bump")["actions"]
-                .as_array_mut().unwrap().push(json!({"kind":"circuit_call","name":"bump","arguments":[]})),
+                .as_array_mut()
+                .unwrap()
+                .push(json!({"kind":"circuit_call","name":"bump","arguments":[]})),
             "wrong_arity" => {
-                let call = first_kind_mut(&mut circuit(&mut value, "upsert")["actions"], "pure_call")
-                    .unwrap();
+                let call =
+                    first_kind_mut(&mut circuit(&mut value, "upsert")["actions"], "pure_call")
+                        .unwrap();
                 assert_eq!(call["name"], "allowed");
                 call["arguments"] = json!([]);
             }
             "wrong_enum" => {
                 let mut wide = fixture("wide");
-                let inequality = first_kind_mut(&mut circuit(&mut wide, "put")["actions"], "not_equal")
-                    .unwrap();
+                let inequality =
+                    first_kind_mut(&mut circuit(&mut wide, "put")["actions"], "not_equal").unwrap();
                 inequality["right"]["ty"]["name"] = json!("OtherKind");
                 value = wide;
             }
             _ => unreachable!(),
         }
-        let name = if mutation == "wrong_enum" { "put" } else { "upsert" };
+        let name = if mutation == "wrong_enum" {
+            "put"
+        } else {
+            "upsert"
+        };
         assert!(!recorded(value, name), "{mutation}");
     }
 }

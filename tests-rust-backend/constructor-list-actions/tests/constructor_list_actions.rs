@@ -14,7 +14,7 @@
 // limitations under the License.
 
 use compact_rust_constructor_list_actions_fixture::ledger_contract::{
-    Contract, drop_first, history_count, initial_state, item_count,
+    Contract, PublicStateView, drop_first, history_count, initial_state, item_count,
 };
 use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::ConstructorContext;
@@ -90,6 +90,17 @@ fn constructor_list_head_and_drop_recording_replay() {
         native.context.query.state.get_ref(),
         recorded.execution.context.query.state.get_ref()
     );
+    // The constructor leaves items[1] and history[4]; popping items must not change history.
+    for context in [&native.context, &recorded.execution.context] {
+        let view = PublicStateView::from(context);
+        let items = view.items().unwrap();
+        assert!(items.is_empty());
+        assert_eq!(items.length().unwrap().value(), 0);
+        assert_eq!(items.head().unwrap(), None);
+        let history = view.history().unwrap();
+        assert_eq!(history.length().unwrap().value(), 1);
+        assert_eq!(history.head().unwrap(), Some(Field::from(4_u64)));
+    }
     let replay = recorded
         .public
         .initial()

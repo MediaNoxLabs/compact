@@ -14,7 +14,7 @@
 // limitations under the License.
 
 use compact_rust_stateful_pure_call_fixture::ledger_contract::{
-    initial_state, read_stored, recorded, save,
+    PublicStateView, initial_state, read_stored, recorded, save,
 };
 #[path = "../../boolean_observation_assertions.rs"]
 mod boolean_observation_assertions;
@@ -52,9 +52,12 @@ fn stateful_pure_helper_calls_match_typescript_and_ledger_bytes() {
     let input = Field::from(7_u64);
     let expected = Field::from(oracle["pure"].as_str().unwrap().parse::<u64>().unwrap());
     assert_eq!(square(input).unwrap(), expected);
-    let context = initial_state(ConstructorContext::new(()))
-        .unwrap()
-        .into_circuit_context(ContractAddress::default());
+    let initial = initial_state(ConstructorContext::new(())).unwrap();
+    assert_eq!(
+        PublicStateView::from(&initial).stored().unwrap(),
+        Field::from(0_u64)
+    );
+    let context = initial.into_circuit_context(ContractAddress::default());
     let saved = save(context, input).unwrap();
     assert_eq!(saved.result, expected);
     let read = read_stored(saved.context).unwrap();

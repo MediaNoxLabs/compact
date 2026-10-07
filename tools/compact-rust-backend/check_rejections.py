@@ -154,6 +154,75 @@ def check_context_locations(compactc: str, directory: Path) -> list[str]:
     return failures
 
 
+
+# These source constructs are checked by the shared frontend before either
+# backend runs. Field is a finite non-Boolean control, not all possible types.
+BOOLEAN_TYPE_REJECTIONS = {
+    "and-left": ("f && b", "expected test to have type Boolean, received Field", 10),
+    "and-right": ("b && f", "mismatch between type Field and type Boolean of condition branches", 10),
+    "or-left": ("f || b", "expected test to have type Boolean, received Field", 10),
+    "or-right": ("b || f", "mismatch between type Boolean and type Field of condition branches", 10),
+    "not-field": ("!f", "expected test to have type Boolean, received Field", 10),
+    "conditional-field-guard": ("f ? b : false", "expected test to have type Boolean, received Field", 10),
+    "and-literal-skip": ("false && f", "mismatch between type Field and type Boolean of condition branches", 10),
+    "or-literal-skip": ("true || f", "mismatch between type Boolean and type Field of condition branches", 10),
+    "conditional-invalid-alternate": ("true ? b : f", "mismatch between type Boolean and type Field of condition branches", 10),
+    "conditional-invalid-consequent": ("false ? f : b", "mismatch between type Field and type Boolean of condition branches", 10),
+    "conditional-bad-unselected-alternate": ("true ? b : !f", "expected test to have type Boolean, received Field", 21),
+    "conditional-bad-unselected-consequent": ("false ? !f : b", "expected test to have type Boolean, received Field", 18),
+}
+BOOLEAN_TYPE_CONTROLS = {
+    "logical_and": "a && b", "logical_or": "a || b", "logical_not": "!a",
+    "conditional": "a ? b : false", "and_literal_skip": "false && b",
+    "or_literal_skip": "true || b", "valid_alternate": "true ? a : !b",
+    "valid_consequent": "false ? !a : b",
+}
+
+
+def check_boolean_typing(compactc: str, directory: Path) -> list[str]:
+    """Check finite source Boolean typing and both static arms for TS and Rust."""
+    directory = directory / "boolean-typing"
+    directory.mkdir()
+    control_source = directory / "valid.compact"
+    control_source.write_text("".join(
+        f"export pure circuit {name}(a: Boolean, b: Boolean): Boolean {{\n"
+        f"  return {expression};\n}}\n"
+        for name, expression in BOOLEAN_TYPE_CONTROLS.items()
+    ))
+    failures = []
+    for target in ("ts", "rust"):
+        output = directory / f"valid-{target}"
+        control = subprocess.run(
+            [compactc, "--target", target, "--skip-zk", str(control_source), str(output)],
+            capture_output=True, text=True, check=False,
+        )
+        artifacts = ("contract/index.js",) if target == "ts" else (
+            "contract/lib.rs", "contract/Cargo.toml"
+        )
+        if control.returncode or not all((output / path).is_file() for path in artifacts):
+            failures.append(f"Boolean {target}: valid controls failed:\n{control.stderr}")
+        for name, (expression, diagnostic, column) in BOOLEAN_TYPE_REJECTIONS.items():
+            source = directory / f"{name}.compact"
+            source.write_text(
+                "export pure circuit value(b: Boolean, f: Field): Boolean {\n"
+                f"  return {expression};\n}}\n"
+            )
+            output = directory / f"{name}-{target}"
+            rejected = subprocess.run(
+                [compactc, "--target", target, "--skip-zk", str(source), str(output)],
+                capture_output=True, text=True, check=False,
+            )
+            expected = f"Exception: {name}.compact line 2 char {column}:\n  {diagnostic}"
+            if rejected.returncode == 0 or rejected.stderr.strip() != expected:
+                failures.append(f"Boolean {name}/{target}: expected exact type refusal:\n"
+                                f"{expected}\nreceived:\n{rejected.stderr}")
+            if output.exists() or any(directory.glob(f".{output.name}.compactc-stage-*")):
+                failures.append(f"Boolean {name}/{target}: refusal published output or staging debris")
+        print(f"Boolean typing {target}: {len(BOOLEAN_TYPE_CONTROLS)} valid expressions, "
+              f"{len(BOOLEAN_TYPE_REJECTIONS)} exact refusal expectations checked")
+    return failures
+
+
 def snapshot(path: Path) -> dict[str, str]:
     return {
         item.relative_to(path).as_posix(): hashlib.sha256(item.read_bytes()).hexdigest()
@@ -512,11 +581,12 @@ def main() -> int:
         failures.extend(check_output_serialization(compactc, directory))
         failures.extend(check_proof_capabilities(compactc, directory))
         failures.extend(check_context_locations(compactc, directory))
+        failures.extend(check_boolean_typing(compactc, directory))
 
     for failure in failures:
         print(f"FAIL {failure}", file=sys.stderr)
     print(f"Checked {len(CASES)} source rejections, {len(CONTEXT_CASES)} source contexts, "
-          f"output publication and proof capabilities; {len(failures)} failed")
+          f"output publication, proof capabilities and shared Boolean typing; {len(failures)} failed")
     return 1 if failures else 0
 
 

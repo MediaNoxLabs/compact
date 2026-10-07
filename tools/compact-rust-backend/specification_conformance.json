@@ -70,7 +70,8 @@
     "Cargo.lock": "08b39446a045133bb8da3445559e3e9a1d59ea14cac93f67db585a5485a51841",
     "runtime-rs/Cargo.toml": "bca116a67835118171aa2d195f6505ff8f453a69af903712176d5c4f93854f20",
     "tools/compact-rust-backend/src/compatibility.json": "5a24458240b7f96f10e08dc79c284fb6eba67f21446a0f746888dfd85cc17bcd",
-    "tests-rust-backend/boolean-logic/tests/conformance.rs": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064"
+    "tests-rust-backend/boolean-logic/tests/conformance.rs": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
+    "tools/compact-rust-backend/check_rejections.py": "915515d7f72bbc135f0b78e3d8aae0e0a077708a34a781bb9baa798571c2f084"
   },
   "grammar_inventory": {
     "format_version": 1,
@@ -4418,7 +4419,8 @@
       ],
       "evidence_ids": [
         "E-if-admission-history",
-        "E-equal-arm-effects"
+        "E-equal-arm-effects",
+        "E-boolean-source-ADR0349"
       ]
     },
     {
@@ -4552,7 +4554,8 @@
       ],
       "evidence_ids": [
         "E-boolean-history",
-        "E-boolean-native-ADR0348"
+        "E-boolean-native-ADR0348",
+        "E-boolean-source-ADR0349"
       ]
     },
     {
@@ -6221,8 +6224,17 @@
           "sha256": "626fb635d6a7ca0ef52f73a6f2b6e0a0fd5bc254e6763c5eb3e93af9b5bdb7b8"
         }
       ],
-      "tests": [],
-      "evidence_ids": [],
+      "tests": [
+        {
+          "path": "tools/compact-rust-backend/check_rejections.py",
+          "line": 182,
+          "sha256": "915515d7f72bbc135f0b78e3d8aae0e0a077708a34a781bb9baa798571c2f084",
+          "test_name": "check_boolean_typing"
+        }
+      ],
+      "evidence_ids": [
+        "E-boolean-source-ADR0349"
+      ],
       "support": {
         "frontend": "source-reviewed",
         "private_ir": "derived-conditional",
@@ -6234,7 +6246,7 @@
       },
       "formal": "historical-static-rule-presence-only; no current conformance or backend theorem",
       "remaining_obligations": [
-        "Source-negative left/right non-Boolean operand controls have not been joined; private If admission is not a direct source logical typing test."
+        "Field is the bounded non-Boolean representative; arbitrary types and combinations remain unqualified. Further conformance expansion is time-boxed, then deferred to the next milestone."
       ],
       "formal_rule_sources": [
         {
@@ -6243,7 +6255,8 @@
           "sha256": "636b1c02f2e291bdf76bc00f43c31fcd7ada458391ed775be5817172f8397de9"
         }
       ],
-      "formal_limit": "Only a related historical static typing rule is identified, not evaluation/failure/recording/proof correspondence."
+      "formal_limit": "Only a related historical static typing rule is identified, not evaluation/failure/recording/proof correspondence.",
+      "observed_frontend_scope": "Both operand positions of &&/|| reject Field on both targets; literal false&&Field and true||Field remain static errors; Boolean controls compile."
     },
     {
       "id": "B02",
@@ -6487,11 +6500,18 @@
           "line": 262,
           "sha256": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
           "test_name": "branching_and_negation_use_witness_answers_not_arguments"
+        },
+        {
+          "path": "tools/compact-rust-backend/check_rejections.py",
+          "line": 182,
+          "sha256": "915515d7f72bbc135f0b78e3d8aae0e0a077708a34a781bb9baa798571c2f084",
+          "test_name": "check_boolean_typing"
         }
       ],
       "evidence_ids": [
         "E-boolean-history",
-        "E-boolean-native-ADR0348"
+        "E-boolean-native-ADR0348",
+        "E-boolean-source-ADR0349"
       ],
       "support": {
         "frontend": "source-reviewed",
@@ -6504,7 +6524,7 @@
       },
       "formal": "historical-static-rule-presence-only; no current conformance or backend theorem",
       "remaining_obligations": [
-        "Non-Boolean source refusal remains unjoined. Recording/observed/proof behavior and other operand compositions retain separate obligations."
+        "Non-Boolean source refusal is observed for Field. Other source types, recording/observed/proof behavior and other operand compositions retain separate obligations."
       ],
       "formal_rule_sources": [
         {
@@ -6515,7 +6535,8 @@
       ],
       "formal_limit": "Only a related historical static typing rule is identified, not evaluation/failure/recording/proof correspondence.",
       "assertion_scope": "One executed test contains both the pure call/assert loop at lines 63\u201372 and subsequent witnessed checks; its name does not restrict it to witnessed calls.",
-      "observed_native_scope": "Both pure and witnessed values, both witnessed operand refusals, and inverted-answer cases execute with exactly one callback on the operand."
+      "observed_native_scope": "Both pure and witnessed values, both witnessed operand refusals, and inverted-answer cases execute with exactly one callback on the operand.",
+      "observed_frontend_scope": "!Field rejected on both public targets with exact Boolean-guard diagnostic; Boolean NOT control compiles."
     },
     {
       "id": "B05",
@@ -6556,10 +6577,17 @@
           "line": 5694,
           "sha256": "43bb19f4811f5082b2e5b01f8f37087bf31f9ad56b6adc1fa8adc8a98f465ad8",
           "test_name": "conditional_requires_boolean_condition_and_equal_branch_types"
+        },
+        {
+          "path": "tools/compact-rust-backend/check_rejections.py",
+          "line": 182,
+          "sha256": "915515d7f72bbc135f0b78e3d8aae0e0a077708a34a781bb9baa798571c2f084",
+          "test_name": "check_boolean_typing"
         }
       ],
       "evidence_ids": [
-        "E-if-admission-history"
+        "E-if-admission-history",
+        "E-boolean-source-ADR0349"
       ],
       "support": {
         "frontend": "source-reviewed",
@@ -6572,7 +6600,7 @@
       },
       "formal": "historical-static-rule-presence-only; no current conformance or backend theorem",
       "remaining_obligations": [
-        "Private IR negative controls do not prove frontend subtype-join completeness. Mixed-width, alias and aggregate source joins need individually qualified obligations; no comparable-type universe claim."
+        "Mixed-width, alias and aggregate source joins and supertype results remain individually unqualified; no comparable-type universe claim. Further conformance deferred after the bounded time box."
       ],
       "formal_rule_sources": [
         {
@@ -6581,7 +6609,8 @@
           "sha256": "636b1c02f2e291bdf76bc00f43c31fcd7ada458391ed775be5817172f8397de9"
         }
       ],
-      "formal_limit": "Only a related historical static typing rule is identified, not evaluation/failure/recording/proof correspondence."
+      "formal_limit": "Only a related historical static typing rule is identified, not evaluation/failure/recording/proof correspondence.",
+      "observed_frontend_scope": "Field guard, Boolean/Field branch incompatibility in both arm positions, and invalid !Field in each literal-unselected arm reject on both targets. Boolean conditional controls compile."
     },
     {
       "id": "B06",
@@ -7061,6 +7090,29 @@
         }
       ],
       "qualification": "Rust 1.99.0 locked/offline native execution of checked-in generated crate: all pure AND/OR pairs and NOT values; identity witness successes, selected/skipped/first-call refusals, and six inverted-answer controls. Explicit callback/private-state and canonical transcript assertions. No fresh compiler regeneration, TS run, recording/replay/proof or formal theorem; no failed-context/rollback claim."
+    },
+    {
+      "id": "E-boolean-source-ADR0349",
+      "strength": "executed-shared-frontend-positive-and-negative-controls",
+      "log": {
+        "artifact_location": "/tmp/rust030-adr0349/tool/run.log",
+        "sha256": "386c64bd2dbf6ec2844fb9e765a6145bc7ca0164cd34f20d75cd1e50e80e9d29",
+        "optional_local_provenance": true,
+        "required_for_portable_check": false
+      },
+      "results": {
+        "artifact_location": "/tmp/rust030-adr0349/tool/results.json",
+        "sha256": "3bb4e121d98c394055053eaf85c6ed8e55319b9f4cce5f5cee5a264c2e900f97",
+        "optional_local_provenance": true,
+        "required_for_portable_check": false
+      },
+      "test_source": {
+        "path": "tools/compact-rust-backend/check_rejections.py",
+        "line": 182,
+        "sha256": "915515d7f72bbc135f0b78e3d8aae0e0a077708a34a781bb9baa798571c2f084",
+        "test_name": "check_boolean_typing"
+      },
+      "qualification": "Both public TS/Rust targets: eight valid Boolean expressions in one compiled module per target, twelve exact source/type rejections per target (26 compiler invocations). Field is one non-Boolean representative. Uses source-qualified prior compiler/Scheme binaries, not a fresh build; same shared frontend is not an independent second semantics oracle. No native execution, recording, replay, proof or general comparable-type join claim."
     }
   ],
   "formal_artifacts": [

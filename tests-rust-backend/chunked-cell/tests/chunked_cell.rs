@@ -99,10 +99,16 @@ fn shape(call: &RecordedCircuitResult<(), impl std::fmt::Debug>) -> serde_json::
 
 fn check<Output: std::fmt::Debug + PartialEq>(
     name: &str,
+    expected_result: Output,
     native: CircuitResult<(), Output, DefaultDB>,
     recorded: RecordedCircuitResult<(), Output, DefaultDB>,
     reference: &serde_json::Value,
 ) {
+    assert_eq!(native.result, expected_result, "{name}: native result");
+    assert_eq!(
+        recorded.execution.result, expected_result,
+        "{name}: recorded result"
+    );
     assert_eq!(recorded.execution.result, native.result, "{name}: result");
     assert_eq!(recorded.execution.gas_cost, native.gas_cost, "{name}: gas");
     assert_eq!(
@@ -231,24 +237,28 @@ fn chunked_cell_calls_match_typescript_and_replay() {
     );
     check(
         "set_active",
+        (),
         ledger_contract::set_active(context(), false).unwrap(),
         contract.recording.set_active(context(), false).unwrap(),
         &reference["setActive"],
     );
     check(
         "get_active",
+        true,
         ledger_contract::get_active(context()).unwrap(),
         contract.recording.get_active(context()).unwrap(),
         &reference["getActive"],
     );
     check(
         "assert_active",
+        (),
         ledger_contract::assert_active(context(), true).unwrap(),
         contract.recording.assert_active(context(), true).unwrap(),
         &reference["assertActive"],
     );
     check(
         "set_amount",
+        (),
         ledger_contract::set_amount(context(), Field::from(11_u64)).unwrap(),
         contract
             .recording
@@ -258,12 +268,14 @@ fn chunked_cell_calls_match_typescript_and_replay() {
     );
     check(
         "get_amount",
+        Field::from(3_u64),
         ledger_contract::get_amount(context()).unwrap(),
         contract.recording.get_amount(context()).unwrap(),
         &reference["getAmount"],
     );
     check(
         "add_amount",
+        (),
         ledger_contract::add_amount(context(), Field::from(7_u64)).unwrap(),
         contract
             .recording
@@ -276,6 +288,7 @@ fn chunked_cell_calls_match_typescript_and_replay() {
     assert_eq!(reference["activeEquals"]["result"], "true");
     check(
         "active_equals",
+        true,
         ledger_contract::active_equals(context(), true).unwrap(),
         equals,
         &reference["activeEquals"],
@@ -288,12 +301,14 @@ fn chunked_cell_calls_match_typescript_and_replay() {
     assert_eq!(reference["plusAmount"]["result"], "10");
     check(
         "plus_amount",
+        Field::from(10_u64),
         ledger_contract::plus_amount(context(), Field::from(7_u64)).unwrap(),
         sum,
         &reference["plusAmount"],
     );
     check(
         "subtract_amount",
+        (),
         ledger_contract::subtract_amount(context(), Field::from(2_u64)).unwrap(),
         contract
             .recording
@@ -303,6 +318,7 @@ fn chunked_cell_calls_match_typescript_and_replay() {
     );
     check(
         "multiply_amount",
+        (),
         ledger_contract::multiply_amount(context(), Field::from(7_u64)).unwrap(),
         contract
             .recording

@@ -15,6 +15,7 @@
 
 use compact_rust_chunked_list_fixture::ledger_contract::{self, Contract, initial_state};
 use compact_rust_chunked_list_fixture::ledger_slots::items;
+use compact_rust_chunked_list_fixture::types::Maybe;
 use midnight_compact_runtime as runtime;
 use midnight_onchain_state::state::{
     ContractMaintenanceAuthority, ContractOperation, ContractState, EntryPointBuf,
@@ -86,10 +87,16 @@ fn shape(call: &RecordedCircuitResult<(), impl std::fmt::Debug>) -> serde_json::
 
 fn check<Output: std::fmt::Debug + PartialEq>(
     name: &str,
+    expected_result: Output,
     native: CircuitResult<(), Output, DefaultDB>,
     recorded: RecordedCircuitResult<(), Output, DefaultDB>,
     reference: &serde_json::Value,
 ) {
+    assert_eq!(native.result, expected_result, "{name}: native result");
+    assert_eq!(
+        recorded.execution.result, expected_result,
+        "{name}: recorded result"
+    );
     assert_eq!(recorded.execution.result, native.result, "{name}: result");
     assert_eq!(recorded.execution.gas_cost, native.gas_cost, "{name}: gas");
     assert_eq!(
@@ -164,24 +171,31 @@ fn chunked_list_calls_match_typescript_and_replay() {
     let contract = Contract::default();
     check(
         "count",
+        runtime::BoundedUint::<{ u64::MAX as u128 }>::new(1).unwrap(),
         ledger_contract::item_count(context()).unwrap(),
         contract.recording.item_count(context()).unwrap(),
         &reference["count"],
     );
     check(
         "empty",
+        false,
         ledger_contract::items_empty(context()).unwrap(),
         contract.recording.items_empty(context()).unwrap(),
         &reference["empty"],
     );
     check(
         "head",
+        Maybe {
+            is_some: true,
+            value: Field::from(1_u64),
+        },
         ledger_contract::first_item(context()).unwrap(),
         contract.recording.first_item(context()).unwrap(),
         &reference["head"],
     );
     check(
         "prepend",
+        (),
         ledger_contract::prepend(context(), Field::from(7_u64)).unwrap(),
         contract
             .recording
@@ -191,12 +205,14 @@ fn chunked_list_calls_match_typescript_and_replay() {
     );
     check(
         "drop",
+        (),
         ledger_contract::drop_first(context()).unwrap(),
         contract.recording.drop_first(context()).unwrap(),
         &reference["drop"],
     );
     check(
         "reset",
+        (),
         ledger_contract::clear_items(context()).unwrap(),
         contract.recording.clear_items(context()).unwrap(),
         &reference["reset"],

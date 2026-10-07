@@ -100,10 +100,16 @@ fn shape(call: &RecordedCircuitResult<(), impl std::fmt::Debug>) -> serde_json::
 
 fn check<Output: std::fmt::Debug + PartialEq>(
     name: &str,
+    expected_result: Output,
     native: CircuitResult<(), Output, DefaultDB>,
     recorded: RecordedCircuitResult<(), Output, DefaultDB>,
     reference: &serde_json::Value,
 ) {
+    assert_eq!(native.result, expected_result, "{name}: native result");
+    assert_eq!(
+        recorded.execution.result, expected_result,
+        "{name}: recorded result"
+    );
     assert_eq!(recorded.execution.result, native.result, "{name}: result");
     assert_eq!(recorded.execution.gas_cost, native.gas_cost, "{name}: gas");
     assert_eq!(
@@ -199,6 +205,7 @@ fn chunked_map_calls_match_typescript_and_replay() {
     );
     check(
         "put",
+        (),
         ledger_contract::put(context(), false, Field::from(7_u64)).unwrap(),
         contract
             .recording
@@ -208,6 +215,7 @@ fn chunked_map_calls_match_typescript_and_replay() {
     );
     check(
         "pair",
+        (),
         ledger_contract::put_pair(context(), true, false, Field::from(42_u64)).unwrap(),
         contract
             .recording
@@ -236,42 +244,49 @@ fn chunked_map_calls_match_typescript_and_replay() {
     }
     check(
         "default",
+        (),
         ledger_contract::put_default(context(), false).unwrap(),
         contract.recording.put_default(context(), false).unwrap(),
         &reference["default"],
     );
     check(
         "has",
+        true,
         ledger_contract::has(context(), true).unwrap(),
         contract.recording.has(context(), true).unwrap(),
         &reference["has"],
     );
     check(
         "get",
+        Field::from(1_u64),
         ledger_contract::get(context(), true).unwrap(),
         contract.recording.get(context(), true).unwrap(),
         &reference["get"],
     );
     check(
         "remove",
+        (),
         ledger_contract::remove_key(context(), true).unwrap(),
         contract.recording.remove_key(context(), true).unwrap(),
         &reference["remove"],
     );
     check(
         "size",
+        runtime::BoundedUint::<{ u64::MAX as u128 }>::new(1).unwrap(),
         ledger_contract::table_size(context()).unwrap(),
         contract.recording.table_size(context()).unwrap(),
         &reference["size"],
     );
     check(
         "empty",
+        false,
         ledger_contract::table_is_empty(context()).unwrap(),
         contract.recording.table_is_empty(context()).unwrap(),
         &reference["empty"],
     );
     check(
         "reset",
+        (),
         ledger_contract::reset_table(context()).unwrap(),
         contract.recording.reset_table(context()).unwrap(),
         &reference["reset"],

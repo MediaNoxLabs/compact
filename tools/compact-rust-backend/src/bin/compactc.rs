@@ -1012,6 +1012,42 @@ mod tests {
     }
 
     #[test]
+    fn failed_stage_rename_restores_previous_output_and_releases_lock() {
+        let root = TempRoot::new();
+        let output = root.0.join("contract");
+        fs::create_dir_all(output.join("nested")).unwrap();
+        fs::write(output.join("nested/sentinel"), b"previous complete output").unwrap();
+        let stage = StagedOutput::new(&output).unwrap();
+        let stage_path = stage.path().to_path_buf();
+        let backup = stage_path.with_file_name(format!(
+            "{}-previous",
+            stage_path.file_name().unwrap().to_string_lossy()
+        ));
+        fs::write(stage_path.join("new.txt"), b"new output").unwrap();
+
+        // Keep the old output intact; only the final stage-to-output rename fails.
+        fs::remove_dir_all(&stage_path).unwrap();
+        let error = stage.publish(&output).unwrap_err();
+        assert_eq!(
+            error.downcast_ref::<std::io::Error>().unwrap().kind(),
+            std::io::ErrorKind::NotFound
+        );
+        assert_eq!(
+            fs::read(output.join("nested/sentinel")).unwrap(),
+            b"previous complete output"
+        );
+        assert_eq!(fs::read_dir(&output).unwrap().count(), 1);
+        assert_eq!(fs::read_dir(output.join("nested")).unwrap().count(), 1);
+        assert!(!output.join("new.txt").exists());
+        assert!(!stage_path.exists());
+        assert!(!backup.exists());
+        assert_eq!(fs::read_dir(&root.0).unwrap().count(), 2); // output and lock
+
+        let lock = fs::File::open(root.0.join(".contract.compactc.lock")).unwrap();
+        FileExt::try_lock_exclusive(&lock).unwrap();
+    }
+
+    #[test]
     fn target_selection_preserves_other_compiler_arguments() {
         let args = [
             "--target",

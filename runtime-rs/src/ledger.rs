@@ -77,6 +77,41 @@ fn path_keys(path: &[u8]) -> Vec<Key> {
         .collect()
 }
 
+// Ledger-8 packs Ins in the low four opcode bits, although its Rust operand
+// is a u8. Check the actual encoding bound including bookkeeping insertions.
+fn checked_path_operand<D: DB>(length: usize, extra: u8) -> Result<u8, TranscriptRejected<D>> {
+    u8::try_from(length)
+        .ok()
+        .and_then(|length| length.checked_add(extra))
+        .filter(|operand| *operand <= 15)
+        .ok_or_else(|| midnight_onchain_vm::error::OnchainProgramError::BoundsExceeded.into())
+}
+
+// Idx uses four bits for (length - 1). Empty paths are the upstream
+// no-op root selection, while nonempty paths encode at most sixteen keys.
+fn checked_index_path<D: DB>(path: &[u8]) -> Result<(), TranscriptRejected<D>> {
+    if path.len() > 16 {
+        Err(midnight_onchain_vm::error::OnchainProgramError::BoundsExceeded.into())
+    } else {
+        Ok(())
+    }
+}
+
+fn query_rejected<D: DB>(error: TranscriptRejected<D>) -> CompactError {
+    CompactError::LedgerQueryRejected(format!("{error:?}"))
+}
+
+// Replacing a field requires a final key, unlike operations that can update
+// the state at an empty root path.
+fn checked_field_path<D: DB>(path: &[u8]) -> Result<(&u8, &[u8]), TranscriptRejected<D>> {
+    path.split_last().ok_or_else(|| {
+        midnight_onchain_vm::error::OnchainProgramError::InvalidArgs(
+            "ledger path contains no field index".into(),
+        )
+        .into()
+    })
+}
+
 /// Compact values that can be stored in a ledger Cell. Implementations use
 /// upstream FAB conversions while keeping each type's declared alignment.
 pub trait CellValue: Aligned + Into<Value> + Sized {
@@ -400,3 +435,6 @@ pub fn empty_query_context() -> QueryContext<DefaultDB> {
 mod kernel;
 pub use kernel::{KernelClaim, query_kernel_claim, query_kernel_mint_shielded};
 pub(crate) use kernel::{kernel_claim_program, kernel_mint_shielded_program};
+
+#[cfg(test)]
+mod program_path_tests;

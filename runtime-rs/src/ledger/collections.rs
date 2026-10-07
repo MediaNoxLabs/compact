@@ -308,9 +308,10 @@ pub fn constructor_list<D: DB>() -> StateValue<D> {
 pub(crate) fn list_length_program<M: ResultMode<D>, D: DB>(
     path: impl Into<LedgerPath>,
     read_result: M::ReadResult,
-) -> Vec<Op<M, D>> {
+) -> Result<Vec<Op<M, D>>, CompactError> {
     let path = path.into();
-    vec![
+    super::checked_index_path::<D>(path.as_slice()).map_err(super::query_rejected)?;
+    Ok(vec![
         Op::Dup { n: 0 },
         Op::Idx {
             cached: false,
@@ -326,7 +327,7 @@ pub(crate) fn list_length_program<M: ResultMode<D>, D: DB>(
             cached: true,
             result: read_result,
         },
-    ]
+    ])
 }
 
 pub fn length_list<D: DB>(
@@ -335,7 +336,7 @@ pub fn length_list<D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<(QueryResults<ResultModeGather, D>, u64), CompactError> {
-    let program = list_length_program::<ResultModeGather, D>(path, ());
+    let program = list_length_program::<ResultModeGather, D>(path, ())?;
     let result = context
         .query(&program, gas_limit, cost_model)
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -346,9 +347,10 @@ pub fn length_list<D: DB>(
 pub(crate) fn list_is_empty_program<M: ResultMode<D>, D: DB>(
     path: impl Into<LedgerPath>,
     read_result: M::ReadResult,
-) -> Vec<Op<M, D>> {
+) -> Result<Vec<Op<M, D>>, CompactError> {
     let path = path.into();
-    vec![
+    super::checked_index_path::<D>(path.as_slice()).map_err(super::query_rejected)?;
+    Ok(vec![
         Op::Dup { n: 0 },
         Op::Idx {
             cached: false,
@@ -370,7 +372,7 @@ pub(crate) fn list_is_empty_program<M: ResultMode<D>, D: DB>(
             cached: true,
             result: read_result,
         },
-    ]
+    ])
 }
 
 pub fn is_empty_list<D: DB>(
@@ -379,7 +381,7 @@ pub fn is_empty_list<D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
-    let program = list_is_empty_program::<ResultModeGather, D>(path, ());
+    let program = list_is_empty_program::<ResultModeGather, D>(path, ())?;
     let result = context
         .query(&program, gas_limit, cost_model)
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -390,8 +392,9 @@ pub fn is_empty_list<D: DB>(
 pub(crate) fn list_head_program<T: CellValue + Default, R: ResultMode<D>, D: DB>(
     path: impl Into<LedgerPath>,
     read_result: R::ReadResult,
-) -> Vec<Op<R, D>> {
+) -> Result<Vec<Op<R, D>>, CompactError> {
     let path = path.into();
+    super::checked_index_path::<D>(path.as_slice()).map_err(super::query_rejected)?;
     let alignment = T::alignment();
     let default = AlignedValue::new(T::default().into(), alignment.clone())
         .expect("default CellValue must match its alignment");
@@ -399,7 +402,7 @@ pub(crate) fn list_head_program<T: CellValue + Default, R: ResultMode<D>, D: DB>
     // including for a zero value whose actual serialization is shorter.
     let concat_bound = (2 + alignment.max_aligned_size()) as u32;
     let absent = AlignedValue::concat([AlignedValue::from(0_u8), default].iter());
-    vec![
+    Ok(vec![
         Op::Dup { n: 0 },
         Op::Idx {
             cached: false,
@@ -438,7 +441,7 @@ pub(crate) fn list_head_program<T: CellValue + Default, R: ResultMode<D>, D: DB>
             cached: true,
             result: read_result,
         },
-    ]
+    ])
 }
 
 pub fn head_list<T: CellValue + Default, M: CellValue, D: DB>(
@@ -447,7 +450,7 @@ pub fn head_list<T: CellValue + Default, M: CellValue, D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<(QueryResults<ResultModeGather, D>, M), CompactError> {
-    let program = list_head_program::<T, ResultModeGather, D>(path, ());
+    let program = list_head_program::<T, ResultModeGather, D>(path, ())?;
     let result = context
         .query(&program, gas_limit, cost_model)
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -458,9 +461,10 @@ pub fn head_list<T: CellValue + Default, M: CellValue, D: DB>(
 pub(crate) fn list_push_front_program<T: CellValue, D: DB>(
     path: impl Into<LedgerPath>,
     value: T,
-) -> Vec<Op<ResultModeVerify, D>> {
+) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
     let path = path.into();
-    vec![
+    let insert_depth = super::checked_path_operand::<D>(path.as_slice().len(), 1)?;
+    Ok(vec![
         Op::Idx {
             cached: false,
             push_path: true,
@@ -494,9 +498,9 @@ pub(crate) fn list_push_front_program<T: CellValue, D: DB>(
         Op::Swap { n: 0 },
         Op::Ins {
             cached: true,
-            n: path.as_slice().len() as u8 + 1,
+            n: insert_depth,
         },
-    ]
+    ])
 }
 
 pub fn push_front_list<T: CellValue, D: DB>(
@@ -506,15 +510,16 @@ pub fn push_front_list<T: CellValue, D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
-    let program = list_push_front_program(path, value);
+    let program = list_push_front_program(path, value)?;
     context.query(&program, gas_limit, cost_model)
 }
 
 pub(crate) fn list_pop_front_program<D: DB>(
     path: impl Into<LedgerPath>,
-) -> Vec<Op<ResultModeVerify, D>> {
+) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
     let path = path.into();
-    vec![
+    let insert_depth = super::checked_path_operand::<D>(path.as_slice().len(), 0)?;
+    Ok(vec![
         Op::Idx {
             cached: false,
             push_path: true,
@@ -527,9 +532,9 @@ pub(crate) fn list_pop_front_program<D: DB>(
         },
         Op::Ins {
             cached: true,
-            n: path.as_slice().len() as u8,
+            n: insert_depth,
         },
-    ]
+    ])
 }
 
 pub fn pop_front_list<D: DB>(
@@ -538,15 +543,16 @@ pub fn pop_front_list<D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
-    let program = list_pop_front_program(path);
+    let program = list_pop_front_program(path)?;
     context.query(&program, gas_limit, cost_model)
 }
 
 pub(crate) fn list_reset_program<D: DB>(
     path: impl Into<LedgerPath>,
-) -> Vec<Op<ResultModeVerify, D>> {
+) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
     let path = path.into();
-    let (field_index, parent) = path.as_slice().split_last().expect("List path is nonempty");
+    let (field_index, parent) = super::checked_field_path::<D>(path.as_slice())?;
+    let parent_depth = super::checked_path_operand::<D>(parent.len(), 0)?;
     let mut program = Vec::new();
     if !parent.is_empty() {
         program.push(Op::Idx {
@@ -572,10 +578,10 @@ pub(crate) fn list_reset_program<D: DB>(
     if !parent.is_empty() {
         program.push(Op::Ins {
             cached: true,
-            n: parent.len() as u8,
+            n: parent_depth,
         });
     }
-    program
+    Ok(program)
 }
 
 pub fn reset_list<D: DB>(
@@ -584,7 +590,7 @@ pub fn reset_list<D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
-    let program = list_reset_program(path);
+    let program = list_reset_program(path)?;
     context.query(&program, gas_limit, cost_model)
 }
 
@@ -592,8 +598,9 @@ pub(crate) fn map_insert_program<K: CellValue, V: CellValue, D: DB>(
     path: &[u8],
     key: K,
     value: V,
-) -> Vec<Op<ResultModeVerify, D>> {
-    vec![
+) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
+    let insert_depth = super::checked_path_operand::<D>(path.len(), 0)?;
+    Ok(vec![
         Op::Idx {
             cached: false,
             push_path: true,
@@ -613,9 +620,9 @@ pub(crate) fn map_insert_program<K: CellValue, V: CellValue, D: DB>(
         },
         Op::Ins {
             cached: true,
-            n: path.len() as u8,
+            n: insert_depth,
         },
-    ]
+    ])
 }
 
 pub fn insert_map<K: CellValue, V: CellValue, D: DB>(
@@ -627,7 +634,7 @@ pub fn insert_map<K: CellValue, V: CellValue, D: DB>(
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
     let path = path.into();
-    let program = map_insert_program(path.as_slice(), key, value);
+    let program = map_insert_program(path.as_slice(), key, value)?;
     context.query(&program, gas_limit, cost_model)
 }
 
@@ -645,10 +652,11 @@ pub(crate) fn map_lookup_program<K: CellValue, M: ResultMode<D>, D: DB>(
     path: &[u8],
     key: K,
     read_result: M::ReadResult,
-) -> Vec<Op<M, D>> {
+) -> Result<Vec<Op<M, D>>, CompactError> {
+    super::checked_index_path::<D>(path).map_err(super::query_rejected)?;
     let key =
         AlignedValue::new(key.into(), K::alignment()).expect("CellValue must match its alignment");
-    vec![
+    Ok(vec![
         Op::Dup { n: 0 },
         Op::Idx {
             cached: false,
@@ -664,7 +672,7 @@ pub(crate) fn map_lookup_program<K: CellValue, M: ResultMode<D>, D: DB>(
             cached: false,
             result: read_result,
         },
-    ]
+    ])
 }
 
 pub fn lookup_map<K: CellValue, V: CellValue, D: DB>(
@@ -675,7 +683,7 @@ pub fn lookup_map<K: CellValue, V: CellValue, D: DB>(
     cost_model: &CostModel,
 ) -> Result<(QueryResults<ResultModeGather, D>, V), CompactError> {
     let path = path.into();
-    let program = map_lookup_program::<K, ResultModeGather, D>(path.as_slice(), key, ());
+    let program = map_lookup_program::<K, ResultModeGather, D>(path.as_slice(), key, ())?;
     let result = context
         .query(&program, gas_limit, cost_model)
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -724,8 +732,9 @@ pub fn reset_map<D: DB>(
 pub(crate) fn set_insert_program<T: CellValue, D: DB>(
     path: &[u8],
     value: T,
-) -> Vec<Op<ResultModeVerify, D>> {
-    vec![
+) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
+    let insert_depth = super::checked_path_operand::<D>(path.len(), 0)?;
+    Ok(vec![
         Op::Idx {
             cached: false,
             push_path: true,
@@ -745,9 +754,9 @@ pub(crate) fn set_insert_program<T: CellValue, D: DB>(
         },
         Op::Ins {
             cached: true,
-            n: path.len() as u8,
+            n: insert_depth,
         },
-    ]
+    ])
 }
 
 pub fn insert_set<T: CellValue, D: DB>(
@@ -759,7 +768,7 @@ pub fn insert_set<T: CellValue, D: DB>(
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
     let path = path.into();
     let path = path.as_slice();
-    let program = set_insert_program(path, value);
+    let program = set_insert_program(path, value)?;
     context.query(&program, gas_limit, cost_model)
 }
 
@@ -790,6 +799,8 @@ pub(crate) fn qualified_coin_set_insert_program<T: CellValue, D: DB>(
     coin: CoinInfo,
     recipient: Recipient,
 ) -> Result<Vec<Op<ResultModeVerify, D>>, CompactError> {
+    let insert_depth =
+        super::checked_path_operand::<D>(path.len(), 0).map_err(super::query_rejected)?;
     let commitment = super::qualified_coin_commitment::<T, D>(context, &coin, &recipient)?;
     Ok(vec![
         Op::Idx {
@@ -826,7 +837,7 @@ pub(crate) fn qualified_coin_set_insert_program<T: CellValue, D: DB>(
         },
         Op::Ins {
             cached: true,
-            n: path.len() as u8,
+            n: insert_depth,
         },
     ])
 }
@@ -836,8 +847,9 @@ pub(crate) fn set_member_program<T: CellValue, M: ResultMode<D>, D: DB>(
     path: &[u8],
     value: T,
     read_result: M::ReadResult,
-) -> Vec<Op<M, D>> {
-    vec![
+) -> Result<Vec<Op<M, D>>, CompactError> {
+    super::checked_index_path::<D>(path).map_err(super::query_rejected)?;
+    Ok(vec![
         Op::Dup { n: 0 },
         Op::Idx {
             cached: false,
@@ -853,7 +865,7 @@ pub(crate) fn set_member_program<T: CellValue, M: ResultMode<D>, D: DB>(
             cached: true,
             result: read_result,
         },
-    ]
+    ])
 }
 
 pub fn member_set<T: CellValue, D: DB>(
@@ -865,7 +877,7 @@ pub fn member_set<T: CellValue, D: DB>(
 ) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
     let path = path.into();
     let path = path.as_slice();
-    let program = set_member_program::<T, ResultModeGather, D>(path, value, ());
+    let program = set_member_program::<T, ResultModeGather, D>(path, value, ())?;
     let result = context
         .query(&program, gas_limit, cost_model)
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -876,8 +888,9 @@ pub fn member_set<T: CellValue, D: DB>(
 pub(crate) fn set_remove_program<T: CellValue, D: DB>(
     path: &[u8],
     value: T,
-) -> Vec<Op<ResultModeVerify, D>> {
-    vec![
+) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
+    let insert_depth = super::checked_path_operand::<D>(path.len(), 0)?;
+    Ok(vec![
         Op::Idx {
             cached: false,
             push_path: true,
@@ -890,9 +903,9 @@ pub(crate) fn set_remove_program<T: CellValue, D: DB>(
         Op::Rem { cached: false },
         Op::Ins {
             cached: true,
-            n: path.len() as u8,
+            n: insert_depth,
         },
-    ]
+    ])
 }
 
 pub fn remove_set<T: CellValue, D: DB>(
@@ -904,15 +917,17 @@ pub fn remove_set<T: CellValue, D: DB>(
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
     let path = path.into();
     let path = path.as_slice();
-    let program = set_remove_program(path, value);
+    let program = set_remove_program(path, value)?;
     context.query(&program, gas_limit, cost_model)
 }
 
-pub(crate) fn set_reset_program<D: DB>(path: &[u8]) -> Vec<Op<ResultModeVerify, D>> {
+pub(crate) fn set_reset_program<D: DB>(
+    path: &[u8],
+) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
     let Some((field, parent)) = path.split_last() else {
         // Preserve the previous low-level empty-path program; compiler-declared
         // Set paths are nonempty and use the keyed replacement below.
-        return vec![
+        return Ok(vec![
             Op::Idx {
                 cached: false,
                 push_path: true,
@@ -924,8 +939,9 @@ pub(crate) fn set_reset_program<D: DB>(path: &[u8]) -> Vec<Op<ResultModeVerify, 
                 value: constructor_set(),
             },
             Op::Ins { cached: true, n: 0 },
-        ];
+        ]);
     };
+    let parent_depth = super::checked_path_operand::<D>(parent.len(), 0)?;
     let mut program = Vec::new();
     if !parent.is_empty() {
         program.push(Op::Idx {
@@ -951,10 +967,10 @@ pub(crate) fn set_reset_program<D: DB>(path: &[u8]) -> Vec<Op<ResultModeVerify, 
     if !parent.is_empty() {
         program.push(Op::Ins {
             cached: true,
-            n: parent.len() as u8,
+            n: parent_depth,
         });
     }
-    program
+    Ok(program)
 }
 
 pub fn reset_set<D: DB>(
@@ -965,15 +981,16 @@ pub fn reset_set<D: DB>(
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
     let path = path.into();
     let path = path.as_slice();
-    let program = set_reset_program(path);
+    let program = set_reset_program(path)?;
     context.query(&program, gas_limit, cost_model)
 }
 
 pub(crate) fn set_size_program<M: ResultMode<D>, D: DB>(
     path: &[u8],
     read_result: M::ReadResult,
-) -> Vec<Op<M, D>> {
-    vec![
+) -> Result<Vec<Op<M, D>>, CompactError> {
+    super::checked_index_path::<D>(path).map_err(super::query_rejected)?;
+    Ok(vec![
         Op::Dup { n: 0 },
         Op::Idx {
             cached: false,
@@ -985,7 +1002,7 @@ pub(crate) fn set_size_program<M: ResultMode<D>, D: DB>(
             cached: true,
             result: read_result,
         },
-    ]
+    ])
 }
 
 pub fn size_set<D: DB>(
@@ -996,7 +1013,7 @@ pub fn size_set<D: DB>(
 ) -> Result<(QueryResults<ResultModeGather, D>, u64), CompactError> {
     let path = path.into();
     let path = path.as_slice();
-    let program = set_size_program::<ResultModeGather, D>(path, ());
+    let program = set_size_program::<ResultModeGather, D>(path, ())?;
     let result = context
         .query(&program, gas_limit, cost_model)
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -1007,8 +1024,9 @@ pub fn size_set<D: DB>(
 pub(crate) fn set_is_empty_program<M: ResultMode<D>, D: DB>(
     path: &[u8],
     read_result: M::ReadResult,
-) -> Vec<Op<M, D>> {
-    vec![
+) -> Result<Vec<Op<M, D>>, CompactError> {
+    super::checked_index_path::<D>(path).map_err(super::query_rejected)?;
+    Ok(vec![
         Op::Dup { n: 0 },
         Op::Idx {
             cached: false,
@@ -1025,7 +1043,7 @@ pub(crate) fn set_is_empty_program<M: ResultMode<D>, D: DB>(
             cached: true,
             result: read_result,
         },
-    ]
+    ])
 }
 
 pub fn is_empty_set<D: DB>(
@@ -1036,7 +1054,7 @@ pub fn is_empty_set<D: DB>(
 ) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
     let path = path.into();
     let path = path.as_slice();
-    let program = set_is_empty_program::<ResultModeGather, D>(path, ());
+    let program = set_is_empty_program::<ResultModeGather, D>(path, ())?;
     let result = context
         .query(&program, gas_limit, cost_model)
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;

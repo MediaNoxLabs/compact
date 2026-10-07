@@ -474,7 +474,7 @@ fn merkle_insert_index_hashed<D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
-    let program = merkle_insert_index_hashed_program::<D>(path.into(), hash, position, history);
+    let program = merkle_insert_index_hashed_program::<D>(path.into(), hash, position, history)?;
     context.query(&program, gas_limit, cost_model)
 }
 
@@ -483,7 +483,11 @@ fn merkle_insert_index_hashed_program<D: DB>(
     hash: AlignedValue,
     position: u64,
     history: MerkleHistory,
-) -> Vec<Op<ResultModeVerify, D>> {
+) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
+    let insert_depth = super::checked_path_operand::<D>(
+        path.as_slice().len(),
+        u8::from(matches!(history, MerkleHistory::Historic)),
+    )?;
     let keys = path_keys(path.as_slice());
     let index_key = |index| vec![Key::Value(AlignedValue::from(index))].into();
     let mut program = vec![
@@ -556,16 +560,16 @@ fn merkle_insert_index_hashed_program<D: DB>(
             },
             Op::Ins {
                 cached: true,
-                n: path.as_slice().len() as u8 + 1,
+                n: insert_depth,
             },
         ]);
     } else {
         program.push(Op::Ins {
             cached: true,
-            n: path.as_slice().len() as u8,
+            n: insert_depth,
         });
     }
-    program
+    Ok(program)
 }
 
 /// Build ledger-8's typed indexed insertion program for a recorded plain tree.
@@ -573,7 +577,7 @@ pub(crate) fn merkle_insert_index_program<T: CellValue, D: DB>(
     path: impl Into<LedgerPath>,
     item: T,
     position: u64,
-) -> Vec<Op<ResultModeVerify, D>> {
+) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
     merkle_insert_index_hashed_program(
         path.into(),
         AlignedValue::from(leaf_hash_for(item)),
@@ -587,7 +591,7 @@ pub(crate) fn merkle_insert_hash_index_program<D: DB>(
     path: impl Into<LedgerPath>,
     hash: FixedBytes<32>,
     position: u64,
-) -> Vec<Op<ResultModeVerify, D>> {
+) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
     merkle_insert_index_hashed_program(
         path.into(),
         aligned_cell_value(hash),
@@ -600,7 +604,7 @@ pub(crate) fn merkle_insert_hash_index_program<D: DB>(
 pub(crate) fn merkle_insert_index_default_program<T: CellValue + Default, D: DB>(
     path: impl Into<LedgerPath>,
     position: u64,
-) -> Vec<Op<ResultModeVerify, D>> {
+) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
     merkle_insert_index_program(path, T::default(), position)
 }
 
@@ -608,7 +612,7 @@ pub(crate) fn historic_merkle_insert_index_program<T: CellValue, D: DB>(
     path: impl Into<LedgerPath>,
     item: T,
     position: u64,
-) -> Vec<Op<ResultModeVerify, D>> {
+) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
     merkle_insert_index_hashed_program(
         path.into(),
         AlignedValue::from(leaf_hash_for(item)),
@@ -622,7 +626,7 @@ pub(crate) fn historic_merkle_insert_hash_index_program<D: DB>(
     path: impl Into<LedgerPath>,
     hash: FixedBytes<32>,
     position: u64,
-) -> Vec<Op<ResultModeVerify, D>> {
+) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
     merkle_insert_index_hashed_program(
         path.into(),
         aligned_cell_value(hash),
@@ -634,7 +638,7 @@ pub(crate) fn historic_merkle_insert_hash_index_program<D: DB>(
 pub(crate) fn historic_merkle_insert_index_default_program<T: CellValue + Default, D: DB>(
     path: impl Into<LedgerPath>,
     position: u64,
-) -> Vec<Op<ResultModeVerify, D>> {
+) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
     historic_merkle_insert_index_program(path, T::default(), position)
 }
 
@@ -682,7 +686,7 @@ fn merkle_insert_hashed<D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
-    let program = merkle_insert_hashed_program::<D>(path.into(), hash, history);
+    let program = merkle_insert_hashed_program::<D>(path.into(), hash, history)?;
     context.query(&program, gas_limit, cost_model)
 }
 
@@ -690,7 +694,8 @@ fn merkle_insert_hashed_program<D: DB>(
     path: LedgerPath,
     hash: AlignedValue,
     history: MerkleHistory,
-) -> Vec<Op<ResultModeVerify, D>> {
+) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
+    let insert_depth = super::checked_path_operand::<D>(path.as_slice().len(), 1)?;
     let keys = path_keys(path.as_slice());
     let index_key = |index| vec![Key::Value(AlignedValue::from(index))].into();
     let mut program = vec![
@@ -751,23 +756,23 @@ fn merkle_insert_hashed_program<D: DB>(
             },
             Op::Ins {
                 cached: true,
-                n: path.as_slice().len() as u8 + 1,
+                n: insert_depth,
             },
         ]);
     } else {
         program.push(Op::Ins {
             cached: true,
-            n: path.as_slice().len() as u8 + 1,
+            n: insert_depth,
         });
     }
-    program
+    Ok(program)
 }
 
 /// Build the same verifying program used by native append, for a recorded circuit.
 pub(crate) fn merkle_insert_program<T: CellValue, D: DB>(
     path: impl Into<LedgerPath>,
     item: T,
-) -> Vec<Op<ResultModeVerify, D>> {
+) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
     merkle_insert_hashed_program(
         path.into(),
         AlignedValue::from(leaf_hash_for(item)),
@@ -780,7 +785,7 @@ pub(crate) fn merkle_insert_program<T: CellValue, D: DB>(
 pub(crate) fn merkle_insert_hash_program<D: DB>(
     path: impl Into<LedgerPath>,
     hash: FixedBytes<32>,
-) -> Vec<Op<ResultModeVerify, D>> {
+) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
     merkle_insert_hashed_program(
         path.into(),
         aligned_cell_value(hash),
@@ -792,7 +797,7 @@ pub(crate) fn merkle_insert_hash_program<D: DB>(
 pub(crate) fn historic_merkle_insert_hash_program<D: DB>(
     path: impl Into<LedgerPath>,
     hash: FixedBytes<32>,
-) -> Vec<Op<ResultModeVerify, D>> {
+) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
     merkle_insert_hashed_program(
         path.into(),
         aligned_cell_value(hash),
@@ -804,7 +809,7 @@ pub(crate) fn historic_merkle_insert_hash_program<D: DB>(
 pub(crate) fn historic_merkle_insert_program<T: CellValue, D: DB>(
     path: impl Into<LedgerPath>,
     item: T,
-) -> Vec<Op<ResultModeVerify, D>> {
+) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
     merkle_insert_hashed_program(
         path.into(),
         AlignedValue::from(leaf_hash_for(item)),
@@ -819,16 +824,17 @@ pub fn historic_reset_history<D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
-    let program = historic_reset_history_program::<D>(path.into());
+    let program = historic_reset_history_program::<D>(path.into())?;
     context.query(&program, gas_limit, cost_model)
 }
 
 pub(crate) fn historic_reset_history_program<D: DB>(
     path: LedgerPath,
-) -> Vec<Op<ResultModeVerify, D>> {
+) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
+    let insert_depth = super::checked_path_operand::<D>(path.as_slice().len(), 2)?;
     let keys = path_keys(path.as_slice());
     let index_key = |index| vec![Key::Value(AlignedValue::from(index))].into();
-    vec![
+    Ok(vec![
         Op::Idx {
             cached: false,
             push_path: true,
@@ -855,9 +861,9 @@ pub(crate) fn historic_reset_history_program<D: DB>(
         },
         Op::Ins {
             cached: true,
-            n: path.as_slice().len() as u8 + 2,
+            n: insert_depth,
         },
-    ]
+    ])
 }
 
 /// Reset a HistoricMerkleTree and seed its new blank root through the VM.
@@ -869,7 +875,7 @@ pub fn historic_reset_to_default<D: DB>(
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
     context.query(
-        &historic_reset_to_default_program(path, depth),
+        &historic_reset_to_default_program(path, depth)?,
         gas_limit,
         cost_model,
     )
@@ -879,12 +885,11 @@ pub fn historic_reset_to_default<D: DB>(
 pub(crate) fn historic_reset_to_default_program<D: DB>(
     path: impl Into<LedgerPath>,
     depth: u8,
-) -> Vec<Op<ResultModeVerify, D>> {
+) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
     let path = path.into();
     let parts = path.as_slice();
-    let (&field_index, parent) = parts
-        .split_last()
-        .expect("ledger path contains a field index");
+    let (&field_index, parent) = super::checked_field_path::<D>(parts)?;
+    let parent_depth = super::checked_path_operand::<D>(parent.len(), 0)?;
     let index_key = |index| vec![Key::Value(AlignedValue::from(index))].into();
     let mut program = Vec::new();
     if !parent.is_empty() {
@@ -928,10 +933,10 @@ pub(crate) fn historic_reset_to_default_program<D: DB>(
     if !parent.is_empty() {
         program.push(Op::Ins {
             cached: true,
-            n: parent.len() as u8,
+            n: parent_depth,
         });
     }
-    program
+    Ok(program)
 }
 
 /// Reset a plain MerkleTree through the canonical ledger VM sequence.
@@ -942,19 +947,17 @@ pub fn merkle_reset_to_default<D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
-    context.query(&merkle_reset_program(path, depth), gas_limit, cost_model)
+    context.query(&merkle_reset_program(path, depth)?, gas_limit, cost_model)
 }
 
 /// Canonical plain-tree reset program shared by native and recorded execution.
 pub(crate) fn merkle_reset_program<D: DB>(
     path: impl Into<LedgerPath>,
     depth: u8,
-) -> Vec<Op<ResultModeVerify, D>> {
+) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
     let path = path.into();
-    let (&field_index, parent) = path
-        .as_slice()
-        .split_last()
-        .expect("ledger path contains a field index");
+    let (&field_index, parent) = super::checked_field_path::<D>(path.as_slice())?;
+    let parent_depth = super::checked_path_operand::<D>(parent.len(), 0)?;
     let mut program = Vec::new();
     if !parent.is_empty() {
         program.push(Op::Idx {
@@ -980,10 +983,10 @@ pub(crate) fn merkle_reset_program<D: DB>(
     if !parent.is_empty() {
         program.push(Op::Ins {
             cached: true,
-            n: parent.len() as u8,
+            n: parent_depth,
         });
     }
-    program
+    Ok(program)
 }
 
 /// Ask the ledger VM whether the next free index has reached tree capacity.
@@ -1007,6 +1010,7 @@ pub(crate) fn is_full_program<M: ResultMode<D>, D: DB>(
     depth: u8,
     read_result: M::ReadResult,
 ) -> Result<Vec<Op<M, D>>, CompactError> {
+    super::checked_index_path::<D>(path.as_slice()).map_err(super::query_rejected)?;
     let capacity = 1_u64.checked_shl(depth as u32).ok_or_else(|| {
         CompactError::InvalidLedgerCell(format!("invalid HistoricMerkleTree depth {depth}"))
     })?;
@@ -1059,7 +1063,7 @@ pub fn merkle_check_root<T: CellValue, D: DB>(
         root,
         MerkleHistory::CurrentOnly,
         (),
-    );
+    )?;
     let result = context
         .query(&program, gas_limit, cost_model)
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -1072,7 +1076,8 @@ fn check_root_program<T: CellValue, M: ResultMode<D>, D: DB>(
     root: T,
     history: MerkleHistory,
     read_result: M::ReadResult,
-) -> Vec<Op<M, D>> {
+) -> Result<Vec<Op<M, D>>, CompactError> {
+    super::checked_index_path::<D>(path.as_slice()).map_err(super::query_rejected)?;
     let historic = matches!(history, MerkleHistory::Historic);
     let index = if historic { 2_u8 } else { 0_u8 };
     let index_key = vec![Key::Value(AlignedValue::from(index))].into();
@@ -1111,14 +1116,14 @@ fn check_root_program<T: CellValue, M: ResultMode<D>, D: DB>(
         cached: true,
         result: read_result,
     });
-    program
+    Ok(program)
 }
 
 pub(crate) fn merkle_check_root_verify_program<T: CellValue, D: DB>(
     path: LedgerPath,
     root: T,
     observed: AlignedValue,
-) -> Vec<Op<ResultModeVerify, D>> {
+) -> Result<Vec<Op<ResultModeVerify, D>>, CompactError> {
     check_root_program(path, root, MerkleHistory::CurrentOnly, observed)
 }
 
@@ -1126,7 +1131,7 @@ pub(crate) fn historic_check_root_verify_program<T: CellValue, D: DB>(
     path: LedgerPath,
     root: T,
     observed: AlignedValue,
-) -> Vec<Op<ResultModeVerify, D>> {
+) -> Result<Vec<Op<ResultModeVerify, D>>, CompactError> {
     check_root_program(path, root, MerkleHistory::Historic, observed)
 }
 
@@ -1143,7 +1148,7 @@ pub fn historic_check_root<T: CellValue, D: DB>(
         root,
         MerkleHistory::Historic,
         (),
-    );
+    )?;
     let result = context
         .query(&program, gas_limit, cost_model)
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -1242,7 +1247,8 @@ mod query_program_tests {
                 plain_root.0,
                 MerkleHistory::CurrentOnly,
                 (),
-            ),
+            )
+            .unwrap(),
             &plain,
             "knownAtInit",
         );
@@ -1252,22 +1258,25 @@ mod query_program_tests {
                 historic_root.0,
                 MerkleHistory::Historic,
                 (),
-            ),
+            )
+            .unwrap(),
             &historic,
             "knownAtInit",
         );
         assert_program(
-            &merkle_insert_hashed_program::<DefaultDB>(path(), hash(), MerkleHistory::CurrentOnly),
+            &merkle_insert_hashed_program::<DefaultDB>(path(), hash(), MerkleHistory::CurrentOnly)
+                .unwrap(),
             &plain,
             "append7",
         );
         assert_program(
-            &merkle_insert_hashed_program::<DefaultDB>(path(), hash(), MerkleHistory::Historic),
+            &merkle_insert_hashed_program::<DefaultDB>(path(), hash(), MerkleHistory::Historic)
+                .unwrap(),
             &historic,
             "append7",
         );
         assert_program(
-            &historic_reset_history_program::<DefaultDB>(path()),
+            &historic_reset_history_program::<DefaultDB>(path()).unwrap(),
             &historic,
             "forgetHistory",
         );

@@ -46,7 +46,7 @@ pub(crate) fn query_counter_at_path<D: DB>(
     }
     let result = context
         .query(
-            &counter_read_program::<ResultModeGather, D>(path, ()),
+            &counter_read_program::<ResultModeGather, D>(path, ())?,
             gas_limit,
             cost_model,
         )
@@ -58,8 +58,9 @@ pub(crate) fn query_counter_at_path<D: DB>(
 pub(crate) fn counter_read_program<M: ResultMode<D>, D: DB>(
     path: &[u8],
     read_result: M::ReadResult,
-) -> Vec<Op<M, D>> {
-    vec![
+) -> Result<Vec<Op<M, D>>, CompactError> {
+    super::checked_index_path::<D>(path).map_err(super::query_rejected)?;
+    Ok(vec![
         Op::Dup { n: 0 },
         Op::Idx {
             cached: false,
@@ -74,7 +75,7 @@ pub(crate) fn counter_read_program<M: ResultMode<D>, D: DB>(
             cached: true,
             result: read_result,
         },
-    ]
+    ])
 }
 
 /// Preserve the Counter ADT's VM comparison, including its cached read result.
@@ -90,7 +91,7 @@ pub(crate) fn query_counter_less_than<D: DB>(
     }
     let result = context
         .query(
-            &counter_less_than_program::<ResultModeGather, D>(path, threshold, ()),
+            &counter_less_than_program::<ResultModeGather, D>(path, threshold, ())?,
             gas_limit,
             cost_model,
         )
@@ -103,8 +104,9 @@ pub(crate) fn counter_less_than_program<M: ResultMode<D>, D: DB>(
     path: &[u8],
     threshold: u64,
     read_result: M::ReadResult,
-) -> Vec<Op<M, D>> {
-    vec![
+) -> Result<Vec<Op<M, D>>, CompactError> {
+    super::checked_index_path::<D>(path).map_err(super::query_rejected)?;
+    Ok(vec![
         Op::Dup { n: 0 },
         Op::Idx {
             cached: false,
@@ -120,7 +122,7 @@ pub(crate) fn counter_less_than_program<M: ResultMode<D>, D: DB>(
             cached: true,
             result: read_result,
         },
-    ]
+    ])
 }
 
 /// Run Compact Counter's increment program through ledger query execution.
@@ -170,7 +172,7 @@ fn update_counter<D: DB>(
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
     context.query(
-        &counter_program(path, amount, subtract),
+        &counter_program(path, amount, subtract)?,
         gas_limit,
         cost_model,
     )
@@ -180,7 +182,8 @@ pub(crate) fn counter_program<D: DB>(
     path: &[u8],
     amount: u16,
     subtract: bool,
-) -> Vec<Op<ResultModeVerify, D>> {
+) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
+    let insert_depth = super::checked_path_operand::<D>(path.len(), 0)?;
     let arithmetic = if subtract {
         Op::Subi {
             immediate: amount.into(),
@@ -190,7 +193,7 @@ pub(crate) fn counter_program<D: DB>(
             immediate: amount.into(),
         }
     };
-    vec![
+    Ok(vec![
         Op::Idx {
             cached: false,
             push_path: true,
@@ -199,7 +202,7 @@ pub(crate) fn counter_program<D: DB>(
         arithmetic,
         Op::Ins {
             cached: true,
-            n: path.len() as u8,
+            n: insert_depth,
         },
-    ]
+    ])
 }

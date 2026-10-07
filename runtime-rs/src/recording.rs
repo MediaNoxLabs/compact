@@ -226,7 +226,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
     ) -> Result<Self, CompactError> {
         let path = path.into();
         let program = ledger::cell_write_program(path.as_slice(), value);
-        self.apply_verify_program(program)
+        self.apply_checked_verify_program(program)
     }
 
     /// Replace a qualified coin Cell using the actual offer-allocated index.
@@ -270,7 +270,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
     ) -> Result<Self, CompactError> {
         let path = path.into();
         let program = ledger::counter_program(path.as_slice(), amount, subtract);
-        self.apply_verify_program(program)
+        self.apply_checked_verify_program(program)
     }
 
     fn apply_verify_program(
@@ -293,13 +293,22 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         Ok(self)
     }
 
+    fn apply_checked_verify_program(
+        self,
+        program: Result<Vec<Op<ResultModeVerify, D>>, ledger::TranscriptRejected<D>>,
+    ) -> Result<Self, CompactError> {
+        let program =
+            program.map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+        self.apply_verify_program(program)
+    }
+
     pub fn insert_set<T: CellValue>(
         self,
         path: impl Into<LedgerPath>,
         value: T,
     ) -> Result<Self, CompactError> {
         let path = path.into();
-        self.apply_verify_program(ledger::set_insert_program(path.as_slice(), value))
+        self.apply_checked_verify_program(ledger::set_insert_program(path.as_slice(), value))
     }
 
     /// Insert a qualified coin using its allocated transaction commitment index.
@@ -325,7 +334,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         path: impl Into<LedgerPath>,
         value: T,
     ) -> Result<Self, CompactError> {
-        self.apply_verify_program(ledger::merkle_insert_program(path, value))
+        self.apply_checked_verify_program(ledger::merkle_insert_program(path, value))
     }
 
     /// Append an already hashed leaf to a plain Merkle tree and retain its VM program.
@@ -334,7 +343,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         path: impl Into<LedgerPath>,
         hash: crate::FixedBytes<32>,
     ) -> Result<Self, CompactError> {
-        self.apply_verify_program(ledger::merkle_insert_hash_program(path, hash))
+        self.apply_checked_verify_program(ledger::merkle_insert_hash_program(path, hash))
     }
 
     /// Reset a plain tree with the canonical metered ledger program.
@@ -343,7 +352,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         path: impl Into<LedgerPath>,
         depth: u8,
     ) -> Result<Self, CompactError> {
-        self.apply_verify_program(ledger::merkle_reset_program(path, depth))
+        self.apply_checked_verify_program(ledger::merkle_reset_program(path, depth))
     }
 
     /// Append to a historic Merkle tree and retain its root-history VM update.
@@ -352,7 +361,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         path: impl Into<LedgerPath>,
         value: T,
     ) -> Result<Self, CompactError> {
-        self.apply_verify_program(ledger::historic_merkle_insert_program(path, value))
+        self.apply_checked_verify_program(ledger::historic_merkle_insert_program(path, value))
     }
 
     /// Append an already hashed leaf and retain the historic root-map update.
@@ -361,7 +370,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         path: impl Into<LedgerPath>,
         hash: crate::FixedBytes<32>,
     ) -> Result<Self, CompactError> {
-        self.apply_verify_program(ledger::historic_merkle_insert_hash_program(path, hash))
+        self.apply_checked_verify_program(ledger::historic_merkle_insert_hash_program(path, hash))
     }
 
     /// Keep the current historic root and discard older root history.
@@ -369,7 +378,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         self,
         path: impl Into<LedgerPath>,
     ) -> Result<Self, CompactError> {
-        self.apply_verify_program(ledger::historic_reset_history_program(path.into()))
+        self.apply_checked_verify_program(ledger::historic_reset_history_program(path.into()))
     }
 
     /// Replace a historic tree and seed the blank root in its new history.
@@ -378,7 +387,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         path: impl Into<LedgerPath>,
         depth: u8,
     ) -> Result<Self, CompactError> {
-        self.apply_verify_program(ledger::historic_reset_to_default_program(path, depth))
+        self.apply_checked_verify_program(ledger::historic_reset_to_default_program(path, depth))
     }
 
     /// Insert a typed leaf at a declared index, retaining the ledger-8 VM program.
@@ -388,7 +397,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         value: T,
         position: crate::BoundedUint<{ u64::MAX as u128 }>,
     ) -> Result<Self, CompactError> {
-        self.apply_verify_program(ledger::merkle_insert_index_program(
+        self.apply_checked_verify_program(ledger::merkle_insert_index_program(
             path,
             value,
             position.value() as u64,
@@ -402,7 +411,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         hash: crate::FixedBytes<32>,
         position: crate::BoundedUint<{ u64::MAX as u128 }>,
     ) -> Result<Self, CompactError> {
-        self.apply_verify_program(ledger::merkle_insert_hash_index_program(
+        self.apply_checked_verify_program(ledger::merkle_insert_hash_index_program(
             path,
             hash,
             position.value() as u64,
@@ -414,7 +423,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         path: impl Into<LedgerPath>,
         position: crate::BoundedUint<{ u64::MAX as u128 }>,
     ) -> Result<Self, CompactError> {
-        self.apply_verify_program(ledger::merkle_insert_index_default_program::<T, D>(
+        self.apply_checked_verify_program(ledger::merkle_insert_index_default_program::<T, D>(
             path,
             position.value() as u64,
         ))
@@ -426,7 +435,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         value: T,
         position: crate::BoundedUint<{ u64::MAX as u128 }>,
     ) -> Result<Self, CompactError> {
-        self.apply_verify_program(ledger::historic_merkle_insert_index_program(
+        self.apply_checked_verify_program(ledger::historic_merkle_insert_index_program(
             path,
             value,
             position.value() as u64,
@@ -440,7 +449,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         hash: crate::FixedBytes<32>,
         position: crate::BoundedUint<{ u64::MAX as u128 }>,
     ) -> Result<Self, CompactError> {
-        self.apply_verify_program(ledger::historic_merkle_insert_hash_index_program(
+        self.apply_checked_verify_program(ledger::historic_merkle_insert_hash_index_program(
             path,
             hash,
             position.value() as u64,
@@ -452,12 +461,10 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         path: impl Into<LedgerPath>,
         position: crate::BoundedUint<{ u64::MAX as u128 }>,
     ) -> Result<Self, CompactError> {
-        self.apply_verify_program(
-            ledger::historic_merkle_insert_index_default_program::<T, D>(
-                path,
-                position.value() as u64,
-            ),
-        )
+        self.apply_checked_verify_program(ledger::historic_merkle_insert_index_default_program::<
+            T,
+            D,
+        >(path, position.value() as u64))
     }
 
     /// Read plain-tree fullness through the ledger VM and retain the observed
@@ -535,7 +542,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
                 "missing Merkle root comparison event".into(),
             ));
         };
-        let program = ledger::merkle_check_root_verify_program(path, root, observed.clone());
+        let program = ledger::merkle_check_root_verify_program(path, root, observed.clone())?;
         self.state.context.query = result.context;
         self.state.observed_gas += result.gas_cost;
         self.state.verify_ops.extend(program);
@@ -561,7 +568,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
                 "missing historic Merkle root membership event".into(),
             ));
         };
-        let program = ledger::historic_check_root_verify_program(path, root, observed.clone());
+        let program = ledger::historic_check_root_verify_program(path, root, observed.clone())?;
         self.state.context.query = result.context;
         self.state.observed_gas += result.gas_cost;
         self.state.verify_ops.extend(program);
@@ -574,12 +581,12 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         value: T,
     ) -> Result<Self, CompactError> {
         let path = path.into();
-        self.apply_verify_program(ledger::set_remove_program(path.as_slice(), value))
+        self.apply_checked_verify_program(ledger::set_remove_program(path.as_slice(), value))
     }
 
     pub fn reset_set(self, path: impl Into<LedgerPath>) -> Result<Self, CompactError> {
         let path = path.into();
-        self.apply_verify_program(ledger::set_reset_program(path.as_slice()))
+        self.apply_checked_verify_program(ledger::set_reset_program(path.as_slice()))
     }
 
     pub fn member_set<T: CellValue + Clone>(
@@ -600,7 +607,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
                 "missing Set member event".into(),
             ));
         };
-        let program = ledger::set_member_program(path.as_slice(), value, observed.clone());
+        let program = ledger::set_member_program(path.as_slice(), value, observed.clone())?;
         self.state.context.query = result.context;
         self.state.observed_gas += result.gas_cost;
         self.state.verify_ops.extend(program);
@@ -620,7 +627,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
                 "missing Set size event".into(),
             ));
         };
-        let program = ledger::set_size_program(path.as_slice(), observed.clone());
+        let program = ledger::set_size_program(path.as_slice(), observed.clone())?;
         self.state.context.query = result.context;
         self.state.observed_gas += result.gas_cost;
         self.state.verify_ops.extend(program);
@@ -643,7 +650,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
                 "missing Set emptiness event".into(),
             ));
         };
-        let program = ledger::set_is_empty_program(path.as_slice(), observed.clone());
+        let program = ledger::set_is_empty_program(path.as_slice(), observed.clone())?;
         self.state.context.query = result.context;
         self.state.observed_gas += result.gas_cost;
         self.state.verify_ops.extend(program);
@@ -657,7 +664,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         value: V,
     ) -> Result<Self, CompactError> {
         let path = path.into();
-        self.apply_verify_program(ledger::map_insert_program(path.as_slice(), key, value))
+        self.apply_checked_verify_program(ledger::map_insert_program(path.as_slice(), key, value))
     }
 
     pub fn remove_map<K: CellValue>(
@@ -698,7 +705,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
                 "missing Map lookup event".into(),
             ));
         };
-        let program = ledger::map_lookup_program(path.as_slice(), key, observed.clone());
+        let program = ledger::map_lookup_program(path.as_slice(), key, observed.clone())?;
         self.state.context.query = result.context;
         self.state.observed_gas += result.gas_cost;
         self.state.verify_ops.extend(program);
@@ -718,15 +725,15 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         path: impl Into<LedgerPath>,
         value: T,
     ) -> Result<Self, CompactError> {
-        self.apply_verify_program(ledger::list_push_front_program(path, value))
+        self.apply_checked_verify_program(ledger::list_push_front_program(path, value))
     }
 
     pub fn pop_front_list(self, path: impl Into<LedgerPath>) -> Result<Self, CompactError> {
-        self.apply_verify_program(ledger::list_pop_front_program(path))
+        self.apply_checked_verify_program(ledger::list_pop_front_program(path))
     }
 
     pub fn reset_list(self, path: impl Into<LedgerPath>) -> Result<Self, CompactError> {
-        self.apply_verify_program(ledger::list_reset_program(path))
+        self.apply_checked_verify_program(ledger::list_reset_program(path))
     }
 
     pub fn length_list(mut self, path: impl Into<LedgerPath>) -> Result<(Self, u64), CompactError> {
@@ -742,7 +749,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
                 "missing List length event".into(),
             ));
         };
-        let program = ledger::list_length_program(path.as_slice(), observed.clone());
+        let program = ledger::list_length_program(path.as_slice(), observed.clone())?;
         self.state.context.query = result.context;
         self.state.observed_gas += result.gas_cost;
         self.state.verify_ops.extend(program);
@@ -765,7 +772,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
                 "missing List emptiness event".into(),
             ));
         };
-        let program = ledger::list_is_empty_program(path.as_slice(), observed.clone());
+        let program = ledger::list_is_empty_program(path.as_slice(), observed.clone())?;
         self.state.context.query = result.context;
         self.state.observed_gas += result.gas_cost;
         self.state.verify_ops.extend(program);
@@ -789,7 +796,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
             ));
         };
         let program =
-            ledger::list_head_program::<T, ResultModeVerify, D>(path.as_slice(), observed.clone());
+            ledger::list_head_program::<T, ResultModeVerify, D>(path.as_slice(), observed.clone())?;
         self.state.context.query = result.context;
         self.state.observed_gas += result.gas_cost;
         self.state.verify_ops.extend(program);
@@ -814,7 +821,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         };
         // Preserve the actual ledger FAB value. Re-encoding `value` could
         // change its alignment and make the verification transcript invalid.
-        let program = ledger::cell_read_program(path.as_slice(), observed.clone());
+        let program = ledger::cell_read_program(path.as_slice(), observed.clone())?;
         self.state.context.query = result.context;
         self.state.observed_gas += result.gas_cost;
         self.state.verify_ops.extend(program);
@@ -840,7 +847,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
             ));
         };
         let program =
-            ledger::counter_less_than_program(path.as_slice(), threshold, observed.clone());
+            ledger::counter_less_than_program(path.as_slice(), threshold, observed.clone())?;
         self.state.context.query = result.context;
         self.state.observed_gas += result.gas_cost;
         self.state.verify_ops.extend(program);
@@ -863,7 +870,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
                 "missing Counter read event".into(),
             ));
         };
-        let program = ledger::counter_read_program(path.as_slice(), observed.clone());
+        let program = ledger::counter_read_program(path.as_slice(), observed.clone())?;
         self.state.context.query = result.context;
         self.state.observed_gas += result.gas_cost;
         self.state.verify_ops.extend(program);

@@ -96,7 +96,7 @@ pub fn query_cell_at_path<T: CellValue, D: DB>(
     if path.is_empty() {
         return Err(CompactError::InvalidLedgerCell("empty ledger path".into()));
     }
-    let program = cell_read_program::<ResultModeGather, D>(path, ());
+    let program = cell_read_program::<ResultModeGather, D>(path, ())?;
     let result = context
         .query(&program, gas_limit, cost_model)
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -107,8 +107,9 @@ pub fn query_cell_at_path<T: CellValue, D: DB>(
 pub(crate) fn cell_read_program<M: ResultMode<D>, D: DB>(
     path: &[u8],
     read_result: M::ReadResult,
-) -> Vec<Op<M, D>> {
-    vec![
+) -> Result<Vec<Op<M, D>>, CompactError> {
+    super::checked_index_path::<D>(path).map_err(super::query_rejected)?;
+    Ok(vec![
         Op::Dup { n: 0 },
         Op::Idx {
             cached: false,
@@ -123,7 +124,7 @@ pub(crate) fn cell_read_program<M: ResultMode<D>, D: DB>(
             cached: false,
             result: read_result,
         },
-    ]
+    ])
 }
 
 pub(crate) fn decode_last_read<T: CellValue, D: DB>(
@@ -161,18 +162,19 @@ pub fn write_cell_at_path<T: CellValue, D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
-    context.query(&cell_write_program(path, value), gas_limit, cost_model)
+    context.query(&cell_write_program(path, value)?, gas_limit, cost_model)
 }
 
 pub(crate) fn cell_write_program<T: CellValue, D: DB>(
     path: &[u8],
     value: T,
-) -> Vec<Op<ResultModeVerify, D>> {
+) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
+    super::checked_index_path::<D>(path)?;
     if path.len() == 1 {
         // Compact emits a root Cell replacement as an insertion keyed by a
         // temporary Cell containing the ledger index. Preserve that program
         // so the ledger transcript matches the circuit's ZKIR public inputs.
-        return vec![
+        return Ok(vec![
             Op::Push {
                 storage: false,
                 value: constructor_cell(path[0]),
@@ -185,12 +187,12 @@ pub(crate) fn cell_write_program<T: CellValue, D: DB>(
                 cached: false,
                 n: 1,
             },
-        ];
+        ]);
     }
     if path.len() == 2 {
         // Compact indexes the containing array, then inserts at its final
         // key and inserts the updated array back into the root.
-        return vec![
+        return Ok(vec![
             Op::Idx {
                 cached: false,
                 push_path: true,
@@ -209,9 +211,9 @@ pub(crate) fn cell_write_program<T: CellValue, D: DB>(
                 n: 1,
             },
             Op::Ins { cached: true, n: 1 },
-        ];
+        ]);
     }
-    vec![
+    Ok(vec![
         Op::Idx {
             cached: false,
             push_path: true,
@@ -227,7 +229,7 @@ pub(crate) fn cell_write_program<T: CellValue, D: DB>(
             value: constructor_cell(value),
         },
         Op::Ins { cached: true, n: 1 },
-    ]
+    ])
 }
 
 /// Replace a qualified-coin Cell using its transaction-allocated commitment index.

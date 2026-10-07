@@ -23,7 +23,6 @@
 use std::borrow::Cow;
 use std::error::Error;
 use std::fmt;
-use std::io::{self, Cursor};
 
 use midnight_base_crypto::fab::AlignedValue;
 use midnight_base_crypto::signatures::Signature;
@@ -34,13 +33,15 @@ use midnight_ledger::structure::{
     INITIAL_PARAMETERS, Intent, LedgerState, ProofPreimageMarker, Transaction,
 };
 use midnight_onchain_state::state::{ContractOperation, EntryPointBuf};
-use midnight_serialize::tagged_deserialize;
 use midnight_storage::storage::{HashMap, Map};
 use midnight_transient_crypto::commitment::PedersenRandomness;
 use midnight_transient_crypto::curve::Fr;
 pub use midnight_transient_crypto::proofs::VerifierKey;
 use midnight_transient_crypto::proofs::{KeyLocation, ProofPreimage};
 use midnight_zswap::{Input, Offer};
+
+mod decoding;
+pub use decoding::{EncodedSizeLimit, decode_verifier_key, decode_verifier_key_with_limit};
 
 mod observation;
 pub use observation::{
@@ -677,39 +678,6 @@ impl<D: DB> OfferBoundPreparedCall<D> {
             ),
         }
     }
-}
-
-impl ObservedContractState<DefaultDB> {
-    /// Decode exact ledger-8 tagged `ContractState` bytes from an indexer.
-    pub fn decode(
-        address: ContractAddress,
-        bytes: &[u8],
-        observation: Observation,
-    ) -> io::Result<Self> {
-        let mut cursor = Cursor::new(bytes);
-        let contract = tagged_deserialize(&mut cursor)?;
-        if cursor.position() != bytes.len() as u64 {
-            return Err(io::Error::new(
-                io::ErrorKind::InvalidData,
-                "trailing contract-state bytes",
-            ));
-        }
-        Ok(Self::new(address, contract, observation))
-    }
-}
-
-/// Decode one compiler-emitted ledger-8 `.verifier` artifact exactly. This
-/// keeps a generated-crate consumer from needing a direct serializer crate.
-pub fn decode_verifier_key(bytes: &[u8]) -> io::Result<VerifierKey> {
-    let mut cursor = Cursor::new(bytes);
-    let verifier = tagged_deserialize(&mut cursor)?;
-    if cursor.position() != bytes.len() as u64 {
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidData,
-            "trailing verifier-key bytes",
-        ));
-    }
-    Ok(verifier)
 }
 
 /// A generated circuit's recorded trace with its source-owned entry point and

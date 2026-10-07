@@ -95,3 +95,105 @@ fn recorded_nested_conditions_on_default_worker() {
     assert!(circuit.recorded);
     assert!(circuit.observed_call);
 }
+
+fn local_call_graph(depth: usize, repeated: bool, mixed: bool) -> Contract {
+    let circuits = (0..depth).map(|i| {
+        let actions = if i + 1 == depth {
+            vec![json!({"kind":"assert", "condition":{"kind":"parameter","name":"selected"}, "message":"selected"})]
+        } else {
+            let call = json!({"kind":"circuit_call", "name":format!("chain{}",i+1), "arguments":[{"kind":"parameter","name":"selected"}]});
+            if mixed && i % 2 == 0 {
+                vec![json!({"kind":"if", "condition":{"kind":"parameter","name":"selected"}, "then":call, "otherwise":{"kind":"sequence","actions":[]}})]
+            } else if repeated { vec![call.clone(),call] } else { vec![call] }
+        };
+        json!({"name":format!("chain{i}"), "parameters":[{"name":"selected","ty":{"kind":"boolean"}}], "internal":i>0, "result":{"kind":"unit"}, "return_value":{"kind":"unit"}, "actions":actions})
+    }).collect::<Vec<_>>();
+    serde_json::from_value(json!({"schema_version":20,"ledger_fields":[],"witnesses":[],"circuits":[],"stateful_circuits":circuits})).expect("valid finite call graph")
+}
+
+fn check_local_call_graph(depth: usize, repeated: bool, mixed: bool) {
+    let contract = local_call_graph(depth, repeated, mixed);
+    let rendered =
+        render_with_capabilities(&contract).expect("supported finite recorded call graph");
+    let entry = rendered
+        .capabilities
+        .circuits
+        .iter()
+        .find(|c| c.name == "chain0")
+        .expect("entry capability");
+    assert!(
+        entry.recorded,
+        "the regression must exercise recording, not only native emission"
+    );
+    assert!(entry.observed_call);
+    assert!(rendered.source.contains("pub fn chain0"));
+}
+
+#[test]
+fn recorded_local_call_chain_on_default_worker() {
+    check_local_call_graph(12, false, false);
+}
+
+#[test]
+fn recorded_repeated_call_diamond_on_default_worker() {
+    check_local_call_graph(12, true, false);
+}
+
+#[test]
+fn recorded_calls_and_branches_on_default_worker() {
+    check_local_call_graph(12, false, true);
+}
+
+#[test]
+fn malformed_local_call_diagnostics_precede_recorded_expansion() {
+    use compact_rust_backend::RenderError;
+    for cyclic in [false, true] {
+        let mut contract = local_call_graph(12, false, false);
+        let mut bad = contract.stateful_circuits.last().unwrap().clone();
+        bad.name = "bad".into();
+        bad.actions = vec![compact_rust_backend::ir::StateAction::CircuitCall {
+            name: if cyclic { "bad" } else { "missing" }.into(),
+            arguments: vec![compact_rust_backend::ir::Expr::Boolean { value: true }],
+        }];
+        contract.stateful_circuits.push(bad);
+        let error = match render_with_capabilities(&contract) {
+            Err(error) => error,
+            Ok(_) => panic!("malformed graph unexpectedly admitted"),
+        };
+        match error {
+            RenderError::UnknownCircuit(name) if !cyclic => assert_eq!(name, "missing"),
+            RenderError::UnsupportedStatefulCall(name) if cyclic => assert_eq!(name, "bad"),
+            other => panic!("unexpected diagnostic: {other:?}"),
+        }
+    }
+}
+
+#[test]
+fn recorded_local_bindings_across_calls_on_default_worker() {
+    let contract = local_call_graph(12, false, false);
+    let mut value = serde_json::to_value(contract).unwrap();
+    for circuit in value["stateful_circuits"].as_array_mut().unwrap() {
+        let mut actions = circuit["actions"].take();
+        for action in actions.as_array_mut().unwrap() {
+            if action["kind"] == "circuit_call" {
+                action["arguments"][0]["name"] = json!("chosen");
+            } else {
+                action["condition"]["name"] = json!("chosen");
+            }
+        }
+        circuit["actions"] = json!([{"kind":"let", "bindings":[{
+            "name":"chosen","ty":{"kind":"boolean"},
+            "value":{"kind":"parameter","name":"selected"}}],
+            "action":{"kind":"sequence","actions":actions}}]);
+    }
+    let contract = serde_json::from_value(value).unwrap();
+    let rendered =
+        render_with_capabilities(&contract).expect("scoped bindings across finite calls");
+    assert!(
+        rendered
+            .capabilities
+            .circuits
+            .iter()
+            .any(|c| c.name == "chain0" && c.recorded && c.observed_call)
+    );
+}

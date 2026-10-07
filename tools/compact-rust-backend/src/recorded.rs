@@ -722,7 +722,8 @@ fn render_recorded_item(
         return Ok(item);
     }
     if !helper
-        && let Some(item) = read_only_verification::render(circuit, ledger_fields, witnesses, circuits)?
+        && let Some(item) =
+            read_only_verification::render(circuit, ledger_fields, witnesses, circuits)?
     {
         return Ok(item);
     }
@@ -4126,6 +4127,118 @@ fn render_recorded_item(
         failure_precision: &mut LegacyActionPrecision,
     ) -> Result<RecordingOutcome<()>, RenderError> {
         match action {
+            StateAction::Sequence { .. }
+            | StateAction::If { .. }
+            | StateAction::CircuitCall { .. } => append_control_steps(
+                action,
+                path,
+                locals,
+                parameters,
+                ledger_fields,
+                witnesses,
+                pure_circuits,
+                circuits,
+                shared_callees,
+                steps,
+                next_temp,
+                visiting,
+                failure_precision,
+            ),
+            StateAction::Let { .. } => append_binding_steps(
+                action,
+                path,
+                locals,
+                parameters,
+                ledger_fields,
+                witnesses,
+                pure_circuits,
+                circuits,
+                shared_callees,
+                steps,
+                next_temp,
+                visiting,
+            ),
+            StateAction::Expression { .. }
+            | StateAction::PureCall { .. }
+            | StateAction::Assert { .. } => append_assertion_steps(
+                action,
+                path,
+                locals,
+                parameters,
+                ledger_fields,
+                witnesses,
+                pure_circuits,
+                circuits,
+                steps,
+                next_temp,
+                visiting,
+            ),
+            StateAction::CounterIncrement { .. }
+            | StateAction::CounterDecrement { .. }
+            | StateAction::CounterReset { .. }
+            | StateAction::SetInsert { .. }
+            | StateAction::SetRemove { .. }
+            | StateAction::SetReset { .. }
+            | StateAction::ListPushFront { .. }
+            | StateAction::ListPopFront { .. }
+            | StateAction::ListReset { .. }
+            | StateAction::MapInsert { .. }
+            | StateAction::MapInsertDefault { .. }
+            | StateAction::MapRemove { .. }
+            | StateAction::MapReset { .. }
+            | StateAction::CellWrite { .. } => append_collection_steps(
+                action,
+                path,
+                locals,
+                parameters,
+                ledger_fields,
+                witnesses,
+                circuits,
+                shared_callees,
+                steps,
+                next_temp,
+                visiting,
+            ),
+            StateAction::HistoricMerkleResetHistory { .. }
+            | StateAction::HistoricMerkleResetToDefault { .. }
+            | StateAction::MerkleInsert { .. }
+            | StateAction::HistoricMerkleInsert { .. }
+            | StateAction::MerkleResetToDefault { .. }
+            | StateAction::MerkleInsertHash { .. }
+            | StateAction::HistoricMerkleInsertHash { .. }
+            | StateAction::MerkleInsertHashIndex { .. }
+            | StateAction::HistoricMerkleInsertHashIndex { .. }
+            | StateAction::MerkleInsertIndex { .. }
+            | StateAction::HistoricMerkleInsertIndex { .. }
+            | StateAction::MerkleInsertIndexDefault { .. }
+            | StateAction::HistoricMerkleInsertIndexDefault { .. } => {
+                append_merkle_steps(action, path, locals, parameters, ledger_fields, steps)
+            }
+            _ => Ok(unavailable_action(action, path)),
+        }
+    }
+
+    // This family retains the original lowering arms and ordered recording state.
+    #[expect(
+        clippy::too_many_arguments,
+        reason = "legacy lowering keeps declarations, scope, and ordered recording state explicit"
+    )]
+    fn append_control_steps(
+        action: &StateAction,
+        path: &str,
+        locals: &HashMap<String, syn::Expr>,
+        parameters: &HashMap<&str, (&Type, syn::Ident)>,
+        ledger_fields: &HashMap<&str, &LedgerField>,
+        witnesses: &HashMap<&str, &WitnessDeclaration>,
+        pure_circuits: &HashMap<&str, &PureCircuit>,
+        circuits: &HashMap<&str, &StatefulCircuit>,
+        shared_callees: &HashSet<String>,
+        steps: &mut Vec<syn::Stmt>,
+        next_temp: &mut usize,
+        visiting: &mut HashSet<String>,
+        failure_precision: &mut LegacyActionPrecision,
+    ) -> Result<RecordingOutcome<()>, RenderError> {
+        match action {
             StateAction::Sequence { actions } => {
                 for (index, action) in actions.iter().enumerate() {
                     if let RecordingOutcome::Unsupported(gap) = append_steps(
@@ -4146,62 +4259,6 @@ fn render_recorded_item(
                         return Ok(RecordingOutcome::Unsupported(gap));
                     }
                 }
-                Ok(RecordingOutcome::Supported(()))
-            }
-            StateAction::Expression {
-                value: Expr::WitnessCall { name, arguments },
-            } => {
-                let declaration = witnesses
-                    .get(name.as_str())
-                    .ok_or_else(|| RenderError::UnknownWitness(name.clone()))?;
-                if arguments.len() != declaration.parameters.len() {
-                    return Err(RenderError::ArgumentCount {
-                        circuit: name.clone(),
-                        expected: declaration.parameters.len(),
-                        actual: arguments.len(),
-                    });
-                }
-                if declaration.result != Type::Unit && declaration.result != Type::Field {
-                    return Ok(unavailable_action(action, path));
-                }
-                if declaration.result == Type::Unit
-                    && !(arguments.is_empty()
-                        || matches!(declaration.parameters.as_slice(), [parameter]
-                            if parameter.ty == Type::OpaqueString
-                                || (matches!(parameter.ty, Type::Struct { .. })
-                                    && recordable_cell_type(&parameter.ty))))
-                {
-                    return Ok(unavailable_action(action, path));
-                }
-                let mut args = Vec::new();
-                for (index, (argument, parameter)) in
-                    arguments.iter().zip(&declaration.parameters).enumerate()
-                {
-                    let Some(value) = cell_source(argument, &parameter.ty, locals, parameters)
-                    else {
-                        return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
-                            argument,
-                            format!("{path}.value.arguments[{index}]"),
-                        )));
-                    };
-                    let ty = rust_type(&parameter.ty)?;
-                    let arg = syn::Ident::new(
-                        &format!("__compact_recorded_witness_arg_{}", *next_temp),
-                        Span::call_site(),
-                    );
-                    *next_temp += 1;
-                    steps.push(syn::parse_quote!(let #arg: #ty = #value;));
-                    args.push(arg);
-                }
-                let method = ident(name)?;
-                steps.push(syn::parse_quote! {
-                    let (frame, _) = frame.try_witness_metered(|context, meter| {
-                        witnesses.#method(context.witness_context_with(super::LedgerView {
-                            state: context.query.state.get_ref(),
-                            meter,
-                        }), #(#args),*)
-                    })?;
-                });
                 Ok(RecordingOutcome::Supported(()))
             }
             StateAction::If {
@@ -4282,34 +4339,152 @@ fn render_recorded_item(
                 ));
                 Ok(RecordingOutcome::Supported(()))
             }
-            StateAction::PureCall { name, arguments } => {
-                let Some(callee) = pure_circuits.get(name.as_str()) else {
-                    return Ok(unavailable_action(action, path));
-                };
-                if !closed_pure_assert_call(callee) || callee.result != Type::Unit {
+            StateAction::CircuitCall { name, arguments } => {
+                let callee = circuits
+                    .get(name.as_str())
+                    .ok_or_else(|| RenderError::UnsupportedStatefulCall(name.clone()))?;
+                if callee.result != Type::Unit || callee.return_value != StateReturn::Unit {
+                    *failure_precision = LegacyActionPrecision::Coarse;
                     return Ok(unavailable_action(action, path));
                 }
-                let [parameter] = callee.parameters.as_slice() else {
-                    unreachable!("closed pure assertion has one parameter")
-                };
-                let [argument] = arguments.as_slice() else {
-                    return Ok(unavailable_action(action, path));
-                };
-                let Some(argument) = cell_source(argument, &parameter.ty, locals, parameters)
-                else {
-                    return Ok(unavailable_action(action, path));
-                };
-                let method = ident(name)?;
-                let typed_arg = syn::Ident::new(
-                    &format!("__compact_recorded_pure_assert_arg_{}", *next_temp),
-                    Span::call_site(),
-                );
-                *next_temp += 1;
-                let arg_ty = rust_type(&parameter.ty)?;
-                steps.push(syn::parse_quote!(let #typed_arg: #arg_ty = #argument;));
-                steps.push(syn::parse_quote!(crate::pure_circuits::#method(#typed_arg)?;));
-                Ok(RecordingOutcome::Supported(()))
+                if arguments.len() != callee.parameters.len() {
+                    return Err(RenderError::ArgumentCount {
+                        circuit: name.clone(),
+                        expected: callee.parameters.len(),
+                        actual: arguments.len(),
+                    });
+                }
+                if shared_callees.contains(name) {
+                    let mut args = Vec::new();
+                    for (argument, parameter) in arguments.iter().zip(&callee.parameters) {
+                        let value = shared_call_argument(
+                            argument,
+                            &parameter.ty,
+                            locals,
+                            parameters,
+                            ledger_fields,
+                            witnesses,
+                            circuits,
+                            steps,
+                            next_temp,
+                            visiting,
+                        )?;
+                        let Some(value) = value else {
+                            *failure_precision = LegacyActionPrecision::Coarse;
+                            return Ok(unavailable_action(action, path));
+                        };
+                        let arg = syn::Ident::new(
+                            &format!("__compact_recorded_arg_{}", *next_temp),
+                            Span::call_site(),
+                        );
+                        *next_temp += 1;
+                        let arg_ty = rust_type(&parameter.ty)?;
+                        steps.push(syn::parse_quote!(let #arg: #arg_ty = #value;));
+                        args.push(arg);
+                    }
+                    let helper = helper_ident(name, circuits)?;
+                    if circuit_uses_witness(callee, circuits, &mut HashSet::new())? {
+                        steps.push(syn::parse_quote!(
+                            let (frame, _) = #helper(frame, witnesses, #(#args),*)?;
+                        ));
+                    } else {
+                        steps.push(syn::parse_quote!(
+                            let (frame, _) = #helper(frame, #(#args),*)?;
+                        ));
+                    }
+                    return Ok(RecordingOutcome::Supported(()));
+                }
+                if !visiting.insert(name.clone()) {
+                    return Err(RenderError::UnsupportedStatefulCall(name.clone()));
+                }
+                let mut callee_locals = HashMap::new();
+                for (argument, parameter) in arguments.iter().zip(&callee.parameters) {
+                    let value = if parameter.ty == Type::Field {
+                        field_expression(
+                            argument,
+                            locals,
+                            parameters,
+                            ledger_fields,
+                            witnesses,
+                            circuits,
+                            shared_callees,
+                            steps,
+                            next_temp,
+                            visiting,
+                        )?
+                    } else if parameter.ty
+                        == (Type::Unsigned {
+                            max: "65535".into(),
+                        })
+                    {
+                        amount_source(argument, locals, parameters)
+                    } else {
+                        cell_source(argument, &parameter.ty, locals, parameters)
+                    };
+                    let Some(value) = value else {
+                        visiting.remove(name);
+                        *failure_precision = LegacyActionPrecision::Coarse;
+                        return Ok(unavailable_action(action, path));
+                    };
+                    let arg = syn::Ident::new(
+                        &format!("__compact_recorded_arg_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    steps.push(syn::parse_quote!(let #arg = #value;));
+                    callee_locals.insert(parameter.name.clone(), syn::parse_quote!(#arg));
+                }
+                let mut failure = None;
+                for (index, action) in callee.actions.iter().enumerate() {
+                    if let RecordingOutcome::Unsupported(gap) = append_steps(
+                        action,
+                        &format!("callee[{name}].actions[{index}]"),
+                        &callee_locals,
+                        &HashMap::new(),
+                        ledger_fields,
+                        witnesses,
+                        pure_circuits,
+                        circuits,
+                        shared_callees,
+                        steps,
+                        next_temp,
+                        visiting,
+                        &mut LegacyActionPrecision::Concrete,
+                    )? {
+                        failure = Some(gap);
+                        break;
+                    }
+                }
+                visiting.remove(name);
+                Ok(failure.map_or(
+                    RecordingOutcome::Supported(()),
+                    RecordingOutcome::Unsupported,
+                ))
             }
+            _ => Ok(unavailable_action(action, path)),
+        }
+    }
+
+    // This family retains the original lowering arms and ordered recording state.
+    #[expect(
+        clippy::too_many_arguments,
+        reason = "legacy lowering keeps declarations, scope, and ordered recording state explicit"
+    )]
+    fn append_binding_steps(
+        action: &StateAction,
+        path: &str,
+        locals: &HashMap<String, syn::Expr>,
+        parameters: &HashMap<&str, (&Type, syn::Ident)>,
+        ledger_fields: &HashMap<&str, &LedgerField>,
+        witnesses: &HashMap<&str, &WitnessDeclaration>,
+        pure_circuits: &HashMap<&str, &PureCircuit>,
+        circuits: &HashMap<&str, &StatefulCircuit>,
+        shared_callees: &HashSet<String>,
+        steps: &mut Vec<syn::Stmt>,
+        next_temp: &mut usize,
+        visiting: &mut HashSet<String>,
+    ) -> Result<RecordingOutcome<()>, RenderError> {
+        match action {
             whole @ StateAction::Let {
                 bindings,
                 action: nested_action,
@@ -5592,6 +5767,113 @@ fn render_recorded_item(
                     &mut LegacyActionPrecision::Concrete,
                 )
             }
+            _ => Ok(unavailable_action(action, path)),
+        }
+    }
+
+    // This family retains the original lowering arms and ordered recording state.
+    #[expect(
+        clippy::too_many_arguments,
+        reason = "legacy lowering keeps declarations, scope, and ordered recording state explicit"
+    )]
+    fn append_assertion_steps(
+        action: &StateAction,
+        path: &str,
+        locals: &HashMap<String, syn::Expr>,
+        parameters: &HashMap<&str, (&Type, syn::Ident)>,
+        ledger_fields: &HashMap<&str, &LedgerField>,
+        witnesses: &HashMap<&str, &WitnessDeclaration>,
+        pure_circuits: &HashMap<&str, &PureCircuit>,
+        circuits: &HashMap<&str, &StatefulCircuit>,
+        steps: &mut Vec<syn::Stmt>,
+        next_temp: &mut usize,
+        visiting: &mut HashSet<String>,
+    ) -> Result<RecordingOutcome<()>, RenderError> {
+        match action {
+            StateAction::Expression {
+                value: Expr::WitnessCall { name, arguments },
+            } => {
+                let declaration = witnesses
+                    .get(name.as_str())
+                    .ok_or_else(|| RenderError::UnknownWitness(name.clone()))?;
+                if arguments.len() != declaration.parameters.len() {
+                    return Err(RenderError::ArgumentCount {
+                        circuit: name.clone(),
+                        expected: declaration.parameters.len(),
+                        actual: arguments.len(),
+                    });
+                }
+                if declaration.result != Type::Unit && declaration.result != Type::Field {
+                    return Ok(unavailable_action(action, path));
+                }
+                if declaration.result == Type::Unit
+                    && !(arguments.is_empty()
+                        || matches!(declaration.parameters.as_slice(), [parameter]
+                            if parameter.ty == Type::OpaqueString
+                                || (matches!(parameter.ty, Type::Struct { .. })
+                                    && recordable_cell_type(&parameter.ty))))
+                {
+                    return Ok(unavailable_action(action, path));
+                }
+                let mut args = Vec::new();
+                for (index, (argument, parameter)) in
+                    arguments.iter().zip(&declaration.parameters).enumerate()
+                {
+                    let Some(value) = cell_source(argument, &parameter.ty, locals, parameters)
+                    else {
+                        return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
+                            argument,
+                            format!("{path}.value.arguments[{index}]"),
+                        )));
+                    };
+                    let ty = rust_type(&parameter.ty)?;
+                    let arg = syn::Ident::new(
+                        &format!("__compact_recorded_witness_arg_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    steps.push(syn::parse_quote!(let #arg: #ty = #value;));
+                    args.push(arg);
+                }
+                let method = ident(name)?;
+                steps.push(syn::parse_quote! {
+                    let (frame, _) = frame.try_witness_metered(|context, meter| {
+                        witnesses.#method(context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }), #(#args),*)
+                    })?;
+                });
+                Ok(RecordingOutcome::Supported(()))
+            }
+            StateAction::PureCall { name, arguments } => {
+                let Some(callee) = pure_circuits.get(name.as_str()) else {
+                    return Ok(unavailable_action(action, path));
+                };
+                if !closed_pure_assert_call(callee) || callee.result != Type::Unit {
+                    return Ok(unavailable_action(action, path));
+                }
+                let [parameter] = callee.parameters.as_slice() else {
+                    unreachable!("closed pure assertion has one parameter")
+                };
+                let [argument] = arguments.as_slice() else {
+                    return Ok(unavailable_action(action, path));
+                };
+                let Some(argument) = cell_source(argument, &parameter.ty, locals, parameters)
+                else {
+                    return Ok(unavailable_action(action, path));
+                };
+                let method = ident(name)?;
+                let typed_arg = syn::Ident::new(
+                    &format!("__compact_recorded_pure_assert_arg_{}", *next_temp),
+                    Span::call_site(),
+                );
+                *next_temp += 1;
+                let arg_ty = rust_type(&parameter.ty)?;
+                steps.push(syn::parse_quote!(let #typed_arg: #arg_ty = #argument;));
+                steps.push(syn::parse_quote!(crate::pure_circuits::#method(#typed_arg)?;));
+                Ok(RecordingOutcome::Supported(()))
+            }
             StateAction::Assert { condition, message } => {
                 // A typed public Uint<8> may be widened to Uint<32> for an
                 // equality guard. Keep the checked cast and assertion before
@@ -5671,128 +5953,29 @@ fn render_recorded_item(
                 });
                 Ok(RecordingOutcome::Supported(()))
             }
-            StateAction::CircuitCall { name, arguments } => {
-                let callee = circuits
-                    .get(name.as_str())
-                    .ok_or_else(|| RenderError::UnsupportedStatefulCall(name.clone()))?;
-                if callee.result != Type::Unit || callee.return_value != StateReturn::Unit {
-                    *failure_precision = LegacyActionPrecision::Coarse;
-                    return Ok(unavailable_action(action, path));
-                }
-                if arguments.len() != callee.parameters.len() {
-                    return Err(RenderError::ArgumentCount {
-                        circuit: name.clone(),
-                        expected: callee.parameters.len(),
-                        actual: arguments.len(),
-                    });
-                }
-                if shared_callees.contains(name) {
-                    let mut args = Vec::new();
-                    for (argument, parameter) in arguments.iter().zip(&callee.parameters) {
-                        let value = shared_call_argument(
-                            argument,
-                            &parameter.ty,
-                            locals,
-                            parameters,
-                            ledger_fields,
-                            witnesses,
-                            circuits,
-                            steps,
-                            next_temp,
-                            visiting,
-                        )?;
-                        let Some(value) = value else {
-                            *failure_precision = LegacyActionPrecision::Coarse;
-                            return Ok(unavailable_action(action, path));
-                        };
-                        let arg = syn::Ident::new(
-                            &format!("__compact_recorded_arg_{}", *next_temp),
-                            Span::call_site(),
-                        );
-                        *next_temp += 1;
-                        let arg_ty = rust_type(&parameter.ty)?;
-                        steps.push(syn::parse_quote!(let #arg: #arg_ty = #value;));
-                        args.push(arg);
-                    }
-                    let helper = helper_ident(name, circuits)?;
-                    if circuit_uses_witness(callee, circuits, &mut HashSet::new())? {
-                        steps.push(syn::parse_quote!(
-                            let (frame, _) = #helper(frame, witnesses, #(#args),*)?;
-                        ));
-                    } else {
-                        steps.push(syn::parse_quote!(
-                            let (frame, _) = #helper(frame, #(#args),*)?;
-                        ));
-                    }
-                    return Ok(RecordingOutcome::Supported(()));
-                }
-                if !visiting.insert(name.clone()) {
-                    return Err(RenderError::UnsupportedStatefulCall(name.clone()));
-                }
-                let mut callee_locals = HashMap::new();
-                for (argument, parameter) in arguments.iter().zip(&callee.parameters) {
-                    let value = if parameter.ty == Type::Field {
-                        field_expression(
-                            argument,
-                            locals,
-                            parameters,
-                            ledger_fields,
-                            witnesses,
-                            circuits,
-                            shared_callees,
-                            steps,
-                            next_temp,
-                            visiting,
-                        )?
-                    } else if parameter.ty
-                        == (Type::Unsigned {
-                            max: "65535".into(),
-                        })
-                    {
-                        amount_source(argument, locals, parameters)
-                    } else {
-                        cell_source(argument, &parameter.ty, locals, parameters)
-                    };
-                    let Some(value) = value else {
-                        visiting.remove(name);
-                        *failure_precision = LegacyActionPrecision::Coarse;
-                        return Ok(unavailable_action(action, path));
-                    };
-                    let arg = syn::Ident::new(
-                        &format!("__compact_recorded_arg_{}", *next_temp),
-                        Span::call_site(),
-                    );
-                    *next_temp += 1;
-                    steps.push(syn::parse_quote!(let #arg = #value;));
-                    callee_locals.insert(parameter.name.clone(), syn::parse_quote!(#arg));
-                }
-                let mut failure = None;
-                for (index, action) in callee.actions.iter().enumerate() {
-                    if let RecordingOutcome::Unsupported(gap) = append_steps(
-                        action,
-                        &format!("callee[{name}].actions[{index}]"),
-                        &callee_locals,
-                        &HashMap::new(),
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                        circuits,
-                        shared_callees,
-                        steps,
-                        next_temp,
-                        visiting,
-                        &mut LegacyActionPrecision::Concrete,
-                    )? {
-                        failure = Some(gap);
-                        break;
-                    }
-                }
-                visiting.remove(name);
-                Ok(failure.map_or(
-                    RecordingOutcome::Supported(()),
-                    RecordingOutcome::Unsupported,
-                ))
-            }
+            _ => Ok(unavailable_action(action, path)),
+        }
+    }
+
+    // This family retains the original lowering arms and ordered recording state.
+    #[expect(
+        clippy::too_many_arguments,
+        reason = "legacy lowering keeps declarations, scope, and ordered recording state explicit"
+    )]
+    fn append_collection_steps(
+        action: &StateAction,
+        path: &str,
+        locals: &HashMap<String, syn::Expr>,
+        parameters: &HashMap<&str, (&Type, syn::Ident)>,
+        ledger_fields: &HashMap<&str, &LedgerField>,
+        witnesses: &HashMap<&str, &WitnessDeclaration>,
+        circuits: &HashMap<&str, &StatefulCircuit>,
+        shared_callees: &HashSet<String>,
+        steps: &mut Vec<syn::Stmt>,
+        next_temp: &mut usize,
+        visiting: &mut HashSet<String>,
+    ) -> Result<RecordingOutcome<()>, RenderError> {
+        match action {
             StateAction::CounterIncrement {
                 field,
                 index,
@@ -6103,6 +6286,80 @@ fn render_recorded_item(
                 ));
                 Ok(RecordingOutcome::Supported(()))
             }
+            StateAction::CellWrite {
+                field,
+                index,
+                value,
+            } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
+                    return Ok(unavailable_action(action, path));
+                };
+                if !recordable_cell_type(ty) {
+                    return Ok(RecordingOutcome::Unsupported(
+                        RecordingGap::unsupported_type(action, ty, format!("{path}.value")),
+                    ));
+                }
+                if declaration.index != *index {
+                    return Ok(unavailable_action(action, path));
+                }
+                let expression = value;
+                let value = if *ty == Type::Field {
+                    field_expression(
+                        value,
+                        locals,
+                        parameters,
+                        ledger_fields,
+                        witnesses,
+                        circuits,
+                        shared_callees,
+                        steps,
+                        next_temp,
+                        visiting,
+                    )?
+                } else if *ty == Type::Boolean {
+                    boolean_expression(
+                        value,
+                        locals,
+                        parameters,
+                        ledger_fields,
+                        witnesses,
+                        circuits,
+                        steps,
+                        next_temp,
+                        visiting,
+                    )?
+                } else {
+                    cell_source(value, ty, locals, parameters)
+                };
+                let Some(value) = value else {
+                    return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
+                        expression,
+                        format!("{path}.value"),
+                    )));
+                };
+                let slot = ident(field)?;
+                steps.push(syn::parse_quote!(
+                    let frame = crate::ledger_slots::#slot.record_write(frame, #value)?;
+                ));
+                Ok(RecordingOutcome::Supported(()))
+            }
+            _ => Ok(unavailable_action(action, path)),
+        }
+    }
+
+    // This family retains the original lowering arms and ordered recording state.
+    fn append_merkle_steps(
+        action: &StateAction,
+        path: &str,
+        locals: &HashMap<String, syn::Expr>,
+        parameters: &HashMap<&str, (&Type, syn::Ident)>,
+        ledger_fields: &HashMap<&str, &LedgerField>,
+        steps: &mut Vec<syn::Stmt>,
+    ) -> Result<RecordingOutcome<()>, RenderError> {
+        match action {
             StateAction::HistoricMerkleResetHistory { field, index } => {
                 let declaration = ledger_fields
                     .get(field.as_str())
@@ -6369,66 +6626,6 @@ fn render_recorded_item(
                 let slot = ident(field)?;
                 steps.push(syn::parse_quote!(
                     let frame = crate::ledger_slots::#slot.record_insert_index_default(frame, #position)?;
-                ));
-                Ok(RecordingOutcome::Supported(()))
-            }
-            StateAction::CellWrite {
-                field,
-                index,
-                value,
-            } => {
-                let declaration = ledger_fields
-                    .get(field.as_str())
-                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-                let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
-                    return Ok(unavailable_action(action, path));
-                };
-                if !recordable_cell_type(ty) {
-                    return Ok(RecordingOutcome::Unsupported(
-                        RecordingGap::unsupported_type(action, ty, format!("{path}.value")),
-                    ));
-                }
-                if declaration.index != *index {
-                    return Ok(unavailable_action(action, path));
-                }
-                let expression = value;
-                let value = if *ty == Type::Field {
-                    field_expression(
-                        value,
-                        locals,
-                        parameters,
-                        ledger_fields,
-                        witnesses,
-                        circuits,
-                        shared_callees,
-                        steps,
-                        next_temp,
-                        visiting,
-                    )?
-                } else if *ty == Type::Boolean {
-                    boolean_expression(
-                        value,
-                        locals,
-                        parameters,
-                        ledger_fields,
-                        witnesses,
-                        circuits,
-                        steps,
-                        next_temp,
-                        visiting,
-                    )?
-                } else {
-                    cell_source(value, ty, locals, parameters)
-                };
-                let Some(value) = value else {
-                    return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
-                        expression,
-                        format!("{path}.value"),
-                    )));
-                };
-                let slot = ident(field)?;
-                steps.push(syn::parse_quote!(
-                    let frame = crate::ledger_slots::#slot.record_write(frame, #value)?;
                 ));
                 Ok(RecordingOutcome::Supported(()))
             }

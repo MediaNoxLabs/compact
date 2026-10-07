@@ -75,6 +75,34 @@ fn canonical_decimal_values_keep_little_endian_byte_order() {
 }
 
 #[test]
+fn canonical_field_modulus_neighbors_have_exact_bytes_and_errors() {
+    // The pinned midnight-transient-crypto 2.0.1 outer::Scalar is midnight-curves
+    // 0.2.0 Fq. Its bls12_381/fq.rs non-Montgomery modulus limbs and
+    // PrimeField::MODULUS specify 0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001.
+    // These decimal neighbors and p-1 bytes were converted independently from
+    // that upstream constant, not derived through field_literal_bytes.
+    const P_MINUS_ONE: &str =
+        "52435875175126190479447740508185965837690552500527637822603658699938581184512";
+    const P: &str = "52435875175126190479447740508185965837690552500527637822603658699938581184513";
+    const P_PLUS_ONE: &str =
+        "52435875175126190479447740508185965837690552500527637822603658699938581184514";
+    assert_eq!(
+        field_literal_bytes(P_MINUS_ONE),
+        Ok([
+            0, 0, 0, 0, 255, 255, 255, 255, 254, 91, 254, 255, 2, 164, 189, 83, 5, 216, 161, 9, 8,
+            216, 57, 51, 72, 125, 157, 41, 83, 167, 237, 115,
+        ])
+    );
+    for text in [P, P_PLUS_ONE] {
+        assert_eq!(
+            field_literal_bytes(text),
+            Err(RenderError::InvalidFieldLiteral(text.into())),
+            "{text}"
+        );
+    }
+}
+
+#[test]
 fn malformed_decimal_text_preserves_the_original_error_payload() {
     for text in [
         "", "00", "01", "+1", "-1", " 1", "1 ", "1\n", "1.0", "1e2", "0x10", "１", "١",

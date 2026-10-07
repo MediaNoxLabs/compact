@@ -133,6 +133,8 @@ pub enum RenderError {
     InvalidEnumVariant(String),
     UnknownParameter(String),
     UnknownCircuit(String),
+    /// A pure call graph supplied through private IR contains a cycle.
+    RecursivePureCall(String),
     UnsupportedStatefulCall(String),
     ArgumentCount {
         circuit: String,
@@ -244,6 +246,9 @@ impl fmt::Display for RenderError {
             Self::InvalidEnumVariant(name) => write!(f, "invalid enum variant {name:?}"),
             Self::UnknownParameter(name) => write!(f, "unknown parameter {name:?}"),
             Self::UnknownCircuit(name) => write!(f, "unknown circuit {name:?}"),
+            Self::RecursivePureCall(name) => {
+                write!(f, "recursive pure circuit call involving {name:?}")
+            }
             Self::UnsupportedStatefulCall(name) => {
                 write!(f, "unsupported stateful circuit call {name:?}")
             }
@@ -2853,7 +2858,7 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
         return Err(RenderError::SchemaVersion(contract.schema_version));
     }
 
-    resource_limits::validate(contract)?;
+    let preflight = resource_limits::validate(contract)?;
 
     // Build callable lookup maps only after checking their keys. Otherwise a
     // later declaration silently replaces an earlier one in a HashMap, and a
@@ -3678,6 +3683,9 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
             }
         })
     };
+    // Preserve existing semantic diagnostics before refusing private-IR pure
+    // recursion. This consumes facts from the bounded preflight, not a new walk.
+    preflight.finish(contract)?;
     let mut file: syn::File = syn::parse2(quote! {
         /// The matching Midnight Compact Rust runtime used by this generated crate.
         pub use midnight_compact_runtime as runtime;

@@ -14,8 +14,8 @@
 // limitations under the License.
 
 //! Saturating DAG expansion over the renderer's existing raw declaration keys.
-//! This does not resolve or reinterpret invalid calls: duplicate, unknown and
-//! cyclic inputs return to the semantic owner after local resource checks.
+//! Duplicate, unknown and cyclic inputs return to the semantic owner after
+//! local resource checks. A pure-cycle target is retained for deferred refusal.
 use super::{
     CallEdge, Contract, GraphStatus, Kind, LimitError, Metrics, Scan, add_cost, check,
     check_frames, max_cost,
@@ -76,7 +76,21 @@ pub(super) fn finish(contract: &Contract, mut scan: Scan<'_>) -> Result<Metrics,
             let j = graph[*node][*next].target;
             *next += 1;
             if color[j] == 1 {
-                scan.metrics.graph_status = GraphStatus::Cycle;
+                // Only the active suffix starting at j is the cycle. A
+                // stateful caller outside that suffix must not change its
+                // classification. Mixed/stateful cycles retain their existing
+                // renderer diagnostics; no second graph traversal is needed.
+                let pure_cycle = stack
+                    .iter()
+                    .rev()
+                    .take_while(|(node, _)| *node != j)
+                    .all(|(node, _)| *node < scan.pure_count)
+                    && j < scan.pure_count;
+                scan.metrics.graph_status = if pure_cycle {
+                    GraphStatus::PureCycle(j)
+                } else {
+                    GraphStatus::Cycle
+                };
                 return Ok(scan.metrics);
             }
             if color[j] == 0 {

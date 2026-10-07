@@ -10185,8 +10185,16 @@ fn typed_membership_plan_checks_helper_closure_and_requires_its_domain() {
             })
             .collect(),
     };
-    assert!(!available(&recursive, "vote$commit"));
-    assert!(!available(&recursive, "vote$reveal"));
+    // Recursive pure helpers are refused instead of publishing capabilities.
+    let expected = RenderError::Located {
+        location: helper.source.clone().unwrap(),
+        error: Box::new(RenderError::RecursivePureCall(helper.name.clone())),
+    };
+    assert_eq!(
+        render_with_capabilities(&recursive).err().unwrap(),
+        expected
+    );
+    assert_eq!(render(&recursive).unwrap_err(), expected);
     let mut wrong_slot = contract;
     wrong_slot
         .ledger_fields

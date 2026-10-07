@@ -14,15 +14,39 @@
 // limitations under the License.
 
 //! Bounded typed-IR preflight, before recursive rendering. The borrowed visitor
-//! budgets pending batches; graph arithmetic saturates. Semantic unknown/cycle
-//! diagnostics remain owned by the existing renderer.
+//! budgets pending batches; graph arithmetic saturates. Pure-cycle facts are
+//! retained for semantic refusal after the renderer's existing checks.
 mod policy;
 use crate::ir::Contract;
 use policy::{LimitError, Limits, ResourceKind as Kind, check};
 
-pub(crate) fn validate(contract: &Contract) -> Result<(), crate::RenderError> {
+/// Resources have been checked, but an otherwise valid pure call cycle must
+/// still be refused before publishing the rendered source.
+#[must_use]
+pub(crate) struct Preflight {
+    pure_cycle: Option<usize>,
+}
+
+impl Preflight {
+    pub(crate) fn finish(self, contract: &Contract) -> Result<(), crate::RenderError> {
+        if let Some(index) = self.pure_cycle {
+            let circuit = &contract.circuits[index];
+            return crate::located(circuit.source.as_ref(), || {
+                Err(crate::RenderError::RecursivePureCall(circuit.name.clone()))
+            });
+        }
+        Ok(())
+    }
+}
+
+pub(crate) fn validate(contract: &Contract) -> Result<Preflight, crate::RenderError> {
     measure(contract, Limits::DEFAULT)
-        .map(|_| ())
+        .map(|metrics| Preflight {
+            pure_cycle: match metrics.graph_status {
+                GraphStatus::PureCycle(index) => Some(index),
+                _ => None,
+            },
+        })
         .map_err(|error| crate::RenderError::ResourceLimit {
             resource: error.resource.label(),
             observed: error.observed,
@@ -50,6 +74,7 @@ enum GraphStatus {
     DuplicateName,
     UnknownCallee,
     Cycle,
+    PureCycle(usize),
 }
 
 #[derive(Clone, Copy)]
@@ -221,3 +246,6 @@ fn measure(contract: &Contract, limits: Limits) -> Result<Metrics, LimitError> {
 mod call_graph;
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod pure_cycles;

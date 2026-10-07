@@ -1785,6 +1785,24 @@ def main() -> None:
             assert [(row["name"], row["recorded"], row["observed_call"])
                     for row in oracle_capabilities["circuits"]] == [
                 ("insert_coin", True, True), ("contains", True, True)]
+            # Keep the frontend-reachable nested native path in the maintained
+            # gate. Runtime qualified_set_paths tests execute its VM helper;
+            # this source still has a deliberate generated recording gap.
+            chunked = base / "qualified-coin-set-chunked"
+            run(compiler, "--target", "rust", "--skip-zk",
+                str(ROOT / "runtime-rs/tests/fixtures/qualified-coin-set-chunked.compact"),
+                str(chunked))
+            chunked_ir = json.loads((chunked / "contract/compact-rust-ir.json").read_text())
+            assert has_coin_insert(chunked_ir["stateful_circuits"])
+            generated = (chunked / "contract/lib.rs").read_text()
+            assert "&[1u8,14u8]" in "".join(generated.split())
+            assert "ledger_slots::pot.insert_coin(" in "".join(generated.split())
+            chunked_caps = json.loads((chunked / "contract/rust-capabilities.json").read_text())
+            assert [(row["name"], row["recorded"], row["observed_call"])
+                    for row in chunked_caps["circuits"]] == [
+                ("insert_coin", False, False), ("contains", True, True)]
+            gap = chunked_caps["circuits"][0]["recording_unavailable"]
+            assert (gap["code"], gap["ir_node"]) == ("unsupported_action", "StateAction::SetInsertCoin")
             if args.proof:
                 adt_proof = base / "adt-qualified-proof"
                 run(compiler, "--target", "rust", "--rust-require-recording",
@@ -1796,7 +1814,8 @@ def main() -> None:
                     "--adt-set-qualified-coin-info", str(adt_proof))
                 run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                     "--qualified-coin-set", str(oracle_proof))
-            print("complete ADT qualified Set source and qualified coin oracle recorded")
+            print("complete ADT qualified Set source and qualified coin oracle recorded; "
+                  "chunked native path and explicit recording gap checked")
             return
         if args.test_center_bboard:
             output = base / "test-center-bboard"

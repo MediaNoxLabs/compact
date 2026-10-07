@@ -221,6 +221,9 @@ class WorkspaceTestPlanTests(unittest.TestCase):
                              str(gate.ROOT / "tools/compact-rust-backend/parity_positive_unit_composition_sources.json"))
             self.assertIn("did_proof_gate.py", by_label["did-proof-lifecycles"][1])
             self.assertIn("consumer-proof-ledger", by_label)
+            self.assertEqual(by_label["qualified-set-path-admission"][1:], [
+                str(gate.ROOT / "tools/compact-rust-backend/check_compactc_target.py"),
+                "--adt-set-qualified"])
             self.assertNotIn("--skip", by_label["did-proof-lifecycles"])
 
     def test_generated_library_guard_falls_back_for_test_or_unknown_expansion(self):

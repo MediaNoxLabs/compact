@@ -566,6 +566,9 @@ def main() -> int:
                 "backend-workspace-clippy", directory, receipt,
                 env=environment)
             run([sys.executable, str(ROOT / "tools/compact-rust-backend/check_compactc_target.py"),
+                 "--adt-set-qualified"], "qualified-set-path-admission", directory, receipt,
+                env=environment)
+            run([sys.executable, str(ROOT / "tools/compact-rust-backend/check_compactc_target.py"),
                  "--consumer", "--proof"], "consumer-proof-ledger", directory, receipt,
                 env=environment)
             run_required_proof_gates(directory, snapshot, environment, receipt)

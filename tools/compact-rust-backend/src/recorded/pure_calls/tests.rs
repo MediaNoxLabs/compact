@@ -184,6 +184,152 @@ fn unsigned_policy_refuses_hidden_effects_and_undeclared_arguments() {
 }
 
 #[test]
+fn field_coercions_preserve_transitive_subtraction_scope_and_effect_checks() {
+    let wrap = |value| Expr::Coerce {
+        value: Box::new(value),
+        ty: Type::Field,
+    };
+    let subtract = |left, right| Expr::Subtract {
+        left: Box::new(left),
+        right: Box::new(right),
+    };
+    let leaf = circuit(
+        "leaf",
+        vec![declaration("x", Type::Field)],
+        Type::Field,
+        wrap(subtract(parameter("x"), field("1"))),
+    );
+    // Repeated transitive calls must not leave the first sibling marked active.
+    let root = circuit(
+        "root",
+        vec![declaration("root_only", Type::Field)],
+        Type::Field,
+        wrap(subtract(
+            call("leaf", vec![parameter("root_only")]),
+            call("leaf", vec![field("2")]),
+        )),
+    );
+    let mut visiting = HashSet::new();
+    let accepted = HashMap::from([("leaf", &leaf), ("root", &root)]);
+    assert!(closed_pure_field_call("root", &accepted, &mut visiting));
+    assert!(visiting.is_empty());
+    for forbidden in forbidden().into_iter().chain([
+        // A caller's formal is not in scope inside its callee.
+        parameter("root_only"),
+        call("root", vec![parameter("x")]),
+        call("absent", vec![parameter("x")]),
+        Expr::Coerce {
+            value: Box::new(parameter("x")),
+            ty: Type::Unsigned { max: "255".into() },
+        },
+    ]) {
+        for invalid_on_left in [true, false] {
+            let (left, right) = if invalid_on_left {
+                (forbidden.clone(), parameter("x"))
+            } else {
+                (parameter("x"), forbidden.clone())
+            };
+            let rejected = PureCircuit {
+                body: wrap(subtract(left, right)),
+                ..leaf.clone()
+            };
+            assert!(
+                !closed_pure_field_call(
+                    "root",
+                    &HashMap::from([("leaf", &rejected), ("root", &root)]),
+                    &mut visiting,
+                ),
+                "wrapper concealed {forbidden:?}; invalid_on_left={invalid_on_left}"
+            );
+            assert!(visiting.is_empty());
+            assert!(closed_pure_field_call("root", &accepted, &mut visiting));
+            assert!(visiting.is_empty());
+        }
+    }
+}
+
+#[test]
+fn unsigned_conversions_preserve_transitive_subtraction_scope_and_effect_checks() {
+    let ty = Type::Unsigned {
+        max: "65535".into(),
+    };
+    let literal = || Expr::UnsignedLiteral {
+        max: "65535".into(),
+        value: "1".into(),
+    };
+    let subtract = |left, right| Expr::UnsignedSubtract {
+        max: "65535".into(),
+        left: Box::new(left),
+        right: Box::new(right),
+    };
+    let wrappers: [fn(Expr) -> Expr; 2] = [
+        |value| Expr::Coerce {
+            value: Box::new(value),
+            ty: Type::Unsigned {
+                max: "65535".into(),
+            },
+        },
+        |value| Expr::UnsignedCast {
+            max: "65535".into(),
+            value: Box::new(value),
+        },
+    ];
+    for (wrapper_index, wrap) in wrappers.into_iter().enumerate() {
+        let leaf = circuit(
+            "leaf",
+            vec![declaration("x", ty.clone())],
+            ty.clone(),
+            wrap(subtract(parameter("x"), literal())),
+        );
+        let root = circuit(
+            "root",
+            vec![declaration("root_only", ty.clone())],
+            ty.clone(),
+            wrap(subtract(
+                call("leaf", vec![parameter("root_only")]),
+                call("leaf", vec![literal()]),
+            )),
+        );
+        let accepted = HashMap::from([("leaf", &leaf), ("root", &root)]);
+        let mut visiting = HashSet::new();
+        assert!(closed_pure_unsigned_call("root", &accepted, &mut visiting));
+        assert!(visiting.is_empty());
+        for forbidden in forbidden().into_iter().chain([
+            parameter("root_only"),
+            call("root", vec![parameter("x")]),
+            call("absent", vec![parameter("x")]),
+            Expr::Coerce {
+                value: Box::new(parameter("x")),
+                ty: Type::Field,
+            },
+        ]) {
+            for invalid_on_left in [true, false] {
+                let (left, right) = if invalid_on_left {
+                    (forbidden.clone(), parameter("x"))
+                } else {
+                    (parameter("x"), forbidden.clone())
+                };
+                let rejected = PureCircuit {
+                    body: wrap(subtract(left, right)),
+                    ..leaf.clone()
+                };
+                assert!(
+                    !closed_pure_unsigned_call(
+                        "root",
+                        &HashMap::from([("leaf", &rejected), ("root", &root)]),
+                        &mut visiting,
+                    ),
+                    "wrapper {wrapper_index} concealed {forbidden:?}; invalid_on_left={invalid_on_left}"
+                );
+                assert!(visiting.is_empty());
+                assert!(closed_pure_unsigned_call("root", &accepted, &mut visiting));
+                assert!(visiting.is_empty());
+            }
+        }
+    }
+}
+
+#[test]
 fn assertion_policy_preserves_exact_parameter_zero_and_statement_shapes() {
     let nonzero = circuit(
         "guard",

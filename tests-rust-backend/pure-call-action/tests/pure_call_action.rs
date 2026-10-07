@@ -173,3 +173,19 @@ fn recorded_pure_assert_call_matches_typescript_success_and_failure() {
     assert_eq!(native_error.to_string(), failure["error"]);
     assert_eq!(recorded_error.to_string(), failure["error"]);
 }
+
+#[test]
+fn direct_pure_guard_accepts_nonzero_and_preserves_zero_error() {
+    use compact_rust_pure_call_action_fixture::pure_circuits::require_positive;
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/pure-call-action.json"
+    ))
+    .unwrap();
+    require_positive(Field::from(7_u64)).unwrap();
+    let error = require_positive(Field::from(0_u64)).unwrap_err();
+    assert_eq!(
+        error,
+        midnight_compact_runtime::CompactError::AssertionFailed("value must be positive".into())
+    );
+    assert_eq!(error.to_string(), oracle["zeroError"]);
+}

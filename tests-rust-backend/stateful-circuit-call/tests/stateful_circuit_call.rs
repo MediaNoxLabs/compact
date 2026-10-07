@@ -121,3 +121,74 @@ fn nested_recorded_calls_preserve_oracle_state_and_replay_effects() {
         oracle["afterHex"]
     );
 }
+
+fn assert_direct_counter_result(
+    native: midnight_compact_runtime::context::CircuitResult<u64, ()>,
+    recorded: midnight_compact_runtime::recording::RecordedCircuitResult<u64, ()>,
+    expected: u64,
+) {
+    use compact_rust_stateful_circuit_call_fixture::ledger_slots;
+    assert_eq!(
+        ledger_slots::count
+            .inspect(native.context.query.state.get_ref())
+            .unwrap(),
+        expected
+    );
+    assert_eq!(native.context.private_state, 7);
+    assert_eq!(recorded.execution.context.private_state, 7);
+    assert!(native.private_transcript_outputs.is_empty());
+    assert!(recorded.execution.private_transcript_outputs.is_empty());
+    assert_eq!(
+        native.context.query.state,
+        recorded.execution.context.query.state
+    );
+    assert_eq!(
+        native.context.query.effects,
+        recorded.execution.context.query.effects
+    );
+    assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(replay.context.state, native.context.query.state);
+    assert_eq!(replay.context.effects, native.context.query.effects);
+}
+
+#[test]
+fn direct_bump_increments_once_without_changing_private_state() {
+    use compact_rust_stateful_circuit_call_fixture::ledger_contract::{bump, recorded};
+    let context = || {
+        initial_state(ConstructorContext::new(7_u64))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default())
+    };
+    assert_direct_counter_result(
+        bump(context()).unwrap(),
+        recorded::bump(context()).unwrap(),
+        1,
+    );
+}
+
+#[test]
+fn direct_add_preserves_zero_and_adds_exact_declared_amount() {
+    use compact_rust_stateful_circuit_call_fixture::ledger_contract::{add, recorded};
+    for amount in [0_u64, 3, 65_535] {
+        let context = || {
+            initial_state(ConstructorContext::new(7_u64))
+                .unwrap()
+                .into_circuit_context(ContractAddress::default())
+        };
+        let argument = BoundedUint::<65535>::new(amount.into()).unwrap();
+        assert_direct_counter_result(
+            add(context(), argument).unwrap(),
+            recorded::add(context(), argument).unwrap(),
+            amount,
+        );
+    }
+}

@@ -270,3 +270,55 @@ fn kernel_effects_match_independent_typescript_and_keep_gas_reporting_distinct()
         }
     }
 }
+
+#[test]
+fn direct_marker_read_preserves_state_and_private_data() {
+    use compact_rust_kernel_shielded_effects_oracle_fixture::ledger_slots;
+    for value in [0_u64, 23] {
+        let context = || {
+            let ctx = ledger_contract::initial_state(ConstructorContext::new(vec![
+                "retained".to_owned(),
+            ]))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default());
+            if value == 0 {
+                ctx
+            } else {
+                ledger_slots::marker
+                    .write(ctx, runtime::Field::from(value))
+                    .unwrap()
+                    .context
+            }
+        };
+        let initial = context();
+        let before = initial.query.state.clone();
+        let effects = initial.query.effects.clone();
+        let native = ledger_contract::read_state(initial).unwrap();
+        let recorded = ledger_contract::recorded::read_state(context()).unwrap();
+        assert_eq!(native.result, runtime::Field::from(value));
+        assert_eq!(recorded.execution.result, native.result);
+        assert_eq!(native.context.query.state, before);
+        assert_eq!(native.context.query.effects, effects);
+        assert_eq!(recorded.execution.context.query.state, before);
+        assert_eq!(recorded.execution.context.query.effects, effects);
+        assert_eq!(native.context.private_state, ["retained"]);
+        assert_eq!(
+            recorded.execution.context.private_state,
+            native.context.private_state
+        );
+        assert!(native.private_transcript_outputs.is_empty());
+        assert!(recorded.execution.private_transcript_outputs.is_empty());
+        assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+        let replay = recorded
+            .public
+            .initial()
+            .query(
+                recorded.public.verify_ops(),
+                None,
+                &recorded.execution.context.cost_model,
+            )
+            .unwrap();
+        assert_eq!(replay.context.state, before);
+        assert_eq!(replay.context.effects, effects);
+    }
+}

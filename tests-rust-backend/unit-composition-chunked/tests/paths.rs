@@ -111,3 +111,114 @@ fn empty_selected_branch_is_execution_only_and_refuses_preparation() {
         Err(PrepareCallError::EmptyTranscript)
     ));
 }
+
+#[test]
+fn direct_close_changes_only_declared_state_and_checks_guards_before_witness() {
+    use fixture::ledger_slots as slots;
+    struct CountingWitness(std::cell::Cell<usize>);
+    impl c::Witnesses<u64> for CountingWitness {
+        fn now(
+            &self,
+            ctx: WitnessContext<'_, u64, c::LedgerView<'_>>,
+        ) -> (u64, r::BoundedUint<18446744073709551615>) {
+            self.0.set(self.0.get() + 1);
+            (*ctx.private_state + 1, r::BoundedUint::new(42).unwrap())
+        }
+    }
+    let context = || {
+        c::initial_state(ConstructorContext::new(7_u64))
+            .unwrap()
+            .into_circuit_context(Default::default())
+    };
+    let nw = CountingWitness(std::cell::Cell::new(0));
+    let rw = CountingWitness(std::cell::Cell::new(0));
+    let native = c::close(context(), &nw, r::BoundedUint::new(0).unwrap()).unwrap();
+    let recorded = c::recorded::close(context(), &rw, r::BoundedUint::new(0).unwrap()).unwrap();
+    assert_eq!(nw.0.get(), 1);
+    assert_eq!(rw.0.get(), 1);
+    assert_eq!(native.context.private_state, 8);
+    assert_eq!(recorded.execution.context.private_state, 8);
+    let after = native.context.query.state.get_ref();
+    assert!(!slots::active.inspect(after).unwrap());
+    assert_eq!(slots::version.inspect(after).unwrap(), 1);
+    assert_eq!(slots::updated.inspect(after).unwrap().value(), 42);
+    assert_eq!(native.private_transcript_outputs.len(), 1);
+    assert_eq!(
+        native.private_transcript_outputs,
+        recorded.execution.private_transcript_outputs
+    );
+    assert_eq!(
+        native.context.query.state,
+        recorded.execution.context.query.state
+    );
+    assert_eq!(
+        native.context.query.effects,
+        recorded.execution.context.query.effects
+    );
+    assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(replay.context.state, native.context.query.state);
+    assert_eq!(replay.context.effects, native.context.query.effects);
+    let before = context();
+    for slot in [
+        slots::untouched0,
+        slots::untouched1,
+        slots::untouched2,
+        slots::untouched3,
+        slots::untouched4,
+        slots::untouched5,
+        slots::untouched6,
+        slots::untouched7,
+        slots::untouched8,
+        slots::untouched9,
+        slots::untouched10,
+        slots::untouched11,
+        slots::untouched12,
+        slots::untouched13,
+        slots::untouched14,
+        slots::untouched15,
+    ] {
+        assert_eq!(
+            slot.inspect(after).unwrap(),
+            slot.inspect(before.query.state.get_ref()).unwrap()
+        );
+    }
+    // Both stale and inactive conditions fail before now(). The closed/stale
+    // combination establishes stale-before-inactive diagnostic precedence.
+    for (closed, expected, message) in [
+        (false, 1, "stale"),
+        (true, 0, "stale"),
+        (true, 1, "inactive"),
+    ] {
+        let prestate = || {
+            let ctx = context();
+            if closed {
+                c::close(ctx, &Witness, r::BoundedUint::new(0).unwrap())
+                    .unwrap()
+                    .context
+            } else {
+                ctx
+            }
+        };
+        let nw = CountingWitness(std::cell::Cell::new(0));
+        let rw = CountingWitness(std::cell::Cell::new(0));
+        let native = c::close(prestate(), &nw, r::BoundedUint::new(expected).unwrap())
+            .err()
+            .unwrap();
+        let recorded = c::recorded::close(prestate(), &rw, r::BoundedUint::new(expected).unwrap())
+            .err()
+            .unwrap();
+        assert_eq!(native, r::CompactError::AssertionFailed(message.into()));
+        assert_eq!(recorded, native);
+        assert_eq!(nw.0.get(), 0);
+        assert_eq!(rw.0.get(), 0);
+    }
+}

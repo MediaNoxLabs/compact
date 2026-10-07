@@ -190,3 +190,38 @@ fn independent_typescript_native_recorded_order_state_and_failures() {
         }
     }
 }
+
+#[test]
+fn direct_crypto_constructor_matches_captured_initial_ledger() {
+    let capture: Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/unit-composition.json"
+    ))
+    .unwrap();
+    let row = capture["cases"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|row| row["id"] == "crypto/valid")
+        .unwrap();
+    // capture-unit-composition.mjs:47 selects ecMulGenerator(1), then calls
+    // this source constructor without modifying the valid scenario's ledger.
+    let key = runtime::ec_mul_generator(Field::from(1_u64)).unwrap();
+    let constructor =
+        c::initial_state(runtime::context::ConstructorContext::new(7_u64), key).unwrap();
+    assert_eq!(constructor.ledger_state, state(row).data);
+    assert_eq!(constructor.private_state, 7);
+    let ledger = constructor.ledger_state.get_ref();
+    assert_eq!(
+        fixture::ledger_slots::controller.inspect(ledger).unwrap(),
+        key
+    );
+    assert!(fixture::ledger_slots::active.inspect(ledger).unwrap());
+    assert_eq!(fixture::ledger_slots::version.inspect(ledger).unwrap(), 0);
+    assert_eq!(
+        fixture::ledger_slots::updated
+            .inspect(ledger)
+            .unwrap()
+            .value(),
+        0
+    );
+}

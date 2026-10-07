@@ -116,3 +116,49 @@ fn tuple_shapes_and_coercions_match_typescript() {
         );
     }
 }
+
+#[test]
+fn direct_ping_sets_flag_and_preserves_private_state() {
+    use compact_rust_tuple_destructure_fixture::{ledger_contract as c, ledger_slots};
+    let context = || {
+        initial_state(ConstructorContext::new(7_u64))
+            .unwrap()
+            .into_circuit_context(Default::default())
+    };
+    assert!(
+        !ledger_slots::flag
+            .inspect(context().query.state.get_ref())
+            .unwrap()
+    );
+    let native = c::ping(context()).unwrap();
+    let recorded = c::recorded::ping(context()).unwrap();
+    assert!(
+        ledger_slots::flag
+            .inspect(native.context.query.state.get_ref())
+            .unwrap()
+    );
+    assert_eq!(native.context.private_state, 7);
+    assert_eq!(recorded.execution.context.private_state, 7);
+    assert!(native.private_transcript_outputs.is_empty());
+    assert!(recorded.execution.private_transcript_outputs.is_empty());
+    assert_eq!(
+        native.context.query.state,
+        recorded.execution.context.query.state
+    );
+    assert_eq!(
+        native.context.query.effects,
+        recorded.execution.context.query.effects
+    );
+    assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(replay.context.state, native.context.query.state);
+    assert_eq!(replay.context.effects, native.context.query.effects);
+}

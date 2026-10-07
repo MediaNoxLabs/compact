@@ -6,9 +6,9 @@
   "ledger_version": "ledger-8.0.3",
   "rust_version": "1.88",
   "runtime_package": "midnight-compact-runtime",
-  "runtime_version": "0.1.0",
+  "runtime_version": "0.2.0",
   "macros_package": "midnight-compact-runtime-macros",
-  "macros_version": "0.1.0",
+  "macros_version": "0.2.0",
   "ledger_dependencies": {
     "midnight-base-crypto": "=1.0.0",
     "midnight-coin-structure": "=2.0.1",

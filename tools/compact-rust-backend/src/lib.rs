@@ -76,7 +76,11 @@ pub(crate) fn ledger_path_expr(field: &ir::LedgerField) -> syn::Expr {
     }
 }
 
+/// A rendering refusal. Downstream matches must retain a fallback arm so new
+/// diagnostics can be added within this backend compatibility line. Display
+/// text is intended for people, not a stable machine-readable protocol.
 #[derive(Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum RenderError {
     /// Bounded compiler support policy was exceeded. The resource label and
     /// Display text are human diagnostics, not a machine-readable protocol.

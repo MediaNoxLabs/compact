@@ -800,6 +800,7 @@ fn run() -> Result<i32, Box<dyn Error>> {
         "source_sha256": selected.source_sha256,
         "compiler": {
             "rust_backend_package": env!("CARGO_PKG_VERSION"),
+            "rust_backend_artifact": "rust-backend-v0.3.0",
             "compact": frontend_manifest.get("compiler-version"),
             "language": frontend_manifest.get("language-version"),
             "typescript_runtime": frontend_manifest.get("runtime-version"),
@@ -1216,6 +1217,8 @@ mod tests {
         let source = Path::new("counter.compact");
         let manifest = crate_manifest(source, RuntimeDependency::Registry(&version)).unwrap();
         let document: toml_edit::DocumentMut = manifest.parse().unwrap();
+        assert_eq!(document["package"]["version"].as_str(), Some("0.1.0"));
+        assert_eq!(document["package"]["publish"].as_bool(), Some(false));
         let dependency = &document["dependencies"]["midnight-compact-runtime"];
         assert_eq!(
             dependency.get("version").and_then(toml_edit::Item::as_str),

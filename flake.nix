@@ -222,7 +222,7 @@
             linking-pkgs = if pkgs.lib.hasSuffix "linux" system then pkgs.pkgsStatic else pkgs;
           in linking-pkgs.rustPlatform.buildRustPackage ({
             pname = "compact-rust-cli";
-            version = "0.1.0";
+            version = "0.2.0";
             # The CLI build needs only its crate sources; local harness scripts
             # and oracle captures must not force rebuilding the release binary.
             src = inclusive.lib.inclusive ./tools/compact-rust-backend [

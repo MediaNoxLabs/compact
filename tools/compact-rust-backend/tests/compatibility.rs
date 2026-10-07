@@ -132,8 +132,8 @@ fn all_declared_version_boundaries_are_exact() {
         ("capability_schema", serde_json::json!(2)),
         ("ledger_version", serde_json::json!("ledger-9.0.0")),
         ("rust_version", serde_json::json!("1.99")),
-        ("runtime_version", serde_json::json!("0.2.0")),
-        ("macros_version", serde_json::json!("0.2.0")),
+        ("runtime_version", serde_json::json!("0.1.0")),
+        ("macros_version", serde_json::json!("0.1.0")),
     ] {
         let root = Root::new();
         let mut record = serde_json::to_value(required()).unwrap();
@@ -164,14 +164,14 @@ fn manifest_and_source_disagreement_cannot_hide_behind_valid_record() {
         ),
         (
             "runtime-rs-macros/Cargo.toml",
-            "version = \"0.1.0\"",
             "version = \"0.2.0\"",
+            "version = \"0.1.0\"",
             "package.version",
         ),
         (
             "runtime-rs/Cargo.toml",
-            "version = \"=0.1.0\"",
             "version = \"=0.2.0\"",
+            "version = \"=0.1.0\"",
             "macros.version",
         ),
         (
@@ -657,4 +657,28 @@ fn malformed_dependency_paths_do_not_disappear_as_absent() {
         &root,
         "runtime-rs.target.cfg(unix).dependencies.midnight-ledger.path must be a string",
     );
+}
+
+#[test]
+fn release_versions_keep_independent_contract_boundaries() {
+    let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let metadata = required();
+    assert_eq!(env!("CARGO_PKG_VERSION"), "0.2.0");
+    assert_eq!(metadata.runtime_version, "0.2.0");
+    assert_eq!(metadata.macros_version, "0.2.0");
+    assert_eq!(
+        (
+            metadata.runtime_abi,
+            metadata.ir_schema,
+            metadata.capability_schema,
+            metadata.schema_version
+        ),
+        (50, 20, 3, 1)
+    );
+    let testkit: toml_edit::DocumentMut = fs::read_to_string(repo.join("testkit-rs/Cargo.toml"))
+        .unwrap()
+        .parse()
+        .unwrap();
+    assert_eq!(testkit["package"]["version"].as_str(), Some("0.1.0"));
+    assert_eq!(testkit["package"]["publish"].as_bool(), Some(false));
 }

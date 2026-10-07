@@ -320,7 +320,7 @@ compactc --target rust --rust-runtime-registry \
 ```
 
 The generated dependency is
-`midnight-compact-runtime = { version = "=0.1.0", package = "midnight-compact-runtime" }`
+`midnight-compact-runtime = { version = "=0.2.0", package = "midnight-compact-runtime" }`
 for this compiler. The option cannot be combined with `--rust-runtime-root`.
 The package is not yet published, so use this mode with the local archive-only
 release rehearsal below until macro and runtime crates are available from a

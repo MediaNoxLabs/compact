@@ -645,7 +645,7 @@ dependencies = [
 
 [[package]]
 name = "compact-rust-backend"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "fs2",
  "midnight-transient-crypto",
@@ -4141,7 +4141,7 @@ dependencies = [
 
 [[package]]
 name = "midnight-compact-runtime"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "hex",
  "midnight-base-crypto",
@@ -4168,7 +4168,7 @@ dependencies = [
 
 [[package]]
 name = "midnight-compact-runtime-macros"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "proc-macro2",
  "quote 1.0.45",

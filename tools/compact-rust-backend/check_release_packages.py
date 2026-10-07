@@ -198,6 +198,9 @@ def main() -> None:
     if args.candidate_tag:
         candidate_tag(args.candidate_tag)
 
+    from check_standalone_lock import compare_locks
+
+    compare_locks(ROOT / "Cargo.lock", ROOT / "tools/compact-rust-backend/Cargo.lock")
     compatibility_record()
     run("package", "-p", PACKAGES[0], "--allow-dirty")
     packages = [inspect_package(PACKAGES[0])]

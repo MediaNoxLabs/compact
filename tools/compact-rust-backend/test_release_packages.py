@@ -53,9 +53,9 @@ class ReleaseInspectionTests(unittest.TestCase):
         context.start()
         self.addCleanup(context.stop)
 
-    def archive(self, dependency="=0.1.0", record=True):
+    def archive(self, dependency="=0.2.0", record=True):
         name = "midnight-compact-runtime"
-        path = self.packages / f"{name}-0.1.0.crate"
+        path = self.packages / f"{name}-0.2.0.crate"
         files = {
             "Cargo.toml": f'[dependencies.midnight-compact-runtime-macros]\nversion = "{dependency}"\n',
             "LICENSE": "license", "README.md": "readme", "src/lib.rs": "// source",
@@ -65,7 +65,7 @@ class ReleaseInspectionTests(unittest.TestCase):
         with tarfile.open(path, "w:gz") as archive:
             for relative, text in files.items():
                 data = text.encode()
-                member = tarfile.TarInfo(f"{name}-0.1.0/{relative}")
+                member = tarfile.TarInfo(f"{name}-0.2.0/{relative}")
                 member.size = len(data)
                 archive.addfile(member, io.BytesIO(data))
         return path
@@ -82,9 +82,9 @@ class ReleaseInspectionTests(unittest.TestCase):
             path = self.root / relative
             text = path.read_text()
             if relative.startswith("runtime-rs-macros"):
-                text = text.replace('version = "0.1.0"', 'version = "0.2.7"')
+                text = text.replace('version = "0.2.0"', 'version = "0.2.7"')
             else:
-                text = text.replace('version = "=0.1.0"', 'version = "=0.2.7"')
+                text = text.replace('version = "=0.2.0"', 'version = "=0.2.7"')
             path.write_text(text)
         for relative in ("runtime-rs/compatibility.json", "tools/compact-rust-backend/src/compatibility.json"):
             path = self.root / relative
@@ -93,7 +93,7 @@ class ReleaseInspectionTests(unittest.TestCase):
             path.write_text(json.dumps(record))
         self.archive(dependency="=0.2.7")
         release.inspect_package("midnight-compact-runtime")
-        self.archive(dependency="=0.1.0")
+        self.archive(dependency="=0.2.0")
         with self.assertRaisesRegex(RuntimeError, "macro dependency is not publishable"):
             release.inspect_package("midnight-compact-runtime")
 

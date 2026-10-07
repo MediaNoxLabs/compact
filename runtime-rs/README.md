@@ -166,7 +166,7 @@ The macro crate must be published first if crates.io distribution is chosen.
 Run `python3 tools/compact-rust-backend/check_release_packages.py` from this
 repository to rehearse both crate packages and verify the unpacked builds. The
 rehearsal supplies the local macro crate as a temporary Cargo patch while the
-exact `0.1.0` macro dependency is absent from crates.io. It does not publish
+exact `0.2.0` macro dependency is absent from crates.io. It does not publish
 either crate or verify a remote consumer against published artifacts.
 
 ## Recording ledger programs

@@ -15,7 +15,7 @@
 
 [package]
 name = "midnight-compact-runtime"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 rust-version = "1.88"
 license = "Apache-2.0"
@@ -29,7 +29,7 @@ include = ["Cargo.toml", "LICENSE", "README.md", "compatibility.json", "src/**",
 ledger-transaction = ["dep:midnight-ledger", "dep:rand"]
 
 [dependencies]
-midnight-compact-runtime-macros = { version = "=0.1.0", path = "../runtime-rs-macros" }
+midnight-compact-runtime-macros = { version = "=0.2.0", path = "../runtime-rs-macros" }
 # Exact crates published with midnight-ledger's ledger-8.0.3 tag. They share
 # representation and VM APIs; minor-version mixing has already broken the VM.
 midnight-base-crypto = "=1.0.0"

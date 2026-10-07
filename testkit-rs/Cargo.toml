@@ -23,7 +23,7 @@ description = "Typed plain-ledger Compact scenarios over the ledger VM"
 publish = false
 
 [dependencies]
-midnight-compact-runtime = { path = "../runtime-rs", version = "=0.1.0" }
+midnight-compact-runtime = { path = "../runtime-rs", version = "=0.2.0" }
 midnight-onchain-runtime = "=3.0.0"
 midnight-onchain-vm = "=3.0.0"
 midnight-zswap = "=8.0.3"

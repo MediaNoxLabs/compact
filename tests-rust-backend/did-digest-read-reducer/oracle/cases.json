@@ -1,0 +1,507 @@
+{
+  "format": "compact-did-digest-read-reducer-capture/v1",
+  "scope": "Renamed and reordered String/Point product Map read with audited local Unit witness",
+  "generatedJavaScriptSha256": "a87d3003a1a7f24816094a90ebccb7497e9d059f3847d24bc67033312ad2babc",
+  "runtimeJavaScriptSha256": "f6b1b8b0d4ecfd6458706fd3969babbb988879dd9c39618cc137c463a151781b",
+  "provenance": [
+    {
+      "path": "examples/rust_backend/did_digest_read_reducer/contract.compact",
+      "sha256": "31dabfffc6f4a374aa9e703f385eba033612d92be3b826941220561b0cb74db8"
+    },
+    {
+      "path": "tests-rust-backend/did-digest-read-reducer/lib.rs",
+      "sha256": "a120cb002cb37980a45b089ba8be67b29b6078de0567e8974c9c2cfd12423a14"
+    },
+    {
+      "path": "tests-rust-backend/did-digest-read-reducer/oracle/capture.mjs",
+      "sha256": "addb9adfeea2e35ef09746c9204ace3a8e0eb41464cfaa4f6841739cf3ac19e8"
+    },
+    {
+      "path": "tests-rust-backend/did-digest-read-reducer/tests/behavior.rs",
+      "sha256": "8455a95cb3c6a88e7338a37c5d6989cdeb5a18cd6b3891616090de2721b7c77b"
+    },
+    {
+      "path": "tests-rust-backend/did-digest-read-reducer/tests/provenance.rs",
+      "sha256": "17a8bda9df6f5a22aa1d5b92aecbfb241f27178a02c61a9b9381a25c59cb9103"
+    },
+    {
+      "path": "runtime/src/built-ins.ts",
+      "sha256": "860c07188480005ff3907213f04902fb388fb0b43ce61a4b09d38b79592f51be"
+    },
+    {
+      "path": "runtime/src/compact-types.ts",
+      "sha256": "7d3da5243377cc1fc1a07fe1622be095fe8c07dbf5b0929559807b6f3196a63b"
+    }
+  ],
+  "cases": [
+    {
+      "id": "matching",
+      "methodId": "reducer-renamed",
+      "expectedKey": "5",
+      "admit": true,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a5c000801010400040100444f726564756365722d72656e616d6564400065018360017f384d6b3130c69d1a83d4f068e399e66445c55424196d07c8a99888d458c865600176291dc83cbd77fc4e28e612d0dd26d6b0fa040a4d651ad8c1c6e25419b1e6394f726564756365722d72656e616d6564c3414140040c040108081000041408010404189003044080a5f2d8fcfaade05094b7754908576cfca34a58b16462d5e71611d5fdec18221a041c040204200801040424140304010410080428080408042c040304300004340801040438350103048f210166445c55424196d07c8a99888d458c865600176291dc83cbd77fc4e28e612d0dd26d6b0fa040a4d651ad8c1c6e25419b1e6394f726564756365722d72656e616d6564c3414140000043c15020304ff01020104030401080408080104010401080101000114030401041004010801040401040204019003044080a5f2d8fcfaade05094b7754908576cfca34a58b16462d5e71611d5fdec18221a04010801040401000801444f726564756365722d72656e616d65644000010401040165018360017f384d6b3130c69d1a83d4f068e399e0001c1876657269667900040008444800044c080104045090030440805db742ee242da41c974e6cb1c128e71544d7b5953f3602ebae6170a842fe977b142c484054481003000400",
+      "privateBefore": 0,
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a5c000801010400040100444f726564756365722d72656e616d6564400065018360017f384d6b3130c69d1a83d4f068e399e66445c55424196d07c8a99888d458c865600176291dc83cbd77fc4e28e612d0dd26d6b0fa040a4d651ad8c1c6e25419b1e6394f726564756365722d72656e616d6564c3414140040c040108081000041408010404189003044080a5f2d8fcfaade05094b7754908576cfca34a58b16462d5e71611d5fdec18221a041c040204200801040424140304010410080428080408042c040304300004340801040438350103048f210166445c55424196d07c8a99888d458c865600176291dc83cbd77fc4e28e612d0dd26d6b0fa040a4d651ad8c1c6e25419b1e6394f726564756365722d72656e616d6564c3414140000043c15020304ff01020104030401080408080104010401080101000114030401041004010801040401040204019003044080a5f2d8fcfaade05094b7754908576cfca34a58b16462d5e71611d5fdec18221a04010801040401000801444f726564756365722d72656e616d65644000010401040165018360017f384d6b3130c69d1a83d4f068e399e0001c1876657269667900040008444800044c080104045090030440805db742ee242da41c974e6cb1c128e71544d7b5953f3602ebae6170a842fe977b142c484054481003000400",
+      "privateAfter": 1,
+      "publicTranscript": [
+        {
+          "dup": {
+            "n": 0
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": false,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    []
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "popeq": {
+            "cached": false,
+            "result": {
+              "value": [
+                [
+                  1
+                ]
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 1
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "dup": {
+            "n": 0
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": false,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    [
+                      1
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    114,
+                    101,
+                    100,
+                    117,
+                    99,
+                    101,
+                    114,
+                    45,
+                    114,
+                    101,
+                    110,
+                    97,
+                    109,
+                    101,
+                    100
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "compress"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "member",
+        {
+          "popeq": {
+            "cached": true,
+            "result": {
+              "value": [
+                [
+                  1
+                ]
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 1
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "dup": {
+            "n": 0
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": false,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    [
+                      1
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": false,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    [
+                      114,
+                      101,
+                      100,
+                      117,
+                      99,
+                      101,
+                      114,
+                      45,
+                      114,
+                      101,
+                      110,
+                      97,
+                      109,
+                      101,
+                      100
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "compress"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "popeq": {
+            "cached": false,
+            "result": {
+              "value": [
+                [
+                  127,
+                  56,
+                  77,
+                  107,
+                  49,
+                  48,
+                  198,
+                  157,
+                  26,
+                  131,
+                  212,
+                  240,
+                  104,
+                  227,
+                  153,
+                  230,
+                  100,
+                  69,
+                  197,
+                  84,
+                  36,
+                  25,
+                  109,
+                  7,
+                  200,
+                  169,
+                  152,
+                  136,
+                  212,
+                  88,
+                  200,
+                  101
+                ],
+                [
+                  118,
+                  41,
+                  29,
+                  200,
+                  60,
+                  189,
+                  119,
+                  252,
+                  78,
+                  40,
+                  230,
+                  18,
+                  208,
+                  221,
+                  38,
+                  214,
+                  176,
+                  250,
+                  4,
+                  10,
+                  77,
+                  101,
+                  26,
+                  216,
+                  193,
+                  198,
+                  226,
+                  84,
+                  25,
+                  177,
+                  230,
+                  57
+                ],
+                [
+                  114,
+                  101,
+                  100,
+                  117,
+                  99,
+                  101,
+                  114,
+                  45,
+                  114,
+                  101,
+                  110,
+                  97,
+                  109,
+                  101,
+                  100
+                ]
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "field"
+                  }
+                },
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "field"
+                  }
+                },
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "compress"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "privateTranscript": [
+        {
+          "valueAtoms": [
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        }
+      ],
+      "queries": [
+        {
+          "readTime": "170000000",
+          "computeTime": "1249914853",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        {
+          "readTime": "170000000",
+          "computeTime": "1252357899",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        {
+          "readTime": "255000000",
+          "computeTime": "1338931355",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      ],
+      "witnessCalls": [
+        "admitted"
+      ]
+    },
+    {
+      "id": "missing",
+      "methodId": "other",
+      "expectedKey": "5",
+      "admit": true,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a5c000801010400040100444f726564756365722d72656e616d6564400065018360017f384d6b3130c69d1a83d4f068e399e66445c55424196d07c8a99888d458c865600176291dc83cbd77fc4e28e612d0dd26d6b0fa040a4d651ad8c1c6e25419b1e6394f726564756365722d72656e616d6564c3414140040c040108081000041408010404189003044080a5f2d8fcfaade05094b7754908576cfca34a58b16462d5e71611d5fdec18221a041c040204200801040424140304010410080428080408042c040304300004340801040438350103048f210166445c55424196d07c8a99888d458c865600176291dc83cbd77fc4e28e612d0dd26d6b0fa040a4d651ad8c1c6e25419b1e6394f726564756365722d72656e616d6564c3414140000043c15020304ff01020104030401080408080104010401080101000114030401041004010801040401040204019003044080a5f2d8fcfaade05094b7754908576cfca34a58b16462d5e71611d5fdec18221a04010801040401000801444f726564756365722d72656e616d65644000010401040165018360017f384d6b3130c69d1a83d4f068e399e0001c1876657269667900040008444800044c080104045090030440805db742ee242da41c974e6cb1c128e71544d7b5953f3602ebae6170a842fe977b142c484054481003000400",
+      "privateBefore": 0,
+      "error": "failed assert: missing",
+      "queries": [
+        {
+          "readTime": "170000000",
+          "computeTime": "1249914853",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        {
+          "readTime": "170000000",
+          "computeTime": "1252345939",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      ],
+      "witnessCalls": []
+    },
+    {
+      "id": "witness-denied",
+      "methodId": "reducer-renamed",
+      "expectedKey": "5",
+      "admit": false,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a5c000801010400040100444f726564756365722d72656e616d6564400065018360017f384d6b3130c69d1a83d4f068e399e66445c55424196d07c8a99888d458c865600176291dc83cbd77fc4e28e612d0dd26d6b0fa040a4d651ad8c1c6e25419b1e6394f726564756365722d72656e616d6564c3414140040c040108081000041408010404189003044080a5f2d8fcfaade05094b7754908576cfca34a58b16462d5e71611d5fdec18221a041c040204200801040424140304010410080428080408042c040304300004340801040438350103048f210166445c55424196d07c8a99888d458c865600176291dc83cbd77fc4e28e612d0dd26d6b0fa040a4d651ad8c1c6e25419b1e6394f726564756365722d72656e616d6564c3414140000043c15020304ff01020104030401080408080104010401080101000114030401041004010801040401040204019003044080a5f2d8fcfaade05094b7754908576cfca34a58b16462d5e71611d5fdec18221a04010801040401000801444f726564756365722d72656e616d65644000010401040165018360017f384d6b3130c69d1a83d4f068e399e0001c1876657269667900040008444800044c080104045090030440805db742ee242da41c974e6cb1c128e71544d7b5953f3602ebae6170a842fe977b142c484054481003000400",
+      "privateBefore": 0,
+      "error": "failed assert: witness denied",
+      "queries": [
+        {
+          "readTime": "170000000",
+          "computeTime": "1249914853",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        {
+          "readTime": "170000000",
+          "computeTime": "1252357899",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        {
+          "readTime": "255000000",
+          "computeTime": "1338931355",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      ],
+      "witnessCalls": [
+        "admitted"
+      ]
+    },
+    {
+      "id": "wrong-point",
+      "methodId": "reducer-renamed",
+      "expectedKey": "6",
+      "admit": true,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a5c000801010400040100444f726564756365722d72656e616d6564400065018360017f384d6b3130c69d1a83d4f068e399e66445c55424196d07c8a99888d458c865600176291dc83cbd77fc4e28e612d0dd26d6b0fa040a4d651ad8c1c6e25419b1e6394f726564756365722d72656e616d6564c3414140040c040108081000041408010404189003044080a5f2d8fcfaade05094b7754908576cfca34a58b16462d5e71611d5fdec18221a041c040204200801040424140304010410080428080408042c040304300004340801040438350103048f210166445c55424196d07c8a99888d458c865600176291dc83cbd77fc4e28e612d0dd26d6b0fa040a4d651ad8c1c6e25419b1e6394f726564756365722d72656e616d6564c3414140000043c15020304ff01020104030401080408080104010401080101000114030401041004010801040401040204019003044080a5f2d8fcfaade05094b7754908576cfca34a58b16462d5e71611d5fdec18221a04010801040401000801444f726564756365722d72656e616d65644000010401040165018360017f384d6b3130c69d1a83d4f068e399e0001c1876657269667900040008444800044c080104045090030440805db742ee242da41c974e6cb1c128e71544d7b5953f3602ebae6170a842fe977b142c484054481003000400",
+      "privateBefore": 0,
+      "error": "failed assert: wrong point",
+      "queries": [
+        {
+          "readTime": "170000000",
+          "computeTime": "1249914853",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        {
+          "readTime": "170000000",
+          "computeTime": "1252357899",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        {
+          "readTime": "255000000",
+          "computeTime": "1338931355",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      ],
+      "witnessCalls": [
+        "admitted"
+      ]
+    }
+  ]
+}

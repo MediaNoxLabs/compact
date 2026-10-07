@@ -57,6 +57,7 @@ use crate::{
 };
 
 mod audited_local;
+mod read_only_verification;
 
 /// The first definite reason an exported circuit has no recorded Rust API.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -717,6 +718,11 @@ fn render_recorded_item(
     }
     if !helper
         && let Some(item) = audited_local::render(circuit, ledger_fields, witnesses, circuits)?
+    {
+        return Ok(item);
+    }
+    if !helper
+        && let Some(item) = read_only_verification::render(circuit, ledger_fields, witnesses, circuits)?
     {
         return Ok(item);
     }

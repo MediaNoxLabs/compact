@@ -3448,11 +3448,11 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/lifecycle.json",
-      "sha256": "96787daf21391beb6b52f5aee0a40fb7e873b0e1d2cab1352f87bc952309d14e"
+      "sha256": "416985808cbc04bbf5afc8a2780c30da6516d1ed122c22d2ae8ce7450750a1e6"
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/pure.json",
-      "sha256": "8fbde875fc49bd307116230ddb5100cdafdc4f5d9f1dcf5cc38b3ea07a8eeca8"
+      "sha256": "a0fe03877c86287a0367c70befd3b04748e9cae53faa42ba02f5a43b287c62d2"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/codec.rs",
@@ -3480,7 +3480,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/point-lifecycle.json",
-      "sha256": "6ee6779bcb511a02701f42d7e98b4f70238c39a6c5380fa8b4108f5743733a55"
+      "sha256": "640b35e2a2a71318cf5f0c42ba444709758d7466916d08836f18547764370a8e"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/point_calls.rs",
@@ -3496,7 +3496,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/alias-lifecycle.json",
-      "sha256": "a1ee7287d7ff59914a12a4610d296be7e6aed8ad98d12876b231be03c2a76f19"
+      "sha256": "9efcd52e8bb7f6101eafbd57a97de1bdffdd84b4a01e0ad854307b92d1d8d5d2"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/alias_calls.rs",
@@ -3512,7 +3512,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/service-lifecycle.json",
-      "sha256": "3a1d3e5b5201f8345da96966f147feea6416a1947115dd1c7282ecaf76efc3c3"
+      "sha256": "35fa2d823a0a48dab2b7f4e8b4e120ddbc43598fbcb9ebadbc542e5a83ff3148"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/service_calls.rs",
@@ -3528,7 +3528,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/schnorr-method-lifecycle.json",
-      "sha256": "c0616628b19e8ec55272442f19a221b7783347aeff9aec51822c2bd111a53c97"
+      "sha256": "242cfa9d35bb3c4f95869bbeda20e1fd6ee4e7c2d6bb5e151dfe08b817317a3a"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/schnorr_method_calls.rs",
@@ -3544,7 +3544,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/jwk-method-lifecycle.json",
-      "sha256": "42107a134dcdf0c2ca5d03f18d900297d616f3b8e53ebc34204076081c92a5ff"
+      "sha256": "f7c1edf6bf752178b68b927f5c4d53f7b53fc54291791f804436133c584c309a"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/jwk_method_calls.rs",
@@ -3557,6 +3557,10 @@
     {
       "path": "tests-rust-backend/did-adoption/tests/provenance.rs",
       "sha256": "28a3d1bb62c115661400db2962ad8b0fe8c4b0e63e9910e4af78e2d9ac03d4db"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/tests/digest_recording.rs",
+      "sha256": "e033c35b4b13a04b60f3161e7de2ec9281aa81c7b400136873ab5f0f20845a0f"
     }
   ],
   "amendment_0259": {
@@ -3655,6 +3659,30 @@
     "limits": [
       "Constructor execution is not proved; original constructor data is actually deployed.",
       "Finite scenarios; digest/relation recording and ledger8.1 qualification remain separate."
+    ]
+  },
+  "amendment_0288": {
+    "scope": "Original pinned DID verifySchnorrJubjubDigestSignature recording through checked Map membership/read projection and audited local Unit Schnorr helper. Five maintained TS cases compare native and recorded public program, query gas, private transcript, effects, errors and rollback.",
+    "historical_baseline": "Earlier summaries and amendments remain historical snapshots; this adds only the digest verifier to current recorded availability.",
+    "current_recorded_exports": [
+      "deactivate",
+      "recoverControllerKey",
+      "rotateControllerKey",
+      "setAlsoKnownAs",
+      "setService",
+      "removeService",
+      "setSchnorrJubjubVerificationMethod",
+      "removeSchnorrJubjubVerificationMethod",
+      "setVerificationMethod",
+      "removeVerificationMethod",
+      "verifySchnorrJubjubDigestSignature"
+    ],
+    "fresh_digest_cases": 5,
+    "provenance_followup": "Seven maintained TS scopes were recaptured against the same pinned source and runtime; complete semantic case objects are identical. Only generated Rust library provenance changed.",
+    "limits": [
+      "Finite five-case parity is not exhaustive cryptographic security evidence.",
+      "Strict original and minimal reducer proofs are separate gates and are not established by this capture.",
+      "Original DID ledger8.1 source remains compiled against the local ledger8.0.3 proof/runtime profile."
     ]
   }
 }

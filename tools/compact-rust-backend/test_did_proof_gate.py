@@ -132,13 +132,13 @@ class OrchestrationTests(unittest.TestCase):
         return gate.run_gate(self.root / "run", self.root / "compiler", self.root / "scheme",
                              self.target, self.env, command=self.command)
 
-    def test_five_scenarios_and_ten_keys_are_mandatory(self):
+    def test_six_scenarios_and_eleven_keys_are_mandatory(self):
         result = self.run_gate()
         self.assertEqual(result["status"], "passed", result.get("error"))
-        self.assertEqual(set(result["scenarios"]), {"points", "aliases", "services", "schnorr-methods", "jwk-methods"})
-        self.assertEqual(len(result["keygen"]), 10)
-        self.assertEqual(sum(len(row["calls"]) for row in result["scenarios"].values()), 14)
-        self.assertEqual(self.calls[-3:], ["prove-services", "prove-schnorr-methods", "prove-jwk-methods"])
+        self.assertEqual(set(result["scenarios"]), {"points", "aliases", "services", "schnorr-methods", "jwk-methods", "digest"})
+        self.assertEqual(len(result["keygen"]), 11)
+        self.assertEqual(sum(len(row["calls"]) for row in result["scenarios"].values()), 16)
+        self.assertEqual(self.calls[-3:], ["prove-schnorr-methods", "prove-jwk-methods", "prove-digest"])
 
     def test_missing_prerequisite_refuses_before_commands_and_retains_failure(self):
         self.env.pop("MIDNIGHT_PP")

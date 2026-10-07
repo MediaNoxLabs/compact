@@ -12,7 +12,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//! Original constructor data is deployed, then three source transitions are proved.
+//! Original constructor data is deployed, then selected source transitions are proved.
 //! The stored constructor id stays zero; the ledger deployment address is distinct.
 use super::*;
 use compact_rust_did_adoption_fixture::{
@@ -44,6 +44,7 @@ enum Lifecycle {
     Services,
     SchnorrMethods,
     JwkMethods,
+    Digest,
 }
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
     run_lifecycle(root, Lifecycle::Points)
@@ -59,6 +60,31 @@ pub(super) fn run_schnorr_methods(root: &Path) -> Result<(), Box<dyn Error>> {
 }
 pub(super) fn run_jwk_methods(root: &Path) -> Result<(), Box<dyn Error>> {
     run_lifecycle(root, Lifecycle::JwkMethods)
+}
+pub(super) fn run_digest(root: &Path) -> Result<(), Box<dyn Error>> {
+    run_lifecycle(root, Lifecycle::Digest)
+}
+fn invoke_digest_recorded(
+    context: r::context::CircuitContext<u64>,
+    witness: &Witness,
+    row: &Value,
+) -> Result<r::recording::RecordedCircuitResult<u64, ()>, r::CompactError> {
+    match row["name"].as_str().unwrap() {
+        "setSchnorrJubjubVerificationMethod" => {
+            schnorr_method_calls::invoke_recorded(context, witness, row)
+        }
+        "verifySchnorrJubjubDigestSignature" => c::recorded::verifySchnorrJubjubDigestSignature(
+            context,
+            witness,
+            codec::string(&row["args"]["id"]),
+            r::FixedVector::new([1u64, 2, 3, 4].map(r::Field::from)),
+            types::SchnorrSignature {
+                announcement: codec::point("2"),
+                response: codec::field_hex(row["responseHex"].as_str().unwrap()),
+            },
+        ),
+        other => panic!("not a digest proof case: {other}"),
+    }
 }
 fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>> {
     let (capture, scenario_id, calls, operations): (&str, &str, &[&str], &[&str]) = match lifecycle
@@ -127,6 +153,15 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
                 "removeSchnorrJubjubVerificationMethod",
                 "setVerificationMethod",
                 "removeVerificationMethod",
+            ],
+        ),
+        Lifecycle::Digest => (
+            include_str!("../../../tests-rust-backend/did-adoption/oracle/lifecycle.json"),
+            "schnorr",
+            &["insert", "read-valid"],
+            &[
+                "setSchnorrJubjubVerificationMethod",
+                "verifySchnorrJubjubDigestSignature",
             ],
         ),
     };
@@ -241,6 +276,12 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
             "remove-unicode" if matches!(lifecycle, Lifecycle::JwkMethods) => {
                 "removeVerificationMethod"
             }
+            "insert" if matches!(lifecycle, Lifecycle::Digest) => {
+                "setSchnorrJubjubVerificationMethod"
+            }
+            "read-valid" if matches!(lifecycle, Lifecycle::Digest) => {
+                "verifySchnorrJubjubDigestSignature"
+            }
             _ => "setAlsoKnownAs",
         };
         let prior = state
@@ -274,6 +315,7 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
             Lifecycle::Services => service_calls::invoke_recorded,
             Lifecycle::SchnorrMethods => schnorr_method_calls::invoke_recorded,
             Lifecycle::JwkMethods => jwk_method_calls::invoke_recorded,
+            Lifecycle::Digest => invoke_digest_recorded,
         };
         let recorded = record(
             observed.circuit_context(private),
@@ -292,7 +334,13 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
             response: codec::field_hex(row["responseHex"].as_str().unwrap()),
         };
         let version = codec::version(row["version"].as_str().unwrap());
-        let input = if name == "setVerificationMethod" {
+        let input = if name == "verifySchnorrJubjubDigestSignature" {
+            AlignedValue::from((
+                codec::string(&row["args"]["id"]),
+                r::FixedVector::new([1u64, 2, 3, 4].map(r::Field::from)),
+                signature.clone(),
+            ))
+        } else if name == "setVerificationMethod" {
             AlignedValue::from((
                 codec::method(&row["args"]["method"]),
                 codec::map(&row["args"]["mutation"]),
@@ -429,6 +477,25 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
                     version,
                 )?
             }
+            "insert" if matches!(lifecycle, Lifecycle::Digest) => {
+                facade.recording().setSchnorrJubjubVerificationMethod_call(
+                    &observed,
+                    private,
+                    codec::schnorr(&row["args"]["method"]),
+                    codec::map(&row["args"]["mutation"]),
+                    signature,
+                    version,
+                )?
+            }
+            "read-valid" if matches!(lifecycle, Lifecycle::Digest) => {
+                facade.recording().verifySchnorrJubjubDigestSignature_call(
+                    &observed,
+                    private,
+                    codec::string(&row["args"]["id"]),
+                    r::FixedVector::new([1u64, 2, 3, 4].map(r::Field::from)),
+                    signature,
+                )?
+            }
             _ => facade.recording().setAlsoKnownAs_call(
                 &observed,
                 private,
@@ -461,20 +528,23 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
         let sealed = proven.seal(StdRng::seed_from_u64(0x259a + number as u64));
         let balanced = async_runtime.block_on(state.balance_tx(rng.clone(), sealed, &resolver))?;
         let accepted_at = state.time;
-        super::did_public_interchange::capture_if_requested(
-            &balanced,
-            &state.ledger,
-            &state.context(),
-            match lifecycle {
-                Lifecycle::Points => "points",
-                Lifecycle::Aliases => "aliases",
-                Lifecycle::Services => "services",
-                Lifecycle::SchnorrMethods => "schnorr-methods",
-                Lifecycle::JwkMethods => "jwk-methods",
-            },
-            id,
-            name,
-        )?;
+        if !matches!(lifecycle, Lifecycle::Digest) {
+            super::did_public_interchange::capture_if_requested(
+                &balanced,
+                &state.ledger,
+                &state.context(),
+                match lifecycle {
+                    Lifecycle::Points => "points",
+                    Lifecycle::Aliases => "aliases",
+                    Lifecycle::Services => "services",
+                    Lifecycle::SchnorrMethods => "schnorr-methods",
+                    Lifecycle::JwkMethods => "jwk-methods",
+                    Lifecycle::Digest => unreachable!("digest has no ledger8.1 interchange row"),
+                },
+                id,
+                name,
+            )?;
+        }
         let result = state.apply(&balanced, WellFormedStrictness::default())?;
         if !matches!(result, TransactionResult::Success(_)) {
             return Err(format!("DID {name} strict application failed: {result:?}").into());
@@ -606,6 +676,21 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
                 "original DID deploy -> JWK method insert -> update -> remove: strict sequential acceptance; constructor execution not proved, stored-id semantics unchanged"
             );
         }
+        Lifecycle::Digest => {
+            if !slots::active.inspect(data)?
+                || slots::deactivated.inspect(data)?
+                || slots::version.inspect(data)? != 1
+                || slots::operationCount.inspect(data)? != 1
+                || slots::schnorrJubjubVerificationMethods
+                    .inspect(data)?
+                    .is_empty()
+            {
+                return Err("final DID digest verification fields differ".into());
+            }
+            println!(
+                "original DID deploy -> Schnorr method insert -> read-only digest verification: default-strict acceptance; constructor execution not proved"
+            );
+        }
     }
     let (scenario, selector) = match lifecycle {
         Lifecycle::Points => ("points", "--did-point-lifecycle"),
@@ -613,6 +698,7 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
         Lifecycle::Services => ("services", "--did-service-lifecycle"),
         Lifecycle::SchnorrMethods => ("schnorr-methods", "--did-schnorr-method-lifecycle"),
         Lifecycle::JwkMethods => ("jwk-methods", "--did-jwk-method-lifecycle"),
+        Lifecycle::Digest => ("digest", "--did-digest-verification"),
     };
     let final_state_file = format!("did-{scenario}-final-state.bin");
     let mut public_state = Vec::new();

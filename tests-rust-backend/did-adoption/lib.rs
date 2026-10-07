@@ -4454,6 +4454,45 @@ pub mod ledger_contract {
             let frame = crate::ledger_slots::updated.record_write(frame, __compact_plan_47)?;
             Ok(frame.finish(()))
         }
+        pub fn verifySchnorrJubjubDigestSignature<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::OpaqueString,
+            __compact_param_1: runtime::FixedVector<runtime::Field, 4>,
+            __compact_param_2: crate::types::SchnorrSignature,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, open): (_, bool) = crate::ledger_slots::active.record_read(frame)?;
+            if !open {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Contract is not active".to_owned(),
+                ));
+            }
+            let __compact_recorded_map_key: runtime::OpaqueString = (__compact_param_0).clone();
+            let (frame, present): (_, bool) = crate::ledger_slots::schnorrJubjubVerificationMethods
+                .record_member(frame, __compact_recorded_map_key.clone())?;
+            if !present {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Verification method does not exist".to_owned(),
+                ));
+            }
+            let (frame, __compact_recorded_map_value): (
+                _,
+                crate::types::SchnorrJubjubVerificationMethod,
+            ) = crate::ledger_slots::schnorrJubjubVerificationMethods
+                .record_lookup(frame, __compact_recorded_map_key)?;
+            let (frame, ()): (_, ()) = frame.call_local(|context| {
+                super::schnorrVerifyDigest(
+                    context,
+                    witnesses,
+                    (__compact_param_1).clone(),
+                    (__compact_param_2).clone(),
+                    __compact_recorded_map_value.publicKey,
+                )
+            })?;
+            Ok(frame.finish(()))
+        }
         pub fn setService<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
@@ -5151,6 +5190,57 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "removeSchnorrJubjubVerificationMethod",
+                    input,
+                ))
+            }
+            pub fn verifySchnorrJubjubDigestSignature<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                methodId: runtime::OpaqueString,
+                digest: runtime::FixedVector<runtime::Field, 4>,
+                signature: crate::types::SchnorrSignature,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                verifySchnorrJubjubDigestSignature(
+                    context,
+                    self.witnesses,
+                    methodId,
+                    digest,
+                    signature,
+                )
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn verifySchnorrJubjubDigestSignature_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                methodId: runtime::OpaqueString,
+                digest: runtime::FixedVector<runtime::Field, 4>,
+                signature: crate::types::SchnorrSignature,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::concat(&[
+                    runtime::fab::AlignedValue::from((methodId).clone()),
+                    runtime::fab::AlignedValue::from((digest).clone()),
+                    runtime::fab::AlignedValue::from((signature).clone()),
+                ]);
+                let recorded = self.verifySchnorrJubjubDigestSignature(
+                    observed.circuit_context(private_state),
+                    methodId,
+                    digest,
+                    signature,
+                )?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "verifySchnorrJubjubDigestSignature",
                     input,
                 ))
             }

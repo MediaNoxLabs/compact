@@ -34,7 +34,7 @@ FIXTURE = Path("tests-rust-backend/did-adoption/lib.rs")
 KEYS = ("rotateControllerKey", "recoverControllerKey", "deactivate", "setAlsoKnownAs",
         "setService", "removeService", "setSchnorrJubjubVerificationMethod",
         "removeSchnorrJubjubVerificationMethod", "setVerificationMethod",
-        "removeVerificationMethod")
+        "removeVerificationMethod", "verifySchnorrJubjubDigestSignature")
 SCENARIOS = {
     "points": {"selector": "--did-point-lifecycle", "installed_operations": list(KEYS[:3]),
                "cases": ["rotate", "recover", "deactivate"], "operations": list(KEYS[:3])},
@@ -51,13 +51,19 @@ SCENARIOS = {
                                        "setSchnorrJubjubVerificationMethod",
                                        "removeSchnorrJubjubVerificationMethod"]},
     "jwk-methods": {"selector": "--did-jwk-method-lifecycle",
-                    "installed_operations": list(KEYS),
+                    "installed_operations": list(KEYS[:-1]),
                     "cases": ["insert-unicode", "update-jwk", "remove-unicode"],
                     "operations": ["setVerificationMethod", "setVerificationMethod",
                                    "removeVerificationMethod"]},
+    "digest": {"selector": "--did-digest-verification",
+               "installed_operations": ["setSchnorrJubjubVerificationMethod",
+                                        "verifySchnorrJubjubDigestSignature"],
+               "cases": ["insert", "read-valid"],
+               "operations": ["setSchnorrJubjubVerificationMethod",
+                              "verifySchnorrJubjubDigestSignature"]},
 }
 EXPORTS = set(KEYS) | {"setVerificationMethod", "removeVerificationMethod",
-    "verifySchnorrJubjubDigestSignature", "setVerificationMethodRelation",
+    "setVerificationMethodRelation",
     "setService", "removeService"}
 
 
@@ -171,8 +177,8 @@ def run_gate(directory, compiler, scheme, target, environment=None, *, command=c
     directory = directory.resolve()
     directory.mkdir(parents=True, exist_ok=False, mode=0o700)
     receipt = {"format": "compact-did-proof-gate/v1", "status": "failed", "commands": [],
-               "scenarios": {}, "key_operations": list(KEYS), "required_proof_call_count": 14,
-               "scope": "offline default-strict deployment/calls; constructor execution unproved; ten of twelve recorded exports"}
+               "scenarios": {}, "key_operations": list(KEYS), "required_proof_call_count": 16,
+               "scope": "offline default-strict deployment/calls; constructor execution unproved; eleven of twelve recorded exports"}
     env = dict(os.environ if environment is None else environment)
     try:
         receipt["prerequisites"] = prerequisites(env)

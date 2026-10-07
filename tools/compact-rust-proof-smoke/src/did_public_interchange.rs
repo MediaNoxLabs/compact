@@ -63,6 +63,45 @@ fn validate_case(scenario: &str, case: &str, operation: &str) -> Result<(), &'st
             | ("jwk-methods", "remove-unicode", "removeVerificationMethod")
             | ("digest", "insert", "setSchnorrJubjubVerificationMethod")
             | ("digest", "read-valid", "verifySchnorrJubjubDigestSignature")
+            | (
+                "relations",
+                "accept-ed"
+                    | "accept-x"
+                    | "accept-bls1"
+                    | "accept-bls2"
+                    | "accept-p256"
+                    | "accept-secp",
+                "setVerificationMethod"
+            )
+            | (
+                "relations",
+                "relation-1-insert"
+                    | "relation-1-remove"
+                    | "relation-2-insert"
+                    | "relation-2-remove"
+                    | "relation-3-insert"
+                    | "relation-3-remove"
+                    | "relation-4-insert"
+                    | "relation-4-remove"
+                    | "relation-5-insert"
+                    | "relation-5-remove",
+                "setVerificationMethodRelation"
+            )
+            | (
+                "relation-schnorr",
+                "insert",
+                "setSchnorrJubjubVerificationMethod"
+            )
+            | (
+                "relation-schnorr",
+                "read-valid",
+                "verifySchnorrJubjubDigestSignature"
+            )
+            | (
+                "relation-schnorr",
+                "relation-insert",
+                "setVerificationMethodRelation"
+            )
     ) {
         Ok(())
     } else {
@@ -146,7 +185,8 @@ pub(super) fn capture_if_requested(
     if !matches!(result, TransactionResult::Success(_)) {
         return Err("public DID interchange transaction did not apply strictly".into());
     }
-    let read_only_digest = scenario == "digest" && case == "read-valid";
+    let read_only_digest =
+        matches!(scenario, "digest" | "relation-schnorr") && case == "read-valid";
     if read_only_digest {
         validate_read_only_digest(transaction, before, &after)?;
     }
@@ -243,6 +283,74 @@ mod tests {
             assert_eq!(
                 validate_case(scenario, case, operation),
                 Err("public DID interchange case is outside the reviewed matrix")
+            );
+        }
+    }
+    #[test]
+    fn absent_export_environment_keeps_unreviewed_calls_optional() {
+        assert!(
+            env::var_os("COMPACT_DID_PUBLIC_INTERCHANGE").is_none(),
+            "run exporter unit tests without the capture environment"
+        );
+        let (ledger, context) = fixture();
+        let transaction: PublicTransaction =
+            Transaction::Standard(midnight_ledger::structure::StandardTransaction {
+                network_id: "local-test".into(),
+                intents: HashMap::new(),
+                guaranteed_coins: None,
+                fallible_coins: HashMap::new(),
+                binding_randomness: 0u64.into(),
+            });
+        capture_if_requested(
+            &transaction,
+            &ledger,
+            &context,
+            "not-reviewed",
+            "not-reviewed",
+            "not-reviewed",
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn relation_rows_are_exact_and_refusals_are_not_transactions() {
+        for case in [
+            "accept-ed",
+            "accept-x",
+            "accept-bls1",
+            "accept-bls2",
+            "accept-p256",
+            "accept-secp",
+        ] {
+            assert!(validate_case("relations", case, "setVerificationMethod").is_ok());
+            assert!(validate_case("relations", case, "setVerificationMethodRelation").is_err());
+        }
+        for index in 1..=5 {
+            for mutation in ["insert", "remove"] {
+                let case = format!("relation-{index}-{mutation}");
+                assert!(validate_case("relations", &case, "setVerificationMethodRelation").is_ok());
+                assert!(
+                    validate_case("relation-schnorr", &case, "setVerificationMethodRelation")
+                        .is_err()
+                );
+            }
+        }
+        for (case, operation) in [
+            ("insert", "setSchnorrJubjubVerificationMethod"),
+            ("read-valid", "verifySchnorrJubjubDigestSignature"),
+            ("relation-insert", "setVerificationMethodRelation"),
+        ] {
+            assert!(validate_case("relation-schnorr", case, operation).is_ok());
+        }
+        for case in [
+            "relation-0-insert",
+            "relation-6-insert",
+            "relation-1-duplicate",
+            "key-agreement-needs-generic",
+        ] {
+            assert!(validate_case("relations", case, "setVerificationMethodRelation").is_err());
+            assert!(
+                validate_case("relation-schnorr", case, "setVerificationMethodRelation").is_err()
             );
         }
     }

@@ -27,6 +27,8 @@ mod aliases;
 mod maps;
 #[path = "cases/points.rs"]
 mod points;
+#[path = "cases/relations.rs"]
+mod relations;
 pub type Failure = Box<dyn Error>;
 pub type Recorded = RecordedCircuitResult<u64, ()>;
 pub struct Case {
@@ -46,6 +48,7 @@ pub fn fixture(kind: &str) -> Result<Fixture, Failure> {
         "point-digest" | "point-guard" => points::fixture(kind),
         "alias-set" | "alias-digest" | "alias-guard" => aliases::fixture(kind),
         "service-map" | "point-map" | "nested-map" | "enum-map" => maps::fixture(kind),
+        "relation-two" | "relation-four" | "relation-nested" => relations::fixture(kind),
         _ => Err("unknown reducer".into()),
     }
 }

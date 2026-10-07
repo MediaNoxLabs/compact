@@ -1,0 +1,39 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import CompactStandardLibrary;
+export enum Curve { Ed25519, X25519 }
+export struct Jwk { curve: Curve, x: Opaque<"string"> }
+export struct Method { id: Opaque<"string">, publicKeyJwk: Jwk }
+export ledger methods: Map<Opaque<"string">, Method>;
+constructor(method: Method) {
+  const m = disclose(method);
+  methods.insert(m.id, m);
+}
+export circuit seed(method: Method): [] {
+  const m = disclose(method);
+  methods.insert(m.id, m);
+}
+export circuit check(id: Opaque<"string">, agreement: Boolean): [] {
+  const key = disclose(id);
+  const needsAgreement = disclose(agreement);
+  if (needsAgreement) {
+    assert(methods.member(key), "missing method");
+    const method = methods.lookup(key);
+    assert(method.publicKeyJwk.curve == Curve.X25519, "wrong curve");
+  } else {
+    assert(!methods.member(key) || methods.lookup(key).publicKeyJwk.curve != Curve.X25519, "wrong signing curve");
+  }
+}

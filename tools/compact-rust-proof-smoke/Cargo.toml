@@ -158,4 +158,7 @@ compact-rust-did-alias-guard-reducer-fixture = { path = "../../tests-rust-backen
 compact-rust-did-service-map-reducer-fixture = { path = "../../tests-rust-backend/did-service-map-reducer", features = ["ledger-transaction"] }
 compact-rust-did-point-map-reducer-fixture = { path = "../../tests-rust-backend/did-point-map-reducer", features = ["ledger-transaction"] }
 compact-rust-did-nested-map-reducer-fixture = { path = "../../tests-rust-backend/did-nested-map-reducer", features = ["ledger-transaction"] }
+compact-rust-did-relation-two-reducer-fixture = { path = "../../tests-rust-backend/did-relation-two-reducer", features = ["ledger-transaction"] }
+compact-rust-did-relation-four-reducer-fixture = { path = "../../tests-rust-backend/did-relation-four-reducer", features = ["ledger-transaction"] }
+compact-rust-did-relation-nested-reducer-fixture = { path = "../../tests-rust-backend/did-relation-nested-reducer", features = ["ledger-transaction"] }
 compact-rust-did-enum-map-reducer-fixture = { path = "../../tests-rust-backend/did-enum-map-reducer", features = ["ledger-transaction"] }

@@ -3323,6 +3323,90 @@ pub mod ledger_contract {
             let frame = crate::ledger_slots::updated.record_write(frame, __compact_witness_0)?;
             Ok((frame, ()))
         }
+        fn __compact_recorded_body_assertVerificationMethodRelationCompatible<Private>(
+            frame: runtime::recording::RecordingFrame<Private>,
+            __compact_param_0: crate::types::VerificationMethodRelation,
+            __compact_param_1: runtime::OpaqueString,
+        ) -> Result<(runtime::recording::RecordingFrame<Private>, ()), runtime::CompactError>
+        {
+            let __compact_plan_0: crate::types::VerificationMethodRelation =
+                crate::types::VerificationMethodRelation::KeyAgreement;
+            let __compact_plan_1: bool = __compact_param_0 == __compact_plan_0;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform branch frames preserve ordered recording steps"
+            )]
+            let frame = if __compact_plan_1 {
+                let (frame, __compact_plan_2): (_, bool) = crate::ledger_slots::verificationMethods
+                    .record_member(frame, (__compact_param_1).clone())?;
+                if !__compact_plan_2 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "KeyAgreement requires an agreement verification method".to_owned(),
+                    ));
+                }
+                let (frame, __compact_plan_3): (_, crate::types::VerificationMethod) =
+                    crate::ledger_slots::verificationMethods
+                        .record_lookup(frame, (__compact_param_1).clone())?;
+                let __compact_plan_4: crate::types::VerificationMethod = __compact_plan_3;
+                let __compact_plan_5: crate::types::PublicKeyJwk =
+                    (((__compact_plan_4).clone()).publicKeyJwk).clone();
+                let __compact_plan_6: crate::types::CurveType = (__compact_plan_5).crv;
+                let __compact_plan_7: crate::types::CurveType = crate::types::CurveType::X25519;
+                let __compact_plan_8: bool = __compact_plan_6 == __compact_plan_7;
+                if !__compact_plan_8 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "KeyAgreement requires an X25519 verification method".to_owned(),
+                    ));
+                }
+                frame
+            } else {
+                let __compact_plan_9: crate::types::VerificationMethodRelation = __compact_param_0;
+                let __compact_plan_10: bool =
+                    crate::pure_circuits::isSigningVerificationMethodRelation(__compact_plan_9)?;
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform branch frames preserve ordered recording steps"
+                )]
+                let frame = if __compact_plan_10 {
+                    let (frame, __compact_plan_11): (_, bool) =
+                        crate::ledger_slots::verificationMethods
+                            .record_member(frame, (__compact_param_1).clone())?;
+                    let (frame, __compact_plan_14): (_, bool) = if __compact_plan_11 {
+                        let __compact_plan_12: bool = false;
+                        (frame, __compact_plan_12)
+                    } else {
+                        let __compact_plan_13: bool = true;
+                        (frame, __compact_plan_13)
+                    };
+                    let (frame, __compact_plan_21): (_, bool) = if __compact_plan_14 {
+                        let __compact_plan_15: bool = true;
+                        (frame, __compact_plan_15)
+                    } else {
+                        let (frame, __compact_plan_16): (_, crate::types::VerificationMethod) =
+                            crate::ledger_slots::verificationMethods
+                                .record_lookup(frame, (__compact_param_1).clone())?;
+                        let __compact_plan_17: crate::types::PublicKeyJwk =
+                            ((__compact_plan_16).publicKeyJwk).clone();
+                        let __compact_plan_18: crate::types::CurveType = (__compact_plan_17).crv;
+                        let __compact_plan_19: crate::types::CurveType =
+                            crate::types::CurveType::X25519;
+                        let __compact_plan_20: bool = __compact_plan_18 != __compact_plan_19;
+                        (frame, __compact_plan_20)
+                    };
+                    if !__compact_plan_21 {
+                        return Err(runtime::CompactError::AssertionFailed(
+                            "Signing verification relations cannot use X25519 verification methods"
+                                .to_owned(),
+                        ));
+                    }
+                    frame
+                } else {
+                    frame
+                };
+                frame
+            };
+            Ok((frame, ()))
+        }
         pub fn rotateControllerKey<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
@@ -4493,6 +4577,461 @@ pub mod ledger_contract {
             })?;
             Ok(frame.finish(()))
         }
+        pub fn setVerificationMethodRelation<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: crate::types::VerificationMethodRelation,
+            __compact_param_1: runtime::OpaqueString,
+            __compact_param_2: crate::types::SetMutation,
+            __compact_param_3: crate::types::SchnorrSignature,
+            __compact_param_4: runtime::BoundedUint<18446744073709551615>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_plan_0: crate::types::VerificationMethodRelation = __compact_param_0;
+            let __compact_plan_1: runtime::OpaqueString = (__compact_param_1).clone();
+            let __compact_plan_2: crate::types::SetMutation = __compact_param_2;
+            let __compact_plan_3: crate::types::SchnorrSignature = (__compact_param_3).clone();
+            let __compact_plan_4: runtime::BoundedUint<18446744073709551615> = __compact_param_4;
+            let (frame, __compact_plan_5): (_, crate::types::ContractAddress) =
+                crate::ledger_slots::id.record_read(frame)?;
+            let __compact_plan_6: crate::types::ContractAddress = __compact_plan_5;
+            let __compact_plan_7: runtime::BoundedUint<18446744073709551615> = __compact_param_4;
+            let __compact_plan_8: crate::types::VerificationMethodRelation = __compact_plan_0;
+            let __compact_plan_9: runtime::OpaqueString = (__compact_plan_1).clone();
+            let __compact_plan_10: crate::types::SetMutation = __compact_plan_2;
+            let __compact_plan_11: runtime::FixedVector<runtime::Field, 4> =
+                crate::pure_circuits::setVerificationMethodRelationAuthorizationDigest(
+                    __compact_plan_6,
+                    __compact_plan_7,
+                    __compact_plan_8,
+                    __compact_plan_9,
+                    __compact_plan_10,
+                )?;
+            let __compact_plan_12: runtime::FixedVector<runtime::Field, 4> = __compact_plan_11;
+            let __compact_plan_13: crate::types::SchnorrSignature = (__compact_plan_3).clone();
+            let __compact_plan_14: runtime::BoundedUint<18446744073709551615> = __compact_plan_4;
+            let __compact_plan_15: runtime::FixedVector<runtime::Field, 4> =
+                (__compact_plan_12).clone();
+            let (frame, __compact_plan_16) = crate::ledger_slots::version.record_read(frame)?;
+            let __compact_plan_17: runtime::BoundedUint<18446744073709551615> =
+                runtime::BoundedUint::<18446744073709551615>::new(__compact_plan_16 as u128)?;
+            let __compact_plan_18: bool = __compact_plan_14 == __compact_plan_17;
+            if !__compact_plan_18 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Controller authorization version is stale".to_owned(),
+                ));
+            }
+            let __compact_plan_19: runtime::FixedVector<runtime::Field, 4> =
+                (__compact_plan_15).clone();
+            let __compact_plan_20: crate::types::SchnorrSignature = (__compact_plan_13).clone();
+            let (frame, __compact_plan_21): (_, runtime::JubjubPoint) =
+                crate::ledger_slots::controllerPublicKey.record_read(frame)?;
+            let __compact_plan_22: runtime::JubjubPoint = __compact_plan_21;
+            let (frame, ()) = frame.call_local(|context| {
+                super::schnorrVerifyDigest(
+                    context,
+                    witnesses,
+                    __compact_plan_19,
+                    __compact_plan_20,
+                    __compact_plan_22,
+                )
+            })?;
+            let (frame, __compact_plan_23): (_, bool) =
+                crate::ledger_slots::active.record_read(frame)?;
+            if !__compact_plan_23 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Contract is not active".to_owned(),
+                ));
+            }
+            let __compact_plan_24: crate::types::SetMutation = __compact_plan_2;
+            crate::pure_circuits::assertSetMutationDefined(__compact_plan_24)?;
+            let __compact_plan_25: runtime::OpaqueString = (__compact_plan_1).clone();
+            let (frame, __compact_plan_26): (_, bool) = crate::ledger_slots::verificationMethods
+                .record_member(frame, (__compact_plan_25).clone())?;
+            let (frame, __compact_plan_29): (_, bool) = if __compact_plan_26 {
+                let __compact_plan_27: bool = true;
+                (frame, __compact_plan_27)
+            } else {
+                let (frame, __compact_plan_28): (_, bool) =
+                    crate::ledger_slots::schnorrJubjubVerificationMethods
+                        .record_member(frame, (__compact_plan_25).clone())?;
+                (frame, __compact_plan_28)
+            };
+            if !__compact_plan_29 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Verification method does not exist".to_owned(),
+                ));
+            }
+            let __compact_plan_30: crate::types::VerificationMethodRelation =
+                crate::types::VerificationMethodRelation::Undefined;
+            let __compact_plan_31: bool = __compact_plan_0 != __compact_plan_30;
+            if !__compact_plan_31 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Verification relation must be defined".to_owned(),
+                ));
+            }
+            let __compact_plan_32: crate::types::VerificationMethodRelation = __compact_plan_0;
+            let __compact_plan_33: runtime::OpaqueString = (__compact_plan_1).clone();
+            let __compact_plan_34: crate::types::VerificationMethodRelation =
+                crate::types::VerificationMethodRelation::Authentication;
+            let __compact_plan_35: bool = __compact_plan_32 == __compact_plan_34;
+            let (frame, __compact_plan_54): (_, bool) = if __compact_plan_35 {
+                let (frame, __compact_plan_36): (_, bool) =
+                    crate::ledger_slots::authenticationRelation
+                        .record_member(frame, (__compact_plan_33).clone())?;
+                (frame, __compact_plan_36)
+            } else {
+                let __compact_plan_37: crate::types::VerificationMethodRelation =
+                    crate::types::VerificationMethodRelation::AssertionMethod;
+                let __compact_plan_38: bool = __compact_plan_32 == __compact_plan_37;
+                let (frame, __compact_plan_53): (_, bool) = if __compact_plan_38 {
+                    let (frame, __compact_plan_39): (_, bool) =
+                        crate::ledger_slots::assertionMethodRelation
+                            .record_member(frame, (__compact_plan_33).clone())?;
+                    (frame, __compact_plan_39)
+                } else {
+                    let __compact_plan_40: crate::types::VerificationMethodRelation =
+                        crate::types::VerificationMethodRelation::KeyAgreement;
+                    let __compact_plan_41: bool = __compact_plan_32 == __compact_plan_40;
+                    let (frame, __compact_plan_52): (_, bool) = if __compact_plan_41 {
+                        let (frame, __compact_plan_42): (_, bool) =
+                            crate::ledger_slots::keyAgreementRelation
+                                .record_member(frame, (__compact_plan_33).clone())?;
+                        (frame, __compact_plan_42)
+                    } else {
+                        let __compact_plan_43: crate::types::VerificationMethodRelation =
+                            crate::types::VerificationMethodRelation::CapabilityInvocation;
+                        let __compact_plan_44: bool = __compact_plan_32 == __compact_plan_43;
+                        let (frame, __compact_plan_51): (_, bool) = if __compact_plan_44 {
+                            let (frame, __compact_plan_45): (_, bool) =
+                                crate::ledger_slots::capabilityInvocationRelation
+                                    .record_member(frame, (__compact_plan_33).clone())?;
+                            (frame, __compact_plan_45)
+                        } else {
+                            let __compact_plan_46: crate::types::VerificationMethodRelation =
+                                crate::types::VerificationMethodRelation::CapabilityDelegation;
+                            let __compact_plan_47: bool = __compact_plan_32 == __compact_plan_46;
+                            let (frame, __compact_plan_50): (_, bool) = if __compact_plan_47 {
+                                let (frame, __compact_plan_48): (_, bool) =
+                                    crate::ledger_slots::capabilityDelegationRelation
+                                        .record_member(frame, (__compact_plan_33).clone())?;
+                                (frame, __compact_plan_48)
+                            } else {
+                                let __compact_plan_49: bool = false;
+                                (frame, __compact_plan_49)
+                            };
+                            (frame, __compact_plan_50)
+                        };
+                        (frame, __compact_plan_51)
+                    };
+                    (frame, __compact_plan_52)
+                };
+                (frame, __compact_plan_53)
+            };
+            let __compact_plan_55: bool = __compact_plan_54;
+            let __compact_plan_56: crate::types::SetMutation = crate::types::SetMutation::Insert;
+            let __compact_plan_57: bool = __compact_plan_2 == __compact_plan_56;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform branch frames preserve ordered recording steps"
+            )]
+            let frame = if __compact_plan_57 {
+                let (frame, __compact_plan_60): (_, bool) = if __compact_plan_55 {
+                    let __compact_plan_58: bool = false;
+                    (frame, __compact_plan_58)
+                } else {
+                    let __compact_plan_59: bool = true;
+                    (frame, __compact_plan_59)
+                };
+                if !__compact_plan_60 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "Verification method relation already exists".to_owned(),
+                    ));
+                }
+                let __compact_plan_61: crate::types::VerificationMethodRelation = __compact_plan_0;
+                let __compact_plan_62: runtime::OpaqueString = (__compact_plan_1).clone();
+                let __compact_plan_63: crate::types::VerificationMethodRelation =
+                    crate::types::VerificationMethodRelation::KeyAgreement;
+                let __compact_plan_64: bool = __compact_plan_61 == __compact_plan_63;
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform branch frames preserve ordered recording steps"
+                )]
+                let frame = if __compact_plan_64 {
+                    let (frame, __compact_plan_65): (_, bool) =
+                        crate::ledger_slots::verificationMethods
+                            .record_member(frame, (__compact_plan_62).clone())?;
+                    if !__compact_plan_65 {
+                        return Err(runtime::CompactError::AssertionFailed(
+                            "KeyAgreement requires an agreement verification method".to_owned(),
+                        ));
+                    }
+                    let (frame, __compact_plan_66): (_, crate::types::VerificationMethod) =
+                        crate::ledger_slots::verificationMethods
+                            .record_lookup(frame, (__compact_plan_62).clone())?;
+                    let __compact_plan_67: crate::types::VerificationMethod = __compact_plan_66;
+                    let __compact_plan_68: crate::types::PublicKeyJwk =
+                        (((__compact_plan_67).clone()).publicKeyJwk).clone();
+                    let __compact_plan_69: crate::types::CurveType = (__compact_plan_68).crv;
+                    let __compact_plan_70: crate::types::CurveType =
+                        crate::types::CurveType::X25519;
+                    let __compact_plan_71: bool = __compact_plan_69 == __compact_plan_70;
+                    if !__compact_plan_71 {
+                        return Err(runtime::CompactError::AssertionFailed(
+                            "KeyAgreement requires an X25519 verification method".to_owned(),
+                        ));
+                    }
+                    frame
+                } else {
+                    let __compact_plan_72: crate::types::VerificationMethodRelation =
+                        __compact_plan_61;
+                    let __compact_plan_73: bool =
+                        crate::pure_circuits::isSigningVerificationMethodRelation(
+                            __compact_plan_72,
+                        )?;
+                    #[allow(
+                        clippy::let_and_return,
+                        reason = "uniform branch frames preserve ordered recording steps"
+                    )]
+                    let frame = if __compact_plan_73 {
+                        let (frame, __compact_plan_74): (_, bool) =
+                            crate::ledger_slots::verificationMethods
+                                .record_member(frame, (__compact_plan_62).clone())?;
+                        let (frame, __compact_plan_77): (_, bool) = if __compact_plan_74 {
+                            let __compact_plan_75: bool = false;
+                            (frame, __compact_plan_75)
+                        } else {
+                            let __compact_plan_76: bool = true;
+                            (frame, __compact_plan_76)
+                        };
+                        let (frame, __compact_plan_84): (_, bool) = if __compact_plan_77 {
+                            let __compact_plan_78: bool = true;
+                            (frame, __compact_plan_78)
+                        } else {
+                            let (frame, __compact_plan_79): (_, crate::types::VerificationMethod) =
+                                crate::ledger_slots::verificationMethods
+                                    .record_lookup(frame, (__compact_plan_62).clone())?;
+                            let __compact_plan_80: crate::types::PublicKeyJwk =
+                                ((__compact_plan_79).publicKeyJwk).clone();
+                            let __compact_plan_81: crate::types::CurveType =
+                                (__compact_plan_80).crv;
+                            let __compact_plan_82: crate::types::CurveType =
+                                crate::types::CurveType::X25519;
+                            let __compact_plan_83: bool = __compact_plan_81 != __compact_plan_82;
+                            (frame, __compact_plan_83)
+                        };
+                        if !__compact_plan_84 {
+                            return Err(
+                                runtime::CompactError::AssertionFailed(
+                                    "Signing verification relations cannot use X25519 verification methods"
+                                        .to_owned(),
+                                ),
+                            );
+                        }
+                        frame
+                    } else {
+                        frame
+                    };
+                    frame
+                };
+                let __compact_plan_85: crate::types::VerificationMethodRelation = __compact_plan_0;
+                let __compact_plan_86: runtime::OpaqueString = (__compact_plan_1).clone();
+                let __compact_plan_87: crate::types::VerificationMethodRelation =
+                    crate::types::VerificationMethodRelation::Authentication;
+                let __compact_plan_88: bool = __compact_plan_85 == __compact_plan_87;
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform branch frames preserve ordered recording steps"
+                )]
+                let frame = if __compact_plan_88 {
+                    let frame = crate::ledger_slots::authenticationRelation
+                        .record_insert(frame, (__compact_plan_86).clone())?;
+                    frame
+                } else {
+                    let __compact_plan_89: crate::types::VerificationMethodRelation =
+                        crate::types::VerificationMethodRelation::AssertionMethod;
+                    let __compact_plan_90: bool = __compact_plan_85 == __compact_plan_89;
+                    #[allow(
+                        clippy::let_and_return,
+                        reason = "uniform branch frames preserve ordered recording steps"
+                    )]
+                    let frame = if __compact_plan_90 {
+                        let frame = crate::ledger_slots::assertionMethodRelation
+                            .record_insert(frame, (__compact_plan_86).clone())?;
+                        frame
+                    } else {
+                        let __compact_plan_91: crate::types::VerificationMethodRelation =
+                            crate::types::VerificationMethodRelation::KeyAgreement;
+                        let __compact_plan_92: bool = __compact_plan_85 == __compact_plan_91;
+                        #[allow(
+                            clippy::let_and_return,
+                            reason = "uniform branch frames preserve ordered recording steps"
+                        )]
+                        let frame = if __compact_plan_92 {
+                            let frame = crate::ledger_slots::keyAgreementRelation
+                                .record_insert(frame, (__compact_plan_86).clone())?;
+                            frame
+                        } else {
+                            let __compact_plan_93: crate::types::VerificationMethodRelation =
+                                crate::types::VerificationMethodRelation::CapabilityInvocation;
+                            let __compact_plan_94: bool = __compact_plan_85 == __compact_plan_93;
+                            #[allow(
+                                clippy::let_and_return,
+                                reason = "uniform branch frames preserve ordered recording steps"
+                            )]
+                            let frame = if __compact_plan_94 {
+                                let frame = crate::ledger_slots::capabilityInvocationRelation
+                                    .record_insert(frame, (__compact_plan_86).clone())?;
+                                frame
+                            } else {
+                                let __compact_plan_95: crate::types::VerificationMethodRelation =
+                                    crate::types::VerificationMethodRelation::CapabilityDelegation;
+                                let __compact_plan_96: bool =
+                                    __compact_plan_85 == __compact_plan_95;
+                                #[allow(
+                                    clippy::let_and_return,
+                                    reason = "uniform branch frames preserve ordered recording steps"
+                                )]
+                                let frame = if __compact_plan_96 {
+                                    let frame =
+                                        crate::ledger_slots::capabilityDelegationRelation
+                                            .record_insert(frame, (__compact_plan_86).clone())?;
+                                    frame
+                                } else {
+                                    frame
+                                };
+                                frame
+                            };
+                            frame
+                        };
+                        frame
+                    };
+                    frame
+                };
+                frame
+            } else {
+                let __compact_plan_97: crate::types::SetMutation =
+                    crate::types::SetMutation::Remove;
+                let __compact_plan_98: bool = __compact_plan_2 == __compact_plan_97;
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform branch frames preserve ordered recording steps"
+                )]
+                let frame = if __compact_plan_98 {
+                    if !__compact_plan_55 {
+                        return Err(runtime::CompactError::AssertionFailed(
+                            "Verification method relation does not exist".to_owned(),
+                        ));
+                    }
+                    let __compact_plan_99: crate::types::VerificationMethodRelation =
+                        __compact_plan_0;
+                    let __compact_plan_100: runtime::OpaqueString = (__compact_plan_1).clone();
+                    let __compact_plan_101: crate::types::VerificationMethodRelation =
+                        crate::types::VerificationMethodRelation::Authentication;
+                    let __compact_plan_102: bool = __compact_plan_99 == __compact_plan_101;
+                    #[allow(
+                        clippy::let_and_return,
+                        reason = "uniform branch frames preserve ordered recording steps"
+                    )]
+                    let frame = if __compact_plan_102 {
+                        let frame = crate::ledger_slots::authenticationRelation
+                            .record_remove(frame, (__compact_plan_100).clone())?;
+                        frame
+                    } else {
+                        let __compact_plan_103: crate::types::VerificationMethodRelation =
+                            crate::types::VerificationMethodRelation::AssertionMethod;
+                        let __compact_plan_104: bool = __compact_plan_99 == __compact_plan_103;
+                        #[allow(
+                            clippy::let_and_return,
+                            reason = "uniform branch frames preserve ordered recording steps"
+                        )]
+                        let frame = if __compact_plan_104 {
+                            let frame = crate::ledger_slots::assertionMethodRelation
+                                .record_remove(frame, (__compact_plan_100).clone())?;
+                            frame
+                        } else {
+                            let __compact_plan_105: crate::types::VerificationMethodRelation =
+                                crate::types::VerificationMethodRelation::KeyAgreement;
+                            let __compact_plan_106: bool = __compact_plan_99 == __compact_plan_105;
+                            #[allow(
+                                clippy::let_and_return,
+                                reason = "uniform branch frames preserve ordered recording steps"
+                            )]
+                            let frame = if __compact_plan_106 {
+                                let frame = crate::ledger_slots::keyAgreementRelation
+                                    .record_remove(frame, (__compact_plan_100).clone())?;
+                                frame
+                            } else {
+                                let __compact_plan_107: crate::types::VerificationMethodRelation =
+                                    crate::types::VerificationMethodRelation::CapabilityInvocation;
+                                let __compact_plan_108: bool =
+                                    __compact_plan_99 == __compact_plan_107;
+                                #[allow(
+                                    clippy::let_and_return,
+                                    reason = "uniform branch frames preserve ordered recording steps"
+                                )]
+                                let frame = if __compact_plan_108 {
+                                    let frame =
+                                        crate::ledger_slots::capabilityInvocationRelation
+                                            .record_remove(frame, (__compact_plan_100).clone())?;
+                                    frame
+                                } else {
+                                    let __compact_plan_109: crate::types::VerificationMethodRelation = crate::types::VerificationMethodRelation::CapabilityDelegation;
+                                    let __compact_plan_110: bool =
+                                        __compact_plan_99 == __compact_plan_109;
+                                    #[allow(
+                                        clippy::let_and_return,
+                                        reason = "uniform branch frames preserve ordered recording steps"
+                                    )]
+                                    let frame = if __compact_plan_110 {
+                                        let frame =
+                                            crate::ledger_slots::capabilityDelegationRelation
+                                                .record_remove(
+                                                    frame,
+                                                    (__compact_plan_100).clone(),
+                                                )?;
+                                        frame
+                                    } else {
+                                        frame
+                                    };
+                                    frame
+                                };
+                                frame
+                            };
+                            frame
+                        };
+                        frame
+                    };
+                    frame
+                } else {
+                    frame
+                };
+                frame
+            };
+            let __compact_plan_111: runtime::BoundedUint<65535> =
+                runtime::BoundedUint::<65535>::new(1u128)
+                    .expect("Compact Uint literal fits its maximum");
+            let __compact_plan_112: runtime::BoundedUint<65535> = __compact_plan_111;
+            let frame = crate::ledger_slots::operationCount
+                .record_increment(frame, (__compact_plan_112).value() as u16)?;
+            let __compact_plan_113: runtime::BoundedUint<65535> =
+                runtime::BoundedUint::<65535>::new(1u128)
+                    .expect("Compact Uint literal fits its maximum");
+            let __compact_plan_114: runtime::BoundedUint<65535> = __compact_plan_113;
+            let frame = crate::ledger_slots::version
+                .record_increment(frame, (__compact_plan_114).value() as u16)?;
+            let (frame, __compact_plan_115): (_, runtime::BoundedUint<18446744073709551615>) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.currentTimestamp(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            let __compact_plan_116: runtime::BoundedUint<18446744073709551615> = __compact_plan_115;
+            let frame = crate::ledger_slots::updated.record_write(frame, __compact_plan_116)?;
+            Ok(frame.finish(()))
+        }
         pub fn setService<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
@@ -5241,6 +5780,71 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "verifySchnorrJubjubDigestSignature",
+                    input,
+                ))
+            }
+            pub fn setVerificationMethodRelation<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                relation: crate::types::VerificationMethodRelation,
+                methodId: runtime::OpaqueString,
+                mutation: crate::types::SetMutation,
+                controllerSignature: crate::types::SchnorrSignature,
+                expectedVersion: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                setVerificationMethodRelation(
+                    context,
+                    self.witnesses,
+                    relation,
+                    methodId,
+                    mutation,
+                    controllerSignature,
+                    expectedVersion,
+                )
+            }
+            #[cfg(feature = "ledger-transaction")]
+            #[allow(
+                clippy::too_many_arguments,
+                reason = "preserves the declared Compact circuit signature"
+            )]
+            pub fn setVerificationMethodRelation_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                relation: crate::types::VerificationMethodRelation,
+                methodId: runtime::OpaqueString,
+                mutation: crate::types::SetMutation,
+                controllerSignature: crate::types::SchnorrSignature,
+                expectedVersion: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::concat(&[
+                    runtime::fab::AlignedValue::from(relation),
+                    runtime::fab::AlignedValue::from((methodId).clone()),
+                    runtime::fab::AlignedValue::from(mutation),
+                    runtime::fab::AlignedValue::from((controllerSignature).clone()),
+                    runtime::fab::AlignedValue::from(expectedVersion),
+                ]);
+                let recorded = self.setVerificationMethodRelation(
+                    observed.circuit_context(private_state),
+                    relation,
+                    methodId,
+                    mutation,
+                    controllerSignature,
+                    expectedVersion,
+                )?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "setVerificationMethodRelation",
                     input,
                 ))
             }

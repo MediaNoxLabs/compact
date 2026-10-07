@@ -3448,11 +3448,11 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/lifecycle.json",
-      "sha256": "416985808cbc04bbf5afc8a2780c30da6516d1ed122c22d2ae8ce7450750a1e6"
+      "sha256": "4fceca6be347ba70a0ce77150605062ad0fc9db5dcb41e665ae9ce2708182121"
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/pure.json",
-      "sha256": "a0fe03877c86287a0367c70befd3b04748e9cae53faa42ba02f5a43b287c62d2"
+      "sha256": "2e844065d420145de43a0d5e56d51efd5bf48903b5019f97146532bd5d93285d"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/codec.rs",
@@ -3480,7 +3480,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/point-lifecycle.json",
-      "sha256": "640b35e2a2a71318cf5f0c42ba444709758d7466916d08836f18547764370a8e"
+      "sha256": "454658d839fca3a8a63c07e9cb519ee731709e50a6c55fe28b696265e6f44fd0"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/point_calls.rs",
@@ -3496,7 +3496,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/alias-lifecycle.json",
-      "sha256": "9efcd52e8bb7f6101eafbd57a97de1bdffdd84b4a01e0ad854307b92d1d8d5d2"
+      "sha256": "204f093f7fdd9e32ae4113085e1ce6c038fb1c34afd8c42f86f99aac995fe10a"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/alias_calls.rs",
@@ -3512,7 +3512,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/service-lifecycle.json",
-      "sha256": "35fa2d823a0a48dab2b7f4e8b4e120ddbc43598fbcb9ebadbc542e5a83ff3148"
+      "sha256": "9977afc53914a4c7600fb18f81e6c147b82100a082ea1d1a8a1dd04003f85bea"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/service_calls.rs",
@@ -3528,7 +3528,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/schnorr-method-lifecycle.json",
-      "sha256": "242cfa9d35bb3c4f95869bbeda20e1fd6ee4e7c2d6bb5e151dfe08b817317a3a"
+      "sha256": "9cd073ec1ac158a6bf09cbc449b6b86175a35688f2068f9a1be18b6e746a6628"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/schnorr_method_calls.rs",
@@ -3544,7 +3544,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/jwk-method-lifecycle.json",
-      "sha256": "f7c1edf6bf752178b68b927f5c4d53f7b53fc54291791f804436133c584c309a"
+      "sha256": "4c8693684a1f4f126d356c9a9a38949ab598f5a41529bf7e2c5e6e4f94044909"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/jwk_method_calls.rs",
@@ -3561,6 +3561,10 @@
     {
       "path": "tests-rust-backend/did-adoption/tests/digest_recording.rs",
       "sha256": "e033c35b4b13a04b60f3161e7de2ec9281aa81c7b400136873ab5f0f20845a0f"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/tests/relation_recording.rs",
+      "sha256": "6d874bc9bf9f99d3e5dcdacfdecf9d0ee82a1f10a623a1bccb88292f8af072d6"
     }
   ],
   "amendment_0259": {
@@ -3683,6 +3687,33 @@
       "Finite five-case parity is not exhaustive cryptographic security evidence.",
       "Strict original and minimal reducer proofs are separate gates and are not established by this capture.",
       "Original DID ledger8.1 source remains compiled against the local ledger8.0.3 proof/runtime profile."
+    ]
+  },
+  "amendment_0295": {
+    "scope": "Original pinned DID relation mutation through checked selected String Sets and nested JWK reads. Forty-two independent captured relation cases exercise typed native and recorded execution, complete programs, per-query and total gas, private transcript, effects, errors and ContractLab rollback.",
+    "historical_baseline": "Earlier summaries/amendments remain historical; this adds the final relation export to recording availability.",
+    "current_recorded_exports": [
+      "deactivate",
+      "recoverControllerKey",
+      "rotateControllerKey",
+      "setAlsoKnownAs",
+      "setService",
+      "removeService",
+      "setSchnorrJubjubVerificationMethod",
+      "removeSchnorrJubjubVerificationMethod",
+      "setVerificationMethod",
+      "removeVerificationMethod",
+      "verifySchnorrJubjubDigestSignature",
+      "setVerificationMethodRelation"
+    ],
+    "relation_cases": 42,
+    "relation_successes": 23,
+    "relation_refusals": 19,
+    "provenance_followup": "Seven maintained TS scopes recaptured using the same generated JavaScript and runtime; complete semantic objects identical. Only generated Rust library provenance changed; no captured expectations edited.",
+    "limits": [
+      "Finite cases are not exhaustive input-domain or cryptographic-security evidence.",
+      "Strict proofs and the public ledger8.1 bridge remain separate acceptance receipts.",
+      "Original constructor execution remains unproved."
     ]
   }
 }

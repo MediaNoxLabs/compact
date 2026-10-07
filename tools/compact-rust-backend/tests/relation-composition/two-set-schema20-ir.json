@@ -1,0 +1,639 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "auth",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "set",
+        "ty": {
+          "kind": "opaque_string"
+        }
+      },
+      "source": {
+        "file": "selected-set.compact",
+        "line": 3,
+        "column": 1
+      }
+    },
+    {
+      "id": "agreement",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "set",
+        "ty": {
+          "kind": "opaque_string"
+        }
+      },
+      "source": {
+        "file": "selected-set.compact",
+        "line": 4,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "member",
+      "parameters": [
+        {
+          "name": "relation",
+          "ty": {
+            "kind": "enum",
+            "name": "Relation",
+            "variants": [
+              "Undefined",
+              "Authentication",
+              "KeyAgreement"
+            ]
+          }
+        },
+        {
+          "name": "id",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        }
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "if",
+          "condition": {
+            "kind": "equal",
+            "left": {
+              "kind": "parameter",
+              "name": "relation"
+            },
+            "right": {
+              "kind": "enum_variant",
+              "ty": {
+                "kind": "enum",
+                "name": "Relation",
+                "variants": [
+                  "Undefined",
+                  "Authentication",
+                  "KeyAgreement"
+                ]
+              },
+              "variant": "Authentication"
+            }
+          },
+          "then": {
+            "kind": "set_member",
+            "field": "auth",
+            "index": 0,
+            "value": {
+              "kind": "parameter",
+              "name": "id"
+            }
+          },
+          "otherwise": {
+            "kind": "if",
+            "condition": {
+              "kind": "equal",
+              "left": {
+                "kind": "parameter",
+                "name": "relation"
+              },
+              "right": {
+                "kind": "enum_variant",
+                "ty": {
+                  "kind": "enum",
+                  "name": "Relation",
+                  "variants": [
+                    "Undefined",
+                    "Authentication",
+                    "KeyAgreement"
+                  ]
+                },
+                "variant": "KeyAgreement"
+              }
+            },
+            "then": {
+              "kind": "set_member",
+              "field": "agreement",
+              "index": 1,
+              "value": {
+                "kind": "parameter",
+                "name": "id"
+              }
+            },
+            "otherwise": {
+              "kind": "boolean",
+              "value": false
+            }
+          }
+        }
+      },
+      "actions": [
+      ],
+      "internal": true,
+      "source": {
+        "file": "selected-set.compact",
+        "line": 5,
+        "column": 1
+      }
+    },
+    {
+      "name": "insert",
+      "parameters": [
+        {
+          "name": "relation",
+          "ty": {
+            "kind": "enum",
+            "name": "Relation",
+            "variants": [
+              "Undefined",
+              "Authentication",
+              "KeyAgreement"
+            ]
+          }
+        },
+        {
+          "name": "id",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "equal",
+            "left": {
+              "kind": "parameter",
+              "name": "relation"
+            },
+            "right": {
+              "kind": "enum_variant",
+              "ty": {
+                "kind": "enum",
+                "name": "Relation",
+                "variants": [
+                  "Undefined",
+                  "Authentication",
+                  "KeyAgreement"
+                ]
+              },
+              "variant": "Authentication"
+            }
+          },
+          "then": {
+            "kind": "set_insert",
+            "field": "auth",
+            "index": 0,
+            "value": {
+              "kind": "parameter",
+              "name": "id"
+            }
+          },
+          "otherwise": {
+            "kind": "if",
+            "condition": {
+              "kind": "equal",
+              "left": {
+                "kind": "parameter",
+                "name": "relation"
+              },
+              "right": {
+                "kind": "enum_variant",
+                "ty": {
+                  "kind": "enum",
+                  "name": "Relation",
+                  "variants": [
+                    "Undefined",
+                    "Authentication",
+                    "KeyAgreement"
+                  ]
+                },
+                "variant": "KeyAgreement"
+              }
+            },
+            "then": {
+              "kind": "set_insert",
+              "field": "agreement",
+              "index": 1,
+              "value": {
+                "kind": "parameter",
+                "name": "id"
+              }
+            },
+            "otherwise": {
+              "kind": "sequence",
+              "actions": [
+              ]
+            }
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "selected-set.compact",
+        "line": 10,
+        "column": 1
+      }
+    },
+    {
+      "name": "remove",
+      "parameters": [
+        {
+          "name": "relation",
+          "ty": {
+            "kind": "enum",
+            "name": "Relation",
+            "variants": [
+              "Undefined",
+              "Authentication",
+              "KeyAgreement"
+            ]
+          }
+        },
+        {
+          "name": "id",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "equal",
+            "left": {
+              "kind": "parameter",
+              "name": "relation"
+            },
+            "right": {
+              "kind": "enum_variant",
+              "ty": {
+                "kind": "enum",
+                "name": "Relation",
+                "variants": [
+                  "Undefined",
+                  "Authentication",
+                  "KeyAgreement"
+                ]
+              },
+              "variant": "Authentication"
+            }
+          },
+          "then": {
+            "kind": "set_remove",
+            "field": "auth",
+            "index": 0,
+            "value": {
+              "kind": "parameter",
+              "name": "id"
+            }
+          },
+          "otherwise": {
+            "kind": "if",
+            "condition": {
+              "kind": "equal",
+              "left": {
+                "kind": "parameter",
+                "name": "relation"
+              },
+              "right": {
+                "kind": "enum_variant",
+                "ty": {
+                  "kind": "enum",
+                  "name": "Relation",
+                  "variants": [
+                    "Undefined",
+                    "Authentication",
+                    "KeyAgreement"
+                  ]
+                },
+                "variant": "KeyAgreement"
+              }
+            },
+            "then": {
+              "kind": "set_remove",
+              "field": "agreement",
+              "index": 1,
+              "value": {
+                "kind": "parameter",
+                "name": "id"
+              }
+            },
+            "otherwise": {
+              "kind": "sequence",
+              "actions": [
+              ]
+            }
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "selected-set.compact",
+        "line": 14,
+        "column": 1
+      }
+    },
+    {
+      "name": "update",
+      "parameters": [
+        {
+          "name": "relation",
+          "ty": {
+            "kind": "enum",
+            "name": "Relation",
+            "variants": [
+              "Undefined",
+              "Authentication",
+              "KeyAgreement"
+            ]
+          }
+        },
+        {
+          "name": "id",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        },
+        {
+          "name": "add",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "r",
+              "ty": {
+                "kind": "enum",
+                "name": "Relation",
+                "variants": [
+                  "Undefined",
+                  "Authentication",
+                  "KeyAgreement"
+                ]
+              },
+              "value": {
+                "kind": "parameter",
+                "name": "relation"
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "key",
+                "ty": {
+                  "kind": "opaque_string"
+                },
+                "value": {
+                  "kind": "parameter",
+                  "name": "id"
+                }
+              }
+            ],
+            "action": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "m",
+                  "ty": {
+                    "kind": "boolean"
+                  },
+                  "value": {
+                    "kind": "parameter",
+                    "name": "add"
+                  }
+                }
+              ],
+              "action": {
+                "kind": "sequence",
+                "actions": [
+                  {
+                    "kind": "assert",
+                    "condition": {
+                      "kind": "not_equal",
+                      "left": {
+                        "kind": "parameter",
+                        "name": "r"
+                      },
+                      "right": {
+                        "kind": "enum_variant",
+                        "ty": {
+                          "kind": "enum",
+                          "name": "Relation",
+                          "variants": [
+                            "Undefined",
+                            "Authentication",
+                            "KeyAgreement"
+                          ]
+                        },
+                        "variant": "Undefined"
+                      }
+                    },
+                    "message": "undefined relation"
+                  },
+                  {
+                    "kind": "let",
+                    "bindings": [
+                      {
+                        "name": "present",
+                        "ty": {
+                          "kind": "boolean"
+                        },
+                        "value": {
+                          "kind": "call",
+                          "name": "member",
+                          "arguments": [
+                            {
+                              "kind": "coerce",
+                              "value": {
+                                "kind": "parameter",
+                                "name": "r"
+                              },
+                              "ty": {
+                                "kind": "enum",
+                                "name": "Relation",
+                                "variants": [
+                                  "Undefined",
+                                  "Authentication",
+                                  "KeyAgreement"
+                                ]
+                              }
+                            },
+                            {
+                              "kind": "coerce",
+                              "value": {
+                                "kind": "parameter",
+                                "name": "key"
+                              },
+                              "ty": {
+                                "kind": "opaque_string"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ],
+                    "action": {
+                      "kind": "if",
+                      "condition": {
+                        "kind": "parameter",
+                        "name": "m"
+                      },
+                      "then": {
+                        "kind": "sequence",
+                        "actions": [
+                          {
+                            "kind": "assert",
+                            "condition": {
+                              "kind": "if",
+                              "condition": {
+                                "kind": "parameter",
+                                "name": "present"
+                              },
+                              "then": {
+                                "kind": "boolean",
+                                "value": false
+                              },
+                              "otherwise": {
+                                "kind": "boolean",
+                                "value": true
+                              }
+                            },
+                            "message": "already present"
+                          },
+                          {
+                            "kind": "circuit_call",
+                            "name": "insert",
+                            "arguments": [
+                              {
+                                "kind": "coerce",
+                                "value": {
+                                  "kind": "parameter",
+                                  "name": "r"
+                                },
+                                "ty": {
+                                  "kind": "enum",
+                                  "name": "Relation",
+                                  "variants": [
+                                    "Undefined",
+                                    "Authentication",
+                                    "KeyAgreement"
+                                  ]
+                                }
+                              },
+                              {
+                                "kind": "coerce",
+                                "value": {
+                                  "kind": "parameter",
+                                  "name": "key"
+                                },
+                                "ty": {
+                                  "kind": "opaque_string"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      "otherwise": {
+                        "kind": "sequence",
+                        "actions": [
+                          {
+                            "kind": "assert",
+                            "condition": {
+                              "kind": "parameter",
+                              "name": "present"
+                            },
+                            "message": "missing relation"
+                          },
+                          {
+                            "kind": "circuit_call",
+                            "name": "remove",
+                            "arguments": [
+                              {
+                                "kind": "coerce",
+                                "value": {
+                                  "kind": "parameter",
+                                  "name": "r"
+                                },
+                                "ty": {
+                                  "kind": "enum",
+                                  "name": "Relation",
+                                  "variants": [
+                                    "Undefined",
+                                    "Authentication",
+                                    "KeyAgreement"
+                                  ]
+                                }
+                              },
+                              {
+                                "kind": "coerce",
+                                "value": {
+                                  "kind": "parameter",
+                                  "name": "key"
+                                },
+                                "ty": {
+                                  "kind": "opaque_string"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "selected-set.compact",
+        "line": 18,
+        "column": 1
+      }
+    }
+  ]
+}

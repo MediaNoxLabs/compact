@@ -1184,6 +1184,48 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-did-relation-four-reducer-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-compact-testkit",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
+name = "compact-rust-did-relation-nested-reducer-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-compact-testkit",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
+name = "compact-rust-did-relation-two-reducer-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-compact-testkit",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
 name = "compact-rust-did-service-map-reducer-fixture"
 version = "0.1.0"
 dependencies = [
@@ -1941,6 +1983,9 @@ dependencies = [
  "compact-rust-did-point-digest-reducer-fixture",
  "compact-rust-did-point-guard-reducer-fixture",
  "compact-rust-did-point-map-reducer-fixture",
+ "compact-rust-did-relation-four-reducer-fixture",
+ "compact-rust-did-relation-nested-reducer-fixture",
+ "compact-rust-did-relation-two-reducer-fixture",
  "compact-rust-did-service-map-reducer-fixture",
  "compact-rust-effectful-return-oracle-fixture",
  "compact-rust-election-oracle-fixture",

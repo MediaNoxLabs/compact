@@ -45,6 +45,8 @@ enum Lifecycle {
     SchnorrMethods,
     JwkMethods,
     Digest,
+    Relations,
+    RelationSchnorr,
 }
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
     run_lifecycle(root, Lifecycle::Points)
@@ -63,6 +65,12 @@ pub(super) fn run_jwk_methods(root: &Path) -> Result<(), Box<dyn Error>> {
 }
 pub(super) fn run_digest(root: &Path) -> Result<(), Box<dyn Error>> {
     run_lifecycle(root, Lifecycle::Digest)
+}
+pub(super) fn run_relations(root: &Path) -> Result<(), Box<dyn Error>> {
+    run_lifecycle(root, Lifecycle::Relations)
+}
+pub(super) fn run_relation_schnorr(root: &Path) -> Result<(), Box<dyn Error>> {
+    run_lifecycle(root, Lifecycle::RelationSchnorr)
 }
 fn invoke_digest_recorded(
     context: r::context::CircuitContext<u64>,
@@ -84,6 +92,36 @@ fn invoke_digest_recorded(
             },
         ),
         other => panic!("not a digest proof case: {other}"),
+    }
+}
+fn invoke_relation_recorded(
+    context: r::context::CircuitContext<u64>,
+    witness: &Witness,
+    row: &Value,
+) -> Result<r::recording::RecordedCircuitResult<u64, ()>, r::CompactError> {
+    let signature = types::SchnorrSignature {
+        announcement: codec::point("2"),
+        response: codec::field_hex(row["responseHex"].as_str().unwrap()),
+    };
+    let version = codec::version(row["version"].as_str().unwrap());
+    match row["name"].as_str().unwrap() {
+        "setVerificationMethod" | "removeVerificationMethod" => {
+            jwk_method_calls::invoke_recorded(context, witness, row)
+        }
+        "setSchnorrJubjubVerificationMethod" => {
+            schnorr_method_calls::invoke_recorded(context, witness, row)
+        }
+        "verifySchnorrJubjubDigestSignature" => invoke_digest_recorded(context, witness, row),
+        "setVerificationMethodRelation" => c::recorded::setVerificationMethodRelation(
+            context,
+            witness,
+            codec::relation(&row["args"]["relation"]),
+            codec::string(&row["args"]["id"]),
+            codec::set(&row["args"]["mutation"]),
+            signature,
+            version,
+        ),
+        other => panic!("not a relation proof case: {other}"),
     }
 }
 fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>> {
@@ -153,6 +191,43 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
                 "removeSchnorrJubjubVerificationMethod",
                 "setVerificationMethod",
                 "removeVerificationMethod",
+            ],
+        ),
+        Lifecycle::Relations => (
+            include_str!("../../../tests-rust-backend/did-adoption/oracle/lifecycle.json"),
+            "methods-relations",
+            &[
+                "accept-ed",
+                "accept-x",
+                "accept-bls1",
+                "accept-bls2",
+                "accept-p256",
+                "accept-secp",
+                "relation-1-insert",
+                "relation-1-remove",
+                "relation-2-insert",
+                "relation-2-remove",
+                "relation-3-insert",
+                "relation-3-remove",
+                "relation-4-insert",
+                "relation-4-remove",
+                "relation-5-insert",
+                "relation-5-remove",
+            ],
+            &[
+                "setVerificationMethod",
+                "removeVerificationMethod",
+                "setVerificationMethodRelation",
+            ],
+        ),
+        Lifecycle::RelationSchnorr => (
+            include_str!("../../../tests-rust-backend/did-adoption/oracle/lifecycle.json"),
+            "schnorr",
+            &["insert", "read-valid", "relation-insert"],
+            &[
+                "setSchnorrJubjubVerificationMethod",
+                "verifySchnorrJubjubDigestSignature",
+                "setVerificationMethodRelation",
             ],
         ),
         Lifecycle::Digest => (
@@ -254,35 +329,47 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
             .iter()
             .find(|r| r["id"] == id)
             .unwrap();
-        let name = match id {
-            "rotate" => "rotateControllerKey",
-            "recover" => "recoverControllerKey",
-            "deactivate" => "deactivate",
-            "insert-unicode" | "update-empty-fields"
-                if matches!(lifecycle, Lifecycle::Services) =>
-            {
-                "setService"
+        let name = if matches!(lifecycle, Lifecycle::Relations | Lifecycle::RelationSchnorr) {
+            match row["name"].as_str().unwrap() {
+                "setVerificationMethod" => "setVerificationMethod",
+                "setVerificationMethodRelation" => "setVerificationMethodRelation",
+                "setSchnorrJubjubVerificationMethod" => "setSchnorrJubjubVerificationMethod",
+                "verifySchnorrJubjubDigestSignature" => "verifySchnorrJubjubDigestSignature",
+                other => panic!("unreviewed relation proof operation: {other}"),
             }
-            "remove-unicode" if matches!(lifecycle, Lifecycle::Services) => "removeService",
-            "insert-unicode" | "update-point" if matches!(lifecycle, Lifecycle::SchnorrMethods) => {
-                "setSchnorrJubjubVerificationMethod"
+        } else {
+            match id {
+                "rotate" => "rotateControllerKey",
+                "recover" => "recoverControllerKey",
+                "deactivate" => "deactivate",
+                "insert-unicode" | "update-empty-fields"
+                    if matches!(lifecycle, Lifecycle::Services) =>
+                {
+                    "setService"
+                }
+                "remove-unicode" if matches!(lifecycle, Lifecycle::Services) => "removeService",
+                "insert-unicode" | "update-point"
+                    if matches!(lifecycle, Lifecycle::SchnorrMethods) =>
+                {
+                    "setSchnorrJubjubVerificationMethod"
+                }
+                "remove-unicode" if matches!(lifecycle, Lifecycle::SchnorrMethods) => {
+                    "removeSchnorrJubjubVerificationMethod"
+                }
+                "insert-unicode" | "update-jwk" if matches!(lifecycle, Lifecycle::JwkMethods) => {
+                    "setVerificationMethod"
+                }
+                "remove-unicode" if matches!(lifecycle, Lifecycle::JwkMethods) => {
+                    "removeVerificationMethod"
+                }
+                "insert" if matches!(lifecycle, Lifecycle::Digest) => {
+                    "setSchnorrJubjubVerificationMethod"
+                }
+                "read-valid" if matches!(lifecycle, Lifecycle::Digest) => {
+                    "verifySchnorrJubjubDigestSignature"
+                }
+                _ => "setAlsoKnownAs",
             }
-            "remove-unicode" if matches!(lifecycle, Lifecycle::SchnorrMethods) => {
-                "removeSchnorrJubjubVerificationMethod"
-            }
-            "insert-unicode" | "update-jwk" if matches!(lifecycle, Lifecycle::JwkMethods) => {
-                "setVerificationMethod"
-            }
-            "remove-unicode" if matches!(lifecycle, Lifecycle::JwkMethods) => {
-                "removeVerificationMethod"
-            }
-            "insert" if matches!(lifecycle, Lifecycle::Digest) => {
-                "setSchnorrJubjubVerificationMethod"
-            }
-            "read-valid" if matches!(lifecycle, Lifecycle::Digest) => {
-                "verifySchnorrJubjubDigestSignature"
-            }
-            _ => "setAlsoKnownAs",
         };
         let prior = state
             .ledger
@@ -316,6 +403,8 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
             Lifecycle::SchnorrMethods => schnorr_method_calls::invoke_recorded,
             Lifecycle::JwkMethods => jwk_method_calls::invoke_recorded,
             Lifecycle::Digest => invoke_digest_recorded,
+            Lifecycle::Relations => invoke_relation_recorded,
+            Lifecycle::RelationSchnorr => invoke_relation_recorded,
         };
         let recorded = record(
             observed.circuit_context(private),
@@ -339,6 +428,14 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
                 codec::string(&row["args"]["id"]),
                 r::FixedVector::new([1u64, 2, 3, 4].map(r::Field::from)),
                 signature.clone(),
+            ))
+        } else if name == "setVerificationMethodRelation" {
+            AlignedValue::from((
+                codec::relation(&row["args"]["relation"]),
+                codec::string(&row["args"]["id"]),
+                codec::set(&row["args"]["mutation"]),
+                signature.clone(),
+                version,
             ))
         } else if name == "setVerificationMethod" {
             AlignedValue::from((
@@ -458,6 +555,56 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
                     signature,
                     version,
                 )?,
+            "accept-ed" | "accept-x" | "accept-bls1" | "accept-bls2" | "accept-p256"
+            | "accept-secp"
+                if matches!(lifecycle, Lifecycle::Relations) =>
+            {
+                facade.recording().setVerificationMethod_call(
+                    &observed,
+                    private,
+                    codec::method(&row["args"]["method"]),
+                    codec::map(&row["args"]["mutation"]),
+                    signature,
+                    version,
+                )?
+            }
+            "insert" if matches!(lifecycle, Lifecycle::RelationSchnorr) => {
+                facade.recording().setSchnorrJubjubVerificationMethod_call(
+                    &observed,
+                    private,
+                    codec::schnorr(&row["args"]["method"]),
+                    codec::map(&row["args"]["mutation"]),
+                    signature,
+                    version,
+                )?
+            }
+            "relation-insert" if matches!(lifecycle, Lifecycle::RelationSchnorr) => {
+                facade.recording().setVerificationMethodRelation_call(
+                    &observed,
+                    private,
+                    codec::relation(&row["args"]["relation"]),
+                    codec::string(&row["args"]["id"]),
+                    codec::set(&row["args"]["mutation"]),
+                    signature,
+                    version,
+                )?
+            }
+            "relation-1-insert" | "relation-1-remove" | "relation-2-insert"
+            | "relation-2-remove" | "relation-3-insert" | "relation-3-remove"
+            | "relation-4-insert" | "relation-4-remove" | "relation-5-insert"
+            | "relation-5-remove"
+                if matches!(lifecycle, Lifecycle::Relations) =>
+            {
+                facade.recording().setVerificationMethodRelation_call(
+                    &observed,
+                    private,
+                    codec::relation(&row["args"]["relation"]),
+                    codec::string(&row["args"]["id"]),
+                    codec::set(&row["args"]["mutation"]),
+                    signature,
+                    version,
+                )?
+            }
             "insert-unicode" | "update-jwk" if matches!(lifecycle, Lifecycle::JwkMethods) => {
                 facade.recording().setVerificationMethod_call(
                     &observed,
@@ -487,7 +634,7 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
                     version,
                 )?
             }
-            "read-valid" if matches!(lifecycle, Lifecycle::Digest) => {
+            "read-valid" if matches!(lifecycle, Lifecycle::Digest | Lifecycle::RelationSchnorr) => {
                 facade.recording().verifySchnorrJubjubDigestSignature_call(
                     &observed,
                     private,
@@ -539,6 +686,8 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
                 Lifecycle::SchnorrMethods => "schnorr-methods",
                 Lifecycle::JwkMethods => "jwk-methods",
                 Lifecycle::Digest => "digest",
+                Lifecycle::Relations => "relations",
+                Lifecycle::RelationSchnorr => "relation-schnorr",
             },
             id,
             name,
@@ -600,6 +749,66 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
             "changed_binding_rejected": true, "applied": true,
             "replay_refusal": "IntentAlreadyExists",
         }));
+    }
+    if matches!(lifecycle, Lifecycle::RelationSchnorr) {
+        let row = scenario["steps"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|row| row["id"] == "key-agreement-needs-generic")
+            .ok_or("missing captured absent-JWK refusal")?;
+        let prior = state.ledger.contract.get(&address).ok_or("DID absent")?;
+        let expected_before: ContractState<DefaultDB> =
+            tagged_deserialize(&mut hex::decode(row["before"].as_str().unwrap())?.as_slice())?;
+        if prior.data != expected_before.data || private != row["privateBefore"].as_u64().unwrap() {
+            return Err("absent-JWK refusal prestate differs from source capture".into());
+        }
+        let observed = ObservedContractState::new(
+            address,
+            prior.clone(),
+            Observation {
+                transaction_hash: [0; 32],
+                block_hash: [0; 32],
+                block_height: 3,
+            },
+        );
+        let error_text = row["error"]
+            .as_str()
+            .ok_or("missing source refusal error")?;
+        let expected_error = r::CompactError::AssertionFailed(
+            error_text
+                .strip_prefix("failed assert: ")
+                .unwrap_or(error_text)
+                .into(),
+        );
+        let native_witness = Witness::new(row["options"].clone());
+        let native =
+            lifecycle_calls::invoke(observed.circuit_context(private), &native_witness, row);
+        if native.err() != Some(expected_error.clone())
+            || json!(*native_witness.calls.borrow()) != row["witnessCalls"]
+        {
+            return Err("native absent-JWK refusal differs from source".into());
+        }
+        let recorded_witness = Witness::new(row["options"].clone());
+        let recorded =
+            invoke_relation_recorded(observed.circuit_context(private), &recorded_witness, row);
+        if recorded.err() != Some(expected_error)
+            || json!(*recorded_witness.calls.borrow()) != row["witnessCalls"]
+            || state
+                .ledger
+                .contract
+                .get(&address)
+                .ok_or("DID absent")?
+                .data
+                != prior.data
+        {
+            return Err(
+                "recorded absent-JWK refusal changed contract state or witness order".into(),
+            );
+        }
+        println!(
+            "original DID missing generic JWK for KeyAgreement: source assertion and witness order match; no transaction prepared or ledger mutation applied"
+        );
     }
     let final_state = state
         .ledger
@@ -674,6 +883,38 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
                 "original DID deploy -> JWK method insert -> update -> remove: strict sequential acceptance; constructor execution not proved, stored-id semantics unchanged"
             );
         }
+        Lifecycle::Relations => {
+            if !slots::active.inspect(data)?
+                || slots::deactivated.inspect(data)?
+                || slots::version.inspect(data)? != 16
+                || slots::operationCount.inspect(data)? != 16
+                || !slots::authenticationRelation.inspect(data)?.is_empty()
+                || !slots::assertionMethodRelation.inspect(data)?.is_empty()
+                || !slots::keyAgreementRelation.inspect(data)?.is_empty()
+                || !slots::capabilityInvocationRelation
+                    .inspect(data)?
+                    .is_empty()
+                || !slots::capabilityDelegationRelation
+                    .inspect(data)?
+                    .is_empty()
+            {
+                return Err("final DID relation cycle fields differ".into());
+            }
+        }
+        Lifecycle::RelationSchnorr => {
+            if !slots::active.inspect(data)?
+                || slots::deactivated.inspect(data)?
+                || slots::version.inspect(data)? != 2
+                || slots::operationCount.inspect(data)? != 2
+                || !slots::verificationMethods.inspect(data)?.is_empty()
+                || slots::schnorrJubjubVerificationMethods
+                    .inspect(data)?
+                    .is_empty()
+                || slots::authenticationRelation.inspect(data)?.is_empty()
+            {
+                return Err("Schnorr-only relation final state differs".into());
+            }
+        }
         Lifecycle::Digest => {
             if !slots::active.inspect(data)?
                 || slots::deactivated.inspect(data)?
@@ -697,6 +938,8 @@ fn run_lifecycle(root: &Path, lifecycle: Lifecycle) -> Result<(), Box<dyn Error>
         Lifecycle::SchnorrMethods => ("schnorr-methods", "--did-schnorr-method-lifecycle"),
         Lifecycle::JwkMethods => ("jwk-methods", "--did-jwk-method-lifecycle"),
         Lifecycle::Digest => ("digest", "--did-digest-verification"),
+        Lifecycle::Relations => ("relations", "--did-relation-lifecycle"),
+        Lifecycle::RelationSchnorr => ("relation-schnorr", "--did-relation-schnorr"),
     };
     let final_state_file = format!("did-{scenario}-final-state.bin");
     let mut public_state = Vec::new();

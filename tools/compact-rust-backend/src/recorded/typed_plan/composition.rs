@@ -14,6 +14,7 @@
 // limitations under the License.
 //! Closed typed Cell/Counter Unit composition; shared Plan owns evaluation.
 use super::*;
+use relation_root_preflight::RelationPermit;
 
 #[derive(Clone, Copy)]
 pub(super) enum AuditedCall<'a> {
@@ -185,6 +186,11 @@ struct Audit<'a> {
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
     active: HashSet<String>,
     calls: Calls<'a>,
+    relation: Option<RelationPermit<'a>>,
+    // These exact immutable IR nodes passed the complete checked nested Map
+    // permit and whole-body audit. Plan cannot emit another MapLookup merely
+    // because some other composition call made `composition_calls` available.
+    checked_lookup_sites: HashSet<*const Expr>,
     public: usize,
     product_map_writes: usize,
     nested_product_map_members: HashSet<(String, u8)>,
@@ -283,12 +289,23 @@ impl Audit<'_> {
                 field,
                 index,
                 value,
-            } if !pure && self.read_only_boolean_depth == 0 => {
+            } if !pure => {
+                let Some(slot) = self.slot(field, *index) else {
+                    return false;
+                };
+                if self.read_only_boolean_depth > 0
+                    && !self
+                        .relation
+                        .as_ref()
+                        .is_some_and(|permit| permit.selected_member(&self.active, slot))
+                {
+                    return false;
+                }
                 if !matches!(
-                    self.slot(field, *index).map(|f| &f.declaration),
-                    Some(LedgerFieldKind::Set {
+                    &slot.declaration,
+                    LedgerFieldKind::Set {
                         ty: Type::OpaqueString
-                    })
+                    }
                 ) {
                     return false;
                 }
@@ -306,11 +323,33 @@ impl Audit<'_> {
                 {
                     return false;
                 }
-                if self.read_only_boolean_depth == 0 && !flat_string_point_map(&slot.declaration) {
+                if self.read_only_boolean_depth == 0
+                    && !flat_string_point_map(&slot.declaration)
+                    && !self
+                        .relation
+                        .as_ref()
+                        .is_some_and(|permit| permit.nested_map(&self.active, slot))
+                {
                     self.nested_product_map_members
                         .insert((field.clone(), *index));
                 }
                 self.public += 1;
+                self.value(key, false, &format!("{path}.key"))
+            }
+            Expr::MapLookup { field, index, key } if !pure => {
+                let Some(slot) = self.slot(field, *index) else {
+                    return false;
+                };
+                if !checked_product_map(&slot.declaration)
+                    || !self
+                        .relation
+                        .as_ref()
+                        .is_some_and(|permit| permit.nested_map(&self.active, slot))
+                {
+                    return false;
+                }
+                self.public += 1;
+                self.checked_lookup_sites.insert(value as *const Expr);
                 self.value(key, false, &format!("{path}.key"))
             }
             Expr::CounterRead { field, index } if !pure && self.read_only_boolean_depth == 0 => {
@@ -668,6 +707,7 @@ pub(super) fn lower_checked<'a>(
     {
         return ProfileAttempt::NotApplicable;
     }
+    let relation = RelationPermit::discover(circuit, ledger, circuits);
     let mut audit = Audit {
         ledger,
         witnesses,
@@ -675,6 +715,8 @@ pub(super) fn lower_checked<'a>(
         circuits,
         active: HashSet::from([circuit.name.clone()]),
         calls: HashMap::new(),
+        relation,
+        checked_lookup_sites: HashSet::new(),
         public: 0,
         product_map_writes: 0,
         nested_product_map_members: HashSet::new(),
@@ -697,12 +739,17 @@ pub(super) fn lower_checked<'a>(
             true,
         ));
     }
-    if !audit.calls.values().any(|call| {
-        matches!(
-            call,
-            AuditedCall::LocalUnit(_) | AuditedCall::RecordedUnit(_)
-        )
-    }) {
+    if !audit
+        .relation
+        .as_ref()
+        .is_some_and(RelationPermit::standalone)
+        && !audit.calls.values().any(|call| {
+            matches!(
+                call,
+                AuditedCall::LocalUnit(_) | AuditedCall::RecordedUnit(_)
+            )
+        })
+    {
         return ProfileAttempt::Rejected(CompositionRejection::obligation(
             "Unit composition requires an audited stateful Unit helper",
             false,
@@ -712,7 +759,11 @@ pub(super) fn lower_checked<'a>(
         .calls
         .values()
         .any(|call| matches!(call, AuditedCall::ReadOnlyBoolean(_)))
-        && audit.product_map_writes == 0)
+        && audit.product_map_writes == 0
+        && !audit
+            .relation
+            .as_ref()
+            .is_some_and(RelationPermit::has_selected))
         || !audit
             .nested_product_map_members
             .is_subset(&audit.product_map_written_fields)
@@ -746,6 +797,7 @@ pub(super) fn lower_checked<'a>(
         phase_reset: false,
         composite_domain: CompositeDomain::UnitComposition,
         composition_calls: Some(audit.calls),
+        composition_lookup_sites: audit.checked_lookup_sites,
         intent_effects: 0,
         intent_queries: 0,
         zswap_inputs: 0,
@@ -843,3 +895,13 @@ impl Plan<'_> {
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+#[path = "composition/relation_composition_tests.rs"]
+mod adr295_preflight;
+
+mod selected_set_preflight;
+
+mod nested_map_preflight;
+
+mod relation_root_preflight;

@@ -337,7 +337,7 @@ pub(crate) fn circuit_emits_native_private_output(
     Ok(effect)
 }
 
-fn expression_contains(expression: &Expr, predicate: &impl Fn(&Expr) -> bool) -> bool {
+pub(crate) fn expression_contains(expression: &Expr, predicate: &impl Fn(&Expr) -> bool) -> bool {
     if predicate(expression) {
         return true;
     }

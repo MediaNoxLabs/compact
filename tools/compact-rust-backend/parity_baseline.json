@@ -1538,6 +1538,14 @@
     "visibility": "internal"
   },
   {
+    "source": "examples/rust_backend/did_relation_nested_reducer.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "check",
+    "signature": "export circuit check(id: Opaque<\"string\">, agreement: Boolean): []",
+    "visibility": "export"
+  },
+  {
     "source": "tools/compact-rust-backend/tests/point-composition/point_guard.compact",
     "module_path": [],
     "kind": "circuit",
@@ -3370,6 +3378,22 @@
     "visibility": "internal"
   },
   {
+    "source": "examples/rust_backend/did_relation_four_reducer.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "insert",
+    "signature": "circuit insert(relation: Relation, id: Opaque<\"string\">): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/did_relation_two_reducer.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "insert",
+    "signature": "circuit insert(relation: Relation, id: Opaque<\"string\">): []",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
     "module_path": [],
     "kind": "circuit",
@@ -3824,6 +3848,22 @@
     "name": "maybeClose",
     "signature": "export circuit maybeClose(take: Boolean, expected: Uint<64>): []",
     "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_relation_four_reducer.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "member",
+    "signature": "circuit member(relation: Relation, id: Opaque<\"string\">): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/did_relation_two_reducer.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "member",
+    "signature": "circuit member(relation: Relation, id: Opaque<\"string\">): Boolean",
+    "visibility": "internal"
   },
   {
     "source": "tools/compact-rust-backend/tests/set-composition/set_string.compact",
@@ -5322,6 +5362,22 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/did_relation_four_reducer.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "remove",
+    "signature": "circuit remove(relation: Relation, id: Opaque<\"string\">): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/did_relation_two_reducer.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "remove",
+    "signature": "circuit remove(relation: Relation, id: Opaque<\"string\">): []",
+    "visibility": "internal"
+  },
+  {
     "source": "tools/compact-rust-backend/tests/map-nested-product/nested-enum.compact",
     "module_path": [],
     "kind": "circuit",
@@ -5855,6 +5911,14 @@
     "kind": "circuit",
     "name": "secretHolderBindingCommitment",
     "signature": "export pure circuit secretHolderBindingCommitment( holderSecret: Bytes<32>, opening: Bytes<32> ): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_relation_nested_reducer.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "seed",
+    "signature": "export circuit seed(method: Method): []",
     "visibility": "export"
   },
   {
@@ -7226,6 +7290,22 @@
     "visibility": "internal"
   },
   {
+    "source": "examples/rust_backend/did_relation_four_reducer.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "update",
+    "signature": "export circuit update(relation: Relation, id: Opaque<\"string\">, add: Boolean): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/did_relation_two_reducer.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "update",
+    "signature": "export circuit update(relation: Relation, id: Opaque<\"string\">, add: Boolean): []",
+    "visibility": "export"
+  },
+  {
     "source": "tools/compact-rust-backend/tests/point-composition/point_digest.compact",
     "module_path": [],
     "kind": "circuit",
@@ -8175,6 +8255,14 @@
     "kind": "constructor",
     "name": "constructor",
     "signature": "constructor(key: JubjubPoint)",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/did_relation_nested_reducer.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor(method: Method)",
     "visibility": "internal"
   },
   {

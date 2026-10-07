@@ -204,6 +204,7 @@ pub(super) fn lower<'a>(
         phase_reset: false,
         composite_domain: CompositeDomain::None,
         composition_calls: None,
+        composition_lookup_sites: Default::default(),
         intent_effects: 0,
         intent_queries: 0,
         zswap_inputs: 0,

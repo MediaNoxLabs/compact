@@ -163,6 +163,7 @@ struct Plan<'a> {
     phase_reset: bool,
     composite_domain: CompositeDomain,
     composition_calls: Option<composition::Calls<'a>>,
+    composition_lookup_sites: HashSet<*const Expr>,
     intent_effects: usize,
     intent_queries: usize,
     zswap_inputs: usize,
@@ -364,6 +365,32 @@ impl Plan<'_> {
         )
     }
 
+    fn composition_map_lookup(
+        &mut self,
+        field: &str,
+        index: u8,
+        key: &Expr,
+        scope: &Scope,
+        steps: &mut Vec<syn::Stmt>,
+    ) -> Option<TypedValue> {
+        let LedgerFieldKind::Map {
+            key: Type::OpaqueString,
+            value,
+        } = &self.field(field, index)?.declaration
+        else {
+            return None;
+        };
+        let ty = value.clone();
+        if !composition::checked_product_map(&self.field(field, index)?.declaration) {
+            return None;
+        }
+        let key = self.expression(key, scope, steps)?;
+        if key.ty != Type::OpaqueString {
+            return None;
+        }
+        self.observe(field, "record_lookup", vec![key.value], ty, steps)
+    }
+
     // Recursion returns through this small dispatcher; helpers keep the same Plan and scope.
     fn expression(
         &mut self,
@@ -401,6 +428,7 @@ impl Plan<'_> {
             | Expr::CellRead { .. }
             | Expr::SetMember { .. }
             | Expr::MapMember { .. }
+            | Expr::MapLookup { .. }
             | Expr::SetSize { .. }
             | Expr::SetIsEmpty { .. }
             | Expr::HistoricMerkleCheckRoot { .. }
@@ -1010,6 +1038,14 @@ impl Plan<'_> {
             }
             Expr::MapMember { field, index, key } if self.composition_calls.is_some() => {
                 self.composition_map_member(field, *index, key, scope, steps)
+            }
+            Expr::MapLookup { field, index, key }
+                if self.composition_calls.is_some()
+                    && self
+                        .composition_lookup_sites
+                        .contains(&(expression as *const Expr)) =>
+            {
+                self.composition_map_lookup(field, *index, key, scope, steps)
             }
             Expr::SetSize { field, index } | Expr::SetIsEmpty { field, index } => {
                 let LedgerFieldKind::Set { ty } = &self.field(field, *index)?.declaration else {
@@ -2362,6 +2398,7 @@ pub(super) fn lower_effectful<'a>(
         phase_reset: false,
         composite_domain: CompositeDomain::None,
         composition_calls: None,
+        composition_lookup_sites: HashSet::new(),
         intent_effects: 0,
         intent_queries: 0,
         zswap_inputs: 0,
@@ -2577,6 +2614,7 @@ pub(super) fn lower_context_query<'a>(
         phase_reset: false,
         composite_domain: CompositeDomain::None,
         composition_calls: None,
+        composition_lookup_sites: HashSet::new(),
         intent_effects: 0,
         intent_queries: 0,
         zswap_inputs: 0,
@@ -2877,6 +2915,7 @@ pub(super) fn lower_shielded_receive<'a>(
         phase_reset: false,
         composite_domain: CompositeDomain::ShieldedReceive,
         composition_calls: None,
+        composition_lookup_sites: HashSet::new(),
         intent_effects: 0,
         intent_queries: 0,
         zswap_inputs: 0,
@@ -3211,6 +3250,7 @@ fn shielded_plan<'a>(
         phase_reset: false,
         composite_domain: domain,
         composition_calls: None,
+        composition_lookup_sites: HashSet::new(),
         intent_effects: 0,
         intent_queries: 0,
         zswap_inputs: 0,
@@ -3421,6 +3461,7 @@ pub(super) fn lower_composite<'a>(
         phase_reset: false,
         composite_domain: domain,
         composition_calls: None,
+        composition_lookup_sites: HashSet::new(),
         intent_effects: 0,
         intent_queries: 0,
         zswap_inputs: 0,
@@ -3568,6 +3609,7 @@ pub(super) fn lower<'a>(
         phase_reset: false,
         composite_domain: CompositeDomain::None,
         composition_calls: None,
+        composition_lookup_sites: HashSet::new(),
         intent_effects: 0,
         intent_queries: 0,
         zswap_inputs: 0,
@@ -4117,6 +4159,7 @@ mod tests {
             phase_reset: false,
             composite_domain: CompositeDomain::None,
             composition_calls: None,
+            composition_lookup_sites: HashSet::new(),
             intent_effects: 0,
             intent_queries: 0,
             zswap_inputs: 0,
@@ -4212,6 +4255,7 @@ mod tests {
             phase_reset: false,
             composite_domain: CompositeDomain::None,
             composition_calls: None,
+            composition_lookup_sites: HashSet::new(),
             intent_effects: 0,
             intent_queries: 0,
             zswap_inputs: 0,

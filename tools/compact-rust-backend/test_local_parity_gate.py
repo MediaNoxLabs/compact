@@ -131,7 +131,7 @@ class MaintainedFixtureAndProofTests(unittest.TestCase):
         mapping = gate.fixture_map()
         self.assertEqual(mapping, fixture_inventory.fixture_map())
         self.assertEqual(freshness.EXTRA_SOURCES, fixture_inventory.extra_sources())
-        self.assertEqual(len(mapping), 193)
+        self.assertEqual(len(mapping), 196)
         inventory_paths = set(gate.inventory.source_paths(gate.ROOT))
         self.assertTrue(set(mapping) <= inventory_paths)
         for source in fixture_inventory.SPECIAL_FIXTURES:
@@ -150,7 +150,8 @@ class MaintainedFixtureAndProofTests(unittest.TestCase):
         calls, receipt = [], {}
         formats = {"did-proof-lifecycles": "compact-did-proof-gate/v1",
                    "did-digest-reducer-proof": "compact-did-digest-reducer-gate/v1",
-                   "did-primitive-reducer-proofs": "compact-did-primitive-reducer-gate/v1"}
+                   "did-primitive-reducer-proofs": "compact-did-primitive-reducer-gate/v1",
+                   "did-relation-proofs": "compact-did-relation-gate/v1"}
         def command(argv, label, directory, receipt, **kwargs):
             calls.append((label, argv))
             self.assertNotIn("--only", argv)
@@ -180,8 +181,8 @@ class MaintainedFixtureAndProofTests(unittest.TestCase):
     def test_full_proof_orchestration_requires_every_child_and_hashes_receipts(self):
         with tempfile.TemporaryDirectory() as tmp:
             calls, receipt = self.run_proofs(Path(tmp))
-            self.assertEqual([label for label, _ in calls], ["did-proof-lifecycles", "did-digest-reducer-proof", "did-primitive-reducer-proofs"])
-            self.assertEqual(set(receipt), {"did_proof_gate", "did_digest_reducer_gate", "did_primitive_reducer_gate"})
+            self.assertEqual([label for label, _ in calls], ["did-proof-lifecycles", "did-digest-reducer-proof", "did-primitive-reducer-proofs", "did-relation-proofs"])
+            self.assertEqual(set(receipt), {"did_proof_gate", "did_digest_reducer_gate", "did_primitive_reducer_gate", "did_relation_gate"})
             for row in receipt.values():
                 self.assertEqual(row["sha256"], gate.sha256(Path(row["path"])))
 
@@ -191,7 +192,7 @@ class MaintainedFixtureAndProofTests(unittest.TestCase):
                 self.run_proofs(Path(tmp), ("did-primitive-reducer-proofs", "changed_earlier"))
 
     def test_failed_missing_or_invalid_child_receipts_fail_orchestration(self):
-        for label in ("did-proof-lifecycles", "did-digest-reducer-proof", "did-primitive-reducer-proofs"):
+        for label in ("did-proof-lifecycles", "did-digest-reducer-proof", "did-primitive-reducer-proofs", "did-relation-proofs"):
             for fault in ("command", "missing", "malformed", "format", "status"):
                 with self.subTest(label=label, fault=fault), tempfile.TemporaryDirectory() as tmp:
                     with self.assertRaises((gate.GateError, OSError, ValueError)):

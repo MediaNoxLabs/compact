@@ -1,0 +1,54 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import CompactStandardLibrary;
+export enum Relation { Undefined, Authentication, Agreement, Invocation, Delegation }
+export ledger authentication: Set<Opaque<"string">>;
+export ledger agreement: Set<Opaque<"string">>;
+export ledger invocation: Set<Opaque<"string">>;
+export ledger delegation: Set<Opaque<"string">>;
+circuit member(relation: Relation, id: Opaque<"string">): Boolean {
+  if (relation == Relation.Authentication) { return authentication.member(id); }
+  else if (relation == Relation.Agreement) { return agreement.member(id); }
+  else if (relation == Relation.Invocation) { return invocation.member(id); }
+  else if (relation == Relation.Delegation) { return delegation.member(id); }
+  return false;
+}
+circuit insert(relation: Relation, id: Opaque<"string">): [] {
+  if (relation == Relation.Authentication) { authentication.insert(id); }
+  else if (relation == Relation.Agreement) { agreement.insert(id); }
+  else if (relation == Relation.Invocation) { invocation.insert(id); }
+  else if (relation == Relation.Delegation) { delegation.insert(id); }
+}
+circuit remove(relation: Relation, id: Opaque<"string">): [] {
+  if (relation == Relation.Authentication) { authentication.remove(id); }
+  else if (relation == Relation.Agreement) { agreement.remove(id); }
+  else if (relation == Relation.Invocation) { invocation.remove(id); }
+  else if (relation == Relation.Delegation) { delegation.remove(id); }
+}
+export circuit update(relation: Relation, id: Opaque<"string">, add: Boolean): [] {
+  const r = disclose(relation);
+  const key = disclose(id);
+  const m = disclose(add);
+  assert(r != Relation.Undefined, "undefined relation");
+  const present = member(r, key);
+  if (m) {
+    assert(!present, "already present");
+    insert(r, key);
+  } else {
+    assert(present, "missing relation");
+    remove(r, key);
+  }
+}

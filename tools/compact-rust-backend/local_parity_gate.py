@@ -278,6 +278,8 @@ def run_required_proof_gates(directory: Path, snapshot: Path, environment: dict,
          "did_digest_reducer_gate", "compact-did-digest-reducer-gate/v1", "--run-dir", "--cargo-target-dir"),
         ("did-primitive-reducer-proofs", "did_primitive_reducer_gate.py", "did-primitive-reducer-proofs",
          "did_primitive_reducer_gate", "compact-did-primitive-reducer-gate/v1", "--output", "--target"),
+        ("did-relation-proofs", "did_relation_gate.py", "did-relation-proofs",
+         "did_relation_gate", "compact-did-relation-gate/v1", "--run-dir", "--cargo-target-dir"),
     )
     children = []
     for label, script, subdirectory, key, expected_format, output_flag, target_flag in gates:

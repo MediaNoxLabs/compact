@@ -1,0 +1,307 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "methods",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "map",
+        "key": {
+          "kind": "opaque_string"
+        },
+        "value": {
+          "kind": "struct",
+          "name": "Method",
+          "fields": [
+            {
+              "name": "id",
+              "ty": {
+                "kind": "opaque_string"
+              }
+            },
+            {
+              "name": "publicKeyJwk",
+              "ty": {
+                "kind": "struct",
+                "name": "Jwk",
+                "fields": [
+                  {
+                    "name": "curve",
+                    "ty": {
+                      "kind": "enum",
+                      "name": "Curve",
+                      "variants": [
+                        "Ed25519",
+                        "X25519"
+                      ]
+                    }
+                  },
+                  {
+                    "name": "x",
+                    "ty": {
+                      "kind": "opaque_string"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "nested-jwk-read.compact",
+        "line": 5,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "check",
+      "parameters": [
+        {
+          "name": "id",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        },
+        {
+          "name": "agreement",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "key",
+              "ty": {
+                "kind": "opaque_string"
+              },
+              "value": {
+                "kind": "parameter",
+                "name": "id"
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "needsAgreement",
+                "ty": {
+                  "kind": "boolean"
+                },
+                "value": {
+                  "kind": "parameter",
+                  "name": "agreement"
+                }
+              }
+            ],
+            "action": {
+              "kind": "if",
+              "condition": {
+                "kind": "parameter",
+                "name": "needsAgreement"
+              },
+              "then": {
+                "kind": "sequence",
+                "actions": [
+                  {
+                    "kind": "assert",
+                    "condition": {
+                      "kind": "map_member",
+                      "field": "methods",
+                      "index": 0,
+                      "key": {
+                        "kind": "parameter",
+                        "name": "key"
+                      }
+                    },
+                    "message": "missing method"
+                  },
+                  {
+                    "kind": "let",
+                    "bindings": [
+                      {
+                        "name": "method",
+                        "ty": {
+                          "kind": "struct",
+                          "name": "Method",
+                          "fields": [
+                            {
+                              "name": "id",
+                              "ty": {
+                                "kind": "opaque_string"
+                              }
+                            },
+                            {
+                              "name": "publicKeyJwk",
+                              "ty": {
+                                "kind": "struct",
+                                "name": "Jwk",
+                                "fields": [
+                                  {
+                                    "name": "curve",
+                                    "ty": {
+                                      "kind": "enum",
+                                      "name": "Curve",
+                                      "variants": [
+                                        "Ed25519",
+                                        "X25519"
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "name": "x",
+                                    "ty": {
+                                      "kind": "opaque_string"
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        },
+                        "value": {
+                          "kind": "map_lookup",
+                          "field": "methods",
+                          "index": 0,
+                          "key": {
+                            "kind": "parameter",
+                            "name": "key"
+                          }
+                        }
+                      }
+                    ],
+                    "action": {
+                      "kind": "assert",
+                      "condition": {
+                        "kind": "equal",
+                        "left": {
+                          "kind": "struct_field",
+                          "value": {
+                            "kind": "struct_field",
+                            "value": {
+                              "kind": "parameter",
+                              "name": "method"
+                            },
+                            "field": "publicKeyJwk",
+                            "index": 1
+                          },
+                          "field": "curve",
+                          "index": 0
+                        },
+                        "right": {
+                          "kind": "enum_variant",
+                          "ty": {
+                            "kind": "enum",
+                            "name": "Curve",
+                            "variants": [
+                              "Ed25519",
+                              "X25519"
+                            ]
+                          },
+                          "variant": "X25519"
+                        }
+                      },
+                      "message": "wrong curve"
+                    }
+                  }
+                ]
+              },
+              "otherwise": {
+                "kind": "assert",
+                "condition": {
+                  "kind": "if",
+                  "condition": {
+                    "kind": "if",
+                    "condition": {
+                      "kind": "map_member",
+                      "field": "methods",
+                      "index": 0,
+                      "key": {
+                        "kind": "parameter",
+                        "name": "key"
+                      }
+                    },
+                    "then": {
+                      "kind": "boolean",
+                      "value": false
+                    },
+                    "otherwise": {
+                      "kind": "boolean",
+                      "value": true
+                    }
+                  },
+                  "then": {
+                    "kind": "boolean",
+                    "value": true
+                  },
+                  "otherwise": {
+                    "kind": "not_equal",
+                    "left": {
+                      "kind": "struct_field",
+                      "value": {
+                        "kind": "struct_field",
+                        "value": {
+                          "kind": "map_lookup",
+                          "field": "methods",
+                          "index": 0,
+                          "key": {
+                            "kind": "parameter",
+                            "name": "key"
+                          }
+                        },
+                        "field": "publicKeyJwk",
+                        "index": 1
+                      },
+                      "field": "curve",
+                      "index": 0
+                    },
+                    "right": {
+                      "kind": "enum_variant",
+                      "ty": {
+                        "kind": "enum",
+                        "name": "Curve",
+                        "variants": [
+                          "Ed25519",
+                          "X25519"
+                        ]
+                      },
+                      "variant": "X25519"
+                    }
+                  }
+                },
+                "message": "wrong signing curve"
+              }
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "nested-jwk-read.compact",
+        "line": 6,
+        "column": 1
+      }
+    }
+  ]
+}

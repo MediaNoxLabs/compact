@@ -185,6 +185,78 @@ def stable_copy(source: Path, destination: Path) -> dict:
     raise GateError(f"compiler changed during snapshot: {source}")
 
 
+def build_input_receipt(environment: dict[str, str], root: Path = ROOT) -> dict:
+    """Observe selected inputs, not Cargo's resolved configuration or rustc flags."""
+    tools = {}
+    for tool, argument in (("rustc", "-Vv"), ("cargo", "-V")):
+        command = [tool, argument]
+        try:
+            result = subprocess.run(command, cwd=root, env=environment,
+                                    capture_output=True, text=True, check=False)
+            tools[tool] = {"argv": command, "exit_code": result.returncode}
+            if result.returncode == 0:
+                tools[tool]["version"] = result.stdout.strip()
+        except OSError as error:
+            # Metadata collection must not introduce a new build prerequisite.
+            tools[tool] = {"argv": command, "error_kind": type(error).__name__}
+    settings = {"RUSTUP_TOOLCHAIN", "CARGO_BUILD_JOBS", "CARGO_INCREMENTAL"}
+    for profile in ("DEV", "TEST", "RELEASE", "BENCH"):
+        for option in ("DEBUG", "OPT_LEVEL", "DEBUG_ASSERTIONS", "OVERFLOW_CHECKS",
+                       "INCREMENTAL", "LTO", "CODEGEN_UNITS", "PANIC", "STRIP"):
+            settings.add(f"CARGO_PROFILE_{profile}_{option}")
+    free_text = {"RUSTFLAGS", "CARGO_ENCODED_RUSTFLAGS", "RUSTC", "RUSTC_WRAPPER",
+                 "RUSTC_WORKSPACE_WRAPPER", "RUSTDOCFLAGS", "CARGO_ENCODED_RUSTDOCFLAGS"}
+    overrides = {}
+    for name in sorted(settings | free_text):
+        value = environment.get(name)
+        if value is None:
+            continue
+        if name in settings and re.fullmatch(
+                r"(?:[0-9]+(?:\.[0-9]+)*|true|false|none|line-tables-only|limited|full|"
+                r"s|z|off|thin|fat|unwind|abort|debuginfo|symbols)", value):
+            overrides[name] = {"value": value}
+        else:
+            encoded = value.encode()
+            overrides[name] = {"sha256": hashlib.sha256(encoded).hexdigest(),
+                               "bytes": len(encoded)}
+    configs = {}
+    for index, parent in enumerate((root, *root.parents)):
+        for name in ("config", "config.toml"):
+            path = parent / ".cargo" / name
+            configs[f"ancestor_{index}/.cargo/{name}"] = sha256(path) if path.is_file() else None
+    cargo_home = Path(environment.get("CARGO_HOME", str(Path.home() / ".cargo")))
+    for name in ("config", "config.toml"):
+        path = cargo_home / name
+        configs[f"cargo_home/{name}"] = sha256(path) if path.is_file() else None
+    return {
+        "tools": tools, "selected_environment": overrides, "cargo_config_sha256": configs,
+        "lock_sha256": {name: sha256(root / name) if (root / name).is_file() else None
+                        for name in ("Cargo.lock", "tools/compact-rust-backend/Cargo.lock")},
+        "selection": "Exact command argv records profile/feature selectors; absent selectors use Cargo defaults.",
+        "limits": "Observed selected inputs only, not resolved Cargo configuration or effective rustc flags. "
+                  "Tool versions describe PATH tools under the selected environment; custom RUSTC/wrapper "
+                  "inputs are hash-bound, not executed or authenticated by these probes. Config contents, "
+                  "free-text overrides and unrelated environment are not disclosed.",
+    }
+
+
+def finish_build_input_receipt(receipt: dict, environment: dict[str, str],
+                               root: Path = ROOT) -> None:
+    """Retain both observations before refusing changed selected lock/config inputs."""
+    before = receipt["build_inputs"]
+    after = build_input_receipt(environment, root)
+    receipt["build_inputs_after"] = after
+    changed = []
+    for group in ("lock_sha256", "cargo_config_sha256"):
+        initial, final = before.get(group, {}), after.get(group, {})
+        for name in sorted(initial.keys() | final.keys()):
+            if initial.get(name) != final.get(name):
+                changed.append(f"{group}:{name}")
+    receipt["build_input_drift"] = changed
+    if changed:
+        raise GateError("selected build input changed during gate: " + ", ".join(changed))
+
+
 def run(command: list[str], label: str, directory: Path, receipt: dict,
         *, env: dict[str, str] | None = None, stdout_path: Path | None = None) -> None:
     log = directory / "logs" / f"{len(receipt['commands']):03d}-{label}.log"
@@ -193,10 +265,12 @@ def run(command: list[str], label: str, directory: Path, receipt: dict,
     with log.open("w") as output, (stdout_path.open("w") if stdout_path else nullcontext(output)) as stdout:
         result = subprocess.run(command, cwd=ROOT, env=env, stdout=stdout,
                                 stderr=output, check=False)
-    receipt["commands"].append({"label": label, "argv": command,
-                                "exit_code": result.returncode,
-                                "seconds": round(time.monotonic() - started, 3),
-                                "log": str(log)})
+    entry = {"label": label, "argv": command, "exit_code": result.returncode,
+             "seconds": round(time.monotonic() - started, 3),
+             "log": str(log), "log_sha256": sha256(log)}
+    if stdout_path is not None:
+        entry["stdout"] = {"path": str(stdout_path), "sha256": sha256(stdout_path)}
+    receipt["commands"].append(entry)
     if result.returncode:
         tail = "\n".join(log.read_text(errors="replace").splitlines()[-12:])
         raise GateError(f"{label} failed ({result.returncode}):\n{tail}")
@@ -369,6 +443,7 @@ def main() -> int:
                             "RUSTUP_TOOLCHAIN": "1.99.0"})
         receipt["cargo_target_dir"] = environment["CARGO_TARGET_DIR"]
         receipt["rust_toolchain"] = environment["RUSTUP_TOOLCHAIN"]
+        receipt["build_inputs"] = build_input_receipt(environment)
         selected_paths = {inventory.relative_source(source, ROOT) for source, _ in selected}
         paths = inventory.source_paths(ROOT, []) if args.full else [source for source, _ in selected]
         contracts = [inventory.parse_source(path, ROOT) for path in paths]
@@ -508,6 +583,7 @@ def main() -> int:
                 if sha256(ROOT / entry[key]) != entry[hash_key]:
                     raise GateError(f"{entry[key]} changed during gate")
         receipt["working_tree_after"] = dirty_paths()
+        finish_build_input_receipt(receipt, environment)
         receipt["status"] = "passed"
         print(f"local parity {receipt['mode']} passed: {len(selected)} fixtures, "
               f"{receipt['capability_summary']['recorded']}/"
@@ -518,6 +594,14 @@ def main() -> int:
     except (GateError, OSError, ValueError, KeyError, json.JSONDecodeError,
             subprocess.CalledProcessError) as error:
         receipt["error"] = str(error)
+        if "build_inputs" in receipt and "build_inputs_after" not in receipt:
+            try:
+                finish_build_input_receipt(receipt, environment)
+            except GateError as drift:
+                receipt["build_input_error"] = str(drift)
+            except (OSError, ValueError, KeyError) as observation_error:
+                # Preserve the original failed command and its retained logs.
+                receipt["build_input_observation_error"] = type(observation_error).__name__
         print(f"local parity gate: {error}", file=sys.stderr)
         return 1
     finally:

@@ -2962,7 +2962,7 @@
     },
     {
       "export": "setVerificationMethodAuthorizationDigest",
-      "case": "jwk-x-日本語🗝️",
+      "case": "jwk-x-\u65e5\u672c\u8a9e\ud83d\udddd\ufe0f",
       "asserted_dimensions": [
         "exact 4-Field independent TS vector",
         "sampled argument/domain sensitivity"
@@ -2978,7 +2978,7 @@
     },
     {
       "export": "setVerificationMethodAuthorizationDigest",
-      "case": "jwk-y-日本語🗝️",
+      "case": "jwk-y-\u65e5\u672c\u8a9e\ud83d\udddd\ufe0f",
       "asserted_dimensions": [
         "exact 4-Field independent TS vector",
         "sampled argument/domain sensitivity"
@@ -3448,11 +3448,11 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/lifecycle.json",
-      "sha256": "5e95c61287b255f5ab34f1653b79cc1735e6fa6036bad3cfd800ef898f909942"
+      "sha256": "96787daf21391beb6b52f5aee0a40fb7e873b0e1d2cab1352f87bc952309d14e"
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/pure.json",
-      "sha256": "f32479c1146d4289509cbbffa91c2083699aa335222e2aa9950593fa18bd9cbd"
+      "sha256": "8fbde875fc49bd307116230ddb5100cdafdc4f5d9f1dcf5cc38b3ea07a8eeca8"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/codec.rs",
@@ -3480,7 +3480,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/point-lifecycle.json",
-      "sha256": "7a86f6401867f412c1572ef8c9635f2ac095ec3440a4644cf6661f22a5fe3779"
+      "sha256": "6ee6779bcb511a02701f42d7e98b4f70238c39a6c5380fa8b4108f5743733a55"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/point_calls.rs",
@@ -3496,7 +3496,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/alias-lifecycle.json",
-      "sha256": "5ddd23a927dad5978abb01f8f8721ac45a70434e3c81beb8725408640d2c0dd6"
+      "sha256": "a1ee7287d7ff59914a12a4610d296be7e6aed8ad98d12876b231be03c2a76f19"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/alias_calls.rs",
@@ -3512,7 +3512,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/service-lifecycle.json",
-      "sha256": "4a4031169fb4fb4642cef552372ffd9250dc6884d7ee0874d87a232f9f73057f"
+      "sha256": "3a1d3e5b5201f8345da96966f147feea6416a1947115dd1c7282ecaf76efc3c3"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/service_calls.rs",
@@ -3528,7 +3528,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/schnorr-method-lifecycle.json",
-      "sha256": "36aa464fc2f2003dcb0a4a31caf43655b7a2c517b78d536efddd9c01f75233a0"
+      "sha256": "c0616628b19e8ec55272442f19a221b7783347aeff9aec51822c2bd111a53c97"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/schnorr_method_calls.rs",
@@ -3537,6 +3537,26 @@
     {
       "path": "tests-rust-backend/did-adoption/tests/schnorr_method_recording.rs",
       "sha256": "85055a113ca2c4d1e7b826ad29ed28115b94d6ece04aa2ee6c0ec5cdc3d76818"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/oracle/jwk-method-lifecycle-cases.mjs",
+      "sha256": "d0f585b84770166d12d53c8da6c7e557f7769fa7ff183c77a6bcd3c2ca6f2ae8"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/oracle/jwk-method-lifecycle.json",
+      "sha256": "42107a134dcdf0c2ca5d03f18d900297d616f3b8e53ebc34204076081c92a5ff"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/support/jwk_method_calls.rs",
+      "sha256": "f65d3163778a2bd163bfd28c6ec0c1375a05044eb3e694a1d2c5027ed71b8d9f"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/tests/jwk_method_recording.rs",
+      "sha256": "abc21f2462813ee1624a40b8d1c29037461dd0cc6d36a313b3360d6959ee92c2"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/tests/provenance.rs",
+      "sha256": "28a3d1bb62c115661400db2962ad8b0fe8c4b0e63e9910e4af78e2d9ac03d4db"
     }
   ],
   "amendment_0259": {
@@ -3607,6 +3627,34 @@
     "limits": [
       "Constructor execution itself is not proved; actual deployment uses unchanged original constructor data.",
       "These finite cases do not prove all DID branches or cross-instance authorization."
+    ]
+  },
+  "amendment_0283": {
+    "scope": "Original JWK verification-method Insert, Update and Remove through exact declared nested String/Point/Enum product Map codecs; existing native/pure semantic rows unchanged.",
+    "historical_baseline": "Earlier summaries/amendments remain historical; latest recorded set below.",
+    "current_recorded_exports": [
+      "deactivate",
+      "recoverControllerKey",
+      "rotateControllerKey",
+      "setAlsoKnownAs",
+      "setService",
+      "removeService",
+      "setSchnorrJubjubVerificationMethod",
+      "removeSchnorrJubjubVerificationMethod",
+      "setVerificationMethod",
+      "removeVerificationMethod"
+    ],
+    "fresh_jwk_scenarios": 3,
+    "fresh_jwk_source_calls": 27,
+    "strict_jwk_calls": [
+      "setVerificationMethod",
+      "setVerificationMethod",
+      "removeVerificationMethod"
+    ],
+    "provenance_followup": "Seven branch TS scopes recaptured after JWK delivery; all complete semantic objects identical. Only six old generated Rust library provenance hashes changed. JWK capture and assertions now covered by provenance gate.",
+    "limits": [
+      "Constructor execution is not proved; original constructor data is actually deployed.",
+      "Finite scenarios; digest/relation recording and ledger8.1 qualification remain separate."
     ]
   }
 }

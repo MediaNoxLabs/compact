@@ -11,7 +11,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/lib.rs",
-      "sha256": "91700ff9f3f7da186d5ac05b2971ef92ae29d293d883909da76383f5dda16c33"
+      "sha256": "2fb7a3dcb253d17f3a92e66a5d3261328e41f5dc31402666cfc22ed70df82c20"
     },
     {
       "path": "runtime/src/built-ins.ts",

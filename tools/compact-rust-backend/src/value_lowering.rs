@@ -140,7 +140,16 @@ pub(crate) fn unsigned_arithmetic_syntax(
         (result_bound, result_max),
     ] {
         if matches!(bound, UnsignedMaximum::Wide { .. }) {
-            return Err(RenderError::InvalidUnsignedMaximum(text.to_owned()));
+            let operation = match operation {
+                Expr::UnsignedAdd { .. } => "addition",
+                Expr::UnsignedSubtract { .. } => "subtraction",
+                Expr::UnsignedMultiply { .. } => "multiplication",
+                _ => unreachable!("unsigned arithmetic caller"),
+            };
+            return Err(RenderError::UnsupportedWideUnsignedOperation {
+                operation,
+                max: text.to_owned(),
+            });
         }
     }
     let left_max = syn::LitInt::new(left_max, Span::call_site());

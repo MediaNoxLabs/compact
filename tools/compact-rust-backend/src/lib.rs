@@ -98,6 +98,11 @@ pub enum RenderError {
     ProofApplicability(String),
     InvalidIdentifier(String),
     InvalidUnsignedMaximum(String),
+    /// The bound is valid, but this operation is not supported by the wide carrier.
+    UnsupportedWideUnsignedOperation {
+        operation: &'static str,
+        max: String,
+    },
     InvalidFieldLiteral(String),
     InvalidUnsignedLiteral {
         value: String,
@@ -180,9 +185,13 @@ impl fmt::Display for RenderError {
             Self::InvalidUnsignedMaximum(max) => {
                 write!(
                     f,
-                    "unsupported Compact Uint maximum {max:?}; expected canonical u128"
+                    "invalid Compact Uint maximum {max:?}; expected a canonical decimal integer from 0 through 2^248 - 1"
                 )
             }
+            Self::UnsupportedWideUnsignedOperation { operation, max } => write!(
+                f,
+                "unsupported wide Compact Uint {operation} for maximum {max:?}"
+            ),
             Self::InvalidFieldLiteral(value) => {
                 write!(
                     f,
@@ -1733,7 +1742,10 @@ fn pure_arithmetic_expression(
                     return Err(RenderError::ExpectedUnsigned(actual));
                 };
                 if matches!(unsigned_maximum(max)?, UnsignedMaximum::Wide { .. }) {
-                    return Err(RenderError::InvalidUnsignedMaximum(max.clone()));
+                    return Err(RenderError::UnsupportedWideUnsignedOperation {
+                        operation: "ordered comparison",
+                        max: max.clone(),
+                    });
                 }
             }
             let rendered = match operator {

@@ -1694,7 +1694,10 @@ fn render_arithmetic_operation(
                 return Err(RenderError::ExpectedUnsigned(left_ty));
             };
             if matches!(unsigned_maximum(max)?, UnsignedMaximum::Wide { .. }) {
-                return Err(RenderError::InvalidUnsignedMaximum(max.clone()));
+                return Err(RenderError::UnsupportedWideUnsignedOperation {
+                    operation: "ordered comparison",
+                    max: max.clone(),
+                });
             }
             let left_name = syn::Ident::new(
                 &format!("__compact_value_{}", *next_temp),
@@ -1717,7 +1720,10 @@ fn render_arithmetic_operation(
                 return Err(RenderError::ExpectedUnsigned(right_ty));
             };
             if matches!(unsigned_maximum(max)?, UnsignedMaximum::Wide { .. }) {
-                return Err(RenderError::InvalidUnsignedMaximum(max.clone()));
+                return Err(RenderError::UnsupportedWideUnsignedOperation {
+                    operation: "ordered comparison",
+                    max: max.clone(),
+                });
             }
             let rendered = match operator {
                 ComparisonOperator::Less => syn::parse_quote!(#left_name.value() < #right.value()),

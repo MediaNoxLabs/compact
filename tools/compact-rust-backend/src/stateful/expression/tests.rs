@@ -338,10 +338,16 @@ fn comparisons_check_each_operand_domain_and_supported_width() {
             .refused(RenderError::ExpectedUnsigned(Type::Field));
         declarations
             .lower(compare("wide", "uint"))
-            .refused_before_effects(RenderError::InvalidUnsignedMaximum(WIDE_MAX.into()));
-        declarations
-            .lower(compare("uint", "wide"))
-            .refused(RenderError::InvalidUnsignedMaximum(WIDE_MAX.into()));
+            .refused_before_effects(RenderError::UnsupportedWideUnsignedOperation {
+                operation: "ordered comparison",
+                max: WIDE_MAX.into(),
+            });
+        declarations.lower(compare("uint", "wide")).refused(
+            RenderError::UnsupportedWideUnsignedOperation {
+                operation: "ordered comparison",
+                max: WIDE_MAX.into(),
+            },
+        );
     }
 }
 

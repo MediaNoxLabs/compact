@@ -76,6 +76,7 @@ mod did_deactivate;
 mod did_deactivate_support;
 mod did_digest_reducer;
 mod did_point_lifecycle;
+mod did_primitive_reducers;
 mod did_public_interchange;
 mod micro_dao_buy_in;
 mod micro_dao_cash_out;
@@ -2352,6 +2353,17 @@ fn run() -> Result<(), Box<dyn Error>> {
             Ok(Err(error)) => Err(error.into()),
             Err(_) => Err("DID lifecycle proof thread panicked".into()),
         };
+    }
+    if first.as_deref() == Some(OsStr::new("--did-primitive-reducer")) {
+        let kind = arguments.next().ok_or("expected reducer kind")?;
+        let root = arguments.next().ok_or("expected proof output directory")?;
+        if arguments.next().is_some() {
+            return Err("unexpected reducer proof arguments".into());
+        }
+        return did_primitive_reducers::run(
+            Path::new(&root),
+            kind.to_str().ok_or("invalid reducer kind")?,
+        );
     }
     if first.as_deref() == Some(OsStr::new("--did-digest-reducer")) {
         let root = arguments

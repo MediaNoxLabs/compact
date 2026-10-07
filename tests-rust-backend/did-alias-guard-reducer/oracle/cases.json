@@ -1,0 +1,547 @@
+{
+  "format": "compact-did-primitive-reducer-capture/v1",
+  "kind": "alias-guard",
+  "generatedJavaScriptSha256": "9274b5cc16438ec3541e53b986ef46c4b11d1acfa57ee35ead9a16cd755c0f15",
+  "runtimeJavaScriptSha256": "f6b1b8b0d4ecfd6458706fd3969babbb988879dd9c39618cc137c463a151781b",
+  "captureSha256": "97e2ed2b889abc091417a436025d909afbe232ce84031ff6c781e864579b2507",
+  "runtimeVersion": "0.16.101",
+  "provenance": [
+    {
+      "path": "tools/compact-rust-backend/tests/set-composition/pure_unit_guard.compact",
+      "sha256": "411bb785786295d6a6fbd83f8d97b6a791a0b1c57f78792629853dcf311d3e91"
+    },
+    {
+      "path": "tests-rust-backend/did-alias-guard-reducer/lib.rs",
+      "sha256": "408962386df18ddaf0cfeb20c2710480176a1c97c920828a2a571084ff38193e"
+    },
+    {
+      "path": "tests-rust-backend/did-alias-guard-reducer/tests/behavior.rs",
+      "sha256": "e311aeba3db062aa8b90156ca0fb3e20d0032fa5b4b4151e907ff1da9c374568"
+    },
+    {
+      "path": "tests-rust-backend/did-alias-guard-reducer/tests/provenance.rs",
+      "sha256": "3c118064d07584d11bedd7fc795a18819980e834e8c9f70359a130470a327d4f"
+    },
+    {
+      "path": "tools/compact-rust-backend/did_primitive_reducers.json",
+      "sha256": "8dd3a33a6d3f49610065e7219b827dc1f8cd69febce0da73743b7f1336ad42ea"
+    },
+    {
+      "path": "tools/compact-rust-backend/did_primitive_reducer_capture.mjs",
+      "sha256": "97e2ed2b889abc091417a436025d909afbe232ce84031ff6c781e864579b2507"
+    },
+    {
+      "path": "tools/compact-rust-backend/did_primitive_reducer_cases.mjs",
+      "sha256": "ae03edee964bf17d4772084f7a26b42433e08d005552f21d6afc7612f8e3dd39"
+    },
+    {
+      "path": "runtime/src/built-ins.ts",
+      "sha256": "860c07188480005ff3907213f04902fb388fb0b43ce61a4b09d38b79592f51be"
+    },
+    {
+      "path": "runtime/src/compact-types.ts",
+      "sha256": "7d3da5243377cc1fc1a07fe1622be095fe8c07dbf5b0929559807b6f3196a63b"
+    }
+  ],
+  "cases": [
+    {
+      "id": "run-insert",
+      "operation": "run",
+      "mutation": 1,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a580008400104000401040408010404080403040c000410080104041458030424480104030401080104040104010401084001000038346c6f63616c5f636f6e74726f6c000400081c2000042408010404289003043f80ae3b4dd13c54df510ae5969ad83c8d7f24af9fc4bf36f4778513d39145e31b90004c487472616e7369746976655f636f6e74726f6c08302000043408010404389003043f808a6821cfb5b47b568d723463251aba08cdc2b4e65fc44c094d1b8703e797280000100c72756e08402000044408010404489003043f80ae60e31fdb4b353d38709288ce63fe4d787e216a2944a836d6d2f44d1fa35d80402020202c3c204c20202020202020202008020c1408201850201003000400",
+      "privateBefore": 0,
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a580008010104000401040408010404080403040c000410080104041458030424480104030401080104040104010401080101000038346c6f63616c5f636f6e74726f6c000400081c2000042408010404289003043f80ae3b4dd13c54df510ae5969ad83c8d7f24af9fc4bf36f4778513d39145e31b90004c487472616e7369746976655f636f6e74726f6c08302000043408010404389003043f808a6821cfb5b47b568d723463251aba08cdc2b4e65fc44c094d1b8703e797280000100c72756e08402000044408010404489003043f80ae60e31fdb4b353d38709288ce63fe4d787e216a2944a836d6d2f44d1fa35d80402020202c3c204c20202020202020202008020c1408201850201003000400",
+      "privateAfter": 0,
+      "result": [],
+      "publicTranscript": [
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": [],
+      "queries": [
+        {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "36",
+          "bytesDeleted": "36"
+        }
+      ],
+      "witnessInputs": [],
+      "admit": true
+    },
+    {
+      "id": "run-remove",
+      "operation": "run",
+      "mutation": 2,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a580008400104000401040408010404080403040c000410080104041458030424480104030401080104040104010401084001000038346c6f63616c5f636f6e74726f6c000400081c2000042408010404289003043f80ae3b4dd13c54df510ae5969ad83c8d7f24af9fc4bf36f4778513d39145e31b90004c487472616e7369746976655f636f6e74726f6c08302000043408010404389003043f808a6821cfb5b47b568d723463251aba08cdc2b4e65fc44c094d1b8703e797280000100c72756e08402000044408010404489003043f80ae60e31fdb4b353d38709288ce63fe4d787e216a2944a836d6d2f44d1fa35d80402020202c3c204c20202020202020202008020c1408201850201003000400",
+      "privateBefore": 0,
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a580008010104000401040408010404080403040c000410080104041458030424480104030401080104040104010401080101000038346c6f63616c5f636f6e74726f6c000400081c2000042408010404289003043f80ae3b4dd13c54df510ae5969ad83c8d7f24af9fc4bf36f4778513d39145e31b90004c487472616e7369746976655f636f6e74726f6c08302000043408010404389003043f808a6821cfb5b47b568d723463251aba08cdc2b4e65fc44c094d1b8703e797280000100c72756e08402000044408010404489003043f80ae60e31fdb4b353d38709288ce63fe4d787e216a2944a836d6d2f44d1fa35d80402020202c3c204c20202020202020202008020c1408201850201003000400",
+      "privateAfter": 0,
+      "result": [],
+      "publicTranscript": [
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": [],
+      "queries": [
+        {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "36",
+          "bytesDeleted": "36"
+        }
+      ],
+      "witnessInputs": [],
+      "admit": true
+    },
+    {
+      "id": "run-undefined",
+      "operation": "run",
+      "mutation": 0,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a580008400104000401040408010404080403040c000410080104041458030424480104030401080104040104010401084001000038346c6f63616c5f636f6e74726f6c000400081c2000042408010404289003043f80ae3b4dd13c54df510ae5969ad83c8d7f24af9fc4bf36f4778513d39145e31b90004c487472616e7369746976655f636f6e74726f6c08302000043408010404389003043f808a6821cfb5b47b568d723463251aba08cdc2b4e65fc44c094d1b8703e797280000100c72756e08402000044408010404489003043f80ae60e31fdb4b353d38709288ce63fe4d787e216a2944a836d6d2f44d1fa35d80402020202c3c204c20202020202020202008020c1408201850201003000400",
+      "privateBefore": 0,
+      "error": "failed assert: undefined mutation",
+      "queries": [],
+      "witnessInputs": [],
+      "admit": true
+    },
+    {
+      "id": "local_control-insert",
+      "operation": "local_control",
+      "mutation": 1,
+      "setup": [
+        {
+          "operation": "run",
+          "mutation": 1
+        }
+      ],
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a580008010104000401040408010404080403040c000410080104041458030424480104030401080104040104010401080101000038346c6f63616c5f636f6e74726f6c000400081c2000042408010404289003043f80ae3b4dd13c54df510ae5969ad83c8d7f24af9fc4bf36f4778513d39145e31b90004c487472616e7369746976655f636f6e74726f6c08302000043408010404389003043f808a6821cfb5b47b568d723463251aba08cdc2b4e65fc44c094d1b8703e797280000100c72756e08402000044408010404489003043f80ae60e31fdb4b353d38709288ce63fe4d787e216a2944a836d6d2f44d1fa35d80402020202c3c204c20202020202020202008020c1408201850201003000400",
+      "privateBefore": 0,
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a580008010104000401040408010404080403040c000410080104041458030424480104030401080104040104010401080101000038346c6f63616c5f636f6e74726f6c000400081c2000042408010404289003043f80ae3b4dd13c54df510ae5969ad83c8d7f24af9fc4bf36f4778513d39145e31b90004c487472616e7369746976655f636f6e74726f6c08302000043408010404389003043f808a6821cfb5b47b568d723463251aba08cdc2b4e65fc44c094d1b8703e797280000100c72756e08402000044408010404489003043f80ae60e31fdb4b353d38709288ce63fe4d787e216a2944a836d6d2f44d1fa35d80402020202c3c204c20202020202020202008020c1408201850201003000400",
+      "privateAfter": 0,
+      "result": [],
+      "publicTranscript": [
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": [],
+      "queries": [
+        {
+          "readTime": "85000000",
+          "computeTime": "1168248299",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      ],
+      "witnessInputs": [],
+      "admit": true
+    },
+    {
+      "id": "local_control-remove",
+      "operation": "local_control",
+      "mutation": 2,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a580008400104000401040408010404080403040c000410080104041458030424480104030401080104040104010401084001000038346c6f63616c5f636f6e74726f6c000400081c2000042408010404289003043f80ae3b4dd13c54df510ae5969ad83c8d7f24af9fc4bf36f4778513d39145e31b90004c487472616e7369746976655f636f6e74726f6c08302000043408010404389003043f808a6821cfb5b47b568d723463251aba08cdc2b4e65fc44c094d1b8703e797280000100c72756e08402000044408010404489003043f80ae60e31fdb4b353d38709288ce63fe4d787e216a2944a836d6d2f44d1fa35d80402020202c3c204c20202020202020202008020c1408201850201003000400",
+      "privateBefore": 0,
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a580008010104000401040408010404080403040c000410080104041458030424480104030401080104040104010401080101000038346c6f63616c5f636f6e74726f6c000400081c2000042408010404289003043f80ae3b4dd13c54df510ae5969ad83c8d7f24af9fc4bf36f4778513d39145e31b90004c487472616e7369746976655f636f6e74726f6c08302000043408010404389003043f808a6821cfb5b47b568d723463251aba08cdc2b4e65fc44c094d1b8703e797280000100c72756e08402000044408010404489003043f80ae60e31fdb4b353d38709288ce63fe4d787e216a2944a836d6d2f44d1fa35d80402020202c3c204c20202020202020202008020c1408201850201003000400",
+      "privateAfter": 0,
+      "result": [],
+      "publicTranscript": [
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": [],
+      "queries": [
+        {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "36",
+          "bytesDeleted": "36"
+        }
+      ],
+      "witnessInputs": [],
+      "admit": true
+    },
+    {
+      "id": "local_control-undefined",
+      "operation": "local_control",
+      "mutation": 0,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a580008400104000401040408010404080403040c000410080104041458030424480104030401080104040104010401084001000038346c6f63616c5f636f6e74726f6c000400081c2000042408010404289003043f80ae3b4dd13c54df510ae5969ad83c8d7f24af9fc4bf36f4778513d39145e31b90004c487472616e7369746976655f636f6e74726f6c08302000043408010404389003043f808a6821cfb5b47b568d723463251aba08cdc2b4e65fc44c094d1b8703e797280000100c72756e08402000044408010404489003043f80ae60e31fdb4b353d38709288ce63fe4d787e216a2944a836d6d2f44d1fa35d80402020202c3c204c20202020202020202008020c1408201850201003000400",
+      "privateBefore": 0,
+      "error": "failed assert: local undefined mutation",
+      "queries": [],
+      "witnessInputs": [],
+      "admit": true
+    },
+    {
+      "id": "transitive_control-insert",
+      "operation": "transitive_control",
+      "mutation": 1,
+      "setup": [
+        {
+          "operation": "run",
+          "mutation": 1
+        },
+        {
+          "operation": "local_control",
+          "mutation": 1
+        }
+      ],
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a580008010104000401040408010404080403040c000410080104041458030424480104030401080104040104010401080101000038346c6f63616c5f636f6e74726f6c000400081c2000042408010404289003043f80ae3b4dd13c54df510ae5969ad83c8d7f24af9fc4bf36f4778513d39145e31b90004c487472616e7369746976655f636f6e74726f6c08302000043408010404389003043f808a6821cfb5b47b568d723463251aba08cdc2b4e65fc44c094d1b8703e797280000100c72756e08402000044408010404489003043f80ae60e31fdb4b353d38709288ce63fe4d787e216a2944a836d6d2f44d1fa35d80402020202c3c204c20202020202020202008020c1408201850201003000400",
+      "privateBefore": 0,
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a580008010104000401040408010404080403040c000410080104041458030424480104030401080104040104010401080101000038346c6f63616c5f636f6e74726f6c000400081c2000042408010404289003043f80ae3b4dd13c54df510ae5969ad83c8d7f24af9fc4bf36f4778513d39145e31b90004c487472616e7369746976655f636f6e74726f6c08302000043408010404389003043f808a6821cfb5b47b568d723463251aba08cdc2b4e65fc44c094d1b8703e797280000100c72756e08402000044408010404489003043f80ae60e31fdb4b353d38709288ce63fe4d787e216a2944a836d6d2f44d1fa35d80402020202c3c204c20202020202020202008020c1408201850201003000400",
+      "privateAfter": 0,
+      "result": [],
+      "publicTranscript": [
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": [],
+      "queries": [
+        {
+          "readTime": "85000000",
+          "computeTime": "1168248299",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      ],
+      "witnessInputs": [],
+      "admit": true
+    },
+    {
+      "id": "transitive_control-remove",
+      "operation": "transitive_control",
+      "mutation": 2,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a580008400104000401040408010404080403040c000410080104041458030424480104030401080104040104010401084001000038346c6f63616c5f636f6e74726f6c000400081c2000042408010404289003043f80ae3b4dd13c54df510ae5969ad83c8d7f24af9fc4bf36f4778513d39145e31b90004c487472616e7369746976655f636f6e74726f6c08302000043408010404389003043f808a6821cfb5b47b568d723463251aba08cdc2b4e65fc44c094d1b8703e797280000100c72756e08402000044408010404489003043f80ae60e31fdb4b353d38709288ce63fe4d787e216a2944a836d6d2f44d1fa35d80402020202c3c204c20202020202020202008020c1408201850201003000400",
+      "privateBefore": 0,
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a580008010104000401040408010404080403040c000410080104041458030424480104030401080104040104010401080101000038346c6f63616c5f636f6e74726f6c000400081c2000042408010404289003043f80ae3b4dd13c54df510ae5969ad83c8d7f24af9fc4bf36f4778513d39145e31b90004c487472616e7369746976655f636f6e74726f6c08302000043408010404389003043f808a6821cfb5b47b568d723463251aba08cdc2b4e65fc44c094d1b8703e797280000100c72756e08402000044408010404489003043f80ae60e31fdb4b353d38709288ce63fe4d787e216a2944a836d6d2f44d1fa35d80402020202c3c204c20202020202020202008020c1408201850201003000400",
+      "privateAfter": 0,
+      "result": [],
+      "publicTranscript": [
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": [],
+      "queries": [
+        {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "36",
+          "bytesDeleted": "36"
+        }
+      ],
+      "witnessInputs": [],
+      "admit": true
+    },
+    {
+      "id": "transitive_control-undefined",
+      "operation": "transitive_control",
+      "mutation": 0,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a580008400104000401040408010404080403040c000410080104041458030424480104030401080104040104010401084001000038346c6f63616c5f636f6e74726f6c000400081c2000042408010404289003043f80ae3b4dd13c54df510ae5969ad83c8d7f24af9fc4bf36f4778513d39145e31b90004c487472616e7369746976655f636f6e74726f6c08302000043408010404389003043f808a6821cfb5b47b568d723463251aba08cdc2b4e65fc44c094d1b8703e797280000100c72756e08402000044408010404489003043f80ae60e31fdb4b353d38709288ce63fe4d787e216a2944a836d6d2f44d1fa35d80402020202c3c204c20202020202020202008020c1408201850201003000400",
+      "privateBefore": 0,
+      "error": "failed assert: local undefined mutation",
+      "queries": [],
+      "witnessInputs": [],
+      "admit": true
+    }
+  ]
+}

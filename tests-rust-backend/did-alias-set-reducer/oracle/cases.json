@@ -1,0 +1,800 @@
+{
+  "format": "compact-did-primitive-reducer-capture/v1",
+  "kind": "alias-set",
+  "generatedJavaScriptSha256": "51a6ab11f251ed305d40e7521af957cd511d488f874e6bf35b758abe50fa1e19",
+  "runtimeJavaScriptSha256": "f6b1b8b0d4ecfd6458706fd3969babbb988879dd9c39618cc137c463a151781b",
+  "captureSha256": "97e2ed2b889abc091417a436025d909afbe232ce84031ff6c781e864579b2507",
+  "runtimeVersion": "0.16.101",
+  "provenance": [
+    {
+      "path": "tools/compact-rust-backend/tests/set-composition/set_string.compact",
+      "sha256": "04694fd4192ac63d14afacb5fb478b073dbcb977eaae262d0b4d3c6740f6aa98"
+    },
+    {
+      "path": "tests-rust-backend/did-alias-set-reducer/lib.rs",
+      "sha256": "4a4d87ce689ff5b4ee68d2a76c537ad2efc08830d4a4fefa573f0e20c53d4815"
+    },
+    {
+      "path": "tests-rust-backend/did-alias-set-reducer/tests/behavior.rs",
+      "sha256": "697cb5313029111eeeee585f3165298b648268f476524fdff8643bfb37e22c88"
+    },
+    {
+      "path": "tests-rust-backend/did-alias-set-reducer/tests/provenance.rs",
+      "sha256": "45c85b81df82974d92b59ee6a0c05d3d56bc58b6a1df83839bb26aab5f1b9a5b"
+    },
+    {
+      "path": "tools/compact-rust-backend/did_primitive_reducers.json",
+      "sha256": "8dd3a33a6d3f49610065e7219b827dc1f8cd69febce0da73743b7f1336ad42ea"
+    },
+    {
+      "path": "tools/compact-rust-backend/did_primitive_reducer_capture.mjs",
+      "sha256": "97e2ed2b889abc091417a436025d909afbe232ce84031ff6c781e864579b2507"
+    },
+    {
+      "path": "tools/compact-rust-backend/did_primitive_reducer_cases.mjs",
+      "sha256": "ae03edee964bf17d4772084f7a26b42433e08d005552f21d6afc7612f8e3dd39"
+    },
+    {
+      "path": "runtime/src/built-ins.ts",
+      "sha256": "860c07188480005ff3907213f04902fb388fb0b43ce61a4b09d38b79592f51be"
+    },
+    {
+      "path": "runtime/src/compact-types.ts",
+      "sha256": "7d3da5243377cc1fc1a07fe1622be095fe8c07dbf5b0929559807b6f3196a63b"
+    }
+  ],
+  "cases": [
+    {
+      "id": "insert-unicode",
+      "operation": "mutate",
+      "value": "référence-東京",
+      "mutation": 1,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a74000400040004020008400804080401040c080104041014030401041008041408040804180403041c0004200801040424ac03044e9c010403040108040808010402040104000001140304010410040108010404010401040108400800003c386d656d6265725f636f6e74726f6c082c0000043008010404349003043f8077886c4eb3caf61787eabc440e0bb689a8984d1fae32a472ee46a407aa6c8200003c3872656d6f76655f636f6e74726f6c083c0000044008010404449003043f804b35187a603b8845ea132eabe471db4c71bea4309f3031aad78d92c56851f1d0001c186d7574617465084c0000045008010404549003043f805ef156038ebf36429c14e9ca67171362e699a8d4af93b27e90e57ea1b8b4d220003c38696e736572745f636f6e74726f6c085c0000046008010404649003043f8068dbcfbff462c758124987809ee46eb09f9cbf542636732aa18dd603a86822404000000000000000380048000058006800080210141800286c001003000400",
+      "privateBefore": 0,
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8400505272c3a966c3a972656e63652de69db1e4baac40000400080004000408080104040c9003044080afa42869d77fe4148a7c1cf051ad5933280c7b1764fad7ea74417520b4847be9041004020008010804180401041c080104042014030401041008142408040804280403042c0004300801040434c9010304dab50101040304010804080801040204019003044080afa42869d77fe4148a7c1cf051ad5933280c7b1764fad7ea74417520b4847be904010801040401000801505272c3a966c3a972656e63652de69db1e4baac40000104000001140304010410040108010404010401040108010800003c386d656d6265725f636f6e74726f6c083c0400044008010404449003043f8077886c4eb3caf61787eabc440e0bb689a8984d1fae32a472ee46a407aa6c8200003c3872656d6f76655f636f6e74726f6c084c0400045008010404549003043f804b35187a603b8845ea132eabe471db4c71bea4309f3031aad78d92c56851f1d0001c186d7574617465085c0400046008010404649003043f805ef156038ebf36429c14e9ca67171362e699a8d4af93b27e90e57ea1b8b4d220003c38696e736572745f636f6e74726f6c086c0400047008010404749003043f8068dbcfbff462c758124987809ee46eb09f9cbf542636732aa18dd603a86822404004040404040404480458040468047804080210142804387c041003000400",
+      "privateAfter": 0,
+      "result": [],
+      "publicTranscript": [
+        {
+          "dup": {
+            "n": 0
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": false,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    []
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    114,
+                    195,
+                    169,
+                    102,
+                    195,
+                    169,
+                    114,
+                    101,
+                    110,
+                    99,
+                    101,
+                    45,
+                    230,
+                    157,
+                    177,
+                    228,
+                    186,
+                    172
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "compress"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "member",
+        {
+          "popeq": {
+            "cached": true,
+            "result": {
+              "value": [
+                []
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 1
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": true,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    []
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    114,
+                    195,
+                    169,
+                    102,
+                    195,
+                    169,
+                    114,
+                    101,
+                    110,
+                    99,
+                    101,
+                    45,
+                    230,
+                    157,
+                    177,
+                    228,
+                    186,
+                    172
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "compress"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "null"
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        },
+        {
+          "ins": {
+            "cached": true,
+            "n": 1
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": true,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    [
+                      1
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "addi": {
+            "immediate": 1
+          }
+        },
+        {
+          "ins": {
+            "cached": true,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": [],
+      "queries": [
+        {
+          "readTime": "170000000",
+          "computeTime": "1252361487",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        {
+          "readTime": "170000000",
+          "computeTime": "1335100549",
+          "bytesWritten": "218",
+          "bytesDeleted": "78"
+        },
+        {
+          "readTime": "170000000",
+          "computeTime": "1323481916",
+          "bytesWritten": "218",
+          "bytesDeleted": "218"
+        }
+      ],
+      "witnessInputs": [],
+      "admit": true
+    },
+    {
+      "id": "remove-unicode",
+      "operation": "mutate",
+      "value": "référence-東京",
+      "mutation": 2,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8400505272c3a966c3a972656e63652de69db1e4baac40000400080004000408080104040c9003044080afa42869d77fe4148a7c1cf051ad5933280c7b1764fad7ea74417520b4847be9041004020008010804180401041c080104042014030401041008142408040804280403042c0004300801040434c9010304dab50101040304010804080801040204019003044080afa42869d77fe4148a7c1cf051ad5933280c7b1764fad7ea74417520b4847be904010801040401000801505272c3a966c3a972656e63652de69db1e4baac40000104000001140304010410040108010404010401040108010800003c386d656d6265725f636f6e74726f6c083c0400044008010404449003043f8077886c4eb3caf61787eabc440e0bb689a8984d1fae32a472ee46a407aa6c8200003c3872656d6f76655f636f6e74726f6c084c0400045008010404549003043f804b35187a603b8845ea132eabe471db4c71bea4309f3031aad78d92c56851f1d0001c186d7574617465085c0400046008010404649003043f805ef156038ebf36429c14e9ca67171362e699a8d4af93b27e90e57ea1b8b4d220003c38696e736572745f636f6e74726f6c086c0400047008010404749003043f8068dbcfbff462c758124987809ee46eb09f9cbf542636732aa18dd603a86822404004040404040404480458040468047804080210142804387c041003000400",
+      "privateBefore": 0,
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a74000400040004020008020804080401040c080104041014030401041008041408040804180403041c0004200801040424ac03044e9c010403040108040808010402040104000001140304010410040108010404010401040108020800003c386d656d6265725f636f6e74726f6c082c0000043008010404349003043f8077886c4eb3caf61787eabc440e0bb689a8984d1fae32a472ee46a407aa6c8200003c3872656d6f76655f636f6e74726f6c083c0000044008010404449003043f804b35187a603b8845ea132eabe471db4c71bea4309f3031aad78d92c56851f1d0001c186d7574617465084c0000045008010404549003043f805ef156038ebf36429c14e9ca67171362e699a8d4af93b27e90e57ea1b8b4d220003c38696e736572745f636f6e74726f6c085c0000046008010404649003043f8068dbcfbff462c758124987809ee46eb09f9cbf542636732aa18dd603a86822404000000000000000380048000058006800080210141800286c001003000400",
+      "privateAfter": 0,
+      "result": [],
+      "publicTranscript": [
+        {
+          "dup": {
+            "n": 0
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": false,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    []
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    114,
+                    195,
+                    169,
+                    102,
+                    195,
+                    169,
+                    114,
+                    101,
+                    110,
+                    99,
+                    101,
+                    45,
+                    230,
+                    157,
+                    177,
+                    228,
+                    186,
+                    172
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "compress"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "member",
+        {
+          "popeq": {
+            "cached": true,
+            "result": {
+              "value": [
+                [
+                  1
+                ]
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 1
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": true,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    []
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    114,
+                    195,
+                    169,
+                    102,
+                    195,
+                    169,
+                    114,
+                    101,
+                    110,
+                    99,
+                    101,
+                    45,
+                    230,
+                    157,
+                    177,
+                    228,
+                    186,
+                    172
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "compress"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "rem": {
+            "cached": false
+          }
+        },
+        {
+          "ins": {
+            "cached": true,
+            "n": 1
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": true,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    [
+                      1
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "addi": {
+            "immediate": 1
+          }
+        },
+        {
+          "ins": {
+            "cached": true,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": [],
+      "queries": [
+        {
+          "readTime": "170000000",
+          "computeTime": "1252361487",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        {
+          "readTime": "170000000",
+          "computeTime": "1325582577",
+          "bytesWritten": "78",
+          "bytesDeleted": "218"
+        },
+        {
+          "readTime": "170000000",
+          "computeTime": "1323481916",
+          "bytesWritten": "78",
+          "bytesDeleted": "78"
+        }
+      ],
+      "witnessInputs": [],
+      "admit": true
+    },
+    {
+      "id": "insert-empty",
+      "operation": "mutate",
+      "value": "",
+      "mutation": 1,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a74000400040004020008400804080401040c080104041014030401041008041408040804180403041c0004200801040424ac03044e9c010403040108040808010402040104000001140304010410040108010404010401040108400800003c386d656d6265725f636f6e74726f6c082c0000043008010404349003043f8077886c4eb3caf61787eabc440e0bb689a8984d1fae32a472ee46a407aa6c8200003c3872656d6f76655f636f6e74726f6c083c0000044008010404449003043f804b35187a603b8845ea132eabe471db4c71bea4309f3031aad78d92c56851f1d0001c186d7574617465084c0000045008010404549003043f805ef156038ebf36429c14e9ca67171362e699a8d4af93b27e90e57ea1b8b4d220003c38696e736572745f636f6e74726f6c085c0000046008010404649003043f8068dbcfbff462c758124987809ee46eb09f9cbf542636732aa18dd603a86822404000000000000000380048000058006800080210141800286c001003000400",
+      "privateBefore": 0,
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8400084040000400080004000408080104040c90030440803330e5ba53cb09ab97dd287ad8ba30380b88a5aca467b6c231b0a46f261c16e1041004020008010804180401041c080104042014030401041008142408040804280403042c000430080104043481010304b66d01010403040108040808010402040190030440803330e5ba53cb09ab97dd287ad8ba30380b88a5aca467b6c231b0a46f261c16e104010801040401000801084040000104000001140304010410040108010404010401040108010800003c386d656d6265725f636f6e74726f6c083c0400044008010404449003043f8077886c4eb3caf61787eabc440e0bb689a8984d1fae32a472ee46a407aa6c8200003c3872656d6f76655f636f6e74726f6c084c0400045008010404549003043f804b35187a603b8845ea132eabe471db4c71bea4309f3031aad78d92c56851f1d0001c186d7574617465085c0400046008010404649003043f805ef156038ebf36429c14e9ca67171362e699a8d4af93b27e90e57ea1b8b4d220003c38696e736572745f636f6e74726f6c086c0400047008010404749003043f8068dbcfbff462c758124987809ee46eb09f9cbf542636732aa18dd603a86822404004040404040404480458040468047804080210142804387c041003000400",
+      "privateAfter": 0,
+      "result": [],
+      "publicTranscript": [
+        {
+          "dup": {
+            "n": 0
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": false,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    []
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "compress"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "member",
+        {
+          "popeq": {
+            "cached": true,
+            "result": {
+              "value": [
+                []
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 1
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": true,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    []
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "compress"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "null"
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        },
+        {
+          "ins": {
+            "cached": true,
+            "n": 1
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": true,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    [
+                      1
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "addi": {
+            "immediate": 1
+          }
+        },
+        {
+          "ins": {
+            "cached": true,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": [],
+      "queries": [
+        {
+          "readTime": "170000000",
+          "computeTime": "1252339959",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        {
+          "readTime": "170000000",
+          "computeTime": "1335077725",
+          "bytesWritten": "182",
+          "bytesDeleted": "78"
+        },
+        {
+          "readTime": "170000000",
+          "computeTime": "1323481916",
+          "bytesWritten": "182",
+          "bytesDeleted": "182"
+        }
+      ],
+      "witnessInputs": [],
+      "admit": true
+    },
+    {
+      "id": "duplicate",
+      "operation": "mutate",
+      "value": "référence-東京",
+      "mutation": 1,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8400505272c3a966c3a972656e63652de69db1e4baac40000400080004000408080104040c9003044080afa42869d77fe4148a7c1cf051ad5933280c7b1764fad7ea74417520b4847be9041004020008010804180401041c080104042014030401041008142408040804280403042c0004300801040434c9010304dab50101040304010804080801040204019003044080afa42869d77fe4148a7c1cf051ad5933280c7b1764fad7ea74417520b4847be904010801040401000801505272c3a966c3a972656e63652de69db1e4baac40000104000001140304010410040108010404010401040108010800003c386d656d6265725f636f6e74726f6c083c0400044008010404449003043f8077886c4eb3caf61787eabc440e0bb689a8984d1fae32a472ee46a407aa6c8200003c3872656d6f76655f636f6e74726f6c084c0400045008010404549003043f804b35187a603b8845ea132eabe471db4c71bea4309f3031aad78d92c56851f1d0001c186d7574617465085c0400046008010404649003043f805ef156038ebf36429c14e9ca67171362e699a8d4af93b27e90e57ea1b8b4d220003c38696e736572745f636f6e74726f6c086c0400047008010404749003043f8068dbcfbff462c758124987809ee46eb09f9cbf542636732aa18dd603a86822404004040404040404480458040468047804080210142804387c041003000400",
+      "privateBefore": 0,
+      "error": "failed assert: already present",
+      "queries": [
+        {
+          "readTime": "170000000",
+          "computeTime": "1252361487",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      ],
+      "witnessInputs": [],
+      "admit": true
+    },
+    {
+      "id": "missing",
+      "operation": "mutate",
+      "value": "absent",
+      "mutation": 2,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a74000400040004020008400804080401040c080104041014030401041008041408040804180403041c0004200801040424ac03044e9c010403040108040808010402040104000001140304010410040108010404010401040108400800003c386d656d6265725f636f6e74726f6c082c0000043008010404349003043f8077886c4eb3caf61787eabc440e0bb689a8984d1fae32a472ee46a407aa6c8200003c3872656d6f76655f636f6e74726f6c083c0000044008010404449003043f804b35187a603b8845ea132eabe471db4c71bea4309f3031aad78d92c56851f1d0001c186d7574617465084c0000045008010404549003043f805ef156038ebf36429c14e9ca67171362e699a8d4af93b27e90e57ea1b8b4d220003c38696e736572745f636f6e74726f6c085c0000046008010404649003043f8068dbcfbff462c758124987809ee46eb09f9cbf542636732aa18dd603a86822404000000000000000380048000058006800080210141800286c001003000400",
+      "privateBefore": 0,
+      "error": "failed assert: absent",
+      "queries": [
+        {
+          "readTime": "170000000",
+          "computeTime": "1252347135",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      ],
+      "witnessInputs": [],
+      "admit": true
+    },
+    {
+      "id": "undefined-before-query",
+      "operation": "mutate",
+      "value": "absent",
+      "mutation": 0,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a74000400040004020008400804080401040c080104041014030401041008041408040804180403041c0004200801040424ac03044e9c010403040108040808010402040104000001140304010410040108010404010401040108400800003c386d656d6265725f636f6e74726f6c082c0000043008010404349003043f8077886c4eb3caf61787eabc440e0bb689a8984d1fae32a472ee46a407aa6c8200003c3872656d6f76655f636f6e74726f6c083c0000044008010404449003043f804b35187a603b8845ea132eabe471db4c71bea4309f3031aad78d92c56851f1d0001c186d7574617465084c0000045008010404549003043f805ef156038ebf36429c14e9ca67171362e699a8d4af93b27e90e57ea1b8b4d220003c38696e736572745f636f6e74726f6c085c0000046008010404649003043f8068dbcfbff462c758124987809ee46eb09f9cbf542636732aa18dd603a86822404000000000000000380048000058006800080210141800286c001003000400",
+      "privateBefore": 0,
+      "error": "failed assert: undefined mutation",
+      "queries": [],
+      "witnessInputs": [],
+      "admit": true
+    }
+  ]
+}

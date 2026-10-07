@@ -1,0 +1,837 @@
+{
+  "format": "compact-did-primitive-reducer-capture/v1",
+  "kind": "point-digest",
+  "generatedJavaScriptSha256": "5a56bdd4a4045a1f2c18cb2a2c77ddd3ec14b3763afc3207a9bf2226bae6eae6",
+  "runtimeJavaScriptSha256": "f6b1b8b0d4ecfd6458706fd3969babbb988879dd9c39618cc137c463a151781b",
+  "captureSha256": "97e2ed2b889abc091417a436025d909afbe232ce84031ff6c781e864579b2507",
+  "runtimeVersion": "0.16.101",
+  "provenance": [
+    {
+      "path": "tools/compact-rust-backend/tests/point-composition/point_digest.compact",
+      "sha256": "a25583542fa4663943c5bec61144911c2014df7019e44cae0d071b97198f994d"
+    },
+    {
+      "path": "tests-rust-backend/did-point-digest-reducer/lib.rs",
+      "sha256": "f4dc728483ede35880dbe8a938a922cdf7cff9cb3e9461ed0fcb623c796e1de8"
+    },
+    {
+      "path": "tests-rust-backend/did-point-digest-reducer/tests/behavior.rs",
+      "sha256": "8bd3fe2ab447f17eccdfae2e12b0f6adf8a4f46c772520db37377ed52ce1feec"
+    },
+    {
+      "path": "tests-rust-backend/did-point-digest-reducer/tests/provenance.rs",
+      "sha256": "f80298e2db1af18f5c58f9decf301e16345b2ed7828bd96bf3aaf7c547afb7e5"
+    },
+    {
+      "path": "tools/compact-rust-backend/did_primitive_reducers.json",
+      "sha256": "8dd3a33a6d3f49610065e7219b827dc1f8cd69febce0da73743b7f1336ad42ea"
+    },
+    {
+      "path": "tools/compact-rust-backend/did_primitive_reducer_capture.mjs",
+      "sha256": "97e2ed2b889abc091417a436025d909afbe232ce84031ff6c781e864579b2507"
+    },
+    {
+      "path": "tools/compact-rust-backend/did_primitive_reducer_cases.mjs",
+      "sha256": "ae03edee964bf17d4772084f7a26b42433e08d005552f21d6afc7612f8e3dd39"
+    },
+    {
+      "path": "runtime/src/built-ins.ts",
+      "sha256": "860c07188480005ff3907213f04902fb388fb0b43ce61a4b09d38b79592f51be"
+    },
+    {
+      "path": "runtime/src/compact-types.ts",
+      "sha256": "7d3da5243377cc1fc1a07fe1622be095fe8c07dbf5b0929559807b6f3196a63b"
+    }
+  ],
+  "cases": [
+    {
+      "id": "update",
+      "operation": "update",
+      "point": 3,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a78002101826001e56fd518a3fe2d515f37be7f655c3104eef572b1e37ed35ea31c123a67c4a53e6001cb550cd538ea0cc1138480408e6eaab9b36c613f0dd3f7784fdb6eea837b1357c24141040004010008010104080401040c080104041014030401041008041408040804180403041c0004200801040424d1010304debd0101040304010804080801040104012101826001e56fd518a3fe2d515f37be7f655c3104eef572b1e37ed35ea31c123a67c4a53e6001cb550cd538ea0cc1138480408e6eaab9b36c613f0dd3f7784fdb6eea837b1357c241410001140304010410040108010404010401040108010100005450707572655f70726f6a656374696f6e5f6f6e6c79000400082c3000043408010404389003043f809c7ec69e5f44772b57ba29f050f7eb02da470a30a99a174fccdf4943afd77470001c1875706461746508403000044408010404489003043f801601a9522cf94c6229a5d3d83ffdffc84fa668d75ff9fcb2ee58a14c4c1047e0003c387363616c61725f636f6e74726f6c08503000045408010404589003043f800bcede38fdf64950cb7170dfe4a190dd8d503fc9fd0a8cc0252958903139e6d0004440706f696e745f77726974655f6f6e6c7908603000046408010404689003043f80b93061285ec659e953584b6ee3e5d2484deb148ec3f046634b88b1eccca28540403c4c3030305c30303030306c303030300802101418302870301003000400",
+      "privateBefore": 0,
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a78002101826001cdbb89b6fc75eebe5569c5469e875722b2e5cbd519a069c82c269176c6c3d8136001c5295dd1cb37a4ae58005ac7019c958df01d0e5256e17e81ba9d94a2db339c47c24141040004010008010104080401040c080104041014030401041008041408040804180403041c0004200801040424d1010304debd0101040304010804080801040104012101826001cdbb89b6fc75eebe5569c5469e875722b2e5cbd519a069c82c269176c6c3d8136001c5295dd1cb37a4ae58005ac7019c958df01d0e5256e17e81ba9d94a2db339c47c241410001140304010410040108010404010401040108010100005450707572655f70726f6a656374696f6e5f6f6e6c79000400082c3000043408010404389003043f809c7ec69e5f44772b57ba29f050f7eb02da470a30a99a174fccdf4943afd77470001c1875706461746508403000044408010404489003043f801601a9522cf94c6229a5d3d83ffdffc84fa668d75ff9fcb2ee58a14c4c1047e0003c387363616c61725f636f6e74726f6c08503000045408010404589003043f800bcede38fdf64950cb7170dfe4a190dd8d503fc9fd0a8cc0252958903139e6d0004440706f696e745f77726974655f6f6e6c7908603000046408010404689003043f80b93061285ec659e953584b6ee3e5d2484deb148ec3f046634b88b1eccca28540403c4c3030305c30303030306c303030300802101418302870301003000400",
+      "privateAfter": 1,
+      "result": [],
+      "publicTranscript": [
+        {
+          "dup": {
+            "n": 0
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": false,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    [
+                      1
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "popeq": {
+            "cached": false,
+            "result": {
+              "value": [
+                [
+                  1
+                ]
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 1
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    205,
+                    187,
+                    137,
+                    182,
+                    252,
+                    117,
+                    238,
+                    190,
+                    85,
+                    105,
+                    197,
+                    70,
+                    158,
+                    135,
+                    87,
+                    34,
+                    178,
+                    229,
+                    203,
+                    213,
+                    25,
+                    160,
+                    105,
+                    200,
+                    44,
+                    38,
+                    145,
+                    118,
+                    198,
+                    195,
+                    216,
+                    19
+                  ],
+                  [
+                    197,
+                    41,
+                    93,
+                    209,
+                    203,
+                    55,
+                    164,
+                    174,
+                    88,
+                    0,
+                    90,
+                    199,
+                    1,
+                    156,
+                    149,
+                    141,
+                    240,
+                    29,
+                    14,
+                    82,
+                    86,
+                    225,
+                    126,
+                    129,
+                    186,
+                    157,
+                    148,
+                    162,
+                    219,
+                    51,
+                    156,
+                    71
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  },
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": [
+        {
+          "valueAtoms": [
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        }
+      ],
+      "queries": [
+        {
+          "readTime": "170000000",
+          "computeTime": "1249914853",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "222",
+          "bytesDeleted": "222"
+        }
+      ],
+      "witnessInputs": [
+        "8509d5eec73da5b391a4682f6e4a05efcd0e34842ae24b3bad807fc061edde05"
+      ],
+      "admit": true
+    },
+    {
+      "id": "projection-only",
+      "operation": "pure_projection_only",
+      "point": 3,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a78002101826001e56fd518a3fe2d515f37be7f655c3104eef572b1e37ed35ea31c123a67c4a53e6001cb550cd538ea0cc1138480408e6eaab9b36c613f0dd3f7784fdb6eea837b1357c24141040004010008010104080401040c080104041014030401041008041408040804180403041c0004200801040424d1010304debd0101040304010804080801040104012101826001e56fd518a3fe2d515f37be7f655c3104eef572b1e37ed35ea31c123a67c4a53e6001cb550cd538ea0cc1138480408e6eaab9b36c613f0dd3f7784fdb6eea837b1357c241410001140304010410040108010404010401040108010100005450707572655f70726f6a656374696f6e5f6f6e6c79000400082c3000043408010404389003043f809c7ec69e5f44772b57ba29f050f7eb02da470a30a99a174fccdf4943afd77470001c1875706461746508403000044408010404489003043f801601a9522cf94c6229a5d3d83ffdffc84fa668d75ff9fcb2ee58a14c4c1047e0003c387363616c61725f636f6e74726f6c08503000045408010404589003043f800bcede38fdf64950cb7170dfe4a190dd8d503fc9fd0a8cc0252958903139e6d0004440706f696e745f77726974655f6f6e6c7908603000046408010404689003043f80b93061285ec659e953584b6ee3e5d2484deb148ec3f046634b88b1eccca28540403c4c3030305c30303030306c303030300802101418302870301003000400",
+      "privateBefore": 0,
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a78002101826001e56fd518a3fe2d515f37be7f655c3104eef572b1e37ed35ea31c123a67c4a53e6001cb550cd538ea0cc1138480408e6eaab9b36c613f0dd3f7784fdb6eea837b1357c24141040004010008400104080401040c080104041014030401041008041408040804180403041c0004200801040424d1010304debd0101040304010804080801040104012101826001e56fd518a3fe2d515f37be7f655c3104eef572b1e37ed35ea31c123a67c4a53e6001cb550cd538ea0cc1138480408e6eaab9b36c613f0dd3f7784fdb6eea837b1357c241410001140304010410040108010404010401040108400100005450707572655f70726f6a656374696f6e5f6f6e6c79000400082c3000043408010404389003043f809c7ec69e5f44772b57ba29f050f7eb02da470a30a99a174fccdf4943afd77470001c1875706461746508403000044408010404489003043f801601a9522cf94c6229a5d3d83ffdffc84fa668d75ff9fcb2ee58a14c4c1047e0003c387363616c61725f636f6e74726f6c08503000045408010404589003043f800bcede38fdf64950cb7170dfe4a190dd8d503fc9fd0a8cc0252958903139e6d0004440706f696e745f77726974655f6f6e6c7908603000046408010404689003043f80b93061285ec659e953584b6ee3e5d2484deb148ec3f046634b88b1eccca28540403c4c3030305c30303030306c303030300802101418302870301003000400",
+      "privateAfter": 1,
+      "result": [],
+      "publicTranscript": [
+        {
+          "dup": {
+            "n": 0
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": false,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    [
+                      1
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "popeq": {
+            "cached": false,
+            "result": {
+              "value": [
+                [
+                  1
+                ]
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 1
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": [
+        {
+          "valueAtoms": [
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        }
+      ],
+      "queries": [
+        {
+          "readTime": "170000000",
+          "computeTime": "1249914853",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "222",
+          "bytesDeleted": "222"
+        }
+      ],
+      "witnessInputs": [
+        "8509d5eec73da5b391a4682f6e4a05efcd0e34842ae24b3bad807fc061edde05"
+      ],
+      "admit": true
+    },
+    {
+      "id": "old-point-write",
+      "operation": "point_write_only",
+      "point": 2,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a78002101826001e56fd518a3fe2d515f37be7f655c3104eef572b1e37ed35ea31c123a67c4a53e6001cb550cd538ea0cc1138480408e6eaab9b36c613f0dd3f7784fdb6eea837b1357c24141040004010008010104080401040c080104041014030401041008041408040804180403041c0004200801040424d1010304debd0101040304010804080801040104012101826001e56fd518a3fe2d515f37be7f655c3104eef572b1e37ed35ea31c123a67c4a53e6001cb550cd538ea0cc1138480408e6eaab9b36c613f0dd3f7784fdb6eea837b1357c241410001140304010410040108010404010401040108010100005450707572655f70726f6a656374696f6e5f6f6e6c79000400082c3000043408010404389003043f809c7ec69e5f44772b57ba29f050f7eb02da470a30a99a174fccdf4943afd77470001c1875706461746508403000044408010404489003043f801601a9522cf94c6229a5d3d83ffdffc84fa668d75ff9fcb2ee58a14c4c1047e0003c387363616c61725f636f6e74726f6c08503000045408010404589003043f800bcede38fdf64950cb7170dfe4a190dd8d503fc9fd0a8cc0252958903139e6d0004440706f696e745f77726974655f6f6e6c7908603000046408010404689003043f80b93061285ec659e953584b6ee3e5d2484deb148ec3f046634b88b1eccca28540403c4c3030305c30303030306c303030300802101418302870301003000400",
+      "privateBefore": 0,
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a78002101826001dd1c0d6935aecc606473e78a773750b2c4adfdcab649fbc3042cee7d61dbf13e6001719af0e6e0c6d0aa680f3b7e97dee9c3cbc3a7815979f08e33a640fab8ca9a31c24141040004010008010104080401040c080104041014030401041008041408040804180403041c0004200801040424d1010304debd0101040304010804080801040104012101826001dd1c0d6935aecc606473e78a773750b2c4adfdcab649fbc3042cee7d61dbf13e6001719af0e6e0c6d0aa680f3b7e97dee9c3cbc3a7815979f08e33a640fab8ca9a31c241410001140304010410040108010404010401040108010100005450707572655f70726f6a656374696f6e5f6f6e6c79000400082c3000043408010404389003043f809c7ec69e5f44772b57ba29f050f7eb02da470a30a99a174fccdf4943afd77470001c1875706461746508403000044408010404489003043f801601a9522cf94c6229a5d3d83ffdffc84fa668d75ff9fcb2ee58a14c4c1047e0003c387363616c61725f636f6e74726f6c08503000045408010404589003043f800bcede38fdf64950cb7170dfe4a190dd8d503fc9fd0a8cc0252958903139e6d0004440706f696e745f77726974655f6f6e6c7908603000046408010404689003043f80b93061285ec659e953584b6ee3e5d2484deb148ec3f046634b88b1eccca28540403c4c3030305c30303030306c303030300802101418302870301003000400",
+      "privateAfter": 1,
+      "result": [],
+      "publicTranscript": [
+        {
+          "dup": {
+            "n": 0
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": false,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    [
+                      1
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "popeq": {
+            "cached": false,
+            "result": {
+              "value": [
+                [
+                  1
+                ]
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 1
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    221,
+                    28,
+                    13,
+                    105,
+                    53,
+                    174,
+                    204,
+                    96,
+                    100,
+                    115,
+                    231,
+                    138,
+                    119,
+                    55,
+                    80,
+                    178,
+                    196,
+                    173,
+                    253,
+                    202,
+                    182,
+                    73,
+                    251,
+                    195,
+                    4,
+                    44,
+                    238,
+                    125,
+                    97,
+                    219,
+                    241,
+                    62
+                  ],
+                  [
+                    113,
+                    154,
+                    240,
+                    230,
+                    224,
+                    198,
+                    208,
+                    170,
+                    104,
+                    15,
+                    59,
+                    126,
+                    151,
+                    222,
+                    233,
+                    195,
+                    203,
+                    195,
+                    167,
+                    129,
+                    89,
+                    121,
+                    240,
+                    142,
+                    51,
+                    166,
+                    64,
+                    250,
+                    184,
+                    202,
+                    154,
+                    49
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  },
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": [
+        {
+          "valueAtoms": [
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        }
+      ],
+      "queries": [
+        {
+          "readTime": "170000000",
+          "computeTime": "1249914853",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "222",
+          "bytesDeleted": "222"
+        }
+      ],
+      "witnessInputs": [
+        "0100000000000000000000000000000000000000000000000000000000000000"
+      ],
+      "admit": true
+    },
+    {
+      "id": "scalar-control",
+      "operation": "scalar_control",
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a78002101826001e56fd518a3fe2d515f37be7f655c3104eef572b1e37ed35ea31c123a67c4a53e6001cb550cd538ea0cc1138480408e6eaab9b36c613f0dd3f7784fdb6eea837b1357c24141040004010008010104080401040c080104041014030401041008041408040804180403041c0004200801040424d1010304debd0101040304010804080801040104012101826001e56fd518a3fe2d515f37be7f655c3104eef572b1e37ed35ea31c123a67c4a53e6001cb550cd538ea0cc1138480408e6eaab9b36c613f0dd3f7784fdb6eea837b1357c241410001140304010410040108010404010401040108010100005450707572655f70726f6a656374696f6e5f6f6e6c79000400082c3000043408010404389003043f809c7ec69e5f44772b57ba29f050f7eb02da470a30a99a174fccdf4943afd77470001c1875706461746508403000044408010404489003043f801601a9522cf94c6229a5d3d83ffdffc84fa668d75ff9fcb2ee58a14c4c1047e0003c387363616c61725f636f6e74726f6c08503000045408010404589003043f800bcede38fdf64950cb7170dfe4a190dd8d503fc9fd0a8cc0252958903139e6d0004440706f696e745f77726974655f6f6e6c7908603000046408010404689003043f80b93061285ec659e953584b6ee3e5d2484deb148ec3f046634b88b1eccca28540403c4c3030305c30303030306c303030300802101418302870301003000400",
+      "privateBefore": 0,
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a78002101826001e56fd518a3fe2d515f37be7f655c3104eef572b1e37ed35ea31c123a67c4a53e6001cb550cd538ea0cc1138480408e6eaab9b36c613f0dd3f7784fdb6eea837b1357c24141040004010008400104080401040c080104041014030401041008041408040804180403041c0004200801040424d1010304debd0101040304010804080801040104012101826001e56fd518a3fe2d515f37be7f655c3104eef572b1e37ed35ea31c123a67c4a53e6001cb550cd538ea0cc1138480408e6eaab9b36c613f0dd3f7784fdb6eea837b1357c241410001140304010410040108010404010401040108400100005450707572655f70726f6a656374696f6e5f6f6e6c79000400082c3000043408010404389003043f809c7ec69e5f44772b57ba29f050f7eb02da470a30a99a174fccdf4943afd77470001c1875706461746508403000044408010404489003043f801601a9522cf94c6229a5d3d83ffdffc84fa668d75ff9fcb2ee58a14c4c1047e0003c387363616c61725f636f6e74726f6c08503000045408010404589003043f800bcede38fdf64950cb7170dfe4a190dd8d503fc9fd0a8cc0252958903139e6d0004440706f696e745f77726974655f6f6e6c7908603000046408010404689003043f80b93061285ec659e953584b6ee3e5d2484deb148ec3f046634b88b1eccca28540403c4c3030305c30303030306c303030300802101418302870301003000400",
+      "privateAfter": 1,
+      "result": [],
+      "publicTranscript": [
+        {
+          "dup": {
+            "n": 0
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": false,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    [
+                      1
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "popeq": {
+            "cached": false,
+            "result": {
+              "value": [
+                [
+                  1
+                ]
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 1
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": [
+        {
+          "valueAtoms": [
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        }
+      ],
+      "queries": [
+        {
+          "readTime": "170000000",
+          "computeTime": "1249914853",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "222",
+          "bytesDeleted": "222"
+        }
+      ],
+      "witnessInputs": [
+        "0100000000000000000000000000000000000000000000000000000000000000"
+      ],
+      "admit": true
+    },
+    {
+      "id": "denied-before-write",
+      "operation": "update",
+      "point": 3,
+      "admit": false,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a78002101826001e56fd518a3fe2d515f37be7f655c3104eef572b1e37ed35ea31c123a67c4a53e6001cb550cd538ea0cc1138480408e6eaab9b36c613f0dd3f7784fdb6eea837b1357c24141040004010008010104080401040c080104041014030401041008041408040804180403041c0004200801040424d1010304debd0101040304010804080801040104012101826001e56fd518a3fe2d515f37be7f655c3104eef572b1e37ed35ea31c123a67c4a53e6001cb550cd538ea0cc1138480408e6eaab9b36c613f0dd3f7784fdb6eea837b1357c241410001140304010410040108010404010401040108010100005450707572655f70726f6a656374696f6e5f6f6e6c79000400082c3000043408010404389003043f809c7ec69e5f44772b57ba29f050f7eb02da470a30a99a174fccdf4943afd77470001c1875706461746508403000044408010404489003043f801601a9522cf94c6229a5d3d83ffdffc84fa668d75ff9fcb2ee58a14c4c1047e0003c387363616c61725f636f6e74726f6c08503000045408010404589003043f800bcede38fdf64950cb7170dfe4a190dd8d503fc9fd0a8cc0252958903139e6d0004440706f696e745f77726974655f6f6e6c7908603000046408010404689003043f80b93061285ec659e953584b6ee3e5d2484deb148ec3f046634b88b1eccca28540403c4c3030305c30303030306c303030300802101418302870301003000400",
+      "privateBefore": 0,
+      "error": "failed assert: unauthorized",
+      "queries": [
+        {
+          "readTime": "170000000",
+          "computeTime": "1249914853",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      ],
+      "witnessInputs": [
+        "8509d5eec73da5b391a4682f6e4a05efcd0e34842ae24b3bad807fc061edde05"
+      ]
+    },
+    {
+      "id": "inactive-before-witness",
+      "operation": "update",
+      "point": 3,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a78002101826001e56fd518a3fe2d515f37be7f655c3104eef572b1e37ed35ea31c123a67c4a53e6001cb550cd538ea0cc1138480408e6eaab9b36c613f0dd3f7784fdb6eea837b1357c24141040004010008400104080401040c080104041014030401041008041408040804180403041c0004200801040424d1010304debd0101040304010804080801040104012101826001e56fd518a3fe2d515f37be7f655c3104eef572b1e37ed35ea31c123a67c4a53e6001cb550cd538ea0cc1138480408e6eaab9b36c613f0dd3f7784fdb6eea837b1357c241410001140304010410040108010404010401040108400100005450707572655f70726f6a656374696f6e5f6f6e6c79000400082c3000043408010404389003043f809c7ec69e5f44772b57ba29f050f7eb02da470a30a99a174fccdf4943afd77470001c1875706461746508403000044408010404489003043f801601a9522cf94c6229a5d3d83ffdffc84fa668d75ff9fcb2ee58a14c4c1047e0003c387363616c61725f636f6e74726f6c08503000045408010404589003043f800bcede38fdf64950cb7170dfe4a190dd8d503fc9fd0a8cc0252958903139e6d0004440706f696e745f77726974655f6f6e6c7908603000046408010404689003043f80b93061285ec659e953584b6ee3e5d2484deb148ec3f046634b88b1eccca28540403c4c3030305c30303030306c303030300802101418302870301003000400",
+      "privateBefore": 1,
+      "error": "failed assert: inactive",
+      "queries": [
+        {
+          "readTime": "170000000",
+          "computeTime": "1249914853",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      ],
+      "witnessInputs": [],
+      "admit": true
+    }
+  ]
+}

@@ -35,6 +35,16 @@ SOURCES = ROOT / "examples" / "rust_backend"
 FIXTURES = ROOT / "tests-rust-backend"
 BACKEND = ROOT / "target" / "debug" / "compact-rustc"
 EXTRA_SOURCES = {
+    ROOT / "tools/compact-rust-backend/tests/point-composition/point_digest.compact": FIXTURES / "did-point-digest-reducer" / "lib.rs",
+    ROOT / "tools/compact-rust-backend/tests/point-composition/point_guard.compact": FIXTURES / "did-point-guard-reducer" / "lib.rs",
+    ROOT / "tools/compact-rust-backend/tests/set-composition/set_string.compact": FIXTURES / "did-alias-set-reducer" / "lib.rs",
+    ROOT / "tools/compact-rust-backend/tests/set-composition/opaque_digest.compact": FIXTURES / "did-alias-digest-reducer" / "lib.rs",
+    ROOT / "tools/compact-rust-backend/tests/set-composition/pure_unit_guard.compact": FIXTURES / "did-alias-guard-reducer" / "lib.rs",
+    ROOT / "tools/compact-rust-backend/tests/map-composition/service_mutation.compact": FIXTURES / "did-service-map-reducer" / "lib.rs",
+    ROOT / "tools/compact-rust-backend/tests/map-point-composition/point_nested.compact": FIXTURES / "did-point-map-reducer" / "lib.rs",
+    ROOT / "tools/compact-rust-backend/tests/map-nested-product/nested-enum.compact": FIXTURES / "did-nested-map-reducer" / "lib.rs",
+    ROOT / "tools/compact-rust-backend/tests/map-nested-product/nested-enum-wide.compact": FIXTURES / "did-enum-map-reducer" / "lib.rs",
+
     SOURCES / "did_digest_read_reducer" / "contract.compact":
         FIXTURES / "did-digest-read-reducer" / "lib.rs",
     SOURCES / "did_adoption" / "packages" / "contract" / "src" / "did.compact":

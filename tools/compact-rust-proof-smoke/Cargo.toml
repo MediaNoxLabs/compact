@@ -149,3 +149,13 @@ compact-rust-field-observation-oracle-fixture = { path = "../../tests-rust-backe
 
 compact-rust-did-adoption-fixture = { path = "../../tests-rust-backend/did-adoption", features = ["ledger-transaction"] }
 compact-rust-did-digest-read-reducer-fixture = { path = "../../tests-rust-backend/did-digest-read-reducer", features = ["ledger-transaction"] }
+
+compact-rust-did-point-digest-reducer-fixture = { path = "../../tests-rust-backend/did-point-digest-reducer", features = ["ledger-transaction"] }
+compact-rust-did-point-guard-reducer-fixture = { path = "../../tests-rust-backend/did-point-guard-reducer", features = ["ledger-transaction"] }
+compact-rust-did-alias-set-reducer-fixture = { path = "../../tests-rust-backend/did-alias-set-reducer", features = ["ledger-transaction"] }
+compact-rust-did-alias-digest-reducer-fixture = { path = "../../tests-rust-backend/did-alias-digest-reducer", features = ["ledger-transaction"] }
+compact-rust-did-alias-guard-reducer-fixture = { path = "../../tests-rust-backend/did-alias-guard-reducer", features = ["ledger-transaction"] }
+compact-rust-did-service-map-reducer-fixture = { path = "../../tests-rust-backend/did-service-map-reducer", features = ["ledger-transaction"] }
+compact-rust-did-point-map-reducer-fixture = { path = "../../tests-rust-backend/did-point-map-reducer", features = ["ledger-transaction"] }
+compact-rust-did-nested-map-reducer-fixture = { path = "../../tests-rust-backend/did-nested-map-reducer", features = ["ledger-transaction"] }
+compact-rust-did-enum-map-reducer-fixture = { path = "../../tests-rust-backend/did-enum-map-reducer", features = ["ledger-transaction"] }

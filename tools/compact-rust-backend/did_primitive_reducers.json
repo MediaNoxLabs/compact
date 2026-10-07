@@ -1,0 +1,328 @@
+{
+  "format": "compact-did-primitive-reducers/v1",
+  "scope": "ADR0294 nine maintained DID primitive reducers; unchanged Compact sources",
+  "reducers": [
+    {
+      "kind": "point-digest",
+      "source": "tools/compact-rust-backend/tests/point-composition/point_digest.compact",
+      "fixture": "tests-rust-backend/did-point-digest-reducer",
+      "package": "compact-rust-did-point-digest-reducer-fixture",
+      "proof_cases": [
+        {
+          "case": "update",
+          "operation": "update"
+        }
+      ],
+      "oracle_cases": [
+        "update",
+        "projection-only",
+        "old-point-write",
+        "scalar-control",
+        "denied-before-write",
+        "inactive-before-witness"
+      ],
+      "operations": [
+        {
+          "operation": "update",
+          "k": 7,
+          "rows": 74
+        }
+      ]
+    },
+    {
+      "kind": "point-guard",
+      "source": "tools/compact-rust-backend/tests/point-composition/point_guard.compact",
+      "fixture": "tests-rust-backend/did-point-guard-reducer",
+      "package": "compact-rust-did-point-guard-reducer-fixture",
+      "proof_cases": [
+        {
+          "case": "different-both",
+          "operation": "check"
+        }
+      ],
+      "oracle_cases": [
+        "different-both",
+        "same-controller",
+        "same-recovery"
+      ],
+      "operations": [
+        {
+          "operation": "check",
+          "k": 8,
+          "rows": 144
+        }
+      ]
+    },
+    {
+      "kind": "alias-set",
+      "source": "tools/compact-rust-backend/tests/set-composition/set_string.compact",
+      "fixture": "tests-rust-backend/did-alias-set-reducer",
+      "package": "compact-rust-did-alias-set-reducer-fixture",
+      "proof_cases": [
+        {
+          "case": "insert-unicode",
+          "operation": "mutate"
+        },
+        {
+          "case": "remove-unicode",
+          "operation": "mutate"
+        }
+      ],
+      "oracle_cases": [
+        "insert-unicode",
+        "remove-unicode",
+        "insert-empty",
+        "duplicate",
+        "missing",
+        "undefined-before-query"
+      ],
+      "operations": [
+        {
+          "operation": "mutate",
+          "k": 8,
+          "rows": 194
+        }
+      ]
+    },
+    {
+      "kind": "alias-digest",
+      "source": "tools/compact-rust-backend/tests/set-composition/opaque_digest.compact",
+      "fixture": "tests-rust-backend/did-alias-digest-reducer",
+      "package": "compact-rust-did-alias-digest-reducer-fixture",
+      "operations": [
+        {
+          "operation": "run",
+          "k": 7,
+          "rows": 81
+        }
+      ],
+      "oracle_cases": [
+        "unicode-insert",
+        "empty-remove",
+        "undefined-is-only-hashed",
+        "witness-denied"
+      ],
+      "proof_cases": [
+        {
+          "case": "unicode-insert",
+          "operation": "run"
+        }
+      ]
+    },
+    {
+      "kind": "alias-guard",
+      "source": "tools/compact-rust-backend/tests/set-composition/pure_unit_guard.compact",
+      "fixture": "tests-rust-backend/did-alias-guard-reducer",
+      "package": "compact-rust-did-alias-guard-reducer-fixture",
+      "operations": [
+        {
+          "operation": "run",
+          "k": 6,
+          "rows": 43
+        },
+        {
+          "operation": "local_control",
+          "k": 6,
+          "rows": 43
+        },
+        {
+          "operation": "transitive_control",
+          "k": 6,
+          "rows": 43
+        }
+      ],
+      "oracle_cases": [
+        "run-insert",
+        "run-remove",
+        "run-undefined",
+        "local_control-insert",
+        "local_control-remove",
+        "local_control-undefined",
+        "transitive_control-insert",
+        "transitive_control-remove",
+        "transitive_control-undefined"
+      ],
+      "proof_cases": [
+        {
+          "case": "run-insert",
+          "operation": "run"
+        },
+        {
+          "case": "local_control-insert",
+          "operation": "local_control"
+        },
+        {
+          "case": "transitive_control-insert",
+          "operation": "transitive_control"
+        }
+      ]
+    },
+    {
+      "kind": "service-map",
+      "source": "tools/compact-rust-backend/tests/map-composition/service_mutation.compact",
+      "fixture": "tests-rust-backend/did-service-map-reducer",
+      "package": "compact-rust-did-service-map-reducer-fixture",
+      "operations": [
+        {
+          "operation": "set_service",
+          "k": 8,
+          "rows": 189
+        },
+        {
+          "operation": "remove_service",
+          "k": 6,
+          "rows": 28
+        }
+      ],
+      "oracle_cases": [
+        "insert-unicode",
+        "update-empty",
+        "remove",
+        "duplicate",
+        "update-missing",
+        "remove-missing",
+        "undefined-before-query"
+      ],
+      "proof_cases": [
+        {
+          "case": "insert-unicode",
+          "operation": "set_service"
+        },
+        {
+          "case": "update-empty",
+          "operation": "set_service"
+        },
+        {
+          "case": "remove",
+          "operation": "remove_service"
+        }
+      ]
+    },
+    {
+      "kind": "point-map",
+      "source": "tools/compact-rust-backend/tests/map-point-composition/point_nested.compact",
+      "fixture": "tests-rust-backend/did-point-map-reducer",
+      "package": "compact-rust-did-point-map-reducer-fixture",
+      "operations": [
+        {
+          "operation": "upsert",
+          "k": 8,
+          "rows": 206
+        },
+        {
+          "operation": "remove",
+          "k": 6,
+          "rows": 28
+        }
+      ],
+      "oracle_cases": [
+        "insert-unicode",
+        "update-point",
+        "remove",
+        "duplicate-after-nested-member",
+        "update-missing",
+        "remove-missing",
+        "insert-empty-key"
+      ],
+      "proof_cases": [
+        {
+          "case": "insert-unicode",
+          "operation": "upsert"
+        },
+        {
+          "case": "update-point",
+          "operation": "upsert"
+        },
+        {
+          "case": "remove",
+          "operation": "remove"
+        }
+      ]
+    },
+    {
+      "kind": "nested-map",
+      "source": "tools/compact-rust-backend/tests/map-nested-product/nested-enum.compact",
+      "fixture": "tests-rust-backend/did-nested-map-reducer",
+      "package": "compact-rust-did-nested-map-reducer-fixture",
+      "operations": [
+        {
+          "operation": "upsert",
+          "k": 8,
+          "rows": 174
+        },
+        {
+          "operation": "remove",
+          "k": 6,
+          "rows": 28
+        }
+      ],
+      "oracle_cases": [
+        "insert-unicode",
+        "update-empty",
+        "remove",
+        "duplicate",
+        "update-missing",
+        "remove-missing",
+        "kind-before-query"
+      ],
+      "proof_cases": [
+        {
+          "case": "insert-unicode",
+          "operation": "upsert"
+        },
+        {
+          "case": "update-empty",
+          "operation": "upsert"
+        },
+        {
+          "case": "remove",
+          "operation": "remove"
+        }
+      ]
+    },
+    {
+      "kind": "enum-map",
+      "source": "tools/compact-rust-backend/tests/map-nested-product/nested-enum-wide.compact",
+      "fixture": "tests-rust-backend/did-enum-map-reducer",
+      "package": "compact-rust-did-enum-map-reducer-fixture",
+      "operations": [
+        {
+          "operation": "put",
+          "k": 7,
+          "rows": 115
+        },
+        {
+          "operation": "drop",
+          "k": 6,
+          "rows": 28
+        }
+      ],
+      "oracle_cases": [
+        "insert-kind-a",
+        "replace-kind-b-outer-c",
+        "overwrite-empty",
+        "drop",
+        "drop-missing",
+        "curve-before-write"
+      ],
+      "proof_cases": [
+        {
+          "case": "insert-kind-a",
+          "operation": "put"
+        },
+        {
+          "case": "replace-kind-b-outer-c",
+          "operation": "put"
+        },
+        {
+          "case": "overwrite-empty",
+          "operation": "put"
+        },
+        {
+          "case": "drop",
+          "operation": "drop"
+        }
+      ]
+    }
+  ]
+}

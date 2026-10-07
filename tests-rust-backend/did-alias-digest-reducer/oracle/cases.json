@@ -1,0 +1,347 @@
+{
+  "format": "compact-did-primitive-reducer-capture/v1",
+  "kind": "alias-digest",
+  "generatedJavaScriptSha256": "f099d2440af0ddd4a676806a7f7fca4b183fb01880096cc56348587e700d2c98",
+  "runtimeJavaScriptSha256": "f6b1b8b0d4ecfd6458706fd3969babbb988879dd9c39618cc137c463a151781b",
+  "captureSha256": "97e2ed2b889abc091417a436025d909afbe232ce84031ff6c781e864579b2507",
+  "runtimeVersion": "0.16.101",
+  "provenance": [
+    {
+      "path": "tools/compact-rust-backend/tests/set-composition/opaque_digest.compact",
+      "sha256": "a37c43c298b2f72e5cc28cf94c56ab4eaa4e16757d577acdf023be5f81f7a3c7"
+    },
+    {
+      "path": "tests-rust-backend/did-alias-digest-reducer/lib.rs",
+      "sha256": "5dfaa19ba8c7cc0b2e53af047211024553c799514cf0b094dd84712a672da25e"
+    },
+    {
+      "path": "tests-rust-backend/did-alias-digest-reducer/tests/behavior.rs",
+      "sha256": "b8b68f696e17379dfc6399a81ca9515c6f748084c8e2adfddd9a7231a2052068"
+    },
+    {
+      "path": "tests-rust-backend/did-alias-digest-reducer/tests/provenance.rs",
+      "sha256": "ca4c51e90abcd086aa53b14719be1422f8f940356f1dbc46aedf43261bd706a1"
+    },
+    {
+      "path": "tools/compact-rust-backend/did_primitive_reducers.json",
+      "sha256": "8dd3a33a6d3f49610065e7219b827dc1f8cd69febce0da73743b7f1336ad42ea"
+    },
+    {
+      "path": "tools/compact-rust-backend/did_primitive_reducer_capture.mjs",
+      "sha256": "97e2ed2b889abc091417a436025d909afbe232ce84031ff6c781e864579b2507"
+    },
+    {
+      "path": "tools/compact-rust-backend/did_primitive_reducer_cases.mjs",
+      "sha256": "ae03edee964bf17d4772084f7a26b42433e08d005552f21d6afc7612f8e3dd39"
+    },
+    {
+      "path": "runtime/src/built-ins.ts",
+      "sha256": "860c07188480005ff3907213f04902fb388fb0b43ce61a4b09d38b79592f51be"
+    },
+    {
+      "path": "runtime/src/compact-types.ts",
+      "sha256": "7d3da5243377cc1fc1a07fe1622be095fe8c07dbf5b0929559807b6f3196a63b"
+    }
+  ],
+  "cases": [
+    {
+      "id": "unicode-insert",
+      "operation": "run",
+      "value": "référence-東京",
+      "mutation": 1,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a340008400104000401040408010404080403040c0004100801040414580304244801040304010801040401040104010840010000100c72756e000400081c20000424080104042890030440806ae60e31fdb4b353d38709288ce63fe4d787e216a2944a836d6d2f44d1fa35d8140820182c201003000400",
+      "privateBefore": 0,
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a340008010104000401040408010404080403040c0004100801040414580304244801040304010801040401040104010801010000100c72756e000400081c20000424080104042890030440806ae60e31fdb4b353d38709288ce63fe4d787e216a2944a836d6d2f44d1fa35d8140820182c201003000400",
+      "privateAfter": 1,
+      "result": [],
+      "publicTranscript": [
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": [
+        {
+          "valueAtoms": [
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        }
+      ],
+      "queries": [
+        {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "36",
+          "bytesDeleted": "36"
+        }
+      ],
+      "witnessInputs": [
+        "4439721dbf9105f67ee6467765125d17f8b697754fa12cee88204ad002685255"
+      ],
+      "admit": true
+    },
+    {
+      "id": "empty-remove",
+      "operation": "run",
+      "value": "",
+      "mutation": 2,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a340008400104000401040408010404080403040c0004100801040414580304244801040304010801040401040104010840010000100c72756e000400081c20000424080104042890030440806ae60e31fdb4b353d38709288ce63fe4d787e216a2944a836d6d2f44d1fa35d8140820182c201003000400",
+      "privateBefore": 0,
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a340008010104000401040408010404080403040c0004100801040414580304244801040304010801040401040104010801010000100c72756e000400081c20000424080104042890030440806ae60e31fdb4b353d38709288ce63fe4d787e216a2944a836d6d2f44d1fa35d8140820182c201003000400",
+      "privateAfter": 1,
+      "result": [],
+      "publicTranscript": [
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": [
+        {
+          "valueAtoms": [
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        }
+      ],
+      "queries": [
+        {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "36",
+          "bytesDeleted": "36"
+        }
+      ],
+      "witnessInputs": [
+        "ee9e1b82ccf1825831a73969aafb063b777fb70169e0b51bf6e423929f508632"
+      ],
+      "admit": true
+    },
+    {
+      "id": "undefined-is-only-hashed",
+      "operation": "run",
+      "value": "référence-東京",
+      "mutation": 0,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a340008400104000401040408010404080403040c0004100801040414580304244801040304010801040401040104010840010000100c72756e000400081c20000424080104042890030440806ae60e31fdb4b353d38709288ce63fe4d787e216a2944a836d6d2f44d1fa35d8140820182c201003000400",
+      "privateBefore": 0,
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a340008010104000401040408010404080403040c0004100801040414580304244801040304010801040401040104010801010000100c72756e000400081c20000424080104042890030440806ae60e31fdb4b353d38709288ce63fe4d787e216a2944a836d6d2f44d1fa35d8140820182c201003000400",
+      "privateAfter": 1,
+      "result": [],
+      "publicTranscript": [
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": [
+        {
+          "valueAtoms": [
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        }
+      ],
+      "queries": [
+        {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "36",
+          "bytesDeleted": "36"
+        }
+      ],
+      "witnessInputs": [
+        "47a4a202c1daaf2f7554a00ce49cf377c2d544ea9073ca338cbfd3d957635c01"
+      ],
+      "admit": true
+    },
+    {
+      "id": "witness-denied",
+      "operation": "run",
+      "value": "référence-東京",
+      "mutation": 1,
+      "admit": false,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a340008400104000401040408010404080403040c0004100801040414580304244801040304010801040401040104010840010000100c72756e000400081c20000424080104042890030440806ae60e31fdb4b353d38709288ce63fe4d787e216a2944a836d6d2f44d1fa35d8140820182c201003000400",
+      "privateBefore": 0,
+      "error": "failed assert: unauthorized",
+      "queries": [],
+      "witnessInputs": [
+        "4439721dbf9105f67ee6467765125d17f8b697754fa12cee88204ad002685255"
+      ]
+    }
+  ]
+}

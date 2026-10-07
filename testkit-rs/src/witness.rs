@@ -23,6 +23,37 @@ use std::{collections::VecDeque, fmt};
 /// failures. A lab reports them as redacted execution errors. Inspect a known
 /// test failure deliberately with `LabError::execution_error()`; assertion text
 /// does not establish whether a script or the application produced the error.
+///
+/// A clone of this owned script has its own answer queue and invocation journal.
+/// A mismatched call consumes nothing; a matching call consumes one answer and
+/// records its arguments:
+///
+/// ```
+/// use midnight_compact_testkit::WitnessScript;
+///
+/// let original = WitnessScript::new([(1_u8, Ok(42_u8)), (2, Ok(84))]);
+/// let mut working = original.clone();
+///
+/// assert!(working.answer(9).is_err());
+/// assert_eq!(working.remaining(), 2);
+/// assert!(working.journal().is_empty());
+///
+/// assert_eq!(working.answer(1).unwrap(), 42);
+/// assert_eq!(working.remaining(), 1);
+/// assert_eq!(working.journal(), &[1]);
+///
+/// // Even after a successful call, a mismatch preserves the remaining answer
+/// // and the existing journal entry.
+/// assert!(working.answer(1).is_err());
+/// assert_eq!(working.remaining(), 1);
+/// assert_eq!(working.journal(), &[1]);
+/// assert_eq!(working.answer(2).unwrap(), 84);
+/// assert_eq!(working.remaining(), 0);
+/// assert_eq!(working.journal(), &[1, 2]);
+///
+/// assert_eq!(original.remaining(), 2);
+/// assert!(original.journal().is_empty());
+/// ```
 #[derive(Clone)]
 pub struct WitnessScript<A, R> {
     answers: VecDeque<(A, Result<R, CompactError>)>,

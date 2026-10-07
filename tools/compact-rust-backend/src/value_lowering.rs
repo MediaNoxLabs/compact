@@ -391,3 +391,6 @@ pub(crate) fn retained_value(value: syn::Expr, ty: &Type) -> syn::Expr {
         syn::parse_quote!((#value).clone())
     }
 }
+
+#[cfg(test)]
+mod tests;

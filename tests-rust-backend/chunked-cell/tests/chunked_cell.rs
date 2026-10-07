@@ -361,8 +361,12 @@ fn chunked_cell_calls_match_typescript_and_replay() {
     let meter = WitnessReadMeter::new(&witness_context);
     assert!(active.witness_read(&meter).unwrap());
     assert_eq!(amount.witness_read(&meter).unwrap(), Field::from(3_u64));
-    assert_eq!(
-        ledger_contract::assert_active(context(), false).is_err(),
-        contract.recording.assert_active(context(), false).is_err()
-    );
+    assert!(matches!(
+        ledger_contract::assert_active(context(), false),
+        Err(runtime::CompactError::AssertionFailed(message)) if message == "active mismatch"
+    ));
+    assert!(matches!(
+        contract.recording.assert_active(context(), false),
+        Err(runtime::CompactError::AssertionFailed(message)) if message == "active mismatch"
+    ));
 }

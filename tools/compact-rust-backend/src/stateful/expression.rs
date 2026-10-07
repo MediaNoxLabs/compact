@@ -441,38 +441,149 @@ fn render_operation_expression(
     query_effect: &mut bool,
 ) -> Result<(syn::Expr, Type, bool), RenderError> {
     match value {
-        Expr::KernelSelf { ty } => {
-            let expected = Type::Struct {
-                name: "ContractAddress".into(),
-                fields: vec![StructField {
-                    name: "bytes".into(),
-                    ty: Type::Bytes { length: 32 },
-                }],
-            };
-            if *ty != expected {
-                return Err(RenderError::TypeMismatch {
-                    expected,
-                    actual: ty.clone(),
-                });
-            }
-            let ty_syntax = rust_type(ty)?;
-            let step = syn::Ident::new(
-                &format!("__compact_query_{}", *next_temp),
-                Span::call_site(),
-            );
-            *next_temp += 1;
-            statements.push(syn::parse_quote!(let #step = context.kernel_self()?;));
-            statements.push(syn::parse_quote!(context = #step.context;));
-            statements.push(syn::parse_quote!(total_cost += #step.gas_cost;));
-            *query_effect = true;
-            Ok((
-                syn::parse_quote!(#ty_syntax {
-                    bytes: runtime::ledger::contract_address_bytes(&#step.result),
-                }),
-                ty.clone(),
-                false,
-            ))
-        }
+        Expr::CellRead { .. }
+        | Expr::CounterLessThan { .. }
+        | Expr::CounterRead { .. }
+        | Expr::SetMember { .. }
+        | Expr::MapMember { .. }
+        | Expr::MapLookup { .. }
+        | Expr::MerkleCheckRoot { .. }
+        | Expr::HistoricMerkleCheckRoot { .. }
+        | Expr::ListLength { .. }
+        | Expr::ListIsEmpty { .. }
+        | Expr::ListHead { .. }
+        | Expr::SetSize { .. }
+        | Expr::SetIsEmpty { .. }
+        | Expr::MapIsEmpty { .. } => render_observation_operation(
+            value,
+            parameters,
+            witnesses,
+            statements,
+            next_temp,
+            circuits,
+            stateful_circuits,
+            ledger_fields,
+            query_effect,
+        ),
+        Expr::Call { .. } | Expr::WitnessCall { .. } => render_call_operation(
+            value,
+            parameters,
+            witnesses,
+            statements,
+            next_temp,
+            circuits,
+            stateful_circuits,
+            ledger_fields,
+            query_effect,
+        ),
+        Expr::KernelSelf { .. }
+        | Expr::KernelClaim { .. }
+        | Expr::KernelMintShielded { .. }
+        | Expr::CreateZswapInput { .. }
+        | Expr::CreateZswapOutput { .. }
+        | Expr::NativeWitnessCall { .. } => render_effect_operation(
+            value,
+            parameters,
+            witnesses,
+            statements,
+            next_temp,
+            circuits,
+            stateful_circuits,
+            ledger_fields,
+            query_effect,
+        ),
+        Expr::Coerce { .. }
+        | Expr::FieldCast { .. }
+        | Expr::FieldToBytes32 { .. }
+        | Expr::UnsignedCast { .. } => render_conversion_operation(
+            value,
+            parameters,
+            witnesses,
+            statements,
+            next_temp,
+            circuits,
+            stateful_circuits,
+            ledger_fields,
+            query_effect,
+        ),
+        Expr::UnsignedAdd { .. }
+        | Expr::UnsignedSubtract { .. }
+        | Expr::UnsignedMultiply { .. }
+        | Expr::Add { .. }
+        | Expr::Subtract { .. }
+        | Expr::Multiply { .. }
+        | Expr::Equal { .. }
+        | Expr::NotEqual { .. }
+        | Expr::Compare { .. } => render_arithmetic_operation(
+            value,
+            parameters,
+            witnesses,
+            statements,
+            next_temp,
+            circuits,
+            stateful_circuits,
+            ledger_fields,
+            query_effect,
+        ),
+        Expr::Assert { .. } => render_assertion_operation(
+            value,
+            parameters,
+            witnesses,
+            statements,
+            next_temp,
+            circuits,
+            stateful_circuits,
+            ledger_fields,
+            query_effect,
+        ),
+        Expr::TransientHash { .. }
+        | Expr::PersistentHash { .. }
+        | Expr::Keccak256 { .. }
+        | Expr::DegradeToTransient { .. }
+        | Expr::UpgradeFromTransient { .. }
+        | Expr::HashToCurve { .. }
+        | Expr::JubjubPointX { .. }
+        | Expr::JubjubPointY { .. }
+        | Expr::EcNeg { .. }
+        | Expr::JubjubScalarFromNative { .. }
+        | Expr::TransientCommit { .. }
+        | Expr::PersistentCommit { .. }
+        | Expr::EcMulGenerator { .. }
+        | Expr::ConstructJubjubPoint { .. }
+        | Expr::EcAdd { .. }
+        | Expr::EcMul { .. } => render_crypto_operation(
+            value,
+            parameters,
+            witnesses,
+            statements,
+            next_temp,
+            circuits,
+            stateful_circuits,
+            ledger_fields,
+            query_effect,
+        ),
+        _ => expression_with_calls(value, parameters, circuits)
+            .map(|(rendered, ty)| (rendered, ty, false)),
+    }
+}
+
+// Same-owner operation family; recursive operands return through the small dispatcher.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "native expression lowering keeps declarations and ordered query effects explicit"
+)]
+fn render_observation_operation(
+    value: &Expr,
+    parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    statements: &mut Vec<syn::Stmt>,
+    next_temp: &mut usize,
+    circuits: &HashMap<&str, &PureCircuit>,
+    stateful_circuits: &HashMap<&str, &StatefulCircuit>,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+    query_effect: &mut bool,
+) -> Result<(syn::Expr, Type, bool), RenderError> {
+    match value {
         Expr::CellRead { field, index } => {
             let declaration = ledger_fields
                 .get(field.as_str())
@@ -875,6 +986,28 @@ fn render_operation_expression(
             *query_effect = true;
             Ok((syn::parse_quote!(#step.result), Type::Boolean, false))
         }
+        _ => expression_with_calls(value, parameters, circuits)
+            .map(|(rendered, ty)| (rendered, ty, false)),
+    }
+}
+
+// Same-owner operation family; recursive operands return through the small dispatcher.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "native expression lowering keeps declarations and ordered query effects explicit"
+)]
+fn render_call_operation(
+    value: &Expr,
+    parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    statements: &mut Vec<syn::Stmt>,
+    next_temp: &mut usize,
+    circuits: &HashMap<&str, &PureCircuit>,
+    stateful_circuits: &HashMap<&str, &StatefulCircuit>,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+    query_effect: &mut bool,
+) -> Result<(syn::Expr, Type, bool), RenderError> {
+    match value {
         Expr::Call { name, arguments } => {
             let (formal_parameters, result, stateful, callee_uses_witness, callee_emits_native) =
                 if let Some(callee) = stateful_circuits.get(name.as_str()) {
@@ -1039,6 +1172,60 @@ fn render_operation_expression(
                 true,
             ))
         }
+        _ => expression_with_calls(value, parameters, circuits)
+            .map(|(rendered, ty)| (rendered, ty, false)),
+    }
+}
+
+// Same-owner operation family; recursive operands return through the small dispatcher.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "native expression lowering keeps declarations and ordered query effects explicit"
+)]
+fn render_effect_operation(
+    value: &Expr,
+    parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    statements: &mut Vec<syn::Stmt>,
+    next_temp: &mut usize,
+    circuits: &HashMap<&str, &PureCircuit>,
+    stateful_circuits: &HashMap<&str, &StatefulCircuit>,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+    query_effect: &mut bool,
+) -> Result<(syn::Expr, Type, bool), RenderError> {
+    match value {
+        Expr::KernelSelf { ty } => {
+            let expected = Type::Struct {
+                name: "ContractAddress".into(),
+                fields: vec![StructField {
+                    name: "bytes".into(),
+                    ty: Type::Bytes { length: 32 },
+                }],
+            };
+            if *ty != expected {
+                return Err(RenderError::TypeMismatch {
+                    expected,
+                    actual: ty.clone(),
+                });
+            }
+            let ty_syntax = rust_type(ty)?;
+            let step = syn::Ident::new(
+                &format!("__compact_query_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            statements.push(syn::parse_quote!(let #step = context.kernel_self()?;));
+            statements.push(syn::parse_quote!(context = #step.context;));
+            statements.push(syn::parse_quote!(total_cost += #step.gas_cost;));
+            *query_effect = true;
+            Ok((
+                syn::parse_quote!(#ty_syntax {
+                    bytes: runtime::ledger::contract_address_bytes(&#step.result),
+                }),
+                ty.clone(),
+                false,
+            ))
+        }
         Expr::KernelClaim {
             value: argument, ..
         }
@@ -1192,6 +1379,432 @@ fn render_operation_expression(
                 false,
             ))
         }
+        _ => expression_with_calls(value, parameters, circuits)
+            .map(|(rendered, ty)| (rendered, ty, false)),
+    }
+}
+
+// Same-owner operation family; recursive operands return through the small dispatcher.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "native expression lowering keeps declarations and ordered query effects explicit"
+)]
+fn render_conversion_operation(
+    value: &Expr,
+    parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    statements: &mut Vec<syn::Stmt>,
+    next_temp: &mut usize,
+    circuits: &HashMap<&str, &PureCircuit>,
+    stateful_circuits: &HashMap<&str, &StatefulCircuit>,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+    query_effect: &mut bool,
+) -> Result<(syn::Expr, Type, bool), RenderError> {
+    match value {
+        Expr::Coerce { value, ty } => {
+            let (rendered, actual, effect) = render_state_expression(
+                value,
+                parameters,
+                witnesses,
+                statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            Ok((
+                coerce_expression(rendered, &actual, ty, 0)?,
+                ty.clone(),
+                effect,
+            ))
+        }
+        Expr::FieldCast { value } => {
+            let (value, actual, effect) = render_state_expression(
+                value,
+                parameters,
+                witnesses,
+                statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            let Type::Unsigned { max } = &actual else {
+                return Err(RenderError::ExpectedUnsigned(actual));
+            };
+            let rendered = match unsigned_maximum(max)? {
+                UnsignedMaximum::Small(_) => {
+                    syn::parse_quote!(runtime::Field::from((#value).value()))
+                }
+                UnsignedMaximum::Wide { .. } => syn::parse_quote!((#value).as_field()),
+            };
+            Ok((rendered, Type::Field, effect))
+        }
+        Expr::FieldToBytes32 { value } => {
+            let (rendered, actual, effect) = render_state_expression(
+                value,
+                parameters,
+                witnesses,
+                statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            if actual != Type::Field {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Field,
+                    actual,
+                });
+            }
+            Ok((
+                field_to_bytes_32_syntax(rendered),
+                Type::Bytes { length: 32 },
+                effect,
+            ))
+        }
+        Expr::UnsignedCast { max, value } => {
+            unsigned_maximum(max)?;
+            let (rendered, actual, effect) = render_state_expression(
+                value,
+                parameters,
+                witnesses,
+                statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            let Type::Unsigned { max: source_max } = actual else {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Unsigned { max: max.clone() },
+                    actual,
+                });
+            };
+            Ok((
+                unsigned_cast_syntax(rendered, &source_max, max)?,
+                Type::Unsigned { max: max.clone() },
+                effect,
+            ))
+        }
+        _ => expression_with_calls(value, parameters, circuits)
+            .map(|(rendered, ty)| (rendered, ty, false)),
+    }
+}
+
+// Same-owner operation family; recursive operands return through the small dispatcher.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "native expression lowering keeps declarations and ordered query effects explicit"
+)]
+fn render_arithmetic_operation(
+    value: &Expr,
+    parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    statements: &mut Vec<syn::Stmt>,
+    next_temp: &mut usize,
+    circuits: &HashMap<&str, &PureCircuit>,
+    stateful_circuits: &HashMap<&str, &StatefulCircuit>,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+    query_effect: &mut bool,
+) -> Result<(syn::Expr, Type, bool), RenderError> {
+    match value {
+        Expr::UnsignedAdd { max, left, right }
+        | Expr::UnsignedSubtract { max, left, right }
+        | Expr::UnsignedMultiply { max, left, right } => {
+            let (left, left_ty, left_effect) = render_state_expression(
+                left,
+                parameters,
+                witnesses,
+                statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            let Type::Unsigned { max: left_max } = left_ty else {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Unsigned { max: max.clone() },
+                    actual: left_ty,
+                });
+            };
+            let left_name = syn::Ident::new(
+                &format!("__compact_value_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            statements.push(syn::parse_quote!(let #left_name = #left;));
+            let (right, right_ty, right_effect) = render_state_expression(
+                right,
+                parameters,
+                witnesses,
+                statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            let Type::Unsigned { max: right_max } = right_ty else {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Unsigned { max: max.clone() },
+                    actual: right_ty,
+                });
+            };
+            let right_name = syn::Ident::new(
+                &format!("__compact_value_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            statements.push(syn::parse_quote!(let #right_name = #right;));
+            Ok((
+                unsigned_arithmetic_syntax(
+                    value,
+                    syn::parse_quote!(#left_name),
+                    syn::parse_quote!(#right_name),
+                    &left_max,
+                    &right_max,
+                    max,
+                )?,
+                Type::Unsigned { max: max.clone() },
+                left_effect || right_effect,
+            ))
+        }
+        Expr::Add { left, right }
+        | Expr::Subtract { left, right }
+        | Expr::Multiply { left, right } => {
+            let (left, left_ty, left_effect) = render_state_expression(
+                left,
+                parameters,
+                witnesses,
+                statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            if left_ty != Type::Field {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Field,
+                    actual: left_ty,
+                });
+            }
+            let left_name = syn::Ident::new(
+                &format!("__compact_value_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            statements.push(syn::parse_quote!(let #left_name = #left;));
+            let (right, right_ty, right_effect) = render_state_expression(
+                right,
+                parameters,
+                witnesses,
+                statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            if right_ty != Type::Field {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Field,
+                    actual: right_ty,
+                });
+            }
+            let right_name = syn::Ident::new(
+                &format!("__compact_value_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            statements.push(syn::parse_quote!(let #right_name = #right;));
+            let rendered = match value {
+                Expr::Add { .. } => syn::parse_quote!(#left_name + #right_name),
+                Expr::Subtract { .. } => syn::parse_quote!(#left_name - #right_name),
+                Expr::Multiply { .. } => syn::parse_quote!(#left_name * #right_name),
+                _ => unreachable!(),
+            };
+            Ok((rendered, Type::Field, left_effect || right_effect))
+        }
+        Expr::Equal { left, right } | Expr::NotEqual { left, right } => {
+            let (left, left_ty, left_effect) = render_state_expression(
+                left,
+                parameters,
+                witnesses,
+                statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            let left_name = syn::Ident::new(
+                &format!("__compact_value_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            statements.push(syn::parse_quote!(let #left_name = #left;));
+            let (right, right_ty, right_effect) = render_state_expression(
+                right,
+                parameters,
+                witnesses,
+                statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            if right_ty != left_ty {
+                return Err(RenderError::TypeMismatch {
+                    expected: left_ty,
+                    actual: right_ty,
+                });
+            }
+            let rendered = if matches!(value, Expr::Equal { .. }) {
+                syn::parse_quote!(#left_name == #right)
+            } else {
+                syn::parse_quote!(#left_name != #right)
+            };
+            Ok((rendered, Type::Boolean, left_effect || right_effect))
+        }
+        Expr::Compare {
+            operator,
+            left,
+            right,
+        } => {
+            let (left, left_ty, left_effect) = render_state_expression(
+                left,
+                parameters,
+                witnesses,
+                statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            let Type::Unsigned { max } = &left_ty else {
+                return Err(RenderError::ExpectedUnsigned(left_ty));
+            };
+            if matches!(unsigned_maximum(max)?, UnsignedMaximum::Wide { .. }) {
+                return Err(RenderError::InvalidUnsignedMaximum(max.clone()));
+            }
+            let left_name = syn::Ident::new(
+                &format!("__compact_value_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            statements.push(syn::parse_quote!(let #left_name = #left;));
+            let (right, right_ty, right_effect) = render_state_expression(
+                right,
+                parameters,
+                witnesses,
+                statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            let Type::Unsigned { max } = &right_ty else {
+                return Err(RenderError::ExpectedUnsigned(right_ty));
+            };
+            if matches!(unsigned_maximum(max)?, UnsignedMaximum::Wide { .. }) {
+                return Err(RenderError::InvalidUnsignedMaximum(max.clone()));
+            }
+            let rendered = match operator {
+                ComparisonOperator::Less => syn::parse_quote!(#left_name.value() < #right.value()),
+                ComparisonOperator::LessEqual => {
+                    syn::parse_quote!(#left_name.value() <= #right.value())
+                }
+                ComparisonOperator::Greater => {
+                    syn::parse_quote!(#left_name.value() > #right.value())
+                }
+                ComparisonOperator::GreaterEqual => {
+                    syn::parse_quote!(#left_name.value() >= #right.value())
+                }
+            };
+            Ok((rendered, Type::Boolean, left_effect || right_effect))
+        }
+        _ => expression_with_calls(value, parameters, circuits)
+            .map(|(rendered, ty)| (rendered, ty, false)),
+    }
+}
+
+// Same-owner operation family; recursive operands return through the small dispatcher.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "native expression lowering keeps declarations and ordered query effects explicit"
+)]
+fn render_assertion_operation(
+    value: &Expr,
+    parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    statements: &mut Vec<syn::Stmt>,
+    next_temp: &mut usize,
+    circuits: &HashMap<&str, &PureCircuit>,
+    stateful_circuits: &HashMap<&str, &StatefulCircuit>,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+    query_effect: &mut bool,
+) -> Result<(syn::Expr, Type, bool), RenderError> {
+    match value {
+        Expr::Assert { condition, message } => {
+            let (condition, actual, effect) = render_state_expression(
+                condition,
+                parameters,
+                witnesses,
+                statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            if actual != Type::Boolean {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Boolean,
+                    actual,
+                });
+            }
+            Ok((
+                syn::parse_quote!({
+                    if !(#condition) {
+                        return Err(runtime::CompactError::AssertionFailed(#message.to_owned()));
+                    }
+                }),
+                Type::Unit,
+                effect,
+            ))
+        }
+        _ => expression_with_calls(value, parameters, circuits)
+            .map(|(rendered, ty)| (rendered, ty, false)),
+    }
+}
+
+// Same-owner operation family; recursive operands return through the small dispatcher.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "native expression lowering keeps declarations and ordered query effects explicit"
+)]
+fn render_crypto_operation(
+    value: &Expr,
+    parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    statements: &mut Vec<syn::Stmt>,
+    next_temp: &mut usize,
+    circuits: &HashMap<&str, &PureCircuit>,
+    stateful_circuits: &HashMap<&str, &StatefulCircuit>,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+    query_effect: &mut bool,
+) -> Result<(syn::Expr, Type, bool), RenderError> {
+    match value {
         Expr::TransientHash { value: input }
         | Expr::PersistentHash { value: input }
         | Expr::Keccak256 { value: input }
@@ -1433,344 +2046,6 @@ fn render_operation_expression(
                 syn::parse_quote!(#operation(#left_name, #right))
             };
             Ok((rendered, Type::JubjubPoint, left_effect || right_effect))
-        }
-        Expr::Assert { condition, message } => {
-            let (condition, actual, effect) = render_state_expression(
-                condition,
-                parameters,
-                witnesses,
-                statements,
-                next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
-                query_effect,
-            )?;
-            if actual != Type::Boolean {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Boolean,
-                    actual,
-                });
-            }
-            Ok((
-                syn::parse_quote!({
-                    if !(#condition) {
-                        return Err(runtime::CompactError::AssertionFailed(#message.to_owned()));
-                    }
-                }),
-                Type::Unit,
-                effect,
-            ))
-        }
-        Expr::Coerce { value, ty } => {
-            let (rendered, actual, effect) = render_state_expression(
-                value,
-                parameters,
-                witnesses,
-                statements,
-                next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
-                query_effect,
-            )?;
-            Ok((
-                coerce_expression(rendered, &actual, ty, 0)?,
-                ty.clone(),
-                effect,
-            ))
-        }
-        Expr::FieldCast { value } => {
-            let (value, actual, effect) = render_state_expression(
-                value,
-                parameters,
-                witnesses,
-                statements,
-                next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
-                query_effect,
-            )?;
-            let Type::Unsigned { max } = &actual else {
-                return Err(RenderError::ExpectedUnsigned(actual));
-            };
-            let rendered = match unsigned_maximum(max)? {
-                UnsignedMaximum::Small(_) => {
-                    syn::parse_quote!(runtime::Field::from((#value).value()))
-                }
-                UnsignedMaximum::Wide { .. } => syn::parse_quote!((#value).as_field()),
-            };
-            Ok((rendered, Type::Field, effect))
-        }
-        Expr::FieldToBytes32 { value } => {
-            let (rendered, actual, effect) = render_state_expression(
-                value,
-                parameters,
-                witnesses,
-                statements,
-                next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
-                query_effect,
-            )?;
-            if actual != Type::Field {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Field,
-                    actual,
-                });
-            }
-            Ok((
-                field_to_bytes_32_syntax(rendered),
-                Type::Bytes { length: 32 },
-                effect,
-            ))
-        }
-        Expr::UnsignedCast { max, value } => {
-            unsigned_maximum(max)?;
-            let (rendered, actual, effect) = render_state_expression(
-                value,
-                parameters,
-                witnesses,
-                statements,
-                next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
-                query_effect,
-            )?;
-            let Type::Unsigned { max: source_max } = actual else {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Unsigned { max: max.clone() },
-                    actual,
-                });
-            };
-            Ok((
-                unsigned_cast_syntax(rendered, &source_max, max)?,
-                Type::Unsigned { max: max.clone() },
-                effect,
-            ))
-        }
-        Expr::UnsignedAdd { max, left, right }
-        | Expr::UnsignedSubtract { max, left, right }
-        | Expr::UnsignedMultiply { max, left, right } => {
-            let (left, left_ty, left_effect) = render_state_expression(
-                left,
-                parameters,
-                witnesses,
-                statements,
-                next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
-                query_effect,
-            )?;
-            let Type::Unsigned { max: left_max } = left_ty else {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Unsigned { max: max.clone() },
-                    actual: left_ty,
-                });
-            };
-            let left_name = syn::Ident::new(
-                &format!("__compact_value_{}", *next_temp),
-                Span::call_site(),
-            );
-            *next_temp += 1;
-            statements.push(syn::parse_quote!(let #left_name = #left;));
-            let (right, right_ty, right_effect) = render_state_expression(
-                right,
-                parameters,
-                witnesses,
-                statements,
-                next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
-                query_effect,
-            )?;
-            let Type::Unsigned { max: right_max } = right_ty else {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Unsigned { max: max.clone() },
-                    actual: right_ty,
-                });
-            };
-            let right_name = syn::Ident::new(
-                &format!("__compact_value_{}", *next_temp),
-                Span::call_site(),
-            );
-            *next_temp += 1;
-            statements.push(syn::parse_quote!(let #right_name = #right;));
-            Ok((
-                unsigned_arithmetic_syntax(
-                    value,
-                    syn::parse_quote!(#left_name),
-                    syn::parse_quote!(#right_name),
-                    &left_max,
-                    &right_max,
-                    max,
-                )?,
-                Type::Unsigned { max: max.clone() },
-                left_effect || right_effect,
-            ))
-        }
-        Expr::Add { left, right }
-        | Expr::Subtract { left, right }
-        | Expr::Multiply { left, right } => {
-            let (left, left_ty, left_effect) = render_state_expression(
-                left,
-                parameters,
-                witnesses,
-                statements,
-                next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
-                query_effect,
-            )?;
-            if left_ty != Type::Field {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Field,
-                    actual: left_ty,
-                });
-            }
-            let left_name = syn::Ident::new(
-                &format!("__compact_value_{}", *next_temp),
-                Span::call_site(),
-            );
-            *next_temp += 1;
-            statements.push(syn::parse_quote!(let #left_name = #left;));
-            let (right, right_ty, right_effect) = render_state_expression(
-                right,
-                parameters,
-                witnesses,
-                statements,
-                next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
-                query_effect,
-            )?;
-            if right_ty != Type::Field {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Field,
-                    actual: right_ty,
-                });
-            }
-            let right_name = syn::Ident::new(
-                &format!("__compact_value_{}", *next_temp),
-                Span::call_site(),
-            );
-            *next_temp += 1;
-            statements.push(syn::parse_quote!(let #right_name = #right;));
-            let rendered = match value {
-                Expr::Add { .. } => syn::parse_quote!(#left_name + #right_name),
-                Expr::Subtract { .. } => syn::parse_quote!(#left_name - #right_name),
-                Expr::Multiply { .. } => syn::parse_quote!(#left_name * #right_name),
-                _ => unreachable!(),
-            };
-            Ok((rendered, Type::Field, left_effect || right_effect))
-        }
-        Expr::Equal { left, right } | Expr::NotEqual { left, right } => {
-            let (left, left_ty, left_effect) = render_state_expression(
-                left,
-                parameters,
-                witnesses,
-                statements,
-                next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
-                query_effect,
-            )?;
-            let left_name = syn::Ident::new(
-                &format!("__compact_value_{}", *next_temp),
-                Span::call_site(),
-            );
-            *next_temp += 1;
-            statements.push(syn::parse_quote!(let #left_name = #left;));
-            let (right, right_ty, right_effect) = render_state_expression(
-                right,
-                parameters,
-                witnesses,
-                statements,
-                next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
-                query_effect,
-            )?;
-            if right_ty != left_ty {
-                return Err(RenderError::TypeMismatch {
-                    expected: left_ty,
-                    actual: right_ty,
-                });
-            }
-            let rendered = if matches!(value, Expr::Equal { .. }) {
-                syn::parse_quote!(#left_name == #right)
-            } else {
-                syn::parse_quote!(#left_name != #right)
-            };
-            Ok((rendered, Type::Boolean, left_effect || right_effect))
-        }
-        Expr::Compare {
-            operator,
-            left,
-            right,
-        } => {
-            let (left, left_ty, left_effect) = render_state_expression(
-                left,
-                parameters,
-                witnesses,
-                statements,
-                next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
-                query_effect,
-            )?;
-            let Type::Unsigned { max } = &left_ty else {
-                return Err(RenderError::ExpectedUnsigned(left_ty));
-            };
-            if matches!(unsigned_maximum(max)?, UnsignedMaximum::Wide { .. }) {
-                return Err(RenderError::InvalidUnsignedMaximum(max.clone()));
-            }
-            let left_name = syn::Ident::new(
-                &format!("__compact_value_{}", *next_temp),
-                Span::call_site(),
-            );
-            *next_temp += 1;
-            statements.push(syn::parse_quote!(let #left_name = #left;));
-            let (right, right_ty, right_effect) = render_state_expression(
-                right,
-                parameters,
-                witnesses,
-                statements,
-                next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
-                query_effect,
-            )?;
-            let Type::Unsigned { max } = &right_ty else {
-                return Err(RenderError::ExpectedUnsigned(right_ty));
-            };
-            if matches!(unsigned_maximum(max)?, UnsignedMaximum::Wide { .. }) {
-                return Err(RenderError::InvalidUnsignedMaximum(max.clone()));
-            }
-            let rendered = match operator {
-                ComparisonOperator::Less => syn::parse_quote!(#left_name.value() < #right.value()),
-                ComparisonOperator::LessEqual => {
-                    syn::parse_quote!(#left_name.value() <= #right.value())
-                }
-                ComparisonOperator::Greater => {
-                    syn::parse_quote!(#left_name.value() > #right.value())
-                }
-                ComparisonOperator::GreaterEqual => {
-                    syn::parse_quote!(#left_name.value() >= #right.value())
-                }
-            };
-            Ok((rendered, Type::Boolean, left_effect || right_effect))
         }
         _ => expression_with_calls(value, parameters, circuits)
             .map(|(rendered, ty)| (rendered, ty, false)),

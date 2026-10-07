@@ -197,3 +197,49 @@ fn recorded_local_bindings_across_calls_on_default_worker() {
             .any(|c| c.name == "chain0" && c.recorded && c.observed_call)
     );
 }
+
+fn native_nested(family: &str, depth: usize) -> Contract {
+    let mut value = serde_json::to_value(nested(family, depth)).unwrap();
+    let pure = value["circuits"][0].take();
+    value["circuits"] = json!([]);
+    value["stateful_circuits"] = json!([{
+        "name":pure["name"],"parameters":pure["parameters"],"result":pure["result"],
+        "actions":[],"return_value":{"kind":"expression","value":pure["body"]}
+    }]);
+    serde_json::from_value(value).expect("valid native Field-returning expression")
+}
+
+fn check_native_nested(family: &str) {
+    for depth in [8, 16, 24] {
+        let contract = native_nested(family, depth);
+        let rendered =
+            render_with_capabilities(&contract).expect("bounded native operation recursion");
+        assert!(rendered.source.contains("pub fn nested"));
+        let entry = rendered
+            .capabilities
+            .circuits
+            .iter()
+            .find(|c| c.name == "nested")
+            .expect("native entry capability");
+        assert!(
+            !entry.recorded,
+            "this native-only result profile must not gain recording support"
+        );
+        assert!(!entry.observed_call);
+    }
+}
+
+#[test]
+fn native_nested_hashes_on_default_worker() {
+    check_native_nested("hash");
+}
+
+#[test]
+fn native_nested_arithmetic_on_default_worker() {
+    check_native_nested("add");
+}
+
+#[test]
+fn native_mixed_control_and_operations_on_default_worker() {
+    check_native_nested("mixed");
+}

@@ -16,14 +16,86 @@
 
 """Exact relation proof inventory and retained-material refusal controls."""
 import copy
+import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 import did_relation_gate as gate
 
 
 class RelationGateTests(unittest.TestCase):
+    def test_fresh_material_creates_key_parents_for_original_and_reducers(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            keygens = []
+
+            def snapshot(source, destination):
+                destination.write_bytes(b"tool")
+                return {"snapshot": str(destination), "sha256": gate.common.sha256(destination)}
+
+            def command(argv, label, directory, receipt, *, env, stdout_path=None):
+                if label.startswith("compile-"):
+                    output = Path(argv[-1])
+                    (output / "contract").mkdir(parents=True)
+                    (output / "compiler").mkdir()
+                    (output / "zkir").mkdir()
+                    if label == "compile-original-did":
+                        fixture = gate.ROOT / gate.did.FIXTURE
+                        operations = sorted(gate.did.EXPORTS)
+                    else:
+                        _, fixture_name, operation = gate.REDUCERS[label.removeprefix("compile-")]
+                        fixture = gate.ROOT / f"tests-rust-backend/{fixture_name}/lib.rs"
+                        operations = [operation]
+                    (output / "contract/lib.rs").write_bytes(fixture.read_bytes())
+                    capabilities = [{"name": op, "recorded": True, "observed_call": True,
+                                     "proof_required": True, "recording_status": "available"}
+                                    for op in operations]
+                    (output / "contract/rust-capabilities.json").write_text(json.dumps(
+                        {"schema_version": 3, "circuits": capabilities}))
+                    (output / "compiler/contract-info.json").write_text(json.dumps(
+                        {"circuits": [{"name": op, "proof": True} for op in operations]}))
+                    for operation in operations:
+                        (output / f"zkir/{operation}.zkir").write_bytes(b"ir")
+                    self.assertFalse((output / "keys").exists())
+                elif label == "prepare-proof-material":
+                    stdout_path.write_text(json.dumps({"format": "compact-proof-material/v1",
+                        "mode": "prepare", "cache_directory": str(root)}))
+                elif label.startswith("keygen-"):
+                    # Like zkir, write into an existing output parent; do not
+                    # let the command double hide missing harness setup.
+                    Path(argv[-2]).write_bytes(b"prover")
+                    Path(argv[-1]).write_bytes(b"verifier")
+                    Path(argv[-3]).with_suffix(".bzkir").write_bytes(b"binary ir")
+                    keygens.append(label)
+                elif label.startswith("prove-"):
+                    name = label.removeprefix("prove-")
+                    output = Path(argv[-1])
+                    if name in gate.SCENARIOS:
+                        summary = self.original(name)
+                        (output / f"did-{name}-result.json").write_text(json.dumps(summary))
+                        (output / summary["final_state_file"]).write_bytes(b"state")
+                    else:
+                        summary = self.reducer(name)
+                        (output / "proof-result.json").write_text(json.dumps(summary))
+                        for call in summary["calls"]:
+                            (output / f"{call['case']}-state.bin").write_bytes(b"state")
+
+            prerequisites = {"MIDNIGHT_PP": str(root), "MIDNIGHT_LEDGER_TEST_STATIC_DIR": str(root),
+                             "zkir": str(root / "zkir")}
+            with patch.object(gate.did, "prerequisites", return_value=prerequisites), \
+                 patch.object(gate.did, "dust_fixture_inventory", return_value={}), \
+                 patch.object(gate, "source_inventory", return_value={}), \
+                 patch.object(gate.common, "git_head", return_value="test-head"):
+                result = gate.run_gate(root / "run", root / "compiler", root / "scheme",
+                                       root / "target", environment={}, command=command, snapshot=snapshot)
+            self.assertEqual(result["status"], "passed", result.get("error"))
+            self.assertEqual(keygens, [f"keygen-{op}" for op in sorted(gate.ORIGINAL_OPERATIONS)]
+                             + [f"keygen-{kind}" for kind in gate.REDUCERS])
+            self.assertEqual(set(result["scenarios"]), set(gate.SCENARIOS))
+            self.assertEqual(set(result["reducers"]), set(gate.REDUCERS))
+
     def original(self, scenario):
         selector, cases, operations = gate.SCENARIOS[scenario]
         return {'format': 'compact-did-proof-result/v1', 'scenario': scenario,

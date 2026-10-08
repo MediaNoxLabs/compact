@@ -231,6 +231,7 @@ def run_gate(directory, compiler, scheme, target, *, reuse_material=None, reuse_
                                 f"{operation}: retained ZKIR differs from fresh compiler output")
                     copy_or_generate(source, destination, lambda: None)
             if reuse_material is None:
+                (original / "keys").mkdir(exist_ok=True)
                 execute([components["zkir"]["snapshot"], "compile",
                          original / f"zkir/{operation}.zkir", original / f"keys/{operation}.prover",
                          original / f"keys/{operation}.verifier"], f"keygen-{operation}")
@@ -277,6 +278,7 @@ def run_gate(directory, compiler, scheme, target, *, reuse_material=None, reuse_
                     copy_or_generate(source_material, destination, lambda: None)
                 materials.append(destination)
             if reuse_reducers is None:
+                (output / "keys").mkdir(exist_ok=True)
                 execute([components["zkir"]["snapshot"], "compile", output / f"zkir/{operation}.zkir",
                          output / f"keys/{operation}.prover", output / f"keys/{operation}.verifier"], f"keygen-{kind}")
             before = hashes(checked_file(path) for path in materials)

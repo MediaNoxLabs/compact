@@ -1,0 +1,47 @@
+{
+  "format": "compact-rust-review-artifacts/v1",
+  "milestone_closure": "0d7610b2792d60fee5d3713d4eb0ede3c98cc82a",
+  "scope": "Supplemental final metrics and developer review deck; frozen milestone qualification unchanged.",
+  "files": [
+    {
+      "path": "doc/rust/0.3.0-final-metrics.md",
+      "sha256": "03e86420d0e71255f7fdab3ef9b9e10ea1b73f1fdb301dfefffdfec8fe539621",
+      "bytes": 5072
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/final-metrics/metrics.json",
+      "sha256": "b7a54f2d0744bf4ad5f6ac55cb80c1732cb40a61c8005bbc497e844b0b4bbeb8",
+      "bytes": 8283
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/final-metrics/develop-merge-review.md",
+      "sha256": "d39d3783c6ab9987c7eea7a780accfdac14efe3aaabbf5b67ad6e9e0a8a6f54f",
+      "bytes": 3034
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/final-metrics/milestone-commit-audit.md",
+      "sha256": "3615d7f138ab1a55e9dfc698b894b302a3e1bd5ca255e01eb27b39e4fe3732ae",
+      "bytes": 687
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/final-metrics/develop-merge-review.json",
+      "sha256": "c0bc9fb7830ab281ccab953dd11f7522c2caf8a9550b4620acf8938eb3d100ec",
+      "bytes": 3386
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/final-metrics/milestone-commit-audit.json",
+      "sha256": "42840c1569a5b6caf47117924cc5d230d1988ea8cc3e8433a01857d277e60317",
+      "bytes": 36988
+    },
+    {
+      "path": "doc/rust/presentations/compact-rust-0.3.0-engineering-review.pptx",
+      "sha256": "c22c71c4734d3b0751d966e59e6d64d3c96c84a71239f53b26ab3ce20777de04",
+      "bytes": 82386
+    },
+    {
+      "path": "doc/rust/presentations/README.md",
+      "sha256": "95785f2641cae8cde35a9844288e12405789893e3b8a94bb4cb7f12d881b3402",
+      "bytes": 946
+    }
+  ]
+}

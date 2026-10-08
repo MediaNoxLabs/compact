@@ -1,0 +1,947 @@
+{
+  "range": "03c03a39..0d7610b2792d60fee5d3713d4eb0ede3c98cc82a",
+  "count": 104,
+  "conventional_count": 104,
+  "dco_count": 104,
+  "signature_counts": {
+    "G": 104
+  },
+  "commits": [
+    {
+      "sha": "0d7610b2792d60fee5d3713d4eb0ede3c98cc82a",
+      "subject": "docs(rust): close the 0.3.0 engineering milestone",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "20cd967eecd967cef2c184277e73892eeb546752",
+      "subject": "docs(rust): publish the 0.3.0 decision and developer collection",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "f9a496660a4a69f4dd7c7927111767ad5c0c12b2",
+      "subject": "test(rust): create fresh relation key directories",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "551f065cd6267e07020a755db5469df03e41b775",
+      "subject": "test(rust): include child status in compatibility failures",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "57fab7755097380b90619672be5150746f9d4a49",
+      "subject": "test(rust): align candidate gates with delivered source baselines",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "679be285d91baf87ae55ae3161140e371d259b62",
+      "subject": "test(rust): separate runtime admission from output recovery",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "2c798d2dc5f94ad13e89610068035ed70d94f469",
+      "subject": "test(rust): retain upstream error variants in strict path checks",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "17433b40a14da83c5c500d92420149c28f755b88",
+      "subject": "feat(testkit): compose official ledger8 providers for local tests",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "9ffd7880405ed5cfd62909ed4aac64a638c7fc02",
+      "subject": "feat(rust): provide a configurable ledger decoding preset",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "231559f12aa67a37065b4663778d69ab278678d2",
+      "subject": "test(rust): require chunked qualified Set compiler admission",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "ef352bcd7062dcf139478c91b64384b0459c33f3",
+      "subject": "fix(rust): address qualified Set context at nested ledger paths",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "e68078846260e4c6b2d18f40ec9ec1a2571cae33",
+      "subject": "fix(rust): validate ledger VM path operands before lowering",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "16f5b55d55832c2e7bf521d28a9f992f08b5aca8",
+      "subject": "feat(rust): add explicit byte limits for ledger decoding",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "6aa345fd76cf99ba491a761c42a39608d7e207eb",
+      "subject": "fix(rust): distinguish unsupported wide integer operations",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "4c8aebc3b94144aa146ca562b3e67cabeb772ed0",
+      "subject": "test(rust): qualify external typed consumer boundaries",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "74d04c1a8ed761263baac1679b05010f64b2fc73",
+      "subject": "docs(rust): align current compatibility labels with ABI 50",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "3455f2e952c019cddd847a874b55f4a16f1ffb73",
+      "subject": "test(rust): verify shared Boolean typing through public targets",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "cb687ddc42ab6d5d7af17971b324db7c3689b226",
+      "subject": "test(rust): cover Boolean values and witness failure order",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "1aa606228502e131f0c901fe4cb932cc6051df7f",
+      "subject": "test(rust): establish versioned specification conformance baseline",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "f352627515e39ce100fdb2d66bbdae910b4deb0c",
+      "subject": "test(rust): cover generated Field modular arithmetic",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "5a9cd35613c0a973c5c5134e7f93fa906bdb3594",
+      "subject": "test(rust): pin Field literal modulus boundaries",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "1374c7ede440c3f7fb0e22261f37ab24629d3439",
+      "subject": "test(rust): preserve prior output after publication failure",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "66dc6fd50c7d877b8f4e637cd46211245232605e",
+      "subject": "test(rust): assert list removal and constructor defaults",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "22e2689c55b09bab04d653496e5b68d9e6b265d5",
+      "subject": "test(rust): verify bounded call graph resource properties",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "22ef5f23e115c3ad070ea1c8cd060a1b4fcafee8",
+      "subject": "test(rust): bind local gate receipts to tools logs and build inputs",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "c8406a4dd74d3bee1cfd77b9337c14891621f7ab",
+      "subject": "test(rust): assert source-defined chunked ledger results",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "c921622dac4a7bed9afc5ce44ebf8e514ba714ac",
+      "subject": "test(rust): anchor generated values and defaults independently",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "31a02ebec210984238ae2135db5938f379340568",
+      "subject": "test(rust): avoid writable executable copies in layout checks",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "e35688eb143aebd2b35867da26d2723e1e276468",
+      "subject": "fix(rust): retain empty vector element types in composed maps",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "827ac965219e8fc203ab0ed8cfb8416094d06644",
+      "subject": "test(rust): cover native witness effect ordering",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "6dd4e965973042ce67ee87458d39ab35f0181fba",
+      "subject": "test(rust): require exact chunked-cell assertion failures",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "dbfd7dc248b6bbe3b188a5a362142facf06621de",
+      "subject": "fix(rust): reject recursive pure calls in private IR",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "300a5cd05649a04819cba4c8ff5dffeaef3cf992",
+      "subject": "fix(rust): validate normalized generated namespaces",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "a136f58f7490b21026d7099dc76178a39803260d",
+      "subject": "fix(rust): preserve fallible vector coercion semantics",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "a162144f7ee253e5f3cd270f4460e3e37526beb2",
+      "subject": "test(rust): cover direct regression helpers and constructors",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "bf7c719beea14f7532feaf0d57577245f42c98ca",
+      "subject": "ci(rust): enable bounded checks on the delivery branch",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "fba6845f37fdbfbfbd49e3a73d896ecff7a70371",
+      "subject": "ci(rust): add bounded owner and MSRV checks with receipts",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "9012a86abfa329b4b4c02896ab1e69ce52fba5f1",
+      "subject": "test(rust): preserve input failures and document owned witness scripts",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "5efa91c280c059e375dcde0998c64dd88f615fb6",
+      "subject": "test(rust): compare digest constructor with captured TS state",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "c924a4e115cdd56e276e35405d80f233860dfbf6",
+      "subject": "test(rust): preserve pure helper admission through conversions",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "49898aeda5c694fcfbd249bb84162340977b1b26",
+      "subject": "test(rust): validate effect operation domain admission",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "d404d8c1abbb5e517d17a4c4b84db604b196618f",
+      "subject": "test(rust): exercise generated reducer control exports",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "d7c6b1ac9416d165b97136f7e05ca176ebfaf987",
+      "subject": "test(rust): validate collection query types and effect ordering",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "3361d696f359a4c86be2256d8e0613f70a4a26aa",
+      "subject": "test(rust): preserve control flow and lexical scope diagnostics",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "f1140869a1518017e09af4600cd78fecce47d0fc",
+      "subject": "test(rust): exercise stateful type and recording scope boundaries",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "dce3c9e90c1cfd5b391c44355ea9f86e862bf317",
+      "subject": "feat(rust): record typed Jubjub values and prove scalar cell writes",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "ec10f324124ccca16cc510a12ccf8c1398496488",
+      "subject": "test(rust): cover resource accounting across typed IR carriers",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "329bf1bc80441125d2800fc9f1dae8b570da5dac",
+      "subject": "feat(rust): record DID relation mutations with checked composition",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "b6fcb06cec7e8913e91faae167926805c4872ffb",
+      "subject": "feat(rust): version public runtime APIs and align standalone dependencies",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "4d2730fd418d4a48143aac88c5c182d14f9769da",
+      "subject": "style(rust): format nested product composition tests",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "03445d6bdb680c78ee617da4939fbde02b7546bf",
+      "subject": "feat(rust): bound compiler ingress and rendering resources",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "e79c639f6f6ebad47c818900a225d87f76947ebf",
+      "subject": "build(rust): remediate compatible dependency advisories",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "c8450ee37485cfd64451bb009a930b07fafff067",
+      "subject": "test(rust): cover shared value lowering boundaries",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "fa7600bc7d4b58475c101f0724f6c8231cb7fd15",
+      "subject": "test(rust): qualify DID digest transactions on ledger 8.1",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "ca97a69fe9f1ebbb9ccf5de1acacedd26a30b6ee",
+      "subject": "fix(rust): reduce native expression operation stack frames",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "1b6c5d02207c08a9426b65fdce84c1b14825ae73",
+      "subject": "fix(rust): unify fixture selection and require reducer proof gates",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "f6a87df1d247fcea4217cafd2a894b0f52624d7b",
+      "subject": "fix(rust): reduce recursive recorded action stack frames",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "40047fb86cac845c5706ab404bea444d6ac71762",
+      "subject": "test(rust): qualify maintained DID primitive reducers",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "926d2bf56b7e7d8532e4d8e03f1806d106aefb1b",
+      "subject": "fix(rust): reduce recursive expression renderer stack frames",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "8a52a01001894ecb5d0e773463436b78993a119b",
+      "subject": "feat(rust): record checked DID digest verification",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "dc97cdbed3ee0592e76acbb7fabd21894e3a946c",
+      "subject": "test(rust): qualify DID lifecycle across ledger 8 profiles",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "1705fc1ae1b1ad28fedf08da32c676b8860b05db",
+      "subject": "refactor(rust): classify checked Unit composition attempts",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "71b8884f1b49ba1bef916722d9c669ce6522c130",
+      "subject": "test(rust): refresh DID provenance after JWK generation",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "e16deac0b203910e73e81c44dbd4d43e11acaf17",
+      "subject": "test(rust): export public DID ledger interchange fixtures",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "770f8dcb546aa3d95455da3a02b9701dcb975191",
+      "subject": "feat(rust): record nested JWK method lifecycle",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "1f9b13944c1ac06d983e952cb1a130750e2a9ee1",
+      "subject": "fix(rust): reduce recursive native renderer stack frames",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "f0775cc61f54dd836c362e1dc8712cba784bc676",
+      "subject": "fix(rust): preserve distinct semantic parameter bindings",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "7d65bd8ee2c2654b9558a8b75077302364fd5d6b",
+      "subject": "feat(rust): record point-product maps and DID method lifecycle",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "d5d4a6c935f5ada7d20d43adf06126d601db19d4",
+      "subject": "refactor(rust): separate typed value and native emitter components",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "fca7577b8a56150a869c56d1e7979727cef33059",
+      "subject": "refactor(rust): separate guarded mutation recording profiles",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "a536360ab002149afc7f6b33465c6d3071eb1d12",
+      "subject": "feat(rust): record flat string maps and DID service lifecycle",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "f965a646af4175b2fa84cc401d236f10b82882ba",
+      "subject": "refactor(rust): own local callback policy beside private context fields",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "dc745e709dcaa0ed621a1690f9a7db9ffe90fe15",
+      "subject": "test(rust): clarify script diagnostics and distinct replay costs",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "91bf9a1521321214bf5bdc1bf751dcecb5369a18",
+      "subject": "fix(rust): validate runtime dependencies in every Cargo context",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "095b67c531b37f82a62e0daedb8dde30a013145f",
+      "subject": "test(rust): classify and cover local helper context boundaries",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "6250d454db1a44f1261b7e903c6fa9ac5af6ecce",
+      "subject": "fix(rust): reject explicit Compact cell enum discriminants",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "6b5e98e8f1f7cbb121118b16a5bffebe0f5c6cf4",
+      "subject": "test(rust): require DID proof lifecycles in the local full gate",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "23d5e8cada2adaf11039bb3d731010a4073167fb",
+      "subject": "feat(rust): record DID alias mutations through typed Set composition",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "9949b01340f5801c9ef2f65e805d4427930c2778",
+      "subject": "refactor(rust): retain checked recording profile rejections",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "82e1336d402f933be11ea21daa57d5afe20f1e31",
+      "subject": "test(rust): cover runtime source and repeated helper boundaries",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "0b297501922db17d623d8ac1a8589f0068fe8c11",
+      "subject": "test(rust): exercise original DID recording through ContractLab",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "51b9ea435f32d7ce7fef767e33d4259f84ae568b",
+      "subject": "feat(rust): record DID Point authorization transitions",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "f103fb345d5425c99e8e553fb21360adfd62a055",
+      "subject": "fix(rust): share semantic names for recorded helper identifiers",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "987b56b11be85ffa69a16aa24cbcb2e4dd4fb6ac",
+      "subject": "feat(rust): validate runtime compatibility before generation",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "6e78bd2b0bac99068118bee480527cf9e80a0c69",
+      "subject": "refactor(rust): isolate pure-call recording policies",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "c43e8fd3a5931b7ffed5ee6c7f73943ab0621cdf",
+      "subject": "test(rust): exercise Merkle scenarios through ContractLab",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "012fbb44f8c4df3c3dc78ee97b209476e4541db8",
+      "subject": "refactor(rust): reuse frame ownership for simple native leaves",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "9ec520a3af2273b2642d4e383245af85e9a154ff",
+      "subject": "test(rust): cover original DID native lifecycle and pure APIs",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "8490847f65137bd219dcf15e0772419c0fea7186",
+      "subject": "test(rust): match passport disclosure guards and cross-language codecs",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "24fa6639441495858b2d3c5e132182febcb2626d",
+      "subject": "refactor(rust): give circuit dependency analysis a shared owner",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "775907eadf1122b7acd1c0657520ae651c642abd",
+      "subject": "test(rust): exercise every pinned passport pure export",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "675547556ed5d841d07d38ad3ee980f8e0efaa53",
+      "subject": "feat(rust): compose audited unit helpers across nested ledger slots",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "2c34c78ac47c0471e64c320a46afe5ada61768a9",
+      "subject": "fix(rust): reject aliases that collide with emitted ledger slots",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "2b583c636c9d450e46e13f28e70c06ff66d0e1e2",
+      "subject": "test(rust): cover passport roots bindings and proof identity checks",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "05d182ae676a437f89abfe402ae8ebbaf6070fe1",
+      "subject": "test(rust): expand passport private-parts and protocol parity cases",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "65cd7d0a61c6cfe7f39914f56f21766fb9d9b4da",
+      "subject": "test(rust): add pinned passport adoption fixtures and TypeScript oracles",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "ceaac44c49ccf361250550d65e170a9c52e1ece2",
+      "subject": "feat(rust): add ContractLab for typed ledger scenarios and replay",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "ee768a60706607580d4ff8b3c949f22c882501b0",
+      "subject": "fix(rust): isolate generated types from representation support names",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "77c9ee144f3c326f29cb44a69b7174c5d81b8945",
+      "subject": "fix(rust): qualify macro-owned names in consumer expansions",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "c70dd63cf91ce59e2bda82a0f27f32073639c669",
+      "subject": "test(rust): strengthen semantic boundary coverage and declaration checks",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "537fd64180b9f9f2f7df6fc947944652690f4a27",
+      "subject": "refactor(rust): separate capability, coin shape and facade components",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "4c5eb5de63808f0891b711fc6b1f35bca58be5e9",
+      "subject": "docs(rust): keep 0.3.0 planning in Obsidian until closeout",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "1f35ac4798bd02cf44c22d2ec84449bfe8a85370",
+      "subject": "docs(rust): plan 0.3.0 runtime and contract adoption",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    },
+    {
+      "sha": "939b7aaaab7ff346149746dc8fce8bd29705b1d9",
+      "subject": "docs(rust): publish backend and runtime architecture decisions",
+      "conventional": true,
+      "dco": true,
+      "signature_status": "G",
+      "signer": "Yurii Shynbuiev <yurii.shynbuiev@iohk.io>",
+      "fingerprint": "68177A52E5E37FDCF31DAEF04BEFC05538080D6E"
+    }
+  ]
+}

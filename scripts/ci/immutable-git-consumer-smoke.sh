@@ -5,7 +5,7 @@
 
 set -euo pipefail
 
-readonly LEDGER_REV="b85f5d8e503fd1d7a1b128bbc1d7156baf823a65"
+readonly LEDGER_REV="30fd606e5652d9146e8c7d453c5c01ea03962a89"
 readonly REPOSITORY_ROOT="$(git rev-parse --show-toplevel)"
 readonly COMPACT_REV="${COMPACT_RUNTIME_GIT_REV:-$(git -C "${REPOSITORY_ROOT}" rev-parse HEAD)}"
 readonly COMPACT_URL="${COMPACT_RUNTIME_GIT_URL:-file://${REPOSITORY_ROOT}}"

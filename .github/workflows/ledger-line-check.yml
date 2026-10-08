@@ -6,12 +6,10 @@ name: Ledger Line Check
 #
 # This fork maintains two ledger lines simultaneously:
 #
-#   codegen-rust  (stable)  → ledger 8, via PUBLISHED crates.io versions
-#                             (midnight-zswap = "8", midnight-onchain-* = "3")
-#                             and NO midnight-ledger git dependency at all.
-#                             This is the branch the CoIP cites as the
-#                             reference implementation, so it must build
-#                             against released crates only.
+#   codegen-rust  (stable)  → ledger 8, via either published crates or one
+#                             reviewed immutable Ledger8 revision. The latter
+#                             is required while a compatible zswap prerelease
+#                             has not been published.
 #   develop       (forward) → ledger 9, via git tags on midnightntwrk/
 #                             midnight-ledger (ledger-9.x). Unreleased;
 #                             becomes the stable line once ledger 9 ships.
@@ -79,7 +77,7 @@ jobs:
 
           # --- lockfile: what actually builds --------------------------
           # Ground truth, and the only place a transitive git pin shows up.
-          lock_ledger_srcs=$(grep -oE 'git\+https://github\.com/midnightntwrk/midnight-ledger[^"]*' Cargo.lock | sort -u || true)
+          lock_ledger_srcs=$(grep -oE 'git\+https://github\.com/(midnightntwrk|MediaNoxLabs)/midnight-ledger[^"]*' Cargo.lock | sort -u || true)
           lock_majors=$(printf '%s\n' "$lock_ledger_srcs" \
             | grep -oE 'tag=ledger-[0-9]+' \
             | grep -oE '[0-9]+$' | sort -u || true)
@@ -88,27 +86,42 @@ jobs:
 
           case "$branch" in
             codegen-rust)
+              stable_git_rev="30fd606e5652d9146e8c7d453c5c01ea03962a89"
               if [ -n "$manifest_majors" ]; then
                 fail \
                   "codegen-rust is the ledger 8 stable branch, but Cargo.toml declares git tag pins for ledger $(echo "$manifest_majors" | tr '\n' ' ')." \
-                  "codegen-rust must depend on PUBLISHED ledger 8 crates only." \
+                  "codegen-rust accepts published Ledger8 crates or the reviewed immutable Ledger8 revision, not tag pins." \
                   "" "Offending pins:" "$(grep -nE 'tag = "ledger-' Cargo.toml)" "" \
-                  "A ledger 9 (or any git-pinned) dependency belongs on develop, not on" \
-                  "the stable branch the CoIP cites as the reference implementation." \
-                  "Retarget this PR to develop, or drop the pins."
+                  "A ledger 9 dependency belongs on develop, not on the stable branch."
               fi
-              if [ -n "$lock_ledger_srcs" ]; then
+
+              if [ -z "$lock_ledger_srcs" ]; then
+                if ! grep -qE '^midnight-zswap\s*=\s*"8"' Cargo.toml; then
+                  fail "codegen-rust expects midnight-zswap = \"8\" when using published Ledger8 crates." \
+                       "Found: $(grep -nE '^midnight-zswap' Cargo.toml || echo '(no midnight-zswap entry)')"
+                fi
+                echo "✓ codegen-rust: ledger 8 — published crates"
+                exit 0
+              fi
+
+              if printf '%s\n' "$lock_ledger_srcs" | grep -qv "?rev=${stable_git_rev}"; then
                 fail \
-                  "codegen-rust must not resolve any midnight-ledger git dependency, but Cargo.lock contains one." \
+                  "codegen-rust resolved an unreviewed midnight-ledger Git revision." \
+                  "Expected revision: $stable_git_rev" \
                   "Resolved git sources:" "$lock_ledger_srcs" "" \
-                  "This can happen transitively even when Cargo.toml looks clean." \
-                  "Regenerate the lockfile against published crates."
+                  "Update the reviewed stable revision deliberately before changing this allow-list."
               fi
-              if ! grep -qE '^midnight-zswap\s*=\s*"8"' Cargo.toml; then
-                fail "codegen-rust expects midnight-zswap = \"8\" (the ledger 8 line) in [workspace.dependencies]." \
+
+              manifest_git_count=$(grep -cE '^midnight-(base-crypto|transient-crypto|serialize|storage|coin-structure|onchain-state|onchain-vm|onchain-runtime|zswap)\s*=.*git = "https://github.com/MediaNoxLabs/midnight-ledger.git".*rev = "'"$stable_git_rev"'"' Cargo.toml || true)
+              if [ "$manifest_git_count" -ne 9 ]; then
+                fail "codegen-rust must pin the complete nine-crate Ledger8 cone to one reviewed revision; found $manifest_git_count entries." \
+                     "$(grep -nE '^midnight-(base-crypto|transient-crypto|serialize|storage|coin-structure|onchain-state|onchain-vm|onchain-runtime|zswap)' Cargo.toml)"
+              fi
+              if ! grep -qE '^midnight-zswap\s*=.*version = "=8\.2\.0-rc\.1"' Cargo.toml; then
+                fail "the reviewed immutable Ledger8 cone expects midnight-zswap =8.2.0-rc.1." \
                      "Found: $(grep -nE '^midnight-zswap' Cargo.toml || echo '(no midnight-zswap entry)')"
               fi
-              echo "✓ codegen-rust: ledger 8 — published crates only, no ledger git sources in Cargo.lock"
+              echo "✓ codegen-rust: ledger 8 — one reviewed immutable source at $stable_git_rev"
               ;;
             develop)
               if [ -z "$manifest_majors" ] && [ -z "$lock_majors" ]; then

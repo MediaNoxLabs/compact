@@ -1,0 +1,3 @@
+   Compiling adr293-migrated v0.1.0 (/tmp/compact-adr293/consumers/migrated)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.60s
+     Running `/tmp/rust030-msrv-target/debug/adr293-migrated`

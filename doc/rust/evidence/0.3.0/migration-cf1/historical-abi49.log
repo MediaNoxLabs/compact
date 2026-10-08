@@ -1,0 +1,40 @@
+    Checking rustls-webpki v0.103.14
+    Checking midnight-curves v0.2.0
+    Checking elliptic-curve v0.13.8
+    Checking fake v2.10.0
+    Checking rustls v0.23.45
+    Checking ecdsa v0.16.9
+    Checking k256 v0.13.4
+    Checking midnight-proofs v0.7.0
+    Checking tokio-rustls v0.26.4
+    Checking hyper-rustls v0.27.7
+    Checking reqwest v0.12.28
+    Checking midnight-base-crypto v1.0.0
+    Checking blake2b_halo2 v0.1.0
+    Checking sha3-circuit v0.1.0
+    Checking midnight-circuits v6.0.0
+    Checking midnight-storage-core v1.1.0
+    Checking midnight-storage v2.0.1
+    Checking midnight-zk-stdlib v1.0.0
+    Checking midnight-transient-crypto v2.0.1
+    Checking midnight-coin-structure v2.0.1
+    Checking midnight-onchain-state v3.0.0
+    Checking midnight-onchain-vm v3.0.0
+    Checking midnight-onchain-runtime v3.0.0
+    Checking midnight-zswap v8.0.3
+    Checking midnight-compact-runtime v0.2.0 (/tmp/compact-adr293/candidate/runtime-rs)
+    Checking adr293-historical-abi49 v0.1.0 (/tmp/compact-adr293/consumers/historical-abi49)
+error[E0080]: evaluation panicked: assertion failed: runtime::RUST_RUNTIME_ABI == 49
+  --> lib.rs:23:19
+   |
+23 |     const _: () = assert!(runtime::RUST_RUNTIME_ABI == 49);
+   |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ evaluation of `pure_circuits::_` failed here
+
+error[E0080]: evaluation panicked: assertion failed: runtime::RUST_RUNTIME_ABI == 49
+  --> lib.rs:34:19
+   |
+34 |     const _: () = assert!(runtime::RUST_RUNTIME_ABI == 49);
+   |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ evaluation of `ledger_contract::_` failed here
+
+For more information about this error, try `rustc --explain E0080`.
+error: could not compile `adr293-historical-abi49` (lib) due to 2 previous errors

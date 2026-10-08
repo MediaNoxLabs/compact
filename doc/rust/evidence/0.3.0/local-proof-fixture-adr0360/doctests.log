@@ -1,0 +1,11 @@
+   Compiling midnight-compact-testkit v0.1.0 (/Users/ysh/.codex/worktrees/07ae/compact/testkit-rs)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.53s
+   Doc-tests midnight_compact_testkit
+
+running 2 tests
+test testkit-rs/src/proof.rs - proof::ProofLab (line 32) - compile ... ok
+test testkit-rs/src/witness.rs - witness::WitnessScript (line 31) ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+all doctests ran in 3.36s; merged doctests compilation took 0.86s

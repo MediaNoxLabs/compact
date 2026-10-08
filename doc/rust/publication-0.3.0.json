@@ -1,0 +1,1993 @@
+{
+  "format": "compact-rust-doc-publication/v1",
+  "date": "2026-10-09",
+  "qualified_source": "f9a496660a4a69f4dd7c7927111767ad5c0c12b2",
+  "technical_qualification_sha256": "69076791c0671f6e258c9a0171ba1117ba2f17e362ffdc56df9c337b8088b424",
+  "adr_count": 121,
+  "guide_package": "244 reviewed files plus final qualification evidence",
+  "cops_sources": [
+    {
+      "path": "doc/cops/README.md",
+      "source": "Initiatives/02 Compact Rust emission/CoPS/README.md",
+      "source_sha256": "210ffc7fc4a8df54174e40933c7aa81e82c1969b92d46d6fe402343ca53d8564",
+      "published_sha256": "f210984b30138f3b92ccf62954f5d59e22d39b46133a7ea4af2f59226c06880f"
+    },
+    {
+      "path": "doc/cops/evidence/decoder-artifact-sizing.zip",
+      "source": "Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0359 — Decoder artifact sizing.zip",
+      "source_sha256": "26759204a72aa54f0c39aa70eb3484b5fb1c85ea4a23ae7736c945a93f84eba4",
+      "published_sha256": "26759204a72aa54f0c39aa70eb3484b5fb1c85ea4a23ae7736c945a93f84eba4"
+    },
+    {
+      "path": "doc/cops/evidence/decoder-policy-implementation.zip",
+      "source": "Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0359 — Practical byte policy implementation.zip",
+      "source_sha256": "f581b9913f547d0114b02eceb18aa3f269d2de66c1dedd36f5029a54ff6cf4d4",
+      "published_sha256": "f581b9913f547d0114b02eceb18aa3f269d2de66c1dedd36f5029a54ff6cf4d4"
+    },
+    {
+      "path": "doc/cops/evidence/pinned-ts-ledger8-comparison.zip",
+      "source": "Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/CoPS-001 — Pinned TS and ledger8 decoder comparison.zip",
+      "source_sha256": "c12dd62daacdae82bc0954c689caa89b66f95755f091ba1abc37136c46c27c53",
+      "published_sha256": "c12dd62daacdae82bc0954c689caa89b66f95755f091ba1abc37136c46c27c53"
+    },
+    {
+      "path": "doc/cops/template.md",
+      "source": "Initiatives/02 Compact Rust emission/CoPS/CoPS-template.md",
+      "source_sha256": "dd7363b378142e7ce517fb6266fd8932f5b98ff5f364b580cfd074914829d6fd",
+      "published_sha256": "dd7363b378142e7ce517fb6266fd8932f5b98ff5f364b580cfd074914829d6fd"
+    },
+    {
+      "path": "doc/cops/0001-ledger-decoding-resource-limits.md",
+      "source": "Initiatives/02 Compact Rust emission/CoPS/CoPS-001 — Ledger decoding resource limits.md",
+      "source_sha256": "26e0e55eaaf979aecbe8ab1071300e14abe6ad7af4fb90f115da30fe1f5e5f0a",
+      "published_sha256": "d1087ceb15c8be7d564764b9183291d97b9a4c372f9734339cca01ccc1a2217e"
+    },
+    {
+      "path": "doc/cops/0002-rust-contract-client-and-provider-boundaries.md",
+      "source": "Initiatives/02 Compact Rust emission/CoPS/CoPS-002 — Rust contract client and provider boundaries.md",
+      "source_sha256": "0fdd725cbbe60031ab7dd9191d85aa4ce9b24d19b349b5449a4503acdc3cbeed",
+      "published_sha256": "cf9ba3a5e6e6f239366444c170bb2c2724e04e2c40629ef64408cd4b379739ba"
+    },
+    {
+      "path": "doc/cops/evidence/decoder-preset-sizing.md",
+      "source": "Initiatives/02 Compact Rust emission/Milestone 0.3.0/Research/Decoder preset sizing — 2026-10-08.md",
+      "source_sha256": "ff1325f97c80bc588aa3556cda898a23bda7aa06e3db4f4cbf93f3b41965a57d",
+      "published_sha256": "2089cda98f3c6798787a51adc322c42bba49a6f3a796de91a4062bb6e688c0d1"
+    },
+    {
+      "path": "doc/cops/evidence/pinned-decoder-comparison.md",
+      "source": "Initiatives/02 Compact Rust emission/Milestone 0.3.0/Research/CoPS-001 — Pinned decoder comparison.md",
+      "source_sha256": "c9f88d5b520beea71dc717f18c49733e54e6865483b611a89b1133d04b8bd4eb",
+      "published_sha256": "d7532672862337e5212d66a90ff78e8cf1d3e0551b0c2491474b21dbb00d9597"
+    },
+    {
+      "path": "doc/cops/evidence/decoder-policy-receipt.md",
+      "source": "Initiatives/02 Compact Rust emission/Milestone 0.3.0/Reviews/ADR0359 — Practical byte policy receipt.md",
+      "source_sha256": "3abd68063c5b4f37bbc4cd523248bb66df1008715e7f7e4c1a2f7e78074b5ebd",
+      "published_sha256": "7de758259a9955b8de6e4db5b27bd7adc6898e301e1d813c88fa772525a18557"
+    }
+  ],
+  "files": [
+    {
+      "path": "doc/cops/0001-ledger-decoding-resource-limits.md",
+      "sha256": "d1087ceb15c8be7d564764b9183291d97b9a4c372f9734339cca01ccc1a2217e",
+      "bytes": 9766
+    },
+    {
+      "path": "doc/cops/0002-rust-contract-client-and-provider-boundaries.md",
+      "sha256": "cf9ba3a5e6e6f239366444c170bb2c2724e04e2c40629ef64408cd4b379739ba",
+      "bytes": 8104
+    },
+    {
+      "path": "doc/cops/README.md",
+      "sha256": "f210984b30138f3b92ccf62954f5d59e22d39b46133a7ea4af2f59226c06880f",
+      "bytes": 1928
+    },
+    {
+      "path": "doc/cops/evidence/decoder-artifact-sizing.zip",
+      "sha256": "26759204a72aa54f0c39aa70eb3484b5fb1c85ea4a23ae7736c945a93f84eba4",
+      "bytes": 75085
+    },
+    {
+      "path": "doc/cops/evidence/decoder-policy-implementation.zip",
+      "sha256": "f581b9913f547d0114b02eceb18aa3f269d2de66c1dedd36f5029a54ff6cf4d4",
+      "bytes": 8124
+    },
+    {
+      "path": "doc/cops/evidence/decoder-policy-receipt.md",
+      "sha256": "7de758259a9955b8de6e4db5b27bd7adc6898e301e1d813c88fa772525a18557",
+      "bytes": 3450
+    },
+    {
+      "path": "doc/cops/evidence/decoder-preset-sizing.md",
+      "sha256": "2089cda98f3c6798787a51adc322c42bba49a6f3a796de91a4062bb6e688c0d1",
+      "bytes": 5375
+    },
+    {
+      "path": "doc/cops/evidence/pinned-decoder-comparison.md",
+      "sha256": "d7532672862337e5212d66a90ff78e8cf1d3e0551b0c2491474b21dbb00d9597",
+      "bytes": 9887
+    },
+    {
+      "path": "doc/cops/evidence/pinned-ts-ledger8-comparison.zip",
+      "sha256": "c12dd62daacdae82bc0954c689caa89b66f95755f091ba1abc37136c46c27c53",
+      "bytes": 150933
+    },
+    {
+      "path": "doc/cops/template.md",
+      "sha256": "dd7363b378142e7ce517fb6266fd8932f5b98ff5f364b580cfd074914829d6fd",
+      "bytes": 1639
+    },
+    {
+      "path": "doc/rust/README.md",
+      "sha256": "c2b88aa015798f7caa9fa6385adc3c0deeb0920a78967eaf73667690c0aa79e8",
+      "bytes": 1604
+    },
+    {
+      "path": "doc/rust/adr/0241-vault-first-delivery-and-measurable-midpoint-ci.md",
+      "sha256": "22d857c18691f30c522db7f40d74e9d42e3d274c7701c6b49986271ab94ea64b",
+      "bytes": 3501
+    },
+    {
+      "path": "doc/rust/adr/0242-separate-capability-coin-shape-and-recording-facade-ownership.md",
+      "sha256": "bbbeb92f0a96a7c19fcded6ea9917e9edfb9cdbd57417f90fffb54e05fcb8611",
+      "bytes": 6111
+    },
+    {
+      "path": "doc/rust/adr/0243-evaluate-generated-abstractions-with-bounded-probes.md",
+      "sha256": "759e9919a69f8e4c066f76848bc2b60465b3de913a06fb58ce31a6fc97f37da4",
+      "bytes": 12700
+    },
+    {
+      "path": "doc/rust/adr/0244-test-owned-semantic-boundaries-before-claiming-code-quality.md",
+      "sha256": "f0b41f454a4f35a933ded7d9fc6884c1a808d10fece0eb90329386c7f90224e0",
+      "bytes": 4411
+    },
+    {
+      "path": "doc/rust/adr/0245-validate-circuit-names-before-constructing-call-maps.md",
+      "sha256": "dc3116bcc92dbdaec8845fc055e9eee865dc518e00802b3a257fae2656da0dbe",
+      "bytes": 3681
+    },
+    {
+      "path": "doc/rust/adr/0246-reject-circuit-collisions-in-emitted-rust-namespaces.md",
+      "sha256": "2fe49f85bca375dd5c5d234ad0e9693619f4a683ec05a93b1e095ea4456a5da0",
+      "bytes": 3723
+    },
+    {
+      "path": "doc/rust/adr/0247-make-macro-name-resolution-contracts-explicit.md",
+      "sha256": "53983f31adf3d97fe41fedb24206a60f61059389d2ac77062975890f2d5d863b",
+      "bytes": 5132
+    },
+    {
+      "path": "doc/rust/adr/0248-own-plain-ledger-scenarios-in-contractlab.md",
+      "sha256": "5cc2a63fecdd012e21ea0a128ee897f13659b6c09aea1a2dbaad83b4975e5057",
+      "bytes": 6563
+    },
+    {
+      "path": "doc/rust/adr/0249-isolate-generated-struct-representation-from-source-names.md",
+      "sha256": "baf661078b66cae839d945dd33fc7019803952ac8f2102c0c829521f8fe2d9a5",
+      "bytes": 4691
+    },
+    {
+      "path": "doc/rust/adr/0250-adopt-pinned-passport-pure-apis-through-independent-oracles.md",
+      "sha256": "3a10bf406ef0e65bb0bb4b25a0f043708b0ebae5988806a31bf44312c8e3c333",
+      "bytes": 3703
+    },
+    {
+      "path": "doc/rust/adr/0251-compose-audited-unit-helpers-over-complete-ledger-paths.md",
+      "sha256": "71dec93d502dab3a109e8d7349c8f020a10a1cba7cdcabd308cc5a03dcb41a53",
+      "bytes": 20154
+    },
+    {
+      "path": "doc/rust/adr/0252-characterize-a-coherent-ledger8-1-compatibility-profile.md",
+      "sha256": "a618e9ab149e4e1170db1bf302da0586b692d43999c6915ff821cb711fe67237",
+      "bytes": 14750
+    },
+    {
+      "path": "doc/rust/adr/0253-validate-exported-aliases-against-emitted-module-names.md",
+      "sha256": "a0ad2475265ce3ac2a44d4abf72c09b10eb2e260646e1ba0c30a1dee1bbb2a71",
+      "bytes": 7473
+    },
+    {
+      "path": "doc/rust/adr/0254-give-circuit-dependency-analysis-an-explicit-owner.md",
+      "sha256": "e7462c0d44d2c5a5fee19f4819097ee6fa47304969e463c26abe9cc1ed9f8d98",
+      "bytes": 4094
+    },
+    {
+      "path": "doc/rust/adr/0255-establish-original-did-lifecycle-and-direct-api-oracles.md",
+      "sha256": "9ed04c5707000ff7ec70fd459afc1ed406b3cc316543350a278f5cad690362e2",
+      "bytes": 17777
+    },
+    {
+      "path": "doc/rust/adr/0256-measure-a-bounded-generated-rust-webassembly-consumer.md",
+      "sha256": "e40e7991cdfd16afff7e160ffec876f35cca1e2eda31f18b313cf6b982645b0c",
+      "bytes": 4507
+    },
+    {
+      "path": "doc/rust/adr/0257-reuse-runtime-frame-ownership-for-simple-native-leaves.md",
+      "sha256": "9cda8b393d127c308dceebbeac3e93ee1ce505256c2ddc6ea002ca7723714581",
+      "bytes": 11678
+    },
+    {
+      "path": "doc/rust/adr/0258-exercise-merkle-scenarios-through-contractlab.md",
+      "sha256": "ba6ecef88dbc36cdb59814f073f85fb16a778059f8881dd3184d277631594302",
+      "bytes": 8113
+    },
+    {
+      "path": "doc/rust/adr/0259-record-point-authorization-transitions-through-shared-composition.md",
+      "sha256": "41c137a97e0e812e9b2fe4c1af6608198e0d9b028ed4e381ef149770fc3fe3a8",
+      "bytes": 17417
+    },
+    {
+      "path": "doc/rust/adr/0261-make-rust-compatibility-and-runtime-selection-explicit.md",
+      "sha256": "13164088f00013adf38130466620e1d296c45df33bf4a303b4f49b69c58c3e35",
+      "bytes": 19339
+    },
+    {
+      "path": "doc/rust/adr/0262-exercise-adopted-did-recording-through-contractlab.md",
+      "sha256": "b4656add87fd2d9841b1d128e053c816eb4d951c24930a620271077da00b2912",
+      "bytes": 9787
+    },
+    {
+      "path": "doc/rust/adr/0263-give-closed-pure-call-recording-policies-an-explicit-owner.md",
+      "sha256": "3e5c28b1caa70a8bdeab87eaeabb6a2236ad3268eac8ccc5de32c772490942f0",
+      "bytes": 4835
+    },
+    {
+      "path": "doc/rust/adr/0264-share-semantic-rust-function-names-across-declarations-and-helpers.md",
+      "sha256": "20318efb57eb0da25321d68f3ca80d381b880043e42a6cc14b79ece740673613",
+      "bytes": 12932
+    },
+    {
+      "path": "doc/rust/adr/0265-compose-opaque-string-set-mutations-through-typed-recording.md",
+      "sha256": "c84a15904874e983026326b609af96d4b8a284fbb9a797c13558f713bfd20447",
+      "bytes": 13711
+    },
+    {
+      "path": "doc/rust/adr/0266-preserve-checked-recording-profile-rejection-reasons.md",
+      "sha256": "30bac5b49bebd6800f9228a58e7b9d1296ecb4f8987c5da44264b0a49bd626a2",
+      "bytes": 9474
+    },
+    {
+      "path": "doc/rust/adr/0267-test-runtime-source-selection-and-repeated-helper-execution-boundaries.md",
+      "sha256": "ef15141358368b1eff9ede150bd77e113fb9039ef44218f166077dfd5354c14e",
+      "bytes": 5496
+    },
+    {
+      "path": "doc/rust/adr/0268-register-did-proof-scenarios-in-the-local-full-gate.md",
+      "sha256": "cd89be740c39650f6a3d3d0587e0d8e6f3643fbc4f1255f306c81284ff4f7ae8",
+      "bytes": 13635
+    },
+    {
+      "path": "doc/rust/adr/0269-record-opaque-string-product-maps-through-shared-typed-composition.md",
+      "sha256": "84173018ab0be85cf078a903c00486a398ac13c35c14c25b0ccd5ce292bc183e",
+      "bytes": 19430
+    },
+    {
+      "path": "doc/rust/adr/0270-validate-every-declared-midnight-dependency-context.md",
+      "sha256": "53fbb144c1bf4d93b556814ee2904f936f0bff640817d60667cedf1a4d002e50",
+      "bytes": 6739
+    },
+    {
+      "path": "doc/rust/adr/0271-classify-and-test-every-local-helper-context-boundary.md",
+      "sha256": "b2d30442ec2bd01f88e530c34f31af891fbb2bbae6e7c084333abe5fa5515c34",
+      "bytes": 5449
+    },
+    {
+      "path": "doc/rust/adr/0272-reject-explicit-discriminants-in-compact-cell-enums.md",
+      "sha256": "6b034316315430618feb4278ef078b5cc70b0990e3a77c53ead122e3261eed3e",
+      "bytes": 4479
+    },
+    {
+      "path": "doc/rust/adr/0273-explain-script-failure-privacy-and-distinct-replay-costs.md",
+      "sha256": "c8fc1f17a9cb701932a1651d19b6801becd6330a360e8dee6905bb159717ba86",
+      "bytes": 5679
+    },
+    {
+      "path": "doc/rust/adr/0274-preserve-default-worker-stack-in-typed-map-lowering.md",
+      "sha256": "cbf638b740f244accf177e7c97c3dbc92e275e6eac96491cf9a522d0f6f6635a",
+      "bytes": 5910
+    },
+    {
+      "path": "doc/rust/adr/0275-own-exhaustive-local-call-validation-in-circuitcontext.md",
+      "sha256": "716598eb5d22957bbb33816ad892d8494c5ece4e1a887d4c5c69aae3089fc1d0",
+      "bytes": 11688
+    },
+    {
+      "path": "doc/rust/adr/0276-prototype-generated-named-argument-facades.md",
+      "sha256": "24c2ebbcd4f511c36ee414a80d6fac2ed84d6d1be9dd2d78706b203c83adf23b",
+      "bytes": 22730
+    },
+    {
+      "path": "doc/rust/adr/0277-separate-closed-guarded-mutation-profiles-from-recording-assembly.md",
+      "sha256": "78d4b1a6cad2748be6e82c0bd9123f97d85016dd81a1ae11e610d941e7d0ff52",
+      "bytes": 5699
+    },
+    {
+      "path": "doc/rust/adr/0278-record-flat-point-product-maps-and-boolean-membership-helpers.md",
+      "sha256": "05c704bef61018f8d0e59e0e936733c64ef6042acd1d121987a568e50830c1e4",
+      "bytes": 15868
+    },
+    {
+      "path": "doc/rust/adr/0279-give-typed-value-lowering-a-cohesive-compiler-owner.md",
+      "sha256": "c2c3acd5e73c2b21a716f2c1dbbbbdb60df6eaac4525f0b0f4bcd84c8427f66d",
+      "bytes": 15063
+    },
+    {
+      "path": "doc/rust/adr/0280-separate-native-state-expressions-and-public-facade-from-circuit-assembly.md",
+      "sha256": "f10892c236517633fb898342d8eaca9d1bf90554723ead0ca46f89029a2fb913",
+      "bytes": 5774
+    },
+    {
+      "path": "doc/rust/adr/0281-track-semantic-rust-names-in-public-parameter-allocation.md",
+      "sha256": "42ded4d49ad39d5e8816835b1701117e0555b145672c77c3c32444fe8e8f6d19",
+      "bytes": 7223
+    },
+    {
+      "path": "doc/rust/adr/0282-diagnose-renderer-stack-exhaustion-on-a-supported-source.md",
+      "sha256": "6141b766106520815bc6caecab81417e15710074498ff7f91fe8caa4271be2da",
+      "bytes": 10175
+    },
+    {
+      "path": "doc/rust/adr/0283-record-nested-jwk-verificationmethod-map-crud.md",
+      "sha256": "1dd19fe28b9c54923a5d655fef10f886c8b2d242aa66575d4dc0a05d0897160c",
+      "bytes": 17721
+    },
+    {
+      "path": "doc/rust/adr/0284-measure-lexical-binding-identity-against-simpler-shared-scopes.md",
+      "sha256": "899ec69845067e26af8f283f9795c3ec20a1f48e3ad716cc12093ff5b45e45bb",
+      "bytes": 5502
+    },
+    {
+      "path": "doc/rust/adr/0285-qualify-typed-consumer-safety-and-pinned-upstream-trust-boundaries.md",
+      "sha256": "0b301ae4e01e0efc7e073a31d4740e1ef0a39dd49a757b5f07bbd807dd4ea2fa",
+      "bytes": 8330
+    },
+    {
+      "path": "doc/rust/adr/0286-classify-checked-unit-composition-attempts.md",
+      "sha256": "ca4ae1c22df46e6e9b091d94d23dbc54002e0ebf24b0a7a87229b55b9fa1d1e8",
+      "bytes": 11787
+    },
+    {
+      "path": "doc/rust/adr/0287-compare-unchanged-did-against-its-original-release-compiler-and-runtime.md",
+      "sha256": "68cf884bf7aa55c53ec119cbcfe84c8a05e47decb73726a20cd32c89eeed5e93",
+      "bytes": 5809
+    },
+    {
+      "path": "doc/rust/adr/0288-record-original-did-digest-verification-through-checked-read-and-local-unit-helper.md",
+      "sha256": "a4478ce53a13f96c814a0161f3fbf93be4eb726b621d1ff424a752a47d307f49",
+      "bytes": 17942
+    },
+    {
+      "path": "doc/rust/adr/0289-verify-a-public-did-transaction-across-ledger8-0-3-and-ledger8-1.md",
+      "sha256": "8eacf7d3789493aa1cbbc69833289cc56e0673d0ecd4de22cbb467a1750f9f26",
+      "bytes": 7154
+    },
+    {
+      "path": "doc/rust/adr/0290-qualify-the-existing-did-effect-families-across-ledger8-profiles.md",
+      "sha256": "183da1379482ecfc2805f8a394962eb8bdef84b6cf65ab5bacae1b45a575e71b",
+      "bytes": 6180
+    },
+    {
+      "path": "doc/rust/adr/0291-bound-compiler-ingress-and-typed-rendering-work.md",
+      "sha256": "7f526b661abc1648b48012e776830e28488f604577bb13e33aad4b8c50f23255",
+      "bytes": 16274
+    },
+    {
+      "path": "doc/rust/adr/0292-reduce-recursive-pure-renderer-frames.md",
+      "sha256": "bdb1efac34a10a23186eec3bb2acbc575f110741226389ad8bf0e3f202a8adc2",
+      "bytes": 7676
+    },
+    {
+      "path": "doc/rust/adr/0293-separate-rust-release-versions-and-migrate-public-consumers-explicitly.md",
+      "sha256": "279bcff278d44d7cdc5c8869b5474f9cb1c05c37bcead02bc8b000814f611d0a",
+      "bytes": 12367
+    },
+    {
+      "path": "doc/rust/adr/0294-maintain-executable-and-strictly-proved-did-primitive-reducers.md",
+      "sha256": "2ca95ad04370b5254f0fb69401eefc80767049f0dbabe60d4b3de92d5c248700",
+      "bytes": 12725
+    },
+    {
+      "path": "doc/rust/adr/0295-record-original-did-relation-mutation-through-checked-selected-sets-and-nested-jwk-reads.md",
+      "sha256": "b21fb65a7fd88575cd4d85b4fd2c8d8c16b22446a67c2d7987cae8013f75c524",
+      "bytes": 18456
+    },
+    {
+      "path": "doc/rust/adr/0296-reduce-legacy-recorded-action-recursion-frames.md",
+      "sha256": "221bb2b5ea523fddbf67381864eb187f65b9494cc3fe514146fd7bb4c2132cb3",
+      "bytes": 8879
+    },
+    {
+      "path": "doc/rust/adr/0297-measure-generated-consumers-with-isolated-phase-boundaries.md",
+      "sha256": "b21a4c74ad02577b9e7fe159326a0ec765398d00bf5f2bc4e41a325c112dc1f1",
+      "bytes": 11749
+    },
+    {
+      "path": "doc/rust/adr/0298-share-fixture-selection-and-require-maintained-reducer-proof-gates.md",
+      "sha256": "004d9b6327e6b1722c0d5a4429f4eae3be48d2cff61171ce964e73d6a3785064",
+      "bytes": 6679
+    },
+    {
+      "path": "doc/rust/adr/0299-reduce-native-recursive-operation-frames.md",
+      "sha256": "536307deb5d60aaa21b84c9ac6d4e06754436d8b7750ddaf080a11c8391b0ff2",
+      "bytes": 6304
+    },
+    {
+      "path": "doc/rust/adr/0300-qualify-original-did-digest-public-transactions-on-ledger8-1.md",
+      "sha256": "37b321a720901f4d93d39f070fb53811e7305e0d5feee17c916c623818940e05",
+      "bytes": 4913
+    },
+    {
+      "path": "doc/rust/adr/0301-triage-dependency-advisories-without-ledger-pin-drift.md",
+      "sha256": "fbff294dd934d7bc81bc822c192db1e1a0c51913c10dbccdfe9136abaa7b734c",
+      "bytes": 10766
+    },
+    {
+      "path": "doc/rust/adr/0302-exercise-value-lowering-boundaries-through-focused-unit-tests.md",
+      "sha256": "d93e6d57b94af76a22dc3bdfdf0f7918cc8ac4ae603f86f55a766a2f618f4253",
+      "bytes": 5351
+    },
+    {
+      "path": "doc/rust/adr/0303-qualify-original-did-relation-transactions-through-the-ledger-8-1-public-bridge.md",
+      "sha256": "40c9d3240651a0a01fb2e0624813a8f6b7cbdb6faad21c3afcf8c5e06d99f019",
+      "bytes": 7989
+    },
+    {
+      "path": "doc/rust/adr/0304-align-the-standalone-backend-lock-with-the-qualified-workspace-graph.md",
+      "sha256": "1ca3cda166465e2dde2d24d110c7efe08a52d1e855e7430f84ab0772da1dd3a4",
+      "bytes": 7230
+    },
+    {
+      "path": "doc/rust/adr/0305-pin-passport-acc-pr177-and-preserve-authorization-across-the-ledger8-port.md",
+      "sha256": "7f348922ebaf8be0713d9b4dac54d36920c44c97544f78b3c8ce3ff7f04ab60c",
+      "bytes": 10523
+    },
+    {
+      "path": "doc/rust/adr/0306-preserve-acc-jubjub-scalar-cast-reduction-on-ledger8.md",
+      "sha256": "766d8cbf6262270a192059a5f7a9d8e69b7fd815a4d14acb08b296c9d893e5c3",
+      "bytes": 10045
+    },
+    {
+      "path": "doc/rust/adr/0307-test-resource-accounting-across-typed-ir-carriers.md",
+      "sha256": "72412166099731c45849bb52d704a33f461d723f3dfd2ef8eb126a778959db88",
+      "bytes": 5856
+    },
+    {
+      "path": "doc/rust/adr/0308-record-typed-jubjub-value-operations-and-a-point-cell-write.md",
+      "sha256": "b962e4c9cd124d857cfa5d3dc21df96bb477c943b5e45bdc7b62e20906479756",
+      "bytes": 8576
+    },
+    {
+      "path": "doc/rust/adr/0309-qualify-pinned-secp256k1-chip-proof-transport-through-the-ledger8-verifier.md",
+      "sha256": "ff8545be92bca554913e402da064efcc77c99bcbc90ad18b4324930446ec7658",
+      "bytes": 6395
+    },
+    {
+      "path": "doc/rust/adr/0310-probe-p256-prime-modular-multiplication-using-existing-ledger8-integer-gadgets.md",
+      "sha256": "5d0a385ec149f4bc53f5be5059d744fd2ebbda26e3ab39910e9a67527694fd17",
+      "bytes": 6262
+    },
+    {
+      "path": "doc/rust/adr/0311-exercise-stateful-expression-diagnostics-through-the-real-dispatcher.md",
+      "sha256": "43967518ab979329e55cfb6f186b2a2da6a868fddab574c5d14fa7ea77ad7796",
+      "bytes": 9743
+    },
+    {
+      "path": "doc/rust/adr/0312-measure-a-complete-p256-variable-base-scalar-component-on-ledger8.md",
+      "sha256": "0428aa4d0c75ab36fdbb81cd94139a21b0446ae47752ab5b37ab25f9795f21fd",
+      "bytes": 9189
+    },
+    {
+      "path": "doc/rust/adr/0313-exclude-p256-and-webauthn-from-the-ledger8-acc-variant.md",
+      "sha256": "a68aa82036920d3253407118cada74fbf33900dfdc2f3c967c2a5fff56ea09c2",
+      "bytes": 9605
+    },
+    {
+      "path": "doc/rust/adr/0314-restrict-acc-authorization-to-jubjub-and-bound-adoption-work.md",
+      "sha256": "779a5a64a1dfe458c76a3799769917b0bd2f47ce7b1d0ea7c7da29a0ececbfd3",
+      "bytes": 7264
+    },
+    {
+      "path": "doc/rust/adr/0315-preserve-ledger8-time-checks-in-the-reduced-passport-profile.md",
+      "sha256": "057554d24ae0a04c60db5fdafcf5b366f8f595c62fc6aed4fa31bfe6297e4c9b",
+      "bytes": 6428
+    },
+    {
+      "path": "doc/rust/adr/0316-remove-acc-adoption-while-retaining-generic-backend-evidence.md",
+      "sha256": "4e1d1379a993302f005682704bc49cb5a9c947963327a3c139725525c5fbf871",
+      "bytes": 7219
+    },
+    {
+      "path": "doc/rust/adr/0317-accept-the-scoped-performance-and-resource-baseline.md",
+      "sha256": "c32ab55c082db63c1d1fba5480c5b011870a96524e10875dac1cb1e7a3990567",
+      "bytes": 5221
+    },
+    {
+      "path": "doc/rust/adr/0318-test-collection-query-admission-and-effect-ordering.md",
+      "sha256": "6a683e9adb06c6bae27cec38e87c8bab130605a6edc77d6e19e8a7e3b684ec0d",
+      "bytes": 6307
+    },
+    {
+      "path": "doc/rust/adr/0319-exercise-generated-reducer-control-exports-directly.md",
+      "sha256": "cae2bdc3a91767b02f1df1363a1d357ec1c13f381fe2098e1ae7909f5910e3c2",
+      "bytes": 5273
+    },
+    {
+      "path": "doc/rust/adr/0320-test-effect-operation-domain-admission.md",
+      "sha256": "2fd6392f60083b84b472ccf42cbd4caa8328df2690e84264fcb7cc032e2a2455",
+      "bytes": 4533
+    },
+    {
+      "path": "doc/rust/adr/0321-reconcile-compatibility-policy-and-qualify-the-msrv-delta.md",
+      "sha256": "220ece22ff9a4f493d45052a53a92c70739e92636b4458fc305ab412f526ba59",
+      "bytes": 5853
+    },
+    {
+      "path": "doc/rust/adr/0322-preserve-pure-helper-admission-through-conversion-wrappers.md",
+      "sha256": "3521feed443bb76e11be44030596ea6bb521460b2b8ced1b918231c4e3b49168",
+      "bytes": 3948
+    },
+    {
+      "path": "doc/rust/adr/0323-bind-legacy-oracle-and-constructor-assertions-to-current-execution.md",
+      "sha256": "0be5876c2530b9f0483e84f16ab9fbc71780d1a0f7ec912093d098c0eec695a1",
+      "bytes": 5066
+    },
+    {
+      "path": "doc/rust/adr/0324-consolidate-current-developer-guides-without-rewriting-history.md",
+      "sha256": "0479a6f13e53e69312793904655b841c7e8150114aab96ae985e1d0ac905f799",
+      "bytes": 5824
+    },
+    {
+      "path": "doc/rust/adr/0325-stabilize-a-bounded-rust-ci-lane-at-the-midpoint.md",
+      "sha256": "f19338e44f646aa0a749de9b0385d2eb091c904d57aab7c08af0b617715ffbda",
+      "bytes": 8440
+    },
+    {
+      "path": "doc/rust/adr/0326-preserve-input-read-failures-and-document-owned-witness-scripts.md",
+      "sha256": "685c138afedeae13e3678afc68863b43bfa016c88ac6a46aa6e92d3e2d952d57",
+      "bytes": 6093
+    },
+    {
+      "path": "doc/rust/adr/0327-independent-compiler-architecture-review-at-the-midpoint.md",
+      "sha256": "53a70f4b22871772b5ad3392c5fc3d9b04ab9b887594cfe48a991c43a1d7f7de",
+      "bytes": 4226
+    },
+    {
+      "path": "doc/rust/adr/0328-exercise-regression-fixture-helpers-through-public-rust-apis.md",
+      "sha256": "375f02dce76d6db4a182a26b2040d2dfc32f9954e2dc960908d5568782359080",
+      "bytes": 4977
+    },
+    {
+      "path": "doc/rust/adr/0329-accept-the-bounded-generated-api-research-portfolio.md",
+      "sha256": "dea93b2faeb15f5962678827b6d2f92f519e5564d354b0de56216edd5ef7fa38",
+      "bytes": 4556
+    },
+    {
+      "path": "doc/rust/adr/0330-preserve-fallible-vector-coercions-without-expanding-generated-arrays.md",
+      "sha256": "f9714717d4fc97e4635bcb9715a1f6f794a8ba0ec48b05ccb23b738d010c2c9d",
+      "bytes": 5277
+    },
+    {
+      "path": "doc/rust/adr/0331-check-generated-facade-and-alias-names-in-the-rust-namespace.md",
+      "sha256": "d389a919aa91bdab5a81e17c785c307b2fa3cd4935ac72da48a493e7b14c669d",
+      "bytes": 5964
+    },
+    {
+      "path": "doc/rust/adr/0332-reject-recursive-pure-calls-at-the-private-ir-admission-boundary.md",
+      "sha256": "1e92d761c5c40b4c721cd715458851ed945754a7cfda9120735c4d095a1889b3",
+      "bytes": 3230
+    },
+    {
+      "path": "doc/rust/adr/0333-preserve-historical-passport-separately-from-current-adoption.md",
+      "sha256": "b32a810baa2d72bb9897dfc9ce037c7435606f1ea43cc40ce85052d83a83dd43",
+      "bytes": 4395
+    },
+    {
+      "path": "doc/rust/adr/0334-execute-witness-conditions-and-witness-produced-collection-operands.md",
+      "sha256": "09b39b074c34f8c20a6d9685dc0a8829738ecd0422683eabbb0a28a5196a9c84",
+      "bytes": 12862
+    },
+    {
+      "path": "doc/rust/adr/0335-require-expected-errors-in-negative-generated-code-controls.md",
+      "sha256": "83f85d43b855a141b4fe5e10ea23c72ac81bf0bf42489bbfb30820bf6aeb1e9c",
+      "bytes": 4907
+    },
+    {
+      "path": "doc/rust/adr/0336-preserve-empty-vector-element-types-during-rust-emission.md",
+      "sha256": "c961751707428bba6458a78034ceecf0a217d6b32ed60d1ad966ccdfb01b2112",
+      "bytes": 5358
+    },
+    {
+      "path": "doc/rust/adr/0337-avoid-writable-executable-copies-in-installation-layout-tests.md",
+      "sha256": "7ef18e7550c12965e19789c0711052f07aed1c943f3a984c84ae6a4c7b4a2edc",
+      "bytes": 6684
+    },
+    {
+      "path": "doc/rust/adr/0338-anchor-generated-value-tests-to-independent-expected-values.md",
+      "sha256": "df0f90f7f2bcd433604ef9bab087e0a926cd947c0227e0bdefb16ac57bae6f27",
+      "bytes": 8397
+    },
+    {
+      "path": "doc/rust/adr/0339-record-reusable-local-gate-tool-and-log-provenance.md",
+      "sha256": "eaa2b8f7bdae6ef3fe1c916cead165668a178861e740870e0952e016b93b3f40",
+      "bytes": 7596
+    },
+    {
+      "path": "doc/rust/adr/0340-assert-source-defined-returns-in-chunked-ledger-tests.md",
+      "sha256": "0f3f1c57098d8c2f78f93d0d2b144870b427d26229b2f77e63b20672ada82c2a",
+      "bytes": 6569
+    },
+    {
+      "path": "doc/rust/adr/0341-verify-bounded-call-graph-resource-accounting-with-seeded-properties.md",
+      "sha256": "621f935b2dffa6ece92b42223f77fdfd5c3437f2f9eb53c3d4f0e0582f719f75",
+      "bytes": 8211
+    },
+    {
+      "path": "doc/rust/adr/0342-check-post-removal-state-and-pure-helper-defaults-independently.md",
+      "sha256": "72a0995f9ed9a2682b74966c13699a646d85edd8ed92492c2fc8d70dd1aa5cb5",
+      "bytes": 3923
+    },
+    {
+      "path": "doc/rust/adr/0343-preserve-previous-compiler-output-when-publication-fails.md",
+      "sha256": "74326fc10172f313225c6d8f116c0853262a8fd8b4d0f26606210c9bad744521",
+      "bytes": 4854
+    },
+    {
+      "path": "doc/rust/adr/0344-pin-compiler-field-admission-at-the-ledger8-modulus.md",
+      "sha256": "0eafc4f971f7a02ce30a751250741730a53654495ec9bf04e9bce68354d367ce",
+      "bytes": 5014
+    },
+    {
+      "path": "doc/rust/adr/0345-review-remaining-dependency-notices-against-shipped-feature-graphs.md",
+      "sha256": "34e9721a9fe489908f084afe99c850333b1c165b2b81ffd7ebc32045cb95f541",
+      "bytes": 6273
+    },
+    {
+      "path": "doc/rust/adr/0346-exercise-generated-field-arithmetic-across-the-modulus.md",
+      "sha256": "3c3eff99816e08a797e25b8f0e8792d402ffb93bcaf3ced4739075e1e8c5dfe9",
+      "bytes": 4569
+    },
+    {
+      "path": "doc/rust/adr/0347-track-versioned-compact-specification-conformance-separately-from-fixtures.md",
+      "sha256": "d204daf12eb3907e969db56ce2ca2640746723dff9552786175e2422c2ca69fc",
+      "bytes": 7234
+    },
+    {
+      "path": "doc/rust/adr/0348-qualify-generated-boolean-values-and-witness-failure-order.md",
+      "sha256": "a23f8b7154b6f1142fcec5983082abf4eb4bb770849f6478b621af1e79695d52",
+      "bytes": 5820
+    },
+    {
+      "path": "doc/rust/adr/0349-verify-shared-boolean-typing-through-both-public-compiler-targets.md",
+      "sha256": "cb1d988eb21fcac44af30546d65a33b2ed1672f892156143b94887cfe92ca100",
+      "bytes": 4940
+    },
+    {
+      "path": "doc/rust/adr/0350-stage-a-portable-developer-documentation-package-for-closeout.md",
+      "sha256": "4cb542b93331107ec3591d8f840440b83d9832ef16ebd8876a4994c2cd7261a0",
+      "bytes": 5039
+    },
+    {
+      "path": "doc/rust/adr/0351-check-merkle-vm-path-operands-before-program-construction.md",
+      "sha256": "474462acca68b5227b09a71e3abf58c3678ac171635961de4c25a56302966ebc",
+      "bytes": 7876
+    },
+    {
+      "path": "doc/rust/adr/0352-distinguish-unsupported-wide-operations-from-malformed-uint-bounds.md",
+      "sha256": "6f366d2942b298210aeb189a0afbf0964d4b5e21d15f9515cbb4b8d0dafeacc9",
+      "bytes": 5228
+    },
+    {
+      "path": "doc/rust/adr/0353-admit-serialized-ledger-inputs-with-explicit-byte-limits.md",
+      "sha256": "a53bf412c27d7f4f9ff635ad78eaceabe65d9e5684f7d5f0c20d2ff56ecbf217",
+      "bytes": 6139
+    },
+    {
+      "path": "doc/rust/adr/0358-address-the-vm-context-relative-to-qualified-set-path-depth.md",
+      "sha256": "a7ad9a1e0f0f4d1129789cc944b7a1a2b7f8ca6dae50cfecb32194db815962fe",
+      "bytes": 7628
+    },
+    {
+      "path": "doc/rust/adr/0359-select-a-practical-ledger-decoding-byte-policy.md",
+      "sha256": "0815dab718be0e057a9b1bcda835abb0238f7d0c58baca222517865987e9f533",
+      "bytes": 5262
+    },
+    {
+      "path": "doc/rust/adr/0360-compose-official-ledger8-providers-in-an-experimental-client-model.md",
+      "sha256": "4dfcac21f3a835d08e638e723dc8c6a5089ef4136ef9eaf6fd4aa674b6ac3025",
+      "bytes": 7126
+    },
+    {
+      "path": "doc/rust/adr/0361-preserve-upstream-error-assertions-in-strict-path-tests.md",
+      "sha256": "544dd81e8e4c474e94db4e8b98201f55f384622e35f6edbb51207f073fc6262a",
+      "bytes": 4017
+    },
+    {
+      "path": "doc/rust/adr/0362-test-output-recovery-after-runtime-compatibility-admission.md",
+      "sha256": "91237c9a88d7a23d65c22f347b67c4905634ba04f4c470afe96738438a25409e",
+      "bytes": 4453
+    },
+    {
+      "path": "doc/rust/adr/0363-reconcile-did-gate-inventories-with-delivered-recording-support.md",
+      "sha256": "3e2cafd8b51b675127ae42cc50e93f5799f6be691f0a45a21c3dd48a17a2ad08",
+      "bytes": 4909
+    },
+    {
+      "path": "doc/rust/adr/0364-refresh-current-conformance-anchors-without-rewriting-historical-evidence.md",
+      "sha256": "dc8c2c28fa0ce650dfb2f97343ecbaf2fb19eb08c07489efa0b07e234d786b47",
+      "bytes": 5149
+    },
+    {
+      "path": "doc/rust/adr/0365-retain-subprocess-exit-status-in-compatibility-failures.md",
+      "sha256": "89e27943e16a1981dfbf95c0a2f112b7c29b206398361f2b434779c8b0fee08e",
+      "bytes": 3495
+    },
+    {
+      "path": "doc/rust/adr/0366-create-fresh-relation-proof-key-directories.md",
+      "sha256": "8a6981d531138359a8ac9c78b0f18f33a3ff2897070c7f0ef1663f7d16243b17",
+      "bytes": 5223
+    },
+    {
+      "path": "doc/rust/adr/README.md",
+      "sha256": "8f473b2d3a385fb0fc79b8ab788964d58e092cd9ed1b330373b535e2592bc498",
+      "bytes": 49387
+    },
+    {
+      "path": "doc/rust/adr/index-0.3.0.md",
+      "sha256": "cb756607c8e248417706101856d04921bf7279d724d24be3d45a740ab4d4985e",
+      "bytes": 31450
+    },
+    {
+      "path": "doc/rust/adr/publication-manifest-0.3.0.json",
+      "sha256": "ce39b3170ff43711190ec6eb4adcf6a27ab0686ee4cc4a7ff3b9f99ba441b36c",
+      "bytes": 96581
+    },
+    {
+      "path": "doc/rust/adr/references-0.3.0.md",
+      "sha256": "c8878d3e98a4660ba8c4ecb7189deb81e55f4736bffe7ef3b999df1b16c6cb1f",
+      "bytes": 54485
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-baselines-adr0363-0364/ADR0364/REPORT.md",
+      "sha256": "56a8bf5b31c10790dc967e522e2e860c37f04a9626f411947a6851c704919966",
+      "bytes": 2805
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-baselines-adr0363-0364/ADR0364/all-harness-tests.log",
+      "sha256": "1211b6ea4ee61533c112fe5a0f528b335d200b04b7ab4d2bd405df7697cf7cd9",
+      "bytes": 600
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-baselines-adr0363-0364/ADR0364/boolean-native-receipt.json",
+      "sha256": "dc92a054b9896b1af528aa8fc1c1fd73be4fc524f9f8196471b31f56499f8d4f",
+      "bytes": 38120
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-baselines-adr0363-0364/ADR0364/boolean-native.log",
+      "sha256": "815b37e817f35ca63fc0164dbe5fab98bd54a7fa64ebda106972aa510ed5e772",
+      "bytes": 878
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-baselines-adr0363-0364/ADR0364/final-receipt.json",
+      "sha256": "f7c8e1c4f7ee05e8e35392f0faa9d628b1a7a6862835e6e8ea467dfd7e541cfc",
+      "bytes": 2619
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-baselines-adr0363-0364/ADR0364/frozen-baseline-check.json",
+      "sha256": "5a63441cdabf6dd14f8ce15e2d474ebfd8e6a0bc5fe1fda56688be16fc8eca1e",
+      "bytes": 3689
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-baselines-adr0363-0364/ADR0364/projection-check.json",
+      "sha256": "c1cedc4167b6476b6a99cd67714fb7f629b267ea4a4ce303209a9e0abd274076",
+      "bytes": 635
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-baselines-adr0363-0364/ADR0364/specification-tests.log",
+      "sha256": "bb50c69954168bdf6186fc9d091c9414f4eb443bec01e2f4352c4da5bc209e39",
+      "bytes": 129
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-baselines-adr0363-0364/candidate57fab/candidate-continuity.json",
+      "sha256": "f87ca4f3fcdeb77242d134bf99170182335e668a630c4a6766619e72d01ebdba",
+      "bytes": 977
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-baselines-adr0363-0364/candidate679/did-source-scope-fix.json",
+      "sha256": "b899aaf2ddf11e98cbb588d855c864342e22dd88eb6cd17fd95611120ae08e08",
+      "bytes": 14859
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-baselines-adr0363-0364/candidate679/did-source-scope-fix.md",
+      "sha256": "7850eb355b6ba8ef53263c8fa82d78a4b54b72b25d848614e5e6165a7871d6bd",
+      "bytes": 4940
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-baselines-adr0363-0364/candidate679/source-scope-preflight/did-proof-gate-unit.log",
+      "sha256": "d27b96e6474e8d70bdce970ba816666988018bc48078b76b56114447280da338",
+      "bytes": 120
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-baselines-adr0363-0364/candidate679/source-scope-preflight/unit-composition-source-scope.json",
+      "sha256": "2ac732aa48f61e7c0af46d062cb31d1c46a42f6b547c82a9e17ef4c896f6ae41",
+      "bytes": 19669
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-baselines-adr0363-0364/candidate679/source-scope-preflight/unit-composition-source-scope.log",
+      "sha256": "c3852f406f20671d4a93f2f25f385116b630446a6a7eaaf462dfc88265b6206e",
+      "bytes": 220
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-baselines-adr0363-0364/review-note.md",
+      "sha256": "2a0901894a77c478d3d788de67feddced0ac55188e064ae23efe9dbb579e3199",
+      "bytes": 2514
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-551f065c/candidate-continuity.json",
+      "sha256": "dc2cfe7ab8d3225ec68ca17cc0d24f7c8dd3f6510aa06d621b411225722f8a49",
+      "bytes": 1034
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-551f065c/remote-receipts/rust-bounded-core-551f065cd6267e07020a755db5469df03e41b775/clippy.log",
+      "sha256": "ed635d3994424ee37f64a637bdf03f664400d7ceefc7429c4ef5af9069033111",
+      "bytes": 1114
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-551f065c/remote-receipts/rust-bounded-core-551f065cd6267e07020a755db5469df03e41b775/fetch.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-551f065c/remote-receipts/rust-bounded-core-551f065cd6267e07020a755db5469df03e41b775/format.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-551f065c/remote-receipts/rust-bounded-core-551f065cd6267e07020a755db5469df03e41b775/result.json",
+      "sha256": "2cfefae65b06fcdd955524109045345e0996c4a284624c34d59ffe82c5dc761c",
+      "bytes": 1484
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-551f065c/remote-receipts/rust-bounded-core-551f065cd6267e07020a755db5469df03e41b775/source.json",
+      "sha256": "9ab48348a9359fdfe4177bd6c0300e7353920e2d0c48f0d0c8e4be6f03629b6b",
+      "bytes": 951
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-551f065c/remote-receipts/rust-bounded-core-551f065cd6267e07020a755db5469df03e41b775/tests.log",
+      "sha256": "39dc115dca78009e4beebb8bd62a9254705dc81b49926ce56519827a42dd1d93",
+      "bytes": 78004
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-551f065c/remote-receipts/rust-bounded-core-551f065cd6267e07020a755db5469df03e41b775/workflow.yml",
+      "sha256": "3c4a7980c014d44c38fa52c36720ad6bb90bd36d9f0022b56b00baec3bb87e8d",
+      "bytes": 9807
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-551f065c/remote-receipts/rust-bounded-msrv-551f065cd6267e07020a755db5469df03e41b775/fetch.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-551f065c/remote-receipts/rust-bounded-msrv-551f065cd6267e07020a755db5469df03e41b775/msrv-standalone-fetch.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-551f065c/remote-receipts/rust-bounded-msrv-551f065cd6267e07020a755db5469df03e41b775/msrv-standalone.log",
+      "sha256": "86e77d45a8e5ce5d1202cc1469a34be6df15bb6710ec9adc89057657f3857185",
+      "bytes": 159
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-551f065c/remote-receipts/rust-bounded-msrv-551f065cd6267e07020a755db5469df03e41b775/msrv-workspace.log",
+      "sha256": "94d03ecb3fcdc451b4ea8025a5caefb136cc6b2ce580ff4d687430f6291386fd",
+      "bytes": 496
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-551f065c/remote-receipts/rust-bounded-msrv-551f065cd6267e07020a755db5469df03e41b775/result.json",
+      "sha256": "fc422c410ea8869cced3873c2e4f66e80b03fca173afd86b082c35ee3c74c3da",
+      "bytes": 1517
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-551f065c/remote-receipts/rust-bounded-msrv-551f065cd6267e07020a755db5469df03e41b775/source.json",
+      "sha256": "3b505a41101c1dfbc7caffe6e421e96d3ca7f14b6a18faea0853fd2857178bad",
+      "bytes": 951
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-551f065c/remote-receipts/rust-bounded-msrv-551f065cd6267e07020a755db5469df03e41b775/workflow.yml",
+      "sha256": "3c4a7980c014d44c38fa52c36720ad6bb90bd36d9f0022b56b00baec3bb87e8d",
+      "bytes": 9807
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-551f065c/remote-verification.json",
+      "sha256": "5d7bc2ebccfeedbb732c8db886af2673b4dadfc653158146e2136662daa5e2b0",
+      "bytes": 748
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-551f065c/review-note.md",
+      "sha256": "ce004622299aac4dfd75e507ed7700000f4c1c197f831b750b087ca1bd5b04bd",
+      "bytes": 1040
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-57fab775/remote-receipts/rust-bounded-core-57fab7755097380b90619672be5150746f9d4a49/clippy.log",
+      "sha256": "330032f8478a3046cef093e0f5cc6362f206adfc0e0a9e428de1092d318559a3",
+      "bytes": 1114
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-57fab775/remote-receipts/rust-bounded-core-57fab7755097380b90619672be5150746f9d4a49/format.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-57fab775/remote-receipts/rust-bounded-core-57fab7755097380b90619672be5150746f9d4a49/result.json",
+      "sha256": "abd08ba1b75da228cedf904ae31c7a04db7492fb669dfb6c47ee63f3fc969663",
+      "bytes": 1484
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-57fab775/remote-receipts/rust-bounded-core-57fab7755097380b90619672be5150746f9d4a49/source.json",
+      "sha256": "a98e9215279ca2c3d94fccc122d0dd954c3a5292b370868eb9c9ac5211373937",
+      "bytes": 951
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-57fab775/remote-receipts/rust-bounded-core-57fab7755097380b90619672be5150746f9d4a49/tests.log",
+      "sha256": "68f328b7551530952bfbb72eb3446e6c995bb1b2a19e243b920d923254c993d0",
+      "bytes": 78004
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-57fab775/remote-receipts/rust-bounded-core-57fab7755097380b90619672be5150746f9d4a49/workflow.yml",
+      "sha256": "3c4a7980c014d44c38fa52c36720ad6bb90bd36d9f0022b56b00baec3bb87e8d",
+      "bytes": 9807
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-57fab775/remote-receipts/rust-bounded-msrv-57fab7755097380b90619672be5150746f9d4a49/msrv-standalone.log",
+      "sha256": "41418bf218a4ed6e41db8701ae9acd8b2b9a32dcced952574fa87283bcf3253e",
+      "bytes": 159
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-57fab775/remote-receipts/rust-bounded-msrv-57fab7755097380b90619672be5150746f9d4a49/msrv-workspace.log",
+      "sha256": "72b2fdaac836d1ff8ba1d6fac0e96f81da6f1415dbcba4e919f8832c45e9050a",
+      "bytes": 496
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-57fab775/remote-receipts/rust-bounded-msrv-57fab7755097380b90619672be5150746f9d4a49/result.json",
+      "sha256": "332885ed5687bf574c01b3503b0a8e127e11253df281db495dcbfe7cdaf03f22",
+      "bytes": 1517
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-57fab775/remote-receipts/rust-bounded-msrv-57fab7755097380b90619672be5150746f9d4a49/source.json",
+      "sha256": "a6bf2c416df96418bbebb5392ec1e7b9be5ad3eb6a464967e818906bcad4e21e",
+      "bytes": 951
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-57fab775/remote-receipts/rust-bounded-msrv-57fab7755097380b90619672be5150746f9d4a49/workflow.yml",
+      "sha256": "3c4a7980c014d44c38fa52c36720ad6bb90bd36d9f0022b56b00baec3bb87e8d",
+      "bytes": 9807
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-57fab775/remote-verification.json",
+      "sha256": "3be8f2b76296f5345a39a51b085ccce8e9864efda04fce64a1764a561e6d2889",
+      "bytes": 1244
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-57fab775/review-note.md",
+      "sha256": "a201f686b15d6ee3e027c11949de5ace7e7cfe6decd366c8a0f6a5cdfaa70bcf",
+      "bytes": 741
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-adr0361/remote-receipts/rust-bounded-core-2c798d2dc5f94ad13e89610068035ed70d94f469/clippy.log",
+      "sha256": "cf0cffff4101e723a75a6de8d8c283619b99b1793b62e5ca7f202b67ebe42fc4",
+      "bytes": 7680
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-adr0361/remote-receipts/rust-bounded-core-2c798d2dc5f94ad13e89610068035ed70d94f469/format.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-adr0361/remote-receipts/rust-bounded-core-2c798d2dc5f94ad13e89610068035ed70d94f469/result.json",
+      "sha256": "48f8c8e63fbc698445913ea9f125b2752faccc04591685a4d81782cb133d7bd2",
+      "bytes": 1448
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-adr0361/remote-receipts/rust-bounded-core-2c798d2dc5f94ad13e89610068035ed70d94f469/source.json",
+      "sha256": "5987f839f4f46b1e196d88d06d9ff37d04da2a9523169bce6b008a8dd8638255",
+      "bytes": 951
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-adr0361/remote-receipts/rust-bounded-core-2c798d2dc5f94ad13e89610068035ed70d94f469/tests.log",
+      "sha256": "c604bfe5c947b2bfa38db4cd0db985eb2f2b83e7906833f0087f7a5a7eddd3f4",
+      "bytes": 85656
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-adr0361/remote-receipts/rust-bounded-core-2c798d2dc5f94ad13e89610068035ed70d94f469/workflow.yml",
+      "sha256": "3c4a7980c014d44c38fa52c36720ad6bb90bd36d9f0022b56b00baec3bb87e8d",
+      "bytes": 9807
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-adr0361/remote-receipts/rust-bounded-msrv-2c798d2dc5f94ad13e89610068035ed70d94f469/msrv-standalone.log",
+      "sha256": "41418bf218a4ed6e41db8701ae9acd8b2b9a32dcced952574fa87283bcf3253e",
+      "bytes": 159
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-adr0361/remote-receipts/rust-bounded-msrv-2c798d2dc5f94ad13e89610068035ed70d94f469/msrv-workspace.log",
+      "sha256": "9790c261446ff56f4731c4dbe7947fc954b2387af5c2314a802ab56a8d2206b2",
+      "bytes": 496
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-adr0361/remote-receipts/rust-bounded-msrv-2c798d2dc5f94ad13e89610068035ed70d94f469/result.json",
+      "sha256": "15b1bddaf4f091e068146f843e5a98573aea87f0962be7b3b3ba18cc9628c818",
+      "bytes": 1517
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-adr0361/remote-receipts/rust-bounded-msrv-2c798d2dc5f94ad13e89610068035ed70d94f469/source.json",
+      "sha256": "d6898917dd5c9ad678d1590385ec498b236dc5e451bfcb61674ce9b596480502",
+      "bytes": 951
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-adr0361/remote-receipts/rust-bounded-msrv-2c798d2dc5f94ad13e89610068035ed70d94f469/workflow.yml",
+      "sha256": "3c4a7980c014d44c38fa52c36720ad6bb90bd36d9f0022b56b00baec3bb87e8d",
+      "bytes": 9807
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-ci-adr0361/review-note.md",
+      "sha256": "a4c61df05e7383c81d26e0b99cd201141488f2bfeb94e19a2a0bc63650ee8799",
+      "bytes": 1664
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/audit-receipt.json",
+      "sha256": "8d85d7de52940ff2eba98c404d4f240f2c81877836db37844f4ba0dfc2ad913a",
+      "bytes": 1384
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/audit-standalone.json",
+      "sha256": "3f3538aeabd844899db724888550677baf3d23ad8882b39488585351844850fa",
+      "bytes": 5359
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/audit-workspace.json",
+      "sha256": "e53e4a432362e5a3d3e69b6f8055273d21164edd28d897fd41d2c3a75ea3091b",
+      "bytes": 6295
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/consumer-runner-provenance.json",
+      "sha256": "1bb716d9c8099574ff4959c8f4f9fccfa3c94ebb591a93bf46765f5e52f6c244",
+      "bytes": 816
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/coverage-delta/coverage-reconciliation.json",
+      "sha256": "8442d59bf0d9131a57dea8d499b360fa43d8040636e49cd68fb22dbbff2c5dfb",
+      "bytes": 141059
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/coverage-delta/exclusions.json",
+      "sha256": "9f06fd7d0fa552931099b48d966e8fbde917c32f0a6426aba5d2ecfa59c3b138",
+      "bytes": 406
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/coverage-delta/run-receipt.json",
+      "sha256": "583cab398d5ae63825135f3ba78de5f3217cd9aef27eeceef676f0b681c85ea6",
+      "bytes": 140010
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/coverage-delta/runtime.log",
+      "sha256": "bce6e6ed191bd742e25be97ff07f8152cf326fb1422b5d23384c4e7693416dfe",
+      "bytes": 1294
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/coverage-delta/testkit.log",
+      "sha256": "06d308a53ff09ef28a3aebe665b482fd7bbbf99523cebfa7d6eb787c3b6070c6",
+      "bytes": 4985
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/current-migrations/commands.json",
+      "sha256": "88e25bef07ec72aa2ee853318553fcf1644e4d6f84e2f53ca8fb4f180e342ddb",
+      "bytes": 1575
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/current-migrations/migrated-lock-qualification.json",
+      "sha256": "2dd29f444e40151bb5862c8f8a0756e844551eba9f57533387b3ddc471a66aff",
+      "bytes": 134
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/current-migrations/migrated.log",
+      "sha256": "10b2f56ad0a3376e7f16cf6eab6a82c326b7bf802c4b656b0d9300045464fdf5",
+      "bytes": 406
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/current-migrations/new-complete-no-fallback-lock-qualification.json",
+      "sha256": "d23425a4aab8372490eb52a237ea49e4cf7c01649e6477c04778999ae35fea2a",
+      "bytes": 134
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/current-migrations/new-complete-no-fallback.log",
+      "sha256": "ca76add180ca48ccd8e1ace7f2e0cc7533bc49a83caad7b0d81a0ba3a8410dbe",
+      "bytes": 1198
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/current-migrations/receipt.json",
+      "sha256": "ee37e72be120bb53298d27ed28c4534b18441bf56fa004ea833986ceaf688f7f",
+      "bytes": 10785
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/current-portable-fixed/10-cargo.log",
+      "sha256": "1389111288849a97f592b2da6a5bc96d65a9f65aa9cb1dbcb9c69da6c9114bf8",
+      "bytes": 480
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/current-portable-fixed/11-cargo.log",
+      "sha256": "ad5f9d4c1053f351a479c94ff879412d400ca528f5ae80f782ce95a4a93c8eb9",
+      "bytes": 331
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/current-portable-fixed/commands.json",
+      "sha256": "d1259c51206fe951d79588f8265d3d3cdb09c14f8ee1175017ea2d917724a2e7",
+      "bytes": 5273
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/current-portable-fixed/receipt.json",
+      "sha256": "b800ce5397d47e4152c18d85764a3afe25b79a4ee08243cb19953c38107b1087",
+      "bytes": 71775
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/current-w2/commands.json",
+      "sha256": "baa1e0eceed3d20a08f6347e8e7465822ccd3adb1f3539d1c385aa9bb39f1ae6",
+      "bytes": 2280
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/current-w2/lock-comparison.json",
+      "sha256": "ef9e446b7ce7dc92515af737f505d213bd6d6fefcf35fd11c7c5383c19acde71",
+      "bytes": 47
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/current-w2/logs/witnessed-1.88.0.log",
+      "sha256": "b36e999aa001c0fe2b595550b7c6bc91482a08ba19811d216612f7667536d4df",
+      "bytes": 6899
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/current-w2/logs/witnessed-1.99.0.log",
+      "sha256": "0b506c2243fbafd884b008a79b72cd108d8075b9003cfedac722f9c6e9508cf2",
+      "bytes": 1064
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/current-w2/receipt.json",
+      "sha256": "43705269881ffda8d99077c6ae02c0348c1f7051051a3619db90b968c0efd967",
+      "bytes": 65691
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/dependency-source-continuity.json",
+      "sha256": "efbcf6ed3f2b995b5795701e4d1704f9a12436b87e597f0b806399c26df251bf",
+      "bytes": 528
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/publication-rejection-before.log",
+      "sha256": "3455f6b77e640c4ddacdebfe1839d8b860e8347c496a1752831b2eab1984c66c",
+      "bytes": 804
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/publication-rejection-fix.json",
+      "sha256": "18b8c016fd4a721fbc39791477156a78b1383a68757e061bb99b068bff559fd3",
+      "bytes": 1724
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/publication-rejection-fix.md",
+      "sha256": "1791fcad9fbb78ca4590541333df7c4d059d87e488410394151218ee12640000",
+      "bytes": 3321
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/publication-rejection-fixed.log",
+      "sha256": "b8746dc33c5145c25df196c75b49a0674c00eabbdb6df8e53ec0d728c668dd0c",
+      "bytes": 667
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/review-note.md",
+      "sha256": "7358e8b9056a312c55a21dc95d14ec659e3cae96f750ede6a10d4c9085901ca3",
+      "bytes": 3232
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/scheme-derivation.json",
+      "sha256": "a45a89b96f83cb20658d36ebd8351b011e9e63c2532baa7a3d9b8fd3c4ba69c7",
+      "bytes": 3424
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/scheme-output-closure.json",
+      "sha256": "00289e831c024ea955e3d86fb9f33ac7317299b8d55b6b1ac7bb8c38ead0318d",
+      "bytes": 1376
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/candidate-consumers-adr0362/scheme-source-binding.json",
+      "sha256": "9a3d2fcaa58c9d51751a1623fa61fec7fed0c1f475c769c71067ef385a7fee59",
+      "bytes": 44755
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/capability-k1/adr0324-rust-capabilities.json",
+      "sha256": "5892af4a3ddd03f41cb7728d26fef8f17971cbd2d57fa0afea907da104d04228",
+      "bytes": 3322
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/capability-k1/check_observed_api.py",
+      "sha256": "d74106475ee986f3773768c04b15476f0143d2a25150e4c0d405c7e132857179",
+      "bytes": 1312
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/capability-k1/historical-rust-capabilities.json",
+      "sha256": "8d3dc57a405875ecce5974e945719b6ae7bbb00b3543de1a40ded0756c15d5d2",
+      "bytes": 3869
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/capability-k1/receipt.json",
+      "sha256": "db30251990c540b471bd27ddb0333488d5096ea70589a3583c27085b07ee93e6",
+      "bytes": 1317
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/capability-k1/retained-receipt.md",
+      "sha256": "d51c8badaf7345dedbcdded1af4eb9a3dfeb59c7be6c5dd23e8a050ace94e3e0",
+      "bytes": 1537
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/counter-c1/retained-receipt.md",
+      "sha256": "d9dc376acedd7166ad57fba33c590ebfbf3d36041c1965db3134d5c1aa29e237",
+      "bytes": 91355
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/counter-c1/run.log",
+      "sha256": "963b25c8d3d18a1110f3f0c20fe4fe0381c27f827e5db23d9e848b55b07beb84",
+      "bytes": 3628
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/final-candidate-f9a49666/qualification-evidence.zip",
+      "sha256": "15c8b8500a69336e1e0255b714bc2aa4dcb6fc0c3db1e2bb57b40a393143fdc4",
+      "bytes": 1019529
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/final-candidate-f9a49666/remaining-receipt.json",
+      "sha256": "431f911d587f4c2c167266917a9e759be2bd8f0c36665567b0f4c32fff6d602b",
+      "bytes": 385047
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/final-candidate-f9a49666/remote-verification.json",
+      "sha256": "40663640c12ba745612d78ee9f1703871e370b7d8d2d043b27e805e9eb4e4b1e",
+      "bytes": 1047
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/final-candidate-f9a49666/review-note.md",
+      "sha256": "cf820ae8d3247f522db581a1753a5ade9f353418f895e3d67ec39b963615dedb",
+      "bytes": 3232
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/final-candidate-f9a49666/technical-qualification.json",
+      "sha256": "69076791c0671f6e258c9a0171ba1117ba2f17e362ffdc56df9c337b8088b424",
+      "bytes": 2770
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/index.md",
+      "sha256": "c641d1f621cb5aadf189dfb182f76eaf8c893f387b6c35a60a127d9689889c39",
+      "bytes": 29133
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/local-proof-fixture-adr0360/REPORT.md",
+      "sha256": "59baa7cf1eff12fcb1e69ff75009d7a54420535c7fa5b528222d7cc275903804",
+      "bytes": 1932
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/local-proof-fixture-adr0360/clippy.log",
+      "sha256": "7827fa28c288d0c5b20f7f9b9c273f2de6cee66209693055dc6fcaa36b72a46f",
+      "bytes": 1588
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/local-proof-fixture-adr0360/default-tests.log",
+      "sha256": "7c4dadc3d47603859f6d13277048b755682def70f60b1e8b48e1ebac6dddc93e",
+      "bytes": 4243
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/local-proof-fixture-adr0360/doctests.log",
+      "sha256": "5fc26b06c96b01aabe7b343d2e996cbfd9bb15c10bb42acb895806ac0c932671",
+      "bytes": 536
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/local-proof-fixture-adr0360/format.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/local-proof-fixture-adr0360/review.md",
+      "sha256": "535a35d14fa637ffe92812c688ad94f6e328d66775917f9017cf2100bc04e409",
+      "bytes": 3345
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/local-proof-fixture-adr0360/source-hashes.json",
+      "sha256": "8f279569de15003aa9bf7b54d4c601f37710e397805b990f48230e76eee50ab6",
+      "bytes": 477
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/local-proof-fixture-adr0360/tests.log",
+      "sha256": "3649f8c99ed45f3f2b2ad0f751005ef6f6bc3a177648aa068a6f9be999633698",
+      "bytes": 4773
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/migration-cf1/MIGRATION.md",
+      "sha256": "b658a175e3b97a1e570895f6a36dcdacc15f22be53cc1e0f1ac7ff958b37b988",
+      "bytes": 3885
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/migration-cf1/compatibility.log",
+      "sha256": "2895607f0325127dd57d6da5c6da0c6597525b1882a58e27ed2372d9bb288380",
+      "bytes": 2845
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/migration-cf1/generated-consumer-results.json",
+      "sha256": "0411f3f3e94c1d7970911739f890a5add14b01a59c9ff2db89e32ea166317634",
+      "bytes": 1232
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/migration-cf1/guide-evidence-map.json",
+      "sha256": "620e6096cdd58b6128f371f0f75574ba9ebc4f2bd196162860531dcace6fd045",
+      "bytes": 6014
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/migration-cf1/historical-abi49.log",
+      "sha256": "295b9f0c8e61eaa5dd15460503297cde682febe38ce2dc18bf009ac80186556f",
+      "bytes": 1769
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/migration-cf1/migrated-msrv-final.log",
+      "sha256": "bc66c291b5e4f1d010f1c0f4411943e0582e666395682bf4a1209692ce6cdc77",
+      "bytes": 211
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/migration-cf1/migrated-primary-final.log",
+      "sha256": "94414be571255aed1839e2b1e4155393b64113a9a85865b3e8d69db3d9de1dbb",
+      "bytes": 315
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/migration-cf1/migration-results.json",
+      "sha256": "fd31990ee0c9d152d082cf0dde0f1abe6928f03284965a18890424b4e0b48614",
+      "bytes": 1897
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/migration-cf1/new-complete-no-fallback.log",
+      "sha256": "fbb9fbbff3dcc2e8cab4d425dab38d782fa7b042cf47d21baea0f674e6799f8f",
+      "bytes": 1035
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/migration-cf1/new-exhaustive.log",
+      "sha256": "bbec98e14f8d5546ba2ae8015f7c7513f06601fd30e25c0ffc6fd43b857f8779",
+      "bytes": 5159
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/migration-cf1/receipt.json",
+      "sha256": "b96d9a0368311fe14f2331ad866c89be850a2eb785ab0ba418007cc991104c40",
+      "bytes": 32583
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/migration-cf1/v2-archive-consumer-closeout.md",
+      "sha256": "b91ee198921d73053860ca9ea26454cd4f39c34acafa0d6dd6431e962bac3e62",
+      "bytes": 16362
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/named-record/README.md",
+      "sha256": "87ab0b6311d05e2d554aeab42c7155b98a076698e3a5ce354e9045613260eee0",
+      "bytes": 2690
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/named-record/artifact-manifest.json",
+      "sha256": "d763f79b4f4dea0b165ef2dabff2c21462a6d60dfd57c61ac81c807eb4b5abed",
+      "bytes": 60516
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/named-record/evidence/clippy.log",
+      "sha256": "a320ca03c820127fb7b33c2b9469be714971fe2ed4870e03d6ea7c8d7bae9577",
+      "bytes": 511
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/named-record/evidence/format-check.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/named-record/evidence/lock-qualification.json",
+      "sha256": "37e60b3767099c32eeffb501d8d4c25f23fdc3d28e4f6aba052daf4d02f8a6db",
+      "bytes": 750
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/named-record/evidence/receipt.json",
+      "sha256": "fd50f65079ec8238401e456beedcfbfe10929d17f591649a707b11d1796bc04f",
+      "bytes": 2524
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/named-record/evidence/source.json",
+      "sha256": "eb111c65534b03b893dc4ec4044e0702623c86e73ff7e42ec3870c1c802f37b8",
+      "bytes": 1090
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/named-record/evidence/test.log",
+      "sha256": "55580e38fc910090980d334d5749947e2cef5d5f1186b2eb12636deb1c629feb",
+      "bytes": 807
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/passport-p1/cargo-local-packages.json",
+      "sha256": "7a8a64f4a90226c11e16a8a7911cfb83dd8bc47fc75ab3eec8756497a31d8523",
+      "bytes": 548
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/passport-p1/compile.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/passport-p1/consumer-final.log",
+      "sha256": "03e1ea661532214a330d5546d040ea711c4704195d92138bb7f6fbbb0de21884",
+      "bytes": 665
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/passport-p1/consumer-first.log",
+      "sha256": "1f64285682eb1acb04c41deeebe79072be9ef96923ea4802ab999c3c524b47d5",
+      "bytes": 1558
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/passport-p1/consumer-locked.log",
+      "sha256": "30975e8f78b66360e968ac9dd90603de9df56437fc47828f01d7da13f6e0b186",
+      "bytes": 958
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/passport-p1/external-generation.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/passport-p1/receipt.json",
+      "sha256": "f6148d0a62019db3a5fe663c9968d8eeebf579e4c0bbeb25d00c11a234df5dda",
+      "bytes": 17544
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/recording-handle-adr0331/DELIVERY.md",
+      "sha256": "1cd338a4ecede0ef0aba2cd05945ac3cc211c870d1a8061dd0b534f54038715b",
+      "bytes": 2765
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/recording-handle-adr0331/default-clippy.log",
+      "sha256": "8760f61dfb052bdc5f6393b9f9e35e8b23ae0ccef58a12e19111e3e0a8bfc8ba",
+      "bytes": 404
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/recording-handle-adr0331/default.log",
+      "sha256": "c8e9b10672c9ba50896591cc545e0812eebf624eb0c06376c11e574962fd66a0",
+      "bytes": 1025
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/recording-handle-adr0331/default.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/recording-handle-adr0331/generated-runtime-source-comparison.json",
+      "sha256": "0e3679a4c6027e9d59c5defa7999c4f779374dbf2ae1457741d03e3ac8c2eda0",
+      "bytes": 9589
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/recording-handle-adr0331/manifest.json",
+      "sha256": "ed756cd5a274ce2aea49ecf1ae2487327ef5f10eb75bae4574cd5e631ac53ba6",
+      "bytes": 12138
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/recording-handle-adr0331/receipt.json",
+      "sha256": "305566c7986a8f9093b821ef75b7970fa5ede3a88fcc58206f55392afa525e13",
+      "bytes": 22344
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/recording-handle-adr0331/sdk-source-comparison.json",
+      "sha256": "f55b1778c189b2cdbe406c20c7732dcd5db115691a1e9b59d5943aa08dd03da9",
+      "bytes": 16846
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/recording-handle-adr0331/transaction-clippy.log",
+      "sha256": "d6dea380c82a92fc64b3164a52105940eb705903ecde8f860f91449793264efa",
+      "bytes": 404
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/recording-handle-adr0331/transaction.log",
+      "sha256": "082c00e554b8cbfb0b789953228f9a14336624871249912c4633323f6d410c7c",
+      "bytes": 892
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/recording-handle-adr0331/transaction.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/relocation-index.json",
+      "sha256": "4a7c158706310de67d39d89e4bc2517476a7b0ec1829cdfba539974d2bca3481",
+      "bytes": 127942
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/rustdoc-adr0326/backend-test-clippy.log",
+      "sha256": "826fc39b7aab0b92c0bbb872b7e6e9645b4c0f0cd968380597db92e70e6d452e",
+      "bytes": 183
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/rustdoc-adr0326/fmt-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/rustdoc-adr0326/input-tests-final.log",
+      "sha256": "9e1c75b58e35d7de19637be2b33a69f532385506445ef63f1a440dafc7bbeed4",
+      "bytes": 1750
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/rustdoc-adr0326/receipt.json",
+      "sha256": "e7f0ae341b8dcaa4dafa3508120cd480d6884d0c01cfe69b3b9d3344f621913c",
+      "bytes": 2892
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/rustdoc-adr0326/testkit-clippy.log",
+      "sha256": "1cf5d8dd08178181580cfc9694b328ad83cac4d9b811939da8956640b2812f02",
+      "bytes": 1251
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/rustdoc-adr0326/testkit-doc-tests.log",
+      "sha256": "06fde780b0b682d87bbbef1993ace0775b9d1beac5b396e6be5464b2845b82c7",
+      "bytes": 1156
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/tutorials-adr0324/VALIDATION.md",
+      "sha256": "4734917463a0318b46c89d911f19798c5bcafe3950b3779b639938900a9cc179",
+      "bytes": 1648
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/tutorials-adr0324/artifact-manifest.json",
+      "sha256": "7ec6633342c116019196e852380bd9a6bf83b65061cf0afb4cbccd44e43c2451",
+      "bytes": 76498
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/tutorials-adr0324/commands.json",
+      "sha256": "ce114ec90a0a1b750958aebed7575a4694f7731045f2860127d6f2d94a4ed21e",
+      "bytes": 5183
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/tutorials-adr0324/did-lifecycle-lock-comparison.json",
+      "sha256": "ef9e446b7ce7dc92515af737f505d213bd6d6fefcf35fd11c7c5383c19acde71",
+      "bytes": 47
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/tutorials-adr0324/feature-source-policy.json",
+      "sha256": "c9491c30fab726cd03fe22389e6a2c12ea678230e079123481392f861d2646f9",
+      "bytes": 7607
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/tutorials-adr0324/generated-before-format.json",
+      "sha256": "865527f60784091b7972f8330dcfbefd7cd5daed0651f30149f9d8444f5b08f9",
+      "bytes": 3666
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/tutorials-adr0324/initial-commands.json",
+      "sha256": "afb5601e9db0627f7e918f892121df677384dfec3a675d5bb67fbfa02385046c",
+      "bytes": 776
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/tutorials-adr0324/initial-lock-comparison.json",
+      "sha256": "f1c3cd7a7b5f2c19639068c620fd11d3514e18695b7775b36744e2c06013eb23",
+      "bytes": 36405
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/tutorials-adr0324/logs/did-lifecycle-clippy.log",
+      "sha256": "dfcfb66860b54554811484029045c30f64b06f3146ffb690c94f4f5bd2fe6b1d",
+      "bytes": 314
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/tutorials-adr0324/logs/did-lifecycle-format.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/tutorials-adr0324/logs/did-lifecycle-generate.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/tutorials-adr0324/logs/did-lifecycle-test-final.log",
+      "sha256": "a9ff2980ec61952c322950fccd44adc96bc379466efbea5efff6143f449b980e",
+      "bytes": 566
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/tutorials-adr0324/logs/did-lifecycle-test.log",
+      "sha256": "31545ace79ac234cab2ed561a8ff0e72051942d5cdc3c83c9836bb57339a00af",
+      "bytes": 693
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/tutorials-adr0324/logs/witnessed-cell-clippy.log",
+      "sha256": "1292ddaad188ab7245192b8ed4251b5d5ea91c8a98c99ad01f7f589f66198c59",
+      "bytes": 556
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/tutorials-adr0324/logs/witnessed-cell-format.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/tutorials-adr0324/logs/witnessed-cell-generate.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/tutorials-adr0324/logs/witnessed-cell-test-final.log",
+      "sha256": "bc2982a5ddd5709dd39e7a58f648017b7f1dfa300a74eed50a8d640b4087fd1f",
+      "bytes": 481
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/tutorials-adr0324/logs/witnessed-cell-test.log",
+      "sha256": "bb263e17d904c7474b1bb121058e9f463cec69e0dda8c8d53c15ad8ff67c6c0f",
+      "bytes": 975
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/tutorials-adr0324/reference-manifest.json",
+      "sha256": "6ff4e7f076fca7166be2548e1a2fb6cd4fe5cc370e828b4f5290c015995b05e2",
+      "bytes": 1837
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/tutorials-adr0324/validation-receipt.json",
+      "sha256": "e0f960c5d9fdc7ba74f0195a482ad294632214a0cec4e5c5cb1a62e007a5ff7e",
+      "bytes": 95292
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/tutorials-adr0324/witnessed-cell-lock-comparison.json",
+      "sha256": "ef9e446b7ce7dc92515af737f505d213bd6d6fefcf35fd11c7c5383c19acde71",
+      "bytes": 47
+    },
+    {
+      "path": "doc/rust/guides/README.md",
+      "sha256": "2d9510e487c5487099959210aaa39866efce96c525005575b82eaee45a908b61",
+      "bytes": 1935
+    },
+    {
+      "path": "doc/rust/guides/VALIDATION.md",
+      "sha256": "cad7d51a0251d2f22cc964da16653ebe17d3c4cb07166bd735813bff7bff5cb2",
+      "bytes": 3098
+    },
+    {
+      "path": "doc/rust/guides/age_predicate_inputs.rs",
+      "sha256": "482b5b8c7b8858a9e7a516c3ad3af57ecee4089d9927e059599743b16777a738",
+      "bytes": 918
+    },
+    {
+      "path": "doc/rust/guides/candidate-qualification.md",
+      "sha256": "22b235c41d1d45f9d23f6e48f2ee84d7657a40fb25ec5fd381b9a23327838e72",
+      "bytes": 3848
+    },
+    {
+      "path": "doc/rust/guides/capabilities.md",
+      "sha256": "7e1735b28f8424e5b3c08b30e303b47f54c54b1fc974d78ed67f7fe5f7e23761",
+      "bytes": 8691
+    },
+    {
+      "path": "doc/rust/guides/contract-lab.md",
+      "sha256": "ee940204e062fe503daa77abc3a2c738aeb4e6d7c6676c33a2af884b2eba2b4e",
+      "bytes": 13135
+    },
+    {
+      "path": "doc/rust/guides/did-service.md",
+      "sha256": "f888922be426a541902a0482521258f18e69dfab88d1137c6779e01efe5addc9",
+      "bytes": 13043
+    },
+    {
+      "path": "doc/rust/guides/did.md",
+      "sha256": "13f9b5b30555b8e36352a3c058ec72a9e55d69ca9d16c6dc14f8d00e976c40b7",
+      "bytes": 5154
+    },
+    {
+      "path": "doc/rust/guides/examples/did-lifecycle/Cargo.toml",
+      "sha256": "1ed09bfd625d3632c2362455ec2e88ae217852e326e90b5675fb910d7b7793fd",
+      "bytes": 360
+    },
+    {
+      "path": "doc/rust/guides/examples/did-lifecycle/data/unit-composition.json",
+      "sha256": "efdad2518994cd41fad6266425224e3d052571cd80296c3c001dfd9ea43735ff",
+      "bytes": 180638
+    },
+    {
+      "path": "doc/rust/guides/examples/did-lifecycle/source/packages/contract/src/did.compact",
+      "sha256": "632f34af543924edb185fe9c8eda54aa4ca0503b0b9e8ee3ff06ec470f6d7456",
+      "bytes": 28322
+    },
+    {
+      "path": "doc/rust/guides/examples/did-lifecycle/source/packages/jubjub-schnorr/src/schnorr.compact",
+      "sha256": "f072731d730d72f8b76b183df2c5187b233a0838d9462894cfb0a6d2f0f66bff",
+      "bytes": 2724
+    },
+    {
+      "path": "doc/rust/guides/examples/did-lifecycle/source/source-manifest.json",
+      "sha256": "a5386c2d3cc8d2f3aa090599a6038efc638f36f20ede19a7067a1ba416610106",
+      "bytes": 571
+    },
+    {
+      "path": "doc/rust/guides/examples/did-lifecycle/support/codec.rs",
+      "sha256": "6bc99baf7a5cc6a1e6b8a93da6d29d5c4dda83184b80ea08efbb0d07c244fb44",
+      "bytes": 3736
+    },
+    {
+      "path": "doc/rust/guides/examples/did-lifecycle/support/lifecycle_witness.rs",
+      "sha256": "9e877e2e38210a5a97b94a7ace909c9fa324988c3a03998836a1f51d15d5a227",
+      "bytes": 3390
+    },
+    {
+      "path": "doc/rust/guides/examples/did-lifecycle/support/witness.rs",
+      "sha256": "25c0788e8190edbfc8541fe12b971d927a0d8d8d7c97cd6b038088ff3a1c3297",
+      "bytes": 3272
+    },
+    {
+      "path": "doc/rust/guides/examples/did-lifecycle/tests/lifecycle.rs",
+      "sha256": "a3811662acaa49e11e6b96a5ad14e5b021e44043300c1404d94313ec35fe899d",
+      "bytes": 8331
+    },
+    {
+      "path": "doc/rust/guides/examples/named-record/Cargo.lock",
+      "sha256": "c433f2d0b8bd703bf8f88776f82967686ddf232d4d47bc18bb0bda4d18a7c960",
+      "bytes": 82540
+    },
+    {
+      "path": "doc/rust/guides/examples/named-record/Cargo.toml",
+      "sha256": "27aee37a9462beea273288ef1b58507198fd98bd27766a97a9a20bf11934536e",
+      "bytes": 356
+    },
+    {
+      "path": "doc/rust/guides/examples/named-record/README.md",
+      "sha256": "3ce2c14817aab8201d803796c4749ae7115813a7a88383434ccb308ddc9f8572",
+      "bytes": 2053
+    },
+    {
+      "path": "doc/rust/guides/examples/named-record/oracle/age-inputs.json",
+      "sha256": "f822c1ceecd4932685420a4ffaa91edfd4d0e746621c6183aa9e95fc261a7701",
+      "bytes": 22546
+    },
+    {
+      "path": "doc/rust/guides/examples/named-record/oracle/branch-age-capture.json",
+      "sha256": "a8cbe32cda7532adf325910214d7b2a4c91ca9da6a95a86946a5ddd32703ce10",
+      "bytes": 3609
+    },
+    {
+      "path": "doc/rust/guides/examples/named-record/oracle/capture-age.mjs",
+      "sha256": "82ecf1fec829ec4c239925ca0cf269608249b0ea9b957ff3a0d209c0cffcf127",
+      "bytes": 3444
+    },
+    {
+      "path": "doc/rust/guides/examples/named-record/oracle/provenance.json",
+      "sha256": "e3518d61a5c9d8aced4c347a806bc42d39a4884208bd045cfa1db95e05eabb3a",
+      "bytes": 7650
+    },
+    {
+      "path": "doc/rust/guides/examples/named-record/oracle/upstream-age-capture.json",
+      "sha256": "3d0b9650e228b6a2fff047b87b5e1a85e7a098adf43c5be0d83c666cba686909",
+      "bytes": 3609
+    },
+    {
+      "path": "doc/rust/guides/examples/named-record/src/lib.rs",
+      "sha256": "482b5b8c7b8858a9e7a516c3ad3af57ecee4089d9927e059599743b16777a738",
+      "bytes": 918
+    },
+    {
+      "path": "doc/rust/guides/examples/named-record/tests/age_predicate.rs",
+      "sha256": "b3066a04eb278f0ebcb980edaf3f5399c744629973e8747d7556410d718a8a0e",
+      "bytes": 4163
+    },
+    {
+      "path": "doc/rust/guides/examples/passport/README.md",
+      "sha256": "ea7d397c180d6ad78733d7d6f14f6647ede9507b0d591abd580895d182909482",
+      "bytes": 1173
+    },
+    {
+      "path": "doc/rust/guides/examples/passport/consumer/Cargo.lock",
+      "sha256": "bb7879e1feb5c65301b6bff24e386d9d30c1af864cabd0588e773a29b927be0a",
+      "bytes": 79480
+    },
+    {
+      "path": "doc/rust/guides/examples/passport/consumer/Cargo.toml",
+      "sha256": "90553daf96e1fde7504bdaf40dc283b3a9af7478943fae237e7ed9e995eaa4b8",
+      "bytes": 214
+    },
+    {
+      "path": "doc/rust/guides/examples/passport/consumer/src/lib.rs",
+      "sha256": "d3dcbd5b2e5ed1946fa306217ea738f6841046320cb55211eb8a1a6e2628655e",
+      "bytes": 1646
+    },
+    {
+      "path": "doc/rust/guides/examples/passport/passport-source/core-compact-staging/credentials.compact",
+      "sha256": "d01f794ceb3654d020a49501bec871362883d7b64afe761ec6bcfcfa9ba9018c",
+      "bytes": 739
+    },
+    {
+      "path": "doc/rust/guides/examples/passport/passport-source/core-compact-staging/credentials/composable.compact",
+      "sha256": "c7576fc307b8f3a598f133babdef062311316ca9e7a5067f892a39b0c66de6dc",
+      "bytes": 416
+    },
+    {
+      "path": "doc/rust/guides/examples/passport/passport-source/core-compact-staging/credentials/holder-bindings.compact",
+      "sha256": "8d64be765219d7f308ccf876184f0a49e049a7a00df67aaba5ce02dbe7442cf1",
+      "bytes": 1611
+    },
+    {
+      "path": "doc/rust/guides/examples/passport/passport-source/core-compact-staging/credentials/proofs.compact",
+      "sha256": "df90f4633409da7431ead431fe42f14100122e069a78eedfe73c921fb1e65b24",
+      "bytes": 5815
+    },
+    {
+      "path": "doc/rust/guides/examples/passport/passport-source/core-compact-staging/credentials/relations.compact",
+      "sha256": "d106bc1f425915f5a868f500c9607178736e5a98d2d956ee10b00549db2f69d3",
+      "bytes": 1625
+    },
+    {
+      "path": "doc/rust/guides/examples/passport/passport-source/core-compact-staging/credentials/signer-authorization.compact",
+      "sha256": "457ba74ec082ae8acc1fb41d8ec30f955c25732e702b18a4f4eb985790509186",
+      "bytes": 7393
+    },
+    {
+      "path": "doc/rust/guides/examples/passport/passport-source/core-compact-staging/credentials/status-bindings.compact",
+      "sha256": "8ba11457beae1e635cf4c0d869c7969d48b3263b4b152631ebe04beaf2b8b216",
+      "bytes": 1203
+    },
+    {
+      "path": "doc/rust/guides/examples/passport/passport-source/core-compact-staging/credentials/types.compact",
+      "sha256": "170a1b40c87b4e98332cee708be60ae8ce40fa5d5299987cad572e931de7546d",
+      "bytes": 1880
+    },
+    {
+      "path": "doc/rust/guides/examples/passport/passport-source/core-compact-staging/credentials/vc.compact",
+      "sha256": "3355cabf7f488c22b19b4ed11f5064e9458e3187af68aa65017e9eb3902f13d7",
+      "bytes": 2853
+    },
+    {
+      "path": "doc/rust/guides/examples/passport/passport-source/core-compact-staging/credentials/vp.compact",
+      "sha256": "93cfb8626de9bb8458417636ad42f16e8915fc11bfb2c31f2524874a2ad3ea35",
+      "bytes": 895
+    },
+    {
+      "path": "doc/rust/guides/examples/passport/passport-source/source-manifest.json",
+      "sha256": "f122c9c890e841d50f2f2980df4229de584333a9eb6c9a4525794f8ce8a77f78",
+      "bytes": 3929
+    },
+    {
+      "path": "doc/rust/guides/examples/passport/passport-source/src/digital-passport-credential.compact",
+      "sha256": "c2db910878fa3b8e86d2fd1be129401e42db9100ccfa3c229acb9b59b4241624",
+      "bytes": 3101
+    },
+    {
+      "path": "doc/rust/guides/examples/passport/passport-source/src/digital-passport-credential/claims.compact",
+      "sha256": "bc461f2c2956b4bb96729853ff9e2e5ab7ab9a786043926ca1b091b637d0fae9",
+      "bytes": 7077
+    },
+    {
+      "path": "doc/rust/guides/examples/passport/passport-source/src/digital-passport-credential/helpers.compact",
+      "sha256": "5490081332197fb98301267e19abe7e9829406d4bb14c711001e799f2205f450",
+      "bytes": 18022
+    },
+    {
+      "path": "doc/rust/guides/examples/passport/passport-source/src/digital-passport-credential/model.compact",
+      "sha256": "27f7f4b28ea2c707c7d1703eaa8a99e6721663db8d84d60414ee30368ffc84a0",
+      "bytes": 1606
+    },
+    {
+      "path": "doc/rust/guides/examples/passport/passport-source/src/digital-passport-credential/protocol-envelope.compact",
+      "sha256": "2463bea6ab295ca16ec2f2d96cb325bf7d6ce81796e29f92c45f68a8d1cb8314",
+      "bytes": 4292
+    },
+    {
+      "path": "doc/rust/guides/examples/passport/passport-source/src/digital-passport-credential/protocol-model.compact",
+      "sha256": "5a5ae2663eb983a96537162ee6af7b8f4ecb313cb218e8b87a54e733c73d0219",
+      "bytes": 10111
+    },
+    {
+      "path": "doc/rust/guides/examples/passport/passport-source/src/digital-passport-credential/validation.compact",
+      "sha256": "849d79cf4b9538dd2eeabbea4341f88010d0f3f2496abad304df8f10fdc27fdb",
+      "bytes": 8563
+    },
+    {
+      "path": "doc/rust/guides/examples/witnessed-cell/Cargo.toml",
+      "sha256": "05b27d8d66922c6f76e9c3ccd4b3b0b2097e026386939715014aad70133860f1",
+      "bytes": 311
+    },
+    {
+      "path": "doc/rust/guides/examples/witnessed-cell/tests/witnessed.rs",
+      "sha256": "3c9339a521cc2ce72b1892a68529d91b97452b7b554cc6a67073da03b475404b",
+      "bytes": 3385
+    },
+    {
+      "path": "doc/rust/guides/examples/witnessed-cell/witnesses_oracle.compact",
+      "sha256": "61b24d39ae57d4ae1c05311d19af9a2e8f094d7f86062e54c89fe3a6eb6ba227",
+      "bytes": 1130
+    },
+    {
+      "path": "doc/rust/guides/feature-source-policy.json",
+      "sha256": "c9491c30fab726cd03fe22389e6a2c12ea678230e079123481392f861d2646f9",
+      "bytes": 7607
+    },
+    {
+      "path": "doc/rust/guides/glossary.md",
+      "sha256": "208007a0e891b113caf747e145433a3ee27ce827e97b9633c207f416b2fd4358",
+      "bytes": 14482
+    },
+    {
+      "path": "doc/rust/guides/guide-manifest.json",
+      "sha256": "d1ab24d2fa7f2ff1ba14cdaf92a24169897aa704b0d9c862e6293ae58dddfd1d",
+      "bytes": 45500
+    },
+    {
+      "path": "doc/rust/guides/index.md",
+      "sha256": "52562c2db8b77216e964832c67ecb97491c723d2d9d9b6e36b24e12cea173802",
+      "bytes": 4545
+    },
+    {
+      "path": "doc/rust/guides/jubjub.md",
+      "sha256": "43dc58c549a72a5bf923a533d3055e05f18dcb7b225ae1d6b48b6b65aba1612c",
+      "bytes": 5835
+    },
+    {
+      "path": "doc/rust/guides/local-proof-tests.md",
+      "sha256": "c2ae3af2c41c404889765204e37ea382e3b513548edd2f57fcb6a139578fc556",
+      "bytes": 5173
+    },
+    {
+      "path": "doc/rust/guides/ownership.md",
+      "sha256": "6a5e4072dd61b544de3fdef92e41fa755ef7982480780caf8b1c3b4ab76047f9",
+      "bytes": 15128
+    },
+    {
+      "path": "doc/rust/guides/passport.md",
+      "sha256": "a294d4c823591cc080a6ebb58d34d346555d136060e86d11bfe1a79c5b9141b3",
+      "bytes": 13001
+    },
+    {
+      "path": "doc/rust/guides/prepare-sdk.py",
+      "sha256": "8eedfe4f531bc97171e0c64ee8bcd56b19447a3f6247d2f476d656b27873ff6a",
+      "bytes": 877
+    },
+    {
+      "path": "doc/rust/guides/proof-integration.md",
+      "sha256": "5fee93ccdbc98da2beaff2f7e98701e2d59201f5f40f031700e0db89ec1d7efe",
+      "bytes": 5842
+    },
+    {
+      "path": "doc/rust/guides/snippet-matrix.md",
+      "sha256": "4a30b4729d63c25cc94c2214bc584207857c50d1b20738db759e699224fa8d32",
+      "bytes": 5569
+    },
+    {
+      "path": "doc/rust/guides/static-constraints.md",
+      "sha256": "822516965d3c7f5574ff500c113a3af66d1aa6eb69f3729b498598806c9ee587",
+      "bytes": 5649
+    },
+    {
+      "path": "doc/rust/guides/testing-witnesses.md",
+      "sha256": "618c49e2e180abf22f43c144b8ab28d85e68601196e70e5f20a24fbe4db3e77e",
+      "bytes": 6033
+    },
+    {
+      "path": "doc/rust/guides/troubleshooting.md",
+      "sha256": "34ea503681cbdc34076270721c9681be183cee5c5871b5a49026259f80508be9",
+      "bytes": 6271
+    },
+    {
+      "path": "doc/rust/guides/version-selection.md",
+      "sha256": "f7e4e4eb977a4ff5f35bff68876d4d2840963c6eb2280934406584452ab166e2",
+      "bytes": 7786
+    },
+    {
+      "path": "doc/rust/guides/versions-and-targets.md",
+      "sha256": "959f6f824efedfcd1aacd0d9356ef8036b05c3d3804bc5a64eac0d14807864cd",
+      "bytes": 9937
+    },
+    {
+      "path": "runtime-rs/README.md",
+      "sha256": "c50a0b74b33428251a97020bdaedfc5bfb6039c75c2ae719992dd759cef4df17",
+      "bytes": 21290
+    },
+    {
+      "path": "testkit-rs/README.md",
+      "sha256": "c85191907e81e5d750794f705d58713d85f2c6b95c8a6d3c018b76afe3920239",
+      "bytes": 4046
+    },
+    {
+      "path": "tools/compact-rust-backend/README.md",
+      "sha256": "ac6e65f0981369ef06da1882e331e8aba75b7b81529f4f52030e70b2a5f50245",
+      "bytes": 115835
+    }
+  ],
+  "scope": "Documentation and evidence publication; historical measurements retain their source identities. No new tag, registry release or deployment."
+}

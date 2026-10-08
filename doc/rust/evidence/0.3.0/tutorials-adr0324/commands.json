@@ -1,0 +1,226 @@
+[
+  {
+    "name": "witnessed-cell-generate",
+    "args": [
+      "/Users/ysh/.codex/worktrees/07ae/compact/target/compact-rust-parity-gate/debug/compactc",
+      "--target",
+      "rust",
+      "--skip-zk",
+      "--rust-runtime-root",
+      "/tmp/rust030-guides-validated-324/examples/sdk",
+      "witnesses_oracle.compact",
+      "generated"
+    ],
+    "cwd": "/tmp/rust030-guides-validated-324/examples/witnessed-cell",
+    "exit_code": 0,
+    "time": "2026-10-07T09:21:31.154995+00:00"
+  },
+  {
+    "name": "witnessed-cell-lock",
+    "args": [
+      "cargo",
+      "+1.99.0",
+      "metadata",
+      "--offline",
+      "--format-version",
+      "1"
+    ],
+    "cwd": "/tmp/rust030-guides-validated-324/examples/witnessed-cell",
+    "exit_code": 0,
+    "time": "2026-10-07T09:21:31.484055+00:00"
+  },
+  {
+    "name": "witnessed-cell-metadata",
+    "args": [
+      "cargo",
+      "+1.99.0",
+      "metadata",
+      "--offline",
+      "--locked",
+      "--format-version",
+      "1"
+    ],
+    "cwd": "/tmp/rust030-guides-validated-324/examples/witnessed-cell",
+    "exit_code": 0,
+    "time": "2026-10-07T09:21:31.647818+00:00"
+  },
+  {
+    "name": "witnessed-cell-test",
+    "args": [
+      "cargo",
+      "+1.99.0",
+      "test",
+      "--offline",
+      "--locked",
+      "-j4",
+      "--test",
+      "witnessed"
+    ],
+    "cwd": "/tmp/rust030-guides-validated-324/examples/witnessed-cell",
+    "exit_code": 0,
+    "time": "2026-10-07T09:21:36.830584+00:00"
+  },
+  {
+    "name": "did-lifecycle-generate",
+    "args": [
+      "/Users/ysh/.codex/worktrees/07ae/compact/target/compact-rust-parity-gate/debug/compactc",
+      "--target",
+      "rust",
+      "--skip-zk",
+      "--rust-runtime-root",
+      "/tmp/rust030-guides-validated-324/examples/sdk",
+      "source/packages/contract/src/did.compact",
+      "generated"
+    ],
+    "cwd": "/tmp/rust030-guides-validated-324/examples/did-lifecycle",
+    "exit_code": 0,
+    "time": "2026-10-07T09:21:37.915629+00:00"
+  },
+  {
+    "name": "did-lifecycle-lock",
+    "args": [
+      "cargo",
+      "+1.99.0",
+      "metadata",
+      "--offline",
+      "--format-version",
+      "1"
+    ],
+    "cwd": "/tmp/rust030-guides-validated-324/examples/did-lifecycle",
+    "exit_code": 0,
+    "time": "2026-10-07T09:21:38.066305+00:00"
+  },
+  {
+    "name": "did-lifecycle-metadata",
+    "args": [
+      "cargo",
+      "+1.99.0",
+      "metadata",
+      "--offline",
+      "--locked",
+      "--format-version",
+      "1"
+    ],
+    "cwd": "/tmp/rust030-guides-validated-324/examples/did-lifecycle",
+    "exit_code": 0,
+    "time": "2026-10-07T09:21:38.243323+00:00"
+  },
+  {
+    "name": "did-lifecycle-test",
+    "args": [
+      "cargo",
+      "+1.99.0",
+      "test",
+      "--offline",
+      "--locked",
+      "-j4",
+      "--test",
+      "lifecycle"
+    ],
+    "cwd": "/tmp/rust030-guides-validated-324/examples/did-lifecycle",
+    "exit_code": 0,
+    "time": "2026-10-07T09:21:42.240174+00:00"
+  },
+  {
+    "name": "witnessed-cell-format",
+    "args": [
+      "rustup",
+      "run",
+      "1.99.0",
+      "rustfmt",
+      "--check",
+      "--edition",
+      "2024",
+      "/tmp/rust030-guides-validated-324/examples/witnessed-cell/tests/witnessed.rs"
+    ],
+    "cwd": "/tmp/rust030-guides-validated-324/examples/witnessed-cell",
+    "exit_code": 0,
+    "time": "2026-10-07T09:22:13.956781+00:00"
+  },
+  {
+    "name": "witnessed-cell-clippy",
+    "args": [
+      "cargo",
+      "+1.99.0",
+      "clippy",
+      "--offline",
+      "--locked",
+      "-j4",
+      "--test",
+      "witnessed",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/tmp/rust030-guides-validated-324/examples/witnessed-cell",
+    "exit_code": 0,
+    "time": "2026-10-07T09:22:15.062621+00:00"
+  },
+  {
+    "name": "witnessed-cell-test-final",
+    "args": [
+      "cargo",
+      "+1.99.0",
+      "test",
+      "--offline",
+      "--locked",
+      "-j4",
+      "--test",
+      "witnessed"
+    ],
+    "cwd": "/tmp/rust030-guides-validated-324/examples/witnessed-cell",
+    "exit_code": 0,
+    "time": "2026-10-07T09:22:17.089891+00:00"
+  },
+  {
+    "name": "did-lifecycle-format",
+    "args": [
+      "rustup",
+      "run",
+      "1.99.0",
+      "rustfmt",
+      "--check",
+      "--edition",
+      "2024",
+      "/tmp/rust030-guides-validated-324/examples/did-lifecycle/tests/lifecycle.rs"
+    ],
+    "cwd": "/tmp/rust030-guides-validated-324/examples/did-lifecycle",
+    "exit_code": 0,
+    "time": "2026-10-07T09:22:17.119952+00:00"
+  },
+  {
+    "name": "did-lifecycle-clippy",
+    "args": [
+      "cargo",
+      "+1.99.0",
+      "clippy",
+      "--offline",
+      "--locked",
+      "-j4",
+      "--test",
+      "lifecycle",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/tmp/rust030-guides-validated-324/examples/did-lifecycle",
+    "exit_code": 0,
+    "time": "2026-10-07T09:22:17.948978+00:00"
+  },
+  {
+    "name": "did-lifecycle-test-final",
+    "args": [
+      "cargo",
+      "+1.99.0",
+      "test",
+      "--offline",
+      "--locked",
+      "-j4",
+      "--test",
+      "lifecycle"
+    ],
+    "cwd": "/tmp/rust030-guides-validated-324/examples/did-lifecycle",
+    "exit_code": 0,
+    "time": "2026-10-07T09:22:20.276117+00:00"
+  }
+]

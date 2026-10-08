@@ -1,0 +1,56 @@
+{
+  "status": "passed",
+  "checks": {
+    "provenance": {
+      "outputs": {},
+      "outcome": "success",
+      "conclusion": "success"
+    },
+    "build-cache": {
+      "outputs": {
+        "cache-hit": "false"
+      },
+      "outcome": "success",
+      "conclusion": "success"
+    },
+    "fetch": {
+      "outputs": {},
+      "outcome": "success",
+      "conclusion": "success"
+    },
+    "format": {
+      "outputs": {},
+      "outcome": "success",
+      "conclusion": "success"
+    },
+    "tests": {
+      "outputs": {},
+      "outcome": "success",
+      "conclusion": "success"
+    },
+    "clippy": {
+      "outputs": {},
+      "outcome": "success",
+      "conclusion": "success"
+    },
+    "msrv_workspace": {
+      "outputs": {},
+      "outcome": "skipped",
+      "conclusion": "skipped"
+    },
+    "msrv_standalone": {
+      "outputs": {},
+      "outcome": "skipped",
+      "conclusion": "skipped"
+    }
+  },
+  "locks_unchanged": true,
+  "artifacts": {
+    "clippy.log": "ed635d3994424ee37f64a637bdf03f664400d7ceefc7429c4ef5af9069033111",
+    "fetch.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source.json": "9ab48348a9359fdfe4177bd6c0300e7353920e2d0c48f0d0c8e4be6f03629b6b",
+    "tests.log": "39dc115dca78009e4beebb8bd62a9254705dc81b49926ce56519827a42dd1d93",
+    "workflow.yml": "3c4a7980c014d44c38fa52c36720ad6bb90bd36d9f0022b56b00baec3bb87e8d"
+  }
+}

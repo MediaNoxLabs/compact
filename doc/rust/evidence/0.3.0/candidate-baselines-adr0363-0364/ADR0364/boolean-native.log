@@ -1,0 +1,14 @@
+   Compiling midnight-compact-runtime v0.2.0 (/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs)
+   Compiling compact-rust-boolean-logic-fixture v0.1.0 (/Users/ysh/.codex/worktrees/07ae/compact/tests-rust-backend/boolean-logic)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.91s
+     Running tests/conformance.rs (target/compact-rust-parity-gate/debug/deps/conformance-6194018704a9035d)
+
+running 5 tests
+test pure_boolean_truth_tables_are_complete ... ok
+test negation_evaluates_each_operand_once_and_preserves_refusal ... ok
+test branching_and_negation_use_witness_answers_not_arguments ... ok
+test witnessed_truth_tables_preserve_selected_values_and_private_state ... ok
+test binary_witness_refusals_halt_selected_evaluation_and_skip_unselected_rhs ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+

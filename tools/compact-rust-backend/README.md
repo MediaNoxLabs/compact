@@ -1,5 +1,7 @@
 # Compact Rust backend (ledger 8)
 
+Start with the [task guides](../../doc/rust/guides/index.md) for installation, generated contracts, witnesses and ContractLab examples. This page describes backend capabilities and their development history.
+
 Architecture history: [Rust backend and runtime ADRs](https://github.com/MediaNoxLabs/compact/tree/codex/rust-backend-ast/doc/rust/adr), with decision status, code examples and delivery evidence.
 
 This backend compiles Compact through the ledger-8 Scheme frontend and renders

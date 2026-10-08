@@ -1,0 +1,13 @@
+{
+  "status": "prepared; not executed",
+  "origins": {
+    "/tmp/rust030-guides-validated-324/validate.py": "fdc1accf449de3b103b004612cace3caea1ab8db88b4847b77480e87ba077972",
+    "/tmp/rust030-guides-validated-324/prepare-sdk.py": "8eedfe4f531bc97171e0c64ee8bcd56b19447a3f6247d2f476d656b27873ff6a",
+    "/tmp/compact-verify-portable-final.py": "7e5853af3415cc967090ae60791e306f70515a74af4ba9ab44f6a1dfc0dfd549"
+  },
+  "adapters": {
+    "run-w2-current.py": "82165ec221da39bd7321e8eaccc0cd4b251de107fa6a762b4907e753cc95353a",
+    "run-portable-current.py": "df9549a8654623bd560a2bfa547bf6ea0d25ec4c88f2cadbe1a17cfc37bf7502"
+  },
+  "source_guard": "Caller must verify candidate source archive manifest and bind compiler/package/Scheme to candidate before execution; commit label alone is not source authentication."
+}

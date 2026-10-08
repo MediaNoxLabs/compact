@@ -1,0 +1,61 @@
+[
+  {
+    "case": "migrated-lock",
+    "argv": [
+      "cargo",
+      "+1.99.0",
+      "metadata",
+      "--offline",
+      "--format-version",
+      "1"
+    ],
+    "cwd": "/private/tmp/rust030-candidate-2c798d2d/current-migrations/migrated",
+    "exit": 0,
+    "elapsed_s": 0.5175354999955744,
+    "log_sha256": "e5879cf816ed5f7ccab97fd1c4ee6f716adc0bc0b619f7abf3ae07c28c96c9dd"
+  },
+  {
+    "case": "migrated",
+    "argv": [
+      "cargo",
+      "+1.99.0",
+      "run",
+      "--offline",
+      "--locked"
+    ],
+    "cwd": "/private/tmp/rust030-candidate-2c798d2d/current-migrations/migrated",
+    "exit": 0,
+    "elapsed_s": 11.595853416016325,
+    "log_sha256": "10b2f56ad0a3376e7f16cf6eab6a82c326b7bf802c4b656b0d9300045464fdf5",
+    "expected_outcome": true
+  },
+  {
+    "case": "new-complete-no-fallback-lock",
+    "argv": [
+      "cargo",
+      "+1.99.0",
+      "metadata",
+      "--offline",
+      "--format-version",
+      "1"
+    ],
+    "cwd": "/private/tmp/rust030-candidate-2c798d2d/current-migrations/new-complete-no-fallback",
+    "exit": 0,
+    "elapsed_s": 0.14456070901360363,
+    "log_sha256": "f57335cdb3ba62eecab5a67c744a6a5cec20d224c5486dd9ca1864e97c4ac1e8"
+  },
+  {
+    "case": "new-complete-no-fallback",
+    "argv": [
+      "cargo",
+      "+1.99.0",
+      "check",
+      "--offline",
+      "--locked"
+    ],
+    "cwd": "/private/tmp/rust030-candidate-2c798d2d/current-migrations/new-complete-no-fallback",
+    "exit": 101,
+    "elapsed_s": 5.7609680409077555,
+    "log_sha256": "ca76add180ca48ccd8e1ace7f2e0cc7533bc49a83caad7b0d81a0ba3a8410dbe"
+  }
+]

@@ -1,0 +1,145 @@
+[
+  {
+    "argv": [
+      "python3",
+      "/private/tmp/rust030-candidate-2c798d2d/source/tools/compact-rust-backend/build_compiler_archive.py",
+      "--package",
+      "/private/tmp/rust030-candidate-2c798d2d/portable-package",
+      "--output",
+      "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/compactc.zip"
+    ],
+    "cwd": "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed",
+    "returncode": 0,
+    "log": "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/0-python3.log"
+  },
+  {
+    "argv": [
+      "/usr/bin/otool",
+      "-L",
+      "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/relocated compiler with spaces/compactc.bin"
+    ],
+    "cwd": "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed",
+    "returncode": 0,
+    "log": "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/1-otool.log"
+  },
+  {
+    "argv": [
+      "/usr/bin/otool",
+      "-L",
+      "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/relocated compiler with spaces/compactc-scheme"
+    ],
+    "cwd": "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed",
+    "returncode": 0,
+    "log": "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/2-otool.log"
+  },
+  {
+    "argv": [
+      "/usr/bin/otool",
+      "-L",
+      "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/relocated compiler with spaces/format-compact"
+    ],
+    "cwd": "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed",
+    "returncode": 0,
+    "log": "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/3-otool.log"
+  },
+  {
+    "argv": [
+      "/usr/bin/otool",
+      "-L",
+      "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/relocated compiler with spaces/fixup-compact"
+    ],
+    "cwd": "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed",
+    "returncode": 0,
+    "log": "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/4-otool.log"
+  },
+  {
+    "argv": [
+      "/usr/bin/otool",
+      "-L",
+      "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/relocated compiler with spaces/zkir"
+    ],
+    "cwd": "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed",
+    "returncode": 0,
+    "log": "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/5-otool.log"
+  },
+  {
+    "argv": [
+      "/usr/bin/otool",
+      "-L",
+      "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/relocated compiler with spaces/zkir-v3"
+    ],
+    "cwd": "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed",
+    "returncode": 0,
+    "log": "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/6-otool.log"
+  },
+  {
+    "argv": [
+      "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/installer bin/compactc",
+      "--skip-zk",
+      "/private/tmp/rust030-candidate-2c798d2d/source/examples/rust_backend/counter.compact",
+      "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/ts"
+    ],
+    "cwd": "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/unrelated working directory",
+    "returncode": 0,
+    "log": "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/7-compactc.log"
+  },
+  {
+    "argv": [
+      "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/installer bin/compactc",
+      "--target",
+      "rust",
+      "--rust-require-recording",
+      "--skip-zk",
+      "/private/tmp/rust030-candidate-2c798d2d/source/examples/rust_backend/counter.compact",
+      "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/rust"
+    ],
+    "cwd": "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/unrelated working directory",
+    "returncode": 0,
+    "log": "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/8-compactc.log"
+  },
+  {
+    "argv": [
+      "cargo",
+      "+1.99.0",
+      "metadata",
+      "--offline",
+      "--format-version",
+      "1",
+      "--manifest-path",
+      "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/rust/contract/Cargo.toml"
+    ],
+    "cwd": "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/unrelated working directory",
+    "returncode": 0,
+    "log": "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/9-cargo.log"
+  },
+  {
+    "argv": [
+      "cargo",
+      "+1.99.0",
+      "check",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/rust/contract/Cargo.toml"
+    ],
+    "cwd": "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/unrelated working directory",
+    "returncode": 0,
+    "log": "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/10-cargo.log"
+  },
+  {
+    "argv": [
+      "cargo",
+      "+1.99.0",
+      "check",
+      "--offline",
+      "--locked",
+      "--features",
+      "ledger-transaction",
+      "--manifest-path",
+      "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/rust/contract/Cargo.toml"
+    ],
+    "cwd": "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/unrelated working directory",
+    "returncode": 0,
+    "log": "/private/tmp/rust030-candidate-2c798d2d/current-portable-fixed/11-cargo.log"
+  }
+]

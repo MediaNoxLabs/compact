@@ -1,0 +1,1 @@
+{"compiler_proof_false": 12, "compiler_proof_true": 19, "declared_pure_circuits": 14, "expected_rejections": 0, "positive_sources": 5, "rust_positive_compiled": 5, "rust_positive_rejected": 0, "ts_positive_compiled": 5}

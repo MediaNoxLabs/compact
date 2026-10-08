@@ -1,0 +1,16 @@
+   Compiling passport-guide-consumer v0.1.0 (/tmp/rust030-passport-guide/consumer)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.44s
+     Running unittests src/lib.rs (target/compact-rust-parity-gate/debug/deps/passport_guide_consumer-1b2f7bbd35e66393)
+
+running 2 tests
+test tests::schema_checks_still_run_for_well_typed_values ... ok
+test tests::root_matches_the_pinned_typescript_vector ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests passport_guide_consumer
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

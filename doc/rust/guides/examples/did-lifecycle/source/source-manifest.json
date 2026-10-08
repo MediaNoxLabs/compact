@@ -1,0 +1,18 @@
+{
+  "format": "compact-did-adoption-sources/v1",
+  "repository": "https://github.com/midnightntwrk/midnight-did",
+  "tag": "v0.7.0",
+  "commit": "4e7f6b0f69bf4e2c8506a9693f8d0c3dfe68e550",
+  "files": [
+    {
+      "path": "packages/contract/src/did.compact",
+      "sha256": "632f34af543924edb185fe9c8eda54aa4ca0503b0b9e8ee3ff06ec470f6d7456",
+      "modification": "none"
+    },
+    {
+      "path": "packages/jubjub-schnorr/src/schnorr.compact",
+      "sha256": "f072731d730d72f8b76b183df2c5187b233a0838d9462894cfb0a6d2f0f66bff",
+      "modification": "none"
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "status": "passed; sources frozen; root owns commit",
+  "owned_sources": {
+    "tools/compact-rust-backend/specification_conformance.json": "59f85282379664c5b93fa37846c97b315699cbe41897d0180a6e80ccd6ef1bc9",
+    "tools/compact-rust-backend/test_specification_conformance.py": "25d02a9538030c4d0d772dc367b65ecb7e47c85fb0fb17fb6694279b3f266e96"
+  },
+  "checker_sha256": "7a864df5862130af93e8bc31b0cfe86f220d37a778ab9d794bd8b33e8b872802",
+  "source_anchor_checkpoint": "679be285",
+  "commands": [
+    {
+      "argv": "CARGO_INCREMENTAL=0 CARGO_TARGET_DIR=/Users/ysh/.codex/worktrees/07ae/compact/target/compact-rust-parity-gate cargo +1.99.0 test --locked --offline -j4 -p compact-rust-boolean-logic-fixture --test conformance",
+      "exit": 0,
+      "passed": 5,
+      "log": "boolean-native.log"
+    },
+    {
+      "argv": "python3 -m unittest discover -s tools/compact-rust-backend -p test_specification_conformance.py",
+      "exit": 0,
+      "passed": 30,
+      "log": "specification-tests.log"
+    },
+    {
+      "argv": "python3 -m unittest discover -s tools/compact-rust-backend -p 'test_*.py'",
+      "exit": 0,
+      "passed": 150,
+      "log": "all-harness-tests.log"
+    },
+    {
+      "argv": "python3 tools/compact-rust-backend/specification_conformance.py --repo-root /tmp/rust030-candidate-679be285/source --report /tmp/rust030-adr0364/frozen-baseline-check.json",
+      "exit": 0,
+      "requirements": 268,
+      "families": 30,
+      "errors": 0
+    },
+    {
+      "argv": "git diff --check -- tools/compact-rust-backend/specification_conformance.json tools/compact-rust-backend/test_specification_conformance.py",
+      "exit": 0
+    }
+  ],
+  "artifact_hashes": {
+    "boolean-native-receipt.json": "dc92a054b9896b1af528aa8fc1c1fd73be4fc524f9f8196471b31f56499f8d4f",
+    "projection-check.json": "c1cedc4167b6476b6a99cd67714fb7f629b267ea4a4ce303209a9e0abd274076",
+    "all-harness-tests.log": "1211b6ea4ee61533c112fe5a0f528b335d200b04b7ab4d2bd405df7697cf7cd9",
+    "baseline-before.json": "f839459042fe4b55e4e629744375b0ecca2c5b8beae57ff6da314bc7f3f1db49",
+    "refresh.py": "2681ce90e2f3033810e50a9a4dbe0792d8bad5cb9e68fdbada1668fc8d010b0e",
+    "boolean-native.log": "815b37e817f35ca63fc0164dbe5fab98bd54a7fa64ebda106972aa510ed5e772",
+    "frozen-baseline-check.json": "5a63441cdabf6dd14f8ce15e2d474ebfd8e6a0bc5fe1fda56688be16fc8eca1e",
+    "specification-tests.log": "bb50c69954168bdf6186fc9d091c9414f4eb443bec01e2f4352c4da5bc209e39"
+  },
+  "lease": "released; no live child processes",
+  "scope": "Only JSON maintenance and test; checker, production code, vault, dirty user docs unchanged."
+}

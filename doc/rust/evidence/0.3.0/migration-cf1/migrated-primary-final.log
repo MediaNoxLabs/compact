@@ -1,0 +1,4 @@
+   Compiling compact-rust-backend v0.2.0 (/tmp/compact-adr293/candidate/tools/compact-rust-backend)
+   Compiling adr293-migrated v0.1.0 (/tmp/compact-adr293/consumers/migrated)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 6.41s
+     Running `/tmp/compact-m2-bench-target/debug/adr293-migrated`

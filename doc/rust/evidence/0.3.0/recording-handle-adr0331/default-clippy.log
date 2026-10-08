@@ -1,0 +1,4 @@
+    Checking midnight-compact-runtime v0.2.0 (/private/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs)
+    Checking compact-contract-recording v0.1.0 (/private/tmp/rust030-adr0331-f4/recording/generated/contract)
+    Checking compact-witnessed-borrowed-handle-probe v0.1.0 (/private/tmp/rust030-adr0331-f4/consumer)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.89s

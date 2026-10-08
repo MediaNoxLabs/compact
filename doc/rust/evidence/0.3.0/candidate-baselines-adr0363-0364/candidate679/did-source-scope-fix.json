@@ -1,0 +1,234 @@
+{
+  "candidate": "679be285d91baf87ae55ae3161140e371d259b62",
+  "status": "passed",
+  "production_changed": false,
+  "cargo_lease": "released",
+  "unit_command": [
+    "/opt/homebrew/opt/python@3.14/bin/python3.14",
+    "/Users/ysh/.codex/worktrees/07ae/compact/tools/compact-rust-backend/check_positive_source_scope.py",
+    "--manifest",
+    "/Users/ysh/.codex/worktrees/07ae/compact/tools/compact-rust-backend/parity_positive_unit_composition_sources.json",
+    "--compiler",
+    "/private/tmp/rust030-candidate-679be285/full-gate/bin/compactc",
+    "--output",
+    "/tmp/rust030-candidate-679be285/source-scope-preflight/unit-composition-source-scope.json"
+  ],
+  "unit_exit_code": 0,
+  "remaining_commands": [
+    {
+      "manifest": "tools/compact-rust-backend/parity_positive_top_level_sources.json",
+      "argv": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Users/ysh/.codex/worktrees/07ae/compact/tools/compact-rust-backend/check_positive_source_scope.py",
+        "--manifest",
+        "/Users/ysh/.codex/worktrees/07ae/compact/tools/compact-rust-backend/parity_positive_top_level_sources.json",
+        "--compiler",
+        "/tmp/rust030-candidate-679be285/full-gate/bin/compactc",
+        "--output",
+        "/tmp/rust030-candidate-679be285/source-scope-preflight/top-level-source-scope.json"
+      ],
+      "exit_code": 0,
+      "seconds": 1.413,
+      "log": "/tmp/rust030-candidate-679be285/source-scope-preflight/top-level-source-scope.log"
+    },
+    {
+      "manifest": "tools/compact-rust-backend/parity_positive_original_election_zerocash_sources.json",
+      "argv": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Users/ysh/.codex/worktrees/07ae/compact/tools/compact-rust-backend/check_positive_source_scope.py",
+        "--manifest",
+        "/Users/ysh/.codex/worktrees/07ae/compact/tools/compact-rust-backend/parity_positive_original_election_zerocash_sources.json",
+        "--compiler",
+        "/tmp/rust030-candidate-679be285/full-gate/bin/compactc",
+        "--output",
+        "/tmp/rust030-candidate-679be285/source-scope-preflight/original-election-zerocash-source-scope.json"
+      ],
+      "exit_code": 0,
+      "seconds": 1.503,
+      "log": "/tmp/rust030-candidate-679be285/source-scope-preflight/original-election-zerocash-source-scope.log"
+    },
+    {
+      "manifest": "tools/compact-rust-backend/parity_positive_test_center_counter_sources.json",
+      "argv": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Users/ysh/.codex/worktrees/07ae/compact/tools/compact-rust-backend/check_positive_source_scope.py",
+        "--manifest",
+        "/Users/ysh/.codex/worktrees/07ae/compact/tools/compact-rust-backend/parity_positive_test_center_counter_sources.json",
+        "--compiler",
+        "/tmp/rust030-candidate-679be285/full-gate/bin/compactc",
+        "--output",
+        "/tmp/rust030-candidate-679be285/source-scope-preflight/test-center-counter-source-scope.json"
+      ],
+      "exit_code": 0,
+      "seconds": 0.654,
+      "log": "/tmp/rust030-candidate-679be285/source-scope-preflight/test-center-counter-source-scope.log"
+    },
+    {
+      "manifest": "tools/compact-rust-backend/parity_positive_test_center_welcome_sources.json",
+      "argv": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Users/ysh/.codex/worktrees/07ae/compact/tools/compact-rust-backend/check_positive_source_scope.py",
+        "--manifest",
+        "/Users/ysh/.codex/worktrees/07ae/compact/tools/compact-rust-backend/parity_positive_test_center_welcome_sources.json",
+        "--compiler",
+        "/tmp/rust030-candidate-679be285/full-gate/bin/compactc",
+        "--output",
+        "/tmp/rust030-candidate-679be285/source-scope-preflight/test-center-welcome-source-scope.json"
+      ],
+      "exit_code": 0,
+      "seconds": 1.05,
+      "log": "/tmp/rust030-candidate-679be285/source-scope-preflight/test-center-welcome-source-scope.log"
+    },
+    {
+      "manifest": "tools/compact-rust-backend/parity_positive_test_center_bboard_sources.json",
+      "argv": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Users/ysh/.codex/worktrees/07ae/compact/tools/compact-rust-backend/check_positive_source_scope.py",
+        "--manifest",
+        "/Users/ysh/.codex/worktrees/07ae/compact/tools/compact-rust-backend/parity_positive_test_center_bboard_sources.json",
+        "--compiler",
+        "/tmp/rust030-candidate-679be285/full-gate/bin/compactc",
+        "--output",
+        "/tmp/rust030-candidate-679be285/source-scope-preflight/test-center-bboard-source-scope.json"
+      ],
+      "exit_code": 0,
+      "seconds": 1.449,
+      "log": "/tmp/rust030-candidate-679be285/source-scope-preflight/test-center-bboard-source-scope.log"
+    },
+    {
+      "manifest": "tools/compact-rust-backend/parity_positive_effectful_return_sources.json",
+      "argv": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Users/ysh/.codex/worktrees/07ae/compact/tools/compact-rust-backend/check_positive_source_scope.py",
+        "--manifest",
+        "/Users/ysh/.codex/worktrees/07ae/compact/tools/compact-rust-backend/parity_positive_effectful_return_sources.json",
+        "--compiler",
+        "/tmp/rust030-candidate-679be285/full-gate/bin/compactc",
+        "--output",
+        "/tmp/rust030-candidate-679be285/source-scope-preflight/effectful-return-source-scope.json"
+      ],
+      "exit_code": 0,
+      "seconds": 0.915,
+      "log": "/tmp/rust030-candidate-679be285/source-scope-preflight/effectful-return-source-scope.log"
+    },
+    {
+      "manifest": "tools/compact-rust-backend/parity_positive_test_center_micro_dao_sources.json",
+      "argv": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Users/ysh/.codex/worktrees/07ae/compact/tools/compact-rust-backend/check_positive_source_scope.py",
+        "--manifest",
+        "/Users/ysh/.codex/worktrees/07ae/compact/tools/compact-rust-backend/parity_positive_test_center_micro_dao_sources.json",
+        "--compiler",
+        "/tmp/rust030-candidate-679be285/full-gate/bin/compactc",
+        "--output",
+        "/tmp/rust030-candidate-679be285/source-scope-preflight/test-center-micro-dao-source-scope.json"
+      ],
+      "exit_code": 0,
+      "seconds": 1.824,
+      "log": "/tmp/rust030-candidate-679be285/source-scope-preflight/test-center-micro-dao-source-scope.log"
+    },
+    {
+      "manifest": "tools/compact-rust-backend/parity_positive_test_center_coracle_sources.json",
+      "argv": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Users/ysh/.codex/worktrees/07ae/compact/tools/compact-rust-backend/check_positive_source_scope.py",
+        "--manifest",
+        "/Users/ysh/.codex/worktrees/07ae/compact/tools/compact-rust-backend/parity_positive_test_center_coracle_sources.json",
+        "--compiler",
+        "/tmp/rust030-candidate-679be285/full-gate/bin/compactc",
+        "--output",
+        "/tmp/rust030-candidate-679be285/source-scope-preflight/test-center-coracle-source-scope.json"
+      ],
+      "exit_code": 0,
+      "seconds": 3.329,
+      "log": "/tmp/rust030-candidate-679be285/source-scope-preflight/test-center-coracle-source-scope.log"
+    },
+    {
+      "manifest": "tools/compact-rust-backend/parity_positive_shielded_receive_sources.json",
+      "argv": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Users/ysh/.codex/worktrees/07ae/compact/tools/compact-rust-backend/check_positive_source_scope.py",
+        "--manifest",
+        "/Users/ysh/.codex/worktrees/07ae/compact/tools/compact-rust-backend/parity_positive_shielded_receive_sources.json",
+        "--compiler",
+        "/tmp/rust030-candidate-679be285/full-gate/bin/compactc",
+        "--output",
+        "/tmp/rust030-candidate-679be285/source-scope-preflight/shielded-receive-source-scope.json"
+      ],
+      "exit_code": 0,
+      "seconds": 0.706,
+      "log": "/tmp/rust030-candidate-679be285/source-scope-preflight/shielded-receive-source-scope.log"
+    },
+    {
+      "manifest": "tools/compact-rust-backend/parity_positive_shielded_merge_sources.json",
+      "argv": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Users/ysh/.codex/worktrees/07ae/compact/tools/compact-rust-backend/check_positive_source_scope.py",
+        "--manifest",
+        "/Users/ysh/.codex/worktrees/07ae/compact/tools/compact-rust-backend/parity_positive_shielded_merge_sources.json",
+        "--compiler",
+        "/tmp/rust030-candidate-679be285/full-gate/bin/compactc",
+        "--output",
+        "/tmp/rust030-candidate-679be285/source-scope-preflight/shielded-merge-source-scope.json"
+      ],
+      "exit_code": 0,
+      "seconds": 0.788,
+      "log": "/tmp/rust030-candidate-679be285/source-scope-preflight/shielded-merge-source-scope.log"
+    },
+    {
+      "manifest": "tools/compact-rust-backend/parity_positive_field_observation_sources.json",
+      "argv": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Users/ysh/.codex/worktrees/07ae/compact/tools/compact-rust-backend/check_positive_source_scope.py",
+        "--manifest",
+        "/Users/ysh/.codex/worktrees/07ae/compact/tools/compact-rust-backend/parity_positive_field_observation_sources.json",
+        "--compiler",
+        "/tmp/rust030-candidate-679be285/full-gate/bin/compactc",
+        "--output",
+        "/tmp/rust030-candidate-679be285/source-scope-preflight/field-observation-source-scope.json"
+      ],
+      "exit_code": 0,
+      "seconds": 0.664,
+      "log": "/tmp/rust030-candidate-679be285/source-scope-preflight/field-observation-source-scope.log"
+    }
+  ],
+  "proof_orchestration_tests": 21,
+  "actual_proofs_executed": false,
+  "source_hashes": {
+    "tools/compact-rust-backend/parity_positive_unit_composition_sources.json": "c201fb408d4f7bf9381a04412833550010a893bdbef048e04382d76957d3001e",
+    "tools/compact-rust-backend/did_proof_gate.py": "cfd9defb4d82678507bee825d716398e4a4c3496171ec0c65aa66b863a4b8087",
+    "tools/compact-rust-backend/test_did_proof_gate.py": "2ca3d37c81b1adc964177c7d0d56d42d41f51f8ec3abdb8ff7bf86c260a098a1"
+  },
+  "evidence_hashes": {
+    "/tmp/rust030-candidate-679be285/source-scope-preflight/did-proof-gate-unit.log": "d27b96e6474e8d70bdce970ba816666988018bc48078b76b56114447280da338",
+    "/tmp/rust030-candidate-679be285/source-scope-preflight/effectful-return-source-scope.json": "f628ed44b5bfe9f68a8d2bc0136d39974702e35a2b2662269d7e058448899009",
+    "/tmp/rust030-candidate-679be285/source-scope-preflight/effectful-return-source-scope.log": "235523b7673a2da1666ac9c9fdfd4f4e6ba871dda173c85b7c04e7e65bb3b0b1",
+    "/tmp/rust030-candidate-679be285/source-scope-preflight/field-observation-source-scope.json": "40f690fe8b50dc93a7b7a1ae52da028040cf83326ff77dc5af6da3f14c511ade",
+    "/tmp/rust030-candidate-679be285/source-scope-preflight/field-observation-source-scope.log": "8c694c98649dcf138d32d83c30bb51affb6f13479601f77af212061d52de4e58",
+    "/tmp/rust030-candidate-679be285/source-scope-preflight/original-election-zerocash-source-scope.json": "6efa5494de9b67a31d10f69a836f4e6d5d38015fcaf203dd3b09176a15ca9079",
+    "/tmp/rust030-candidate-679be285/source-scope-preflight/original-election-zerocash-source-scope.log": "c96110e2eb9c1c5f1c924d1375324f74d6fb2690fe2b10c3342921d23b15831b",
+    "/tmp/rust030-candidate-679be285/source-scope-preflight/remaining-commands.json": "80bdc0d47475271a5fa3d2bc66dd00e7f82b8abf3ea0828e068d7ae818f8d600",
+    "/tmp/rust030-candidate-679be285/source-scope-preflight/run_remaining.py": "22289b9d6da0e8ba26c9d7d0cb6d5de98bb63420894d3c4e2eb5b193caf6f9db",
+    "/tmp/rust030-candidate-679be285/source-scope-preflight/shielded-merge-source-scope.json": "3b6de58e4bbad1de4e99ce069ccfca3aa4188c8940dcab37943dad221d32fa54",
+    "/tmp/rust030-candidate-679be285/source-scope-preflight/shielded-merge-source-scope.log": "a729ee15eb1a3ed42200bda126eee3aadece6e2e3b2700a8b8bad9d4814b5eae",
+    "/tmp/rust030-candidate-679be285/source-scope-preflight/shielded-receive-source-scope.json": "55c69720c4c714af29cf79e055731b51a60717ed72f0ba7efde1e0f443be1d72",
+    "/tmp/rust030-candidate-679be285/source-scope-preflight/shielded-receive-source-scope.log": "a729ee15eb1a3ed42200bda126eee3aadece6e2e3b2700a8b8bad9d4814b5eae",
+    "/tmp/rust030-candidate-679be285/source-scope-preflight/test-center-bboard-source-scope.json": "f9cf3929969fab188c98a60d7a7a2bc9defd6d76e34a0c686180543d97de0658",
+    "/tmp/rust030-candidate-679be285/source-scope-preflight/test-center-bboard-source-scope.log": "a7da4d15a52203d63fa3f64e5797e6c413979e6b9e0505ba76983ec5d02cc416",
+    "/tmp/rust030-candidate-679be285/source-scope-preflight/test-center-coracle-source-scope.json": "111770ddee7feb8f72341e80ec1c715269271f58eae1c050fb5cd642d32c7aa5",
+    "/tmp/rust030-candidate-679be285/source-scope-preflight/test-center-coracle-source-scope.log": "19665800f8e46eeb82197c74718ac6cb51e96acec1c2f430812eae4882810e0e",
+    "/tmp/rust030-candidate-679be285/source-scope-preflight/test-center-counter-source-scope.json": "e319a392a8ccdb6ebbb3e7e88a100c86dd589de2c2c46752c0b8c8c0226ad0b9",
+    "/tmp/rust030-candidate-679be285/source-scope-preflight/test-center-counter-source-scope.log": "235523b7673a2da1666ac9c9fdfd4f4e6ba871dda173c85b7c04e7e65bb3b0b1",
+    "/tmp/rust030-candidate-679be285/source-scope-preflight/test-center-micro-dao-source-scope.json": "2649672a05eea668e56ef1bc4ec960dde606c58ff1ea8fba82dc92a448a2544c",
+    "/tmp/rust030-candidate-679be285/source-scope-preflight/test-center-micro-dao-source-scope.log": "49d3b7287f2c91bc936c7f42b7c77cd25f9fe683e913898445dc93ae7514bf29",
+    "/tmp/rust030-candidate-679be285/source-scope-preflight/test-center-welcome-source-scope.json": "acc7af0fa1f65cfea8eb896b64307e60fc3ba29a0087f993223591a2aecfef70",
+    "/tmp/rust030-candidate-679be285/source-scope-preflight/test-center-welcome-source-scope.log": "ab0868e6b81f0c09b61f3aeb71e8ddcd7f64a06893ce9d8fbf50f8426144e901",
+    "/tmp/rust030-candidate-679be285/source-scope-preflight/top-level-source-scope.json": "607538a3143a3d9c0028bb141968621a446edea21abd89c3157d6515170b0b92",
+    "/tmp/rust030-candidate-679be285/source-scope-preflight/top-level-source-scope.log": "5e64c08403c7ce91a068c766044a70c15f3e248cf8689eb6dc6bf7561772c790",
+    "/tmp/rust030-candidate-679be285/source-scope-preflight/unit-composition-source-scope.json": "2ac732aa48f61e7c0af46d062cb31d1c46a42f6b547c82a9e17ef4c896f6ae41",
+    "/tmp/rust030-candidate-679be285/source-scope-preflight/unit-composition-source-scope.log": "c3852f406f20671d4a93f2f25f385116b630446a6a7eaaf462dfc88265b6206e"
+  },
+  "compiler_sha256": "d052cb07bf0dcf42c6aba59e461de9a0b3f06b96f78c4c591f7a104892acf6ba",
+  "scheme_sha256": "47dabe42351653dec921305e5f939b1412aa9e2ec29adb66b576e678b5c1155d",
+  "historical_joined_receipt_sha256": "9c375c7dc2fb9d3acf1f3a9effea07e1d60e79982cb88bfb1ccf80751205d367"
+}

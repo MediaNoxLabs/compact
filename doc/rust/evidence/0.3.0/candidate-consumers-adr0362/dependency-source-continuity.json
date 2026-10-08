@@ -1,0 +1,22 @@
+{
+  "audited_baseline": "5a9cd356",
+  "candidate": "2c798d2dc5f94ad13e89610068035ed70d94f469",
+  "locks": [
+    {
+      "lock": "Cargo.lock",
+      "same_external_packages": true,
+      "added": [],
+      "removed": [],
+      "old_external_packages": 452,
+      "current_external_packages": 452
+    },
+    {
+      "lock": "tools/compact-rust-backend/Cargo.lock",
+      "same_external_packages": true,
+      "added": [],
+      "removed": [],
+      "old_external_packages": 302,
+      "current_external_packages": 302
+    }
+  ]
+}

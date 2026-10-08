@@ -1,0 +1,64 @@
+{
+  "base_commit": "5efa91c280c059e375dcde0998c64dd88f615fb6",
+  "completed_utc": "2026-10-07T09:24:14.408243+00:00",
+  "source_sha256": {
+    "tools/compact-rust-backend/src/bin_support/input.rs": "a74267fd72b67b139686d411a9839caec04098949cea5dbbaeffed5b691f3715",
+    "testkit-rs/src/witness.rs": "78cc58c2ebd75dbb8a724a89dab1fa542725cdf6a7935439a593ebee8f3e46b1"
+  },
+  "production_source_checks": [
+    {
+      "file": "tools/compact-rust-backend/src/bin_support/input.rs",
+      "unchanged_non_test_non_rustdoc_source": true
+    },
+    {
+      "file": "testkit-rs/src/witness.rs",
+      "unchanged_non_test_non_rustdoc_source": true
+    }
+  ],
+  "toolchain": "rustc 1.99.0 (b940084d7 2026-09-28)\nbinary: rustc\ncommit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4\ncommit-date: 2026-09-28\nhost: aarch64-apple-darwin\nrelease: 1.99.0\nLLVM version: 23.1.1\n",
+  "environment": {
+    "CARGO_TARGET_DIR": "target/compact-rust-parity-gate",
+    "CARGO_INCREMENTAL": "0"
+  },
+  "commands": [
+    {
+      "command": "cargo +1.99.0 test --offline --locked -j4 -p compact-rust-backend --bins input::tests",
+      "log": "input-tests-final.log",
+      "exit_code": 0,
+      "passed": 12,
+      "details": "4 each across compact-rust-backend, compact-rustc, compactc"
+    },
+    {
+      "command": "cargo +1.99.0 test --offline --locked -j4 -p midnight-compact-testkit --doc",
+      "log": "testkit-doc-tests.log",
+      "exit_code": 0,
+      "passed": 1
+    },
+    {
+      "command": "cargo +1.99.0 clippy --offline --locked -j4 -p compact-rust-backend --bins --tests --all-features -- -D warnings",
+      "log": "backend-test-clippy.log",
+      "exit_code": 0
+    },
+    {
+      "command": "cargo +1.99.0 clippy --offline --locked -j4 -p midnight-compact-testkit --lib --all-features -- -D warnings",
+      "log": "testkit-clippy.log",
+      "exit_code": 0
+    },
+    {
+      "command": "cargo +1.99.0 fmt --all --check",
+      "log": "fmt-final.log",
+      "exit_code": 0
+    }
+  ],
+  "logs_sha256": {
+    "backend-clippy.log": "be9540ef0c58526a41c637abd91dbed41d75b7bf52367a80e8f813ccea681cd9",
+    "backend-test-clippy.log": "826fc39b7aab0b92c0bbb872b7e6e9645b4c0f0cd968380597db92e70e6d452e",
+    "fmt-final.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "fmt.log": "ed461a1735c5b8e45856fade5efb5ecbc0718665a06ea3d23977e8d1242e76dc",
+    "input-tests-final.log": "9e1c75b58e35d7de19637be2b33a69f532385506445ef63f1a440dafc7bbeed4",
+    "input-tests.log": "ec0ffd54eb383820d1cccb0f0c5e16bc9313860ed958d139d4f95c44ce66dc37",
+    "testkit-clippy.log": "1cf5d8dd08178181580cfc9694b328ad83cac4d9b811939da8956640b2812f02",
+    "testkit-doc-tests.log": "06fde780b0b682d87bbbef1993ace0775b9d1beac5b396e6be5464b2845b82c7"
+  },
+  "development_attempt": "Initial fmt check required wrapping one constructor expression; fixed in owned file; final focused tests rerun."
+}

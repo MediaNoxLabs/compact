@@ -1,0 +1,18 @@
+{
+  "unchanged_projections": [
+    "scope",
+    "grammar_inventory",
+    "grammar_classifications",
+    "semantic_families",
+    "reference_headings",
+    "requirements",
+    "formal_artifacts",
+    "formal_gaps"
+  ],
+  "historical_evidence_log_strength_qualification_preserved": true,
+  "original_source_commit_preserved": true,
+  "before_sha256": "f839459042fe4b55e4e629744375b0ecca2c5b8beae57ff6da314bc7f3f1db49",
+  "after_sha256": "59f85282379664c5b93fa37846c97b315699cbe41897d0180a6e80ccd6ef1bc9",
+  "new_evidence_id": "E-boolean-native-candidate-679be285",
+  "current_anchor_commit": "679be285d91baf87ae55ae3161140e371d259b62"
+}

@@ -1,0 +1,78 @@
+   Compiling futures-executor v0.3.32
+   Compiling futures v0.3.32
+   Compiling midnight-base-crypto v1.0.0
+   Compiling midnight-storage-core v1.1.0
+   Compiling midnight-transient-crypto v2.0.1
+   Compiling midnight-storage v2.0.1
+   Compiling midnight-coin-structure v2.0.1
+   Compiling midnight-zkir v2.1.0
+   Compiling midnight-onchain-state v3.0.0
+   Compiling midnight-onchain-vm v3.0.0
+   Compiling midnight-onchain-runtime v3.0.0
+   Compiling midnight-zswap v8.0.3
+   Compiling midnight-ledger v8.0.3
+   Compiling midnight-compact-runtime v0.2.0 (/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs)
+   Compiling compact-rust-merkle-tree-oracle-fixture v0.1.0 (/Users/ysh/.codex/worktrees/07ae/compact/tests-rust-backend/merkle-tree-oracle)
+   Compiling compact-rust-witnesses-oracle-fixture v0.1.0 (/Users/ysh/.codex/worktrees/07ae/compact/tests-rust-backend/witnesses-oracle)
+   Compiling compact-rust-counter-parameter-fixture v0.1.0 (/Users/ysh/.codex/worktrees/07ae/compact/tests-rust-backend/counter-parameter)
+   Compiling compact-rust-witness-conditional-fixture v0.1.0 (/Users/ysh/.codex/worktrees/07ae/compact/tests-rust-backend/witness-conditional)
+   Compiling compact-rust-set-size-oracle-fixture v0.1.0 (/Users/ysh/.codex/worktrees/07ae/compact/tests-rust-backend/set-size-oracle)
+   Compiling midnight-compact-testkit v0.1.0 (/Users/ysh/.codex/worktrees/07ae/compact/testkit-rs)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 14.30s
+     Running unittests src/lib.rs (target/compact-rust-parity-gate/debug/deps/midnight_compact_testkit-b9b2d9c7a793d532)
+
+running 5 tests
+test proof::tests::local_resolution_preserves_unavailable_io_and_decode_categories_without_retry ... ok
+test proof::tests::local_resolution_admits_exact_bytes_and_rejects_one_under ... ok
+test proof::tests::local_official_provider_refuses_missing_and_malformed_ir_before_parameters ... ok
+test proof::tests::local_official_provider_checks_real_assertion_without_proving_or_parameters ... ok
+test environment::tests::applying_policy_does_not_reset_address_identity_or_fixture_provenance ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/boundaries.rs (target/compact-rust-parity-gate/debug/deps/boundaries-823de79cfa2e6c93)
+
+running 12 tests
+test script_mismatch_exhaustion_error_and_rollback_preserve_owned_checkpoint ... ok
+test diagnostics_redact_outputs_private_state_transcripts_and_underlying_errors ... ok
+test application_assertions_with_script_text_are_generic_redacted_execution_errors ... ok
+test constructor_rejects_wallet_and_even_empty_nondefault_intent_plans ... ok
+test recording_must_start_at_supplied_state_and_keep_sealed_identity ... ok
+test snapshot_metadata_and_environment_mismatch_never_changes_the_lab ... ok
+test local_empty_replay_is_distinct_from_native_and_effects_reset_each_call ... ok
+test explicit_clock_identity_and_seed_are_retained_across_valid_calls_and_restore ... ok
+test trusted_adapter_boundary_does_not_attest_transient_policy_changes ... ok
+test native_and_recorded_results_cannot_replace_environment_or_admit_zswap ... ok
+test replay_state_effects_and_error_precedence_do_not_commit_tampered_execution ... ok
+test script_failures_after_public_write_roll_back_and_require_explicit_inspection ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/generated_scenarios.rs (target/compact-rust-parity-gate/debug/deps/generated_scenarios-2f040d9486108565)
+
+running 6 tests
+test native_only_branches_and_ordered_witness_outputs_are_not_labeled_replay ... ok
+test owned_forks_can_run_independently_on_normal_test_workers ... ok
+test counter_sequences_fork_restore_and_late_failure_are_atomic ... ok
+test query_grouping_changes_replay_cost_without_witnesses ... ok
+test witnessed_cell_matches_frozen_typescript_and_commits_owned_script ... ok
+test collections_use_real_vm_on_empty_and_nonempty_prestates ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.18s
+
+     Running tests/merkle_scenarios.rs (target/compact-rust-parity-gate/debug/deps/merkle_scenarios-f1d90d55d587eae4)
+
+running 2 tests
+test merkle_calls_are_repeatable_and_failed_query_preserves_checkpoint ... ok
+test merkle_append_root_checks_and_owned_reset_match_typescript_and_vm ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+   Doc-tests midnight_compact_testkit
+
+running 1 test
+test testkit-rs/src/witness.rs - witness::WitnessScript (line 31) ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+all doctests ran in 1.06s; merged doctests compilation took 0.57s

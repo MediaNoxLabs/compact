@@ -1,0 +1,80 @@
+{
+  "format_version": 1,
+  "status": "passed",
+  "requirements": 268,
+  "families": 30,
+  "errors": [],
+  "formal_artifacts": [
+    {
+      "path": "specification/src/Syntax/json/Lsrc.json",
+      "sha256": "1b192f03d15b88cd8d4c8634c87ecb754690bc28f350331fd2b38d539da09668",
+      "status": "known-stale",
+      "qualification": "No Agda typecheck, constructor proof or operational equivalence claim",
+      "added_requirements": [
+        "Lsrc/Block/nonterminal/dd9f57b78e8dc30c",
+        "Lsrc/Block/production/d482cf28f7d23ccc",
+        "Lsrc/Circuit-Definition/production/13f49e6f5d121729",
+        "Lsrc/Const-Binding/nonterminal/573e1ff7e9dec233",
+        "Lsrc/Const-Binding/production/fef2cb65b3b1a381",
+        "Lsrc/Expression/nonterminal/41650f0ef586b754",
+        "Lsrc/Expression/production/53d311ab9fe0f347",
+        "Lsrc/Expression/production/86bbe47a3cf742a1",
+        "Lsrc/Expression/production/b6db5ba301a55d6d",
+        "Lsrc/Expression/production/ffd32c8dd11d36c5",
+        "Lsrc/Function/production/625bb6e6436fec12",
+        "Lsrc/Import-Declaration/production/75ed4441ff53a1be",
+        "Lsrc/Import-Element/nonterminal/f1518b8c61ea73e1",
+        "Lsrc/Import-Element/production/75c100828c477e6f",
+        "Lsrc/Ledger-Constructor/production/a84bed110db7baf7",
+        "Lsrc/Program-Element/production/8128247be2559898",
+        "Lsrc/Statement/production/304516574993870f",
+        "Lsrc/Statement/production/51de062248a4e291",
+        "Lsrc/Statement/production/d43b3b694a44edc4",
+        "Lsrc/Statement/production/de5b0705adca3393",
+        "Lsrc/Tuple-Argument/nonterminal/286efe3f047e8fa2",
+        "Lsrc/Tuple-Argument/production/3259043538a12b4a",
+        "Lsrc/Tuple-Argument/production/74e946f2cc5a372c",
+        "Lsrc/Type-Definition/nonterminal/44c2fa1cc135adbc",
+        "Lsrc/Type-Definition/production/83530fe0dbc0fbca",
+        "Lsrc/terminals/terminal/57da273a75dd6f24",
+        "Lsrc/terminals/terminal/fc3e74f2ad9e3ee2"
+      ],
+      "removed_requirements": [
+        "Lsrc/Circuit-Definition/production/970ef2dc65ef50d5",
+        "Lsrc/Expression/nonterminal/7c8a2807d0eb24fc",
+        "Lsrc/Expression/production/4a2de8709f7d8ccb",
+        "Lsrc/Expression/production/613161e0042bc5c1",
+        "Lsrc/External-Declaration/nonterminal/c6dbcd0bb1890d9c",
+        "Lsrc/External-Declaration/production/04b7fa86503a3350",
+        "Lsrc/Function/production/eda64d9a6855c8f0",
+        "Lsrc/Ledger-Constructor/production/d94ea177b121182a",
+        "Lsrc/Program-Element/production/68fbe61fd41f3833",
+        "Lsrc/Statement/production/067b0d677a880dc4",
+        "Lsrc/Statement/production/d482cf28f7d23ccc",
+        "Lsrc/terminals/terminal/8c4062dc06bf9e2f",
+        "Lsrc/terminals/terminal/de469549cb74c467"
+      ],
+      "same_grammar": false,
+      "versions": {
+        "Compiler version": "0.24.103",
+        "Language version": "0.16.103"
+      },
+      "same_versions": false,
+      "current_disposition": "known formal debt"
+    },
+    {
+      "path": "specification/src/Syntax/Generated/Lsrc.agda",
+      "sha256": "68b76ab3b2852080ef9c5d2b46f7ce681579d035cf1e5a5034bf19d12aa8ed33",
+      "status": "known-stale",
+      "qualification": "No Agda typecheck, constructor proof or operational equivalence claim",
+      "versions": {
+        "Compiler version": "0.24.103",
+        "Language version": "0.16.103"
+      },
+      "same_versions": false,
+      "current_disposition": "known formal debt"
+    }
+  ],
+  "evidence_mode": "cached source-bound baseline check; no fresh extraction",
+  "qualification": "Grammar/source/classification drift only. Unknown support stays unknown; no semantic equivalence or formal proof established."
+}

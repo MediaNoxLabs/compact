@@ -1,0 +1,8 @@
+....................................................................local parity gate: controlled stop after mandatory DID invocation
+............................checked /var/folders/55/p48skc9j45b2s3301cv1_6tw0000gn/T/tmpfpapd5tm/external-target/package/midnight-compact-runtime-0.2.0.crate (5 entries)
+.checked /var/folders/55/p48skc9j45b2s3301cv1_6tw0000gn/T/tmp7_o5fk5g/external-target/package/midnight-compact-runtime-0.2.0.crate (5 entries)
+.....................................................
+----------------------------------------------------------------------
+Ran 150 tests in 6.609s
+
+OK

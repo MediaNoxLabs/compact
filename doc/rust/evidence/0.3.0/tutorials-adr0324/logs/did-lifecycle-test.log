@@ -1,0 +1,11 @@
+   Compiling compact-contract-did v0.1.0 (/private/tmp/rust030-guides-validated-324/examples/did-lifecycle/generated/contract)
+   Compiling compact-did-lifecycle-guide v0.1.0 (/private/tmp/rust030-guides-validated-324/examples/did-lifecycle)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.23s
+     Running tests/lifecycle.rs (/tmp/compact-m2-bench-target/debug/deps/lifecycle-55a4647bbcb96de9)
+
+running 2 tests
+test did_late_witness_failure_keeps_owned_lab_checkpoint_and_external_journal ... ok
+test did_deactivate_recorded_lab_matches_original_typescript_and_native ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.30s
+

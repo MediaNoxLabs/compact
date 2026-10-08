@@ -1,0 +1,56 @@
+{
+  "format": "compact-rust-technical-qualification/v1",
+  "status": "passed",
+  "candidate": "f9a496660a4a69f4dd7c7927111767ad5c0c12b2",
+  "source_tree": "29e9d59798ec3f8aab2c60912f1dee20dab510e0",
+  "qualification_mode": "completed unchanged prefix plus repaired and remaining gates",
+  "full_run_status_preserved": "551f065c full run remains failed; no relabeling or claim of a single fresh full run at f9a49666",
+  "successful_prefix_commands": 423,
+  "recovery_commands": 3,
+  "fixtures_verified": 198,
+  "all_required_proof_gates": [
+    {
+      "gate": "did_proof_gate",
+      "path": "/private/tmp/rust030-candidate-551f065c/full-gate/did-proof/receipt.json",
+      "sha256": "0d102216b31d0b09c54c8d9ab1d4cfffc7476391842560ac3b6c12c1199fbb51"
+    },
+    {
+      "gate": "did_digest_reducer_gate",
+      "path": "/private/tmp/rust030-candidate-551f065c/full-gate/did-digest-reducer-proof/receipt.json",
+      "sha256": "a8e018f39581a40131e42e9115ea7681e9b919e71bef1995760a4f931d722060"
+    },
+    {
+      "gate": "did_primitive_reducer_gate",
+      "path": "/private/tmp/rust030-candidate-551f065c/full-gate/did-primitive-reducer-proofs/receipt.json",
+      "sha256": "9e7256154f44889b0da9de1db2b9b27d9f4a2a341c1dff8267deccf16dd51052"
+    },
+    {
+      "gate": "did-relation-proofs",
+      "path": "/private/tmp/rust030-candidate-f9a49666/did-relation-proofs/receipt.json",
+      "sha256": "a18214d6176bec32192af5968faa161ba36697b88cbf1161782722d7b14edc75"
+    },
+    {
+      "gate": "acc-jubjub-proofs",
+      "path": "/private/tmp/rust030-candidate-f9a49666/acc-jubjub-proofs/receipt.json",
+      "sha256": "a59883e4efd0f70e3c722042d038af1cc4a91d29c0f2f9bf5d6cfc3941e4f00e"
+    }
+  ],
+  "prefix_receipt": {
+    "path": "/tmp/rust030-candidate-551f065c/full-gate/receipt.json",
+    "sha256": "5f49a70c42903ac4ccc3a1508b3e883f3831eeb390ec210b567a025f48b04ab3"
+  },
+  "recovery_receipt": {
+    "path": "/private/tmp/rust030-candidate-f9a49666/remaining-receipt.json",
+    "sha256": "431f911d587f4c2c167266917a9e759be2bd8f0c36665567b0f4c32fff6d602b"
+  },
+  "remote_verification": {
+    "path": "/private/tmp/rust030-candidate-f9a49666/remote-verification.json",
+    "sha256": "40663640c12ba745612d78ee9f1703871e370b7d8d2d043b27e805e9eb4e4b1e"
+  },
+  "changes": [
+    "tools/compact-rust-backend/did_relation_gate.py",
+    "tools/compact-rust-backend/test_did_relation_gate.py"
+  ],
+  "retained_consumer_coverage_migration_package_audit": "2c798d2d measurements retain original identities; source continuity through551 and the two harness/test files above. Final closure crosswalk joins those receipts.",
+  "remaining_acceptance": "Technical gates accepted; #352 publication and #358 closure still required. #364 closes after required documentation deliverable."
+}

@@ -1,0 +1,43 @@
+{
+  "started_at": 1791444769.9182038,
+  "scanner_sha256": "e3154d155c04cdfb0a060e9515e67bb918a42027751db5c0f76e234e9c965b51",
+  "database_commit": "b8a1a33e246a0a9a3b5f377248c41a503defec74",
+  "commands": [
+    {
+      "name": "workspace",
+      "argv": [
+        "/tmp/rust030-dependency-audit/tool/bin/cargo-audit",
+        "audit",
+        "--db",
+        "/tmp/rust030-candidate-2c798d2d/advisory-db",
+        "--no-fetch",
+        "--file",
+        "/tmp/rust030-candidate-2c798d2d/source/Cargo.lock",
+        "--json",
+        "--deny",
+        "warnings"
+      ],
+      "exit_code": 1,
+      "lock_sha256": "36cdb54f1d471742a6bbee5159a2fe81ec2279aa0cf7060a26c941de1f98505b",
+      "output_sha256": "e53e4a432362e5a3d3e69b6f8055273d21164edd28d897fd41d2c3a75ea3091b"
+    },
+    {
+      "name": "standalone",
+      "argv": [
+        "/tmp/rust030-dependency-audit/tool/bin/cargo-audit",
+        "audit",
+        "--db",
+        "/tmp/rust030-candidate-2c798d2d/advisory-db",
+        "--no-fetch",
+        "--file",
+        "/tmp/rust030-candidate-2c798d2d/source/tools/compact-rust-backend/Cargo.lock",
+        "--json",
+        "--deny",
+        "warnings"
+      ],
+      "exit_code": 1,
+      "lock_sha256": "80ed8a3bee346a2e4d7da7ae29cd84a63e84b43eb9dec4849d5aac396e6ad622",
+      "output_sha256": "3f3538aeabd844899db724888550677baf3d23ad8882b39488585351844850fa"
+    }
+  ]
+}

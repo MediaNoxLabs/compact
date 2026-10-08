@@ -1,0 +1,56 @@
+{
+  "status": "passed",
+  "checks": {
+    "provenance": {
+      "outputs": {},
+      "outcome": "success",
+      "conclusion": "success"
+    },
+    "build-cache": {
+      "outputs": {
+        "cache-hit": "false"
+      },
+      "outcome": "success",
+      "conclusion": "success"
+    },
+    "fetch": {
+      "outputs": {},
+      "outcome": "success",
+      "conclusion": "success"
+    },
+    "format": {
+      "outputs": {},
+      "outcome": "skipped",
+      "conclusion": "skipped"
+    },
+    "tests": {
+      "outputs": {},
+      "outcome": "skipped",
+      "conclusion": "skipped"
+    },
+    "clippy": {
+      "outputs": {},
+      "outcome": "skipped",
+      "conclusion": "skipped"
+    },
+    "msrv_workspace": {
+      "outputs": {},
+      "outcome": "success",
+      "conclusion": "success"
+    },
+    "msrv_standalone": {
+      "outputs": {},
+      "outcome": "success",
+      "conclusion": "success"
+    }
+  },
+  "locks_unchanged": true,
+  "artifacts": {
+    "fetch.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "msrv-standalone-fetch.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "msrv-standalone.log": "41418bf218a4ed6e41db8701ae9acd8b2b9a32dcced952574fa87283bcf3253e",
+    "msrv-workspace.log": "72b2fdaac836d1ff8ba1d6fac0e96f81da6f1415dbcba4e919f8832c45e9050a",
+    "source.json": "a6bf2c416df96418bbebb5392ec1e7b9be5ad3eb6a464967e818906bcad4e21e",
+    "workflow.yml": "3c4a7980c014d44c38fa52c36720ad6bb90bd36d9f0022b56b00baec3bb87e8d"
+  }
+}

@@ -1,0 +1,93 @@
+[
+  {
+    "name": "prepare-sdk",
+    "args": [
+      "python3",
+      "/tmp/rust030-guides-validated-324/prepare-sdk.py",
+      "--source",
+      "/private/tmp/rust030-candidate-2c798d2d/source",
+      "--examples",
+      "/private/tmp/rust030-candidate-2c798d2d/current-w2/examples"
+    ],
+    "cwd": "/private/tmp/rust030-candidate-2c798d2d/current-w2",
+    "exit_code": 0,
+    "time": "2026-10-08T07:45:14.238591+00:00"
+  },
+  {
+    "name": "generate",
+    "args": [
+      "/Users/ysh/.codex/worktrees/07ae/compact/target/compact-rust-parity-gate/debug/compactc",
+      "--target",
+      "rust",
+      "--skip-zk",
+      "--rust-runtime-root",
+      "/private/tmp/rust030-candidate-2c798d2d/current-w2/examples/sdk",
+      "witnesses_oracle.compact",
+      "generated"
+    ],
+    "cwd": "/private/tmp/rust030-candidate-2c798d2d/current-w2/examples/witnessed-cell",
+    "exit_code": 0,
+    "time": "2026-10-08T07:45:14.880071+00:00"
+  },
+  {
+    "name": "lock",
+    "args": [
+      "cargo",
+      "+1.99.0",
+      "metadata",
+      "--offline",
+      "--format-version",
+      "1"
+    ],
+    "cwd": "/private/tmp/rust030-candidate-2c798d2d/current-w2/examples/witnessed-cell",
+    "exit_code": 0,
+    "time": "2026-10-08T07:45:15.230687+00:00"
+  },
+  {
+    "name": "metadata",
+    "args": [
+      "cargo",
+      "+1.99.0",
+      "metadata",
+      "--offline",
+      "--locked",
+      "--format-version",
+      "1"
+    ],
+    "cwd": "/private/tmp/rust030-candidate-2c798d2d/current-w2/examples/witnessed-cell",
+    "exit_code": 0,
+    "time": "2026-10-08T07:45:15.391655+00:00"
+  },
+  {
+    "name": "witnessed-1.99.0",
+    "args": [
+      "cargo",
+      "+1.99.0",
+      "test",
+      "--offline",
+      "--locked",
+      "-j4",
+      "--test",
+      "witnessed"
+    ],
+    "cwd": "/private/tmp/rust030-candidate-2c798d2d/current-w2/examples/witnessed-cell",
+    "exit_code": 0,
+    "time": "2026-10-08T07:45:22.684899+00:00"
+  },
+  {
+    "name": "witnessed-1.88.0",
+    "args": [
+      "cargo",
+      "+1.88.0",
+      "test",
+      "--offline",
+      "--locked",
+      "-j4",
+      "--test",
+      "witnessed"
+    ],
+    "cwd": "/private/tmp/rust030-candidate-2c798d2d/current-w2/examples/witnessed-cell",
+    "exit_code": 0,
+    "time": "2026-10-08T07:45:59.036110+00:00"
+  }
+]

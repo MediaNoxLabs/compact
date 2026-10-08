@@ -1,0 +1,2301 @@
+{
+  "schema": "rust-documentation-evidence-relocation/v1",
+  "purpose": "Portable bounded evidence selection for ADR0350; historical execution only",
+  "archives": {
+    "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0324 — Validated external developer tutorials.zip": "3919b99d283f9417eee4267daa90c7c246bba9edc95e446eb446974fa1934203",
+    "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0326 — Input failure and witness rustdoc checks.zip": "00516d3610e63c722e9f57dcebfbee78c496fa1411344f7432c86dc6bfc587aa",
+    "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip": "1ebd1202011072db74ea9ffcd5ccc75d03164ada4cb14a428dbbee07834c44a7",
+    "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/R03002 — External named-input recipe.zip": "f0bfef94ac4fb6b318162bfc07bae9b70a9d3e2e329b13ed56f6f729c6f868fd"
+  },
+  "files": [
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0324 — Validated external developer tutorials.zip",
+        "archive_sha256": "3919b99d283f9417eee4267daa90c7c246bba9edc95e446eb446974fa1934203",
+        "member": "VALIDATION.md"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-guides-validated-324/VALIDATION.md",
+          "sha256": "4734917463a0318b46c89d911f19798c5bcafe3950b3779b639938900a9cc179",
+          "same_bytes": true
+        }
+      ],
+      "destination": "tutorials-adr0324/VALIDATION.md",
+      "sha256": "4734917463a0318b46c89d911f19798c5bcafe3950b3779b639938900a9cc179",
+      "bytes": 1648,
+      "group": "tutorials-adr0324",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0324 — Validated external developer tutorials.zip",
+        "archive_sha256": "3919b99d283f9417eee4267daa90c7c246bba9edc95e446eb446974fa1934203",
+        "member": "validation-receipt.json"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-guides-validated-324/validation-receipt.json",
+          "sha256": "e0f960c5d9fdc7ba74f0195a482ad294632214a0cec4e5c5cb1a62e007a5ff7e",
+          "same_bytes": true
+        }
+      ],
+      "destination": "tutorials-adr0324/validation-receipt.json",
+      "sha256": "e0f960c5d9fdc7ba74f0195a482ad294632214a0cec4e5c5cb1a62e007a5ff7e",
+      "bytes": 95292,
+      "group": "tutorials-adr0324",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0324 — Validated external developer tutorials.zip",
+        "archive_sha256": "3919b99d283f9417eee4267daa90c7c246bba9edc95e446eb446974fa1934203",
+        "member": "artifact-manifest.json"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-guides-validated-324/artifact-manifest.json",
+          "sha256": "7ec6633342c116019196e852380bd9a6bf83b65061cf0afb4cbccd44e43c2451",
+          "same_bytes": true
+        }
+      ],
+      "destination": "tutorials-adr0324/artifact-manifest.json",
+      "sha256": "7ec6633342c116019196e852380bd9a6bf83b65061cf0afb4cbccd44e43c2451",
+      "bytes": 76498,
+      "group": "tutorials-adr0324",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0324 — Validated external developer tutorials.zip",
+        "archive_sha256": "3919b99d283f9417eee4267daa90c7c246bba9edc95e446eb446974fa1934203",
+        "member": "commands.json"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-guides-validated-324/commands.json",
+          "sha256": "ce114ec90a0a1b750958aebed7575a4694f7731045f2860127d6f2d94a4ed21e",
+          "same_bytes": true
+        }
+      ],
+      "destination": "tutorials-adr0324/commands.json",
+      "sha256": "ce114ec90a0a1b750958aebed7575a4694f7731045f2860127d6f2d94a4ed21e",
+      "bytes": 5183,
+      "group": "tutorials-adr0324",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0324 — Validated external developer tutorials.zip",
+        "archive_sha256": "3919b99d283f9417eee4267daa90c7c246bba9edc95e446eb446974fa1934203",
+        "member": "initial-commands.json"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-guides-validated-324/initial-commands.json",
+          "sha256": "afb5601e9db0627f7e918f892121df677384dfec3a675d5bb67fbfa02385046c",
+          "same_bytes": true
+        }
+      ],
+      "destination": "tutorials-adr0324/initial-commands.json",
+      "sha256": "afb5601e9db0627f7e918f892121df677384dfec3a675d5bb67fbfa02385046c",
+      "bytes": 776,
+      "group": "tutorials-adr0324",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0324 — Validated external developer tutorials.zip",
+        "archive_sha256": "3919b99d283f9417eee4267daa90c7c246bba9edc95e446eb446974fa1934203",
+        "member": "feature-source-policy.json"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-guides-validated-324/feature-source-policy.json",
+          "sha256": "c9491c30fab726cd03fe22389e6a2c12ea678230e079123481392f861d2646f9",
+          "same_bytes": true
+        }
+      ],
+      "destination": "tutorials-adr0324/feature-source-policy.json",
+      "sha256": "c9491c30fab726cd03fe22389e6a2c12ea678230e079123481392f861d2646f9",
+      "bytes": 7607,
+      "group": "tutorials-adr0324",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0324 — Validated external developer tutorials.zip",
+        "archive_sha256": "3919b99d283f9417eee4267daa90c7c246bba9edc95e446eb446974fa1934203",
+        "member": "generated-before-format.json"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-guides-validated-324/generated-before-format.json",
+          "sha256": "865527f60784091b7972f8330dcfbefd7cd5daed0651f30149f9d8444f5b08f9",
+          "same_bytes": true
+        }
+      ],
+      "destination": "tutorials-adr0324/generated-before-format.json",
+      "sha256": "865527f60784091b7972f8330dcfbefd7cd5daed0651f30149f9d8444f5b08f9",
+      "bytes": 3666,
+      "group": "tutorials-adr0324",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0324 — Validated external developer tutorials.zip",
+        "archive_sha256": "3919b99d283f9417eee4267daa90c7c246bba9edc95e446eb446974fa1934203",
+        "member": "reference-manifest.json"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-guides-validated-324/reference-manifest.json",
+          "sha256": "6ff4e7f076fca7166be2548e1a2fb6cd4fe5cc370e828b4f5290c015995b05e2",
+          "same_bytes": true
+        }
+      ],
+      "destination": "tutorials-adr0324/reference-manifest.json",
+      "sha256": "6ff4e7f076fca7166be2548e1a2fb6cd4fe5cc370e828b4f5290c015995b05e2",
+      "bytes": 1837,
+      "group": "tutorials-adr0324",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0324 — Validated external developer tutorials.zip",
+        "archive_sha256": "3919b99d283f9417eee4267daa90c7c246bba9edc95e446eb446974fa1934203",
+        "member": "initial-lock-comparison.json"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-guides-validated-324/initial-lock-comparison.json",
+          "sha256": "f1c3cd7a7b5f2c19639068c620fd11d3514e18695b7775b36744e2c06013eb23",
+          "same_bytes": true
+        }
+      ],
+      "destination": "tutorials-adr0324/initial-lock-comparison.json",
+      "sha256": "f1c3cd7a7b5f2c19639068c620fd11d3514e18695b7775b36744e2c06013eb23",
+      "bytes": 36405,
+      "group": "tutorials-adr0324",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0324 — Validated external developer tutorials.zip",
+        "archive_sha256": "3919b99d283f9417eee4267daa90c7c246bba9edc95e446eb446974fa1934203",
+        "member": "did-lifecycle-lock-comparison.json"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-guides-validated-324/did-lifecycle-lock-comparison.json",
+          "sha256": "ef9e446b7ce7dc92515af737f505d213bd6d6fefcf35fd11c7c5383c19acde71",
+          "same_bytes": true
+        }
+      ],
+      "destination": "tutorials-adr0324/did-lifecycle-lock-comparison.json",
+      "sha256": "ef9e446b7ce7dc92515af737f505d213bd6d6fefcf35fd11c7c5383c19acde71",
+      "bytes": 47,
+      "group": "tutorials-adr0324",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0324 — Validated external developer tutorials.zip",
+        "archive_sha256": "3919b99d283f9417eee4267daa90c7c246bba9edc95e446eb446974fa1934203",
+        "member": "witnessed-cell-lock-comparison.json"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-guides-validated-324/witnessed-cell-lock-comparison.json",
+          "sha256": "ef9e446b7ce7dc92515af737f505d213bd6d6fefcf35fd11c7c5383c19acde71",
+          "same_bytes": true
+        }
+      ],
+      "destination": "tutorials-adr0324/witnessed-cell-lock-comparison.json",
+      "sha256": "ef9e446b7ce7dc92515af737f505d213bd6d6fefcf35fd11c7c5383c19acde71",
+      "bytes": 47,
+      "group": "tutorials-adr0324",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0324 — Validated external developer tutorials.zip",
+        "archive_sha256": "3919b99d283f9417eee4267daa90c7c246bba9edc95e446eb446974fa1934203",
+        "member": "logs/did-lifecycle-clippy.log"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-guides-validated-324/logs/did-lifecycle-clippy.log",
+          "sha256": "dfcfb66860b54554811484029045c30f64b06f3146ffb690c94f4f5bd2fe6b1d",
+          "same_bytes": true
+        }
+      ],
+      "destination": "tutorials-adr0324/logs/did-lifecycle-clippy.log",
+      "sha256": "dfcfb66860b54554811484029045c30f64b06f3146ffb690c94f4f5bd2fe6b1d",
+      "bytes": 314,
+      "group": "tutorials-adr0324",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0324 — Validated external developer tutorials.zip",
+        "archive_sha256": "3919b99d283f9417eee4267daa90c7c246bba9edc95e446eb446974fa1934203",
+        "member": "logs/did-lifecycle-format.log"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-guides-validated-324/logs/did-lifecycle-format.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "same_bytes": true
+        }
+      ],
+      "destination": "tutorials-adr0324/logs/did-lifecycle-format.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "group": "tutorials-adr0324",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0324 — Validated external developer tutorials.zip",
+        "archive_sha256": "3919b99d283f9417eee4267daa90c7c246bba9edc95e446eb446974fa1934203",
+        "member": "logs/did-lifecycle-generate.log"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-guides-validated-324/logs/did-lifecycle-generate.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "same_bytes": true
+        }
+      ],
+      "destination": "tutorials-adr0324/logs/did-lifecycle-generate.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "group": "tutorials-adr0324",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0324 — Validated external developer tutorials.zip",
+        "archive_sha256": "3919b99d283f9417eee4267daa90c7c246bba9edc95e446eb446974fa1934203",
+        "member": "logs/did-lifecycle-test-final.log"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-guides-validated-324/logs/did-lifecycle-test-final.log",
+          "sha256": "a9ff2980ec61952c322950fccd44adc96bc379466efbea5efff6143f449b980e",
+          "same_bytes": true
+        }
+      ],
+      "destination": "tutorials-adr0324/logs/did-lifecycle-test-final.log",
+      "sha256": "a9ff2980ec61952c322950fccd44adc96bc379466efbea5efff6143f449b980e",
+      "bytes": 566,
+      "group": "tutorials-adr0324",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0324 — Validated external developer tutorials.zip",
+        "archive_sha256": "3919b99d283f9417eee4267daa90c7c246bba9edc95e446eb446974fa1934203",
+        "member": "logs/did-lifecycle-test.log"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-guides-validated-324/logs/did-lifecycle-test.log",
+          "sha256": "31545ace79ac234cab2ed561a8ff0e72051942d5cdc3c83c9836bb57339a00af",
+          "same_bytes": true
+        }
+      ],
+      "destination": "tutorials-adr0324/logs/did-lifecycle-test.log",
+      "sha256": "31545ace79ac234cab2ed561a8ff0e72051942d5cdc3c83c9836bb57339a00af",
+      "bytes": 693,
+      "group": "tutorials-adr0324",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0324 — Validated external developer tutorials.zip",
+        "archive_sha256": "3919b99d283f9417eee4267daa90c7c246bba9edc95e446eb446974fa1934203",
+        "member": "logs/witnessed-cell-clippy.log"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-guides-validated-324/logs/witnessed-cell-clippy.log",
+          "sha256": "1292ddaad188ab7245192b8ed4251b5d5ea91c8a98c99ad01f7f589f66198c59",
+          "same_bytes": true
+        }
+      ],
+      "destination": "tutorials-adr0324/logs/witnessed-cell-clippy.log",
+      "sha256": "1292ddaad188ab7245192b8ed4251b5d5ea91c8a98c99ad01f7f589f66198c59",
+      "bytes": 556,
+      "group": "tutorials-adr0324",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0324 — Validated external developer tutorials.zip",
+        "archive_sha256": "3919b99d283f9417eee4267daa90c7c246bba9edc95e446eb446974fa1934203",
+        "member": "logs/witnessed-cell-format.log"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-guides-validated-324/logs/witnessed-cell-format.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "same_bytes": true
+        }
+      ],
+      "destination": "tutorials-adr0324/logs/witnessed-cell-format.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "group": "tutorials-adr0324",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0324 — Validated external developer tutorials.zip",
+        "archive_sha256": "3919b99d283f9417eee4267daa90c7c246bba9edc95e446eb446974fa1934203",
+        "member": "logs/witnessed-cell-generate.log"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-guides-validated-324/logs/witnessed-cell-generate.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "same_bytes": true
+        }
+      ],
+      "destination": "tutorials-adr0324/logs/witnessed-cell-generate.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "group": "tutorials-adr0324",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0324 — Validated external developer tutorials.zip",
+        "archive_sha256": "3919b99d283f9417eee4267daa90c7c246bba9edc95e446eb446974fa1934203",
+        "member": "logs/witnessed-cell-test-final.log"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-guides-validated-324/logs/witnessed-cell-test-final.log",
+          "sha256": "bc2982a5ddd5709dd39e7a58f648017b7f1dfa300a74eed50a8d640b4087fd1f",
+          "same_bytes": true
+        }
+      ],
+      "destination": "tutorials-adr0324/logs/witnessed-cell-test-final.log",
+      "sha256": "bc2982a5ddd5709dd39e7a58f648017b7f1dfa300a74eed50a8d640b4087fd1f",
+      "bytes": 481,
+      "group": "tutorials-adr0324",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0324 — Validated external developer tutorials.zip",
+        "archive_sha256": "3919b99d283f9417eee4267daa90c7c246bba9edc95e446eb446974fa1934203",
+        "member": "logs/witnessed-cell-test.log"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-guides-validated-324/logs/witnessed-cell-test.log",
+          "sha256": "bb263e17d904c7474b1bb121058e9f463cec69e0dda8c8d53c15ad8ff67c6c0f",
+          "same_bytes": true
+        }
+      ],
+      "destination": "tutorials-adr0324/logs/witnessed-cell-test.log",
+      "sha256": "bb263e17d904c7474b1bb121058e9f463cec69e0dda8c8d53c15ad8ff67c6c0f",
+      "bytes": 975,
+      "group": "tutorials-adr0324",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0326 — Input failure and witness rustdoc checks.zip",
+        "archive_sha256": "00516d3610e63c722e9f57dcebfbee78c496fa1411344f7432c86dc6bfc587aa",
+        "member": "receipt.json"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-adr326/receipt.json",
+          "sha256": "e7f0ae341b8dcaa4dafa3508120cd480d6884d0c01cfe69b3b9d3344f621913c",
+          "same_bytes": true
+        }
+      ],
+      "destination": "rustdoc-adr0326/receipt.json",
+      "sha256": "e7f0ae341b8dcaa4dafa3508120cd480d6884d0c01cfe69b3b9d3344f621913c",
+      "bytes": 2892,
+      "group": "rustdoc-adr0326",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0326 — Input failure and witness rustdoc checks.zip",
+        "archive_sha256": "00516d3610e63c722e9f57dcebfbee78c496fa1411344f7432c86dc6bfc587aa",
+        "member": "input-tests-final.log"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-adr326/input-tests-final.log",
+          "sha256": "9e1c75b58e35d7de19637be2b33a69f532385506445ef63f1a440dafc7bbeed4",
+          "same_bytes": true
+        }
+      ],
+      "destination": "rustdoc-adr0326/input-tests-final.log",
+      "sha256": "9e1c75b58e35d7de19637be2b33a69f532385506445ef63f1a440dafc7bbeed4",
+      "bytes": 1750,
+      "group": "rustdoc-adr0326",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0326 — Input failure and witness rustdoc checks.zip",
+        "archive_sha256": "00516d3610e63c722e9f57dcebfbee78c496fa1411344f7432c86dc6bfc587aa",
+        "member": "testkit-doc-tests.log"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-adr326/testkit-doc-tests.log",
+          "sha256": "06fde780b0b682d87bbbef1993ace0775b9d1beac5b396e6be5464b2845b82c7",
+          "same_bytes": true
+        }
+      ],
+      "destination": "rustdoc-adr0326/testkit-doc-tests.log",
+      "sha256": "06fde780b0b682d87bbbef1993ace0775b9d1beac5b396e6be5464b2845b82c7",
+      "bytes": 1156,
+      "group": "rustdoc-adr0326",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0326 — Input failure and witness rustdoc checks.zip",
+        "archive_sha256": "00516d3610e63c722e9f57dcebfbee78c496fa1411344f7432c86dc6bfc587aa",
+        "member": "backend-test-clippy.log"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-adr326/backend-test-clippy.log",
+          "sha256": "826fc39b7aab0b92c0bbb872b7e6e9645b4c0f0cd968380597db92e70e6d452e",
+          "same_bytes": true
+        }
+      ],
+      "destination": "rustdoc-adr0326/backend-test-clippy.log",
+      "sha256": "826fc39b7aab0b92c0bbb872b7e6e9645b4c0f0cd968380597db92e70e6d452e",
+      "bytes": 183,
+      "group": "rustdoc-adr0326",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0326 — Input failure and witness rustdoc checks.zip",
+        "archive_sha256": "00516d3610e63c722e9f57dcebfbee78c496fa1411344f7432c86dc6bfc587aa",
+        "member": "testkit-clippy.log"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-adr326/testkit-clippy.log",
+          "sha256": "1cf5d8dd08178181580cfc9694b328ad83cac4d9b811939da8956640b2812f02",
+          "same_bytes": true
+        }
+      ],
+      "destination": "rustdoc-adr0326/testkit-clippy.log",
+      "sha256": "1cf5d8dd08178181580cfc9694b328ad83cac4d9b811939da8956640b2812f02",
+      "bytes": 1251,
+      "group": "rustdoc-adr0326",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0326 — Input failure and witness rustdoc checks.zip",
+        "archive_sha256": "00516d3610e63c722e9f57dcebfbee78c496fa1411344f7432c86dc6bfc587aa",
+        "member": "fmt-final.log"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-adr326/fmt-final.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "same_bytes": true
+        }
+      ],
+      "destination": "rustdoc-adr0326/fmt-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "group": "rustdoc-adr0326",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip",
+        "archive_sha256": "1ebd1202011072db74ea9ffcd5ccc75d03164ada4cb14a428dbbee07834c44a7",
+        "member": "receipt.json"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-passport-guide/receipt.json",
+          "sha256": "f6148d0a62019db3a5fe663c9968d8eeebf579e4c0bbeb25d00c11a234df5dda",
+          "same_bytes": true
+        }
+      ],
+      "destination": "passport-p1/receipt.json",
+      "sha256": "f6148d0a62019db3a5fe663c9968d8eeebf579e4c0bbeb25d00c11a234df5dda",
+      "bytes": 17544,
+      "group": "passport-p1",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip",
+        "archive_sha256": "1ebd1202011072db74ea9ffcd5ccc75d03164ada4cb14a428dbbee07834c44a7",
+        "member": "cargo-local-packages.json"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-passport-guide/cargo-local-packages.json",
+          "sha256": "7a8a64f4a90226c11e16a8a7911cfb83dd8bc47fc75ab3eec8756497a31d8523",
+          "same_bytes": true
+        }
+      ],
+      "destination": "passport-p1/cargo-local-packages.json",
+      "sha256": "7a8a64f4a90226c11e16a8a7911cfb83dd8bc47fc75ab3eec8756497a31d8523",
+      "bytes": 548,
+      "group": "passport-p1",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip",
+        "archive_sha256": "1ebd1202011072db74ea9ffcd5ccc75d03164ada4cb14a428dbbee07834c44a7",
+        "member": "compile.log"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-passport-guide/compile.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "same_bytes": true
+        }
+      ],
+      "destination": "passport-p1/compile.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "group": "passport-p1",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip",
+        "archive_sha256": "1ebd1202011072db74ea9ffcd5ccc75d03164ada4cb14a428dbbee07834c44a7",
+        "member": "external-generation.log"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-passport-guide/external-generation.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "same_bytes": true
+        }
+      ],
+      "destination": "passport-p1/external-generation.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "group": "passport-p1",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip",
+        "archive_sha256": "1ebd1202011072db74ea9ffcd5ccc75d03164ada4cb14a428dbbee07834c44a7",
+        "member": "consumer-final.log"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-passport-guide/consumer-final.log",
+          "sha256": "03e1ea661532214a330d5546d040ea711c4704195d92138bb7f6fbbb0de21884",
+          "same_bytes": true
+        }
+      ],
+      "destination": "passport-p1/consumer-final.log",
+      "sha256": "03e1ea661532214a330d5546d040ea711c4704195d92138bb7f6fbbb0de21884",
+      "bytes": 665,
+      "group": "passport-p1",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip",
+        "archive_sha256": "1ebd1202011072db74ea9ffcd5ccc75d03164ada4cb14a428dbbee07834c44a7",
+        "member": "consumer-first.log"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-passport-guide/consumer-first.log",
+          "sha256": "1f64285682eb1acb04c41deeebe79072be9ef96923ea4802ab999c3c524b47d5",
+          "same_bytes": true
+        }
+      ],
+      "destination": "passport-p1/consumer-first.log",
+      "sha256": "1f64285682eb1acb04c41deeebe79072be9ef96923ea4802ab999c3c524b47d5",
+      "bytes": 1558,
+      "group": "passport-p1",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip",
+        "archive_sha256": "1ebd1202011072db74ea9ffcd5ccc75d03164ada4cb14a428dbbee07834c44a7",
+        "member": "consumer-locked.log"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-passport-guide/consumer-locked.log",
+          "sha256": "30975e8f78b66360e968ac9dd90603de9df56437fc47828f01d7da13f6e0b186",
+          "same_bytes": true
+        }
+      ],
+      "destination": "passport-p1/consumer-locked.log",
+      "sha256": "30975e8f78b66360e968ac9dd90603de9df56437fc47828f01d7da13f6e0b186",
+      "bytes": 958,
+      "group": "passport-p1",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/R03002 — External named-input recipe.zip",
+        "archive_sha256": "f0bfef94ac4fb6b318162bfc07bae9b70a9d3e2e329b13ed56f6f729c6f868fd",
+        "member": "README.md"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-named-record-guide/README.md",
+          "sha256": "87ab0b6311d05e2d554aeab42c7155b98a076698e3a5ce354e9045613260eee0",
+          "same_bytes": true
+        }
+      ],
+      "destination": "named-record/README.md",
+      "sha256": "87ab0b6311d05e2d554aeab42c7155b98a076698e3a5ce354e9045613260eee0",
+      "bytes": 2690,
+      "group": "named-record",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/R03002 — External named-input recipe.zip",
+        "archive_sha256": "f0bfef94ac4fb6b318162bfc07bae9b70a9d3e2e329b13ed56f6f729c6f868fd",
+        "member": "artifact-manifest.json"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-named-record-guide/artifact-manifest.json",
+          "sha256": "d763f79b4f4dea0b165ef2dabff2c21462a6d60dfd57c61ac81c807eb4b5abed",
+          "same_bytes": true
+        }
+      ],
+      "destination": "named-record/artifact-manifest.json",
+      "sha256": "d763f79b4f4dea0b165ef2dabff2c21462a6d60dfd57c61ac81c807eb4b5abed",
+      "bytes": 60516,
+      "group": "named-record",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/R03002 — External named-input recipe.zip",
+        "archive_sha256": "f0bfef94ac4fb6b318162bfc07bae9b70a9d3e2e329b13ed56f6f729c6f868fd",
+        "member": "evidence/receipt.json"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-named-record-guide/evidence/receipt.json",
+          "sha256": "fd50f65079ec8238401e456beedcfbfe10929d17f591649a707b11d1796bc04f",
+          "same_bytes": true
+        }
+      ],
+      "destination": "named-record/evidence/receipt.json",
+      "sha256": "fd50f65079ec8238401e456beedcfbfe10929d17f591649a707b11d1796bc04f",
+      "bytes": 2524,
+      "group": "named-record",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/R03002 — External named-input recipe.zip",
+        "archive_sha256": "f0bfef94ac4fb6b318162bfc07bae9b70a9d3e2e329b13ed56f6f729c6f868fd",
+        "member": "evidence/source.json"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-named-record-guide/evidence/source.json",
+          "sha256": "eb111c65534b03b893dc4ec4044e0702623c86e73ff7e42ec3870c1c802f37b8",
+          "same_bytes": true
+        }
+      ],
+      "destination": "named-record/evidence/source.json",
+      "sha256": "eb111c65534b03b893dc4ec4044e0702623c86e73ff7e42ec3870c1c802f37b8",
+      "bytes": 1090,
+      "group": "named-record",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/R03002 — External named-input recipe.zip",
+        "archive_sha256": "f0bfef94ac4fb6b318162bfc07bae9b70a9d3e2e329b13ed56f6f729c6f868fd",
+        "member": "evidence/lock-qualification.json"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-named-record-guide/evidence/lock-qualification.json",
+          "sha256": "37e60b3767099c32eeffb501d8d4c25f23fdc3d28e4f6aba052daf4d02f8a6db",
+          "same_bytes": true
+        }
+      ],
+      "destination": "named-record/evidence/lock-qualification.json",
+      "sha256": "37e60b3767099c32eeffb501d8d4c25f23fdc3d28e4f6aba052daf4d02f8a6db",
+      "bytes": 750,
+      "group": "named-record",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/R03002 — External named-input recipe.zip",
+        "archive_sha256": "f0bfef94ac4fb6b318162bfc07bae9b70a9d3e2e329b13ed56f6f729c6f868fd",
+        "member": "evidence/test.log"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-named-record-guide/evidence/test.log",
+          "sha256": "55580e38fc910090980d334d5749947e2cef5d5f1186b2eb12636deb1c629feb",
+          "same_bytes": true
+        }
+      ],
+      "destination": "named-record/evidence/test.log",
+      "sha256": "55580e38fc910090980d334d5749947e2cef5d5f1186b2eb12636deb1c629feb",
+      "bytes": 807,
+      "group": "named-record",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/R03002 — External named-input recipe.zip",
+        "archive_sha256": "f0bfef94ac4fb6b318162bfc07bae9b70a9d3e2e329b13ed56f6f729c6f868fd",
+        "member": "evidence/clippy.log"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-named-record-guide/evidence/clippy.log",
+          "sha256": "a320ca03c820127fb7b33c2b9469be714971fe2ed4870e03d6ea7c8d7bae9577",
+          "same_bytes": true
+        }
+      ],
+      "destination": "named-record/evidence/clippy.log",
+      "sha256": "a320ca03c820127fb7b33c2b9469be714971fe2ed4870e03d6ea7c8d7bae9577",
+      "bytes": 511,
+      "group": "named-record",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/R03002 — External named-input recipe.zip",
+        "archive_sha256": "f0bfef94ac4fb6b318162bfc07bae9b70a9d3e2e329b13ed56f6f729c6f868fd",
+        "member": "evidence/format-check.log"
+      },
+      "original_aliases": [
+        {
+          "path": "/tmp/rust030-named-record-guide/evidence/format-check.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "same_bytes": true
+        }
+      ],
+      "destination": "named-record/evidence/format-check.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "group": "named-record",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ContractLab standalone consumer —2026-10-07.md"
+      },
+      "original_aliases": [],
+      "destination": "counter-c1/retained-receipt.md",
+      "sha256": "d9dc376acedd7166ad57fba33c590ebfbf3d36041c1965db3134d5c1aa29e237",
+      "bytes": 91355,
+      "group": "counter-c1",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/tmp/rust030-testkit-consumer/run.log"
+      },
+      "original_aliases": [],
+      "destination": "counter-c1/run.log",
+      "sha256": "963b25c8d3d18a1110f3f0c20fe4fe0381c27f827e5db23d9e848b55b07beb84",
+      "bytes": 3628,
+      "group": "counter-c1",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/tmp/rust030-capability-guide/receipt.json"
+      },
+      "original_aliases": [],
+      "destination": "capability-k1/receipt.json",
+      "sha256": "db30251990c540b471bd27ddb0333488d5096ea70589a3583c27085b07ee93e6",
+      "bytes": 1317,
+      "group": "capability-k1",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/tmp/rust030-capability-guide/check_observed_api.py"
+      },
+      "original_aliases": [],
+      "destination": "capability-k1/check_observed_api.py",
+      "sha256": "d74106475ee986f3773768c04b15476f0143d2a25150e4c0d405c7e132857179",
+      "bytes": 1312,
+      "group": "capability-k1",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/tmp/rust030-adr288/strict-original-gate-final/did/contract/rust-capabilities.json"
+      },
+      "original_aliases": [],
+      "destination": "capability-k1/historical-rust-capabilities.json",
+      "sha256": "8d3dc57a405875ecce5974e945719b6ae7bbb00b3543de1a40ded0756c15d5d2",
+      "bytes": 3869,
+      "group": "capability-k1",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/tmp/rust030-guides-validated-324/examples/did-lifecycle/generated/contract/rust-capabilities.json"
+      },
+      "original_aliases": [],
+      "destination": "capability-k1/adr0324-rust-capabilities.json",
+      "sha256": "5892af4a3ddd03f41cb7728d26fef8f17971cbd2d57fa0afea907da104d04228",
+      "bytes": 3322,
+      "group": "capability-k1",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Capability guide execution receipt — 2026-10-07.md"
+      },
+      "original_aliases": [],
+      "destination": "capability-k1/retained-receipt.md",
+      "sha256": "d51c8badaf7345dedbcdded1af4eb9a3dfeb59c7be6c5dd23e8a050ace94e3e0",
+      "bytes": 1537,
+      "group": "capability-k1",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/tmp/compact-adr293/receipt.json"
+      },
+      "original_aliases": [],
+      "destination": "migration-cf1/receipt.json",
+      "sha256": "b96d9a0368311fe14f2331ad866c89be850a2eb785ab0ba418007cc991104c40",
+      "bytes": 32583,
+      "group": "migration-cf1",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/tmp/compact-adr293/migration-results.json"
+      },
+      "original_aliases": [],
+      "destination": "migration-cf1/migration-results.json",
+      "sha256": "fd31990ee0c9d152d082cf0dde0f1abe6928f03284965a18890424b4e0b48614",
+      "bytes": 1897,
+      "group": "migration-cf1",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/tmp/compact-adr293/generated-consumer-results.json"
+      },
+      "original_aliases": [],
+      "destination": "migration-cf1/generated-consumer-results.json",
+      "sha256": "0411f3f3e94c1d7970911739f890a5add14b01a59c9ff2db89e32ea166317634",
+      "bytes": 1232,
+      "group": "migration-cf1",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/tmp/compact-adr293/historical-abi49.log"
+      },
+      "original_aliases": [],
+      "destination": "migration-cf1/historical-abi49.log",
+      "sha256": "295b9f0c8e61eaa5dd15460503297cde682febe38ce2dc18bf009ac80186556f",
+      "bytes": 1769,
+      "group": "migration-cf1",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/tmp/compact-adr293/new-exhaustive.log"
+      },
+      "original_aliases": [],
+      "destination": "migration-cf1/new-exhaustive.log",
+      "sha256": "bbec98e14f8d5546ba2ae8015f7c7513f06601fd30e25c0ffc6fd43b857f8779",
+      "bytes": 5159,
+      "group": "migration-cf1",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/tmp/compact-adr293/new-complete-no-fallback.log"
+      },
+      "original_aliases": [],
+      "destination": "migration-cf1/new-complete-no-fallback.log",
+      "sha256": "fbb9fbbff3dcc2e8cab4d425dab38d782fa7b042cf47d21baea0f674e6799f8f",
+      "bytes": 1035,
+      "group": "migration-cf1",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/tmp/compact-adr293/migrated-primary-final.log"
+      },
+      "original_aliases": [],
+      "destination": "migration-cf1/migrated-primary-final.log",
+      "sha256": "94414be571255aed1839e2b1e4155393b64113a9a85865b3e8d69db3d9de1dbb",
+      "bytes": 315,
+      "group": "migration-cf1",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/tmp/compact-adr293/migrated-msrv-final.log"
+      },
+      "original_aliases": [],
+      "destination": "migration-cf1/migrated-msrv-final.log",
+      "sha256": "bc66c291b5e4f1d010f1c0f4411943e0582e666395682bf4a1209692ce6cdc77",
+      "bytes": 211,
+      "group": "migration-cf1",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/tmp/compact-adr293/compatibility.log"
+      },
+      "original_aliases": [],
+      "destination": "migration-cf1/compatibility.log",
+      "sha256": "2895607f0325127dd57d6da5c6da0c6597525b1882a58e27ed2372d9bb288380",
+      "bytes": 2845,
+      "group": "migration-cf1",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/tmp/compact-adr293/MIGRATION.md"
+      },
+      "original_aliases": [],
+      "destination": "migration-cf1/MIGRATION.md",
+      "sha256": "b658a175e3b97a1e570895f6a36dcdacc15f22be53cc1e0f1ac7ff958b37b988",
+      "bytes": 3885,
+      "group": "migration-cf1",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/tmp/rust030-guide-companions/evidence-map.json"
+      },
+      "original_aliases": [],
+      "destination": "migration-cf1/guide-evidence-map.json",
+      "sha256": "620e6096cdd58b6128f371f0f75574ba9ebc4f2bd196162860531dcace6fd045",
+      "bytes": 6014,
+      "group": "migration-cf1",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Artifacts/rust-backend-v2-remote-03c03a39/closure/closeout.md"
+      },
+      "original_aliases": [],
+      "destination": "migration-cf1/v2-archive-consumer-closeout.md",
+      "sha256": "b91ee198921d73053860ca9ea26454cd4f39c34acafa0d6dd6431e962bac3e62",
+      "bytes": 16362,
+      "group": "migration-cf1",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/tmp/rust030-adr0331-f4/receipt.json"
+      },
+      "original_aliases": [],
+      "destination": "recording-handle-adr0331/receipt.json",
+      "sha256": "305566c7986a8f9093b821ef75b7970fa5ede3a88fcc58206f55392afa525e13",
+      "bytes": 22344,
+      "group": "recording-handle-adr0331",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/tmp/rust030-adr0331-f4/DELIVERY.md"
+      },
+      "original_aliases": [],
+      "destination": "recording-handle-adr0331/DELIVERY.md",
+      "sha256": "1cd338a4ecede0ef0aba2cd05945ac3cc211c870d1a8061dd0b534f54038715b",
+      "bytes": 2765,
+      "group": "recording-handle-adr0331",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/tmp/rust030-adr0331-f4/manifest.json"
+      },
+      "original_aliases": [],
+      "destination": "recording-handle-adr0331/manifest.json",
+      "sha256": "ed756cd5a274ce2aea49ecf1ae2487327ef5f10eb75bae4574cd5e631ac53ba6",
+      "bytes": 12138,
+      "group": "recording-handle-adr0331",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/tmp/rust030-adr0331-f4/default.log"
+      },
+      "original_aliases": [],
+      "destination": "recording-handle-adr0331/default.log",
+      "sha256": "c8e9b10672c9ba50896591cc545e0812eebf624eb0c06376c11e574962fd66a0",
+      "bytes": 1025,
+      "group": "recording-handle-adr0331",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/tmp/rust030-adr0331-f4/default.stderr.log"
+      },
+      "original_aliases": [],
+      "destination": "recording-handle-adr0331/default.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "group": "recording-handle-adr0331",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/tmp/rust030-adr0331-f4/transaction.log"
+      },
+      "original_aliases": [],
+      "destination": "recording-handle-adr0331/transaction.log",
+      "sha256": "082c00e554b8cbfb0b789953228f9a14336624871249912c4633323f6d410c7c",
+      "bytes": 892,
+      "group": "recording-handle-adr0331",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/tmp/rust030-adr0331-f4/transaction.stderr.log"
+      },
+      "original_aliases": [],
+      "destination": "recording-handle-adr0331/transaction.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "group": "recording-handle-adr0331",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/tmp/rust030-adr0331-f4/default-clippy.log"
+      },
+      "original_aliases": [],
+      "destination": "recording-handle-adr0331/default-clippy.log",
+      "sha256": "8760f61dfb052bdc5f6393b9f9e35e8b23ae0ccef58a12e19111e3e0a8bfc8ba",
+      "bytes": 404,
+      "group": "recording-handle-adr0331",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/tmp/rust030-adr0331-f4/transaction-clippy.log"
+      },
+      "original_aliases": [],
+      "destination": "recording-handle-adr0331/transaction-clippy.log",
+      "sha256": "d6dea380c82a92fc64b3164a52105940eb705903ecde8f860f91449793264efa",
+      "bytes": 404,
+      "group": "recording-handle-adr0331",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/tmp/rust030-adr0331-f4/generated-runtime-source-comparison.json"
+      },
+      "original_aliases": [],
+      "destination": "recording-handle-adr0331/generated-runtime-source-comparison.json",
+      "sha256": "0e3679a4c6027e9d59c5defa7999c4f779374dbf2ae1457741d03e3ac8c2eda0",
+      "bytes": 9589,
+      "group": "recording-handle-adr0331",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "original": {
+        "path": "/tmp/rust030-adr0331-f4/sdk-source-comparison.json"
+      },
+      "original_aliases": [],
+      "destination": "recording-handle-adr0331/sdk-source-comparison.json",
+      "sha256": "f55b1778c189b2cdbe406c20c7732dcd5db115691a1e9b59d5943aa08dd03da9",
+      "bytes": 16846,
+      "group": "recording-handle-adr0331",
+      "scope": "historical evidence, retained byte-for-byte; no execution performed during publication staging"
+    },
+    {
+      "destination": "local-proof-fixture-adr0360/REPORT.md",
+      "sha256": "59baa7cf1eff12fcb1e69ff75009d7a54420535c7fa5b528222d7cc275903804",
+      "bytes": 1932,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Reviews/ADR0360 — Official provider test fixture evidence.zip",
+        "archive_sha256": "da389ca2e6447aa1ef61eb1f8a6aa558299a81172c863d1c69b15801f5ba009f",
+        "member": "REPORT.md"
+      },
+      "qualification": "Historical ADR0360 local tests/docs; check/refusal coverage and no-run successful prove example, not successful proof receipt."
+    },
+    {
+      "destination": "local-proof-fixture-adr0360/tests.log",
+      "sha256": "3649f8c99ed45f3f2b2ad0f751005ef6f6bc3a177648aa068a6f9be999633698",
+      "bytes": 4773,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Reviews/ADR0360 — Official provider test fixture evidence.zip",
+        "archive_sha256": "da389ca2e6447aa1ef61eb1f8a6aa558299a81172c863d1c69b15801f5ba009f",
+        "member": "tests.log"
+      },
+      "qualification": "Historical ADR0360 local tests/docs; check/refusal coverage and no-run successful prove example, not successful proof receipt."
+    },
+    {
+      "destination": "local-proof-fixture-adr0360/default-tests.log",
+      "sha256": "7c4dadc3d47603859f6d13277048b755682def70f60b1e8b48e1ebac6dddc93e",
+      "bytes": 4243,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Reviews/ADR0360 — Official provider test fixture evidence.zip",
+        "archive_sha256": "da389ca2e6447aa1ef61eb1f8a6aa558299a81172c863d1c69b15801f5ba009f",
+        "member": "default-tests.log"
+      },
+      "qualification": "Historical ADR0360 local tests/docs; check/refusal coverage and no-run successful prove example, not successful proof receipt."
+    },
+    {
+      "destination": "local-proof-fixture-adr0360/doctests.log",
+      "sha256": "5fc26b06c96b01aabe7b343d2e996cbfd9bb15c10bb42acb895806ac0c932671",
+      "bytes": 536,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Reviews/ADR0360 — Official provider test fixture evidence.zip",
+        "archive_sha256": "da389ca2e6447aa1ef61eb1f8a6aa558299a81172c863d1c69b15801f5ba009f",
+        "member": "doctests.log"
+      },
+      "qualification": "Historical ADR0360 local tests/docs; check/refusal coverage and no-run successful prove example, not successful proof receipt."
+    },
+    {
+      "destination": "local-proof-fixture-adr0360/clippy.log",
+      "sha256": "7827fa28c288d0c5b20f7f9b9c273f2de6cee66209693055dc6fcaa36b72a46f",
+      "bytes": 1588,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Reviews/ADR0360 — Official provider test fixture evidence.zip",
+        "archive_sha256": "da389ca2e6447aa1ef61eb1f8a6aa558299a81172c863d1c69b15801f5ba009f",
+        "member": "clippy.log"
+      },
+      "qualification": "Historical ADR0360 local tests/docs; check/refusal coverage and no-run successful prove example, not successful proof receipt."
+    },
+    {
+      "destination": "local-proof-fixture-adr0360/format.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Reviews/ADR0360 — Official provider test fixture evidence.zip",
+        "archive_sha256": "da389ca2e6447aa1ef61eb1f8a6aa558299a81172c863d1c69b15801f5ba009f",
+        "member": "format.log"
+      },
+      "qualification": "Historical ADR0360 local tests/docs; check/refusal coverage and no-run successful prove example, not successful proof receipt."
+    },
+    {
+      "destination": "local-proof-fixture-adr0360/review.md",
+      "sha256": "535a35d14fa637ffe92812c688ad94f6e328d66775917f9017cf2100bc04e409",
+      "bytes": 3345,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Reviews/ADR0360 — Official provider test fixture evidence.zip",
+        "archive_sha256": "da389ca2e6447aa1ef61eb1f8a6aa558299a81172c863d1c69b15801f5ba009f",
+        "member": "review.md"
+      },
+      "qualification": "Historical ADR0360 local tests/docs; check/refusal coverage and no-run successful prove example, not successful proof receipt."
+    },
+    {
+      "destination": "local-proof-fixture-adr0360/source-hashes.json",
+      "sha256": "8f279569de15003aa9bf7b54d4c601f37710e397805b990f48230e76eee50ab6",
+      "bytes": 477,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Reviews/ADR0360 — Official provider test fixture evidence.zip",
+        "archive_sha256": "da389ca2e6447aa1ef61eb1f8a6aa558299a81172c863d1c69b15801f5ba009f",
+        "member": "source-hashes.json"
+      },
+      "qualification": "Historical ADR0360 local tests/docs; check/refusal coverage and no-run successful prove example, not successful proof receipt."
+    },
+    {
+      "destination": "candidate-ci-adr0361/remote-receipts/rust-bounded-core-2c798d2dc5f94ad13e89610068035ed70d94f469/clippy.log",
+      "sha256": "cf0cffff4101e723a75a6de8d8c283619b99b1793b62e5ca7f202b67ebe42fc4",
+      "bytes": 7680,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0361 — Strict Clippy and bounded candidate CI.zip",
+        "archive_sha256": "82624dd30644c613acba0306babc1b28a451b49b08e1a6a28bc98d9176662828",
+        "member": "remote-receipts/rust-bounded-core-2c798d2dc5f94ad13e89610068035ed70d94f469/clippy.log"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-ci-adr0361/remote-receipts/rust-bounded-core-2c798d2dc5f94ad13e89610068035ed70d94f469/format.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0361 — Strict Clippy and bounded candidate CI.zip",
+        "archive_sha256": "82624dd30644c613acba0306babc1b28a451b49b08e1a6a28bc98d9176662828",
+        "member": "remote-receipts/rust-bounded-core-2c798d2dc5f94ad13e89610068035ed70d94f469/format.log"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-ci-adr0361/remote-receipts/rust-bounded-core-2c798d2dc5f94ad13e89610068035ed70d94f469/result.json",
+      "sha256": "48f8c8e63fbc698445913ea9f125b2752faccc04591685a4d81782cb133d7bd2",
+      "bytes": 1448,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0361 — Strict Clippy and bounded candidate CI.zip",
+        "archive_sha256": "82624dd30644c613acba0306babc1b28a451b49b08e1a6a28bc98d9176662828",
+        "member": "remote-receipts/rust-bounded-core-2c798d2dc5f94ad13e89610068035ed70d94f469/result.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-ci-adr0361/remote-receipts/rust-bounded-core-2c798d2dc5f94ad13e89610068035ed70d94f469/source.json",
+      "sha256": "5987f839f4f46b1e196d88d06d9ff37d04da2a9523169bce6b008a8dd8638255",
+      "bytes": 951,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0361 — Strict Clippy and bounded candidate CI.zip",
+        "archive_sha256": "82624dd30644c613acba0306babc1b28a451b49b08e1a6a28bc98d9176662828",
+        "member": "remote-receipts/rust-bounded-core-2c798d2dc5f94ad13e89610068035ed70d94f469/source.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-ci-adr0361/remote-receipts/rust-bounded-core-2c798d2dc5f94ad13e89610068035ed70d94f469/tests.log",
+      "sha256": "c604bfe5c947b2bfa38db4cd0db985eb2f2b83e7906833f0087f7a5a7eddd3f4",
+      "bytes": 85656,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0361 — Strict Clippy and bounded candidate CI.zip",
+        "archive_sha256": "82624dd30644c613acba0306babc1b28a451b49b08e1a6a28bc98d9176662828",
+        "member": "remote-receipts/rust-bounded-core-2c798d2dc5f94ad13e89610068035ed70d94f469/tests.log"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-ci-adr0361/remote-receipts/rust-bounded-core-2c798d2dc5f94ad13e89610068035ed70d94f469/workflow.yml",
+      "sha256": "3c4a7980c014d44c38fa52c36720ad6bb90bd36d9f0022b56b00baec3bb87e8d",
+      "bytes": 9807,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0361 — Strict Clippy and bounded candidate CI.zip",
+        "archive_sha256": "82624dd30644c613acba0306babc1b28a451b49b08e1a6a28bc98d9176662828",
+        "member": "remote-receipts/rust-bounded-core-2c798d2dc5f94ad13e89610068035ed70d94f469/workflow.yml"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-ci-adr0361/remote-receipts/rust-bounded-msrv-2c798d2dc5f94ad13e89610068035ed70d94f469/msrv-standalone.log",
+      "sha256": "41418bf218a4ed6e41db8701ae9acd8b2b9a32dcced952574fa87283bcf3253e",
+      "bytes": 159,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0361 — Strict Clippy and bounded candidate CI.zip",
+        "archive_sha256": "82624dd30644c613acba0306babc1b28a451b49b08e1a6a28bc98d9176662828",
+        "member": "remote-receipts/rust-bounded-msrv-2c798d2dc5f94ad13e89610068035ed70d94f469/msrv-standalone.log"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-ci-adr0361/remote-receipts/rust-bounded-msrv-2c798d2dc5f94ad13e89610068035ed70d94f469/msrv-workspace.log",
+      "sha256": "9790c261446ff56f4731c4dbe7947fc954b2387af5c2314a802ab56a8d2206b2",
+      "bytes": 496,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0361 — Strict Clippy and bounded candidate CI.zip",
+        "archive_sha256": "82624dd30644c613acba0306babc1b28a451b49b08e1a6a28bc98d9176662828",
+        "member": "remote-receipts/rust-bounded-msrv-2c798d2dc5f94ad13e89610068035ed70d94f469/msrv-workspace.log"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-ci-adr0361/remote-receipts/rust-bounded-msrv-2c798d2dc5f94ad13e89610068035ed70d94f469/result.json",
+      "sha256": "15b1bddaf4f091e068146f843e5a98573aea87f0962be7b3b3ba18cc9628c818",
+      "bytes": 1517,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0361 — Strict Clippy and bounded candidate CI.zip",
+        "archive_sha256": "82624dd30644c613acba0306babc1b28a451b49b08e1a6a28bc98d9176662828",
+        "member": "remote-receipts/rust-bounded-msrv-2c798d2dc5f94ad13e89610068035ed70d94f469/result.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-ci-adr0361/remote-receipts/rust-bounded-msrv-2c798d2dc5f94ad13e89610068035ed70d94f469/source.json",
+      "sha256": "d6898917dd5c9ad678d1590385ec498b236dc5e451bfcb61674ce9b596480502",
+      "bytes": 951,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0361 — Strict Clippy and bounded candidate CI.zip",
+        "archive_sha256": "82624dd30644c613acba0306babc1b28a451b49b08e1a6a28bc98d9176662828",
+        "member": "remote-receipts/rust-bounded-msrv-2c798d2dc5f94ad13e89610068035ed70d94f469/source.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-ci-adr0361/remote-receipts/rust-bounded-msrv-2c798d2dc5f94ad13e89610068035ed70d94f469/workflow.yml",
+      "sha256": "3c4a7980c014d44c38fa52c36720ad6bb90bd36d9f0022b56b00baec3bb87e8d",
+      "bytes": 9807,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0361 — Strict Clippy and bounded candidate CI.zip",
+        "archive_sha256": "82624dd30644c613acba0306babc1b28a451b49b08e1a6a28bc98d9176662828",
+        "member": "remote-receipts/rust-bounded-msrv-2c798d2dc5f94ad13e89610068035ed70d94f469/workflow.yml"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-ci-adr0361/review-note.md",
+      "sha256": "a4c61df05e7383c81d26e0b99cd201141488f2bfeb94e19a2a0bc63650ee8799",
+      "bytes": 1664,
+      "original": {
+        "path": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Reviews/ADR0361 — Strict Clippy and bounded candidate CI.md"
+      },
+      "qualification": "Byte-identical dated review note; historical links/paths are preserved as provenance, not current navigation."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/audit-receipt.json",
+      "sha256": "8d85d7de52940ff2eba98c404d4f240f2c81877836db37844f4ba0dfc2ad913a",
+      "bytes": 1384,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "audit-receipt.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/audit-standalone.json",
+      "sha256": "3f3538aeabd844899db724888550677baf3d23ad8882b39488585351844850fa",
+      "bytes": 5359,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "audit-standalone.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/audit-workspace.json",
+      "sha256": "e53e4a432362e5a3d3e69b6f8055273d21164edd28d897fd41d2c3a75ea3091b",
+      "bytes": 6295,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "audit-workspace.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/dependency-source-continuity.json",
+      "sha256": "efbcf6ed3f2b995b5795701e4d1704f9a12436b87e597f0b806399c26df251bf",
+      "bytes": 528,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "dependency-source-continuity.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/current-w2/commands.json",
+      "sha256": "baa1e0eceed3d20a08f6347e8e7465822ccd3adb1f3539d1c385aa9bb39f1ae6",
+      "bytes": 2280,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "current-w2/commands.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/current-w2/lock-comparison.json",
+      "sha256": "ef9e446b7ce7dc92515af737f505d213bd6d6fefcf35fd11c7c5383c19acde71",
+      "bytes": 47,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "current-w2/lock-comparison.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/current-w2/receipt.json",
+      "sha256": "43705269881ffda8d99077c6ae02c0348c1f7051051a3619db90b968c0efd967",
+      "bytes": 65691,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "current-w2/receipt.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/current-w2/logs/witnessed-1.88.0.log",
+      "sha256": "b36e999aa001c0fe2b595550b7c6bc91482a08ba19811d216612f7667536d4df",
+      "bytes": 6899,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "current-w2/logs/witnessed-1.88.0.log"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/current-w2/logs/witnessed-1.99.0.log",
+      "sha256": "0b506c2243fbafd884b008a79b72cd108d8075b9003cfedac722f9c6e9508cf2",
+      "bytes": 1064,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "current-w2/logs/witnessed-1.99.0.log"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/current-migrations/commands.json",
+      "sha256": "88e25bef07ec72aa2ee853318553fcf1644e4d6f84e2f53ca8fb4f180e342ddb",
+      "bytes": 1575,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "current-migrations/commands.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/current-migrations/receipt.json",
+      "sha256": "ee37e72be120bb53298d27ed28c4534b18441bf56fa004ea833986ceaf688f7f",
+      "bytes": 10785,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "current-migrations/receipt.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/current-migrations/migrated.log",
+      "sha256": "10b2f56ad0a3376e7f16cf6eab6a82c326b7bf802c4b656b0d9300045464fdf5",
+      "bytes": 406,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "current-migrations/migrated.log"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/current-migrations/new-complete-no-fallback.log",
+      "sha256": "ca76add180ca48ccd8e1ace7f2e0cc7533bc49a83caad7b0d81a0ba3a8410dbe",
+      "bytes": 1198,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "current-migrations/new-complete-no-fallback.log"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/current-migrations/migrated-lock-qualification.json",
+      "sha256": "2dd29f444e40151bb5862c8f8a0756e844551eba9f57533387b3ddc471a66aff",
+      "bytes": 134,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "current-migrations/migrated-lock-qualification.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/current-migrations/new-complete-no-fallback-lock-qualification.json",
+      "sha256": "d23425a4aab8372490eb52a237ea49e4cf7c01649e6477c04778999ae35fea2a",
+      "bytes": 134,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "current-migrations/new-complete-no-fallback-lock-qualification.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/coverage-delta/coverage-reconciliation.json",
+      "sha256": "8442d59bf0d9131a57dea8d499b360fa43d8040636e49cd68fb22dbbff2c5dfb",
+      "bytes": 141059,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "coverage-delta/coverage-reconciliation.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/coverage-delta/run-receipt.json",
+      "sha256": "583cab398d5ae63825135f3ba78de5f3217cd9aef27eeceef676f0b681c85ea6",
+      "bytes": 140010,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "coverage-delta/run-receipt.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/coverage-delta/runtime.log",
+      "sha256": "bce6e6ed191bd742e25be97ff07f8152cf326fb1422b5d23384c4e7693416dfe",
+      "bytes": 1294,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "coverage-delta/runtime.log"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/coverage-delta/testkit.log",
+      "sha256": "06d308a53ff09ef28a3aebe665b482fd7bbbf99523cebfa7d6eb787c3b6070c6",
+      "bytes": 4985,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "coverage-delta/testkit.log"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/coverage-delta/exclusions.json",
+      "sha256": "9f06fd7d0fa552931099b48d966e8fbde917c32f0a6426aba5d2ecfa59c3b138",
+      "bytes": 406,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "coverage-delta/exclusions.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/current-portable-fixed/commands.json",
+      "sha256": "d1259c51206fe951d79588f8265d3d3cdb09c14f8ee1175017ea2d917724a2e7",
+      "bytes": 5273,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "current-portable-fixed/commands.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/current-portable-fixed/receipt.json",
+      "sha256": "b800ce5397d47e4152c18d85764a3afe25b79a4ee08243cb19953c38107b1087",
+      "bytes": 71775,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "current-portable-fixed/receipt.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/current-portable-fixed/10-cargo.log",
+      "sha256": "1389111288849a97f592b2da6a5bc96d65a9f65aa9cb1dbcb9c69da6c9114bf8",
+      "bytes": 480,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "current-portable-fixed/10-cargo.log"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/current-portable-fixed/11-cargo.log",
+      "sha256": "ad5f9d4c1053f351a479c94ff879412d400ca528f5ae80f782ce95a4a93c8eb9",
+      "bytes": 331,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "current-portable-fixed/11-cargo.log"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/publication-rejection-before.log",
+      "sha256": "3455f6b77e640c4ddacdebfe1839d8b860e8347c496a1752831b2eab1984c66c",
+      "bytes": 804,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "publication-rejection-before.log"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/publication-rejection-fixed.log",
+      "sha256": "b8746dc33c5145c25df196c75b49a0674c00eabbdb6df8e53ec0d728c668dd0c",
+      "bytes": 667,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "publication-rejection-fixed.log"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/publication-rejection-fix.json",
+      "sha256": "18b8c016fd4a721fbc39791477156a78b1383a68757e061bb99b068bff559fd3",
+      "bytes": 1724,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "publication-rejection-fix.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/publication-rejection-fix.md",
+      "sha256": "1791fcad9fbb78ca4590541333df7c4d059d87e488410394151218ee12640000",
+      "bytes": 3321,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "publication-rejection-fix.md"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/scheme-source-binding.json",
+      "sha256": "9a3d2fcaa58c9d51751a1623fa61fec7fed0c1f475c769c71067ef385a7fee59",
+      "bytes": 44755,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "scheme-source-binding.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/scheme-derivation.json",
+      "sha256": "a45a89b96f83cb20658d36ebd8351b011e9e63c2532baa7a3d9b8fd3c4ba69c7",
+      "bytes": 3424,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "scheme-derivation.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/scheme-output-closure.json",
+      "sha256": "00289e831c024ea955e3d86fb9f33ac7317299b8d55b6b1ac7bb8c38ead0318d",
+      "bytes": 1376,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "scheme-output-closure.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/consumer-runner-provenance.json",
+      "sha256": "1bb716d9c8099574ff4959c8f4f9fccfa3c94ebb591a93bf46765f5e52f6c244",
+      "bytes": 816,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Candidate consumers coverage and ADR0362 — 2026-10-08.zip",
+        "archive_sha256": "aa2c37bc5e177fe8ac7ad5b00e4f13a30a6ae6d2b5b93ca4dc882a973e935b37",
+        "member": "consumer-runner-provenance.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-consumers-adr0362/review-note.md",
+      "sha256": "7358e8b9056a312c55a21dc95d14ec659e3cae96f750ede6a10d4c9085901ca3",
+      "bytes": 3232,
+      "original": {
+        "path": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Reviews/Candidate consumers coverage and ADR0362 — 2026-10-08.md"
+      },
+      "qualification": "Byte-identical dated review note; historical links/paths are preserved as provenance, not current navigation."
+    },
+    {
+      "destination": "candidate-baselines-adr0363-0364/ADR0364/REPORT.md",
+      "sha256": "56a8bf5b31c10790dc967e522e2e860c37f04a9626f411947a6851c704919966",
+      "bytes": 2805,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0363-0364 — Candidate gate baselines.zip",
+        "archive_sha256": "34122970d79d307f70a74d6a3de11c38297bc93429f7bb276156c6a6cdc6fabf",
+        "member": "ADR0364/REPORT.md"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-baselines-adr0363-0364/ADR0364/all-harness-tests.log",
+      "sha256": "1211b6ea4ee61533c112fe5a0f528b335d200b04b7ab4d2bd405df7697cf7cd9",
+      "bytes": 600,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0363-0364 — Candidate gate baselines.zip",
+        "archive_sha256": "34122970d79d307f70a74d6a3de11c38297bc93429f7bb276156c6a6cdc6fabf",
+        "member": "ADR0364/all-harness-tests.log"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-baselines-adr0363-0364/ADR0364/boolean-native-receipt.json",
+      "sha256": "dc92a054b9896b1af528aa8fc1c1fd73be4fc524f9f8196471b31f56499f8d4f",
+      "bytes": 38120,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0363-0364 — Candidate gate baselines.zip",
+        "archive_sha256": "34122970d79d307f70a74d6a3de11c38297bc93429f7bb276156c6a6cdc6fabf",
+        "member": "ADR0364/boolean-native-receipt.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-baselines-adr0363-0364/ADR0364/boolean-native.log",
+      "sha256": "815b37e817f35ca63fc0164dbe5fab98bd54a7fa64ebda106972aa510ed5e772",
+      "bytes": 878,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0363-0364 — Candidate gate baselines.zip",
+        "archive_sha256": "34122970d79d307f70a74d6a3de11c38297bc93429f7bb276156c6a6cdc6fabf",
+        "member": "ADR0364/boolean-native.log"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-baselines-adr0363-0364/ADR0364/final-receipt.json",
+      "sha256": "f7c8e1c4f7ee05e8e35392f0faa9d628b1a7a6862835e6e8ea467dfd7e541cfc",
+      "bytes": 2619,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0363-0364 — Candidate gate baselines.zip",
+        "archive_sha256": "34122970d79d307f70a74d6a3de11c38297bc93429f7bb276156c6a6cdc6fabf",
+        "member": "ADR0364/final-receipt.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-baselines-adr0363-0364/ADR0364/frozen-baseline-check.json",
+      "sha256": "5a63441cdabf6dd14f8ce15e2d474ebfd8e6a0bc5fe1fda56688be16fc8eca1e",
+      "bytes": 3689,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0363-0364 — Candidate gate baselines.zip",
+        "archive_sha256": "34122970d79d307f70a74d6a3de11c38297bc93429f7bb276156c6a6cdc6fabf",
+        "member": "ADR0364/frozen-baseline-check.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-baselines-adr0363-0364/ADR0364/projection-check.json",
+      "sha256": "c1cedc4167b6476b6a99cd67714fb7f629b267ea4a4ce303209a9e0abd274076",
+      "bytes": 635,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0363-0364 — Candidate gate baselines.zip",
+        "archive_sha256": "34122970d79d307f70a74d6a3de11c38297bc93429f7bb276156c6a6cdc6fabf",
+        "member": "ADR0364/projection-check.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-baselines-adr0363-0364/ADR0364/specification-tests.log",
+      "sha256": "bb50c69954168bdf6186fc9d091c9414f4eb443bec01e2f4352c4da5bc209e39",
+      "bytes": 129,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0363-0364 — Candidate gate baselines.zip",
+        "archive_sha256": "34122970d79d307f70a74d6a3de11c38297bc93429f7bb276156c6a6cdc6fabf",
+        "member": "ADR0364/specification-tests.log"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-baselines-adr0363-0364/candidate57fab/candidate-continuity.json",
+      "sha256": "f87ca4f3fcdeb77242d134bf99170182335e668a630c4a6766619e72d01ebdba",
+      "bytes": 977,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0363-0364 — Candidate gate baselines.zip",
+        "archive_sha256": "34122970d79d307f70a74d6a3de11c38297bc93429f7bb276156c6a6cdc6fabf",
+        "member": "candidate57fab/candidate-continuity.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-baselines-adr0363-0364/candidate679/did-source-scope-fix.json",
+      "sha256": "b899aaf2ddf11e98cbb588d855c864342e22dd88eb6cd17fd95611120ae08e08",
+      "bytes": 14859,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0363-0364 — Candidate gate baselines.zip",
+        "archive_sha256": "34122970d79d307f70a74d6a3de11c38297bc93429f7bb276156c6a6cdc6fabf",
+        "member": "candidate679/did-source-scope-fix.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-baselines-adr0363-0364/candidate679/did-source-scope-fix.md",
+      "sha256": "7850eb355b6ba8ef53263c8fa82d78a4b54b72b25d848614e5e6165a7871d6bd",
+      "bytes": 4940,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0363-0364 — Candidate gate baselines.zip",
+        "archive_sha256": "34122970d79d307f70a74d6a3de11c38297bc93429f7bb276156c6a6cdc6fabf",
+        "member": "candidate679/did-source-scope-fix.md"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-baselines-adr0363-0364/candidate679/source-scope-preflight/unit-composition-source-scope.json",
+      "sha256": "2ac732aa48f61e7c0af46d062cb31d1c46a42f6b547c82a9e17ef4c896f6ae41",
+      "bytes": 19669,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0363-0364 — Candidate gate baselines.zip",
+        "archive_sha256": "34122970d79d307f70a74d6a3de11c38297bc93429f7bb276156c6a6cdc6fabf",
+        "member": "candidate679/source-scope-preflight/unit-composition-source-scope.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-baselines-adr0363-0364/candidate679/source-scope-preflight/unit-composition-source-scope.log",
+      "sha256": "c3852f406f20671d4a93f2f25f385116b630446a6a7eaaf462dfc88265b6206e",
+      "bytes": 220,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0363-0364 — Candidate gate baselines.zip",
+        "archive_sha256": "34122970d79d307f70a74d6a3de11c38297bc93429f7bb276156c6a6cdc6fabf",
+        "member": "candidate679/source-scope-preflight/unit-composition-source-scope.log"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-baselines-adr0363-0364/candidate679/source-scope-preflight/did-proof-gate-unit.log",
+      "sha256": "d27b96e6474e8d70bdce970ba816666988018bc48078b76b56114447280da338",
+      "bytes": 120,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0363-0364 — Candidate gate baselines.zip",
+        "archive_sha256": "34122970d79d307f70a74d6a3de11c38297bc93429f7bb276156c6a6cdc6fabf",
+        "member": "candidate679/source-scope-preflight/did-proof-gate-unit.log"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-baselines-adr0363-0364/review-note.md",
+      "sha256": "2a0901894a77c478d3d788de67feddced0ac55188e064ae23efe9dbb579e3199",
+      "bytes": 2514,
+      "original": {
+        "path": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Reviews/ADR0363-0364 — Candidate gate baseline receipt.md"
+      },
+      "qualification": "Byte-identical dated review note; historical links/paths are preserved as provenance, not current navigation."
+    },
+    {
+      "destination": "candidate-ci-57fab775/remote-receipts/rust-bounded-msrv-57fab7755097380b90619672be5150746f9d4a49/workflow.yml",
+      "sha256": "3c4a7980c014d44c38fa52c36720ad6bb90bd36d9f0022b56b00baec3bb87e8d",
+      "bytes": 9807,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Bounded candidate CI — 57fab775.zip",
+        "archive_sha256": "2c581d5411db0bc762e9e66025d97809f3cafa542b748011d79359f8694c61aa",
+        "member": "remote-receipts/rust-bounded-msrv-57fab7755097380b90619672be5150746f9d4a49/workflow.yml"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-ci-57fab775/remote-receipts/rust-bounded-msrv-57fab7755097380b90619672be5150746f9d4a49/result.json",
+      "sha256": "332885ed5687bf574c01b3503b0a8e127e11253df281db495dcbfe7cdaf03f22",
+      "bytes": 1517,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Bounded candidate CI — 57fab775.zip",
+        "archive_sha256": "2c581d5411db0bc762e9e66025d97809f3cafa542b748011d79359f8694c61aa",
+        "member": "remote-receipts/rust-bounded-msrv-57fab7755097380b90619672be5150746f9d4a49/result.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-ci-57fab775/remote-receipts/rust-bounded-msrv-57fab7755097380b90619672be5150746f9d4a49/msrv-standalone.log",
+      "sha256": "41418bf218a4ed6e41db8701ae9acd8b2b9a32dcced952574fa87283bcf3253e",
+      "bytes": 159,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Bounded candidate CI — 57fab775.zip",
+        "archive_sha256": "2c581d5411db0bc762e9e66025d97809f3cafa542b748011d79359f8694c61aa",
+        "member": "remote-receipts/rust-bounded-msrv-57fab7755097380b90619672be5150746f9d4a49/msrv-standalone.log"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-ci-57fab775/remote-receipts/rust-bounded-msrv-57fab7755097380b90619672be5150746f9d4a49/source.json",
+      "sha256": "a6bf2c416df96418bbebb5392ec1e7b9be5ad3eb6a464967e818906bcad4e21e",
+      "bytes": 951,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Bounded candidate CI — 57fab775.zip",
+        "archive_sha256": "2c581d5411db0bc762e9e66025d97809f3cafa542b748011d79359f8694c61aa",
+        "member": "remote-receipts/rust-bounded-msrv-57fab7755097380b90619672be5150746f9d4a49/source.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-ci-57fab775/remote-receipts/rust-bounded-msrv-57fab7755097380b90619672be5150746f9d4a49/msrv-workspace.log",
+      "sha256": "72b2fdaac836d1ff8ba1d6fac0e96f81da6f1415dbcba4e919f8832c45e9050a",
+      "bytes": 496,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Bounded candidate CI — 57fab775.zip",
+        "archive_sha256": "2c581d5411db0bc762e9e66025d97809f3cafa542b748011d79359f8694c61aa",
+        "member": "remote-receipts/rust-bounded-msrv-57fab7755097380b90619672be5150746f9d4a49/msrv-workspace.log"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-ci-57fab775/remote-receipts/rust-bounded-core-57fab7755097380b90619672be5150746f9d4a49/workflow.yml",
+      "sha256": "3c4a7980c014d44c38fa52c36720ad6bb90bd36d9f0022b56b00baec3bb87e8d",
+      "bytes": 9807,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Bounded candidate CI — 57fab775.zip",
+        "archive_sha256": "2c581d5411db0bc762e9e66025d97809f3cafa542b748011d79359f8694c61aa",
+        "member": "remote-receipts/rust-bounded-core-57fab7755097380b90619672be5150746f9d4a49/workflow.yml"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-ci-57fab775/remote-receipts/rust-bounded-core-57fab7755097380b90619672be5150746f9d4a49/result.json",
+      "sha256": "abd08ba1b75da228cedf904ae31c7a04db7492fb669dfb6c47ee63f3fc969663",
+      "bytes": 1484,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Bounded candidate CI — 57fab775.zip",
+        "archive_sha256": "2c581d5411db0bc762e9e66025d97809f3cafa542b748011d79359f8694c61aa",
+        "member": "remote-receipts/rust-bounded-core-57fab7755097380b90619672be5150746f9d4a49/result.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-ci-57fab775/remote-receipts/rust-bounded-core-57fab7755097380b90619672be5150746f9d4a49/format.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Bounded candidate CI — 57fab775.zip",
+        "archive_sha256": "2c581d5411db0bc762e9e66025d97809f3cafa542b748011d79359f8694c61aa",
+        "member": "remote-receipts/rust-bounded-core-57fab7755097380b90619672be5150746f9d4a49/format.log"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-ci-57fab775/remote-receipts/rust-bounded-core-57fab7755097380b90619672be5150746f9d4a49/source.json",
+      "sha256": "a98e9215279ca2c3d94fccc122d0dd954c3a5292b370868eb9c9ac5211373937",
+      "bytes": 951,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Bounded candidate CI — 57fab775.zip",
+        "archive_sha256": "2c581d5411db0bc762e9e66025d97809f3cafa542b748011d79359f8694c61aa",
+        "member": "remote-receipts/rust-bounded-core-57fab7755097380b90619672be5150746f9d4a49/source.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-ci-57fab775/remote-receipts/rust-bounded-core-57fab7755097380b90619672be5150746f9d4a49/clippy.log",
+      "sha256": "330032f8478a3046cef093e0f5cc6362f206adfc0e0a9e428de1092d318559a3",
+      "bytes": 1114,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Bounded candidate CI — 57fab775.zip",
+        "archive_sha256": "2c581d5411db0bc762e9e66025d97809f3cafa542b748011d79359f8694c61aa",
+        "member": "remote-receipts/rust-bounded-core-57fab7755097380b90619672be5150746f9d4a49/clippy.log"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-ci-57fab775/remote-receipts/rust-bounded-core-57fab7755097380b90619672be5150746f9d4a49/tests.log",
+      "sha256": "68f328b7551530952bfbb72eb3446e6c995bb1b2a19e243b920d923254c993d0",
+      "bytes": 78004,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Bounded candidate CI — 57fab775.zip",
+        "archive_sha256": "2c581d5411db0bc762e9e66025d97809f3cafa542b748011d79359f8694c61aa",
+        "member": "remote-receipts/rust-bounded-core-57fab7755097380b90619672be5150746f9d4a49/tests.log"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-ci-57fab775/remote-verification.json",
+      "sha256": "3be8f2b76296f5345a39a51b085ccce8e9864efda04fce64a1764a561e6d2889",
+      "bytes": 1244,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Bounded candidate CI — 57fab775.zip",
+        "archive_sha256": "2c581d5411db0bc762e9e66025d97809f3cafa542b748011d79359f8694c61aa",
+        "member": "remote-verification.json"
+      },
+      "qualification": "Exact historical candidate receipt subset. Source/run scopes retained; not full-gate or milestone acceptance."
+    },
+    {
+      "destination": "candidate-ci-57fab775/review-note.md",
+      "sha256": "a201f686b15d6ee3e027c11949de5ace7e7cfe6decd366c8a0f6a5cdfaa70bcf",
+      "bytes": 741,
+      "original": {
+        "path": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Reviews/Bounded candidate CI — 57fab775.md"
+      },
+      "qualification": "Byte-identical dated review note; historical links/paths are preserved as provenance, not current navigation."
+    },
+    {
+      "destination": "candidate-ci-551f065c/remote-receipts/rust-bounded-core-551f065cd6267e07020a755db5469df03e41b775/clippy.log",
+      "sha256": "ed635d3994424ee37f64a637bdf03f664400d7ceefc7429c4ef5af9069033111",
+      "bytes": 1114,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Bounded candidate CI — 551f065c.zip",
+        "archive_sha256": "5d969988dff0ca837faa8f181a96a33e7eb360ff26114c7422ebf6b7cc1f6056",
+        "member": "remote-receipts/rust-bounded-core-551f065cd6267e07020a755db5469df03e41b775/clippy.log"
+      },
+      "qualification": "Exact551 bounded Linux core/MSRV receipt only; no full-gate/proof/network qualification."
+    },
+    {
+      "destination": "candidate-ci-551f065c/remote-receipts/rust-bounded-core-551f065cd6267e07020a755db5469df03e41b775/fetch.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Bounded candidate CI — 551f065c.zip",
+        "archive_sha256": "5d969988dff0ca837faa8f181a96a33e7eb360ff26114c7422ebf6b7cc1f6056",
+        "member": "remote-receipts/rust-bounded-core-551f065cd6267e07020a755db5469df03e41b775/fetch.log"
+      },
+      "qualification": "Exact551 bounded Linux core/MSRV receipt only; no full-gate/proof/network qualification."
+    },
+    {
+      "destination": "candidate-ci-551f065c/remote-receipts/rust-bounded-core-551f065cd6267e07020a755db5469df03e41b775/format.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Bounded candidate CI — 551f065c.zip",
+        "archive_sha256": "5d969988dff0ca837faa8f181a96a33e7eb360ff26114c7422ebf6b7cc1f6056",
+        "member": "remote-receipts/rust-bounded-core-551f065cd6267e07020a755db5469df03e41b775/format.log"
+      },
+      "qualification": "Exact551 bounded Linux core/MSRV receipt only; no full-gate/proof/network qualification."
+    },
+    {
+      "destination": "candidate-ci-551f065c/remote-receipts/rust-bounded-core-551f065cd6267e07020a755db5469df03e41b775/result.json",
+      "sha256": "2cfefae65b06fcdd955524109045345e0996c4a284624c34d59ffe82c5dc761c",
+      "bytes": 1484,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Bounded candidate CI — 551f065c.zip",
+        "archive_sha256": "5d969988dff0ca837faa8f181a96a33e7eb360ff26114c7422ebf6b7cc1f6056",
+        "member": "remote-receipts/rust-bounded-core-551f065cd6267e07020a755db5469df03e41b775/result.json"
+      },
+      "qualification": "Exact551 bounded Linux core/MSRV receipt only; no full-gate/proof/network qualification."
+    },
+    {
+      "destination": "candidate-ci-551f065c/remote-receipts/rust-bounded-core-551f065cd6267e07020a755db5469df03e41b775/source.json",
+      "sha256": "9ab48348a9359fdfe4177bd6c0300e7353920e2d0c48f0d0c8e4be6f03629b6b",
+      "bytes": 951,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Bounded candidate CI — 551f065c.zip",
+        "archive_sha256": "5d969988dff0ca837faa8f181a96a33e7eb360ff26114c7422ebf6b7cc1f6056",
+        "member": "remote-receipts/rust-bounded-core-551f065cd6267e07020a755db5469df03e41b775/source.json"
+      },
+      "qualification": "Exact551 bounded Linux core/MSRV receipt only; no full-gate/proof/network qualification."
+    },
+    {
+      "destination": "candidate-ci-551f065c/remote-receipts/rust-bounded-core-551f065cd6267e07020a755db5469df03e41b775/tests.log",
+      "sha256": "39dc115dca78009e4beebb8bd62a9254705dc81b49926ce56519827a42dd1d93",
+      "bytes": 78004,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Bounded candidate CI — 551f065c.zip",
+        "archive_sha256": "5d969988dff0ca837faa8f181a96a33e7eb360ff26114c7422ebf6b7cc1f6056",
+        "member": "remote-receipts/rust-bounded-core-551f065cd6267e07020a755db5469df03e41b775/tests.log"
+      },
+      "qualification": "Exact551 bounded Linux core/MSRV receipt only; no full-gate/proof/network qualification."
+    },
+    {
+      "destination": "candidate-ci-551f065c/remote-receipts/rust-bounded-core-551f065cd6267e07020a755db5469df03e41b775/workflow.yml",
+      "sha256": "3c4a7980c014d44c38fa52c36720ad6bb90bd36d9f0022b56b00baec3bb87e8d",
+      "bytes": 9807,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Bounded candidate CI — 551f065c.zip",
+        "archive_sha256": "5d969988dff0ca837faa8f181a96a33e7eb360ff26114c7422ebf6b7cc1f6056",
+        "member": "remote-receipts/rust-bounded-core-551f065cd6267e07020a755db5469df03e41b775/workflow.yml"
+      },
+      "qualification": "Exact551 bounded Linux core/MSRV receipt only; no full-gate/proof/network qualification."
+    },
+    {
+      "destination": "candidate-ci-551f065c/remote-receipts/rust-bounded-msrv-551f065cd6267e07020a755db5469df03e41b775/fetch.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Bounded candidate CI — 551f065c.zip",
+        "archive_sha256": "5d969988dff0ca837faa8f181a96a33e7eb360ff26114c7422ebf6b7cc1f6056",
+        "member": "remote-receipts/rust-bounded-msrv-551f065cd6267e07020a755db5469df03e41b775/fetch.log"
+      },
+      "qualification": "Exact551 bounded Linux core/MSRV receipt only; no full-gate/proof/network qualification."
+    },
+    {
+      "destination": "candidate-ci-551f065c/remote-receipts/rust-bounded-msrv-551f065cd6267e07020a755db5469df03e41b775/msrv-standalone-fetch.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Bounded candidate CI — 551f065c.zip",
+        "archive_sha256": "5d969988dff0ca837faa8f181a96a33e7eb360ff26114c7422ebf6b7cc1f6056",
+        "member": "remote-receipts/rust-bounded-msrv-551f065cd6267e07020a755db5469df03e41b775/msrv-standalone-fetch.log"
+      },
+      "qualification": "Exact551 bounded Linux core/MSRV receipt only; no full-gate/proof/network qualification."
+    },
+    {
+      "destination": "candidate-ci-551f065c/remote-receipts/rust-bounded-msrv-551f065cd6267e07020a755db5469df03e41b775/msrv-standalone.log",
+      "sha256": "86e77d45a8e5ce5d1202cc1469a34be6df15bb6710ec9adc89057657f3857185",
+      "bytes": 159,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Bounded candidate CI — 551f065c.zip",
+        "archive_sha256": "5d969988dff0ca837faa8f181a96a33e7eb360ff26114c7422ebf6b7cc1f6056",
+        "member": "remote-receipts/rust-bounded-msrv-551f065cd6267e07020a755db5469df03e41b775/msrv-standalone.log"
+      },
+      "qualification": "Exact551 bounded Linux core/MSRV receipt only; no full-gate/proof/network qualification."
+    },
+    {
+      "destination": "candidate-ci-551f065c/remote-receipts/rust-bounded-msrv-551f065cd6267e07020a755db5469df03e41b775/msrv-workspace.log",
+      "sha256": "94d03ecb3fcdc451b4ea8025a5caefb136cc6b2ce580ff4d687430f6291386fd",
+      "bytes": 496,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Bounded candidate CI — 551f065c.zip",
+        "archive_sha256": "5d969988dff0ca837faa8f181a96a33e7eb360ff26114c7422ebf6b7cc1f6056",
+        "member": "remote-receipts/rust-bounded-msrv-551f065cd6267e07020a755db5469df03e41b775/msrv-workspace.log"
+      },
+      "qualification": "Exact551 bounded Linux core/MSRV receipt only; no full-gate/proof/network qualification."
+    },
+    {
+      "destination": "candidate-ci-551f065c/remote-receipts/rust-bounded-msrv-551f065cd6267e07020a755db5469df03e41b775/result.json",
+      "sha256": "fc422c410ea8869cced3873c2e4f66e80b03fca173afd86b082c35ee3c74c3da",
+      "bytes": 1517,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Bounded candidate CI — 551f065c.zip",
+        "archive_sha256": "5d969988dff0ca837faa8f181a96a33e7eb360ff26114c7422ebf6b7cc1f6056",
+        "member": "remote-receipts/rust-bounded-msrv-551f065cd6267e07020a755db5469df03e41b775/result.json"
+      },
+      "qualification": "Exact551 bounded Linux core/MSRV receipt only; no full-gate/proof/network qualification."
+    },
+    {
+      "destination": "candidate-ci-551f065c/remote-receipts/rust-bounded-msrv-551f065cd6267e07020a755db5469df03e41b775/source.json",
+      "sha256": "3b505a41101c1dfbc7caffe6e421e96d3ca7f14b6a18faea0853fd2857178bad",
+      "bytes": 951,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Bounded candidate CI — 551f065c.zip",
+        "archive_sha256": "5d969988dff0ca837faa8f181a96a33e7eb360ff26114c7422ebf6b7cc1f6056",
+        "member": "remote-receipts/rust-bounded-msrv-551f065cd6267e07020a755db5469df03e41b775/source.json"
+      },
+      "qualification": "Exact551 bounded Linux core/MSRV receipt only; no full-gate/proof/network qualification."
+    },
+    {
+      "destination": "candidate-ci-551f065c/remote-receipts/rust-bounded-msrv-551f065cd6267e07020a755db5469df03e41b775/workflow.yml",
+      "sha256": "3c4a7980c014d44c38fa52c36720ad6bb90bd36d9f0022b56b00baec3bb87e8d",
+      "bytes": 9807,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Bounded candidate CI — 551f065c.zip",
+        "archive_sha256": "5d969988dff0ca837faa8f181a96a33e7eb360ff26114c7422ebf6b7cc1f6056",
+        "member": "remote-receipts/rust-bounded-msrv-551f065cd6267e07020a755db5469df03e41b775/workflow.yml"
+      },
+      "qualification": "Exact551 bounded Linux core/MSRV receipt only; no full-gate/proof/network qualification."
+    },
+    {
+      "destination": "candidate-ci-551f065c/remote-verification.json",
+      "sha256": "5d7bc2ebccfeedbb732c8db886af2673b4dadfc653158146e2136662daa5e2b0",
+      "bytes": 748,
+      "original": {
+        "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Bounded candidate CI — 551f065c.zip",
+        "archive_sha256": "5d969988dff0ca837faa8f181a96a33e7eb360ff26114c7422ebf6b7cc1f6056",
+        "member": "remote-verification.json"
+      },
+      "qualification": "Exact551 bounded Linux core/MSRV receipt only; no full-gate/proof/network qualification."
+    },
+    {
+      "destination": "candidate-ci-551f065c/review-note.md",
+      "sha256": "ce004622299aac4dfd75e507ed7700000f4c1c197f831b750b087ca1bd5b04bd",
+      "bytes": 1040,
+      "original": {
+        "path": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Reviews/Bounded candidate CI — 551f065c.md"
+      },
+      "qualification": "Original source-scoped review/continuity record; no fresh repetition of historical measured consumers."
+    },
+    {
+      "destination": "candidate-ci-551f065c/candidate-continuity.json",
+      "sha256": "dc2cfe7ab8d3225ec68ca17cc0d24f7c8dd3f6510aa06d621b411225722f8a49",
+      "bytes": 1034,
+      "original": {
+        "path": "/tmp/rust030-candidate-551f065c/candidate-continuity.json"
+      },
+      "qualification": "Original source-scoped review/continuity record; no fresh repetition of historical measured consumers."
+    },
+    {
+      "destination": "final-candidate-f9a49666/qualification-evidence.zip",
+      "sha256": "15c8b8500a69336e1e0255b714bc2aa4dcb6fc0c3db1e2bb57b40a393143fdc4",
+      "bytes": 1019529,
+      "original": {
+        "path": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Final technical qualification — f9a49666.zip"
+      },
+      "qualification": "Original final technical acceptance evidence; failed full prefix and successful recovery remain separately labeled."
+    },
+    {
+      "destination": "final-candidate-f9a49666/technical-qualification.json",
+      "sha256": "69076791c0671f6e258c9a0171ba1117ba2f17e362ffdc56df9c337b8088b424",
+      "bytes": 2770,
+      "original": {
+        "path": "/tmp/rust030-candidate-f9a49666/technical-qualification.json"
+      },
+      "qualification": "Original final technical acceptance evidence; failed full prefix and successful recovery remain separately labeled."
+    },
+    {
+      "destination": "final-candidate-f9a49666/remaining-receipt.json",
+      "sha256": "431f911d587f4c2c167266917a9e759be2bd8f0c36665567b0f4c32fff6d602b",
+      "bytes": 385047,
+      "original": {
+        "path": "/tmp/rust030-candidate-f9a49666/remaining-receipt.json"
+      },
+      "qualification": "Original final technical acceptance evidence; failed full prefix and successful recovery remain separately labeled."
+    },
+    {
+      "destination": "final-candidate-f9a49666/remote-verification.json",
+      "sha256": "40663640c12ba745612d78ee9f1703871e370b7d8d2d043b27e805e9eb4e4b1e",
+      "bytes": 1047,
+      "original": {
+        "path": "/tmp/rust030-candidate-f9a49666/remote-verification.json"
+      },
+      "qualification": "Original final technical acceptance evidence; failed full prefix and successful recovery remain separately labeled."
+    },
+    {
+      "destination": "final-candidate-f9a49666/review-note.md",
+      "sha256": "cf820ae8d3247f522db581a1753a5ade9f353418f895e3d67ec39b963615dedb",
+      "bytes": 3232,
+      "original": {
+        "path": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Reviews/Final technical qualification — f9a49666.md"
+      },
+      "qualification": "Original final technical acceptance evidence; failed full prefix and successful recovery remain separately labeled."
+    }
+  ],
+  "missing_referenced_artifacts": [],
+  "deliberate_exclusions": [
+    {
+      "group": "tutorials-adr0324",
+      "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0324 — Validated external developer tutorials.zip",
+      "unselected_members": 542,
+      "reason": "Bounded receipt selection; full SDK, generated code, lock snapshots, proof material, and verbose Cargo metadata are not republished here. Historical receipts may name these original archive members."
+    },
+    {
+      "group": "rustdoc-adr0326",
+      "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0326 — Input failure and witness rustdoc checks.zip",
+      "unselected_members": 4,
+      "reason": "Bounded receipt selection; full SDK, generated code, lock snapshots, proof material, and verbose Cargo metadata are not republished here. Historical receipts may name these original archive members."
+    },
+    {
+      "group": "passport-p1",
+      "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip",
+      "unselected_members": 119,
+      "reason": "Bounded receipt selection; full SDK, generated code, lock snapshots, proof material, and verbose Cargo metadata are not republished here. Historical receipts may name these original archive members."
+    },
+    {
+      "group": "named-record",
+      "archive": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/R03002 — External named-input recipe.zip",
+      "unselected_members": 468,
+      "reason": "Bounded receipt selection; full SDK, generated code, lock snapshots, proof material, and verbose Cargo metadata are not republished here. Historical receipts may name these original archive members."
+    }
+  ],
+  "current_edition_comparisons": [
+    {
+      "path": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Developer guides/Current edition/validation-receipt.json",
+      "sha256": "e0f960c5d9fdc7ba74f0195a482ad294632214a0cec4e5c5cb1a62e007a5ff7e",
+      "same_bytes_as_staged": true
+    },
+    {
+      "path": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Developer guides/Current edition/reference-manifest.json",
+      "sha256": "6ff4e7f076fca7166be2548e1a2fb6cd4fe5cc370e828b4f5290c015995b05e2",
+      "same_bytes_as_staged": true
+    }
+  ],
+  "limits": [
+    "No tests, builds, proof generation, or semantic revalidation performed.",
+    "Original paths in immutable receipts are provenance strings, not portable navigation. Resolve selected artifacts with this index.",
+    "Unselected full archives remain vault history; this package is not a complete reproducibility capsule.",
+    "Dedicated wrong FixedBytes length and wrong witness signature external negative receipts were not established by the companion guide evidence map.",
+    "ADR0285/#409 scoped external-consumer controls later passed at4c8aebc3. Original STOP text inside historical receipts/policies remains unchanged and is not current status.",
+    "Owner approved encoded admission for0.3.0 with configurable opt-in64MiB policy; aggregate heap/object/CPU containment deferred. Final candidate and publication remain separate."
+  ],
+  "historical_assembly_source_head": "74d04c1a8ed761263baac1679b05010f64b2fc73",
+  "refresh_source_head": "551f065cd6267e07020a755db5469df03e41b775",
+  "refresh_provenance": "Original80 selected evidence files unchanged, including exactly8 ADR0360 members. Added reviewed public candidate subsets for ADR0361–0364 and57fab bounded CI. No private product research; no execution during staging. Separate551 stage appends17 current remote/source-continuity records; all153 prior evidence members preserved."
+}

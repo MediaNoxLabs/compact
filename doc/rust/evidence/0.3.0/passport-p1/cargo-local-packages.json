@@ -1,0 +1,18 @@
+[
+  {
+    "name": "compact-contract-digital-passport-credential",
+    "manifest": "/tmp/rust030-passport-guide/generated/contract/Cargo.toml"
+  },
+  {
+    "name": "midnight-compact-runtime",
+    "manifest": "/tmp/rust030-passport-guide/generated/contract/runtime-rs/Cargo.toml"
+  },
+  {
+    "name": "midnight-compact-runtime-macros",
+    "manifest": "/tmp/rust030-passport-guide/generated/contract/runtime-rs-macros/Cargo.toml"
+  },
+  {
+    "name": "passport-guide-consumer",
+    "manifest": "/tmp/rust030-passport-guide/consumer/Cargo.toml"
+  }
+]

@@ -1,0 +1,149 @@
+{
+  "schema_version": 3,
+  "circuits": [
+    {
+      "name": "rotateControllerKey",
+      "source": {
+        "file": "did.compact",
+        "line": 577,
+        "column": 1
+      },
+      "recorded": true,
+      "observed_call": true,
+      "proof_required": true,
+      "recording_status": "available"
+    },
+    {
+      "name": "recoverControllerKey",
+      "source": {
+        "file": "did.compact",
+        "line": 595,
+        "column": 1
+      },
+      "recorded": true,
+      "observed_call": true,
+      "proof_required": true,
+      "recording_status": "available"
+    },
+    {
+      "name": "setAlsoKnownAs",
+      "source": {
+        "file": "did.compact",
+        "line": 613,
+        "column": 1
+      },
+      "recorded": true,
+      "observed_call": true,
+      "proof_required": true,
+      "recording_status": "available"
+    },
+    {
+      "name": "setVerificationMethod",
+      "source": {
+        "file": "did.compact",
+        "line": 638,
+        "column": 1
+      },
+      "recorded": true,
+      "observed_call": true,
+      "proof_required": true,
+      "recording_status": "available"
+    },
+    {
+      "name": "removeVerificationMethod",
+      "source": {
+        "file": "did.compact",
+        "line": 670,
+        "column": 1
+      },
+      "recorded": true,
+      "observed_call": true,
+      "proof_required": true,
+      "recording_status": "available"
+    },
+    {
+      "name": "setSchnorrJubjubVerificationMethod",
+      "source": {
+        "file": "did.compact",
+        "line": 688,
+        "column": 1
+      },
+      "recorded": true,
+      "observed_call": true,
+      "proof_required": true,
+      "recording_status": "available"
+    },
+    {
+      "name": "removeSchnorrJubjubVerificationMethod",
+      "source": {
+        "file": "did.compact",
+        "line": 718,
+        "column": 1
+      },
+      "recorded": true,
+      "observed_call": true,
+      "proof_required": true,
+      "recording_status": "available"
+    },
+    {
+      "name": "verifySchnorrJubjubDigestSignature",
+      "source": {
+        "file": "did.compact",
+        "line": 742,
+        "column": 1
+      },
+      "recorded": true,
+      "observed_call": true,
+      "proof_required": true,
+      "recording_status": "available"
+    },
+    {
+      "name": "setVerificationMethodRelation",
+      "source": {
+        "file": "did.compact",
+        "line": 754,
+        "column": 1
+      },
+      "recorded": true,
+      "observed_call": true,
+      "proof_required": true,
+      "recording_status": "available"
+    },
+    {
+      "name": "setService",
+      "source": {
+        "file": "did.compact",
+        "line": 791,
+        "column": 1
+      },
+      "recorded": true,
+      "observed_call": true,
+      "proof_required": true,
+      "recording_status": "available"
+    },
+    {
+      "name": "removeService",
+      "source": {
+        "file": "did.compact",
+        "line": 816,
+        "column": 1
+      },
+      "recorded": true,
+      "observed_call": true,
+      "proof_required": true,
+      "recording_status": "available"
+    },
+    {
+      "name": "deactivate",
+      "source": {
+        "file": "did.compact",
+        "line": 833,
+        "column": 1
+      },
+      "recorded": true,
+      "observed_call": true,
+      "proof_required": true,
+      "recording_status": "available"
+    }
+  ]
+}

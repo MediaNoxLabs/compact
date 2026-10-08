@@ -1,0 +1,10 @@
+   Compiling midnight-compact-runtime-macros v0.2.0 (/home/runner/work/compact/compact/runtime-rs-macros)
+    Checking compact-rust-backend v0.2.0 (/home/runner/work/compact/compact/tools/compact-rust-backend)
+    Checking midnight-compact-runtime v0.2.0 (/home/runner/work/compact/compact/runtime-rs)
+    Checking compact-rust-counter-parameter-fixture v0.1.0 (/home/runner/work/compact/compact/tests-rust-backend/counter-parameter)
+    Checking compact-rust-merkle-tree-oracle-fixture v0.1.0 (/home/runner/work/compact/compact/tests-rust-backend/merkle-tree-oracle)
+    Checking compact-rust-set-size-oracle-fixture v0.1.0 (/home/runner/work/compact/compact/tests-rust-backend/set-size-oracle)
+    Checking compact-rust-witness-conditional-fixture v0.1.0 (/home/runner/work/compact/compact/tests-rust-backend/witness-conditional)
+    Checking compact-rust-witnesses-oracle-fixture v0.1.0 (/home/runner/work/compact/compact/tests-rust-backend/witnesses-oracle)
+    Checking midnight-compact-testkit v0.1.0 (/home/runner/work/compact/compact/testkit-rs)
+    Finished `dev` profile [unoptimized] target(s) in 8.57s

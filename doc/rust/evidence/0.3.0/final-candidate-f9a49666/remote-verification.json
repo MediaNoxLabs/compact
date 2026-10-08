@@ -1,0 +1,27 @@
+{
+  "candidate": "f9a496660a4a69f4dd7c7927111767ad5c0c12b2",
+  "run": 37775401108,
+  "lanes": [
+    {
+      "lane": "core",
+      "status": "passed",
+      "source_sha256": "f68a638c828407262527721813820852fb5f63d79f7a20c6025c818182c6f8e2",
+      "result_sha256": "22f5722f1f1a6499012ee4910e23178d7fe64ecaf516dcf51af59213396d0334",
+      "passing_test_cases": 742,
+      "test_result_blocks": 63,
+      "advertised_artifacts_verified": 6
+    },
+    {
+      "lane": "msrv",
+      "status": "passed",
+      "source_sha256": "351d7fd2a6c3e4de14090ec49e8a0b94b3d7997b17287be7c3e1775621a7ab8b",
+      "result_sha256": "50a482535aa80e8df17e1fad16b2543d5007075cb49f1dc9906127e48b872915",
+      "passing_test_cases": 0,
+      "test_result_blocks": 0,
+      "advertised_artifacts_verified": 6
+    }
+  ],
+  "artifact_hashes_verified": true,
+  "scope": "Bounded Linux core and selected Rust1.88 backend/Jubjub/standalone compilation; not whole-workspace MSRV, external Linux ContractLab or proof execution.",
+  "source_tree_and_local_locks_verified": true
+}

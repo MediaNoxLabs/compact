@@ -1,0 +1,874 @@
+{
+  "format": "compact-adr293-304-candidate/v1",
+  "status": "focused gates passed; final ADR295 join required; no live changes or publication",
+  "base_revision": "e79c639f6f6ebad47c818900a225d87f76947ebf",
+  "accepted_resource_overlay": {
+    "path": "/tmp/compact-adr291/integration/receipt.json",
+    "bytes": 15520,
+    "sha256": "8e4198cbb3f855668455bef7d28397e9535acab1a842ad1e071c8124ec158e1d"
+  },
+  "resource_overlay_signed_as": "03445d6bdb680c78ee617da4939fbde02b7546bf",
+  "mapping": {
+    "artifact_label": "rust-backend-v0.3.0",
+    "backend": "0.2.0",
+    "runtime": "0.2.0",
+    "macros": "0.2.0",
+    "testkit": "0.1.0 unpublished",
+    "generated_application": "0.1.0 unpublished",
+    "runtime_abi": 50,
+    "ir_schema": 20,
+    "capability_schema": 3,
+    "compatibility_schema": 1,
+    "compiler": "0.31.133",
+    "language": "0.23.105",
+    "typescript_runtime": "0.16.101"
+  },
+  "adr293": {
+    "focused_cli_tests": 16,
+    "compatibility_tests": 21,
+    "strict_all_target_all_feature_backend_clippy": "passed",
+    "release_inspection_python_tests": 5,
+    "migration_controls": {
+      "old_exhaustive_old_backend": "runs",
+      "old_exhaustive_new_backend": "E0004 refusal",
+      "all_new_variants_without_wildcard": "E0004 explicitly non_exhaustive",
+      "migrated_wildcard": "runs on Rust1.99 and1.88, finite declarations limit256 observed257"
+    },
+    "generated_controls": {
+      "old_abi50": "recorded/replay + ContractLab executes Rust1.99",
+      "new_bundled_abi50": "recorded/replay executes Rust1.99",
+      "new_shared_abi50": "recorded/replay + ContractLab executes Rust1.88",
+      "unedited_historical_abi49": "E0080 unchanged ABI49 assertions with newpair",
+      "three_distribution_modes": "bundled/shared/registry generation; all libs equal; registry availability unverified",
+      "before_after": "Exact source/schema3 proof capability bytes match old e79 backend and version candidate on Counter IR"
+    },
+    "msrv": "Rust1.88 locked approved-workspace graph all-feature check backend/runtime/testkit/Counter passed; migrated+shared consumers execute",
+    "packages": "Both runtime/macros0.2 archives pass Cargo package verification with explicit local macro patch; no registry/tag/upload"
+  },
+  "adr304": {
+    "attribution": "Tracked standalone-lock drift predates ADR293; initial candidate changed only backend version before reproducing failure",
+    "before": "actual standalone1.88 --offline --locked refuses konst0.4.3/konst_proc_macros0.4.1 MSRV1.89",
+    "after": "approved-workspace seeded offline resolution, no unconstrained update",
+    "audit": {
+      "standalone_packages": 303,
+      "registry_packages": 302,
+      "git_packages": 0,
+      "local_packages": 1,
+      "retained_edges": 785,
+      "removed_feature_edges": [
+        {
+          "package": [
+            "hyper",
+            "1.8.1",
+            "registry+https://github.com/rust-lang/crates.io-index"
+          ],
+          "removed_edges": [
+            [
+              "h2",
+              "0.4.16",
+              "registry+https://github.com/rust-lang/crates.io-index"
+            ],
+            [
+              "httpdate",
+              "1.0.3",
+              "registry+https://github.com/rust-lang/crates.io-index"
+            ]
+          ]
+        },
+        {
+          "package": [
+            "hyper-rustls",
+            "0.27.7",
+            "registry+https://github.com/rust-lang/crates.io-index"
+          ],
+          "removed_edges": [
+            [
+              "log",
+              "0.4.29",
+              "registry+https://github.com/rust-lang/crates.io-index"
+            ],
+            [
+              "webpki-roots",
+              "1.0.6",
+              "registry+https://github.com/rust-lang/crates.io-index"
+            ]
+          ]
+        },
+        {
+          "package": [
+            "midnight-base-crypto",
+            "1.0.0",
+            "registry+https://github.com/rust-lang/crates.io-index"
+          ],
+          "removed_edges": [
+            [
+              "indicatif",
+              "0.17.11",
+              "registry+https://github.com/rust-lang/crates.io-index"
+            ]
+          ]
+        },
+        {
+          "package": [
+            "reqwest",
+            "0.12.28",
+            "registry+https://github.com/rust-lang/crates.io-index"
+          ],
+          "removed_edges": [
+            [
+              "webpki-roots",
+              "1.0.6",
+              "registry+https://github.com/rust-lang/crates.io-index"
+            ]
+          ]
+        },
+        {
+          "package": [
+            "rustls",
+            "0.23.45",
+            "registry+https://github.com/rust-lang/crates.io-index"
+          ],
+          "removed_edges": [
+            [
+              "log",
+              "0.4.29",
+              "registry+https://github.com/rust-lang/crates.io-index"
+            ]
+          ]
+        },
+        {
+          "package": [
+            "semver",
+            "1.0.27",
+            "registry+https://github.com/rust-lang/crates.io-index"
+          ],
+          "removed_edges": [
+            [
+              "serde",
+              "1.0.228",
+              "registry+https://github.com/rust-lang/crates.io-index"
+            ],
+            [
+              "serde_core",
+              "1.0.228",
+              "registry+https://github.com/rust-lang/crates.io-index"
+            ]
+          ]
+        },
+        {
+          "package": [
+            "tokio",
+            "1.50.0",
+            "registry+https://github.com/rust-lang/crates.io-index"
+          ],
+          "removed_edges": [
+            [
+              "parking_lot",
+              "0.12.5",
+              "registry+https://github.com/rust-lang/crates.io-index"
+            ],
+            [
+              "signal-hook-registry",
+              "1.4.8",
+              "registry+https://github.com/rust-lang/crates.io-index"
+            ],
+            [
+              "tokio-macros",
+              "2.6.1",
+              "registry+https://github.com/rust-lang/crates.io-index"
+            ]
+          ]
+        },
+        {
+          "package": [
+            "tower",
+            "0.5.3",
+            "registry+https://github.com/rust-lang/crates.io-index"
+          ],
+          "removed_edges": [
+            [
+              "tokio-util",
+              "0.7.18",
+              "registry+https://github.com/rust-lang/crates.io-index"
+            ],
+            [
+              "tracing",
+              "0.1.44",
+              "registry+https://github.com/rust-lang/crates.io-index"
+            ]
+          ]
+        },
+        {
+          "package": [
+            "tower-http",
+            "0.6.8",
+            "registry+https://github.com/rust-lang/crates.io-index"
+          ],
+          "removed_edges": [
+            [
+              "async-compression",
+              "0.4.41",
+              "registry+https://github.com/rust-lang/crates.io-index"
+            ],
+            [
+              "futures-core",
+              "0.3.32",
+              "registry+https://github.com/rust-lang/crates.io-index"
+            ],
+            [
+              "http-body-util",
+              "0.1.3",
+              "registry+https://github.com/rust-lang/crates.io-index"
+            ],
+            [
+              "tokio",
+              "1.50.0",
+              "registry+https://github.com/rust-lang/crates.io-index"
+            ],
+            [
+              "tokio-util",
+              "0.7.18",
+              "registry+https://github.com/rust-lang/crates.io-index"
+            ],
+            [
+              "tracing",
+              "0.1.44",
+              "registry+https://github.com/rust-lang/crates.io-index"
+            ]
+          ]
+        },
+        {
+          "package": [
+            "tracing",
+            "0.1.44",
+            "registry+https://github.com/rust-lang/crates.io-index"
+          ],
+          "removed_edges": [
+            [
+              "log",
+              "0.4.29",
+              "registry+https://github.com/rust-lang/crates.io-index"
+            ]
+          ]
+        },
+        {
+          "package": [
+            "tracing-core",
+            "0.1.36",
+            "registry+https://github.com/rust-lang/crates.io-index"
+          ],
+          "removed_edges": [
+            [
+              "valuable",
+              "0.1.1",
+              "registry+https://github.com/rust-lang/crates.io-index"
+            ]
+          ]
+        },
+        {
+          "package": [
+            "url",
+            "2.5.8",
+            "registry+https://github.com/rust-lang/crates.io-index"
+          ],
+          "removed_edges": [
+            [
+              "serde_derive",
+              "1.0.228",
+              "registry+https://github.com/rust-lang/crates.io-index"
+            ]
+          ]
+        },
+        {
+          "package": [
+            "web-time",
+            "1.1.0",
+            "registry+https://github.com/rust-lang/crates.io-index"
+          ],
+          "removed_edges": [
+            [
+              "serde",
+              "1.0.228",
+              "registry+https://github.com/rust-lang/crates.io-index"
+            ]
+          ]
+        }
+      ],
+      "assurance": "All retained identities/checksums/edges match workspace; inactive edge removals reported. Locked compilation is separate."
+    },
+    "new_identities": 0,
+    "checksum_mismatches": 0,
+    "added_edges": 0,
+    "removed_inactive_edges": 24,
+    "removed_inactive_edge_owners": 13,
+    "actual_locked_standalone_msrv": "passed Rust1.88 check and18 resource/default-worker tests",
+    "regression_tests": 10,
+    "release_hook": "compare_locks before package rehearsal; actual locked build remains separate",
+    "nix": "same source/lock input route reproduced; no Nix derivation build claimed",
+    "advisory": "all selected identities/checksums are approved workspace subset; no new advisory scan claimed"
+  },
+  "retained_failures": [
+    "Handwritten shared consumer used /tmp while generated path canonicalized/private/tmp; fixed only handwritten manifest, unedited generated output preserved",
+    "Initial migrated1.99 standalone-lock consumer failed on1.88; retained log/lock led to tracked-lock reproduction and ADR304",
+    "Initial exact fixture byte comparison exposed rustfmt presentation difference; actual renderer-to-renderer source+schema3 equality confirmed"
+  ],
+  "pending": [
+    "Join ADR295 final source and new workspace members before parent integration",
+    "Parent final compatibility/release qualification; no broad proof/corpus/Nix/remote claim here"
+  ],
+  "owned_files": [
+    {
+      "path": "Cargo.lock",
+      "candidate": "/tmp/compact-adr293/candidate/Cargo.lock",
+      "sha256": "094c8dd620c5e2840c8263d83dc17944a6f8bb909ebadd55bc4b904c9d0d9bc0",
+      "bytes": 161995,
+      "before_sha256": "b38cd410dd69f21fae0e30610bca471497713683fbd46a00e6f9dfce32051585"
+    },
+    {
+      "path": "flake.nix",
+      "candidate": "/tmp/compact-adr293/candidate/flake.nix",
+      "sha256": "9019898e9092286c080af59b30791956c154cbcebd6e6a9570ad8f39ea1aa17c",
+      "bytes": 26803,
+      "before_sha256": "c2f06834d07b6684d0a6e45f3ec0878f7b56d1d05c75c5e0d2aef14158e8af52"
+    },
+    {
+      "path": "runtime-rs/Cargo.toml",
+      "candidate": "/tmp/compact-adr293/candidate/runtime-rs/Cargo.toml",
+      "sha256": "bca116a67835118171aa2d195f6505ff8f453a69af903712176d5c4f93854f20",
+      "bytes": 2110,
+      "before_sha256": "affbb44eab905b30809cfc32792287c99f63c9d1794c7e73319ef87ef872f1e7"
+    },
+    {
+      "path": "runtime-rs/README.md",
+      "candidate": "/tmp/compact-adr293/candidate/runtime-rs/README.md",
+      "sha256": "c77851be2244a13f8d446c8199fcdc666062dcf750237cc086bfe5e9e876f3e4",
+      "bytes": 21087,
+      "before_sha256": "93f4144039abfb374e7129749d0ac63e1a719b77d46b3f8fdf02594e99b9deb5"
+    },
+    {
+      "path": "runtime-rs/compatibility.json",
+      "candidate": "/tmp/compact-adr293/candidate/runtime-rs/compatibility.json",
+      "sha256": "5a24458240b7f96f10e08dc79c284fb6eba67f21446a0f746888dfd85cc17bcd",
+      "bytes": 900,
+      "before_sha256": "d003271e952b8153ad5a3697cfb681c83f08a458497559504d44e77476569684"
+    },
+    {
+      "path": "runtime-rs-macros/Cargo.toml",
+      "candidate": "/tmp/compact-adr293/candidate/runtime-rs-macros/Cargo.toml",
+      "sha256": "65874980e856555e7b8d1c7bdae620f518762a2926de5cd37ff259a664a38cab",
+      "bytes": 1164,
+      "before_sha256": "1543e47f3b9aa7ddacc8c50bb0768c10b5d4805e2d22531c266bf82027cbe26f"
+    },
+    {
+      "path": "testkit-rs/Cargo.toml",
+      "candidate": "/tmp/compact-adr293/candidate/testkit-rs/Cargo.toml",
+      "sha256": "cedb32bb088ce7222ad896c4aca1402c2312ccd557600d8c77ada655c91dc036",
+      "bytes": 1623,
+      "before_sha256": "aa81ac9cb3969797546fae7b646c35e779f0b150415eefac5db38762e899b80e"
+    },
+    {
+      "path": "tools/compact-rust-backend/Cargo.lock",
+      "candidate": "/tmp/compact-adr293/candidate/tools/compact-rust-backend/Cargo.lock",
+      "sha256": "80ed8a3bee346a2e4d7da7ae29cd84a63e84b43eb9dec4849d5aac396e6ad622",
+      "bytes": 74574,
+      "before_sha256": "30dd8ce71219ca9c3d3398347464b610df11b9cecdf234d623ff116445ab11f0"
+    },
+    {
+      "path": "tools/compact-rust-backend/Cargo.toml",
+      "candidate": "/tmp/compact-adr293/candidate/tools/compact-rust-backend/Cargo.toml",
+      "sha256": "70a5959f6d9392b1ae3eefc760b138fb1c627d601f58047e7a99df70e9fa7ac8",
+      "bytes": 1331,
+      "before_sha256": "b3767eee07b6e1fc407086ee29fe55f5498affebe1af8054f013d6725dff5ee2"
+    },
+    {
+      "path": "tools/compact-rust-backend/README.md",
+      "candidate": "/tmp/compact-adr293/candidate/tools/compact-rust-backend/README.md",
+      "sha256": "06d4aa2fb1b36d91be02c6727717224d3d8b9c619ea3ce64005ac7c4ef1266a0",
+      "bytes": 115626,
+      "before_sha256": "dd13c2ca376e6df4fbf949f39356c77e91e686574e2ba0c8cc14d8e79d4ab648"
+    },
+    {
+      "path": "tools/compact-rust-backend/check_release_packages.py",
+      "candidate": "/tmp/compact-adr293/candidate/tools/compact-rust-backend/check_release_packages.py",
+      "sha256": "0fb7a4ce744005ab0ac701d851c98dc0f2ebc0de05efdc9f08e2e18d18892be6",
+      "bytes": 10721,
+      "before_sha256": "5d2f8110090b04be89ef1ca05d378c27cdbc62923d62836f2c3bb2bb11e672fc"
+    },
+    {
+      "path": "tools/compact-rust-backend/check_standalone_lock.py",
+      "candidate": "/tmp/compact-adr293/candidate/tools/compact-rust-backend/check_standalone_lock.py",
+      "sha256": "14a28bc256dbbb6fa8d9e4ab8cc6969982cc9fc57c50f336de61497d1a50b4cd",
+      "bytes": 4393,
+      "before_sha256": null
+    },
+    {
+      "path": "tools/compact-rust-backend/src/bin/compactc.rs",
+      "candidate": "/tmp/compact-adr293/candidate/tools/compact-rust-backend/src/bin/compactc.rs",
+      "sha256": "2ceb9be6d23f9a7c9b44b9e078aa8c313423e8425a5315d67b0c4c9fcb98b79d",
+      "bytes": 45981,
+      "before_sha256": "06b2c4eb0071cbfe75356a4c05772f729dc9014b1a5b504dbda2739db3f5693d"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/compatibility.json",
+      "candidate": "/tmp/compact-adr293/candidate/tools/compact-rust-backend/src/compatibility.json",
+      "sha256": "5a24458240b7f96f10e08dc79c284fb6eba67f21446a0f746888dfd85cc17bcd",
+      "bytes": 900,
+      "before_sha256": "d003271e952b8153ad5a3697cfb681c83f08a458497559504d44e77476569684"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/lib.rs",
+      "candidate": "/tmp/compact-adr293/candidate/tools/compact-rust-backend/src/lib.rs",
+      "sha256": "1c9236f937ea646519836f8116dbb4b3316a64fe621acc510d37a4aa89c99bdc",
+      "bytes": 153763,
+      "before_sha256": "12bc222f6e4e461f4d3838b50de7f743c54794d9c1f66ec8158e9a01c14a7665"
+    },
+    {
+      "path": "tools/compact-rust-backend/test_release_packages.py",
+      "candidate": "/tmp/compact-adr293/candidate/tools/compact-rust-backend/test_release_packages.py",
+      "sha256": "bfbf0e075b107d387914cb29b4eb5c44f7d87f684d7ad551f71c2366179c8edb",
+      "bytes": 5370,
+      "before_sha256": "565a4d76565340a0a1bd23550831626752385896abb78abffb5937993c782921"
+    },
+    {
+      "path": "tools/compact-rust-backend/test_standalone_lock.py",
+      "candidate": "/tmp/compact-adr293/candidate/tools/compact-rust-backend/test_standalone_lock.py",
+      "sha256": "a8b9e21143f2db610b66b5a96fca03eeb48d4af42c9ee4b795145d7331403fba",
+      "bytes": 4987,
+      "before_sha256": null
+    },
+    {
+      "path": "tools/compact-rust-backend/tests/compatibility.rs",
+      "candidate": "/tmp/compact-adr293/candidate/tools/compact-rust-backend/tests/compatibility.rs",
+      "sha256": "c47ca75852a962f874bf7d0e8639de6cc672f9806b8557a2aa49524d5ad867fd",
+      "bytes": 24577,
+      "before_sha256": "426cc9bfd4f90a3434d956c54cd09f568d3a6362cd7a7ea787556f6ce5c2c9b2"
+    }
+  ],
+  "patch": {
+    "path": "/tmp/compact-adr293/candidate.patch",
+    "bytes": 100434,
+    "sha256": "9afe99fdf5e0c7220b50c6177f5de1faeb873c79bcb757387338bcfb53d4b6d8"
+  },
+  "artifacts": [
+    {
+      "path": "/tmp/compact-adr293/MIGRATION.md",
+      "bytes": 3885,
+      "sha256": "b658a175e3b97a1e570895f6a36dcdacc15f22be53cc1e0f1ac7ff958b37b988"
+    },
+    {
+      "path": "/tmp/compact-adr293/backend-clippy.log",
+      "bytes": 1077,
+      "sha256": "a8e2bf3aca561f5f1f0719067dbde2dc4bfa9d43e67b8c599aa54684fcb559f2"
+    },
+    {
+      "path": "/tmp/compact-adr293/baseline.json",
+      "bytes": 227567,
+      "sha256": "31e4413d5790aa846cd8510718106cc3ee29e6ebf96c2ab6a834b38748e3e31a"
+    },
+    {
+      "path": "/tmp/compact-adr293/bundled-generation.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/compact-adr293/compatibility.log",
+      "bytes": 2845,
+      "sha256": "2895607f0325127dd57d6da5c6da0c6597525b1882a58e27ed2372d9bb288380"
+    },
+    {
+      "path": "/tmp/compact-adr293/compiler-build.log",
+      "bytes": 72,
+      "sha256": "9d892c5778d0c975f64a671e66ea5a753502353da3addd1dfdf3825225e406a2"
+    },
+    {
+      "path": "/tmp/compact-adr293/compiler-final-build.log",
+      "bytes": 72,
+      "sha256": "8950be1e8f4499f41b8e38ef15f09a0e2671be53a43aa5dec4d794320908881d"
+    },
+    {
+      "path": "/tmp/compact-adr293/consumers/generated-bundled/Cargo.lock",
+      "bytes": 79461,
+      "sha256": "940b86eb9d590a1d4badb3af23e7187dad3e9a6f071ca67b80df3788fa8d617e"
+    },
+    {
+      "path": "/tmp/compact-adr293/consumers/generated-bundled/Cargo.toml",
+      "bytes": 210,
+      "sha256": "3a8f74e36359157b3cf54e6f31b73d094d7bfb548743d1ddb69d65dc012b7310"
+    },
+    {
+      "path": "/tmp/compact-adr293/consumers/generated-bundled/src/main.rs",
+      "bytes": 683,
+      "sha256": "de9aba4acd286e4821e5aaddbe1a48c47294419f8445d793004596dbb0b2dcf2"
+    },
+    {
+      "path": "/tmp/compact-adr293/consumers/generated-old/Cargo.lock",
+      "bytes": 79679,
+      "sha256": "7428cf38f9a2c3131f499ef6c9ab176deb7a5aecf1725684e45fe2138804ef93"
+    },
+    {
+      "path": "/tmp/compact-adr293/consumers/generated-old/Cargo.toml",
+      "bytes": 305,
+      "sha256": "e7553a7113be4ff97c785ff0322ccb4206a35af4e6d5530acfb964c77129a15d"
+    },
+    {
+      "path": "/tmp/compact-adr293/consumers/generated-old/src/main.rs",
+      "bytes": 1260,
+      "sha256": "0312621f414488d75bafce020e644f95c8193215f6e2582c5180c7b5410338cc"
+    },
+    {
+      "path": "/tmp/compact-adr293/consumers/generated-shared/Cargo.lock",
+      "bytes": 79674,
+      "sha256": "b8986e246e6dc78ac17323b19ef233eb1be1aca7b3518c0e5be79bed3754fe1b"
+    },
+    {
+      "path": "/tmp/compact-adr293/consumers/generated-shared/Cargo.toml",
+      "bytes": 291,
+      "sha256": "3ada8842725ea821b75f4fee8a883b447d2c70e94f1fc8045696c065e21b76a3"
+    },
+    {
+      "path": "/tmp/compact-adr293/consumers/generated-shared/src/main.rs",
+      "bytes": 1260,
+      "sha256": "0312621f414488d75bafce020e644f95c8193215f6e2582c5180c7b5410338cc"
+    },
+    {
+      "path": "/tmp/compact-adr293/consumers/historical-abi49/Cargo.lock",
+      "bytes": 82296,
+      "sha256": "f93b00561c155fc970ef3d36e80e6279d9b87f4e55c36cf5c82b3c7dadee11e7"
+    },
+    {
+      "path": "/tmp/compact-adr293/consumers/historical-abi49/Cargo.toml",
+      "bytes": 289,
+      "sha256": "3cde46c2cd4e1425cf68d20cc068d93218f76947124aedc476a6a19ff5931f4f"
+    },
+    {
+      "path": "/tmp/compact-adr293/consumers/historical-abi49/lib.rs",
+      "bytes": 12545,
+      "sha256": "28917bc67eb0be71ecddf86d360538cc02a0409c3a6a0f75754ed09b484d61aa"
+    },
+    {
+      "path": "/tmp/compact-adr293/consumers/historical-abi49/provenance.json",
+      "bytes": 227,
+      "sha256": "649f7ab0a37cb7dd93e6d7f62a20b7e4c33013af8d422f0860fb905ee38a40ae"
+    },
+    {
+      "path": "/tmp/compact-adr293/consumers/migrated/Cargo.lock",
+      "bytes": 74689,
+      "sha256": "d6590ece31b982e8ded3919e2dc71e9600e1c941dd6c4169b885ddd8803fcdea"
+    },
+    {
+      "path": "/tmp/compact-adr293/consumers/migrated/Cargo.toml",
+      "bytes": 213,
+      "sha256": "21b7989b788d72207316d803d184528dbbe568abb319009fd80a100f47a27ea8"
+    },
+    {
+      "path": "/tmp/compact-adr293/consumers/migrated/src/main.rs",
+      "bytes": 915,
+      "sha256": "a7d28dbd295137f75bd616a971b88145a993ec840153cd49e0525fdb197c1aea"
+    },
+    {
+      "path": "/tmp/compact-adr293/consumers/new-complete-no-fallback/Cargo.lock",
+      "bytes": 78977,
+      "sha256": "22a7004b19dfd4475e51dfc242b698dcb03af0df83ba26466f8c8f873b7bc3d8"
+    },
+    {
+      "path": "/tmp/compact-adr293/consumers/new-complete-no-fallback/Cargo.toml",
+      "bytes": 209,
+      "sha256": "8e9201949808049fa25312fdc86962af8c30d23791f47ccb9cdac6d1e7cc56c5"
+    },
+    {
+      "path": "/tmp/compact-adr293/consumers/new-complete-no-fallback/src/main.rs",
+      "bytes": 2965,
+      "sha256": "9275bc3a1af09528dbd5911b6c91803d482fff37f8cc727039d473722f2d75ef"
+    },
+    {
+      "path": "/tmp/compact-adr293/consumers/new-exhaustive/Cargo.lock",
+      "bytes": 78967,
+      "sha256": "20c46349e7c56d2db11a42e5fac15eee2b25f54f39c702050d83411806e38556"
+    },
+    {
+      "path": "/tmp/compact-adr293/consumers/new-exhaustive/Cargo.toml",
+      "bytes": 199,
+      "sha256": "b8e1e7e41a65ce43a4d6d541efc613418d87629e512148388d27c1407511b702"
+    },
+    {
+      "path": "/tmp/compact-adr293/consumers/new-exhaustive/src/main.rs",
+      "bytes": 2903,
+      "sha256": "2074df794624c75341ea7c28c73a0571bb473bcda061dc67c67d9110c4865557"
+    },
+    {
+      "path": "/tmp/compact-adr293/consumers/old-exhaustive/Cargo.lock",
+      "bytes": 78967,
+      "sha256": "2275840741cd68c3f7e43b4ee69128e458876e7a95554e4688ab0cc14b3e44dc"
+    },
+    {
+      "path": "/tmp/compact-adr293/consumers/old-exhaustive/Cargo.toml",
+      "bytes": 193,
+      "sha256": "ea531d5fe942c26beb7b2a2fd8af3c9918501e2d53d4068b21feba8e14fce593"
+    },
+    {
+      "path": "/tmp/compact-adr293/consumers/old-exhaustive/src/main.rs",
+      "bytes": 2903,
+      "sha256": "2074df794624c75341ea7c28c73a0571bb473bcda061dc67c67d9110c4865557"
+    },
+    {
+      "path": "/tmp/compact-adr293/consumers/render-equivalence/Cargo.lock",
+      "bytes": 74961,
+      "sha256": "a43ee27c2ea184fa40ba99077fc03fffe1c85a48c61efb4680fa6be2cfb3056c"
+    },
+    {
+      "path": "/tmp/compact-adr293/consumers/render-equivalence/Cargo.toml",
+      "bytes": 337,
+      "sha256": "6d587d7918d2c3092598b3148a312d631895024c67137a454713e93c04767554"
+    },
+    {
+      "path": "/tmp/compact-adr293/consumers/render-equivalence/src/main.rs",
+      "bytes": 776,
+      "sha256": "7a02f14cb3291540621767b5873fbff4dfe66a42d10e285cbbee2403fcf07296"
+    },
+    {
+      "path": "/tmp/compact-adr293/final-backend-clippy.log",
+      "bytes": 172,
+      "sha256": "86b7f0ff1b061ec0f0f992235867b603d3a7a7ba49c220b86310b1dab2fa0d1e"
+    },
+    {
+      "path": "/tmp/compact-adr293/final-focused-tests.log",
+      "bytes": 3322,
+      "sha256": "bacf2fe796dc56ebadaf946e03f93f1008c897d1b18fd7283d59ad0e1fcc5d14"
+    },
+    {
+      "path": "/tmp/compact-adr293/generated-bundled.log",
+      "bytes": 739,
+      "sha256": "e94336bcc81b30869b783402ba67cba9a29c123fa11465c76ed3849184a2b1bb"
+    },
+    {
+      "path": "/tmp/compact-adr293/generated-consumer-results.json",
+      "bytes": 1232,
+      "sha256": "0411f3f3e94c1d7970911739f890a5add14b01a59c9ff2db89e32ea166317634"
+    },
+    {
+      "path": "/tmp/compact-adr293/generated-old.log",
+      "bytes": 1505,
+      "sha256": "960d562962a41cb0d96f4f1591ca24f6dbbcda58ec3d442cb7889522aaefd2dc"
+    },
+    {
+      "path": "/tmp/compact-adr293/generated-shared-before-path-fix.log",
+      "bytes": 282,
+      "sha256": "b272d363baf29643007ac926ce86e9c5ee15c986cc82d13e38bf9650b286308e"
+    },
+    {
+      "path": "/tmp/compact-adr293/generated-shared.log",
+      "bytes": 3671,
+      "sha256": "c2bc45e3d0db631b22622d36e9add09a0d57e4ef7fe7f63ee3dbafbbd420d5bb"
+    },
+    {
+      "path": "/tmp/compact-adr293/generation-results.json",
+      "bytes": 17513,
+      "sha256": "70c0b67ddf035a4b031beaee9bb6e48c978d5881ccfeffa590e14d6df70d3bf3"
+    },
+    {
+      "path": "/tmp/compact-adr293/historical-abi49.log",
+      "bytes": 1769,
+      "sha256": "295b9f0c8e61eaa5dd15460503297cde682febe38ce2dc18bf009ac80186556f"
+    },
+    {
+      "path": "/tmp/compact-adr293/metadata.json",
+      "bytes": 587552,
+      "sha256": "71ffb0c82734d00ff454a69605819492593cf53fa7476c41982b7a0306b8fccd"
+    },
+    {
+      "path": "/tmp/compact-adr293/midnight-compact-runtime-macros-package.log",
+      "bytes": 457,
+      "sha256": "43f3c1e918fa8cdb0138986aab337ab5006df5193a9c86c3994bd21c9a76063b"
+    },
+    {
+      "path": "/tmp/compact-adr293/midnight-compact-runtime-package.log",
+      "bytes": 417,
+      "sha256": "cb8d378b86c27636bf5eb303bcb3dcbfcb0b6150422a02de571427a54c5cdc11"
+    },
+    {
+      "path": "/tmp/compact-adr293/migrated-msrv-before-lock-profile.log",
+      "bytes": 350,
+      "sha256": "bba638714677f58a094ecce299fedf2130195e9cde93468d62d4c6b94584348b"
+    },
+    {
+      "path": "/tmp/compact-adr293/migrated-msrv-final.log",
+      "bytes": 211,
+      "sha256": "bc66c291b5e4f1d010f1c0f4411943e0582e666395682bf4a1209692ce6cdc77"
+    },
+    {
+      "path": "/tmp/compact-adr293/migrated-msrv-profile.log",
+      "bytes": 936,
+      "sha256": "10fcc609816c8bc196c367a30dcfc65ec1a66f31a2f5bcf4d0a075c0997f3a6d"
+    },
+    {
+      "path": "/tmp/compact-adr293/migrated-msrv.log",
+      "bytes": 350,
+      "sha256": "bba638714677f58a094ecce299fedf2130195e9cde93468d62d4c6b94584348b"
+    },
+    {
+      "path": "/tmp/compact-adr293/migrated-primary-final.log",
+      "bytes": 315,
+      "sha256": "94414be571255aed1839e2b1e4155393b64113a9a85865b3e8d69db3d9de1dbb"
+    },
+    {
+      "path": "/tmp/compact-adr293/migrated.log",
+      "bytes": 315,
+      "sha256": "811f422197268774e375f0828a1aac1244e239422fc152c67ccfd1c0673eaa47"
+    },
+    {
+      "path": "/tmp/compact-adr293/migration-results.json",
+      "bytes": 1897,
+      "sha256": "fd31990ee0c9d152d082cf0dde0f1abe6928f03284965a18890424b4e0b48614"
+    },
+    {
+      "path": "/tmp/compact-adr293/msrv-check.log",
+      "bytes": 578,
+      "sha256": "6ca6b513ea2e0aa325ed296704dc4c97c74f2772985bf27cc0434e2ba93327a1"
+    },
+    {
+      "path": "/tmp/compact-adr293/new-complete-no-fallback.log",
+      "bytes": 1035,
+      "sha256": "fbb9fbbff3dcc2e8cab4d425dab38d782fa7b042cf47d21baea0f674e6799f8f"
+    },
+    {
+      "path": "/tmp/compact-adr293/new-exhaustive.log",
+      "bytes": 5159,
+      "sha256": "bbec98e14f8d5546ba2ae8015f7c7513f06601fd30e25c0ffc6fd43b857f8779"
+    },
+    {
+      "path": "/tmp/compact-adr293/old-exhaustive.log",
+      "bytes": 327,
+      "sha256": "9cded7bcec78cbb58724c724e8463ee5da4f842cd29114543ae3917ace75dceb"
+    },
+    {
+      "path": "/tmp/compact-adr293/package-rehearsal-final.log",
+      "bytes": 259,
+      "sha256": "569748364bb7afe142b6202014c1ecc8b2d2f832a82a26e056f074d4115994cc"
+    },
+    {
+      "path": "/tmp/compact-adr293/package-rehearsal.json",
+      "bytes": 2777,
+      "sha256": "0d6b19385f2bdbb71f8295c2d68687d55952d01c77fbd1e5a441f677166c6a4d"
+    },
+    {
+      "path": "/tmp/compact-adr293/package-rehearsal.py",
+      "bytes": 1637,
+      "sha256": "c6921426b8a789e443141794aba74880ae709c6688e47fc6be997319765487be"
+    },
+    {
+      "path": "/tmp/compact-adr293/registry-generation.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/compact-adr293/release-inspection-tests-final.log",
+      "bytes": 387,
+      "sha256": "9a713ff792e7186804d11df549fb0533e2dc136c489731892e044a32a19bde0e"
+    },
+    {
+      "path": "/tmp/compact-adr293/render-equivalence.log",
+      "bytes": 551,
+      "sha256": "af11550d52aa1ae9a387fa695f763cc2b8a63b85bda26f19100b9cb88974e2d6"
+    },
+    {
+      "path": "/tmp/compact-adr293/run-generated.py",
+      "bytes": 1091,
+      "sha256": "de2df88241b4e0e2e1759c546ac389eae79d5fe786afbd6f4ddf3fd84a7b06b7"
+    },
+    {
+      "path": "/tmp/compact-adr293/run-migrations.py",
+      "bytes": 1432,
+      "sha256": "1f2bbe72e56287d4f001396d76c1240adccd45e740b2b77126fbab5ee61345a3"
+    },
+    {
+      "path": "/tmp/compact-adr293/shared-generation.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/compact-adr293/tracked-standalone-msrv.log",
+      "bytes": 350,
+      "sha256": "bba638714677f58a094ecce299fedf2130195e9cde93468d62d4c6b94584348b"
+    },
+    {
+      "path": "/tmp/compact-adr304/alignment.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/compact-adr304/approved-workspace.lock",
+      "bytes": 161995,
+      "sha256": "094c8dd620c5e2840c8263d83dc17944a6f8bb909ebadd55bc4b904c9d0d9bc0"
+    },
+    {
+      "path": "/tmp/compact-adr304/before-standalone.lock",
+      "bytes": 78846,
+      "sha256": "8ba635163cc71df0260b6e83ab3888d3ee73df38e95d089c65e2d8d0fdd3415a"
+    },
+    {
+      "path": "/tmp/compact-adr304/lock-subset-audit.json",
+      "bytes": 5695,
+      "sha256": "9f3fdacbc637be6f0e159bbf1c63fb0d838c11635f37e1dc939dacb759872f1c"
+    },
+    {
+      "path": "/tmp/compact-adr304/lock-tests-final.log",
+      "bytes": 109,
+      "sha256": "ceea5e339bfb84b2653af263ee2fe0a0e2de2bfaed2f3efd00a6d42b42fde502"
+    },
+    {
+      "path": "/tmp/compact-adr304/lock-tests.log",
+      "bytes": 107,
+      "sha256": "eab4281419f49474c6773f172eab4705e82da9e9196e5418e92a366609bcb99e"
+    },
+    {
+      "path": "/tmp/compact-adr304/normalized-edge-changes.json",
+      "bytes": 5064,
+      "sha256": "c0da254e562316a0d3a09ceba23d35953de58c3e44fe385849255e6adb683e1c"
+    },
+    {
+      "path": "/tmp/compact-adr304/standalone-msrv-locked.log",
+      "bytes": 788,
+      "sha256": "0cb34bd569cbf1db826da7815aea636724e5b15642bb33c2b70e26ea6218f821"
+    },
+    {
+      "path": "/tmp/compact-adr304/standalone-msrv-tests.log",
+      "bytes": 1839,
+      "sha256": "7af3126c2222a5420fc78ae67949d6cb5bb1a676714b0da40b9e088cd6cec96d"
+    },
+    {
+      "path": "/tmp/compact-adr304/tracked-standalone-msrv.log",
+      "bytes": 350,
+      "sha256": "bba638714677f58a094ecce299fedf2130195e9cde93468d62d4c6b94584348b"
+    }
+  ],
+  "binaries": {
+    "generation_compiler": {
+      "path": "/tmp/compact-adr293/bin/compactc",
+      "bytes": 22025976,
+      "sha256": "bc57dd3c5f0b6908e2ec68c6c50fa2f644cb890a199f4cb98782ea2747103072"
+    },
+    "final_compiler": {
+      "path": "/tmp/compact-adr293/bin/compactc-final",
+      "bytes": 22025976,
+      "sha256": "43db4143973293de4c204375636e894336f706a6ae5f9e658f62f5579118354f"
+    }
+  },
+  "package_archives": [
+    {
+      "path": "/tmp/compact-adr293/archives/midnight-compact-runtime-0.2.0.crate",
+      "bytes": 814779,
+      "sha256": "708814d347b7439773c7a051453897e171a56421a9efc6d8a1af98bb82fd2134"
+    },
+    {
+      "path": "/tmp/compact-adr293/archives/midnight-compact-runtime-macros-0.2.0.crate",
+      "bytes": 16764,
+      "sha256": "a931e28187b226905122f7109de23e0b1f3fe1ee3f60e3f1d1727031dd2cc9ac"
+    }
+  ],
+  "toolchains": {
+    "1.99.0": "rustc 1.99.0 (b940084d7 2026-09-28)\nbinary: rustc\ncommit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4\ncommit-date: 2026-09-28\nhost: aarch64-apple-darwin\nrelease: 1.99.0\nLLVM version: 23.1.1",
+    "1.88.0": "rustc 1.88.0 (6b00bc388 2025-06-23)\nbinary: rustc\ncommit-hash: 6b00bc3880198600130e1cf62b8f8a93494488cc\ncommit-date: 2025-06-23\nhost: aarch64-apple-darwin\nrelease: 1.88.0\nLLVM version: 20.1.5"
+  },
+  "platform": "Darwin arm64",
+  "build_policy": "Warm leased bench/MSRV caches, incremental0,j4, offline. No live source edits."
+}

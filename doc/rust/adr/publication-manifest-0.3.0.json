@@ -1,0 +1,1595 @@
+{
+  "format": "compact-rust-adr-publication/v2",
+  "published_date": "2026-10-09",
+  "qualified_source_revision": "f9a496660a4a69f4dd7c7927111767ad5c0c12b2",
+  "record_count": 121,
+  "historical_record_count": 239,
+  "published_collection_count": 360,
+  "absent_historical_ids": [
+    "RUST-ADR-0116",
+    "RUST-ADR-0260"
+  ],
+  "excluded_separate_ids": [
+    "RUST-ADR-0354",
+    "RUST-ADR-0355",
+    "RUST-ADR-0356",
+    "RUST-ADR-0357"
+  ],
+  "qualification_receipt_sha256": "69076791c0671f6e258c9a0171ba1117ba2f17e362ffdc56df9c337b8088b424",
+  "records": [
+    {
+      "id": "RUST-ADR-0241",
+      "alias": "ADR-0241",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0241 — Vault-first delivery and measurable midpoint CI.md",
+      "source_sha256": "d854c590cd6bd884bbef8118fd03d0f38388a5bb46bcfee54578e4e74c87b1a2",
+      "staged_sha256": "76b3fdf58483c93dae555aed3dc18c203e3abd8e2d8b9cb8548bbdd336e138ee",
+      "published_path": "doc/rust/adr/0241-vault-first-delivery-and-measurable-midpoint-ci.md",
+      "published_sha256": "22d857c18691f30c522db7f40d74e9d42e3d274c7701c6b49986271ab94ea64b",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0242",
+      "alias": "ADR-0242",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0242 — Separate capability coin-shape and recording-facade ownership.md",
+      "source_sha256": "e09d6c093a649e7dc46c349ecfa89d4ea188f30cf15f809a4a6286ce74121660",
+      "staged_sha256": "1029725efdfc2f726aaf125672390d612256f8391be52bd8d4f1aaaca847f65b",
+      "published_path": "doc/rust/adr/0242-separate-capability-coin-shape-and-recording-facade-ownership.md",
+      "published_sha256": "bbbeb92f0a96a7c19fcded6ea9917e9edfb9cdbd57417f90fffb54e05fcb8611",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0243",
+      "alias": "ADR-0243",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0243 — Evaluate generated abstractions with bounded probes.md",
+      "source_sha256": "66ff1da2d7d7ce2bf6a52c72b5028c20723d9ebeefcc903adcde4a794f9d2502",
+      "staged_sha256": "37fe4877faa826a756690791e082cd540617b403c63b070b32e4575d6fa7975a",
+      "published_path": "doc/rust/adr/0243-evaluate-generated-abstractions-with-bounded-probes.md",
+      "published_sha256": "759e9919a69f8e4c066f76848bc2b60465b3de913a06fb58ce31a6fc97f37da4",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0244",
+      "alias": "ADR-0244",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0244 — Test owned semantic boundaries before claiming code quality.md",
+      "source_sha256": "f2dc665c9bbc35f898176af46aadd90f830c9e35cbb50dac35f054922b3c5660",
+      "staged_sha256": "96e2f35acb930a1c0231b2a7b13ef32b37a241b27be3d6bd4dc975af9fb0e152",
+      "published_path": "doc/rust/adr/0244-test-owned-semantic-boundaries-before-claiming-code-quality.md",
+      "published_sha256": "f0b41f454a4f35a933ded7d9fc6884c1a808d10fece0eb90329386c7f90224e0",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0245",
+      "alias": "ADR-0245",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0245 — Validate circuit names before constructing call maps.md",
+      "source_sha256": "23167fab539e211dfdb57027619b21d4c58e0b8339dbb744d660504ec7f5dfd2",
+      "staged_sha256": "34615d6b94b5d76aee93a2689f9c1052f5fcfd86bbe8dac26966537e4c3fd1e0",
+      "published_path": "doc/rust/adr/0245-validate-circuit-names-before-constructing-call-maps.md",
+      "published_sha256": "dc3116bcc92dbdaec8845fc055e9eee865dc518e00802b3a257fae2656da0dbe",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0246",
+      "alias": "ADR-0246",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0246 — Reject circuit collisions in emitted Rust namespaces.md",
+      "source_sha256": "c69023f25b215a497f53912adaafb01b82dbcf4f7ba5eae0e31b5af7ad23135d",
+      "staged_sha256": "60dc930a9ab80308c62fe8fc015e4a57bbbb291ac767c945f2c50558b841a82a",
+      "published_path": "doc/rust/adr/0246-reject-circuit-collisions-in-emitted-rust-namespaces.md",
+      "published_sha256": "2fe49f85bca375dd5c5d234ad0e9693619f4a683ec05a93b1e095ea4456a5da0",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0247",
+      "alias": "ADR-0247",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0247 — Make macro name-resolution contracts explicit.md",
+      "source_sha256": "d030bc2ec707247045a0422efa9ef20f229b80b59d23ac0e1d3f61f7f717b482",
+      "staged_sha256": "f4929b1e1e89d95e4b887db5eaca9a67f7647c8208e5efe9cc52e138760231fb",
+      "published_path": "doc/rust/adr/0247-make-macro-name-resolution-contracts-explicit.md",
+      "published_sha256": "53983f31adf3d97fe41fedb24206a60f61059389d2ac77062975890f2d5d863b",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0248",
+      "alias": "ADR-0248",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0248 — Own plain-ledger scenarios in ContractLab.md",
+      "source_sha256": "b79d7f96981e0ed02945442a885d9dfb65b03ffd4f826469a3eef85fcb9cc752",
+      "staged_sha256": "969dc5da989903fc4da7bcec2ffe50179bb9706055a9c1064544373f5d7a0c81",
+      "published_path": "doc/rust/adr/0248-own-plain-ledger-scenarios-in-contractlab.md",
+      "published_sha256": "5cc2a63fecdd012e21ea0a128ee897f13659b6c09aea1a2dbaad83b4975e5057",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0249",
+      "alias": "ADR-0249",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0249 — Isolate generated struct representation from source names.md",
+      "source_sha256": "7cc89a2b6110f040acf5faef64f3522506869c2ac8ecc4a59e0fbb33b2503518",
+      "staged_sha256": "59de167da2209d0aa873e4cce91eb5905cbe54d749ac6cead97f02a547872399",
+      "published_path": "doc/rust/adr/0249-isolate-generated-struct-representation-from-source-names.md",
+      "published_sha256": "baf661078b66cae839d945dd33fc7019803952ac8f2102c0c829521f8fe2d9a5",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0250",
+      "alias": "ADR-0250",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0250 — Adopt pinned passport pure APIs through independent oracles.md",
+      "source_sha256": "8f6752b30d3dcd19cb0668ccee3d8cdc8e124d59df8cf085d497051a2d87b910",
+      "staged_sha256": "0fade74d04b859718c28150bfb138908c631e8c6cb7ed16be64ebe84ccc7bdb9",
+      "published_path": "doc/rust/adr/0250-adopt-pinned-passport-pure-apis-through-independent-oracles.md",
+      "published_sha256": "3a10bf406ef0e65bb0bb4b25a0f043708b0ebae5988806a31bf44312c8e3c333",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0251",
+      "alias": "ADR-0251",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0251 — Compose audited Unit helpers over complete ledger paths.md",
+      "source_sha256": "2d5c419f0d5d2c7f84f5fbb0adf9c198aa45afd8ee7ebcedc0954762b1ebf628",
+      "staged_sha256": "92503486d1622f6e8c0220e0d78852db7a3cac64d9fec81b9cac7585d8719774",
+      "published_path": "doc/rust/adr/0251-compose-audited-unit-helpers-over-complete-ledger-paths.md",
+      "published_sha256": "71dec93d502dab3a109e8d7349c8f020a10a1cba7cdcabd308cc5a03dcb41a53",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0252",
+      "alias": "ADR-0252",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0252 — Characterize a coherent ledger8.1 compatibility profile.md",
+      "source_sha256": "af757f9ca2f6eccfee55689a19f89656ba8dfa9fa1088e62aa9211ad94826fa4",
+      "staged_sha256": "1c9b81e88238b3c1209dd5db9452785e8b1417484cc422a8da68112dfbb5c5e8",
+      "published_path": "doc/rust/adr/0252-characterize-a-coherent-ledger8-1-compatibility-profile.md",
+      "published_sha256": "a618e9ab149e4e1170db1bf302da0586b692d43999c6915ff821cb711fe67237",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0253",
+      "alias": "ADR-0253",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0253 — Validate exported aliases against emitted module names.md",
+      "source_sha256": "bd9c2de18468f1c9269a9df9697620318d0afa03ae0a861713f44072b1dbafe8",
+      "staged_sha256": "3c18c41f6f7b0b3afd00d2b2ff3d468f246d1111fa1cf2bc9a8e73a7d763217a",
+      "published_path": "doc/rust/adr/0253-validate-exported-aliases-against-emitted-module-names.md",
+      "published_sha256": "a0ad2475265ce3ac2a44d4abf72c09b10eb2e260646e1ba0c30a1dee1bbb2a71",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0254",
+      "alias": "ADR-0254",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0254 — Give circuit dependency analysis an explicit owner.md",
+      "source_sha256": "a6482921eeb409781298c5c845cadd62c8b54a197f5fd74026b55628546f8e0a",
+      "staged_sha256": "e6c29ac8a2ec2bb23bb4e6a2491e4f7ba3b1496102fa878f4f052630e094881c",
+      "published_path": "doc/rust/adr/0254-give-circuit-dependency-analysis-an-explicit-owner.md",
+      "published_sha256": "e7462c0d44d2c5a5fee19f4819097ee6fa47304969e463c26abe9cc1ed9f8d98",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0255",
+      "alias": "ADR-0255",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0255 — Establish original DID lifecycle and direct API oracles.md",
+      "source_sha256": "ad26e53cdf9bd801467e4de8a445093940d133dbde6e30f03d1badae12f74804",
+      "staged_sha256": "ff8f7f942d8681c784da7d1058041e66c303a2e82ee5a0cd684fb455c5be1f2d",
+      "published_path": "doc/rust/adr/0255-establish-original-did-lifecycle-and-direct-api-oracles.md",
+      "published_sha256": "9ed04c5707000ff7ec70fd459afc1ed406b3cc316543350a278f5cad690362e2",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0256",
+      "alias": "ADR-0256",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0256 — Measure a bounded generated Rust WebAssembly consumer.md",
+      "source_sha256": "841d2bd41ccfde9ea50f75c4b2da013c8e95cafbaf238f8e2c24f0dde97ba82c",
+      "staged_sha256": "e44007b27dca2e00f33f483444f291746abba0c6ae9370d2a08b919a860fb00b",
+      "published_path": "doc/rust/adr/0256-measure-a-bounded-generated-rust-webassembly-consumer.md",
+      "published_sha256": "e40e7991cdfd16afff7e160ffec876f35cca1e2eda31f18b313cf6b982645b0c",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0257",
+      "alias": "ADR-0257",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0257 — Reuse runtime frame ownership for simple native leaves.md",
+      "source_sha256": "010537fb6362032b785b67b93a57fe7828a681880f908b40d044593094edada1",
+      "staged_sha256": "e26847e5c765a8d5f71d5543ea8208d564e293d8f81f69b10cfcf8654c4e8d84",
+      "published_path": "doc/rust/adr/0257-reuse-runtime-frame-ownership-for-simple-native-leaves.md",
+      "published_sha256": "9cda8b393d127c308dceebbeac3e93ee1ce505256c2ddc6ea002ca7723714581",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0258",
+      "alias": "ADR-0258",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0258 — Exercise Merkle scenarios through ContractLab.md",
+      "source_sha256": "5378b12f8f3b399982d59ab9d937375229aba7bfab082609216fc4011cf4b53f",
+      "staged_sha256": "b58afda05b0ae79f1e1fd5728b0bd1fd72ffb92d45dda2def8346e84b35e73e9",
+      "published_path": "doc/rust/adr/0258-exercise-merkle-scenarios-through-contractlab.md",
+      "published_sha256": "ba6ecef88dbc36cdb59814f073f85fb16a778059f8881dd3184d277631594302",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0259",
+      "alias": "ADR-0259",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0259 — Record Point authorization transitions through shared composition.md",
+      "source_sha256": "6bba5aae024a87ae55008be48765cc8fd34e32fdcf59bb82885f1b118da158cb",
+      "staged_sha256": "0e651b4531ac8e5ef47765f7c113647e264b20c2e376f9a3c7d185a7ed66a4a6",
+      "published_path": "doc/rust/adr/0259-record-point-authorization-transitions-through-shared-composition.md",
+      "published_sha256": "41c137a97e0e812e9b2fe4c1af6608198e0d9b028ed4e381ef149770fc3fe3a8",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0261",
+      "alias": "ADR-0261",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0261 — Make Rust compatibility and runtime selection explicit.md",
+      "source_sha256": "6c6ef8f3643b42223ba7f56d67721b792b563279d283a6df053b56f93514ba9e",
+      "staged_sha256": "b3e2ffc686f8e3016c9588a8dedc73f710ae4f8726168a0a9ec3b4a8a71303d5",
+      "published_path": "doc/rust/adr/0261-make-rust-compatibility-and-runtime-selection-explicit.md",
+      "published_sha256": "13164088f00013adf38130466620e1d296c45df33bf4a303b4f49b69c58c3e35",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0262",
+      "alias": "ADR-0262",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0262 — Exercise adopted DID recording through ContractLab.md",
+      "source_sha256": "b7c6813006ba5712f913e69a18a4539c560eb2c211baccc6c15097a904bb3a60",
+      "staged_sha256": "f43a0107c1ba64b74ad27b83a539112ea9e9e83c2d8bdbf593e0fbf0e7a8acd2",
+      "published_path": "doc/rust/adr/0262-exercise-adopted-did-recording-through-contractlab.md",
+      "published_sha256": "b4656add87fd2d9841b1d128e053c816eb4d951c24930a620271077da00b2912",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0263",
+      "alias": "ADR-0263",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0263 — Give closed pure-call recording policies an explicit owner.md",
+      "source_sha256": "aa6e448321b334458b7e038b587a1de05393667b43f2e1e71ca8eba986741aa3",
+      "staged_sha256": "e38fb69303fb37afd3742683057c2e5900207f03207900bd77f871a05ec456ed",
+      "published_path": "doc/rust/adr/0263-give-closed-pure-call-recording-policies-an-explicit-owner.md",
+      "published_sha256": "3e5c28b1caa70a8bdeab87eaeabb6a2236ad3268eac8ccc5de32c772490942f0",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0264",
+      "alias": "ADR-0264",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0264 — Share semantic Rust function names across declarations and helpers.md",
+      "source_sha256": "3ba24b5750e7f1381ee86c2b0d8250a8c2274ab1a867499a75d7cfe5edf398fc",
+      "staged_sha256": "8fc00b656c1c0c3b5d38d7c01212f32a0dcc5ad5281c245f4f80c37eaac91c94",
+      "published_path": "doc/rust/adr/0264-share-semantic-rust-function-names-across-declarations-and-helpers.md",
+      "published_sha256": "20318efb57eb0da25321d68f3ca80d381b880043e42a6cc14b79ece740673613",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0265",
+      "alias": "ADR-0265",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0265 — Compose opaque-string Set mutations through typed recording.md",
+      "source_sha256": "8081832e29b7f97777c30330fd08155fdb05f1f91325b719878144d7d26474be",
+      "staged_sha256": "1e0a3c322d692801042cfdf50745b591e692a11f68f01137583f5671a7956463",
+      "published_path": "doc/rust/adr/0265-compose-opaque-string-set-mutations-through-typed-recording.md",
+      "published_sha256": "c84a15904874e983026326b609af96d4b8a284fbb9a797c13558f713bfd20447",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0266",
+      "alias": "ADR-0266",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0266 — Preserve checked recording-profile rejection reasons.md",
+      "source_sha256": "14b131e4cb773ad5b27c08254167576f7fe174e2ff3a34b17ff3f0fe038e1a8f",
+      "staged_sha256": "c06cd60e6ac5bef8b3187b94dd7bf874a545a810bea0518d63a3d135baed66df",
+      "published_path": "doc/rust/adr/0266-preserve-checked-recording-profile-rejection-reasons.md",
+      "published_sha256": "30bac5b49bebd6800f9228a58e7b9d1296ecb4f8987c5da44264b0a49bd626a2",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0267",
+      "alias": "ADR-0267",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0267 — Test runtime-source selection and repeated helper execution boundaries.md",
+      "source_sha256": "03b20d48c90a59cada1a37316a1fd2aa593235d8a1196a4efcfb692d2fa4e651",
+      "staged_sha256": "2e7ba689bc3aac8a9b88eb8f562ad8d48c6778e9bfcf08d64d25620a26c27dbe",
+      "published_path": "doc/rust/adr/0267-test-runtime-source-selection-and-repeated-helper-execution-boundaries.md",
+      "published_sha256": "ef15141358368b1eff9ede150bd77e113fb9039ef44218f166077dfd5354c14e",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0268",
+      "alias": "ADR-0268",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0268 — Register DID proof scenarios in the local full gate.md",
+      "source_sha256": "9ff3f8e80e26738308df1a4f9b1625fe3061a5e93385ac02adb767b5b4b2154b",
+      "staged_sha256": "6910a829f0fc416ba50b53e87f74364f72525e5bd93f7024b6e22d8b64877933",
+      "published_path": "doc/rust/adr/0268-register-did-proof-scenarios-in-the-local-full-gate.md",
+      "published_sha256": "cd89be740c39650f6a3d3d0587e0d8e6f3643fbc4f1255f306c81284ff4f7ae8",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0269",
+      "alias": "ADR-0269",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0269 — Record opaque-string product Maps through shared typed composition.md",
+      "source_sha256": "2ebf70e9e3815d95ca7ed5b4bcc1374907034b0fa1d8d286e0036e48db007fb5",
+      "staged_sha256": "0489bcc3cc8b08c3cf6c36787845513bafd63bdbbe5b96904e449137ec93b0f5",
+      "published_path": "doc/rust/adr/0269-record-opaque-string-product-maps-through-shared-typed-composition.md",
+      "published_sha256": "84173018ab0be85cf078a903c00486a398ac13c35c14c25b0ccd5ce292bc183e",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0270",
+      "alias": "ADR-0270",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0270 — Validate every declared Midnight dependency context.md",
+      "source_sha256": "f17aad91ea04fde35336c04051ba0abc8059c99bb2e090a81ebb8aaf2184f6f1",
+      "staged_sha256": "129adeb7fc13af3df38cbd2d5587377471ddf857a447eac051eaf819a1340098",
+      "published_path": "doc/rust/adr/0270-validate-every-declared-midnight-dependency-context.md",
+      "published_sha256": "53fbb144c1bf4d93b556814ee2904f936f0bff640817d60667cedf1a4d002e50",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0271",
+      "alias": "ADR-0271",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0271 — Classify and test every local-helper context boundary.md",
+      "source_sha256": "7ccf1890fec3fc328c417c56be301359f0b063838c6f9b1a09754f36af1a57b0",
+      "staged_sha256": "67aa624d37334eb03a0303e0f708d283b312a8ac476a26bde9e0a758982cec56",
+      "published_path": "doc/rust/adr/0271-classify-and-test-every-local-helper-context-boundary.md",
+      "published_sha256": "b2d30442ec2bd01f88e530c34f31af891fbb2bbae6e7c084333abe5fa5515c34",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0272",
+      "alias": "ADR-0272",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0272 — Reject explicit discriminants in Compact cell enums.md",
+      "source_sha256": "0ba3f7826771ccb0f8a407579b2f09357064f61b34243c8ad204cb031ec7af02",
+      "staged_sha256": "75178514a204cc7715c65212be1b42e297ccb28c6f17a6d2ed8f030265d30e85",
+      "published_path": "doc/rust/adr/0272-reject-explicit-discriminants-in-compact-cell-enums.md",
+      "published_sha256": "6b034316315430618feb4278ef078b5cc70b0990e3a77c53ead122e3261eed3e",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0273",
+      "alias": "ADR-0273",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0273 — Explain script failure privacy and distinct replay costs.md",
+      "source_sha256": "a52e5f75ceb511d355dccce8b305bb9635906b084b1faccbfda744ce4c90c489",
+      "staged_sha256": "a16c85c425c5999e665d8239f886227dddb3cd672e6e1a11cd9ddfdf700f822a",
+      "published_path": "doc/rust/adr/0273-explain-script-failure-privacy-and-distinct-replay-costs.md",
+      "published_sha256": "c8fc1f17a9cb701932a1651d19b6801becd6330a360e8dee6905bb159717ba86",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0274",
+      "alias": "ADR-0274",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0274 — Preserve default worker stack in typed Map lowering.md",
+      "source_sha256": "d8812cb458a9ee2c077fe219db36035d1aefb618b3598a66c55c0547362645ca",
+      "staged_sha256": "87051d1f434e07feb865e6ec176a4cead9ba531c30c2124d977e719452bde3f7",
+      "published_path": "doc/rust/adr/0274-preserve-default-worker-stack-in-typed-map-lowering.md",
+      "published_sha256": "cbf638b740f244accf177e7c97c3dbc92e275e6eac96491cf9a522d0f6f6635a",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0275",
+      "alias": "ADR-0275",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0275 — Own exhaustive local-call validation in CircuitContext.md",
+      "source_sha256": "ce6de82a0bc150064901bf19d974bdb81d9031d23a6c88ee39dd183c24ff6361",
+      "staged_sha256": "38f5122c3a733c115dbdcf129a7bb49e6ddf1245d55a671226c0403d79969e00",
+      "published_path": "doc/rust/adr/0275-own-exhaustive-local-call-validation-in-circuitcontext.md",
+      "published_sha256": "716598eb5d22957bbb33816ad892d8494c5ece4e1a887d4c5c69aae3089fc1d0",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0276",
+      "alias": "ADR-0276",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0276 — Prototype generated named argument facades.md",
+      "source_sha256": "8b16bcd5736a91f26ab225b196d0d8c4f29715a2e1d8194b0400baf94b5410a4",
+      "staged_sha256": "20333353e73762e42575bd9b357069a6724a857dd19a8f11c7bd5fdc3453bb18",
+      "published_path": "doc/rust/adr/0276-prototype-generated-named-argument-facades.md",
+      "published_sha256": "24c2ebbcd4f511c36ee414a80d6fac2ed84d6d1be9dd2d78706b203c83adf23b",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0277",
+      "alias": "ADR-0277",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0277 — Separate closed guarded mutation profiles from recording assembly.md",
+      "source_sha256": "2621e310840cc8f6549b68f44ce99cfc0de0657573ae48aad4fe9e4fd8ab6853",
+      "staged_sha256": "381cd28f3e7fe9ed19fcf819209deff6da1c0e1263c253c72cdbace56a7345dc",
+      "published_path": "doc/rust/adr/0277-separate-closed-guarded-mutation-profiles-from-recording-assembly.md",
+      "published_sha256": "78d4b1a6cad2748be6e82c0bd9123f97d85016dd81a1ae11e610d941e7d0ff52",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0278",
+      "alias": "ADR-0278",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0278 — Record flat point-product Maps and Boolean membership helpers.md",
+      "source_sha256": "37baaf6834dd1dbeb9b659e7681385183694da207374d29a0cfa2f657efb11cb",
+      "staged_sha256": "cc37478390c4793f600b3b265b1948564f31004cf6e190286c5c7bb078f78c19",
+      "published_path": "doc/rust/adr/0278-record-flat-point-product-maps-and-boolean-membership-helpers.md",
+      "published_sha256": "05c704bef61018f8d0e59e0e936733c64ef6042acd1d121987a568e50830c1e4",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0279",
+      "alias": "ADR-0279",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0279 — Give typed value lowering a cohesive compiler owner.md",
+      "source_sha256": "5f271019bcae4b9c2bcd794c5bcb1c67075d97afc4eeced80921f824da05a457",
+      "staged_sha256": "b72dcc29f944b581782c591d0b6b076c9b466f7127778e110dbac40fb925153a",
+      "published_path": "doc/rust/adr/0279-give-typed-value-lowering-a-cohesive-compiler-owner.md",
+      "published_sha256": "c2c3acd5e73c2b21a716f2c1dbbbbdb60df6eaac4525f0b0f4bcd84c8427f66d",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0280",
+      "alias": "ADR-0280",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0280 — Separate native state expressions and public facade from circuit assembly.md",
+      "source_sha256": "92157c6068fe1babdb1f938b6b0405131c2188ee3f6d202ba8fd27029f0591b3",
+      "staged_sha256": "8f48c2751175db513e33d401d49ed6814316c98c530ba88b94ba2f6441ef51db",
+      "published_path": "doc/rust/adr/0280-separate-native-state-expressions-and-public-facade-from-circuit-assembly.md",
+      "published_sha256": "f10892c236517633fb898342d8eaca9d1bf90554723ead0ca46f89029a2fb913",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0281",
+      "alias": "ADR-0281",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0281 — Track semantic Rust names in public parameter allocation.md",
+      "source_sha256": "769c46479b9446c1b6c9f9dc1e839f1cd8b00040eaf89e89eb9c41a4569362aa",
+      "staged_sha256": "bbdc69b0ce8902d7ef4661e413ef1749538a4f0c8c8e31ace9c2d898bc137273",
+      "published_path": "doc/rust/adr/0281-track-semantic-rust-names-in-public-parameter-allocation.md",
+      "published_sha256": "42ded4d49ad39d5e8816835b1701117e0555b145672c77c3c32444fe8e8f6d19",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0282",
+      "alias": "ADR-0282",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0282 — Diagnose renderer stack exhaustion on a supported source.md",
+      "source_sha256": "59c75d166c426f6887c6d93880e6443224b81d0f3bc0c4a7e88747c4c110ba4f",
+      "staged_sha256": "5a866c3ba2ffeb1494e91054e5003bb902da73775acc2932630136e0cc40e6a9",
+      "published_path": "doc/rust/adr/0282-diagnose-renderer-stack-exhaustion-on-a-supported-source.md",
+      "published_sha256": "6141b766106520815bc6caecab81417e15710074498ff7f91fe8caa4271be2da",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0283",
+      "alias": "ADR-0283",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0283 — Record nested JWK VerificationMethod Map CRUD.md",
+      "source_sha256": "2687f4bdb374fd413e92da7b0264c1cdd5c9595b0dc4f93789067a160af705af",
+      "staged_sha256": "318b4af77b261d43a6a39c6d725f590adf9683b3275d346993040609ba5fdb14",
+      "published_path": "doc/rust/adr/0283-record-nested-jwk-verificationmethod-map-crud.md",
+      "published_sha256": "1dd19fe28b9c54923a5d655fef10f886c8b2d242aa66575d4dc0a05d0897160c",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0284",
+      "alias": "ADR-0284",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0284 — Measure lexical binding identity against simpler shared scopes.md",
+      "source_sha256": "6f79d1809d6bdc0ec45d344fd9a5266ecd503bb9548c4dfb477b8b7d45c1ea84",
+      "staged_sha256": "dcf7c04f02c0f2e8990cae7a3083b2f39e8a54e29453e76e0f1a3d67e3006ee7",
+      "published_path": "doc/rust/adr/0284-measure-lexical-binding-identity-against-simpler-shared-scopes.md",
+      "published_sha256": "899ec69845067e26af8f283f9795c3ec20a1f48e3ad716cc12093ff5b45e45bb",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0285",
+      "alias": "ADR-0285",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0285 — Qualify typed consumer safety and pinned upstream trust boundaries.md",
+      "source_sha256": "a2bc1e2fa3da61067a50232afc83c48fffe315bb372b8ae5282b5307c72de710",
+      "staged_sha256": "49ccfa89403e12f2a882b49beb646e6a5b0645c83f55fbace0da2d307a030f78",
+      "published_path": "doc/rust/adr/0285-qualify-typed-consumer-safety-and-pinned-upstream-trust-boundaries.md",
+      "published_sha256": "0b301ae4e01e0efc7e073a31d4740e1ef0a39dd49a757b5f07bbd807dd4ea2fa",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0286",
+      "alias": "ADR-0286",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0286 — Classify checked Unit composition attempts.md",
+      "source_sha256": "22080c63650eab306f15e6ac88994aa43e385a5e5a96c0a16c180319e14b25bc",
+      "staged_sha256": "d314314bd5aaea7292791dcd71eb0538beef1947e13d1a96238a2cb4b57be470",
+      "published_path": "doc/rust/adr/0286-classify-checked-unit-composition-attempts.md",
+      "published_sha256": "ca4ae1c22df46e6e9b091d94d23dbc54002e0ebf24b0a7a87229b55b9fa1d1e8",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0287",
+      "alias": "ADR-0287",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0287 — Compare unchanged DID against its original release compiler and runtime.md",
+      "source_sha256": "7db98df535509074d893509223c9cd2f72fc06d425a9b8de9d2bc1bb68de57ae",
+      "staged_sha256": "e4e905597c7c9e35de4723eba9f05e94d5dadb0758d306821c39a83c207b41f8",
+      "published_path": "doc/rust/adr/0287-compare-unchanged-did-against-its-original-release-compiler-and-runtime.md",
+      "published_sha256": "68cf884bf7aa55c53ec119cbcfe84c8a05e47decb73726a20cd32c89eeed5e93",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0288",
+      "alias": "ADR-0288",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0288 — Record original DID digest verification through checked read and local Unit helper.md",
+      "source_sha256": "1917191815682e07b6e74c421f51be8c907f7643c5f5b2a0d8abe2878dc80b61",
+      "staged_sha256": "6729b3e80e1125a8ceea4d57131874d4fbcfc7643b4c9ae83dfe3c537520e48e",
+      "published_path": "doc/rust/adr/0288-record-original-did-digest-verification-through-checked-read-and-local-unit-helper.md",
+      "published_sha256": "a4478ce53a13f96c814a0161f3fbf93be4eb726b621d1ff424a752a47d307f49",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0289",
+      "alias": "ADR-0289",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0289 — Verify a public DID transaction across ledger8.0.3 and ledger8.1.md",
+      "source_sha256": "ff848ec49e70f6ab23d28660af4366fa66daf91b73837c52616f666e77b01fad",
+      "staged_sha256": "e3b34c7f64bf7655ac96585009de0a4ad7bf054f4b7ebac0b9d9504e9578bdfd",
+      "published_path": "doc/rust/adr/0289-verify-a-public-did-transaction-across-ledger8-0-3-and-ledger8-1.md",
+      "published_sha256": "8eacf7d3789493aa1cbbc69833289cc56e0673d0ecd4de22cbb467a1750f9f26",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0290",
+      "alias": "ADR-0290",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0290 — Qualify the existing DID effect families across ledger8 profiles.md",
+      "source_sha256": "d5924da0008b3dfbeb047f711fd470650dab92638cc36f8867dbf2b1940fa5d7",
+      "staged_sha256": "e92345ae71a819d50da2495cea649e5150b2d8524d89e531ae299ea656b8e100",
+      "published_path": "doc/rust/adr/0290-qualify-the-existing-did-effect-families-across-ledger8-profiles.md",
+      "published_sha256": "183da1379482ecfc2805f8a394962eb8bdef84b6cf65ab5bacae1b45a575e71b",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0291",
+      "alias": "ADR-0291",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0291 — Bound compiler ingress and typed rendering work.md",
+      "source_sha256": "d75703d3b84648545b58a6af8808ecf113c775dd5e926ad6e30f20b32f209d07",
+      "staged_sha256": "4dd6660c6edc7eaabd835524d9f742095fec8f77d316e09c3bf53df385a00a01",
+      "published_path": "doc/rust/adr/0291-bound-compiler-ingress-and-typed-rendering-work.md",
+      "published_sha256": "7f526b661abc1648b48012e776830e28488f604577bb13e33aad4b8c50f23255",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0292",
+      "alias": "ADR-0292",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0292 — Reduce recursive pure renderer frames.md",
+      "source_sha256": "69beb29125885aaf563059fb407172bd78f31dc01b4d537e9ee9d15371ad5067",
+      "staged_sha256": "1aa09758369478db40cb0ffa1060304f991c895a2cb45fbfa6982096fba27dab",
+      "published_path": "doc/rust/adr/0292-reduce-recursive-pure-renderer-frames.md",
+      "published_sha256": "bdb1efac34a10a23186eec3bb2acbc575f110741226389ad8bf0e3f202a8adc2",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0293",
+      "alias": "ADR-0293",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0293 — Separate Rust release versions and migrate public consumers explicitly.md",
+      "source_sha256": "e40e2c9bec4f50f3b3ffe866c2c2a47fbb474e69a57cbca0468ad42ba37c9d8f",
+      "staged_sha256": "62e6aefe2461bc5d45f2688c9b2752b260855de03bd88adcbb65d09c49defacd",
+      "published_path": "doc/rust/adr/0293-separate-rust-release-versions-and-migrate-public-consumers-explicitly.md",
+      "published_sha256": "279bcff278d44d7cdc5c8869b5474f9cb1c05c37bcead02bc8b000814f611d0a",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0294",
+      "alias": "ADR-0294",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0294 — Maintain executable and strictly proved DID primitive reducers.md",
+      "source_sha256": "ad92e884063a6d089e976aa7279bf71decfeee3eaabfc4c209df0aca2fd80e09",
+      "staged_sha256": "76fe9fbb7f3d67336d7c1bc559233b82e4892419bfb9b37cb86d7bdf78e7f252",
+      "published_path": "doc/rust/adr/0294-maintain-executable-and-strictly-proved-did-primitive-reducers.md",
+      "published_sha256": "2ca95ad04370b5254f0fb69401eefc80767049f0dbabe60d4b3de92d5c248700",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0295",
+      "alias": "ADR-0295",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0295 — Record original DID relation mutation through checked selected Sets and nested JWK reads.md",
+      "source_sha256": "cb0368d5409a83f5a717562ea194dd3d0b39ee9fbd70c0cd63deaaddaeaa88dd",
+      "staged_sha256": "c5af837ef62946b081d05ab76d9c2a00c82672188437257fd710ae90f325aeef",
+      "published_path": "doc/rust/adr/0295-record-original-did-relation-mutation-through-checked-selected-sets-and-nested-jwk-reads.md",
+      "published_sha256": "b21fb65a7fd88575cd4d85b4fd2c8d8c16b22446a67c2d7987cae8013f75c524",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0296",
+      "alias": "ADR-0296",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0296 — Reduce legacy recorded action recursion frames.md",
+      "source_sha256": "71469e5393bd6592e66e2593c6f21d7b83a90ed118eaf1aab9a2a44154897ee2",
+      "staged_sha256": "1ab003b83341cceeee2a3d29b49a90dd95f9456ab5fe9c1a9dcc93ab8ca3ec3c",
+      "published_path": "doc/rust/adr/0296-reduce-legacy-recorded-action-recursion-frames.md",
+      "published_sha256": "221bb2b5ea523fddbf67381864eb187f65b9494cc3fe514146fd7bb4c2132cb3",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0297",
+      "alias": "ADR-0297",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0297 — Measure generated consumers with isolated phase boundaries.md",
+      "source_sha256": "b47f6a58c8c07fbf3d5b0627e77b1898807d55d0b9f0aab59aef6a8ee9e4e180",
+      "staged_sha256": "9a133d0a40782aedadc39d43a73df620853b9912c19a95b3a8805374e1e032da",
+      "published_path": "doc/rust/adr/0297-measure-generated-consumers-with-isolated-phase-boundaries.md",
+      "published_sha256": "b21a4c74ad02577b9e7fe159326a0ec765398d00bf5f2bc4e41a325c112dc1f1",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0298",
+      "alias": "ADR-0298",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0298 — Share fixture selection and require maintained reducer proof gates.md",
+      "source_sha256": "d7cb91a68e918edb4bf59a4a7deb5ad6720a0ec78a70d4bd5d05c110231b2239",
+      "staged_sha256": "2be8675486e33471120993132a389aef506b06b4c6b0b88126aebc32a01933e8",
+      "published_path": "doc/rust/adr/0298-share-fixture-selection-and-require-maintained-reducer-proof-gates.md",
+      "published_sha256": "004d9b6327e6b1722c0d5a4429f4eae3be48d2cff61171ce964e73d6a3785064",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0299",
+      "alias": "ADR-0299",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0299 — Reduce native recursive operation frames.md",
+      "source_sha256": "cd47e452c1ed3573c416921e037a9aba651a56e70943a67de5f46bd7a55651ab",
+      "staged_sha256": "36e0a797f057469744c4f31196105743823683fa264d273411693139d7cbdb23",
+      "published_path": "doc/rust/adr/0299-reduce-native-recursive-operation-frames.md",
+      "published_sha256": "536307deb5d60aaa21b84c9ac6d4e06754436d8b7750ddaf080a11c8391b0ff2",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0300",
+      "alias": "ADR-0300",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0300 — Qualify original DID digest public transactions on ledger8.1.md",
+      "source_sha256": "9bedbaa52ec05c34ea1c95bd001a0fd14406d0376556c6f2df1dc4b66e644522",
+      "staged_sha256": "8d19669004154519d723aed91ad26b58ad4a9b8753b07a01350b7208c79856cf",
+      "published_path": "doc/rust/adr/0300-qualify-original-did-digest-public-transactions-on-ledger8-1.md",
+      "published_sha256": "37b321a720901f4d93d39f070fb53811e7305e0d5feee17c916c623818940e05",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0301",
+      "alias": "ADR-0301",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0301 — Triage dependency advisories without ledger pin drift.md",
+      "source_sha256": "105dd01d0e60a6cf903be68df7c6d8a1fce089c93da58ba09c5e88d91d7287f8",
+      "staged_sha256": "5526cd0d5851925f978662a7c8c4d7297194d30c5ba3b282a38bd7c893866379",
+      "published_path": "doc/rust/adr/0301-triage-dependency-advisories-without-ledger-pin-drift.md",
+      "published_sha256": "fbff294dd934d7bc81bc822c192db1e1a0c51913c10dbccdfe9136abaa7b734c",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0302",
+      "alias": "ADR-0302",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0302 — Exercise value lowering boundaries through focused unit tests.md",
+      "source_sha256": "ff4ed0d8a95b187f8a89a2d218446f22dd0587d3cf3d5d623ec94d08c9cd2ce2",
+      "staged_sha256": "b82261b32cb070f8f736aa6df2c644260c595550253e304e664d185741d31c88",
+      "published_path": "doc/rust/adr/0302-exercise-value-lowering-boundaries-through-focused-unit-tests.md",
+      "published_sha256": "d93e6d57b94af76a22dc3bdfdf0f7918cc8ac4ae603f86f55a766a2f618f4253",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0303",
+      "alias": "ADR-0303",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0303 — Qualify original DID relation transactions through the ledger 8.1 public bridge.md",
+      "source_sha256": "82ccc9886236231d62702435c95965ef5f2419ca7a9c25464eb0ce402c0948e1",
+      "staged_sha256": "446eebc1b25cd60cf19ae451c39f73fad12573a33fd21f462a5b27962fb16c4c",
+      "published_path": "doc/rust/adr/0303-qualify-original-did-relation-transactions-through-the-ledger-8-1-public-bridge.md",
+      "published_sha256": "40c9d3240651a0a01fb2e0624813a8f6b7cbdb6faad21c3afcf8c5e06d99f019",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0304",
+      "alias": "ADR-0304",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0304 — Align the standalone backend lock with the qualified workspace graph.md",
+      "source_sha256": "06c4b79d2751ae0185fd3939d62b4efb47813b288c19b01a39f5b459d9d151df",
+      "staged_sha256": "94f5d88760a839841c5cf9042329307d17c0cbae3675b8282f74695bcd1cc64f",
+      "published_path": "doc/rust/adr/0304-align-the-standalone-backend-lock-with-the-qualified-workspace-graph.md",
+      "published_sha256": "1ca3cda166465e2dde2d24d110c7efe08a52d1e855e7430f84ab0772da1dd3a4",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0305",
+      "alias": "ADR-0305",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0305 — Pin Passport ACC PR177 and preserve authorization across the ledger8 port.md",
+      "source_sha256": "d4b250101d3c0dbc2cb549b25fcdb9339e1cfbc76d55e439d7102818e0e05a53",
+      "staged_sha256": "42ab996dbe9009e42423303d744b750cabab06da442e5ba48560da5ed6370f92",
+      "published_path": "doc/rust/adr/0305-pin-passport-acc-pr177-and-preserve-authorization-across-the-ledger8-port.md",
+      "published_sha256": "7f348922ebaf8be0713d9b4dac54d36920c44c97544f78b3c8ce3ff7f04ab60c",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0306",
+      "alias": "ADR-0306",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0306 — Preserve ACC Jubjub scalar cast reduction on ledger8.md",
+      "source_sha256": "2f7ecf139b0df059d207982a2c4de84157dbc65b40f8f2c94e3bec10426e911e",
+      "staged_sha256": "0f630f399635bcf6bd1404957b55149144ea26d65f287c0b024da2712da4b1b1",
+      "published_path": "doc/rust/adr/0306-preserve-acc-jubjub-scalar-cast-reduction-on-ledger8.md",
+      "published_sha256": "766d8cbf6262270a192059a5f7a9d8e69b7fd815a4d14acb08b296c9d893e5c3",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0307",
+      "alias": "ADR-0307",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0307 — Test resource accounting across typed IR carriers.md",
+      "source_sha256": "62807d37ea1762ed97aba09def8ff9567f94ae549ab063d4607484303b180a97",
+      "staged_sha256": "02e6db8ddc798772e92191aae2eae1d6d5dacc370c8e4b4f854fc8f540b5050e",
+      "published_path": "doc/rust/adr/0307-test-resource-accounting-across-typed-ir-carriers.md",
+      "published_sha256": "72412166099731c45849bb52d704a33f461d723f3dfd2ef8eb126a778959db88",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0308",
+      "alias": "ADR-0308",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0308 — Record typed Jubjub value operations and a point Cell write.md",
+      "source_sha256": "b538d53ef07b7f00b683212777a0ac034185e11fef7bb09ff32f122f43a13949",
+      "staged_sha256": "d0444bd7dd0e9a6cb3160448f1baef67da91ad469c5fa804b936b8d2d5376d34",
+      "published_path": "doc/rust/adr/0308-record-typed-jubjub-value-operations-and-a-point-cell-write.md",
+      "published_sha256": "b962e4c9cd124d857cfa5d3dc21df96bb477c943b5e45bdc7b62e20906479756",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0309",
+      "alias": "ADR-0309",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0309 — Qualify pinned secp256k1 chip proof transport through the ledger8 verifier.md",
+      "source_sha256": "267ad6bc806a30643e92f6b9228297cf23d752ff8bc2a26d6770344635354985",
+      "staged_sha256": "901d3789c2c238d94848949018aa75f5f0419763db56c14fc6eb8c421c11f5f0",
+      "published_path": "doc/rust/adr/0309-qualify-pinned-secp256k1-chip-proof-transport-through-the-ledger8-verifier.md",
+      "published_sha256": "ff8545be92bca554913e402da064efcc77c99bcbc90ad18b4324930446ec7658",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0310",
+      "alias": "ADR-0310",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0310 — Probe P256-prime modular multiplication using existing ledger8 integer gadgets.md",
+      "source_sha256": "1c053803067d60b1bc692aca85a2caff44fd160ae6864d44ce7f70bc4363187f",
+      "staged_sha256": "fff00c47c1127f586ef3022b3770f53e2cfdc7aa151418b1484c33cc3ba3f4ab",
+      "published_path": "doc/rust/adr/0310-probe-p256-prime-modular-multiplication-using-existing-ledger8-integer-gadgets.md",
+      "published_sha256": "5d0a385ec149f4bc53f5be5059d744fd2ebbda26e3ab39910e9a67527694fd17",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0311",
+      "alias": "ADR-0311",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0311 — Exercise stateful expression diagnostics through the real dispatcher.md",
+      "source_sha256": "1bc75fac82c19704f091fd8643f6a68c51b1e91b81df836164e603fb4873e74d",
+      "staged_sha256": "1416cbbc0d93e3c279bfb14bd9c0e1e61872b8d3f1ece9426e056c1bd5ac0903",
+      "published_path": "doc/rust/adr/0311-exercise-stateful-expression-diagnostics-through-the-real-dispatcher.md",
+      "published_sha256": "43967518ab979329e55cfb6f186b2a2da6a868fddab574c5d14fa7ea77ad7796",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0312",
+      "alias": "ADR-0312",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0312 — Measure a complete P256 variable-base scalar component on ledger8.md",
+      "source_sha256": "58f1ce7b1b6a06866694689b2ac968a3d2f010d9061a93a9379fbb908f6cf4b8",
+      "staged_sha256": "6c29c818ce9cf4d3be24d94c39b9594b46cd85709e0dc8c941a129154b4e5407",
+      "published_path": "doc/rust/adr/0312-measure-a-complete-p256-variable-base-scalar-component-on-ledger8.md",
+      "published_sha256": "0428aa4d0c75ab36fdbb81cd94139a21b0446ae47752ab5b37ab25f9795f21fd",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0313",
+      "alias": "ADR-0313",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0313 — Exclude P256 and WebAuthn from the ledger8 ACC variant.md",
+      "source_sha256": "7c895f0b1006033f00144de748180bb29a7fb00c49e9024e6290cd32b064e455",
+      "staged_sha256": "3b427016c7cb67b685bda6afb52f79dfb5b5ecf2b9d1e127011a82898c060b5d",
+      "published_path": "doc/rust/adr/0313-exclude-p256-and-webauthn-from-the-ledger8-acc-variant.md",
+      "published_sha256": "a68aa82036920d3253407118cada74fbf33900dfdc2f3c967c2a5fff56ea09c2",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0314",
+      "alias": "ADR-0314",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0314 — Restrict ACC authorization to Jubjub and bound adoption work.md",
+      "source_sha256": "ec0430c299ef2a11f14228d5f7f4b5cc26f6ae077fccc9c016725df8af85120b",
+      "staged_sha256": "3ec1ec81703d2fdffa048cb113f408f82d719ce126b2f6a03172ba8f9b4a7bcb",
+      "published_path": "doc/rust/adr/0314-restrict-acc-authorization-to-jubjub-and-bound-adoption-work.md",
+      "published_sha256": "779a5a64a1dfe458c76a3799769917b0bd2f47ce7b1d0ea7c7da29a0ececbfd3",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0315",
+      "alias": "ADR-0315",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0315 — Preserve ledger8 time checks in the reduced Passport profile.md",
+      "source_sha256": "3f045de2a1a2d93921c4d4f98392f716ddcf5306013475b5fb3821743e28add9",
+      "staged_sha256": "97de6fbcd6b520ce2625505de34d69dd7a9d70498f04b9e3474a5698a872b43e",
+      "published_path": "doc/rust/adr/0315-preserve-ledger8-time-checks-in-the-reduced-passport-profile.md",
+      "published_sha256": "057554d24ae0a04c60db5fdafcf5b366f8f595c62fc6aed4fa31bfe6297e4c9b",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0316",
+      "alias": "ADR-0316",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0316 — Remove ACC adoption while retaining generic backend evidence.md",
+      "source_sha256": "b2102c20850f3e042db787435b92565e0fd7e446f27775b3fcc6602985284610",
+      "staged_sha256": "997fa4d27a24118a563a98f11191c1e0d72bb827763532802d2540c1e56d1a89",
+      "published_path": "doc/rust/adr/0316-remove-acc-adoption-while-retaining-generic-backend-evidence.md",
+      "published_sha256": "4e1d1379a993302f005682704bc49cb5a9c947963327a3c139725525c5fbf871",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0317",
+      "alias": "ADR-0317",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0317 — Accept the scoped performance and resource baseline.md",
+      "source_sha256": "b98cde53bfaae210dfd85bcca869b91504b2dc5439255d4eca5e59328e56ae04",
+      "staged_sha256": "db111b1b2522238de84c2596f8c03bd388a18f826c53198445d4b9dffce35f0b",
+      "published_path": "doc/rust/adr/0317-accept-the-scoped-performance-and-resource-baseline.md",
+      "published_sha256": "c32ab55c082db63c1d1fba5480c5b011870a96524e10875dac1cb1e7a3990567",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0318",
+      "alias": "ADR-0318",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0318 — Test collection query admission and effect ordering.md",
+      "source_sha256": "3aabfe817e850e83053484c5463fe948d4249464e597f548dcdf38322e2b2d3a",
+      "staged_sha256": "8e5a39f713a7390fc3d4b1bf73f75d11da612cf738f72aeda68bc2a5d1dd394c",
+      "published_path": "doc/rust/adr/0318-test-collection-query-admission-and-effect-ordering.md",
+      "published_sha256": "6a683e9adb06c6bae27cec38e87c8bab130605a6edc77d6e19e8a7e3b684ec0d",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0319",
+      "alias": "ADR-0319",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0319 — Exercise generated reducer control exports directly.md",
+      "source_sha256": "621c28ee21bf8f95bbd19649c87fd42b6db560c1751fbd850bfdb9e818c958c1",
+      "staged_sha256": "5ee488b6758511d57712f00ae056fc2434f1811785ca7b347b99924856e203a4",
+      "published_path": "doc/rust/adr/0319-exercise-generated-reducer-control-exports-directly.md",
+      "published_sha256": "cae2bdc3a91767b02f1df1363a1d357ec1c13f381fe2098e1ae7909f5910e3c2",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0320",
+      "alias": "ADR-0320",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0320 — Test effect-operation domain admission.md",
+      "source_sha256": "56e2d12522eb80e8fa956e2b56b9ffcb36f0de35dee466980e071822b4c5016c",
+      "staged_sha256": "5213f01cc253602d3333f4482c056ad5210d4b3a5ca8058c350c01f62e75652c",
+      "published_path": "doc/rust/adr/0320-test-effect-operation-domain-admission.md",
+      "published_sha256": "2fd6392f60083b84b472ccf42cbd4caa8328df2690e84264fcb7cc032e2a2455",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0321",
+      "alias": "ADR-0321",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0321 — Reconcile compatibility policy and qualify the MSRV delta.md",
+      "source_sha256": "4fe8bd4be668812460d07a0bec1cb6a08a2d938c71b06825ed15c7c7d9ef9e90",
+      "staged_sha256": "98f6141ebb4f21458e5a7b7603f159100395acac5fa5aeeeb9e2724d136ec1df",
+      "published_path": "doc/rust/adr/0321-reconcile-compatibility-policy-and-qualify-the-msrv-delta.md",
+      "published_sha256": "220ece22ff9a4f493d45052a53a92c70739e92636b4458fc305ab412f526ba59",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0322",
+      "alias": "ADR-0322",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0322 — Preserve pure-helper admission through conversion wrappers.md",
+      "source_sha256": "a533b3a00bcd6df358ed9030f280afce670a25043b532f49ca90bc2c9f5efa89",
+      "staged_sha256": "f4e4a56e5fb4e1d9286eacbf8af3c76c0e64bc27900c0bf4240e34898d354454",
+      "published_path": "doc/rust/adr/0322-preserve-pure-helper-admission-through-conversion-wrappers.md",
+      "published_sha256": "3521feed443bb76e11be44030596ea6bb521460b2b8ced1b918231c4e3b49168",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0323",
+      "alias": "ADR-0323",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0323 — Bind legacy oracle and constructor assertions to current execution.md",
+      "source_sha256": "16948d94ca603938a91c98b21a7785484e26a901c86bfa4cf1932caddc795c47",
+      "staged_sha256": "ce26955687e8b0b13af0aaf979b8b2b7e4c6cedbb2eb9344c43c829a955fab70",
+      "published_path": "doc/rust/adr/0323-bind-legacy-oracle-and-constructor-assertions-to-current-execution.md",
+      "published_sha256": "0be5876c2530b9f0483e84f16ab9fbc71780d1a0f7ec912093d098c0eec695a1",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0324",
+      "alias": "ADR-0324",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0324 — Consolidate current developer guides without rewriting history.md",
+      "source_sha256": "a809e1047fdea86e9d647ab624ef8cd057f0acb07c42c936b70cde1de83b58a7",
+      "staged_sha256": "3837dc5d147ead281f64e1ebd6a3b84f5ba68fa6b233e45c5f4e745dfc8d4d4d",
+      "published_path": "doc/rust/adr/0324-consolidate-current-developer-guides-without-rewriting-history.md",
+      "published_sha256": "0479a6f13e53e69312793904655b841c7e8150114aab96ae985e1d0ac905f799",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0325",
+      "alias": "ADR-0325",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0325 — Stabilize a bounded Rust CI lane at the midpoint.md",
+      "source_sha256": "8db6881d7d32621c3acc731dff332c2f8c58c03138134da364d21428d87c13e6",
+      "staged_sha256": "a09b120beebd5d1f81087fcd16eba6a7d25fc0e42ed9bc1827d3a74c923552f0",
+      "published_path": "doc/rust/adr/0325-stabilize-a-bounded-rust-ci-lane-at-the-midpoint.md",
+      "published_sha256": "f19338e44f646aa0a749de9b0385d2eb091c904d57aab7c08af0b617715ffbda",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0326",
+      "alias": "ADR-0326",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0326 — Preserve input read failures and document owned witness scripts.md",
+      "source_sha256": "19b6c826266fac340bb83024618e7e3710b3263ce41713c32bb6af2f53549937",
+      "staged_sha256": "c7ff0b05781bb64591479224dcb21392734de7856719cc6e24237142e867f90f",
+      "published_path": "doc/rust/adr/0326-preserve-input-read-failures-and-document-owned-witness-scripts.md",
+      "published_sha256": "685c138afedeae13e3678afc68863b43bfa016c88ac6a46aa6e92d3e2d952d57",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0327",
+      "alias": "ADR-0327",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0327 — Independent compiler architecture review at the midpoint.md",
+      "source_sha256": "fb90992dcd167893edd8e0d337483a92732617f6efe0fc154253753517eaddfc",
+      "staged_sha256": "70dc10e82d76e3ef2289523748db9f903f9c68467fd93f3afb739aa7b01d9b91",
+      "published_path": "doc/rust/adr/0327-independent-compiler-architecture-review-at-the-midpoint.md",
+      "published_sha256": "53a70f4b22871772b5ad3392c5fc3d9b04ab9b887594cfe48a991c43a1d7f7de",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0328",
+      "alias": "ADR-0328",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0328 — Exercise regression fixture helpers through public Rust APIs.md",
+      "source_sha256": "b9bf5ac1c999bcc7832313c62eebe220bc345f61eba740ba37a06c5d7118689e",
+      "staged_sha256": "1bec7e08c34aa20405acade58e6d31fd4bd891e2ab046fd328623640e1161b07",
+      "published_path": "doc/rust/adr/0328-exercise-regression-fixture-helpers-through-public-rust-apis.md",
+      "published_sha256": "375f02dce76d6db4a182a26b2040d2dfc32f9954e2dc960908d5568782359080",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0329",
+      "alias": "ADR-0329",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0329 — Accept the bounded generated API research portfolio.md",
+      "source_sha256": "45c4657d54dda63394f5cb791962a0b5a1362324bf9935fa2ab9f2e70b86cbc4",
+      "staged_sha256": "1bef5fe36daab4857f81967350eb23c0bc489d1cdeb60308a39b5450320466c8",
+      "published_path": "doc/rust/adr/0329-accept-the-bounded-generated-api-research-portfolio.md",
+      "published_sha256": "dea93b2faeb15f5962678827b6d2f92f519e5564d354b0de56216edd5ef7fa38",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0330",
+      "alias": "ADR-0330",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0330 — Preserve fallible vector coercions without expanding generated arrays.md",
+      "source_sha256": "c3b2a411728ce668cad29d7372ad072a5d752e34a85aa805e0dbe4b5bd8eb371",
+      "staged_sha256": "53d0b45984987eabfa7d61d15072f4c6275b6c643f81602928443f792b9c9749",
+      "published_path": "doc/rust/adr/0330-preserve-fallible-vector-coercions-without-expanding-generated-arrays.md",
+      "published_sha256": "f9714717d4fc97e4635bcb9715a1f6f794a8ba0ec48b05ccb23b738d010c2c9d",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0331",
+      "alias": "ADR-0331",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0331 — Check generated facade and alias names in the Rust namespace.md",
+      "source_sha256": "d968eb3af282a8f18838bd6fa87eaca015ad6423e619035150eb59512f1ce2a8",
+      "staged_sha256": "8a4c1114faa3398d2a782cd8773bb54d54d0b769d17e0801fa8e4ef575d9782a",
+      "published_path": "doc/rust/adr/0331-check-generated-facade-and-alias-names-in-the-rust-namespace.md",
+      "published_sha256": "d389a919aa91bdab5a81e17c785c307b2fa3cd4935ac72da48a493e7b14c669d",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0332",
+      "alias": "ADR-0332",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0332 — Reject recursive pure calls at the private IR admission boundary.md",
+      "source_sha256": "cae52255213d9b1f2631111be12ca8aabfc138c8de020cdb6d91adb11e1b66a3",
+      "staged_sha256": "725b2b9410fdb31e75f1cd579dbec9fc96844d212a7405e19fd1dc79f20b12c2",
+      "published_path": "doc/rust/adr/0332-reject-recursive-pure-calls-at-the-private-ir-admission-boundary.md",
+      "published_sha256": "1e92d761c5c40b4c721cd715458851ed945754a7cfda9120735c4d095a1889b3",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0333",
+      "alias": "ADR-0333",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0333 — Preserve historical passport separately from current adoption.md",
+      "source_sha256": "c688fcd724dce133c4a122d3c48e7ef75754c33e8d244b62c75cb6e137b32dc6",
+      "staged_sha256": "3f5ddc7d08471b208da54c2fe8b0aa7dc4d39463d86d3e0f1e03a98ca4ce98e1",
+      "published_path": "doc/rust/adr/0333-preserve-historical-passport-separately-from-current-adoption.md",
+      "published_sha256": "b32a810baa2d72bb9897dfc9ce037c7435606f1ea43cc40ce85052d83a83dd43",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0334",
+      "alias": "ADR-0334",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0334 — Execute witness conditions and witness-produced collection operands.md",
+      "source_sha256": "73f2043f9befd401e9eb0096df56760d18de5abd4cec9978ed45d4ca51bada7c",
+      "staged_sha256": "04c7def7ebc4941364ba1cea3ca8c0d4eb4f481d1702e263f626be0d5729a502",
+      "published_path": "doc/rust/adr/0334-execute-witness-conditions-and-witness-produced-collection-operands.md",
+      "published_sha256": "09b39b074c34f8c20a6d9685dc0a8829738ecd0422683eabbb0a28a5196a9c84",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0335",
+      "alias": "ADR-0335",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0335 — Require expected errors in negative generated-code controls.md",
+      "source_sha256": "6de54279083fce1635302d396b8f360f87464be8d13b9bec290ad6f23b33431a",
+      "staged_sha256": "d1c9045c6891cca15e5069566c477c3193b3c7d231cde4a2d31f2d3bf6a6eb58",
+      "published_path": "doc/rust/adr/0335-require-expected-errors-in-negative-generated-code-controls.md",
+      "published_sha256": "83f85d43b855a141b4fe5e10ea23c72ac81bf0bf42489bbfb30820bf6aeb1e9c",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0336",
+      "alias": "ADR-0336",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0336 — Preserve empty-vector element types during Rust emission.md",
+      "source_sha256": "c96b983f13d21b496e7647738c48e5f72734f48848c3b37dc033b44f0d6445fc",
+      "staged_sha256": "cc2967700ff073620ac29d7608fcbe7bf1306117e04377ee44d08c02c52a5d45",
+      "published_path": "doc/rust/adr/0336-preserve-empty-vector-element-types-during-rust-emission.md",
+      "published_sha256": "c961751707428bba6458a78034ceecf0a217d6b32ed60d1ad966ccdfb01b2112",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0337",
+      "alias": "ADR-0337",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0337 — Avoid writable executable copies in installation-layout tests.md",
+      "source_sha256": "d274f16e80ab4d65eece8c5901b4af37fd2c695b5adfe92027cdf242f312e583",
+      "staged_sha256": "b5e6fc78302311ff84936eab429c254aae3cd02ecff8d0f7c23c2710a52c0ea9",
+      "published_path": "doc/rust/adr/0337-avoid-writable-executable-copies-in-installation-layout-tests.md",
+      "published_sha256": "7ef18e7550c12965e19789c0711052f07aed1c943f3a984c84ae6a4c7b4a2edc",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0338",
+      "alias": "ADR-0338",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0338 — Anchor generated-value tests to independent expected values.md",
+      "source_sha256": "da3735069c422efc95f547a41dc1ebc1f783bdfc9134aa5992dd541a1bec77ba",
+      "staged_sha256": "79bd41ce924ad7396c918271215f48e18c20b204e49374233f987551a0e9d1c2",
+      "published_path": "doc/rust/adr/0338-anchor-generated-value-tests-to-independent-expected-values.md",
+      "published_sha256": "df0f90f7f2bcd433604ef9bab087e0a926cd947c0227e0bdefb16ac57bae6f27",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0339",
+      "alias": "ADR-0339",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0339 — Record reusable local-gate tool and log provenance.md",
+      "source_sha256": "ba8eba0d7dae557beea11414c38ceb0dee17a555f28469a9bdd9c75fac2ce172",
+      "staged_sha256": "dab9f1583681189c7672e634a2d91030a7653f906bd8bb5305703c1e26e8d396",
+      "published_path": "doc/rust/adr/0339-record-reusable-local-gate-tool-and-log-provenance.md",
+      "published_sha256": "eaa2b8f7bdae6ef3fe1c916cead165668a178861e740870e0952e016b93b3f40",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0340",
+      "alias": "ADR-0340",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0340 — Assert source-defined returns in chunked ledger tests.md",
+      "source_sha256": "c038e4b8a98294b76c830596456dc5e7278f2750413b2861b4d3b750254a3d6f",
+      "staged_sha256": "5533ee18753ec2550dbd9498bc654a476394638a4c9b887cec7a857d97218440",
+      "published_path": "doc/rust/adr/0340-assert-source-defined-returns-in-chunked-ledger-tests.md",
+      "published_sha256": "0f3f1c57098d8c2f78f93d0d2b144870b427d26229b2f77e63b20672ada82c2a",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0341",
+      "alias": "ADR-0341",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0341 — Verify bounded call-graph resource accounting with seeded properties.md",
+      "source_sha256": "da4fed6aa4d4649feff69d48e742180c759cbd71df5121e4fc71d62bc84792f7",
+      "staged_sha256": "17b38fc6487a582bcb667ece86b35390429cbd7ef86964d7ba7b0065ec0e84d0",
+      "published_path": "doc/rust/adr/0341-verify-bounded-call-graph-resource-accounting-with-seeded-properties.md",
+      "published_sha256": "621f935b2dffa6ece92b42223f77fdfd5c3437f2f9eb53c3d4f0e0582f719f75",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0342",
+      "alias": "ADR-0342",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0342 — Check post-removal state and pure-helper defaults independently.md",
+      "source_sha256": "a21c7212dc5dd4f0edd057a5a9e13f6fb77d3b30a5297698f228ce4f440d195b",
+      "staged_sha256": "306026beb192c3c5324ae8bd8babf8a5d9458f41f8d9e00ba127dac79bb6cb92",
+      "published_path": "doc/rust/adr/0342-check-post-removal-state-and-pure-helper-defaults-independently.md",
+      "published_sha256": "72a0995f9ed9a2682b74966c13699a646d85edd8ed92492c2fc8d70dd1aa5cb5",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0343",
+      "alias": "ADR-0343",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0343 — Preserve previous compiler output when publication fails.md",
+      "source_sha256": "3601dad336c07e2f03987d2c620bc1a55a78ce8d387ebc9c32c672d36f9977ca",
+      "staged_sha256": "f9dd1ea9a3d4b1b689c821870f297911fac09ee44f3c7ee83b47547ad2f651c0",
+      "published_path": "doc/rust/adr/0343-preserve-previous-compiler-output-when-publication-fails.md",
+      "published_sha256": "74326fc10172f313225c6d8f116c0853262a8fd8b4d0f26606210c9bad744521",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0344",
+      "alias": "ADR-0344",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0344 — Pin compiler Field admission at the ledger8 modulus.md",
+      "source_sha256": "646fb116d94ddeeadee1bc8dc3003a129303a37375b682e807704fd603f07097",
+      "staged_sha256": "c507ceab9fe428296c1063b6602c3f0cdf3895a560bbd40da74c25be582cefad",
+      "published_path": "doc/rust/adr/0344-pin-compiler-field-admission-at-the-ledger8-modulus.md",
+      "published_sha256": "0eafc4f971f7a02ce30a751250741730a53654495ec9bf04e9bce68354d367ce",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0345",
+      "alias": "ADR-0345",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0345 — Review remaining dependency notices against shipped feature graphs.md",
+      "source_sha256": "ae67e7ca956d36fe86bb4fba445e66f6e7d52a4f7127da2095358a0ad21e17cd",
+      "staged_sha256": "420736a0e63d54b10cec722fad0c74b31135af0e902721589cdd432184891684",
+      "published_path": "doc/rust/adr/0345-review-remaining-dependency-notices-against-shipped-feature-graphs.md",
+      "published_sha256": "34e9721a9fe489908f084afe99c850333b1c165b2b81ffd7ebc32045cb95f541",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0346",
+      "alias": "ADR-0346",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0346 — Exercise generated Field arithmetic across the modulus.md",
+      "source_sha256": "9ce09fbc5b19dcba28ce0c5b3a343785f522940e7da87b4cec1288755b14d7be",
+      "staged_sha256": "fe56d970eea69d793ba13dbaa307c53c8c36688f13c2bfd922acf2b53b4f9f6c",
+      "published_path": "doc/rust/adr/0346-exercise-generated-field-arithmetic-across-the-modulus.md",
+      "published_sha256": "3c3eff99816e08a797e25b8f0e8792d402ffb93bcaf3ced4739075e1e8c5dfe9",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0347",
+      "alias": "ADR-0347",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0347 — Track versioned Compact specification conformance separately from fixtures.md",
+      "source_sha256": "dafaf805904111b7b254552015656bdc8b9fcf822ccc7d4d1ef1248a5bd2ee4a",
+      "staged_sha256": "01516b89b5f8f2f8c6143c9e17b9bef306dcddfdff798047c06a61f9c92a4a3b",
+      "published_path": "doc/rust/adr/0347-track-versioned-compact-specification-conformance-separately-from-fixtures.md",
+      "published_sha256": "d204daf12eb3907e969db56ce2ca2640746723dff9552786175e2422c2ca69fc",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0348",
+      "alias": "ADR-0348",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0348 — Qualify generated Boolean values and witness failure order.md",
+      "source_sha256": "2256e32497c631a9a6633bbc09eb170306e950e25a61bdbbd1ebd4a4cd26e747",
+      "staged_sha256": "7f644c5df2c042788d30649ca809e43dbf612051ab9c682aa4009d2cba5f85f4",
+      "published_path": "doc/rust/adr/0348-qualify-generated-boolean-values-and-witness-failure-order.md",
+      "published_sha256": "a23f8b7154b6f1142fcec5983082abf4eb4bb770849f6478b621af1e79695d52",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0349",
+      "alias": "ADR-0349",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0349 — Verify shared Boolean typing through both public compiler targets.md",
+      "source_sha256": "02ddee3640dfd3f8b09036569addb5c71d258172be7b4e2db305cd0ff9c15903",
+      "staged_sha256": "95078b9456b3186e4441e436cdeb4d320668297b0df194d33edbbc2e69893cbb",
+      "published_path": "doc/rust/adr/0349-verify-shared-boolean-typing-through-both-public-compiler-targets.md",
+      "published_sha256": "cb1d988eb21fcac44af30546d65a33b2ed1672f892156143b94887cfe92ca100",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0350",
+      "alias": "ADR-0350",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0350 — Stage a portable developer documentation package for closeout.md",
+      "source_sha256": "7b458575b5cb5a651bc8b592b506b6bb89e3193d56195a9aeaf36e7fb093665d",
+      "staged_sha256": "0137d91e0b63262531a33d30037e12981a0b9c1e4cae6c7ec2ad8d6a8fe6d4b4",
+      "published_path": "doc/rust/adr/0350-stage-a-portable-developer-documentation-package-for-closeout.md",
+      "published_sha256": "4cb542b93331107ec3591d8f840440b83d9832ef16ebd8876a4994c2cd7261a0",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0351",
+      "alias": "ADR-0351",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0351 — Check Merkle VM path operands before program construction.md",
+      "source_sha256": "b343357811c704cdddf7d782b9dfe5c628ad1f351b0bb56c1180a8d9872a8cbb",
+      "staged_sha256": "0b37a3dd870970294e94c36183c63826811256e050cc1224180f82f1a16dadc0",
+      "published_path": "doc/rust/adr/0351-check-merkle-vm-path-operands-before-program-construction.md",
+      "published_sha256": "474462acca68b5227b09a71e3abf58c3678ac171635961de4c25a56302966ebc",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0352",
+      "alias": "ADR-0352",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0352 — Distinguish unsupported wide operations from malformed Uint bounds.md",
+      "source_sha256": "1c471a0ed2ffdb8d9f5d499dacdfc669f2a4b928ec7ff60c8860f967a3948b89",
+      "staged_sha256": "237b3b033d622d11cfaec454382ad03aacfb5e4d321bb4d7b446736603b323da",
+      "published_path": "doc/rust/adr/0352-distinguish-unsupported-wide-operations-from-malformed-uint-bounds.md",
+      "published_sha256": "6f366d2942b298210aeb189a0afbf0964d4b5e21d15f9515cbb4b8d0dafeacc9",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0353",
+      "alias": "ADR-0353",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0353 — Admit serialized ledger inputs with explicit byte limits.md",
+      "source_sha256": "869fd4adcba3fe0bf0a15d07fd00b5808805db1b1ea32f320e27dc56c27e1764",
+      "staged_sha256": "7a5e0e83bd427a779ecf3c73402a9075572b6d04d9537da0d2805571ec915da0",
+      "published_path": "doc/rust/adr/0353-admit-serialized-ledger-inputs-with-explicit-byte-limits.md",
+      "published_sha256": "a53bf412c27d7f4f9ff635ad78eaceabe65d9e5684f7d5f0c20d2ff56ecbf217",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0358",
+      "alias": "ADR-0358",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0358 — Address the VM context relative to qualified Set path depth.md",
+      "source_sha256": "0b03258d50d227f440194d5779935f08967f3aa97d04e4005411327643fdab2b",
+      "staged_sha256": "97e800b1c27780b7e0eca7b0f6696135143ec4c02a2baa7c2740f018cd594838",
+      "published_path": "doc/rust/adr/0358-address-the-vm-context-relative-to-qualified-set-path-depth.md",
+      "published_sha256": "a7ad9a1e0f0f4d1129789cc944b7a1a2b7f8ca6dae50cfecb32194db815962fe",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0359",
+      "alias": "ADR-0359",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0359 — Select a practical ledger decoding byte policy.md",
+      "source_sha256": "a34480e12a2f8da6d9f0ca812cd7c7b6f496ff81d99456907025a3f62ff79fdb",
+      "staged_sha256": "bc7330828a1d04ca665d0b420cf8cc96a02550cb15b7bcf1610f88421e9e0cf7",
+      "published_path": "doc/rust/adr/0359-select-a-practical-ledger-decoding-byte-policy.md",
+      "published_sha256": "0815dab718be0e057a9b1bcda835abb0238f7d0c58baca222517865987e9f533",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0360",
+      "alias": "ADR-0360",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0360 — Compose official ledger8 providers in an experimental client model.md",
+      "source_sha256": "633ce0341b238c6e9524a9b477f770ec2318b243ef00a76a7ab734d0b67a7f0d",
+      "staged_sha256": "e9851c0807329f1850693bc5bef853bf3d6a33bb6a655537afe0dc085e571207",
+      "published_path": "doc/rust/adr/0360-compose-official-ledger8-providers-in-an-experimental-client-model.md",
+      "published_sha256": "4dfcac21f3a835d08e638e723dc8c6a5089ef4136ef9eaf6fd4aa674b6ac3025",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0361",
+      "alias": "ADR-0361",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0361 — Preserve upstream error assertions in strict path tests.md",
+      "source_sha256": "014013649b633c1cc34619f5b6fc4c4ff331b725b178de128b63d2a01f5f4a72",
+      "staged_sha256": "fa8f6a756a44201a6f428ed3c8789a14e137b9ea8347c797e3c1c33028a8f764",
+      "published_path": "doc/rust/adr/0361-preserve-upstream-error-assertions-in-strict-path-tests.md",
+      "published_sha256": "544dd81e8e4c474e94db4e8b98201f55f384622e35f6edbb51207f073fc6262a",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0362",
+      "alias": "ADR-0362",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0362 — Test output recovery after runtime compatibility admission.md",
+      "source_sha256": "c0721b7d2cf8f769f4aef4e1312926f51f624eebaed0572ab6bc92159355f317",
+      "staged_sha256": "34f638ab61b5292264e9346a6925734cea0732dfd43acab594fe4d13db917ae6",
+      "published_path": "doc/rust/adr/0362-test-output-recovery-after-runtime-compatibility-admission.md",
+      "published_sha256": "91237c9a88d7a23d65c22f347b67c4905634ba04f4c470afe96738438a25409e",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0363",
+      "alias": "ADR-0363",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0363 — Reconcile DID gate inventories with delivered recording support.md",
+      "source_sha256": "6b47f2a07ff081d5bfffa11695ac16261fdcfe618af34b1051417f887796419c",
+      "staged_sha256": "862654efe5c77d1a108ad09832918115517e183d4e9dfa81ef9fec7a8d563565",
+      "published_path": "doc/rust/adr/0363-reconcile-did-gate-inventories-with-delivered-recording-support.md",
+      "published_sha256": "3e2cafd8b51b675127ae42cc50e93f5799f6be691f0a45a21c3dd48a17a2ad08",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0364",
+      "alias": "ADR-0364",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0364 — Refresh current conformance anchors without rewriting historical evidence.md",
+      "source_sha256": "666556c8be7757e709a61299d1809ad1b1952df717280551ce6d8dfac2ea9778",
+      "staged_sha256": "1f89a061b4e8bc28fa1de7c80f9bdeef7323eb234959cb1442b96a3bd666f509",
+      "published_path": "doc/rust/adr/0364-refresh-current-conformance-anchors-without-rewriting-historical-evidence.md",
+      "published_sha256": "dc8c2c28fa0ce650dfb2f97343ecbaf2fb19eb08c07489efa0b07e234d786b47",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0365",
+      "alias": "ADR-0365",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0365 — Retain subprocess exit status in compatibility failures.md",
+      "source_sha256": "d6ca456e761ead01d89f798abd86379a3057409ec8b1aa2a524fe90b15e6da60",
+      "staged_sha256": "36ce3033eb291912f04a39277180169d5fdb4bbc9f1d7329e0880328c44d9752",
+      "published_path": "doc/rust/adr/0365-retain-subprocess-exit-status-in-compatibility-failures.md",
+      "published_sha256": "89e27943e16a1981dfbf95c0a2f112b7c29b206398361f2b434779c8b0fee08e",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    },
+    {
+      "id": "RUST-ADR-0366",
+      "alias": "ADR-0366",
+      "source_identifier": "Initiatives/02 Compact Rust emission/ADRs/ADR-0366 — Create fresh relation proof key directories.md",
+      "source_sha256": "b0e9bdaed1609fc3f7824f09108a35fd8326a60f744f13883278ee1de0fd0f59",
+      "staged_sha256": "f331e836d9be0688a44936604bc6540d735b5829c00f85dd56315954fa94bb2f",
+      "published_path": "doc/rust/adr/0366-create-fresh-relation-proof-key-directories.md",
+      "published_sha256": "8a6981d531138359a8ac9c78b0f18f33a3ff2897070c7f0ef1663f7d16243b17",
+      "transformations": [
+        "Reviewed source/header/link relocation; executable fences retained",
+        "Publication metadata finalized; staged historical body byte-identical"
+      ]
+    }
+  ],
+  "policy": "Original239 records and manifest unchanged; historical bodies preserve original evidence/status/dates. Publication commit recorded separately after creation."
+}

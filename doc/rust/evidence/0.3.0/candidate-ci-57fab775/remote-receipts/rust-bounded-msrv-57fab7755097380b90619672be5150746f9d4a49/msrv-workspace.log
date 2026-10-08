@@ -1,0 +1,5 @@
+    Checking compact-rust-backend v0.2.0 (/home/runner/work/compact/compact/tools/compact-rust-backend)
+   Compiling midnight-compact-runtime-macros v0.2.0 (/home/runner/work/compact/compact/runtime-rs-macros)
+    Checking midnight-compact-runtime v0.2.0 (/home/runner/work/compact/compact/runtime-rs)
+    Checking compact-rust-jubjub-scalar-cell-fixture v0.1.0 (/home/runner/work/compact/compact/tests-rust-backend/jubjub-scalar-cell)
+    Finished `dev` profile [unoptimized] target(s) in 5.48s

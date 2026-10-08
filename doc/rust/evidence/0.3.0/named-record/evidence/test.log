@@ -1,0 +1,12 @@
+   Compiling midnight-compact-runtime-macros v0.2.0 (/private/tmp/rust030-named-record-guide/sdk/runtime-rs-macros)
+   Compiling midnight-compact-runtime v0.2.0 (/private/tmp/rust030-named-record-guide/sdk/runtime-rs)
+   Compiling compact-rust-vc-passport-adoption-fixture v0.1.0 (/private/tmp/rust030-named-record-guide/generated/contract)
+   Compiling compact-passport-named-record-guide v0.1.0 (/private/tmp/rust030-named-record-guide)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.48s
+     Running tests/age_predicate.rs (/tmp/compact-m2-bench-target/debug/deps/age_predicate-a3e870294b9ce9df)
+
+running 1 test
+test application_named_inputs_match_twenty_five_captured_age_cases ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

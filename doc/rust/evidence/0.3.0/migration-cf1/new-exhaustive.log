@@ -1,0 +1,151 @@
+   Compiling proc-macro2 v1.0.107
+    Checking getrandom v0.2.17
+    Checking zerocopy v0.8.59
+    Checking socket2 v0.6.5
+    Checking rand_core v0.6.4
+    Checking mio v1.2.3
+    Checking rand_xorshift v0.3.0
+    Checking ff v0.13.1
+   Compiling quote v1.0.47
+    Checking tokio v1.53.1
+    Checking aws-lc-sys v0.45.0
+   Compiling syn v2.0.119
+   Compiling syn v3.0.6
+    Checking ppv-lite86 v0.2.21
+    Checking rand_chacha v0.3.1
+   Compiling syn v1.0.109
+    Checking rand v0.8.8
+    Checking group v0.13.0
+   Compiling synstructure v0.14.0
+    Checking either v1.18.0
+    Checking rand_core v0.10.1
+   Compiling darling_core v0.20.11
+   Compiling zeroize_derive v1.5.0
+   Compiling zerofrom-derive v0.1.8
+    Checking zeroize v1.9.0
+    Checking zerofrom v0.1.8
+    Checking generic-array v0.14.9
+   Compiling yoke-derive v0.8.4
+    Checking crypto-common v0.1.6
+    Checking block-buffer v0.10.4
+   Compiling serde_derive v1.0.229
+    Checking digest v0.10.7
+   Compiling zerovec-derive v0.11.6
+   Compiling displaydoc v0.2.7
+    Checking yoke v0.8.3
+   Compiling tracing-attributes v0.1.31
+   Compiling futures-macro v0.3.34
+    Checking zerovec v0.11.8
+    Checking zerotrie v0.2.5
+    Checking tracing v0.1.44
+    Checking serde v1.0.229
+    Checking tinystr v0.8.4
+    Checking icu_locale_core v2.3.0
+    Checking potential_utf v0.1.6
+    Checking icu_collections v2.3.0
+    Checking futures-util v0.3.34
+    Checking sha2 v0.10.9
+    Checking icu_provider v2.3.1
+    Checking rustls-pki-types v1.15.1
+    Checking aws-lc-rs v1.18.1
+    Checking der v0.7.10
+    Checking hex v0.4.3
+    Checking rustls-webpki v0.103.15
+    Checking icu_properties v2.3.0
+    Checking icu_normalizer v2.3.0
+    Checking rustls v0.23.45
+    Checking spki v0.7.3
+    Checking serdect v0.2.0
+    Checking serde_arrays v0.2.0
+   Compiling halo2derive v0.2.0
+    Checking idna_adapter v1.2.2
+    Checking blst v0.3.17
+    Checking rayon v1.12.0
+    Checking pairing v0.23.0
+    Checking hyper v1.11.1
+    Checking getrandom v0.4.3
+    Checking idna v1.1.0
+    Checking sec1 v0.7.3
+    Checking pkcs8 v0.10.2
+    Checking hmac v0.12.1
+   Compiling darling_macro v0.20.11
+    Checking crypto-bigint v0.5.5
+    Checking security-framework-sys v2.17.0
+    Checking form_urlencoded v1.2.2
+    Checking typewit v1.15.2
+    Checking hyper-util v0.1.21
+    Checking const_panic v0.2.17
+    Checking midnight-curves v0.2.1
+    Checking tower v0.5.3
+    Checking elliptic-curve v0.13.8
+    Checking url v2.5.8
+   Compiling darling v0.20.11
+    Checking security-framework v3.7.0
+    Checking rfc6979 v0.4.0
+    Checking tokio-rustls v0.26.6
+    Checking signature v2.2.0
+   Compiling midnight-serialize-macros v1.0.0
+    Checking chacha20 v0.10.2
+    Checking rustls-platform-verifier v0.7.1
+    Checking konst v0.4.3
+    Checking rand v0.10.3
+   Compiling dummy v0.8.0
+    Checking midnight-proofs v0.7.3
+    Checking ecdsa v0.16.9
+    Checking nix v0.31.3
+    Checking hyper-rustls v0.27.10
+    Checking tower-http v0.6.11
+    Checking futures-executor v0.3.34
+    Checking crypto v0.5.1
+    Checking tokio-util v0.7.19
+    Checking unicode-ident v1.0.26
+    Checking fake v2.10.0
+    Checking atomic-write-file v0.3.1
+    Checking reqwest v0.13.5
+    Checking rustix v1.1.5
+    Checking midnight-serialize v1.1.1
+    Checking futures v0.3.34
+    Checking k256 v0.13.4
+    Checking parking_lot_core v0.9.12
+    Checking blake2b_halo2 v0.1.0
+    Checking sha3-circuit v0.1.0
+   Compiling midnight-base-crypto-derive v1.0.0
+    Checking tempfile v3.27.0
+    Checking midnight-circuits v6.3.0
+    Checking sysinfo v0.34.2
+    Checking parking_lot v0.12.5
+    Checking midnight-base-crypto v1.0.1
+   Compiling midnight-storage-macros v1.0.0
+   Compiling derive-where v1.7.0
+    Checking itertools v0.14.0
+    Checking hashbrown v0.17.1
+    Checking archery v1.2.3
+    Checking indexmap v2.14.2
+    Checking midnight-storage-core v1.2.1
+    Checking toml_edit v0.22.27
+    Checking prettyplease v0.2.37
+    Checking midnight-zk-stdlib v1.3.0
+    Checking midnight-transient-crypto v2.0.1
+    Checking compact-rust-backend v0.2.0 (/tmp/compact-adr293/candidate/tools/compact-rust-backend)
+    Checking adr293-new-exhaustive v0.1.0 (/tmp/compact-adr293/consumers/new-exhaustive)
+error[E0004]: non-exhaustive patterns: `&_` not covered
+  --> src/main.rs:3:11
+   |
+ 3 |     match error {
+   |           ^^^^^ pattern `&_` not covered
+   |
+note: `RenderError` defined here
+  --> /tmp/compact-adr293/candidate/tools/compact-rust-backend/src/lib.rs:81:1
+   |
+81 | pub enum RenderError {
+   | ^^^^^^^^^^^^^^^^^^^^
+   = note: the matched value is of type `&RenderError`
+   = note: `RenderError` is marked as non-exhaustive, so a wildcard `_` is necessary to match exhaustively
+help: ensure that all possible cases are being handled by adding a match arm with a wildcard pattern or an explicit pattern as shown
+   |
+42 ~         RenderError::MalformedReturnPlan => "MalformedReturnPlan",
+43 ~         &_ => todo!(),
+   |
+
+For more information about this error, try `rustc --explain E0004`.
+error: could not compile `adr293-new-exhaustive` (bin "adr293-new-exhaustive") due to 1 previous error

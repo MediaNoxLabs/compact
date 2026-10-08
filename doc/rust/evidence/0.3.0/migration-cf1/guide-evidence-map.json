@@ -1,0 +1,133 @@
+{
+  "format": "rust030-guide-claim-map/v1",
+  "date": "2026-10-07",
+  "mode": "read-only reconciliation, no new builds or tests",
+  "migration_artifacts": [
+    {
+      "path": "/tmp/compact-adr293/receipt.json",
+      "sha256": "b96d9a0368311fe14f2331ad866c89be850a2eb785ab0ba418007cc991104c40",
+      "retained_receipt_expected": null,
+      "match": "receipt root; current hash recorded"
+    },
+    {
+      "path": "/tmp/compact-adr293/migration-results.json",
+      "sha256": "fd31990ee0c9d152d082cf0dde0f1abe6928f03284965a18890424b4e0b48614",
+      "retained_receipt_expected": "fd31990ee0c9d152d082cf0dde0f1abe6928f03284965a18890424b4e0b48614",
+      "match": true
+    },
+    {
+      "path": "/tmp/compact-adr293/generated-consumer-results.json",
+      "sha256": "0411f3f3e94c1d7970911739f890a5add14b01a59c9ff2db89e32ea166317634",
+      "retained_receipt_expected": "0411f3f3e94c1d7970911739f890a5add14b01a59c9ff2db89e32ea166317634",
+      "match": true
+    },
+    {
+      "path": "/tmp/compact-adr293/historical-abi49.log",
+      "sha256": "295b9f0c8e61eaa5dd15460503297cde682febe38ce2dc18bf009ac80186556f",
+      "retained_receipt_expected": "295b9f0c8e61eaa5dd15460503297cde682febe38ce2dc18bf009ac80186556f",
+      "match": true
+    },
+    {
+      "path": "/tmp/compact-adr293/new-exhaustive.log",
+      "sha256": "bbec98e14f8d5546ba2ae8015f7c7513f06601fd30e25c0ffc6fd43b857f8779",
+      "retained_receipt_expected": "bbec98e14f8d5546ba2ae8015f7c7513f06601fd30e25c0ffc6fd43b857f8779",
+      "match": true
+    },
+    {
+      "path": "/tmp/compact-adr293/new-complete-no-fallback.log",
+      "sha256": "fbb9fbbff3dcc2e8cab4d425dab38d782fa7b042cf47d21baea0f674e6799f8f",
+      "retained_receipt_expected": "fbb9fbbff3dcc2e8cab4d425dab38d782fa7b042cf47d21baea0f674e6799f8f",
+      "match": true
+    },
+    {
+      "path": "/tmp/compact-adr293/migrated-primary-final.log",
+      "sha256": "94414be571255aed1839e2b1e4155393b64113a9a85865b3e8d69db3d9de1dbb",
+      "retained_receipt_expected": "94414be571255aed1839e2b1e4155393b64113a9a85865b3e8d69db3d9de1dbb",
+      "match": true
+    },
+    {
+      "path": "/tmp/compact-adr293/migrated-msrv-final.log",
+      "sha256": "bc66c291b5e4f1d010f1c0f4411943e0582e666395682bf4a1209692ce6cdc77",
+      "retained_receipt_expected": "bc66c291b5e4f1d010f1c0f4411943e0582e666395682bf4a1209692ce6cdc77",
+      "match": true
+    },
+    {
+      "path": "/tmp/compact-adr293/compatibility.log",
+      "sha256": "2895607f0325127dd57d6da5c6da0c6597525b1882a58e27ed2372d9bb288380",
+      "retained_receipt_expected": "2895607f0325127dd57d6da5c6da0c6597525b1882a58e27ed2372d9bb288380",
+      "match": true
+    }
+  ],
+  "vault_archives_verified": [
+    {
+      "path": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0293 and ADR0304 pre-join evidence.zip",
+      "expected": "e1bd69daffeb9320691e840654539e72b0c068b4ef9be60658e45e8a70ba9ba2",
+      "actual": "e1bd69daffeb9320691e840654539e72b0c068b4ef9be60658e45e8a70ba9ba2",
+      "match": true
+    },
+    {
+      "path": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Milestone 0.3.0/Evidence/ADR0293-0295-0303-0304 \u2014 Signed joined delivery.zip",
+      "expected": "9062cfe7afcf8c15f77cb8674ea75cfcb0865a37898cdc31f45e0fb8c6b7c748",
+      "actual": "9062cfe7afcf8c15f77cb8674ea75cfcb0865a37898cdc31f45e0fb8c6b7c748",
+      "match": true
+    }
+  ],
+  "source_controls_inspected": [
+    {
+      "path": "/Users/ysh/.codex/worktrees/07ae/compact/tools/compact-rust-backend/check_archive_consumer.py",
+      "sha256": "36fc513c0543f522d2dd5666b557bf755f5b86930ea2c05d140d4b85df75bd5e",
+      "fresh_test_run": false
+    },
+    {
+      "path": "/Users/ysh/.codex/worktrees/07ae/compact/tools/compact-rust-backend/check_compactc_target.py",
+      "sha256": "60a5d9f6ac372578eb6af878836a5a0dfa1c198a69b0ab4bd1c98ed571c9d307",
+      "fresh_test_run": false
+    },
+    {
+      "path": "/Users/ysh/.codex/worktrees/07ae/compact/tools/compact-rust-backend/tests/compatibility.rs",
+      "sha256": "c47ca75852a962f874bf7d0e8639de6cc672f9806b8557a2aa49524d5ad867fd",
+      "fresh_test_run": false
+    },
+    {
+      "path": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs/src/primitives.rs",
+      "sha256": "9e1296ffda9a3f52ca516173f06ae68b8ad90085aaa7472eba0bafe4efc58f82",
+      "fresh_test_run": false
+    },
+    {
+      "path": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs/tests/bounded_uint.rs",
+      "sha256": "9b3abe2635390adcd6c197f210775576e1bc4d28c7e172af1939bf8e26952112",
+      "fresh_test_run": false
+    }
+  ],
+  "current_did_report": {
+    "path": "/tmp/rust030-guides-validated-324/examples/did-lifecycle/generated/contract/rust-capabilities.json",
+    "sha256": "5892af4a3ddd03f41cb7728d26fef8f17971cbd2d57fa0afea907da104d04228",
+    "all_available_exports": [
+      "rotateControllerKey",
+      "recoverControllerKey",
+      "setAlsoKnownAs",
+      "setVerificationMethod",
+      "removeVerificationMethod",
+      "setSchnorrJubjubVerificationMethod",
+      "removeSchnorrJubjubVerificationMethod",
+      "verifySchnorrJubjubDigestSignature",
+      "setVerificationMethodRelation",
+      "setService",
+      "removeService",
+      "deactivate"
+    ],
+    "claim": "Report inspection only; checker/proof not rerun"
+  },
+  "historical_archive_consumer_receipt": {
+    "path": "/Users/ysh/obsidian/midnight/Initiatives/02 Compact Rust emission/Artifacts/rust-backend-v2-remote-03c03a39/closure/closeout.md",
+    "sha256": "b91ee198921d73053860ca9ea26454cd4f39c34acafa0d6dd6431e962bac3e62",
+    "checkpoint": "03c03a39",
+    "date": "2026-10-06",
+    "scope": "Retained aggregate archive consumer success; not new0.3 per-negative-case qualification"
+  },
+  "gaps": [
+    "No fresh0.3 typed-slot/archive negative consumer execution joined here",
+    "No dedicated retained external FixedBytes wrong-length or wrong generated witness signature compile-fail receipt found"
+  ],
+  "stopped_lane": "ADR0285 untouched; no new assurance claim"
+}

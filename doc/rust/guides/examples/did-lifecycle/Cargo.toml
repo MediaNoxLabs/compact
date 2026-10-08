@@ -1,0 +1,15 @@
+[workspace]
+[package]
+name = "compact-did-lifecycle-guide"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+publish = false
+
+[dependencies]
+did_contract = { package = "compact-contract-did", path = "generated/contract" }
+midnight-compact-testkit = { path = "../sdk/testkit-rs" }
+midnight-serialize = "=1.0.0"
+hex = "0.4"
+serde_json = "1"
+sha2 = "0.10"

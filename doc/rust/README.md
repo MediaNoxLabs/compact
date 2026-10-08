@@ -4,6 +4,9 @@ The Rust target uses the ledger-8 Compact frontend, a typed private IR, a Rust A
 
 ## Guides
 
+- [Start with a task: compile, implement witnesses, test and integrate](guides/index.md)
+- [ContractLab testkit](../../testkit-rs/README.md)
+
 - [Compiler backend and generated crate guide](../../tools/compact-rust-backend/README.md)
 - [Runtime APIs, ledger ownership and ABI](../../runtime-rs/README.md)
 - [Mechanical representation derives](../../runtime-rs-macros/README.md)

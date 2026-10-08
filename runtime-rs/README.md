@@ -1,5 +1,7 @@
 # Midnight Compact Rust runtime
 
+For application workflows, start with the [Rust task guides](../doc/rust/guides/index.md) and [ContractLab testkit](../testkit-rs/README.md).
+
 Architecture history: [Rust backend and runtime ADRs](https://github.com/MediaNoxLabs/compact/tree/codex/rust-backend-ast/doc/rust/adr), with decision status, code examples and delivery evidence.
 
 This crate implements the native execution surface used by Rust contracts
@@ -9,7 +11,8 @@ queries. Generated code checks `RUST_RUNTIME_ABI` at compile time. A generated
 crate bundles matching runtime sources by default or points to one shared
 source root when compiled with `--rust-runtime-root`.
 
-The current runtime ABI is 49. It adds `RecordingFrame::own_coin_public_key`,
+The current runtime ABI is 50. The following paragraphs record earlier ABI additions.
+ABI 49 added `RecordingFrame::own_coin_public_key`,
 retaining the native Bytes32 private output without a public query. Observed
 execution identity is explicit and sealed through preparation; it selects a
 recipient and does not authenticate wallet ownership. ABI 48 adds recorded

@@ -1,0 +1,16 @@
+{
+  "from": "2c798d2dc5f94ad13e89610068035ed70d94f469",
+  "to": "57fab7755097380b90619672be5150746f9d4a49",
+  "changed": [
+    "tools/compact-rust-backend/check_rejections.py",
+    "tools/compact-rust-backend/did_proof_gate.py",
+    "tools/compact-rust-backend/parity_positive_unit_composition_sources.json",
+    "tools/compact-rust-backend/specification_conformance.json",
+    "tools/compact-rust-backend/test_did_proof_gate.py",
+    "tools/compact-rust-backend/test_specification_conformance.py"
+  ],
+  "verified_git_blobs": 3253,
+  "claim": "All other tracked file bytes identical. Original compiler/Scheme/consumer/coverage/migration/audit/package receipts retain prior revision and are reused through this explicit source-equality join. Fresh full gate exercises changed test harness. No new binary rebuild is necessary.",
+  "prior_evidence": "/tmp/rust030-candidate-2c798d2d",
+  "source_guard_sha256": "c75a4dad0e9a07ef640be4aa28191c4110df48fbf0a0b9bf1def7c7939db9a26"
+}

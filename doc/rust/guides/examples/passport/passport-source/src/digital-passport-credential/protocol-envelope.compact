@@ -1,0 +1,102 @@
+// This file is part of midnightntwrk/midnight-vc-passport.
+// Copyright (C) Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Family-owned protocol-envelope primitives (OpenSpec change
+// `upgrade-credential-compact`, design D1/D3).
+//
+// `credential-compact@0.2.0-rc1` removed the generic protocol choreography
+// (`ProtocolMessageEnvelope`, `HolderBindingProfile`,
+// `CredentialProtocolFeatures`, the response sentinel, and the envelope
+// validators) from the core contract layer as a family concern. This module
+// vendores the envelope layer locally, adapted from the last published core
+// sources (0.1.0-rc3) with:
+// - the upstream `VerificationMethodRef.didContractAddress` -> `controllerAddress`
+//   rename applied (nothing in this module embeds a `VerificationMethodRef`,
+//   so the rename affects only downstream copies), and
+// - the `HolderBindingProfile` trimmed to the single profile the family
+//   supports (`explicitDid`); the removed experimental profiles stay removed.
+//
+// The response sentinel keeps the deterministic padded constant so existing
+// fixtures and codec vectors stay byte-stable.
+
+export enum HolderBindingProfile {
+  explicitDid
+}
+
+// Compatibility protocol hint. Authoritative family capabilities belong on the
+// schema descriptor; protocol messages may carry this shape only as a transport
+// hint while older adapters migrate.
+export struct CredentialProtocolFeatures {
+  supportsSelectiveDisclosure: Boolean,
+  supportsPredicateProofs: Boolean,
+  supportsVerifierScopedPseudonym: Boolean,
+  supportsSameHolderProof: Boolean,
+}
+
+export struct ProtocolMessageEnvelope {
+  version: Uint<16>,
+  messageId: Bytes<32>,
+  threadId: Bytes<32>,
+  initialMessage: Boolean,
+  respondsToMessageId: Bytes<32>,
+  createdAt: Uint<64>,
+  hasExpiresAt: Boolean,
+  expiresAt: Uint<64>,
+}
+
+export pure circuit noProtocolResponseReference(): Bytes<32> {
+  return pad(32, "midnight:vc:protocol:none");
+}
+
+export pure circuit assertValidProtocolMessageEnvelope(
+                      envelope: ProtocolMessageEnvelope
+                      ): [] {
+  const noResponse = noProtocolResponseReference();
+  assert(envelope.version == 1, "Protocol message version mismatch");
+  assert(envelope.messageId != noResponse, "Protocol message id must be set");
+  assert(envelope.threadId != noResponse, "Protocol thread id must be set");
+  if (envelope.initialMessage) {
+    assert(envelope.respondsToMessageId == noResponse,
+           "Initial protocol message must not reference a previous message"
+           );
+  } else {
+    assert(envelope.respondsToMessageId != noResponse,
+           "Protocol response message must reference a previous message"
+           );
+  }
+  if (envelope.hasExpiresAt) {
+    assert(envelope.expiresAt >= envelope.createdAt,
+           "Protocol message expiration must not precede creation"
+           );
+  }
+}
+
+export pure circuit assertProtocolResponseEnvelope(
+                      requestEnvelope: ProtocolMessageEnvelope,
+                      responseEnvelope: ProtocolMessageEnvelope
+                      ): [] {
+  assertValidProtocolMessageEnvelope(requestEnvelope);
+  assertValidProtocolMessageEnvelope(responseEnvelope);
+  assert(!responseEnvelope.initialMessage, "Protocol response must not be initial");
+  assert(responseEnvelope.threadId == requestEnvelope.threadId,
+         "Protocol response thread id does not match the request thread id"
+         );
+  assert(responseEnvelope.respondsToMessageId == requestEnvelope.messageId,
+         "Protocol response does not reference the request message id"
+         );
+  assert(responseEnvelope.createdAt >= requestEnvelope.createdAt,
+         "Protocol response creation time must not precede the request"
+         );
+}

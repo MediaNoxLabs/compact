@@ -1,0 +1,17 @@
+info: cargo-llvm-cov currently setting cfg(coverage); you can opt-out it by passing --no-cfg-coverage
+     Running `cargo test --manifest-path /Users/ysh/.codex/worktrees/07ae/compact/Cargo.toml --target-dir /private/tmp/rust030-quality-coverage --locked --offline -j 4 -p midnight-compact-runtime --features ledger-transaction --test transaction_decoding`
+   Compiling midnight-compact-runtime v0.2.0 (/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs)
+    Finished `test` profile [unoptimized] target(s) in 2.63s
+     Running tests/transaction_decoding.rs (/private/tmp/rust030-quality-coverage/debug/deps/transaction_decoding-e842624d4b65f1b3)
+
+running 7 tests
+test seeded_verifier_round_trips_through_legacy_and_limited_decoders ... ok
+test oversized_invalid_bytes_are_refused_before_parsing_without_payload_disclosure ... ok
+test malformed_tag_truncation_trailing_and_empty_preserve_legacy_refusals ... ok
+test state_decoder_preserves_exact_state_and_caller_metadata ... ok
+test exact_and_larger_budgets_admit_while_one_under_and_zero_refuse ... ok
+test default_policy_round_trips_real_state_and_seeded_verifier ... ok
+test custom_policy_preserves_budgets_below_and_above_the_default ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

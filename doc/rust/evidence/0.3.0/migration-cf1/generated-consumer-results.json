@@ -1,0 +1,48 @@
+[
+  {
+    "mode": "old",
+    "toolchain": "1.99.0",
+    "exit": 0,
+    "elapsed_s": 12.378386417054571,
+    "command": [
+      "cargo",
+      "+1.99.0",
+      "run",
+      "--manifest-path",
+      "/tmp/compact-adr293/consumers/generated-old/Cargo.toml",
+      "--offline"
+    ],
+    "log_sha256": "960d562962a41cb0d96f4f1591ca24f6dbbcda58ec3d442cb7889522aaefd2dc"
+  },
+  {
+    "mode": "bundled",
+    "toolchain": "1.99.0",
+    "exit": 0,
+    "elapsed_s": 3.419106416986324,
+    "command": [
+      "cargo",
+      "+1.99.0",
+      "run",
+      "--manifest-path",
+      "/tmp/compact-adr293/consumers/generated-bundled/Cargo.toml",
+      "--offline"
+    ],
+    "log_sha256": "e94336bcc81b30869b783402ba67cba9a29c123fa11465c76ed3849184a2b1bb"
+  },
+  {
+    "mode": "shared",
+    "toolchain": "1.88.0",
+    "exit": 0,
+    "elapsed_s": null,
+    "command": [
+      "cargo",
+      "+1.88.0",
+      "run",
+      "--manifest-path",
+      "/tmp/compact-adr293/consumers/generated-shared/Cargo.toml",
+      "--offline"
+    ],
+    "log_sha256": "c2bc45e3d0db631b22622d36e9add09a0d57e4ef7fe7f63ee3dbafbbd420d5bb",
+    "resolution": "Handwritten external testkit path canonicalized to /private/tmp; generated source and manifest unchanged"
+  }
+]

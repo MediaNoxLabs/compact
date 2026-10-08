@@ -1,0 +1,41 @@
+{
+  "run": 37748332319,
+  "candidate": "57fab7755097380b90619672be5150746f9d4a49",
+  "artifacts_verified": true,
+  "lanes": [
+    {
+      "lane": "msrv",
+      "source_sha256": "a6bf2c416df96418bbebb5392ec1e7b9be5ad3eb6a464967e818906bcad4e21e",
+      "result_sha256": "332885ed5687bf574c01b3503b0a8e127e11253df281db495dcbfe7cdaf03f22",
+      "passing_tests": 0,
+      "test_result_blocks": 0,
+      "checks": {
+        "provenance": "success",
+        "build-cache": "success",
+        "fetch": "success",
+        "format": "skipped",
+        "tests": "skipped",
+        "clippy": "skipped",
+        "msrv_workspace": "success",
+        "msrv_standalone": "success"
+      }
+    },
+    {
+      "lane": "core",
+      "source_sha256": "a98e9215279ca2c3d94fccc122d0dd954c3a5292b370868eb9c9ac5211373937",
+      "result_sha256": "abd08ba1b75da228cedf904ae31c7a04db7492fb669dfb6c47ee63f3fc969663",
+      "passing_tests": 742,
+      "test_result_blocks": 63,
+      "checks": {
+        "provenance": "success",
+        "build-cache": "success",
+        "fetch": "success",
+        "format": "success",
+        "tests": "success",
+        "clippy": "success",
+        "msrv_workspace": "skipped",
+        "msrv_standalone": "skipped"
+      }
+    }
+  ]
+}

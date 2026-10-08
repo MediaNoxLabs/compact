@@ -1,0 +1,32 @@
+   Compiling compact-rust-backend v0.2.0 (/Users/ysh/.codex/worktrees/07ae/compact/tools/compact-rust-backend)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.98s
+     Running unittests src/main.rs (target/compact-rust-parity-gate/debug/deps/compact_rust_backend-55a824931a4babeb)
+
+running 4 tests
+test input::tests::oversized_stream_is_not_fully_consumed ... ok
+test input::tests::reader_failure_after_prefix_does_not_return_partial_input ... ok
+test input::tests::exact_short_utf8_and_one_over ... ok
+test input::tests::reader_failure_before_any_bytes_preserves_kind_and_payload ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/compact-rustc.rs (target/compact-rust-parity-gate/debug/deps/compact_rustc-37d2e5f9266c1b53)
+
+running 4 tests
+test input::tests::reader_failure_before_any_bytes_preserves_kind_and_payload ... ok
+test input::tests::reader_failure_after_prefix_does_not_return_partial_input ... ok
+test input::tests::oversized_stream_is_not_fully_consumed ... ok
+test input::tests::exact_short_utf8_and_one_over ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/compactc.rs (target/compact-rust-parity-gate/debug/deps/compactc-5f6b2b2ba3b55988)
+
+running 4 tests
+test input::tests::reader_failure_after_prefix_does_not_return_partial_input ... ok
+test input::tests::reader_failure_before_any_bytes_preserves_kind_and_payload ... ok
+test input::tests::oversized_stream_is_not_fully_consumed ... ok
+test input::tests::exact_short_utf8_and_one_over ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 14 filtered out; finished in 0.00s
+

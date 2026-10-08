@@ -1,0 +1,23 @@
+{
+  "scope": "Narrow stale publication-rejection harness correction; no production edits or Cargo",
+  "base_head": "2c798d2dc5f94ad13e89610068035ed70d94f469",
+  "source": "tools/compact-rust-backend/check_rejections.py",
+  "source_sha256": "b2eccc1e4a5c9d81910ca2f3def28fe5208dad54ee8083306f74658411063185",
+  "compiler_sha256": "d052cb07bf0dcf42c6aba59e461de9a0b3f06b96f78c4c591f7a104892acf6ba",
+  "scheme_sha256": "47dabe42351653dec921305e5f939b1412aa9e2ec29adb66b576e678b5c1155d",
+  "command": "COMPACTC=/tmp/rust030-candidate-2c798d2d/full-gate/bin/compactc COMPACTC_SCHEME=/tmp/rust030-candidate-2c798d2d/full-gate/bin/compactc-scheme COMPACT_RUST_RUNTIME_DIR=/Users/ysh/.codex/worktrees/07ae/compact PYTHONDONTWRITEBYTECODE=1 python3 tools/compact-rust-backend/check_rejections.py",
+  "exit_code": 0,
+  "result": "4 source rejections, 6 source contexts, output publication, proof capabilities, shared Boolean typing; 0 failed",
+  "log": "publication-rejection-fixed.log",
+  "log_sha256": "b8746dc33c5145c25df196c75b49a0674c00eabbdb6df8e53ec0d728c668dd0c",
+  "original_failed_log": "full-gate/logs/397-compiler-rejections.log",
+  "original_failed_log_sha256": "3455f6b77e640c4ddacdebfe1839d8b860e8347c496a1752831b2eab1984c66c",
+  "git_diff_check": 0,
+  "adr": "ADR0362",
+  "issue": 499,
+  "diagnostic_comparison": "Complete stderr.strip() equality including source position and Boolean type diagnostic",
+  "initial_pass_log": "publication-rejection-initial-pass.log",
+  "initial_pass_log_sha256": "b8746dc33c5145c25df196c75b49a0674c00eabbdb6df8e53ec0d728c668dd0c",
+  "before_log_copy": "publication-rejection-before.log",
+  "before_log_copy_sha256": "3455f6b77e640c4ddacdebfe1839d8b860e8347c496a1752831b2eab1984c66c"
+}

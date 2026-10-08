@@ -1,0 +1,425 @@
+{
+  "compiler": {
+    "path": "/private/tmp/rust030-candidate-679be285/full-gate/bin/compactc",
+    "sha256": "d052cb07bf0dcf42c6aba59e461de9a0b3f06b96f78c4c591f7a104892acf6ba"
+  },
+  "failures": [],
+  "format_version": 1,
+  "git_head": "679be285d91baf87ae55ae3161140e371d259b62",
+  "manifest": "/Users/ysh/.codex/worktrees/07ae/compact/tools/compact-rust-backend/parity_positive_unit_composition_sources.json",
+  "manifest_sha256": "c201fb408d4f7bf9381a04412833550010a893bdbef048e04382d76957d3001e",
+  "scope": "checked positive source compiler acceptance/proof metadata; no executing parity",
+  "sources": [
+    {
+      "cargo_check": {
+        "command": [
+          "cargo",
+          "+1.99.0",
+          "check",
+          "--offline",
+          "--manifest-path",
+          "/var/folders/55/p48skc9j45b2s3301cv1_6tw0000gn/T/compact-positive-scope-chu1tuwx/rust/contract/Cargo.toml"
+        ],
+        "exit_code": 0,
+        "stderr": "     Locking 324 packages to highest Rust 1.88 compatible versions\n      Adding generic-array v0.14.7 (available: v0.14.9)\n      Adding midnight-base-crypto v1.0.0 (available: v1.0.2)\n      Adding midnight-circuits v6.0.0 (available: v6.3.0)\n      Adding midnight-coin-structure v2.0.1 (available: v2.0.2)\n      Adding midnight-curves v0.2.0 (available: v0.2.1)\n      Adding midnight-ledger v8.0.3 (available: v8.1.2)\n      Adding midnight-onchain-runtime v3.0.0 (available: v3.1.2)\n      Adding midnight-onchain-state v3.0.0 (available: v3.0.2)\n      Adding midnight-onchain-vm v3.0.0 (available: v3.1.2)\n      Adding midnight-proofs v0.7.0 (available: v0.7.3)\n      Adding midnight-serialize v1.0.0 (available: v1.1.1)\n      Adding midnight-storage v2.0.1 (available: v2.0.3)\n      Adding midnight-storage-core v1.1.0 (available: v1.2.1)\n      Adding midnight-transient-crypto v2.0.1 (available: v2.1.1)\n      Adding midnight-zk-stdlib v1.0.0 (available: v1.3.0)\n      Adding midnight-zswap v8.0.3 (available: v8.1.3)\n      Adding rand v0.8.6 (available: v0.8.8)\n      Adding sha3 v0.10.8 (available: v0.10.9)\n    Checking compact-contract-unit-composition-flat v0.1.0 (/var/folders/55/p48skc9j45b2s3301cv1_6tw0000gn/T/compact-positive-scope-chu1tuwx/rust/contract)\n    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.38s\n",
+        "stdout": ""
+      },
+      "expected_ts": "success",
+      "generated_cargo_lock_sha256": "e7a7d309847b44d90ef7323d9c155807af1f97c8389a26d38bb0b1c6777f8e36",
+      "generated_rust_sha256": "1da62330fe71e204f2ea24c11765ee5b7e45398f40c85dec6b89c631b0557f67",
+      "proof_circuits": [
+        {
+          "name": "close",
+          "proof": true,
+          "pure": false
+        },
+        {
+          "name": "maybeClose",
+          "proof": true,
+          "pure": false
+        }
+      ],
+      "rust_capabilities": [
+        {
+          "name": "close",
+          "proof_required": true,
+          "recording_status": "available"
+        },
+        {
+          "name": "maybeClose",
+          "proof_required": true,
+          "recording_status": "available"
+        }
+      ],
+      "rust_capability_schema": 3,
+      "rust_compile": "success",
+      "rust_fixture": "tests-rust-backend/unit-composition-flat/lib.rs",
+      "rust_fixture_match": true,
+      "rust_fixture_sha256": "5ab07aa532cf47427b382016e734c728a0598d0d58dec991d8d982549d06eb01",
+      "source": "examples/rust_backend/unit_composition_flat.compact",
+      "source_sha256": "bc236e0d7a50c8d73b2b4738f9504ded3e630f2f271711e870b91534b094183b",
+      "ts_compile": "success"
+    },
+    {
+      "cargo_check": {
+        "command": [
+          "cargo",
+          "+1.99.0",
+          "check",
+          "--offline",
+          "--manifest-path",
+          "/var/folders/55/p48skc9j45b2s3301cv1_6tw0000gn/T/compact-positive-scope-_1f_pcyo/rust/contract/Cargo.toml"
+        ],
+        "exit_code": 0,
+        "stderr": "     Locking 324 packages to highest Rust 1.88 compatible versions\n      Adding generic-array v0.14.7 (available: v0.14.9)\n      Adding midnight-base-crypto v1.0.0 (available: v1.0.2)\n      Adding midnight-circuits v6.0.0 (available: v6.3.0)\n      Adding midnight-coin-structure v2.0.1 (available: v2.0.2)\n      Adding midnight-curves v0.2.0 (available: v0.2.1)\n      Adding midnight-ledger v8.0.3 (available: v8.1.2)\n      Adding midnight-onchain-runtime v3.0.0 (available: v3.1.2)\n      Adding midnight-onchain-state v3.0.0 (available: v3.0.2)\n      Adding midnight-onchain-vm v3.0.0 (available: v3.1.2)\n      Adding midnight-proofs v0.7.0 (available: v0.7.3)\n      Adding midnight-serialize v1.0.0 (available: v1.1.1)\n      Adding midnight-storage v2.0.1 (available: v2.0.3)\n      Adding midnight-storage-core v1.1.0 (available: v1.2.1)\n      Adding midnight-transient-crypto v2.0.1 (available: v2.1.1)\n      Adding midnight-zk-stdlib v1.0.0 (available: v1.3.0)\n      Adding midnight-zswap v8.0.3 (available: v8.1.3)\n      Adding rand v0.8.6 (available: v0.8.8)\n      Adding sha3 v0.10.8 (available: v0.10.9)\n    Checking compact-contract-unit-composition-chunked v0.1.0 (/var/folders/55/p48skc9j45b2s3301cv1_6tw0000gn/T/compact-positive-scope-_1f_pcyo/rust/contract)\n    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.51s\n",
+        "stdout": ""
+      },
+      "expected_ts": "success",
+      "generated_cargo_lock_sha256": "b6b54ca6f39ae716be81e746d5751b357d692d2e234c7489bcbd698febe60379",
+      "generated_rust_sha256": "fab9d0ce1df78ced2e42155d7c693b029d63d6901b0aec12fb5771ae3f6889a5",
+      "proof_circuits": [
+        {
+          "name": "close",
+          "proof": true,
+          "pure": false
+        },
+        {
+          "name": "maybeClose",
+          "proof": true,
+          "pure": false
+        }
+      ],
+      "rust_capabilities": [
+        {
+          "name": "close",
+          "proof_required": true,
+          "recording_status": "available"
+        },
+        {
+          "name": "maybeClose",
+          "proof_required": true,
+          "recording_status": "available"
+        }
+      ],
+      "rust_capability_schema": 3,
+      "rust_compile": "success",
+      "rust_fixture": "tests-rust-backend/unit-composition-chunked/lib.rs",
+      "rust_fixture_match": true,
+      "rust_fixture_sha256": "34f4ec957ea082475b87ce86cf3601320d4df852549c5b175fe89743198ff998",
+      "source": "examples/rust_backend/unit_composition_chunked.compact",
+      "source_sha256": "2717d15d195aada7631e5ced336310d9ef702837a1b3100bd13ff2bc5525b543",
+      "ts_compile": "success"
+    },
+    {
+      "cargo_check": {
+        "command": [
+          "cargo",
+          "+1.99.0",
+          "check",
+          "--offline",
+          "--manifest-path",
+          "/var/folders/55/p48skc9j45b2s3301cv1_6tw0000gn/T/compact-positive-scope-5tcg8edm/rust/contract/Cargo.toml"
+        ],
+        "exit_code": 0,
+        "stderr": "     Locking 324 packages to highest Rust 1.88 compatible versions\n      Adding generic-array v0.14.7 (available: v0.14.9)\n      Adding midnight-base-crypto v1.0.0 (available: v1.0.2)\n      Adding midnight-circuits v6.0.0 (available: v6.3.0)\n      Adding midnight-coin-structure v2.0.1 (available: v2.0.2)\n      Adding midnight-curves v0.2.0 (available: v0.2.1)\n      Adding midnight-ledger v8.0.3 (available: v8.1.2)\n      Adding midnight-onchain-runtime v3.0.0 (available: v3.1.2)\n      Adding midnight-onchain-state v3.0.0 (available: v3.0.2)\n      Adding midnight-onchain-vm v3.0.0 (available: v3.1.2)\n      Adding midnight-proofs v0.7.0 (available: v0.7.3)\n      Adding midnight-serialize v1.0.0 (available: v1.1.1)\n      Adding midnight-storage v2.0.1 (available: v2.0.3)\n      Adding midnight-storage-core v1.1.0 (available: v1.2.1)\n      Adding midnight-transient-crypto v2.0.1 (available: v2.1.1)\n      Adding midnight-zk-stdlib v1.0.0 (available: v1.3.0)\n      Adding midnight-zswap v8.0.3 (available: v8.1.3)\n      Adding rand v0.8.6 (available: v0.8.8)\n      Adding sha3 v0.10.8 (available: v0.10.9)\n    Checking compact-contract-unit-composition-crypto v0.1.0 (/var/folders/55/p48skc9j45b2s3301cv1_6tw0000gn/T/compact-positive-scope-5tcg8edm/rust/contract)\n    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.55s\n",
+        "stdout": ""
+      },
+      "expected_ts": "success",
+      "generated_cargo_lock_sha256": "8cc068df3b5bfe74643fdf3ec0c02f70c721cc8468f8ea13b5ec145657423eaf",
+      "generated_rust_sha256": "7c1fee92c75cc108a9ededd9eeb995c72eefa94daa3d974d16012b5e79d29186",
+      "proof_circuits": [
+        {
+          "name": "close",
+          "proof": true,
+          "pure": false
+        },
+        {
+          "name": "verifyOnly",
+          "proof": true,
+          "pure": false
+        }
+      ],
+      "rust_capabilities": [
+        {
+          "name": "close",
+          "proof_required": true,
+          "recording_status": "available"
+        },
+        {
+          "name": "verifyOnly",
+          "proof_required": true,
+          "recording_status": "available"
+        }
+      ],
+      "rust_capability_schema": 3,
+      "rust_compile": "success",
+      "rust_fixture": "tests-rust-backend/unit-composition-crypto/lib.rs",
+      "rust_fixture_match": true,
+      "rust_fixture_sha256": "01423a4060315c683a52b70396829df1c8b42b9977235ced7fb6df9e4e1d8752",
+      "source": "examples/rust_backend/unit_composition_crypto.compact",
+      "source_sha256": "100a7153e8de09860c8d9eac1075e27a1727d3239e10d57ac5005fb63b5985eb",
+      "ts_compile": "success"
+    },
+    {
+      "cargo_check": {
+        "command": [
+          "cargo",
+          "+1.99.0",
+          "check",
+          "--offline",
+          "--manifest-path",
+          "/var/folders/55/p48skc9j45b2s3301cv1_6tw0000gn/T/compact-positive-scope-fm6d1sap/rust/contract/Cargo.toml"
+        ],
+        "exit_code": 0,
+        "stderr": "     Locking 324 packages to highest Rust 1.88 compatible versions\n      Adding generic-array v0.14.7 (available: v0.14.9)\n      Adding midnight-base-crypto v1.0.0 (available: v1.0.2)\n      Adding midnight-circuits v6.0.0 (available: v6.3.0)\n      Adding midnight-coin-structure v2.0.1 (available: v2.0.2)\n      Adding midnight-curves v0.2.0 (available: v0.2.1)\n      Adding midnight-ledger v8.0.3 (available: v8.1.2)\n      Adding midnight-onchain-runtime v3.0.0 (available: v3.1.2)\n      Adding midnight-onchain-state v3.0.0 (available: v3.0.2)\n      Adding midnight-onchain-vm v3.0.0 (available: v3.1.2)\n      Adding midnight-proofs v0.7.0 (available: v0.7.3)\n      Adding midnight-serialize v1.0.0 (available: v1.1.1)\n      Adding midnight-storage v2.0.1 (available: v2.0.3)\n      Adding midnight-storage-core v1.1.0 (available: v1.2.1)\n      Adding midnight-transient-crypto v2.0.1 (available: v2.1.1)\n      Adding midnight-zk-stdlib v1.0.0 (available: v1.3.0)\n      Adding midnight-zswap v8.0.3 (available: v8.1.3)\n      Adding rand v0.8.6 (available: v0.8.8)\n      Adding sha3 v0.10.8 (available: v0.10.9)\n    Checking compact-contract-did v0.1.0 (/var/folders/55/p48skc9j45b2s3301cv1_6tw0000gn/T/compact-positive-scope-fm6d1sap/rust/contract)\n    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.82s\n",
+        "stdout": ""
+      },
+      "expected_ts": "success",
+      "generated_cargo_lock_sha256": "3c350d47b3720194f121a4a7a6cab0e3416f5815f13c2860147e4612531a3d61",
+      "generated_rust_sha256": "38a9ebfb6341c06349bd3c53cef23c20ba4e4eb87e14f074f68159122729dbcc",
+      "proof_circuits": [
+        {
+          "name": "controllerAuthorizationDigest",
+          "proof": false,
+          "pure": true
+        },
+        {
+          "name": "rotateControllerKeyAuthorizationDigest",
+          "proof": false,
+          "pure": true
+        },
+        {
+          "name": "recoverControllerKeyAuthorizationDigest",
+          "proof": false,
+          "pure": true
+        },
+        {
+          "name": "setAlsoKnownAsAuthorizationDigest",
+          "proof": false,
+          "pure": true
+        },
+        {
+          "name": "setVerificationMethodAuthorizationDigest",
+          "proof": false,
+          "pure": true
+        },
+        {
+          "name": "removeVerificationMethodAuthorizationDigest",
+          "proof": false,
+          "pure": true
+        },
+        {
+          "name": "setSchnorrJubjubVerificationMethodAuthorizationDigest",
+          "proof": false,
+          "pure": true
+        },
+        {
+          "name": "removeSchnorrJubjubVerificationMethodAuthorizationDigest",
+          "proof": false,
+          "pure": true
+        },
+        {
+          "name": "setVerificationMethodRelationAuthorizationDigest",
+          "proof": false,
+          "pure": true
+        },
+        {
+          "name": "setServiceAuthorizationDigest",
+          "proof": false,
+          "pure": true
+        },
+        {
+          "name": "removeServiceAuthorizationDigest",
+          "proof": false,
+          "pure": true
+        },
+        {
+          "name": "deactivateAuthorizationDigest",
+          "proof": false,
+          "pure": true
+        },
+        {
+          "name": "rotateControllerKey",
+          "proof": true,
+          "pure": false
+        },
+        {
+          "name": "recoverControllerKey",
+          "proof": true,
+          "pure": false
+        },
+        {
+          "name": "setAlsoKnownAs",
+          "proof": true,
+          "pure": false
+        },
+        {
+          "name": "setVerificationMethod",
+          "proof": true,
+          "pure": false
+        },
+        {
+          "name": "removeVerificationMethod",
+          "proof": true,
+          "pure": false
+        },
+        {
+          "name": "setSchnorrJubjubVerificationMethod",
+          "proof": true,
+          "pure": false
+        },
+        {
+          "name": "removeSchnorrJubjubVerificationMethod",
+          "proof": true,
+          "pure": false
+        },
+        {
+          "name": "verifySchnorrJubjubDigestSignature",
+          "proof": true,
+          "pure": false
+        },
+        {
+          "name": "setVerificationMethodRelation",
+          "proof": true,
+          "pure": false
+        },
+        {
+          "name": "setService",
+          "proof": true,
+          "pure": false
+        },
+        {
+          "name": "removeService",
+          "proof": true,
+          "pure": false
+        },
+        {
+          "name": "deactivate",
+          "proof": true,
+          "pure": false
+        }
+      ],
+      "rust_capabilities": [
+        {
+          "name": "rotateControllerKey",
+          "proof_required": true,
+          "recording_status": "available"
+        },
+        {
+          "name": "recoverControllerKey",
+          "proof_required": true,
+          "recording_status": "available"
+        },
+        {
+          "name": "setAlsoKnownAs",
+          "proof_required": true,
+          "recording_status": "available"
+        },
+        {
+          "name": "setVerificationMethod",
+          "proof_required": true,
+          "recording_status": "available"
+        },
+        {
+          "name": "removeVerificationMethod",
+          "proof_required": true,
+          "recording_status": "available"
+        },
+        {
+          "name": "setSchnorrJubjubVerificationMethod",
+          "proof_required": true,
+          "recording_status": "available"
+        },
+        {
+          "name": "removeSchnorrJubjubVerificationMethod",
+          "proof_required": true,
+          "recording_status": "available"
+        },
+        {
+          "name": "verifySchnorrJubjubDigestSignature",
+          "proof_required": true,
+          "recording_status": "available"
+        },
+        {
+          "name": "setVerificationMethodRelation",
+          "proof_required": true,
+          "recording_status": "available"
+        },
+        {
+          "name": "setService",
+          "proof_required": true,
+          "recording_status": "available"
+        },
+        {
+          "name": "removeService",
+          "proof_required": true,
+          "recording_status": "available"
+        },
+        {
+          "name": "deactivate",
+          "proof_required": true,
+          "recording_status": "available"
+        }
+      ],
+      "rust_capability_schema": 3,
+      "rust_compile": "success",
+      "rust_fixture": "tests-rust-backend/did-adoption/lib.rs",
+      "rust_fixture_match": true,
+      "rust_fixture_sha256": "06c6ad6b1bc75c98eb81401e7385285fd5fb11cc88f4f89ea5ab61edb40d204c",
+      "source": "examples/rust_backend/did_adoption/packages/contract/src/did.compact",
+      "source_sha256": "632f34af543924edb185fe9c8eda54aa4ca0503b0b9e8ee3ff06ec470f6d7456",
+      "ts_compile": "success"
+    },
+    {
+      "cargo_check": {
+        "command": [
+          "cargo",
+          "+1.99.0",
+          "check",
+          "--offline",
+          "--manifest-path",
+          "/var/folders/55/p48skc9j45b2s3301cv1_6tw0000gn/T/compact-positive-scope-l5773ew7/rust/contract/Cargo.toml"
+        ],
+        "exit_code": 0,
+        "stderr": "     Locking 324 packages to highest Rust 1.88 compatible versions\n      Adding generic-array v0.14.7 (available: v0.14.9)\n      Adding midnight-base-crypto v1.0.0 (available: v1.0.2)\n      Adding midnight-circuits v6.0.0 (available: v6.3.0)\n      Adding midnight-coin-structure v2.0.1 (available: v2.0.2)\n      Adding midnight-curves v0.2.0 (available: v0.2.1)\n      Adding midnight-ledger v8.0.3 (available: v8.1.2)\n      Adding midnight-onchain-runtime v3.0.0 (available: v3.1.2)\n      Adding midnight-onchain-state v3.0.0 (available: v3.0.2)\n      Adding midnight-onchain-vm v3.0.0 (available: v3.1.2)\n      Adding midnight-proofs v0.7.0 (available: v0.7.3)\n      Adding midnight-serialize v1.0.0 (available: v1.1.1)\n      Adding midnight-storage v2.0.1 (available: v2.0.3)\n      Adding midnight-storage-core v1.1.0 (available: v1.2.1)\n      Adding midnight-transient-crypto v2.0.1 (available: v2.1.1)\n      Adding midnight-zk-stdlib v1.0.0 (available: v1.3.0)\n      Adding midnight-zswap v8.0.3 (available: v8.1.3)\n      Adding rand v0.8.6 (available: v0.8.8)\n      Adding sha3 v0.10.8 (available: v0.10.9)\n    Checking compact-contract-repeated-unit-helper v0.1.0 (/var/folders/55/p48skc9j45b2s3301cv1_6tw0000gn/T/compact-positive-scope-l5773ew7/rust/contract)\n    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.51s\n",
+        "stdout": ""
+      },
+      "expected_ts": "success",
+      "generated_cargo_lock_sha256": "2bbfe9eb8b848b533352b375f58d2bbd12d9875f906c8dbd4711951b568cea0d",
+      "generated_rust_sha256": "90c7fdca29d1732fb5ac7b263669c6cb2adfe0792f03f6cd4785cb20df0109c7",
+      "proof_circuits": [
+        {
+          "name": "twice",
+          "proof": true,
+          "pure": false
+        }
+      ],
+      "rust_capabilities": [
+        {
+          "name": "twice",
+          "proof_required": true,
+          "recording_status": "available"
+        }
+      ],
+      "rust_capability_schema": 3,
+      "rust_compile": "success",
+      "rust_fixture": "tests-rust-backend/repeated-unit-helper/lib.rs",
+      "rust_fixture_match": true,
+      "rust_fixture_sha256": "67666007aef215d615c8d32601a55e320806180171bf9acef482ae744a30bb9a",
+      "source": "examples/rust_backend/repeated_unit_helper.compact",
+      "source_sha256": "3ef5076edf6d7d56164ec10531dc1eeb3db3306b896b9df090b602c4a0c98bfb",
+      "ts_compile": "success"
+    }
+  ],
+  "suite": "ADR0251 typed Unit composition",
+  "summary": {
+    "compiler_proof_false": 12,
+    "compiler_proof_true": 19,
+    "declared_pure_circuits": 14,
+    "expected_rejections": 0,
+    "positive_sources": 5,
+    "rust_positive_compiled": 5,
+    "rust_positive_rejected": 0,
+    "ts_positive_compiled": 5
+  }
+}

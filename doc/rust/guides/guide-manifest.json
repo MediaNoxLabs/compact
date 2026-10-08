@@ -1,0 +1,726 @@
+{
+  "format_version": 1,
+  "purpose": "Published developer guide collection; executable examples retain their recorded source and execution scopes.",
+  "source_note": "Vault-relative origins identify retained planning sources; archive member origins preserve historical provenance.",
+  "omitted": [
+    "Current edition/draft.py",
+    "Current edition/artifact-manifest.json (mutable pre-relocation manifest)",
+    "generated SDK/build output; binaries; targets; proof material"
+  ],
+  "historical_reference_manifest": "../evidence/0.3.0/tutorials-adr0324/reference-manifest.json",
+  "files": [
+    {
+      "destination": "VALIDATION.md",
+      "sha256": "cad7d51a0251d2f22cc964da16653ebe17d3c4cb07166bd735813bff7bff5cb2",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Current edition/VALIDATION.md",
+      "source_sha256": "fe1e52bec18ae11f5b788d8fd372c3d5ce11347c142966008bdad646ff864d66",
+      "transformation": "Prose/navigation relocation and explicit historical evidence-scope clarification; executable code fences unchanged.",
+      "execution": "No new execution; historical receipts retain their original qualification.",
+      "editorial_provenance": {
+        "source": "midnight/Milestone 0.3.0/Research/Guide editorial publication wording — 551f065c/exact-replacements.json",
+        "source_sha256": "f8bc1740c6e792b316362bfe12266b15e6c6a6cf962cbb7f537c462e40c83f93",
+        "replacement_ids": [
+          "editorial-08"
+        ]
+      }
+    },
+    {
+      "destination": "did.md",
+      "sha256": "13f9b5b30555b8e36352a3c058ec72a9e55d69ca9d16c6dc14f8d00e976c40b7",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Current edition/did.md",
+      "source_sha256": "a55d3b9ef18cd7721ee05bdfbdcf22a7bd1238ad4b7ff4f9c17fbe853253d94d",
+      "transformation": "Prose/navigation relocation and explicit historical evidence-scope clarification; executable code fences unchanged.",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/did-lifecycle/Cargo.toml",
+      "sha256": "1ed09bfd625d3632c2362455ec2e88ae217852e326e90b5675fb910d7b7793fd",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Current edition/examples/did-lifecycle/Cargo.toml",
+      "source_sha256": "1ed09bfd625d3632c2362455ec2e88ae217852e326e90b5675fb910d7b7793fd",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/did-lifecycle/data/unit-composition.json",
+      "sha256": "efdad2518994cd41fad6266425224e3d052571cd80296c3c001dfd9ea43735ff",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Current edition/examples/did-lifecycle/data/unit-composition.json",
+      "source_sha256": "efdad2518994cd41fad6266425224e3d052571cd80296c3c001dfd9ea43735ff",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/did-lifecycle/source/packages/contract/src/did.compact",
+      "sha256": "632f34af543924edb185fe9c8eda54aa4ca0503b0b9e8ee3ff06ec470f6d7456",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Current edition/examples/did-lifecycle/source/packages/contract/src/did.compact",
+      "source_sha256": "632f34af543924edb185fe9c8eda54aa4ca0503b0b9e8ee3ff06ec470f6d7456",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/did-lifecycle/source/packages/jubjub-schnorr/src/schnorr.compact",
+      "sha256": "f072731d730d72f8b76b183df2c5187b233a0838d9462894cfb0a6d2f0f66bff",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Current edition/examples/did-lifecycle/source/packages/jubjub-schnorr/src/schnorr.compact",
+      "source_sha256": "f072731d730d72f8b76b183df2c5187b233a0838d9462894cfb0a6d2f0f66bff",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/did-lifecycle/source/source-manifest.json",
+      "sha256": "a5386c2d3cc8d2f3aa090599a6038efc638f36f20ede19a7067a1ba416610106",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Current edition/examples/did-lifecycle/source/source-manifest.json",
+      "source_sha256": "a5386c2d3cc8d2f3aa090599a6038efc638f36f20ede19a7067a1ba416610106",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/did-lifecycle/support/codec.rs",
+      "sha256": "6bc99baf7a5cc6a1e6b8a93da6d29d5c4dda83184b80ea08efbb0d07c244fb44",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Current edition/examples/did-lifecycle/support/codec.rs",
+      "source_sha256": "6bc99baf7a5cc6a1e6b8a93da6d29d5c4dda83184b80ea08efbb0d07c244fb44",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/did-lifecycle/support/lifecycle_witness.rs",
+      "sha256": "9e877e2e38210a5a97b94a7ace909c9fa324988c3a03998836a1f51d15d5a227",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Current edition/examples/did-lifecycle/support/lifecycle_witness.rs",
+      "source_sha256": "9e877e2e38210a5a97b94a7ace909c9fa324988c3a03998836a1f51d15d5a227",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/did-lifecycle/support/witness.rs",
+      "sha256": "25c0788e8190edbfc8541fe12b971d927a0d8d8d7c97cd6b038088ff3a1c3297",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Current edition/examples/did-lifecycle/support/witness.rs",
+      "source_sha256": "25c0788e8190edbfc8541fe12b971d927a0d8d8d7c97cd6b038088ff3a1c3297",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/did-lifecycle/tests/lifecycle.rs",
+      "sha256": "a3811662acaa49e11e6b96a5ad14e5b021e44043300c1404d94313ec35fe899d",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Current edition/examples/did-lifecycle/tests/lifecycle.rs",
+      "source_sha256": "a3811662acaa49e11e6b96a5ad14e5b021e44043300c1404d94313ec35fe899d",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/witnessed-cell/Cargo.toml",
+      "sha256": "05b27d8d66922c6f76e9c3ccd4b3b0b2097e026386939715014aad70133860f1",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Current edition/examples/witnessed-cell/Cargo.toml",
+      "source_sha256": "05b27d8d66922c6f76e9c3ccd4b3b0b2097e026386939715014aad70133860f1",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/witnessed-cell/tests/witnessed.rs",
+      "sha256": "3c9339a521cc2ce72b1892a68529d91b97452b7b554cc6a67073da03b475404b",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Current edition/examples/witnessed-cell/tests/witnessed.rs",
+      "source_sha256": "3c9339a521cc2ce72b1892a68529d91b97452b7b554cc6a67073da03b475404b",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/witnessed-cell/witnesses_oracle.compact",
+      "sha256": "61b24d39ae57d4ae1c05311d19af9a2e8f094d7f86062e54c89fe3a6eb6ba227",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Current edition/examples/witnessed-cell/witnesses_oracle.compact",
+      "source_sha256": "61b24d39ae57d4ae1c05311d19af9a2e8f094d7f86062e54c89fe3a6eb6ba227",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "feature-source-policy.json",
+      "sha256": "c9491c30fab726cd03fe22389e6a2c12ea678230e079123481392f861d2646f9",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Current edition/feature-source-policy.json",
+      "source_sha256": "c9491c30fab726cd03fe22389e6a2c12ea678230e079123481392f861d2646f9",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "index.md",
+      "sha256": "52562c2db8b77216e964832c67ecb97491c723d2d9d9b6e36b24e12cea173802",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Current edition/index.md",
+      "source_sha256": "388f5d2d863c5f294190c941dab1375bb9c7455935a95322b768bb17c695fb33",
+      "transformation": "Authoritative vault prose and prior stage supplements preserved; add explicit current-candidate status navigation. Executable fences unchanged.",
+      "execution": "No new execution; historical receipts retain their original qualification.",
+      "editorial_provenance": {
+        "source": "midnight/Milestone 0.3.0/Research/Guide editorial publication wording — 551f065c/exact-replacements.json",
+        "source_sha256": "f8bc1740c6e792b316362bfe12266b15e6c6a6cf962cbb7f537c462e40c83f93",
+        "replacement_ids": [
+          "editorial-17",
+          "editorial-18"
+        ]
+      }
+    },
+    {
+      "destination": "local-proof-tests.md",
+      "sha256": "c2ae3af2c41c404889765204e37ea382e3b513548edd2f57fcb6a139578fc556",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Current edition/local-proof-tests.md",
+      "source_sha256": "052e2a4ae0320cffc5ce452346110036c041ac2e5e0c4d64a34ff41cbbf75b44",
+      "transformation": "Authoritative vault prose with clearly dated staging qualification/navigation supplement; executable fences unchanged.",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "prepare-sdk.py",
+      "sha256": "8eedfe4f531bc97171e0c64ee8bcd56b19447a3f6247d2f476d656b27873ff6a",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Current edition/prepare-sdk.py",
+      "source_sha256": "8eedfe4f531bc97171e0c64ee8bcd56b19447a3f6247d2f476d656b27873ff6a",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "proof-integration.md",
+      "sha256": "5fee93ccdbc98da2beaff2f7e98701e2d59201f5f40f031700e0db89ec1d7efe",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Current edition/proof-integration.md",
+      "source_sha256": "d35e1c3121d92bc00ff3ce7003b54785d01eddd8f5bffa92f85abe590912d665",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification.",
+      "editorial_provenance": {
+        "source": "midnight/Milestone 0.3.0/Research/Guide editorial publication wording — 551f065c/exact-replacements.json",
+        "source_sha256": "f8bc1740c6e792b316362bfe12266b15e6c6a6cf962cbb7f537c462e40c83f93",
+        "replacement_ids": [
+          "editorial-20",
+          "editorial-21"
+        ]
+      }
+    },
+    {
+      "destination": "snippet-matrix.md",
+      "sha256": "4a30b4729d63c25cc94c2214bc584207857c50d1b20738db759e699224fa8d32",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Current edition/snippet-matrix.md",
+      "source_sha256": "de7506a499bdf8d2967d91d950ba7a2ef932f3229a96f67d2387049a7600b776",
+      "transformation": "Prose/navigation relocation and explicit historical evidence-scope clarification; executable code fences unchanged.",
+      "execution": "No new execution; historical receipts retain their original qualification.",
+      "editorial_provenance": {
+        "source": "midnight/Milestone 0.3.0/Research/Guide editorial publication wording — 551f065c/exact-replacements.json",
+        "source_sha256": "f8bc1740c6e792b316362bfe12266b15e6c6a6cf962cbb7f537c462e40c83f93",
+        "replacement_ids": [
+          "editorial-22",
+          "editorial-23",
+          "editorial-24",
+          "editorial-25"
+        ]
+      }
+    },
+    {
+      "destination": "testing-witnesses.md",
+      "sha256": "618c49e2e180abf22f43c144b8ab28d85e68601196e70e5f20a24fbe4db3e77e",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Current edition/testing-witnesses.md",
+      "source_sha256": "618c49e2e180abf22f43c144b8ab28d85e68601196e70e5f20a24fbe4db3e77e",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification.",
+      "editorial_provenance": {
+        "source": "midnight/Milestone 0.3.0/Research/Guide editorial publication wording — 551f065c/exact-replacements.json",
+        "source_sha256": "f8bc1740c6e792b316362bfe12266b15e6c6a6cf962cbb7f537c462e40c83f93",
+        "replacement_ids": [
+          "editorial-28"
+        ]
+      }
+    },
+    {
+      "destination": "troubleshooting.md",
+      "sha256": "34ea503681cbdc34076270721c9681be183cee5c5871b5a49026259f80508be9",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Current edition/troubleshooting.md",
+      "source_sha256": "34ea503681cbdc34076270721c9681be183cee5c5871b5a49026259f80508be9",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification.",
+      "editorial_provenance": {
+        "source": "midnight/Milestone 0.3.0/Research/Guide editorial publication wording — 551f065c/exact-replacements.json",
+        "source_sha256": "f8bc1740c6e792b316362bfe12266b15e6c6a6cf962cbb7f537c462e40c83f93",
+        "replacement_ids": [
+          "editorial-29"
+        ]
+      }
+    },
+    {
+      "destination": "versions-and-targets.md",
+      "sha256": "959f6f824efedfcd1aacd0d9356ef8036b05c3d3804bc5a64eac0d14807864cd",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Current edition/versions-and-targets.md",
+      "source_sha256": "25bcf3a7a52616871a5b3735f048b1d03d7ea553e0ef51fc65c1768247bb8c5e",
+      "transformation": "Authoritative vault prose and prior stage supplements preserved; add explicit current-candidate status navigation. Executable fences unchanged.",
+      "execution": "No new execution; historical receipts retain their original qualification.",
+      "editorial_provenance": {
+        "source": "midnight/Milestone 0.3.0/Research/Guide editorial publication wording — 551f065c/exact-replacements.json",
+        "source_sha256": "f8bc1740c6e792b316362bfe12266b15e6c6a6cf962cbb7f537c462e40c83f93",
+        "replacement_ids": [
+          "editorial-32",
+          "editorial-33",
+          "editorial-34",
+          "editorial-35",
+          "editorial-36",
+          "editorial-37"
+        ]
+      }
+    },
+    {
+      "destination": "passport.md",
+      "sha256": "a294d4c823591cc080a6ebb58d34d346555d136060e86d11bfe1a79c5b9141b3",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Digital passport pure API walkthrough.md",
+      "source_sha256": "9c1a13f69d6989a0abed0c3a9028e291dbb5510c3161424716e0faed7651090e",
+      "transformation": "Prose/navigation relocation and explicit historical evidence-scope clarification; executable code fences unchanged.",
+      "execution": "No new execution; historical receipts retain their original qualification.",
+      "editorial_provenance": {
+        "source": "midnight/Milestone 0.3.0/Research/Guide editorial publication wording — 551f065c/exact-replacements.json",
+        "source_sha256": "f8bc1740c6e792b316362bfe12266b15e6c6a6cf962cbb7f537c462e40c83f93",
+        "replacement_ids": [
+          "editorial-19"
+        ]
+      }
+    },
+    {
+      "destination": "capabilities.md",
+      "sha256": "7e1735b28f8424e5b3c08b30e303b47f54c54b1fc974d78ed67f7fe5f7e23761",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Reading Rust capability reports.md",
+      "source_sha256": "0ee1aeee131b00af955aa775efecd29d8e126d650d0c4699943f87f796f848cf",
+      "transformation": "Prose/navigation relocation and explicit historical evidence-scope clarification; executable code fences unchanged.",
+      "execution": "No new execution; historical receipts retain their original qualification.",
+      "editorial_provenance": {
+        "source": "midnight/Milestone 0.3.0/Research/Guide editorial publication wording — 551f065c/exact-replacements.json",
+        "source_sha256": "f8bc1740c6e792b316362bfe12266b15e6c6a6cf962cbb7f537c462e40c83f93",
+        "replacement_ids": [
+          "editorial-13"
+        ]
+      }
+    },
+    {
+      "destination": "ownership.md",
+      "sha256": "6a5e4072dd61b544de3fdef92e41fa755ef7982480780caf8b1c3b4ab76047f9",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Runtime and compiler ownership map.md",
+      "source_sha256": "9e1c2b62c24253c1436ed2268ba6d3b26d7da6e967856bf9bf1301e59041f3a2",
+      "transformation": "Prose/navigation relocation and explicit historical evidence-scope clarification; executable code fences unchanged.",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "static-constraints.md",
+      "sha256": "822516965d3c7f5574ff500c113a3af66d1aa6eb69f3729b498598806c9ee587",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Static constraints and migration evidence.md",
+      "source_sha256": "486d47600b5bc2c8162584bc8e6322f4f27bbb20394f061a442d8a8a846d342e",
+      "transformation": "Prose/navigation relocation and explicit historical evidence-scope clarification; executable code fences unchanged.",
+      "execution": "No new execution; historical receipts retain their original qualification.",
+      "editorial_provenance": {
+        "source": "midnight/Milestone 0.3.0/Research/Guide editorial publication wording — 551f065c/exact-replacements.json",
+        "source_sha256": "f8bc1740c6e792b316362bfe12266b15e6c6a6cf962cbb7f537c462e40c83f93",
+        "replacement_ids": [
+          "editorial-26",
+          "editorial-27"
+        ]
+      }
+    },
+    {
+      "destination": "version-selection.md",
+      "sha256": "f7e4e4eb977a4ff5f35bff68876d4d2840963c6eb2280934406584452ab166e2",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Version and runtime selection.md",
+      "source_sha256": "7393df3839745b82a64f68d4022387be6a5c6917ff2ec52954ce99847b6eafc6",
+      "transformation": "Prose/navigation relocation and explicit historical evidence-scope clarification; executable code fences unchanged.",
+      "execution": "No new execution; historical receipts retain their original qualification.",
+      "editorial_provenance": {
+        "source": "midnight/Milestone 0.3.0/Research/Guide editorial publication wording — 551f065c/exact-replacements.json",
+        "source_sha256": "f8bc1740c6e792b316362bfe12266b15e6c6a6cf962cbb7f537c462e40c83f93",
+        "replacement_ids": [
+          "editorial-30",
+          "editorial-31"
+        ]
+      }
+    },
+    {
+      "destination": "contract-lab.md",
+      "sha256": "ee940204e062fe503daa77abc3a2c738aeb4e6d7c6676c33a2af884b2eba2b4e",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Testing generated contracts with ContractLab.md",
+      "source_sha256": "e34585da3e34e17ee0e9eaad7e785c0605d9042acdcc033ef2a1c4395dc5d36e",
+      "transformation": "Prose/navigation relocation and explicit historical evidence-scope clarification; executable code fences unchanged.",
+      "execution": "No new execution; historical receipts retain their original qualification.",
+      "editorial_provenance": {
+        "source": "midnight/Milestone 0.3.0/Research/Guide editorial publication wording — 551f065c/exact-replacements.json",
+        "source_sha256": "f8bc1740c6e792b316362bfe12266b15e6c6a6cf962cbb7f537c462e40c83f93",
+        "replacement_ids": [
+          "editorial-14"
+        ]
+      }
+    },
+    {
+      "destination": "glossary.md",
+      "sha256": "208007a0e891b113caf747e145433a3ee27ce827e97b9633c207f416b2fd4358",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Rust backend and ContractLab glossary.md",
+      "source_sha256": "84d0637e8e9199a5be4849d6b29fec02428e41eabc42f594436a83acbe1b3fc7",
+      "transformation": "Prose/navigation relocation and explicit historical evidence-scope clarification; executable code fences unchanged.",
+      "execution": "No new execution; historical receipts retain their original qualification.",
+      "editorial_provenance": {
+        "source": "midnight/Milestone 0.3.0/Research/Guide editorial publication wording — 551f065c/exact-replacements.json",
+        "source_sha256": "f8bc1740c6e792b316362bfe12266b15e6c6a6cf962cbb7f537c462e40c83f93",
+        "replacement_ids": [
+          "editorial-16"
+        ]
+      }
+    },
+    {
+      "destination": "did-service.md",
+      "sha256": "f888922be426a541902a0482521258f18e69dfab88d1137c6779e01efe5addc9",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Original DID Service developer guide.md",
+      "source_sha256": "26d8df47ad9e7cfa4248c7d07d351bcc88a62d30cc73a92bc94b24d32eda47e7",
+      "transformation": "Prose/navigation relocation and explicit historical evidence-scope clarification; executable code fences unchanged.",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "jubjub.md",
+      "sha256": "43dc58c549a72a5bf923a533d3055e05f18dcb7b225ae1d6b48b6b65aba1612c",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Jubjub values — Native calls recording and proof boundaries.md",
+      "source_sha256": "48e6f74a3a4ccbabc76f27bcded4a0312da09cfc9dca99ba6277e644be3da25b",
+      "transformation": "Prose/navigation relocation and explicit historical evidence-scope clarification; executable code fences unchanged.",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/passport/consumer/Cargo.lock",
+      "sha256": "bb7879e1feb5c65301b6bff24e386d9d30c1af864cabd0588e773a29b927be0a",
+      "source": "midnight/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip!/consumer/Cargo.lock",
+      "source_sha256": "bb7879e1feb5c65301b6bff24e386d9d30c1af864cabd0588e773a29b927be0a",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/passport/consumer/Cargo.toml",
+      "sha256": "90553daf96e1fde7504bdaf40dc283b3a9af7478943fae237e7ed9e995eaa4b8",
+      "source": "midnight/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip!/consumer/Cargo.toml",
+      "source_sha256": "90553daf96e1fde7504bdaf40dc283b3a9af7478943fae237e7ed9e995eaa4b8",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/passport/consumer/src/lib.rs",
+      "sha256": "d3dcbd5b2e5ed1946fa306217ea738f6841046320cb55211eb8a1a6e2628655e",
+      "source": "midnight/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip!/consumer/src/lib.rs",
+      "source_sha256": "d3dcbd5b2e5ed1946fa306217ea738f6841046320cb55211eb8a1a6e2628655e",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/passport/passport-source/core-compact-staging/credentials/composable.compact",
+      "sha256": "c7576fc307b8f3a598f133babdef062311316ca9e7a5067f892a39b0c66de6dc",
+      "source": "midnight/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip!/passport-source/core-compact-staging/credentials/composable.compact",
+      "source_sha256": "c7576fc307b8f3a598f133babdef062311316ca9e7a5067f892a39b0c66de6dc",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/passport/passport-source/core-compact-staging/credentials/holder-bindings.compact",
+      "sha256": "8d64be765219d7f308ccf876184f0a49e049a7a00df67aaba5ce02dbe7442cf1",
+      "source": "midnight/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip!/passport-source/core-compact-staging/credentials/holder-bindings.compact",
+      "source_sha256": "8d64be765219d7f308ccf876184f0a49e049a7a00df67aaba5ce02dbe7442cf1",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/passport/passport-source/core-compact-staging/credentials/proofs.compact",
+      "sha256": "df90f4633409da7431ead431fe42f14100122e069a78eedfe73c921fb1e65b24",
+      "source": "midnight/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip!/passport-source/core-compact-staging/credentials/proofs.compact",
+      "source_sha256": "df90f4633409da7431ead431fe42f14100122e069a78eedfe73c921fb1e65b24",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/passport/passport-source/core-compact-staging/credentials/relations.compact",
+      "sha256": "d106bc1f425915f5a868f500c9607178736e5a98d2d956ee10b00549db2f69d3",
+      "source": "midnight/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip!/passport-source/core-compact-staging/credentials/relations.compact",
+      "source_sha256": "d106bc1f425915f5a868f500c9607178736e5a98d2d956ee10b00549db2f69d3",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/passport/passport-source/core-compact-staging/credentials/signer-authorization.compact",
+      "sha256": "457ba74ec082ae8acc1fb41d8ec30f955c25732e702b18a4f4eb985790509186",
+      "source": "midnight/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip!/passport-source/core-compact-staging/credentials/signer-authorization.compact",
+      "source_sha256": "457ba74ec082ae8acc1fb41d8ec30f955c25732e702b18a4f4eb985790509186",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/passport/passport-source/core-compact-staging/credentials/status-bindings.compact",
+      "sha256": "8ba11457beae1e635cf4c0d869c7969d48b3263b4b152631ebe04beaf2b8b216",
+      "source": "midnight/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip!/passport-source/core-compact-staging/credentials/status-bindings.compact",
+      "source_sha256": "8ba11457beae1e635cf4c0d869c7969d48b3263b4b152631ebe04beaf2b8b216",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/passport/passport-source/core-compact-staging/credentials/types.compact",
+      "sha256": "170a1b40c87b4e98332cee708be60ae8ce40fa5d5299987cad572e931de7546d",
+      "source": "midnight/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip!/passport-source/core-compact-staging/credentials/types.compact",
+      "source_sha256": "170a1b40c87b4e98332cee708be60ae8ce40fa5d5299987cad572e931de7546d",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/passport/passport-source/core-compact-staging/credentials/vc.compact",
+      "sha256": "3355cabf7f488c22b19b4ed11f5064e9458e3187af68aa65017e9eb3902f13d7",
+      "source": "midnight/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip!/passport-source/core-compact-staging/credentials/vc.compact",
+      "source_sha256": "3355cabf7f488c22b19b4ed11f5064e9458e3187af68aa65017e9eb3902f13d7",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/passport/passport-source/core-compact-staging/credentials/vp.compact",
+      "sha256": "93cfb8626de9bb8458417636ad42f16e8915fc11bfb2c31f2524874a2ad3ea35",
+      "source": "midnight/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip!/passport-source/core-compact-staging/credentials/vp.compact",
+      "source_sha256": "93cfb8626de9bb8458417636ad42f16e8915fc11bfb2c31f2524874a2ad3ea35",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/passport/passport-source/core-compact-staging/credentials.compact",
+      "sha256": "d01f794ceb3654d020a49501bec871362883d7b64afe761ec6bcfcfa9ba9018c",
+      "source": "midnight/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip!/passport-source/core-compact-staging/credentials.compact",
+      "source_sha256": "d01f794ceb3654d020a49501bec871362883d7b64afe761ec6bcfcfa9ba9018c",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/passport/passport-source/source-manifest.json",
+      "sha256": "f122c9c890e841d50f2f2980df4229de584333a9eb6c9a4525794f8ce8a77f78",
+      "source": "midnight/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip!/passport-source/source-manifest.json",
+      "source_sha256": "f122c9c890e841d50f2f2980df4229de584333a9eb6c9a4525794f8ce8a77f78",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/passport/passport-source/src/digital-passport-credential/claims.compact",
+      "sha256": "bc461f2c2956b4bb96729853ff9e2e5ab7ab9a786043926ca1b091b637d0fae9",
+      "source": "midnight/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip!/passport-source/src/digital-passport-credential/claims.compact",
+      "source_sha256": "bc461f2c2956b4bb96729853ff9e2e5ab7ab9a786043926ca1b091b637d0fae9",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/passport/passport-source/src/digital-passport-credential/helpers.compact",
+      "sha256": "5490081332197fb98301267e19abe7e9829406d4bb14c711001e799f2205f450",
+      "source": "midnight/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip!/passport-source/src/digital-passport-credential/helpers.compact",
+      "source_sha256": "5490081332197fb98301267e19abe7e9829406d4bb14c711001e799f2205f450",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/passport/passport-source/src/digital-passport-credential/model.compact",
+      "sha256": "27f7f4b28ea2c707c7d1703eaa8a99e6721663db8d84d60414ee30368ffc84a0",
+      "source": "midnight/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip!/passport-source/src/digital-passport-credential/model.compact",
+      "source_sha256": "27f7f4b28ea2c707c7d1703eaa8a99e6721663db8d84d60414ee30368ffc84a0",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/passport/passport-source/src/digital-passport-credential/protocol-envelope.compact",
+      "sha256": "2463bea6ab295ca16ec2f2d96cb325bf7d6ce81796e29f92c45f68a8d1cb8314",
+      "source": "midnight/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip!/passport-source/src/digital-passport-credential/protocol-envelope.compact",
+      "source_sha256": "2463bea6ab295ca16ec2f2d96cb325bf7d6ce81796e29f92c45f68a8d1cb8314",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/passport/passport-source/src/digital-passport-credential/protocol-model.compact",
+      "sha256": "5a5ae2663eb983a96537162ee6af7b8f4ecb313cb218e8b87a54e733c73d0219",
+      "source": "midnight/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip!/passport-source/src/digital-passport-credential/protocol-model.compact",
+      "source_sha256": "5a5ae2663eb983a96537162ee6af7b8f4ecb313cb218e8b87a54e733c73d0219",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/passport/passport-source/src/digital-passport-credential/validation.compact",
+      "sha256": "849d79cf4b9538dd2eeabbea4341f88010d0f3f2496abad304df8f10fdc27fdb",
+      "source": "midnight/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip!/passport-source/src/digital-passport-credential/validation.compact",
+      "source_sha256": "849d79cf4b9538dd2eeabbea4341f88010d0f3f2496abad304df8f10fdc27fdb",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/passport/passport-source/src/digital-passport-credential.compact",
+      "sha256": "c2db910878fa3b8e86d2fd1be129401e42db9100ccfa3c229acb9b59b4241624",
+      "source": "midnight/Milestone 0.3.0/Evidence/Passport developer guide external consumer.zip!/passport-source/src/digital-passport-credential.compact",
+      "source_sha256": "c2db910878fa3b8e86d2fd1be129401e42db9100ccfa3c229acb9b59b4241624",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/named-record/Cargo.lock",
+      "sha256": "c433f2d0b8bd703bf8f88776f82967686ddf232d4d47bc18bb0bda4d18a7c960",
+      "source": "midnight/Milestone 0.3.0/Evidence/R03002 — External named-input recipe.zip!/Cargo.lock",
+      "source_sha256": "c433f2d0b8bd703bf8f88776f82967686ddf232d4d47bc18bb0bda4d18a7c960",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/named-record/Cargo.toml",
+      "sha256": "27aee37a9462beea273288ef1b58507198fd98bd27766a97a9a20bf11934536e",
+      "source": "midnight/Milestone 0.3.0/Evidence/R03002 — External named-input recipe.zip!/Cargo.toml",
+      "source_sha256": "27aee37a9462beea273288ef1b58507198fd98bd27766a97a9a20bf11934536e",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/named-record/oracle/age-inputs.json",
+      "sha256": "f822c1ceecd4932685420a4ffaa91edfd4d0e746621c6183aa9e95fc261a7701",
+      "source": "midnight/Milestone 0.3.0/Evidence/R03002 — External named-input recipe.zip!/oracle/age-inputs.json",
+      "source_sha256": "f822c1ceecd4932685420a4ffaa91edfd4d0e746621c6183aa9e95fc261a7701",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/named-record/oracle/branch-age-capture.json",
+      "sha256": "a8cbe32cda7532adf325910214d7b2a4c91ca9da6a95a86946a5ddd32703ce10",
+      "source": "midnight/Milestone 0.3.0/Evidence/R03002 — External named-input recipe.zip!/oracle/branch-age-capture.json",
+      "source_sha256": "a8cbe32cda7532adf325910214d7b2a4c91ca9da6a95a86946a5ddd32703ce10",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/named-record/oracle/capture-age.mjs",
+      "sha256": "82ecf1fec829ec4c239925ca0cf269608249b0ea9b957ff3a0d209c0cffcf127",
+      "source": "midnight/Milestone 0.3.0/Evidence/R03002 — External named-input recipe.zip!/oracle/capture-age.mjs",
+      "source_sha256": "82ecf1fec829ec4c239925ca0cf269608249b0ea9b957ff3a0d209c0cffcf127",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/named-record/oracle/provenance.json",
+      "sha256": "e3518d61a5c9d8aced4c347a806bc42d39a4884208bd045cfa1db95e05eabb3a",
+      "source": "midnight/Milestone 0.3.0/Evidence/R03002 — External named-input recipe.zip!/oracle/provenance.json",
+      "source_sha256": "e3518d61a5c9d8aced4c347a806bc42d39a4884208bd045cfa1db95e05eabb3a",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/named-record/oracle/upstream-age-capture.json",
+      "sha256": "3d0b9650e228b6a2fff047b87b5e1a85e7a098adf43c5be0d83c666cba686909",
+      "source": "midnight/Milestone 0.3.0/Evidence/R03002 — External named-input recipe.zip!/oracle/upstream-age-capture.json",
+      "source_sha256": "3d0b9650e228b6a2fff047b87b5e1a85e7a098adf43c5be0d83c666cba686909",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/named-record/src/lib.rs",
+      "sha256": "482b5b8c7b8858a9e7a516c3ad3af57ecee4089d9927e059599743b16777a738",
+      "source": "midnight/Milestone 0.3.0/Evidence/R03002 — External named-input recipe.zip!/src/lib.rs",
+      "source_sha256": "482b5b8c7b8858a9e7a516c3ad3af57ecee4089d9927e059599743b16777a738",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/named-record/tests/age_predicate.rs",
+      "sha256": "b3066a04eb278f0ebcb980edaf3f5399c744629973e8747d7556410d718a8a0e",
+      "source": "midnight/Milestone 0.3.0/Evidence/R03002 — External named-input recipe.zip!/tests/age_predicate.rs",
+      "source_sha256": "b3066a04eb278f0ebcb980edaf3f5399c744629973e8747d7556410d718a8a0e",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "age_predicate_inputs.rs",
+      "sha256": "482b5b8c7b8858a9e7a516c3ad3af57ecee4089d9927e059599743b16777a738",
+      "source": "midnight/Milestone 0.3.0/Evidence/R03002 — External named-input recipe.zip!/src/lib.rs",
+      "source_sha256": "482b5b8c7b8858a9e7a516c3ad3af57ecee4089d9927e059599743b16777a738",
+      "transformation": "byte-identical copy",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/passport/README.md",
+      "sha256": "ea7d397c180d6ad78733d7d6f14f6647ede9507b0d591abd580895d182909482",
+      "source": null,
+      "source_sha256": null,
+      "transformation": "New staging/prerequisite prose; not an executed recipe",
+      "execution": "No new execution; historical receipts retain their original qualification."
+    },
+    {
+      "destination": "examples/named-record/README.md",
+      "sha256": "3ce2c14817aab8201d803796c4749ae7115813a7a88383434ccb308ddc9f8572",
+      "source": null,
+      "source_sha256": null,
+      "transformation": "New staging/prerequisite prose; not an executed recipe",
+      "execution": "No new execution; historical receipts retain their original qualification.",
+      "editorial_provenance": {
+        "source": "midnight/Milestone 0.3.0/Research/Guide editorial publication wording — 551f065c/exact-replacements.json",
+        "source_sha256": "f8bc1740c6e792b316362bfe12266b15e6c6a6cf962cbb7f537c462e40c83f93",
+        "replacement_ids": [
+          "editorial-15"
+        ]
+      }
+    },
+    {
+      "destination": "README.md",
+      "sha256": "2d9510e487c5487099959210aaa39866efce96c525005575b82eaee45a908b61",
+      "source": null,
+      "source_sha256": null,
+      "transformation": "Authoritative vault prose and prior stage supplements preserved; add explicit current-candidate status navigation. Executable fences unchanged.",
+      "execution": "No new execution; historical receipts retain their original qualification.",
+      "editorial_provenance": {
+        "source": "midnight/Milestone 0.3.0/Research/Guide editorial publication wording — 551f065c/exact-replacements.json",
+        "source_sha256": "f8bc1740c6e792b316362bfe12266b15e6c6a6cf962cbb7f537c462e40c83f93",
+        "replacement_ids": [
+          "editorial-03",
+          "editorial-04",
+          "editorial-05",
+          "editorial-06",
+          "editorial-07"
+        ]
+      }
+    },
+    {
+      "destination": "candidate-qualification.md",
+      "sha256": "22b235c41d1d45f9d23f6e48f2ee84d7657a40fb25ec5fd381b9a23327838e72",
+      "source": "midnight/Milestone 0.3.0/Developer guides/Current edition/candidate-qualification.md",
+      "source_sha256": "22b235c41d1d45f9d23f6e48f2ee84d7657a40fb25ec5fd381b9a23327838e72",
+      "transformation": "Current authoritative technical acceptance page, copied exactly; separate publication provenance.",
+      "execution": "Static provenance checks only; no builds/tests/proofs.",
+      "editorial_provenance": {
+        "source": "midnight/Milestone 0.3.0/Research/Guide editorial publication wording — 551f065c/exact-replacements.json",
+        "source_sha256": "f8bc1740c6e792b316362bfe12266b15e6c6a6cf962cbb7f537c462e40c83f93",
+        "replacement_ids": [
+          "editorial-09",
+          "editorial-10",
+          "editorial-11",
+          "editorial-12"
+        ]
+      }
+    }
+  ],
+  "unbundled_historical_note_titles": [
+    "ACC PR177 — Typed Jubjub recording delivery",
+    "ADR-0269 — Record opaque-string product Maps through shared typed composition",
+    "ADR-0274 — Preserve default worker stack in typed Map lowering",
+    "ADR-0276 — Prototype generated named argument facades",
+    "ADR-0278 — Record flat point-product Maps and Boolean membership helpers",
+    "ADR-0283 — Record nested JWK VerificationMethod Map CRUD",
+    "ADR-0308 — Record typed Jubjub value operations and a point Cell write",
+    "ADR0248 — ContractLab local receipt",
+    "ADR0250 — Passport codec and maintained suite receipt",
+    "ADR0255 — Original DID native lifecycle local receipt",
+    "ADR0258 — ContractLab Merkle local receipt",
+    "ADR0269 — Strict DID Service proof receipt",
+    "ADR0278 — 183-source renderer differential",
+    "ADR0278 — Point-product Map delivery receipt",
+    "ADR0278 — Strict DID Schnorr proof receipt",
+    "ADR0283 — 183-source renderer differential",
+    "ADR0283 — Local gate logs and interrupted attempt",
+    "ADR0283 — Nested JWK delivery receipt",
+    "ADR0283 — Pinned DID source and capture closure",
+    "ADR0283 — Strict DID JWK proof receipt",
+    "ADR0284 — Lexical scope and binding identity decision",
+    "ADR0285 resumed consumer qualification — 2026-10-08",
+    "ADR0286 — Checked Unit composition delivery",
+    "Code quality assessment",
+    "DID JWK delivery — 2026-10-07",
+    "DID Service delivery — 2026-10-07",
+    "DID and minimal-reproducer local acceptance — 2026-10-07",
+    "Delivery dashboard",
+    "Final candidate qualification — 57fab775",
+    "Joined relation and release delivery — 2026-10-07",
+    "Passport adoption acceptance — 2026-10-07",
+    "R030-01 representative checked-admission acceptance mapping",
+    "Typed consumer safety local acceptance — 2026-10-08"
+  ],
+  "source_aliases": {
+    "midnight/": "Obsidian vault midnight, directory Initiatives/02 Compact Rust emission/"
+  },
+  "refresh_source_head": "f9a496660a4a69f4dd7c7927111767ad5c0c12b2",
+  "staging_only_source_corrections": [],
+  "current_scope": "Technical qualification accepted via explicit unchanged prefix and repaired gates; publication does not extend evidence.",
+  "editorial_refresh": {
+    "source_sha256": "f8bc1740c6e792b316362bfe12266b15e6c6a6cf962cbb7f537c462e40c83f93",
+    "source": "midnight/Milestone 0.3.0/Research/Guide editorial publication wording — 551f065c/exact-replacements.json",
+    "scope": "Reviewed prose published; prior evidence and executable fences retained. Current technical qualification is recorded separately."
+  }
+}

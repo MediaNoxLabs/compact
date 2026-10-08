@@ -1,0 +1,7 @@
+{
+  "runtime-rs/src/ledger/program_path_tests.rs": "external cfg(test) module",
+  "runtime-rs/src/transaction/observation_tests.rs": "test-file name or tests subtree",
+  "runtime-rs/src/transaction/transient_tests.rs": "test-file name or tests subtree",
+  "runtime-rs/src/transaction/zswap_tests.rs": "test-file name or tests subtree",
+  "testkit-rs/src/proof_tests.rs": "test-file name or tests subtree"
+}

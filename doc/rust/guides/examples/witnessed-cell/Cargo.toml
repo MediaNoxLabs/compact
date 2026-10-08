@@ -1,0 +1,12 @@
+[workspace]
+[package]
+name = "compact-witnessed-cell-guide"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+publish = false
+
+[dependencies]
+contract = { package = "compact-contract-witnesses-oracle", path = "generated/contract" }
+midnight-compact-testkit = { path = "../sdk/testkit-rs" }
+sha2 = "0.10"

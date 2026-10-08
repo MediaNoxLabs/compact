@@ -1,0 +1,5 @@
+   Compiling midnight-compact-runtime-macros v0.2.0 (/private/tmp/rust030-named-record-guide/sdk/runtime-rs-macros)
+    Checking midnight-compact-runtime v0.2.0 (/private/tmp/rust030-named-record-guide/sdk/runtime-rs)
+    Checking compact-rust-vc-passport-adoption-fixture v0.1.0 (/private/tmp/rust030-named-record-guide/generated/contract)
+    Checking compact-passport-named-record-guide v0.1.0 (/private/tmp/rust030-named-record-guide)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.35s

@@ -1,0 +1,16 @@
+{
+  "source_head": "fba6845f37fdbfbfbd49e3a73d896ecff7a70371",
+  "generated_source_sha256": "758c3c1bbd1f87eda347c9912fe5b95ad03d9f165f05f7f2ab0440b2ad34062d",
+  "wrapper_sha256": "482b5b8c7b8858a9e7a516c3ad3af57ecee4089d9927e059599743b16777a738",
+  "root_lock_sha256": "d55a398a40e0d654cee095ed09f3e006188431b0faa3460ff7bf86bdd1363d94",
+  "oracle_input_sha256": "f822c1ceecd4932685420a4ffaa91edfd4d0e746621c6183aa9e95fc261a7701",
+  "upstream_capture_sha256": "3d0b9650e228b6a2fff047b87b5e1a85e7a098adf43c5be0d83c666cba686909",
+  "branch_capture_sha256": "a8cbe32cda7532adf325910214d7b2a4c91ca9da6a95a86946a5ddd32703ce10",
+  "capture_cases": {
+    "ok": 6,
+    "error": 19
+  },
+  "generated_source": "Unedited maintained lib.rs; manifest alone relocates its runtime path",
+  "support_parser": "Copied exact uint32/bytes32/civil_date and input construction from maintained age_predicate.rs; replaced seven-argument call with application wrapper; added dual-capture/count assertions",
+  "scope": "application-owned ordinary Rust documentation wrapper, not generated Args or emitter change"
+}

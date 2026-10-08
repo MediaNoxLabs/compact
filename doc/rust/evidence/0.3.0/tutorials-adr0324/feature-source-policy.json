@@ -1,0 +1,164 @@
+{
+  "format": "compact-rust-feature-source-policy/v1",
+  "status": "accepted local compatibility checkpoint; final release qualification pending",
+  "source_commit": "5efa91c280c059e375dcde0998c64dd88f615fb6",
+  "milestone": "0.3.0",
+  "artifact_label": "rust-backend-v0.3.0",
+  "publication": "source distribution; no registry, release tag or network qualification",
+  "current_source_hashes": {
+    "Cargo.toml": "dd127311a7cb57bd877aec29cf5f64f27d985f3f08a12b5c6c5215e24d2d26f1",
+    "Cargo.lock": "d55a398a40e0d654cee095ed09f3e006188431b0faa3460ff7bf86bdd1363d94",
+    "runtime-rs/Cargo.toml": "bca116a67835118171aa2d195f6505ff8f453a69af903712176d5c4f93854f20",
+    "runtime-rs/compatibility.json": "5a24458240b7f96f10e08dc79c284fb6eba67f21446a0f746888dfd85cc17bcd",
+    "runtime-rs-macros/Cargo.toml": "65874980e856555e7b8d1c7bdae620f518762a2926de5cd37ff259a664a38cab",
+    "testkit-rs/Cargo.toml": "cedb32bb088ce7222ad896c4aca1402c2312ccd557600d8c77ada655c91dc036",
+    "tools/compact-rust-backend/Cargo.toml": "70a5959f6d9392b1ae3eefc760b138fb1c627d601f58047e7a99df70e9fa7ac8",
+    "tools/compact-rust-backend/Cargo.lock": "80ed8a3bee346a2e4d7da7ae29cd84a63e84b43eb9dec4849d5aac396e6ad622",
+    "tools/compact-rust-backend/src/compatibility.json": "5a24458240b7f96f10e08dc79c284fb6eba67f21446a0f746888dfd85cc17bcd",
+    "tools/compact-rust-backend/src/compatibility.rs": "d8aadd8c18bca1cae80276ee8366fb2378544d2c1eeb2169bb8d70e3d42c861c",
+    "tools/compact-rust-backend/tests/compatibility.rs": "c47ca75852a962f874bf7d0e8639de6cc672f9806b8557a2aa49524d5ad867fd"
+  },
+  "runtime_compatibility": {
+    "schema_version": 1,
+    "runtime_abi": 50,
+    "ir_schema": 20,
+    "capability_schema": 3,
+    "ledger_version": "ledger-8.0.3",
+    "rust_version": "1.88",
+    "runtime_package": "midnight-compact-runtime",
+    "runtime_version": "0.2.0",
+    "macros_package": "midnight-compact-runtime-macros",
+    "macros_version": "0.2.0",
+    "ledger_dependencies": {
+      "midnight-base-crypto": "=1.0.0",
+      "midnight-coin-structure": "=2.0.1",
+      "midnight-onchain-runtime": "=3.0.0",
+      "midnight-onchain-state": "=3.0.0",
+      "midnight-onchain-vm": "=3.0.0",
+      "midnight-serialize": "=1.0.0",
+      "midnight-storage": "=2.0.1",
+      "midnight-storage-core": "=1.1.0",
+      "midnight-transient-crypto": "=2.0.1",
+      "midnight-circuits": "=6.0.0",
+      "midnight-curves": "=0.2.0",
+      "midnight-proofs": "=0.7.0",
+      "midnight-zk-stdlib": "=1.0.0",
+      "midnight-zswap": "=8.0.3",
+      "midnight-ledger": "=8.0.3"
+    }
+  },
+  "component_versions": {
+    "runtime-rs/Cargo.toml": "0.2.0",
+    "runtime-rs-macros/Cargo.toml": "0.2.0",
+    "testkit-rs/Cargo.toml": "0.1.0",
+    "tools/compact-rust-backend/Cargo.toml": "0.2.0"
+  },
+  "feature_profiles": [
+    {
+      "profile": "native",
+      "status": "supported within generated capability report",
+      "feature": "default",
+      "runtime": "ledger8.0.3",
+      "limits": [
+        "default includes crypto/proof dependencies",
+        "per-circuit native admission is not a recorded/proof capability"
+      ]
+    },
+    {
+      "profile": "ledger-transaction",
+      "status": "supported within exact recorded/proof evidence",
+      "feature": "ledger-transaction",
+      "runtime": "ledger8.0.3",
+      "limits": [
+        "actual capability schema3 per export applies",
+        "no network deployment qualification"
+      ]
+    },
+    {
+      "profile": "ContractLab",
+      "status": "supported source-only testkit",
+      "package": "midnight-compact-testkit@0.1.0",
+      "limits": [
+        "not a proof or network sandbox",
+        "external witness side effects are caller responsibility"
+      ]
+    },
+    {
+      "profile": "wasm32-unknown-unknown",
+      "status": "experimental bounded ADR0256 prototype",
+      "limits": [
+        "Node24.14.0 and Chromium151.0.7922.34 tested only",
+        "explicit wrapper/import/entropy/transport profile",
+        "no full ledger transaction runtime, browser proving, WASI, universal engines or 1.88 WASM MSRV"
+      ]
+    },
+    {
+      "profile": "registry",
+      "status": "manifest emission only",
+      "limits": [
+        "package availability and remote consumer are unverified"
+      ]
+    }
+  ],
+  "ledger_profiles": {
+    "native": "8.0.3",
+    "DID_original_compiler": "ledger8.0.2 / compiler0.31.1 / runtime0.16.0",
+    "DID_application_wire": "ledger-v8 npm8.1.0",
+    "isolated_receiver": "coherent Rust8.1 receiver only; not native profile promotion"
+  },
+  "migration_policy": {
+    "backend": "0.2.0 RenderError non_exhaustive and resource error; add wildcard",
+    "ABI49": "retain exact historical bundle or regenerate; do not edit numeric ABI assertion",
+    "ABI50": "retained old generated consumer compatible with matched0.2 runtime/macros pair",
+    "IR20": "exact frontend/backend pair, no historical loader",
+    "deprecation": "no low-level removal; positional generated APIs retained"
+  },
+  "evidence": {
+    "migration_receipt": {
+      "path": "/tmp/compact-adr293/receipt.json",
+      "sha256": "b96d9a0368311fe14f2331ad866c89be850a2eb785ab0ba418007cc991104c40",
+      "artifact_hashes_verified": 78
+    },
+    "joined_delivery": {
+      "path": "/tmp/rust030-joined-delivery-receipt.json",
+      "sha256": "9461edf563705da7ee27873c1605cf8f2dc19ec8f9c70d24f99bea23e8615979",
+      "source_snapshot": "329bf1bc80441125d2800fc9f1dae8b570da5dac"
+    },
+    "relation_receiver": {
+      "path": "/tmp/rust030-adr303/aggregate.json",
+      "snapshot_rows": 11,
+      "verified_artifacts": 35
+    },
+    "current_msrv": {
+      "receipt_sha256": "e149a15449be38b4538c0268be6c56d48d30c249581a6a7996473915fa634e57",
+      "head": "49898aeda5c694fcfbd249bb84162340977b1b26",
+      "host": "aarch64-apple-darwin",
+      "scope": "actual Rust1.88 workspace backend/Jubjub all-feature and isolated standalone compilation",
+      "post_check_changes": [
+        "tests-rust-backend/did-digest-read-reducer/tests/constructor.rs",
+        "tools/compact-rust-backend/src/recorded/pure_calls/tests.rs"
+      ],
+      "post_check_change_scope": "test-only; public compatibility/source production unchanged"
+    },
+    "current_upstream_drift": {
+      "summary_sha256": "8dd442f947305bce62a614aeb9acd28667ead00d272d66e470049e628e9f085b",
+      "checked_at_utc": "2026-10-07T08:20:54.167066+00:00",
+      "did": "unchanged v0.7.0",
+      "passport": "unchanged develop at selected commit and dependency0.2.0",
+      "core": "newer unselected0.3.0 main; no adoption promotion",
+      "adopted_remote_source_hashes": 19
+    }
+  },
+  "remaining_before_parent_acceptance": [],
+  "remaining_release_gate": [
+    "final frozen-candidate source/locks/toolchain manifest",
+    "read-only recheck of immutable DID/passport source refs and upstream drift before RC",
+    "repository publication of vault planning at closeout"
+  ],
+  "explicit_exclusions": {
+    "ADR0285_issue409": "Existing automatic-review stop remains unresolved; consumer-safety/cross-instance investigation is not resumed, qualified or closed by this policy or MSRV commands.",
+    "security_acceptance": "No new consumer-safety, transaction ownership or cross-instance assurance claim; audits and explicitly stopped work retain their separate dispositions."
+  },
+  "acceptance_scope": "Current local source compatibility, migration, actual native MSRV delta and timestamped upstream policy. Final R03020 rechecks are required and not yet passed.",
+  "automatic_review_stop": "ADR0285/#409 remains stopped and unaccepted; this parent does not close consumer safety or security audit."
+}

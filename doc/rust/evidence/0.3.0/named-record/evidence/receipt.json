@@ -1,0 +1,90 @@
+{
+  "scope": "Native aarch64 macOS external application wrapper against existing TS captures; no generation, proof, network or performance claim",
+  "toolchain": "rustc 1.99.0 (b940084d7 2026-09-28)\nbinary: rustc\ncommit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4\ncommit-date: 2026-09-28\nhost: aarch64-apple-darwin\nrelease: 1.99.0\nLLVM version: 23.1.1\n",
+  "commands": [
+    {
+      "name": "format-owned",
+      "argv": [
+        "rustfmt",
+        "--edition",
+        "2024",
+        "src/lib.rs",
+        "tests/age_predicate.rs"
+      ],
+      "exit": 0,
+      "seconds": 0.041,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "prune-and-metadata",
+      "argv": [
+        "cargo",
+        "metadata",
+        "--offline",
+        "--format-version",
+        "1"
+      ],
+      "exit": 0,
+      "seconds": 0.247,
+      "log_sha256": "3d12cd12b317cbbe25a65354719529a3e1ebc90822c2beae98a1948df6b306da"
+    },
+    {
+      "name": "test",
+      "argv": [
+        "cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "-j4",
+        "--test",
+        "age_predicate"
+      ],
+      "exit": 0,
+      "seconds": 4.019,
+      "log_sha256": "55580e38fc910090980d334d5749947e2cef5d5f1186b2eb12636deb1c629feb"
+    },
+    {
+      "name": "clippy",
+      "argv": [
+        "cargo",
+        "clippy",
+        "--offline",
+        "--locked",
+        "-j4",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit": 0,
+      "seconds": 2.431,
+      "log_sha256": "a320ca03c820127fb7b33c2b9469be714971fe2ed4870e03d6ea7c8d7bae9577"
+    },
+    {
+      "name": "format-check",
+      "argv": [
+        "rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/lib.rs",
+        "tests/age_predicate.rs"
+      ],
+      "exit": 0,
+      "seconds": 0.038,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "status": "passed",
+  "wrapper_sha256": "482b5b8c7b8858a9e7a516c3ad3af57ecee4089d9927e059599743b16777a738",
+  "test_sha256": "b3066a04eb278f0ebcb980edaf3f5399c744629973e8747d7556410d718a8a0e",
+  "generated_sha256": "758c3c1bbd1f87eda347c9912fe5b95ad03d9f165f05f7f2ab0440b2ad34062d",
+  "lock_sha256": "c433f2d0b8bd703bf8f88776f82967686ddf232d4d47bc18bb0bda4d18a7c960",
+  "cases": {
+    "total": 25,
+    "accepted": 6,
+    "exact_captured_error": 19
+  },
+  "locks_unchanged_after_qualification": true,
+  "generated_unchanged": true
+}

@@ -1,0 +1,16 @@
+{
+  "format": "compact-rust-bounded-checks/v1",
+  "source_commit": "2c798d2dc5f94ad13e89610068035ed70d94f469",
+  "source_tree": "517859ba4f5b0c33d3fabe2fc0766dc44a9d3a5e",
+  "event_sha": "2c798d2dc5f94ad13e89610068035ed70d94f469",
+  "lane": "core",
+  "rustc": "rustc 1.99.0 (b940084d7 2026-09-28)\nbinary: rustc\ncommit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4\ncommit-date: 2026-09-28\nhost: x86_64-unknown-linux-gnu\nrelease: 1.99.0\nLLVM version: 23.1.1",
+  "cargo": "cargo 1.99.0 (5f94df478 2026-08-27)",
+  "features": "all-features",
+  "profile": "dev/test; debug=0; incremental=0; default assertions and overflow checks",
+  "locks": {
+    "Cargo.lock": "36cdb54f1d471742a6bbee5159a2fe81ec2279aa0cf7060a26c941de1f98505b",
+    "tools/compact-rust-backend/Cargo.lock": "80ed8a3bee346a2e4d7da7ae29cd84a63e84b43eb9dec4849d5aac396e6ad622"
+  },
+  "qualification": "bounded Rust checks; no compiler regeneration, proof or network qualification"
+}

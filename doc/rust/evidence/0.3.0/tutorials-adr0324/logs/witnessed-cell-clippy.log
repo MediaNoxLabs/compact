@@ -1,0 +1,5 @@
+    Checking midnight-compact-runtime v0.2.0 (/private/tmp/rust030-guides-validated-324/examples/sdk/runtime-rs)
+    Checking midnight-compact-testkit v0.1.0 (/private/tmp/rust030-guides-validated-324/examples/sdk/testkit-rs)
+    Checking compact-contract-witnesses-oracle v0.1.0 (/private/tmp/rust030-guides-validated-324/examples/witnessed-cell/generated/contract)
+    Checking compact-witnessed-cell-guide v0.1.0 (/private/tmp/rust030-guides-validated-324/examples/witnessed-cell)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.03s

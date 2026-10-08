@@ -1,0 +1,167 @@
+[
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs/src/ledger.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs/src/ledger.rs",
+    "sha256": "fc50998d03468dad89fe2eb1e65ff13a1ac726868b39152fc27f0d2fc00cd8e5"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs/src/opaque.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs/src/opaque.rs",
+    "sha256": "a9db120e6d2c91b9bd4d2c6fde8875ee4d1e80951e2457fc136041f08dfabdaa"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs/src/transaction.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs/src/transaction.rs",
+    "sha256": "37412b8d09b86b5e5af2c064a9e4c86abecfe5c09b436d983aa6488bf0e1f6d0"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs/src/primitives.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs/src/primitives.rs",
+    "sha256": "9e1296ffda9a3f52ca516173f06ae68b8ad90085aaa7472eba0bafe4efc58f82"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs/src/zswap.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs/src/zswap.rs",
+    "sha256": "6b60dc95dbe5b665e6d629ad1afbadd62c51d9e3c55142caf05daef6d6aadfae"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs/src/public_state.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs/src/public_state.rs",
+    "sha256": "f66054c023f38811c5d7b9147657db25438505cd96694bd34460f778cb21eca0"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs/src/slots.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs/src/slots.rs",
+    "sha256": "b3bfaf9b9bbc988171337126e060265612f753f9b7cd95d19cd3aa402ebe3a44"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs/src/recording.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs/src/recording.rs",
+    "sha256": "572a6ed4f0fae49e035c87a7e38f7d67294727766af37b9fc56aacdad1df6b01"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs/src/lib.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs/src/lib.rs",
+    "sha256": "7d045bd7feea2f5f4f88b27c0f51f5bb0f460159052551ab36cc7e9d9eb033b5"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs/src/natives.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs/src/natives.rs",
+    "sha256": "20b97e8e385121c5e0f0c66ed0fe4acfd7fd137dc6b93da17f82c6cc055febc1"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs/src/context.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs/src/context.rs",
+    "sha256": "27a053325511a79543ff8b87ed19aa820542795e3d1fe9d9616e34450dce57f5"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs/src/transaction/observation_tests.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs/src/transaction/observation_tests.rs",
+    "sha256": "489d366f39a565f66d7f2dded770c93b92bd44fa2b33048921b8e73261e94cf6"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs/src/transaction/transients.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs/src/transaction/transients.rs",
+    "sha256": "13a591805c791237d92eff23a3d0a50b9aa68175d100d94f66d9854ac8ed8225"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs/src/transaction/observation.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs/src/transaction/observation.rs",
+    "sha256": "34edff558fdc583a2265918bc1173fbcf9d6124035f3fd872588fa10df1834d8"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs/src/transaction/placement.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs/src/transaction/placement.rs",
+    "sha256": "31bb5d4aa71c71937875490b858569d943e296bc7147a9e0c5b65d39cb10b68a"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs/src/transaction/transient_tests.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs/src/transaction/transient_tests.rs",
+    "sha256": "919fc29bc09b8d011bd60e397e126ba84b53978ae33f6d746dd699535b5bfbf1"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs/src/transaction/zswap_tests.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs/src/transaction/zswap_tests.rs",
+    "sha256": "98a3fe361144b2162fbcdc6d443996aa7d0a68e23b2093020eacfa3520c75b40"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs/src/ledger/cell.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs/src/ledger/cell.rs",
+    "sha256": "807abe16c1eb706aeff9e3b34cfb4461900766f57d7ea44b649c9e37e46e15b3"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs/src/ledger/merkle.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs/src/ledger/merkle.rs",
+    "sha256": "edcb54356c7dc52a4abfab865c8f63ce9fbd906235a153c327fa329f3edb4f17"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs/src/ledger/kernel.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs/src/ledger/kernel.rs",
+    "sha256": "6aaba93307a10c4f5da24195f535bb05b7ffb67e8efa089fd3d9e123a61fa0b3"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs/src/ledger/counter.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs/src/ledger/counter.rs",
+    "sha256": "329845d89510ca8a8856837c31aa2e67993ad808485b5a7b4a91f7f9adffda34"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs/src/ledger/collections.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs/src/ledger/collections.rs",
+    "sha256": "3ea44a1ffe49348591c9c3ab65c1b18953ec3e31af186aa9f90c799fec40c3e5"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs/src/context/local_boundary.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs/src/context/local_boundary.rs",
+    "sha256": "da43f7be96404cffd1a06fb23319c2f80eb87be17f1b0e1cd5a694b5a4537f2d"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs/src/recording/zswap.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs/src/recording/zswap.rs",
+    "sha256": "e2cf3d079e95ef379b2c096a61d869891fddce3d9adbace0d92596ccdf4d127e"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs/src/recording/kernel.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs/src/recording/kernel.rs",
+    "sha256": "285c5f665c442adbf16a1f90dcc8757929121a226a8884411449aa0f5dca2f1d"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs-macros/src/merkle.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs-macros/src/merkle.rs",
+    "sha256": "5ff96cf8cffc5e281df0063dd376e727fa8f5cba303b63fb83b4be6772907417"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs-macros/src/lib.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs-macros/src/lib.rs",
+    "sha256": "7b762702ed2010cbbc7d1413526e41dfdbe7b4c7e50468697a1c961f8b72304f"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs-macros/src/witness_bridge.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs-macros/src/witness_bridge.rs",
+    "sha256": "b903dba38370e1f3768dfe1831333f8bac4a29cc422e1935e613248ed18080e3"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs-macros/src/struct_repr.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs-macros/src/struct_repr.rs",
+    "sha256": "0aad6caa1af814dd42288aa5841c3a170c8fccb5372c261b9ed0503ef3275733"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs-macros/src/tests/merkle.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs-macros/src/tests/merkle.rs",
+    "sha256": "52b2d2f92516f20464cc8a42073a3b07d06dbf989e102a8a57293e9449831e9c"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs-macros/src/tests/witness_bridge.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs-macros/src/tests/witness_bridge.rs",
+    "sha256": "b428be6cf313dcfeeb4816bc9d90ab474a8b838b877e02d98a9254b650fab2e6"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs-macros/src/tests/struct_repr.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs-macros/src/tests/struct_repr.rs",
+    "sha256": "5a190e1af53f54ddf74943a0e7337c07ac9e4f837e8dc82816f63aa84c634271"
+  },
+  {
+    "generated": "/tmp/rust030-adr0331-f4/recording/generated/contract/runtime-rs-macros/src/tests/cell_value.rs",
+    "current": "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs-macros/src/tests/cell_value.rs",
+    "sha256": "acd18d0840784eda543e71b7e6feb772b61fb42e64f49f33d7f98774cfd84f64"
+  }
+]

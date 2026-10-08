@@ -1,0 +1,13 @@
+   Compiling midnight-compact-runtime-macros v0.2.0 (/private/tmp/rust030-candidate-2c798d2d/current-w2/examples/sdk/runtime-rs-macros)
+   Compiling midnight-compact-runtime v0.2.0 (/private/tmp/rust030-candidate-2c798d2d/current-w2/examples/sdk/runtime-rs)
+   Compiling midnight-compact-testkit v0.1.0 (/private/tmp/rust030-candidate-2c798d2d/current-w2/examples/sdk/testkit-rs)
+   Compiling compact-contract-witnesses-oracle v0.1.0 (/private/tmp/rust030-candidate-2c798d2d/current-w2/examples/witnessed-cell/generated/contract)
+   Compiling compact-witnessed-cell-guide v0.1.0 (/private/tmp/rust030-candidate-2c798d2d/current-w2/examples/witnessed-cell)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 6.57s
+     Running tests/witnessed.rs (/Users/ysh/.codex/worktrees/07ae/compact/target/compact-rust-parity-gate/debug/deps/witnessed-d4d19f25fc90e875)
+
+running 1 test
+test recorded_witness_commits_once_and_exhaustion_preserves_checkpoint ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+

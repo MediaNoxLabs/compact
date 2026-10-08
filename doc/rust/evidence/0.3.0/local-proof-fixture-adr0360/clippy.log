@@ -1,0 +1,22 @@
+    Checking futures-executor v0.3.32
+   Compiling midnight-compact-runtime-macros v0.2.0 (/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs-macros)
+    Checking futures v0.3.32
+    Checking midnight-base-crypto v1.0.0
+    Checking midnight-storage-core v1.1.0
+    Checking midnight-transient-crypto v2.0.1
+    Checking midnight-storage v2.0.1
+    Checking midnight-coin-structure v2.0.1
+    Checking midnight-zkir v2.1.0
+    Checking midnight-onchain-state v3.0.0
+    Checking midnight-onchain-vm v3.0.0
+    Checking midnight-onchain-runtime v3.0.0
+    Checking midnight-zswap v8.0.3
+    Checking midnight-ledger v8.0.3
+    Checking midnight-compact-runtime v0.2.0 (/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs)
+    Checking compact-rust-witness-conditional-fixture v0.1.0 (/Users/ysh/.codex/worktrees/07ae/compact/tests-rust-backend/witness-conditional)
+    Checking compact-rust-set-size-oracle-fixture v0.1.0 (/Users/ysh/.codex/worktrees/07ae/compact/tests-rust-backend/set-size-oracle)
+    Checking compact-rust-merkle-tree-oracle-fixture v0.1.0 (/Users/ysh/.codex/worktrees/07ae/compact/tests-rust-backend/merkle-tree-oracle)
+    Checking compact-rust-witnesses-oracle-fixture v0.1.0 (/Users/ysh/.codex/worktrees/07ae/compact/tests-rust-backend/witnesses-oracle)
+    Checking compact-rust-counter-parameter-fixture v0.1.0 (/Users/ysh/.codex/worktrees/07ae/compact/tests-rust-backend/counter-parameter)
+    Checking midnight-compact-testkit v0.1.0 (/Users/ysh/.codex/worktrees/07ae/compact/testkit-rs)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 8.52s

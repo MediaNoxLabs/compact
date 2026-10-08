@@ -1,0 +1,15 @@
+{
+  "source_head": "5efa91c280c059e375dcde0998c64dd88f615fb6",
+  "sources_sha256": {
+    "/Users/ysh/.codex/worktrees/07ae/compact/examples/rust_backend/witnesses_oracle.compact": "61b24d39ae57d4ae1c05311d19af9a2e8f094d7f86062e54c89fe3a6eb6ba227",
+    "/Users/ysh/.codex/worktrees/07ae/compact/runtime-rs/tests/fixtures/unit-composition.json": "efdad2518994cd41fad6266425224e3d052571cd80296c3c001dfd9ea43735ff",
+    "/Users/ysh/.codex/worktrees/07ae/compact/examples/rust_backend/did_adoption/source-manifest.json": "a5386c2d3cc8d2f3aa090599a6038efc638f36f20ede19a7067a1ba416610106",
+    "/Users/ysh/.codex/worktrees/07ae/compact/examples/rust_backend/did_adoption/packages/contract/src/did.compact": "632f34af543924edb185fe9c8eda54aa4ca0503b0b9e8ee3ff06ec470f6d7456",
+    "/Users/ysh/.codex/worktrees/07ae/compact/examples/rust_backend/did_adoption/packages/jubjub-schnorr/src/schnorr.compact": "f072731d730d72f8b76b183df2c5187b233a0838d9462894cfb0a6d2f0f66bff",
+    "/Users/ysh/.codex/worktrees/07ae/compact/tests-rust-backend/did-adoption/tests/contract_lab.rs": "33b7ca4df242f766f849cd837b27d7062a0e72661d11a36f45ed9cfc24f3bf7e",
+    "/Users/ysh/.codex/worktrees/07ae/compact/tests-rust-backend/did-adoption/support/witness.rs": "d5353a4ca657c320823cba70dd230a35dfb56ca4e60799859677276a39bf3db8",
+    "/Users/ysh/.codex/worktrees/07ae/compact/tests-rust-backend/did-adoption/support/lifecycle_witness.rs": "4f2d31d790096836439efce442f61f0b05952edc1daf0598a7d2b09373f92f69",
+    "/Users/ysh/.codex/worktrees/07ae/compact/tests-rust-backend/did-adoption/support/codec.rs": "91695087c80d17f8d0f18968655eef31820044a8577ba0a5671e9e45ba0546ba"
+  },
+  "status": "Copied source/capture files byte-identical; rewritten Rust imports/include paths and new Cargo manifests are uncompiled external adaptations. No runnable acceptance claimed."
+}

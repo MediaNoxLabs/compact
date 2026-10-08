@@ -1,0 +1,14 @@
+{
+  "seed_root_lock_sha256": "d55a398a40e0d654cee095ed09f3e006188431b0faa3460ff7bf86bdd1363d94",
+  "external_lock_sha256": "c433f2d0b8bd703bf8f88776f82967686ddf232d4d47bc18bb0bda4d18a7c960",
+  "registry_entries": 324,
+  "mismatches": [],
+  "local_manifest_paths": [
+    "/private/tmp/rust030-named-record-guide/Cargo.toml",
+    "/private/tmp/rust030-named-record-guide/generated/contract/Cargo.toml",
+    "/private/tmp/rust030-named-record-guide/sdk/runtime-rs/Cargo.toml",
+    "/private/tmp/rust030-named-record-guide/sdk/runtime-rs-macros/Cargo.toml"
+  ],
+  "one_shared_runtime_id": "path+file:///private/tmp/rust030-named-record-guide/sdk/runtime-rs#midnight-compact-runtime@0.2.0",
+  "workspace_root": "/private/tmp/rust030-named-record-guide"
+}

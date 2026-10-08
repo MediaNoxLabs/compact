@@ -1,0 +1,9 @@
+Context nested: nested.compact line 2 char 10; TS accepted
+Context constructor: constructor.compact line 3 char 16; TS accepted
+Context imported: broken.compact line 3 char 10; TS accepted
+Context witness: witness.compact line 1 char 18; TS shared refusal
+Context struct: struct.compact line 2 char 10; TS shared refusal
+Context ledger: ledger.compact line 2 char 31; TS shared refusal
+Boolean typing ts: 8 valid expressions, 12 exact refusal expectations checked
+Boolean typing rust: 8 valid expressions, 12 exact refusal expectations checked
+Checked 4 source rejections, 6 source contexts, output publication, proof capabilities and shared Boolean typing; 0 failed

@@ -1,0 +1,13 @@
+[workspace]
+[package]
+name = "compact-passport-named-record-guide"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+publish = false
+[dependencies]
+passport = { package = "compact-rust-vc-passport-adoption-fixture", path = "generated/contract" }
+[dev-dependencies]
+midnight-compact-runtime = { path = "sdk/runtime-rs" }
+hex = "0.4"
+serde_json = "1"

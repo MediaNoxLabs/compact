@@ -1,0 +1,56 @@
+   Compiling rand v0.8.6
+   Compiling crossbeam-epoch v0.9.20
+   Compiling rustls v0.23.45
+   Compiling rustls-webpki v0.103.14
+   Compiling group v0.13.0
+   Compiling pairing v0.23.0
+   Compiling elliptic-curve v0.13.8
+   Compiling anyhow v1.0.103
+   Compiling ecdsa v0.16.9
+   Compiling crossbeam-deque v0.8.6
+   Compiling fake v2.10.0
+   Compiling rayon-core v1.13.0
+   Compiling rayon v1.12.0
+   Compiling atomic-write-file v0.2.3
+   Compiling k256 v0.13.4
+   Compiling tokio-rustls v0.26.4
+   Compiling hyper-rustls v0.27.7
+   Compiling midnight-curves v0.2.0
+   Compiling reqwest v0.12.28
+   Compiling midnight-base-crypto v1.0.0
+   Compiling midnight-proofs v0.7.0
+   Compiling midnight-storage-core v1.1.0
+   Compiling blake2b_halo2 v0.1.0
+   Compiling sha3-circuit v0.1.0
+   Compiling midnight-circuits v6.0.0
+   Compiling midnight-zk-stdlib v1.0.0
+   Compiling midnight-transient-crypto v2.0.1
+   Compiling compact-rust-backend v0.2.0 (/tmp/compact-adr293/candidate/tools/compact-rust-backend)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 15.29s
+     Running tests/compatibility.rs (/tmp/compact-m2-bench-target/debug/deps/compatibility-737d2cb4042ee59d)
+
+running 21 tests
+test linked_source_entries_are_refused_before_copying ... ok
+test inline_dependency_table_is_valid_and_malformed_container_is_an_error ... ok
+test content_fingerprints_change_without_claiming_authentication ... ok
+test extra_ledger_graph_and_missing_macro_manifest_are_clear_failures ... ok
+test matching_macro_version_still_requires_a_proc_macro_library ... ok
+test missing_malformed_and_unknown_metadata_are_not_accepted ... ok
+test release_versions_keep_independent_contract_boundaries ... ok
+test literal_only_source_labels_refuse_expression_or_wrong_literal_forms ... ok
+test matching_ledger_declarations_remain_valid_in_all_runtime_contexts ... ok
+test current_source_pair_matches_compiler_and_is_identified ... ok
+test all_declared_version_boundaries_are_exact ... ok
+test manifest_and_source_disagreement_cannot_hide_behind_valid_record ... ok
+test malformed_dependency_paths_do_not_disappear_as_absent ... ok
+test both_empty_runtime_root_spellings_require_a_directory ... ok
+test root_and_parse_failures_identify_the_selected_input ... ok
+test public_cli_preflight_preserves_existing_output_without_frontend_or_fallback ... ok
+test same_version_alternate_dependency_sources_refuse_before_frontend_and_publication ... ok
+test aliases_resolve_before_midnight_classification_and_macros_reject_extra_graphs ... ok
+test midnight_dependencies_in_every_context_are_checked_before_frontend ... ok
+test broken_installed_root_does_not_fall_back_to_build_checkout ... ok
+test selected_source_changes_during_frontend_do_not_replace_output ... ok
+
+test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.59s
+

@@ -1,0 +1,30 @@
+     Locking 1 package to highest Rust 1.99.0 compatible version
+      Adding compact-contract-digital-passport-credential v0.1.0 (/tmp/rust030-passport-guide/generated/contract)
+   Compiling midnight-compact-runtime-macros v0.1.0 (/tmp/rust030-passport-guide/generated/contract/runtime-rs-macros)
+   Compiling midnight-compact-runtime v0.1.0 (/tmp/rust030-passport-guide/generated/contract/runtime-rs)
+   Compiling compact-contract-digital-passport-credential v0.1.0 (/tmp/rust030-passport-guide/generated/contract)
+   Compiling passport-guide-consumer v0.1.0 (/tmp/rust030-passport-guide/consumer)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.72s
+     Running unittests src/lib.rs (target/compact-rust-parity-gate/debug/deps/passport_guide_consumer-1b2f7bbd35e66393)
+
+running 2 tests
+test tests::root_matches_the_pinned_typescript_vector ... ok
+test tests::schema_checks_still_run_for_well_typed_values ... FAILED
+
+failures:
+
+---- tests::schema_checks_still_run_for_well_typed_values stdout ----
+
+thread 'tests::schema_checks_still_run_for_well_typed_values' (63357838) panicked at src/lib.rs:40:9:
+assertion `left == right` failed
+  left: "failed assert: Schema major version must be positive"
+ right: "Schema major version must be positive"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    tests::schema_checks_still_run_for_well_typed_values
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`

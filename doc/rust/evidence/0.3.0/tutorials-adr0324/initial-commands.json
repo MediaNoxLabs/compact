@@ -1,0 +1,30 @@
+[
+  {
+    "name": "witnessed-cell-generate",
+    "args": [
+      "/Users/ysh/.codex/worktrees/07ae/compact/target/compact-rust-parity-gate/debug/compactc",
+      "--target",
+      "rust",
+      "--skip-zk",
+      "--rust-runtime-root",
+      "/tmp/rust030-guides-validated-324/examples/sdk",
+      "witnesses_oracle.compact",
+      "generated"
+    ],
+    "cwd": "/tmp/rust030-guides-validated-324/examples/witnessed-cell",
+    "exit_code": 0,
+    "time": "2026-10-07T09:21:12.128777+00:00"
+  },
+  {
+    "name": "witnessed-cell-lock",
+    "args": [
+      "cargo",
+      "+1.99.0",
+      "generate-lockfile",
+      "--offline"
+    ],
+    "cwd": "/tmp/rust030-guides-validated-324/examples/witnessed-cell",
+    "exit_code": 0,
+    "time": "2026-10-07T09:21:12.837026+00:00"
+  }
+]

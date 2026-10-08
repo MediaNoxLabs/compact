@@ -1,0 +1,66 @@
+[
+  {
+    "case": "old-exhaustive",
+    "command": [
+      "cargo",
+      "+1.99.0",
+      "run",
+      "--manifest-path",
+      "/tmp/compact-adr293/consumers/old-exhaustive/Cargo.toml",
+      "--offline"
+    ],
+    "exit": 0,
+    "expected_outcome": true,
+    "elapsed_s": 6.454253667034209,
+    "log_sha256": "9cded7bcec78cbb58724c724e8463ee5da4f842cd29114543ae3917ace75dceb",
+    "lock_sha256": "2275840741cd68c3f7e43b4ee69128e458876e7a95554e4688ab0cc14b3e44dc"
+  },
+  {
+    "case": "new-exhaustive",
+    "command": [
+      "cargo",
+      "+1.99.0",
+      "check",
+      "--manifest-path",
+      "/tmp/compact-adr293/consumers/new-exhaustive/Cargo.toml",
+      "--offline"
+    ],
+    "exit": 101,
+    "expected_outcome": true,
+    "elapsed_s": 17.573198625002988,
+    "log_sha256": "bbec98e14f8d5546ba2ae8015f7c7513f06601fd30e25c0ffc6fd43b857f8779",
+    "lock_sha256": "20c46349e7c56d2db11a42e5fac15eee2b25f54f39c702050d83411806e38556"
+  },
+  {
+    "case": "new-complete-no-fallback",
+    "command": [
+      "cargo",
+      "+1.99.0",
+      "check",
+      "--manifest-path",
+      "/tmp/compact-adr293/consumers/new-complete-no-fallback/Cargo.toml",
+      "--offline"
+    ],
+    "exit": 101,
+    "expected_outcome": true,
+    "elapsed_s": 0.2594267919193953,
+    "log_sha256": "fbb9fbbff3dcc2e8cab4d425dab38d782fa7b042cf47d21baea0f674e6799f8f",
+    "lock_sha256": "22a7004b19dfd4475e51dfc242b698dcb03af0df83ba26466f8c8f873b7bc3d8"
+  },
+  {
+    "case": "migrated",
+    "command": [
+      "cargo",
+      "+1.99.0",
+      "run",
+      "--manifest-path",
+      "/tmp/compact-adr293/consumers/migrated/Cargo.toml",
+      "--offline"
+    ],
+    "exit": 0,
+    "expected_outcome": true,
+    "elapsed_s": 6.890231500030495,
+    "log_sha256": "811f422197268774e375f0828a1aac1244e239422fc152c67ccfd1c0673eaa47",
+    "lock_sha256": "5a0903d2ac0e56b6768fcbb3b77222a2b11666dc712a100359cdaf0a5fd50858"
+  }
+]

@@ -1,0 +1,23 @@
+{
+  "run": 37750105111,
+  "candidate": "551f065cd6267e07020a755db5469df03e41b775",
+  "lanes": [
+    {
+      "lane": "msrv",
+      "status": "passed",
+      "passing_test_cases": 0,
+      "test_result_blocks": 0,
+      "source_sha256": "3b505a41101c1dfbc7caffe6e421e96d3ca7f14b6a18faea0853fd2857178bad",
+      "result_sha256": "fc422c410ea8869cced3873c2e4f66e80b03fca173afd86b082c35ee3c74c3da"
+    },
+    {
+      "lane": "core",
+      "status": "passed",
+      "passing_test_cases": 742,
+      "test_result_blocks": 63,
+      "source_sha256": "9ab48348a9359fdfe4177bd6c0300e7353920e2d0c48f0d0c8e4be6f03629b6b",
+      "result_sha256": "2cfefae65b06fcdd955524109045345e0996c4a284624c34d59ffe82c5dc761c"
+    }
+  ],
+  "artifact_hashes_verified": true
+}

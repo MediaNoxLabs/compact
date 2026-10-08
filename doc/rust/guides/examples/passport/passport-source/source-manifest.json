@@ -1,0 +1,104 @@
+{
+  "format": "compact-vc-passport-adoption-sources/v1",
+  "origins": {
+    "passport": {
+      "repository": "https://github.com/midnightntwrk/midnight-vc-passport",
+      "ref": "develop",
+      "commit": "2e13b029f7f9e37a7ba1e4d987fdcd8620c4eab3"
+    },
+    "core": {
+      "repository": "https://github.com/midnightntwrk/midnight-verifiable-credentials",
+      "commit": "1a65558b9fcc1c3334932464ca23141f82c8e974",
+      "npm_package": "@midnight-ntwrk/credential-compact@0.2.0",
+      "npm_tarball_sha256": "095b6056912059e5b281b39d2d133a1048d42b5a6104da4367951c2773d70c4f",
+      "npm_sri": "sha512-VbHryqfKW9qWSdBEyftnmk8z5ELzeAYYZhBxF4oOUJK2ZDmsCTmPi4dRy9qHPtT1rzxH26+PDQt3sO5cDeCb5A=="
+    }
+  },
+  "files": [
+    {
+      "path": "core-compact-staging/credentials/composable.compact",
+      "sha256": "c7576fc307b8f3a598f133babdef062311316ca9e7a5067f892a39b0c66de6dc",
+      "origin": "core"
+    },
+    {
+      "path": "core-compact-staging/credentials/holder-bindings.compact",
+      "sha256": "8d64be765219d7f308ccf876184f0a49e049a7a00df67aaba5ce02dbe7442cf1",
+      "origin": "core"
+    },
+    {
+      "path": "core-compact-staging/credentials/proofs.compact",
+      "sha256": "df90f4633409da7431ead431fe42f14100122e069a78eedfe73c921fb1e65b24",
+      "origin": "core"
+    },
+    {
+      "path": "core-compact-staging/credentials/relations.compact",
+      "sha256": "d106bc1f425915f5a868f500c9607178736e5a98d2d956ee10b00549db2f69d3",
+      "origin": "core"
+    },
+    {
+      "path": "core-compact-staging/credentials/signer-authorization.compact",
+      "sha256": "457ba74ec082ae8acc1fb41d8ec30f955c25732e702b18a4f4eb985790509186",
+      "origin": "core"
+    },
+    {
+      "path": "core-compact-staging/credentials/status-bindings.compact",
+      "sha256": "8ba11457beae1e635cf4c0d869c7969d48b3263b4b152631ebe04beaf2b8b216",
+      "origin": "core"
+    },
+    {
+      "path": "core-compact-staging/credentials/types.compact",
+      "sha256": "170a1b40c87b4e98332cee708be60ae8ce40fa5d5299987cad572e931de7546d",
+      "origin": "core"
+    },
+    {
+      "path": "core-compact-staging/credentials/vc.compact",
+      "sha256": "3355cabf7f488c22b19b4ed11f5064e9458e3187af68aa65017e9eb3902f13d7",
+      "origin": "core"
+    },
+    {
+      "path": "core-compact-staging/credentials/vp.compact",
+      "sha256": "93cfb8626de9bb8458417636ad42f16e8915fc11bfb2c31f2524874a2ad3ea35",
+      "origin": "core"
+    },
+    {
+      "path": "core-compact-staging/credentials.compact",
+      "sha256": "d01f794ceb3654d020a49501bec871362883d7b64afe761ec6bcfcfa9ba9018c",
+      "origin": "core"
+    },
+    {
+      "path": "src/digital-passport-credential/claims.compact",
+      "sha256": "bc461f2c2956b4bb96729853ff9e2e5ab7ab9a786043926ca1b091b637d0fae9",
+      "origin": "passport"
+    },
+    {
+      "path": "src/digital-passport-credential/helpers.compact",
+      "sha256": "5490081332197fb98301267e19abe7e9829406d4bb14c711001e799f2205f450",
+      "origin": "passport"
+    },
+    {
+      "path": "src/digital-passport-credential/model.compact",
+      "sha256": "27f7f4b28ea2c707c7d1703eaa8a99e6721663db8d84d60414ee30368ffc84a0",
+      "origin": "passport"
+    },
+    {
+      "path": "src/digital-passport-credential/protocol-envelope.compact",
+      "sha256": "2463bea6ab295ca16ec2f2d96cb325bf7d6ce81796e29f92c45f68a8d1cb8314",
+      "origin": "passport"
+    },
+    {
+      "path": "src/digital-passport-credential/protocol-model.compact",
+      "sha256": "5a5ae2663eb983a96537162ee6af7b8f4ecb313cb218e8b87a54e733c73d0219",
+      "origin": "passport"
+    },
+    {
+      "path": "src/digital-passport-credential/validation.compact",
+      "sha256": "849d79cf4b9538dd2eeabbea4341f88010d0f3f2496abad304df8f10fdc27fdb",
+      "origin": "passport"
+    },
+    {
+      "path": "src/digital-passport-credential.compact",
+      "sha256": "c2db910878fa3b8e86d2fd1be129401e42db9100ccfa3c229acb9b59b4241624",
+      "origin": "passport"
+    }
+  ]
+}

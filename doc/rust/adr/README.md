@@ -2,9 +2,15 @@
 
 This is the canonical published **Rust engineering decision collection** for `MediaNoxLabs/compact:codex/rust-backend-ast`. It covers the compiler backend, generated Rust APIs, runtime, macros, ledger/proof integration and delivery boundaries.
 
-**239 records:** `RUST-ADR-0001` through `RUST-ADR-0240`, with **0116 absent** from the source collection. Original `ADR-NNNN` aliases are retained. Do not fill this historical gap or renumber later records. [0022](0022-meter-merkle-witness-vm-reads-while-keeping-local-projections.md) explicitly supersedes [0021](0021-keep-merkle-witness-projections-local.md); other extensions do not automatically supersede earlier decisions.
+**360 published records:** 239 historical records through `RUST-ADR-0240` and 121 milestone 0.3.0 records: 0241–0353 except 0260, plus 0358–0366. Original `ADR-NNNN` aliases are retained. Preserve absent historical IDs **0116 and 0260**; do not renumber records or reuse assigned identifiers. [0022](0022-meter-merkle-witness-vm-reads-while-keeping-local-projections.md) explicitly supersedes [0021](0021-keep-merkle-witness-projections-local.md); other extensions do not automatically supersede earlier decisions.
 
 These are implementation decisions on this branch. Their status does **not** imply upstream LFDT/TSC acceptance, a CoIP number or a released language feature. The separate [CoIP process](../../../coips/coip-0001.md) and [CoIP register](../../../coips/README.md) retain their own governance and numbering.
+
+## Milestone 0.3.0 decision collection
+
+The [0.3.0 register](index-0.3.0.md) lists 121 decisions: 0241–0353 except 0260, plus 0358–0366. [Reference conventions](references-0.3.0.md) distinguish retained historical evidence from current developer instructions. Per-record source hashes and dated amendments preserve the sequence of decisions, including bounded deliveries, scope removal and rejected experiments.
+
+Documentation publication does not extend the acceptance recorded by implementation, audit, proof or candidate receipts. The earlier milestone baseline below retains its original revision and limits.
 
 ## Accepted milestone baseline
 
@@ -18,19 +24,19 @@ Acceptance covers the published branch and matching Nix distribution. It does no
 - **Original source metadata** and **historical decision/amendments** preserve the original chronology, failed experiments, proposed code and narrower earlier ABI/schema/evidence scopes.
 - **Referenced repository commits** link resolvable commits mentioned in the source; prerequisites and probes are not relabeled as final delivery.
 - [Reference conventions](references.md) explain symbolic local evidence roots and unpublished research notes. A public issue summary is not a substitute for missing raw evidence bytes.
-- [Publication manifest](publication-manifest.json) records all source/published hashes and per-record editorial transformations.
+- [Historical publication manifest](publication-manifest.json) retains the original 239 imported source/published hashes and editorial transformations. The 0.3.0 batch keeps its own source and publication provenance.
 
-Publication is a documentation change after milestone closure; earlier test receipts remain attached to their actual implementation revision. No new milestone is opened by this import.
+Publication preserves decisions and receipts at their actual source revisions. It neither creates a new milestone nor turns historical tests into current candidate qualification.
 
 ## Maintaining the collection
 
-Use the [template](template.md). Record problem, before/after code, alternatives, emitter/runtime ownership, upstream primitive mapping, compatibility and verifiable acceptance. Link a focused issue and an agreed milestone before implementation. Preserve dated amendments and explicit supersession when a decision changes. The next new identifier follows 0240.
+Use the [template](template.md). Record problem, before/after code, alternatives, emitter/runtime ownership, upstream primitive mapping, compatibility and verifiable acceptance. Link a focused issue and an agreed milestone before implementation. Preserve dated amendments and explicit supersession when a decision changes. Identifiers through 0366 are assigned; consult the current registers before allocating another identifier.
 
 Git is the canonical published ADR text from this import onward. The Obsidian collection retains original source hashes and exploratory/historical evidence, and links to the published register. Edit published decisions in Git and reconcile any vault mirror explicitly; do not silently overwrite either history.
 
 ## Topic index
 
-These are starting points by subject; the complete register below lists every record, and the manifest retains detailed per-record topic tags.
+These are starting points by subject. The original register below and the separate 0.3.0 register together locate this collection; the historical manifest retains its original topic tags.
 
 ### Architecture and generated Rust APIs
 
@@ -60,7 +66,7 @@ These are starting points by subject; the complete register below lists every re
 
 [0007](0007-bundle-the-matching-runtime-until-a-versioned-release-exists.md) · [0013](0013-bind-runtime-archives-to-a-release-manifest.md) · [0032](0032-keep-generated-crate-guides-aligned-with-abi-15.md) · [0225](0225-pin-ci-proof-fixtures-and-rust-consumer-wiring.md) · [0226](0226-bind-installer-tests-to-cargo-and-isolate-read-only-baselines.md) · [0228](0228-real-pinned-compiler-archives-for-installer-acceptance.md) · [0229](0229-bind-existing-installer-scenarios-to-genuine-archives.md) · [0230](0230-prove-historical-self-update-with-pinned-local-releases.md) · [0231](0231-dispatch-existing-extracted-compiler-and-codeql-checks-on-candidate-branches.md) · [0232](0232-prove-both-ledger-boolean-branches-of-conditional-counter-circuits.md) · [0233](0233-coalesce-overlapping-formatter-inputs-before-concurrent-writes.md) · [0235](0235-prepare-locked-dependencies-for-clean-macos-rust-consumers.md) · [0236](0236-select-an-actual-intel-macos-runner-in-installer-ci.md) · [0237](0237-allow-the-extracted-compiler-cold-build-budget.md) · [0238](0238-native-build-tools-for-the-static-linux-cli.md) · [0239](0239-explicit-preparation-of-built-in-proof-material.md) · [0240](0240-bound-rust-validation-storage-on-linux-ci.md)
 
-## Complete register
+## Original register
 
 | Number | Decision | Reviewed decision status |
 |---|---|---|
@@ -303,3 +309,5 @@ These are starting points by subject; the complete register below lists every re
 | 0238 | [Native build tools for the static Linux CLI](0238-native-build-tools-for-the-static-linux-cli.md) | accepted-ci |
 | 0239 | [Explicit preparation of built-in proof material](0239-explicit-preparation-of-built-in-proof-material.md) | accepted-ci |
 | 0240 | [Bound Rust validation storage on Linux CI](0240-bound-rust-validation-storage-on-linux-ci.md) | accepted-ci |
+
+- [0366 — Create fresh relation proof key directories](0366-create-fresh-relation-proof-key-directories.md): fresh key ownership and retained-prefix qualification.

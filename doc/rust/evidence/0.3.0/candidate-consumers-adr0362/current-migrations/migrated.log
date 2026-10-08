@@ -1,0 +1,4 @@
+   Compiling compact-rust-backend v0.2.0 (/private/tmp/rust030-candidate-2c798d2d/source/tools/compact-rust-backend)
+   Compiling adr293-migrated v0.1.0 (/private/tmp/rust030-candidate-2c798d2d/current-migrations/migrated)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 10.85s
+     Running `/Users/ysh/.codex/worktrees/07ae/compact/target/compact-rust-parity-gate/debug/adr293-migrated`

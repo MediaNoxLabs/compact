@@ -22,13 +22,31 @@ license = "Apache-2.0"
 description = "Typed plain-ledger Compact scenarios over the ledger VM"
 publish = false
 
+[features]
+default = []
+# Local proof-test composition over the official ledger8 provider interfaces.
+proof = [
+    "midnight-compact-runtime/ledger-transaction",
+    "dep:midnight-base-crypto",
+    "dep:midnight-transient-crypto",
+    "dep:midnight-zkir",
+    "dep:rand",
+]
+
 [dependencies]
 midnight-compact-runtime = { path = "../runtime-rs", version = "=0.2.0" }
+midnight-base-crypto = { version = "=1.0.0", optional = true }
+midnight-transient-crypto = { version = "=2.0.1", optional = true }
+midnight-zkir = { version = "=2.1.0", optional = true }
+rand = { version = "=0.8.6", optional = true }
 midnight-onchain-runtime = "=3.0.0"
 midnight-onchain-vm = "=3.0.0"
 midnight-zswap = "=8.0.3"
 
 [dev-dependencies]
+futures-executor = "=0.3.32"
+midnight-serialize = "=1.0.0"
+rand = "=0.8.6"
 midnight-base-crypto = "=1.0.0"
 midnight-coin-structure = "=2.0.1"
 compact-rust-counter-parameter-fixture = { path = "../tests-rust-backend/counter-parameter" }

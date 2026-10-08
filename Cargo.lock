@@ -4256,12 +4256,17 @@ dependencies = [
  "compact-rust-set-size-oracle-fixture",
  "compact-rust-witness-conditional-fixture",
  "compact-rust-witnesses-oracle-fixture",
+ "futures-executor",
  "midnight-base-crypto",
  "midnight-coin-structure",
  "midnight-compact-runtime",
  "midnight-onchain-runtime",
  "midnight-onchain-vm",
+ "midnight-serialize",
+ "midnight-transient-crypto",
+ "midnight-zkir",
  "midnight-zswap",
+ "rand 0.8.6",
  "serde_json",
 ]
 

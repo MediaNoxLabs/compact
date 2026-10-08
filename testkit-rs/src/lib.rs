@@ -25,6 +25,10 @@
 //!
 //! Private checkpoints require owned data (or immutable persistence): `Clone`
 //! cannot undo external witness side effects or shared interior mutation.
+//!
+//! With feature `proof`, `ProofLab` holds official resolver/parameter providers
+//! and constructs the official local prover for tests. Call its upstream `check`
+//! and `prove` methods explicitly; a successful check is not a generated proof.
 
 mod environment;
 mod error;
@@ -32,6 +36,11 @@ mod lab;
 mod report;
 mod snapshot;
 mod witness;
+
+#[cfg(feature = "proof")]
+mod proof;
+#[cfg(feature = "proof")]
+pub use proof::{ProofError, ProofLab};
 
 pub use environment::Environment;
 pub use error::LabError;

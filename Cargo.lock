@@ -2754,7 +2754,7 @@ dependencies = [
 [[package]]
 name = "midnight-base-crypto"
 version = "1.0.1"
-source = "git+https://github.com/MediaNoxLabs/midnight-ledger.git?rev=2cce0f8f26e8ab1398af1c9ed61b087c28611a3f#2cce0f8f26e8ab1398af1c9ed61b087c28611a3f"
+source = "git+https://github.com/MediaNoxLabs/midnight-ledger.git?rev=8655615e7c4cbf3a1187b3203bf72e69dc09b8dc#8655615e7c4cbf3a1187b3203bf72e69dc09b8dc"
 dependencies = [
  "anyhow",
  "atomic-write-file",
@@ -2785,7 +2785,7 @@ dependencies = [
 [[package]]
 name = "midnight-base-crypto-derive"
 version = "1.0.0"
-source = "git+https://github.com/MediaNoxLabs/midnight-ledger.git?rev=2cce0f8f26e8ab1398af1c9ed61b087c28611a3f#2cce0f8f26e8ab1398af1c9ed61b087c28611a3f"
+source = "git+https://github.com/MediaNoxLabs/midnight-ledger.git?rev=8655615e7c4cbf3a1187b3203bf72e69dc09b8dc#8655615e7c4cbf3a1187b3203bf72e69dc09b8dc"
 dependencies = [
  "proc-macro2",
  "quote 1.0.45",
@@ -2818,7 +2818,7 @@ dependencies = [
 [[package]]
 name = "midnight-coin-structure"
 version = "2.0.2"
-source = "git+https://github.com/MediaNoxLabs/midnight-ledger.git?rev=2cce0f8f26e8ab1398af1c9ed61b087c28611a3f#2cce0f8f26e8ab1398af1c9ed61b087c28611a3f"
+source = "git+https://github.com/MediaNoxLabs/midnight-ledger.git?rev=8655615e7c4cbf3a1187b3203bf72e69dc09b8dc#8655615e7c4cbf3a1187b3203bf72e69dc09b8dc"
 dependencies = [
  "fake",
  "lazy_static",
@@ -2887,7 +2887,7 @@ dependencies = [
 [[package]]
 name = "midnight-ledger-static"
 version = "9.0.0"
-source = "git+https://github.com/MediaNoxLabs/midnight-ledger.git?rev=2cce0f8f26e8ab1398af1c9ed61b087c28611a3f#2cce0f8f26e8ab1398af1c9ed61b087c28611a3f"
+source = "git+https://github.com/MediaNoxLabs/midnight-ledger.git?rev=8655615e7c4cbf3a1187b3203bf72e69dc09b8dc#8655615e7c4cbf3a1187b3203bf72e69dc09b8dc"
 dependencies = [
  "proc-macro2",
  "quote 1.0.45",
@@ -2896,7 +2896,7 @@ dependencies = [
 [[package]]
 name = "midnight-onchain-runtime"
 version = "3.1.1"
-source = "git+https://github.com/MediaNoxLabs/midnight-ledger.git?rev=2cce0f8f26e8ab1398af1c9ed61b087c28611a3f#2cce0f8f26e8ab1398af1c9ed61b087c28611a3f"
+source = "git+https://github.com/MediaNoxLabs/midnight-ledger.git?rev=8655615e7c4cbf3a1187b3203bf72e69dc09b8dc#8655615e7c4cbf3a1187b3203bf72e69dc09b8dc"
 dependencies = [
  "derive-where",
  "enum_index",
@@ -2921,7 +2921,7 @@ dependencies = [
 [[package]]
 name = "midnight-onchain-state"
 version = "3.0.1"
-source = "git+https://github.com/MediaNoxLabs/midnight-ledger.git?rev=2cce0f8f26e8ab1398af1c9ed61b087c28611a3f#2cce0f8f26e8ab1398af1c9ed61b087c28611a3f"
+source = "git+https://github.com/MediaNoxLabs/midnight-ledger.git?rev=8655615e7c4cbf3a1187b3203bf72e69dc09b8dc#8655615e7c4cbf3a1187b3203bf72e69dc09b8dc"
 dependencies = [
  "derive-where",
  "fake",
@@ -2939,7 +2939,7 @@ dependencies = [
 [[package]]
 name = "midnight-onchain-vm"
 version = "3.1.1"
-source = "git+https://github.com/MediaNoxLabs/midnight-ledger.git?rev=2cce0f8f26e8ab1398af1c9ed61b087c28611a3f#2cce0f8f26e8ab1398af1c9ed61b087c28611a3f"
+source = "git+https://github.com/MediaNoxLabs/midnight-ledger.git?rev=8655615e7c4cbf3a1187b3203bf72e69dc09b8dc#8655615e7c4cbf3a1187b3203bf72e69dc09b8dc"
 dependencies = [
  "derive-where",
  "fake",
@@ -2982,7 +2982,7 @@ dependencies = [
 [[package]]
 name = "midnight-serialize"
 version = "1.1.1"
-source = "git+https://github.com/MediaNoxLabs/midnight-ledger.git?rev=2cce0f8f26e8ab1398af1c9ed61b087c28611a3f#2cce0f8f26e8ab1398af1c9ed61b087c28611a3f"
+source = "git+https://github.com/MediaNoxLabs/midnight-ledger.git?rev=8655615e7c4cbf3a1187b3203bf72e69dc09b8dc#8655615e7c4cbf3a1187b3203bf72e69dc09b8dc"
 dependencies = [
  "crypto",
  "konst",
@@ -2995,7 +2995,7 @@ dependencies = [
 [[package]]
 name = "midnight-serialize-macros"
 version = "1.0.0"
-source = "git+https://github.com/MediaNoxLabs/midnight-ledger.git?rev=2cce0f8f26e8ab1398af1c9ed61b087c28611a3f#2cce0f8f26e8ab1398af1c9ed61b087c28611a3f"
+source = "git+https://github.com/MediaNoxLabs/midnight-ledger.git?rev=8655615e7c4cbf3a1187b3203bf72e69dc09b8dc#8655615e7c4cbf3a1187b3203bf72e69dc09b8dc"
 dependencies = [
  "proc-macro2",
  "quote 1.0.45",
@@ -3005,7 +3005,7 @@ dependencies = [
 [[package]]
 name = "midnight-storage"
 version = "2.0.3"
-source = "git+https://github.com/MediaNoxLabs/midnight-ledger.git?rev=2cce0f8f26e8ab1398af1c9ed61b087c28611a3f#2cce0f8f26e8ab1398af1c9ed61b087c28611a3f"
+source = "git+https://github.com/MediaNoxLabs/midnight-ledger.git?rev=8655615e7c4cbf3a1187b3203bf72e69dc09b8dc#8655615e7c4cbf3a1187b3203bf72e69dc09b8dc"
 dependencies = [
  "crypto",
  "derive-where",
@@ -3023,7 +3023,7 @@ dependencies = [
 [[package]]
 name = "midnight-storage-core"
 version = "1.2.1"
-source = "git+https://github.com/MediaNoxLabs/midnight-ledger.git?rev=2cce0f8f26e8ab1398af1c9ed61b087c28611a3f#2cce0f8f26e8ab1398af1c9ed61b087c28611a3f"
+source = "git+https://github.com/MediaNoxLabs/midnight-ledger.git?rev=8655615e7c4cbf3a1187b3203bf72e69dc09b8dc#8655615e7c4cbf3a1187b3203bf72e69dc09b8dc"
 dependencies = [
  "archery",
  "crypto",
@@ -3047,7 +3047,7 @@ dependencies = [
 [[package]]
 name = "midnight-storage-macros"
 version = "1.0.0"
-source = "git+https://github.com/MediaNoxLabs/midnight-ledger.git?rev=2cce0f8f26e8ab1398af1c9ed61b087c28611a3f#2cce0f8f26e8ab1398af1c9ed61b087c28611a3f"
+source = "git+https://github.com/MediaNoxLabs/midnight-ledger.git?rev=8655615e7c4cbf3a1187b3203bf72e69dc09b8dc#8655615e7c4cbf3a1187b3203bf72e69dc09b8dc"
 dependencies = [
  "midnight-serialize-macros",
  "proc-macro2",
@@ -3058,7 +3058,7 @@ dependencies = [
 [[package]]
 name = "midnight-transient-crypto"
 version = "2.1.1"
-source = "git+https://github.com/MediaNoxLabs/midnight-ledger.git?rev=2cce0f8f26e8ab1398af1c9ed61b087c28611a3f#2cce0f8f26e8ab1398af1c9ed61b087c28611a3f"
+source = "git+https://github.com/MediaNoxLabs/midnight-ledger.git?rev=8655615e7c4cbf3a1187b3203bf72e69dc09b8dc#8655615e7c4cbf3a1187b3203bf72e69dc09b8dc"
 dependencies = [
  "anyhow",
  "blake2b_simd",
@@ -3119,7 +3119,7 @@ dependencies = [
 [[package]]
 name = "midnight-zswap"
 version = "8.2.0-rc.1"
-source = "git+https://github.com/MediaNoxLabs/midnight-ledger.git?rev=2cce0f8f26e8ab1398af1c9ed61b087c28611a3f#2cce0f8f26e8ab1398af1c9ed61b087c28611a3f"
+source = "git+https://github.com/MediaNoxLabs/midnight-ledger.git?rev=8655615e7c4cbf3a1187b3203bf72e69dc09b8dc#8655615e7c4cbf3a1187b3203bf72e69dc09b8dc"
 dependencies = [
  "derive-where",
  "fake",

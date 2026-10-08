@@ -255,7 +255,11 @@ fn public_cli_preflight_preserves_existing_output_without_frontend_or_fallback()
             .unwrap();
         assert!(!result.status.success());
         let error = String::from_utf8(result.stderr).unwrap();
-        assert!(error.contains("runtime_abi"), "{mode}: {error}");
+        assert!(
+            error.contains("runtime_abi"),
+            "{mode}: child status {:?}: {error}",
+            result.status
+        );
         assert_eq!(fs::read(out.join("sentinel")).unwrap(), b"keep exact bytes");
         assert_eq!(fs::read_dir(out).unwrap().count(), 1);
         assert!(!root.0.join(".existing.compactc.lock").exists());
@@ -375,7 +379,8 @@ fn broken_installed_root_does_not_fall_back_to_build_checkout() {
     let error = String::from_utf8(result.stderr).unwrap();
     assert!(
         error.contains("installed/share/compactc/runtime-rs/compatibility.json"),
-        "{error}"
+        "child status {:?}: {error}",
+        result.status
     );
     assert!(error.contains("no fallback"), "{error}");
     assert_eq!(fs::read(output.join("sentinel")).unwrap(), b"keep");
@@ -501,7 +506,11 @@ fn public_refusal(root: &Root, expected: &str) {
         .unwrap();
     assert!(!result.status.success());
     let error = String::from_utf8(result.stderr).unwrap();
-    assert!(error.contains(expected), "expected {expected}: {error}");
+    assert!(
+        error.contains(expected),
+        "expected {expected}; child status {:?}: {error}",
+        result.status
+    );
     assert_eq!(
         fs::read_to_string(output.join("sentinel")).unwrap(),
         "existing artifact"

@@ -28,17 +28,30 @@ use crate::ledger::{ContractAddress, DefaultDB};
 /// total decoded heap, object count or CPU work. The pinned ledger serializer's
 /// own recursion and allocation behavior still applies. Bound acquisition before
 /// constructing the byte slice as well when reading from an untrusted transport.
-/// No default limit is inferred from contract or verifier fixture sizes.
+/// [`Self::default`] opts into a 64 MiB application policy. It is not a ledger
+/// protocol limit or the maximum supported artifact size. Use [`Self::new`] for
+/// a different integration budget; legacy decoders do not apply this default.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct EncodedSizeLimit {
     max_bytes: usize,
 }
 
 impl EncodedSizeLimit {
+    /// The opt-in default admits at most 64 MiB (67,108,864 encoded bytes).
+    ///
+    /// This is an application policy, not a protocol or global decoder cap,
+    /// maximum supported ledger artifact size, or decoded heap/CPU bound.
+    pub const DEFAULT_MAX_BYTES: usize = 64 * 1024 * 1024;
+
     /// Select the largest encoded input to admit. Zero admits only an empty
     /// slice, which the ledger tagged decoder rejects as an invalid artifact.
     pub const fn new(max_bytes: usize) -> Self {
         Self { max_bytes }
+    }
+
+    /// Return the selected encoded-byte budget, including any explicit override.
+    pub const fn max_bytes(self) -> usize {
+        self.max_bytes
     }
 
     fn admit(self, bytes: &[u8]) -> io::Result<()> {
@@ -53,6 +66,12 @@ impl EncodedSizeLimit {
             ));
         }
         Ok(())
+    }
+}
+
+impl Default for EncodedSizeLimit {
+    fn default() -> Self {
+        Self::new(Self::DEFAULT_MAX_BYTES)
     }
 }
 

@@ -127,6 +127,49 @@ fn seeded_verifier_round_trips_through_legacy_and_limited_decoders() {
 }
 
 #[test]
+fn default_policy_round_trips_real_state_and_seeded_verifier() {
+    let policy = EncodedSizeLimit::default();
+    assert_eq!(EncodedSizeLimit::DEFAULT_MAX_BYTES, 67_108_864);
+    assert_eq!(policy.max_bytes(), EncodedSizeLimit::DEFAULT_MAX_BYTES);
+    for artifact in [Artifact::State, Artifact::Key] {
+        let encoded = artifact.encoded();
+        assert!(encoded.len() < policy.max_bytes());
+        assert_eq!(
+            artifact.decode(&encoded, Some(policy)).unwrap(),
+            artifact.decode(&encoded, None).unwrap(),
+            "{artifact:?}: default policy must preserve exact decoding"
+        );
+    }
+}
+
+#[test]
+fn custom_policy_preserves_budgets_below_and_above_the_default() {
+    // Exercise policy boundaries without allocating a default-sized input.
+    // A generous preset must not clamp explicit application budgets.
+    for max_bytes in [
+        0,
+        EncodedSizeLimit::DEFAULT_MAX_BYTES - 1,
+        EncodedSizeLimit::DEFAULT_MAX_BYTES,
+        EncodedSizeLimit::DEFAULT_MAX_BYTES + 1,
+        usize::MAX,
+    ] {
+        let policy = EncodedSizeLimit::new(max_bytes);
+        assert_eq!(policy.max_bytes(), max_bytes);
+        for artifact in [Artifact::State, Artifact::Key] {
+            let encoded = artifact.encoded();
+            if max_bytes == 0 {
+                assert_eq!(
+                    artifact.decode(&encoded, Some(policy)).unwrap_err().kind(),
+                    io::ErrorKind::InvalidData
+                );
+            } else {
+                assert_eq!(artifact.decode(&encoded, Some(policy)).unwrap(), encoded);
+            }
+        }
+    }
+}
+
+#[test]
 fn malformed_tag_truncation_trailing_and_empty_preserve_legacy_refusals() {
     for artifact in [Artifact::State, Artifact::Key] {
         let valid = artifact.encoded();

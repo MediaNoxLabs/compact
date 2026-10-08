@@ -90,9 +90,9 @@ class OrchestrationTests(unittest.TestCase):
         output = directory / "did"
         if label == "compile-did":
             put(output / "contract/lib.rs", "fixture")
-            rows = [{"name": name, "proof_required": True, "recorded": name in gate.KEYS,
-                     "observed_call": name in gate.KEYS,
-                     "recording_status": "available" if name in gate.KEYS else "unavailable"}
+            rows = [{"name": name, "proof_required": True, "recorded": name in gate.EXPORTS,
+                     "observed_call": name in gate.EXPORTS,
+                     "recording_status": "available" if name in gate.EXPORTS else "unavailable"}
                     for name in sorted(gate.EXPORTS)]
             for row in rows:
                 if not row["recorded"]:
@@ -220,6 +220,33 @@ class OrchestrationTests(unittest.TestCase):
                 put(path, report)
         self.mutation = mutate
         self.assertIn("twelve-export", self.run_gate()["error"])
+        self.assertNotIn("build-proof-runner", self.calls)
+
+    def test_relation_recording_does_not_expand_this_gates_proof_scope(self):
+        result = self.run_gate()
+        self.assertEqual(result["status"], "passed", result.get("error"))
+        self.assertEqual(len(gate.EXPORTS), 12)
+        self.assertEqual(len(gate.KEYS), 11)
+        self.assertIn("setVerificationMethodRelation", gate.EXPORTS)
+        self.assertNotIn("keygen-setVerificationMethodRelation", self.calls)
+        self.assertTrue(all("setVerificationMethodRelation" not in scenario["operations"]
+                            for scenario in gate.SCENARIOS.values()))
+
+    def test_lost_relation_recording_refuses_before_build(self):
+        def mutate(label, output):
+            if label == "compile-did":
+                path = output / "contract/rust-capabilities.json"
+                report = gate.read_json(path)
+                row = next(r for r in report["circuits"]
+                           if r["name"] == "setVerificationMethodRelation")
+                row.update(recorded=False, observed_call=False, recording_status="unavailable")
+                row["recording_unavailable"] = {"code": "unsupported_action",
+                    "ir_node": "StateAction::CircuitCall", "path": "actions[0]", "detail": "regression"}
+                row["observed_call_unavailable"] = {"code": "recording_unavailable",
+                    "ir_node": "StateAction::CircuitCall", "path": "actions[0]", "detail": "regression"}
+                put(path, report)
+        self.mutation = mutate
+        self.assertIn("reviewed twelve-export scope", self.run_gate()["error"])
         self.assertNotIn("build-proof-runner", self.calls)
 
     def test_new_source_file_during_run_refuses_changed_inventory(self):

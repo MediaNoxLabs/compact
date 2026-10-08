@@ -6,7 +6,9 @@
     "language_version": "0.23.105",
     "native_ledger_version": "8.0.3",
     "private_ir_version": 20,
-    "runtime_abi": 50
+    "runtime_abi": 50,
+    "current_anchor_commit": "679be285d91baf87ae55ae3161140e371d259b62",
+    "current_anchor_qualification": "ADR0364 maintains current repository anchors at this commit. The original source_commit, extraction inventory and historical execution identities retain their original checkpoints; no semantic support or formal claim is promoted."
   },
   "scope": {
     "grammar_accounting": "190 productions + 78 structural metadata entries = 268 inventory requirements; not 268 language features",
@@ -26,12 +28,12 @@
     "compiler/frontend-passes.ss": "f89633ae3b7bb1ccb09f1c0166e657e57b21494d933ca4d20b3db4ecbdb97d14",
     "compiler/analysis-passes.ss": "1e1beb4be9ca74cc229e533b65493874f7ab024b675892160faeca91fe5efc75",
     "tools/compact-rust-backend/src/naming.rs": "195add310b477edb75df58abb91ac7cc5ede949d399429cce04815bbd02683c0",
-    "tools/compact-rust-backend/src/lib.rs": "626fb635d6a7ca0ef52f73a6f2b6e0a0fd5bc254e6763c5eb3e93af9b5bdb7b8",
+    "tools/compact-rust-backend/src/lib.rs": "0c76c00acb1a9097016782bbcf8a6268a054acfca150e6fd425f931db14db678",
     "compiler/langs.ss": "cd28124ea4ef024bcb2f7fc235972e0349e97ee7132363a037ca63cc3c76c0ea",
     "tools/compact-rust-backend/src/ir.rs": "365e07cb913276b9162d2053c03997161353a03f377a28ecea219717b7207eed",
     "compiler/rust-ir-passes.ss": "a4132cb733ddf363b2665c48d021a201aa04520367c614a52b33c94f370cb5d4",
-    "tools/compact-rust-backend/src/value_lowering.rs": "7950d7639454e36389d775d44fb557dec2b8cb4d4cb3c7744f1e302ccebcb060",
-    "tools/compact-rust-backend/src/stateful/expression.rs": "9c36e8809f5f3fa46c481f4de9d3cd67ada4c4b54498117b8460f763a0b0b25d",
+    "tools/compact-rust-backend/src/value_lowering.rs": "bcd00c3cdc385fab6180a8deb8e37ced35d0c04a9b31898cdbfe1f37a06ce813",
+    "tools/compact-rust-backend/src/stateful/expression.rs": "68566ada9187a89cc70ed7068302fca3ace194b3fecf2b788322aad019401a34",
     "compiler/midnight-ledger.ss": "b711672074e0e050f5be259af51ab09570613fbce1f10999a91f3c72140cf43c",
     "tools/compact-rust-backend/src/witness.rs": "f2129fafafcce04a226a99810ed820b45cce5d35e3f34c6414faacc82b01391c",
     "doc/explicit-disclosure.mdx": "e67f0c8703a72cc8be0f57a83b213615c5a446b5bcca19fb6b158ecea6c2b4f5",
@@ -67,11 +69,11 @@
     "specification/src/Semantics/Operational/Untyped/Reduction.agda": "51eb51300b79a8dc3df5f367b900cbd39e08a9db8b93098d275cb11ca27c57ee",
     "specification/src/Semantics/Operational/Untyped/State.agda": "d0f6003e2afc2921999c5f28a2c5905a48b0cec2b4a50a0ac05c2fe67476c91d",
     "specification/src/Semantics/Static/Coverage.agda": "0494b91d8b5a9173a9a2ba1e139a197814e9476fa55ba483bea9fd4e191db174",
-    "Cargo.lock": "08b39446a045133bb8da3445559e3e9a1d59ea14cac93f67db585a5485a51841",
+    "Cargo.lock": "36cdb54f1d471742a6bbee5159a2fe81ec2279aa0cf7060a26c941de1f98505b",
     "runtime-rs/Cargo.toml": "bca116a67835118171aa2d195f6505ff8f453a69af903712176d5c4f93854f20",
     "tools/compact-rust-backend/src/compatibility.json": "5a24458240b7f96f10e08dc79c284fb6eba67f21446a0f746888dfd85cc17bcd",
     "tests-rust-backend/boolean-logic/tests/conformance.rs": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
-    "tools/compact-rust-backend/check_rejections.py": "915515d7f72bbc135f0b78e3d8aae0e0a077708a34a781bb9baa798571c2f084"
+    "tools/compact-rust-backend/check_rejections.py": "b2eccc1e4a5c9d81910ca2f3def28fe5208dad54ee8083306f74658411063185"
   },
   "grammar_inventory": {
     "format_version": 1,
@@ -3816,8 +3818,8 @@
         },
         {
           "path": "tools/compact-rust-backend/src/lib.rs",
-          "line": 1325,
-          "sha256": "626fb635d6a7ca0ef52f73a6f2b6e0a0fd5bc254e6763c5eb3e93af9b5bdb7b8"
+          "line": 1334,
+          "sha256": "0c76c00acb1a9097016782bbcf8a6268a054acfca150e6fd425f931db14db678"
         }
       ],
       "support": {
@@ -4007,12 +4009,12 @@
         {
           "path": "tools/compact-rust-backend/src/value_lowering.rs",
           "line": 27,
-          "sha256": "7950d7639454e36389d775d44fb557dec2b8cb4d4cb3c7744f1e302ccebcb060"
+          "sha256": "bcd00c3cdc385fab6180a8deb8e37ced35d0c04a9b31898cdbfe1f37a06ce813"
         },
         {
           "path": "tools/compact-rust-backend/src/value_lowering.rs",
-          "line": 158,
-          "sha256": "7950d7639454e36389d775d44fb557dec2b8cb4d4cb3c7744f1e302ccebcb060"
+          "line": 167,
+          "sha256": "bcd00c3cdc385fab6180a8deb8e37ced35d0c04a9b31898cdbfe1f37a06ce813"
         },
         {
           "path": "tools/compact-rust-backend/src/ir.rs",
@@ -4051,18 +4053,18 @@
       "implementation_sources": [
         {
           "path": "tools/compact-rust-backend/src/value_lowering.rs",
-          "line": 158,
-          "sha256": "7950d7639454e36389d775d44fb557dec2b8cb4d4cb3c7744f1e302ccebcb060"
+          "line": 167,
+          "sha256": "bcd00c3cdc385fab6180a8deb8e37ced35d0c04a9b31898cdbfe1f37a06ce813"
         },
         {
           "path": "tools/compact-rust-backend/src/value_lowering.rs",
-          "line": 299,
-          "sha256": "7950d7639454e36389d775d44fb557dec2b8cb4d4cb3c7744f1e302ccebcb060"
+          "line": 308,
+          "sha256": "bcd00c3cdc385fab6180a8deb8e37ced35d0c04a9b31898cdbfe1f37a06ce813"
         },
         {
           "path": "tools/compact-rust-backend/src/lib.rs",
-          "line": 1437,
-          "sha256": "626fb635d6a7ca0ef52f73a6f2b6e0a0fd5bc254e6763c5eb3e93af9b5bdb7b8"
+          "line": 1446,
+          "sha256": "0c76c00acb1a9097016782bbcf8a6268a054acfca150e6fd425f931db14db678"
         }
       ],
       "support": {
@@ -4096,13 +4098,13 @@
       "implementation_sources": [
         {
           "path": "tools/compact-rust-backend/src/lib.rs",
-          "line": 441,
-          "sha256": "626fb635d6a7ca0ef52f73a6f2b6e0a0fd5bc254e6763c5eb3e93af9b5bdb7b8"
+          "line": 450,
+          "sha256": "0c76c00acb1a9097016782bbcf8a6268a054acfca150e6fd425f931db14db678"
         },
         {
           "path": "tools/compact-rust-backend/src/lib.rs",
-          "line": 2960,
-          "sha256": "626fb635d6a7ca0ef52f73a6f2b6e0a0fd5bc254e6763c5eb3e93af9b5bdb7b8"
+          "line": 2972,
+          "sha256": "0c76c00acb1a9097016782bbcf8a6268a054acfca150e6fd425f931db14db678"
         },
         {
           "path": "tools/compact-rust-backend/src/naming.rs",
@@ -4151,8 +4153,8 @@
         },
         {
           "path": "tools/compact-rust-backend/src/value_lowering.rs",
-          "line": 299,
-          "sha256": "7950d7639454e36389d775d44fb557dec2b8cb4d4cb3c7744f1e302ccebcb060"
+          "line": 308,
+          "sha256": "bcd00c3cdc385fab6180a8deb8e37ced35d0c04a9b31898cdbfe1f37a06ce813"
         }
       ],
       "support": {
@@ -4226,8 +4228,8 @@
         },
         {
           "path": "tools/compact-rust-backend/src/lib.rs",
-          "line": 2057,
-          "sha256": "626fb635d6a7ca0ef52f73a6f2b6e0a0fd5bc254e6763c5eb3e93af9b5bdb7b8"
+          "line": 2069,
+          "sha256": "0c76c00acb1a9097016782bbcf8a6268a054acfca150e6fd425f931db14db678"
         }
       ],
       "support": {
@@ -4266,8 +4268,8 @@
         },
         {
           "path": "tools/compact-rust-backend/src/lib.rs",
-          "line": 3052,
-          "sha256": "626fb635d6a7ca0ef52f73a6f2b6e0a0fd5bc254e6763c5eb3e93af9b5bdb7b8"
+          "line": 3064,
+          "sha256": "0c76c00acb1a9097016782bbcf8a6268a054acfca150e6fd425f931db14db678"
         }
       ],
       "support": {
@@ -4306,8 +4308,8 @@
         },
         {
           "path": "tools/compact-rust-backend/src/lib.rs",
-          "line": 1325,
-          "sha256": "626fb635d6a7ca0ef52f73a6f2b6e0a0fd5bc254e6763c5eb3e93af9b5bdb7b8"
+          "line": 1334,
+          "sha256": "0c76c00acb1a9097016782bbcf8a6268a054acfca150e6fd425f931db14db678"
         }
       ],
       "support": {
@@ -4341,13 +4343,13 @@
       "implementation_sources": [
         {
           "path": "tools/compact-rust-backend/src/lib.rs",
-          "line": 1260,
-          "sha256": "626fb635d6a7ca0ef52f73a6f2b6e0a0fd5bc254e6763c5eb3e93af9b5bdb7b8"
+          "line": 1269,
+          "sha256": "0c76c00acb1a9097016782bbcf8a6268a054acfca150e6fd425f931db14db678"
         },
         {
           "path": "tools/compact-rust-backend/src/stateful/expression.rs",
           "line": 1,
-          "sha256": "9c36e8809f5f3fa46c481f4de9d3cd67ada4c4b54498117b8460f763a0b0b25d"
+          "sha256": "68566ada9187a89cc70ed7068302fca3ace194b3fecf2b788322aad019401a34"
         }
       ],
       "support": {
@@ -4391,13 +4393,13 @@
         },
         {
           "path": "tools/compact-rust-backend/src/lib.rs",
-          "line": 1277,
-          "sha256": "626fb635d6a7ca0ef52f73a6f2b6e0a0fd5bc254e6763c5eb3e93af9b5bdb7b8"
+          "line": 1286,
+          "sha256": "0c76c00acb1a9097016782bbcf8a6268a054acfca150e6fd425f931db14db678"
         },
         {
           "path": "tools/compact-rust-backend/src/stateful/expression.rs",
           "line": 1,
-          "sha256": "9c36e8809f5f3fa46c481f4de9d3cd67ada4c4b54498117b8460f763a0b0b25d"
+          "sha256": "68566ada9187a89cc70ed7068302fca3ace194b3fecf2b788322aad019401a34"
         }
       ],
       "support": {
@@ -4441,8 +4443,8 @@
         },
         {
           "path": "tools/compact-rust-backend/src/lib.rs",
-          "line": 2057,
-          "sha256": "626fb635d6a7ca0ef52f73a6f2b6e0a0fd5bc254e6763c5eb3e93af9b5bdb7b8"
+          "line": 2069,
+          "sha256": "0c76c00acb1a9097016782bbcf8a6268a054acfca150e6fd425f931db14db678"
         }
       ],
       "support": {
@@ -4486,8 +4488,8 @@
         },
         {
           "path": "tools/compact-rust-backend/src/lib.rs",
-          "line": 790,
-          "sha256": "626fb635d6a7ca0ef52f73a6f2b6e0a0fd5bc254e6763c5eb3e93af9b5bdb7b8"
+          "line": 799,
+          "sha256": "0c76c00acb1a9097016782bbcf8a6268a054acfca150e6fd425f931db14db678"
         }
       ],
       "support": {
@@ -4531,8 +4533,8 @@
         },
         {
           "path": "tools/compact-rust-backend/src/lib.rs",
-          "line": 1277,
-          "sha256": "626fb635d6a7ca0ef52f73a6f2b6e0a0fd5bc254e6763c5eb3e93af9b5bdb7b8"
+          "line": 1286,
+          "sha256": "0c76c00acb1a9097016782bbcf8a6268a054acfca150e6fd425f931db14db678"
         }
       ],
       "support": {
@@ -4576,8 +4578,8 @@
         },
         {
           "path": "tools/compact-rust-backend/src/lib.rs",
-          "line": 1180,
-          "sha256": "626fb635d6a7ca0ef52f73a6f2b6e0a0fd5bc254e6763c5eb3e93af9b5bdb7b8"
+          "line": 1189,
+          "sha256": "0c76c00acb1a9097016782bbcf8a6268a054acfca150e6fd425f931db14db678"
         }
       ],
       "support": {
@@ -4612,17 +4614,17 @@
         {
           "path": "tools/compact-rust-backend/src/value_lowering.rs",
           "line": 88,
-          "sha256": "7950d7639454e36389d775d44fb557dec2b8cb4d4cb3c7744f1e302ccebcb060"
+          "sha256": "bcd00c3cdc385fab6180a8deb8e37ced35d0c04a9b31898cdbfe1f37a06ce813"
         },
         {
           "path": "tools/compact-rust-backend/src/value_lowering.rs",
           "line": 119,
-          "sha256": "7950d7639454e36389d775d44fb557dec2b8cb4d4cb3c7744f1e302ccebcb060"
+          "sha256": "bcd00c3cdc385fab6180a8deb8e37ced35d0c04a9b31898cdbfe1f37a06ce813"
         },
         {
           "path": "tools/compact-rust-backend/src/lib.rs",
-          "line": 1910,
-          "sha256": "626fb635d6a7ca0ef52f73a6f2b6e0a0fd5bc254e6763c5eb3e93af9b5bdb7b8"
+          "line": 1922,
+          "sha256": "0c76c00acb1a9097016782bbcf8a6268a054acfca150e6fd425f931db14db678"
         }
       ],
       "support": {
@@ -4661,8 +4663,8 @@
         },
         {
           "path": "tools/compact-rust-backend/src/lib.rs",
-          "line": 1380,
-          "sha256": "626fb635d6a7ca0ef52f73a6f2b6e0a0fd5bc254e6763c5eb3e93af9b5bdb7b8"
+          "line": 1389,
+          "sha256": "0c76c00acb1a9097016782bbcf8a6268a054acfca150e6fd425f931db14db678"
         }
       ],
       "support": {
@@ -4706,8 +4708,8 @@
         },
         {
           "path": "tools/compact-rust-backend/src/lib.rs",
-          "line": 1480,
-          "sha256": "626fb635d6a7ca0ef52f73a6f2b6e0a0fd5bc254e6763c5eb3e93af9b5bdb7b8"
+          "line": 1489,
+          "sha256": "0c76c00acb1a9097016782bbcf8a6268a054acfca150e6fd425f931db14db678"
         }
       ],
       "support": {
@@ -4752,7 +4754,7 @@
         {
           "path": "tools/compact-rust-backend/src/stateful/expression.rs",
           "line": 1,
-          "sha256": "9c36e8809f5f3fa46c481f4de9d3cd67ada4c4b54498117b8460f763a0b0b25d"
+          "sha256": "68566ada9187a89cc70ed7068302fca3ace194b3fecf2b788322aad019401a34"
         }
       ],
       "support": {
@@ -4786,8 +4788,8 @@
       "implementation_sources": [
         {
           "path": "tools/compact-rust-backend/src/lib.rs",
-          "line": 3023,
-          "sha256": "626fb635d6a7ca0ef52f73a6f2b6e0a0fd5bc254e6763c5eb3e93af9b5bdb7b8"
+          "line": 3035,
+          "sha256": "0c76c00acb1a9097016782bbcf8a6268a054acfca150e6fd425f931db14db678"
         },
         {
           "path": "compiler/midnight-ledger.ss",
@@ -4837,7 +4839,7 @@
         {
           "path": "tools/compact-rust-backend/src/stateful/expression.rs",
           "line": 1,
-          "sha256": "9c36e8809f5f3fa46c481f4de9d3cd67ada4c4b54498117b8460f763a0b0b25d"
+          "sha256": "68566ada9187a89cc70ed7068302fca3ace194b3fecf2b788322aad019401a34"
         },
         {
           "path": "doc/explicit-disclosure.mdx",
@@ -6220,15 +6222,15 @@
         },
         {
           "path": "tools/compact-rust-backend/src/lib.rs",
-          "line": 1277,
-          "sha256": "626fb635d6a7ca0ef52f73a6f2b6e0a0fd5bc254e6763c5eb3e93af9b5bdb7b8"
+          "line": 1286,
+          "sha256": "0c76c00acb1a9097016782bbcf8a6268a054acfca150e6fd425f931db14db678"
         }
       ],
       "tests": [
         {
           "path": "tools/compact-rust-backend/check_rejections.py",
           "line": 182,
-          "sha256": "915515d7f72bbc135f0b78e3d8aae0e0a077708a34a781bb9baa798571c2f084",
+          "sha256": "b2eccc1e4a5c9d81910ca2f3def28fe5208dad54ee8083306f74658411063185",
           "test_name": "check_boolean_typing"
         }
       ],
@@ -6282,8 +6284,8 @@
         },
         {
           "path": "tools/compact-rust-backend/src/lib.rs",
-          "line": 1277,
-          "sha256": "626fb635d6a7ca0ef52f73a6f2b6e0a0fd5bc254e6763c5eb3e93af9b5bdb7b8"
+          "line": 1286,
+          "sha256": "0c76c00acb1a9097016782bbcf8a6268a054acfca150e6fd425f931db14db678"
         }
       ],
       "tests": [
@@ -6374,8 +6376,8 @@
         },
         {
           "path": "tools/compact-rust-backend/src/lib.rs",
-          "line": 1277,
-          "sha256": "626fb635d6a7ca0ef52f73a6f2b6e0a0fd5bc254e6763c5eb3e93af9b5bdb7b8"
+          "line": 1286,
+          "sha256": "0c76c00acb1a9097016782bbcf8a6268a054acfca150e6fd425f931db14db678"
         }
       ],
       "tests": [
@@ -6466,8 +6468,8 @@
         },
         {
           "path": "tools/compact-rust-backend/src/lib.rs",
-          "line": 1277,
-          "sha256": "626fb635d6a7ca0ef52f73a6f2b6e0a0fd5bc254e6763c5eb3e93af9b5bdb7b8"
+          "line": 1286,
+          "sha256": "0c76c00acb1a9097016782bbcf8a6268a054acfca150e6fd425f931db14db678"
         }
       ],
       "tests": [
@@ -6504,7 +6506,7 @@
         {
           "path": "tools/compact-rust-backend/check_rejections.py",
           "line": 182,
-          "sha256": "915515d7f72bbc135f0b78e3d8aae0e0a077708a34a781bb9baa798571c2f084",
+          "sha256": "b2eccc1e4a5c9d81910ca2f3def28fe5208dad54ee8083306f74658411063185",
           "test_name": "check_boolean_typing"
         }
       ],
@@ -6567,8 +6569,8 @@
         },
         {
           "path": "tools/compact-rust-backend/src/lib.rs",
-          "line": 1277,
-          "sha256": "626fb635d6a7ca0ef52f73a6f2b6e0a0fd5bc254e6763c5eb3e93af9b5bdb7b8"
+          "line": 1286,
+          "sha256": "0c76c00acb1a9097016782bbcf8a6268a054acfca150e6fd425f931db14db678"
         }
       ],
       "tests": [
@@ -6581,7 +6583,7 @@
         {
           "path": "tools/compact-rust-backend/check_rejections.py",
           "line": 182,
-          "sha256": "915515d7f72bbc135f0b78e3d8aae0e0a077708a34a781bb9baa798571c2f084",
+          "sha256": "b2eccc1e4a5c9d81910ca2f3def28fe5208dad54ee8083306f74658411063185",
           "test_name": "check_boolean_typing"
         }
       ],
@@ -6631,13 +6633,13 @@
       "implementation_sources": [
         {
           "path": "tools/compact-rust-backend/src/lib.rs",
-          "line": 1277,
-          "sha256": "626fb635d6a7ca0ef52f73a6f2b6e0a0fd5bc254e6763c5eb3e93af9b5bdb7b8"
+          "line": 1286,
+          "sha256": "0c76c00acb1a9097016782bbcf8a6268a054acfca150e6fd425f931db14db678"
         },
         {
           "path": "tools/compact-rust-backend/src/stateful/expression.rs",
           "line": 1,
-          "sha256": "9c36e8809f5f3fa46c481f4de9d3cd67ada4c4b54498117b8460f763a0b0b25d"
+          "sha256": "68566ada9187a89cc70ed7068302fca3ace194b3fecf2b788322aad019401a34"
         }
       ],
       "tests": [
@@ -6740,13 +6742,13 @@
       "implementation_sources": [
         {
           "path": "tools/compact-rust-backend/src/lib.rs",
-          "line": 1277,
-          "sha256": "626fb635d6a7ca0ef52f73a6f2b6e0a0fd5bc254e6763c5eb3e93af9b5bdb7b8"
+          "line": 1286,
+          "sha256": "0c76c00acb1a9097016782bbcf8a6268a054acfca150e6fd425f931db14db678"
         },
         {
           "path": "tools/compact-rust-backend/src/stateful/expression.rs",
           "line": 1,
-          "sha256": "9c36e8809f5f3fa46c481f4de9d3cd67ada4c4b54498117b8460f763a0b0b25d"
+          "sha256": "68566ada9187a89cc70ed7068302fca3ace194b3fecf2b788322aad019401a34"
         }
       ],
       "tests": [
@@ -6817,13 +6819,13 @@
         },
         {
           "path": "tools/compact-rust-backend/src/lib.rs",
-          "line": 1277,
-          "sha256": "626fb635d6a7ca0ef52f73a6f2b6e0a0fd5bc254e6763c5eb3e93af9b5bdb7b8"
+          "line": 1286,
+          "sha256": "0c76c00acb1a9097016782bbcf8a6268a054acfca150e6fd425f931db14db678"
         },
         {
           "path": "tools/compact-rust-backend/src/lib.rs",
-          "line": 1325,
-          "sha256": "626fb635d6a7ca0ef52f73a6f2b6e0a0fd5bc254e6763c5eb3e93af9b5bdb7b8"
+          "line": 1334,
+          "sha256": "0c76c00acb1a9097016782bbcf8a6268a054acfca150e6fd425f931db14db678"
         }
       ],
       "tests": [],
@@ -7067,29 +7069,20 @@
           "test_name": "branching_and_negation_use_witness_answers_not_arguments"
         }
       ],
-      "source_closure": [
-        {
-          "path": "examples/rust_backend/boolean_logic.compact",
-          "line": 1,
-          "sha256": "bd6fc3c9da25a8d1ee201b0d8028fb789cdffcdab8b6a4d23038ad119fcb3b31"
-        },
-        {
-          "path": "tests-rust-backend/boolean-logic/lib.rs",
-          "line": 1,
-          "sha256": "89b4fe8001fac2b198aa73118de3c162cfa75b44366428b722dd5533746455f1"
-        },
-        {
-          "path": "Cargo.lock",
-          "line": 1,
-          "sha256": "08b39446a045133bb8da3445559e3e9a1d59ea14cac93f67db585a5485a51841"
-        },
-        {
-          "path": "tests-rust-backend/boolean-logic/Cargo.toml",
-          "line": 1,
-          "sha256": "b7f214bee46e7af419b5023be037e864fb354a449269b8b46e5148ea8611509c"
-        }
-      ],
-      "qualification": "Rust 1.99.0 locked/offline native execution of checked-in generated crate: all pure AND/OR pairs and NOT values; identity witness successes, selected/skipped/first-call refusals, and six inverted-answer controls. Explicit callback/private-state and canonical transcript assertions. No fresh compiler regeneration, TS run, recording/replay/proof or formal theorem; no failed-context/rollback claim."
+      "qualification": "Rust 1.99.0 locked/offline native execution of checked-in generated crate: all pure AND/OR pairs and NOT values; identity witness successes, selected/skipped/first-call refusals, and six inverted-answer controls. Explicit callback/private-state and canonical transcript assertions. No fresh compiler regeneration, TS run, recording/replay/proof or formal theorem; no failed-context/rollback claim.",
+      "recorded_source_commit": "cb687ddc42ab6d5d7af17971b324db7c3689b226",
+      "recorded_source_hashes": {
+        "examples/rust_backend/boolean_logic.compact": "bd6fc3c9da25a8d1ee201b0d8028fb789cdffcdab8b6a4d23038ad119fcb3b31",
+        "tests-rust-backend/boolean-logic/lib.rs": "89b4fe8001fac2b198aa73118de3c162cfa75b44366428b722dd5533746455f1",
+        "Cargo.lock": "08b39446a045133bb8da3445559e3e9a1d59ea14cac93f67db585a5485a51841",
+        "tests-rust-backend/boolean-logic/Cargo.toml": "b7f214bee46e7af419b5023be037e864fb354a449269b8b46e5148ea8611509c"
+      },
+      "recorded_source_lines": {
+        "examples/rust_backend/boolean_logic.compact": 1,
+        "tests-rust-backend/boolean-logic/lib.rs": 1,
+        "Cargo.lock": 1,
+        "tests-rust-backend/boolean-logic/Cargo.toml": 1
+      }
     },
     {
       "id": "E-boolean-source-ADR0349",
@@ -7106,13 +7099,91 @@
         "optional_local_provenance": true,
         "required_for_portable_check": false
       },
-      "test_source": {
+      "qualification": "Both public TS/Rust targets: eight valid Boolean expressions in one compiled module per target, twelve exact source/type rejections per target (26 compiler invocations). Field is one non-Boolean representative. Uses source-qualified prior compiler/Scheme binaries, not a fresh build; same shared frontend is not an independent second semantics oracle. No native execution, recording, replay, proof or general comparable-type join claim.",
+      "recorded_tool_head": "cb687ddc42ab6d5d7af17971b324db7c3689b226",
+      "recorded_delivery_commit": "3455f2e952c019cddd847a874b55f4a16f1ffb73",
+      "recorded_source_hashes": {
+        "tools/compact-rust-backend/check_rejections.py": "915515d7f72bbc135f0b78e3d8aae0e0a077708a34a781bb9baa798571c2f084"
+      },
+      "current_test_source": {
         "path": "tools/compact-rust-backend/check_rejections.py",
         "line": 182,
-        "sha256": "915515d7f72bbc135f0b78e3d8aae0e0a077708a34a781bb9baa798571c2f084",
+        "sha256": "b2eccc1e4a5c9d81910ca2f3def28fe5208dad54ee8083306f74658411063185",
         "test_name": "check_boolean_typing"
       },
-      "qualification": "Both public TS/Rust targets: eight valid Boolean expressions in one compiled module per target, twelve exact source/type rejections per target (26 compiler invocations). Field is one non-Boolean representative. Uses source-qualified prior compiler/Scheme binaries, not a fresh build; same shared frontend is not an independent second semantics oracle. No native execution, recording, replay, proof or general comparable-type join claim."
+      "current_anchor_qualification": "The maintained check_boolean_typing body is unchanged; this current file anchor does not change the original executed harness identity or log."
+    },
+    {
+      "id": "E-boolean-native-candidate-679be285",
+      "strength": "executed-native-finite-specification-cases",
+      "log": {
+        "artifact_location": "/tmp/rust030-adr0364/boolean-native.log",
+        "sha256": "815b37e817f35ca63fc0164dbe5fab98bd54a7fa64ebda106972aa510ed5e772",
+        "optional_local_provenance": true,
+        "required_for_portable_check": false
+      },
+      "tests": [
+        {
+          "path": "tests-rust-backend/boolean-logic/tests/conformance.rs",
+          "line": 157,
+          "sha256": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
+          "test_name": "pure_boolean_truth_tables_are_complete"
+        },
+        {
+          "path": "tests-rust-backend/boolean-logic/tests/conformance.rs",
+          "line": 173,
+          "sha256": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
+          "test_name": "witnessed_truth_tables_preserve_selected_values_and_private_state"
+        },
+        {
+          "path": "tests-rust-backend/boolean-logic/tests/conformance.rs",
+          "line": 202,
+          "sha256": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
+          "test_name": "binary_witness_refusals_halt_selected_evaluation_and_skip_unselected_rhs"
+        },
+        {
+          "path": "tests-rust-backend/boolean-logic/tests/conformance.rs",
+          "line": 242,
+          "sha256": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
+          "test_name": "negation_evaluates_each_operand_once_and_preserves_refusal"
+        },
+        {
+          "path": "tests-rust-backend/boolean-logic/tests/conformance.rs",
+          "line": 262,
+          "sha256": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
+          "test_name": "branching_and_negation_use_witness_answers_not_arguments"
+        }
+      ],
+      "source_closure": [
+        {
+          "path": "examples/rust_backend/boolean_logic.compact",
+          "line": 1,
+          "sha256": "bd6fc3c9da25a8d1ee201b0d8028fb789cdffcdab8b6a4d23038ad119fcb3b31"
+        },
+        {
+          "path": "tests-rust-backend/boolean-logic/lib.rs",
+          "line": 1,
+          "sha256": "89b4fe8001fac2b198aa73118de3c162cfa75b44366428b722dd5533746455f1"
+        },
+        {
+          "path": "Cargo.lock",
+          "line": 1,
+          "sha256": "36cdb54f1d471742a6bbee5159a2fe81ec2279aa0cf7060a26c941de1f98505b"
+        },
+        {
+          "path": "tests-rust-backend/boolean-logic/Cargo.toml",
+          "line": 1,
+          "sha256": "b7f214bee46e7af419b5023be037e864fb354a449269b8b46e5148ea8611509c"
+        }
+      ],
+      "qualification": "Five existing Boolean conformance tests passed on Rust1.99.0 with the current locked/offline candidate graph. Checked-in generated crate; finite native value/callback/refusal/transcript assertions only. No fresh compiler regeneration, TS run, recording/replay/proof, network or formal theorem; no promotion of existing requirement support statuses.",
+      "source_commit": "679be285d91baf87ae55ae3161140e371d259b62",
+      "receipt": {
+        "artifact_location": "/tmp/rust030-adr0364/boolean-native-receipt.json",
+        "sha256": "dc92a054b9896b1af528aa8fc1c1fd73be4fc524f9f8196471b31f56499f8d4f",
+        "optional_local_provenance": true,
+        "required_for_portable_check": false
+      }
     }
   ],
   "formal_artifacts": [

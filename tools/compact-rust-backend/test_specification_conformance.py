@@ -154,6 +154,27 @@ class GateTests(unittest.TestCase):
         self.assertIn({"kind": "conflicting-source-identity", "path": "grammar.ss"},
                       self.run_gate()["errors"])
 
+    def test_historical_execution_hash_does_not_replace_current_source_guard(self):
+        self.baseline["evidence"] = [{
+            "id": "historical-observation",
+            "recorded_source_hashes": {"reference.mdx": "0" * 64},
+            "current_test_source": {
+                "path": "reference.mdx", "line": 1,
+                "sha256": gate.file_hash(self.root / "reference.mdx"),
+            },
+        }]
+        self.assertEqual(self.run_gate()["errors"], [])
+        (self.root / "reference.mdx").write_text("# Reference\nchanged semantics\n")
+        errors = self.run_gate()["errors"]
+        self.assertIn({"kind": "source-drift", "path": "reference.mdx"}, errors)
+        self.assertIn({
+            "kind": "anchor-source-drift",
+            "location": "baseline.evidence[0].current_test_source",
+            "path": "reference.mdx",
+        }, errors)
+        self.assertEqual(self.baseline["evidence"][0]["recorded_source_hashes"],
+                         {"reference.mdx": "0" * 64})
+
     def test_baseline_version_annotation_must_match(self):
         self.baseline["baseline"] = {"compiler_version": "wrong"}
         self.assertIn({"kind": "baseline-version-drift", "field": "compiler_version"},

@@ -145,8 +145,9 @@ def capability_inventory(output):
     require(len(rows) == 12 and {r["name"] for r in rows} == EXPORTS,
             "DID gate requires the complete twelve-export capability inventory")
     require(all(r["proof"] for r in rows), "DID proof applicability changed")
-    require({r["name"] for r in rows if r["recorded"]} == set(KEYS),
-            "DID recorded inventory differs from the reviewed ten-export scope")
+    # All exports record; relation proof scenarios belong to did_relation_gate.py.
+    require({r["name"] for r in rows if r["recorded"]} == EXPORTS,
+            "DID recorded inventory differs from the reviewed twelve-export scope")
     return report
 
 

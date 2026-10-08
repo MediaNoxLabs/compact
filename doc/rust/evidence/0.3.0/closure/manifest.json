@@ -1,0 +1,35 @@
+{
+  "format": "compact-rust-closure-publication/v1",
+  "date": "2026-10-08T18:44:33.160907+00:00",
+  "qualified_source": "f9a496660a4a69f4dd7c7927111767ad5c0c12b2",
+  "prior_documentation_publication": "20cd967eecd967cef2c184277e73892eeb546752",
+  "scope": "Closure documents only; original report-source archive preserves historical content. Original publication manifests remain unchanged.",
+  "files": [
+    {
+      "path": "doc/rust/0.3.0-closure.md",
+      "sha256": "3e61894603ee953a42f8ca1604a94c2a00cc2c348615894f3d28ca8eca8ffbfe",
+      "bytes": 24256
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/closure/crosswalk.md",
+      "sha256": "9156943ebbbfe2c77e9dffa954735141eef5b1b2c173e752eb11da4fa9519663",
+      "bytes": 43407
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/closure/crosswalk.json",
+      "sha256": "e74c56d0a345367d8dab79812c2ea879e0f31ceb7d79e9b336dd6e2059dc5f4e",
+      "bytes": 372787
+    },
+    {
+      "path": "doc/rust/evidence/0.3.0/closure/acceptance-sources.zip",
+      "sha256": "e5e6a4aaf463409eb55f4b56cd824472ec70d39691d4bb92de506cb44cbadfad",
+      "bytes": 324448
+    },
+    {
+      "path": "doc/rust/README.md",
+      "sha256": "15d0d49bfdd99eda11185da446bb3fd59b8dc35d44c3d284bee7abd506cfb08a",
+      "bytes": 1975,
+      "scope": "committed navigation; separate user proposals remain unstaged"
+    }
+  ]
+}

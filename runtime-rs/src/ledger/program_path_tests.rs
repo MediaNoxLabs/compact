@@ -24,6 +24,10 @@ type MutationBuilder = fn(&[u8]) -> Result<Program, TranscriptRejected<DefaultDB
 type ReadBuilder = fn(&[u8]) -> Result<Program, CompactError>;
 
 #[test]
+#[expect(
+    clippy::result_large_err,
+    reason = "Test builders preserve upstream errors for exact variant assertions"
+)]
 fn mutation_operands_preserve_exact_encoding_boundaries() {
     let cases: &[(&str, usize, MutationBuilder)] = &[
         ("plain append", 14, |p| merkle_insert_program(p, true)),
@@ -172,6 +176,10 @@ fn read_and_cell_programs_preserve_sixteen_key_index_boundary() {
 }
 
 #[test]
+#[expect(
+    clippy::result_large_err,
+    reason = "Test builders preserve upstream errors for exact variant assertions"
+)]
 fn empty_paths_distinguish_field_replacement_from_root_selection() {
     for build in [
         (|p: &[u8]| merkle_reset_program::<DefaultDB>(p, 3)) as MutationBuilder,

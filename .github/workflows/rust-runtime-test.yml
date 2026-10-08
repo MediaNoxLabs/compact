@@ -61,6 +61,7 @@ on:
       - "examples/**"
       - "Cargo.toml"
       - "Cargo.lock"
+      - "scripts/ci/immutable-git-consumer-smoke.sh"
       - "flake.nix"
       - "flake.lock"
       # The compiler-backed job depends on this composite action; editing it
@@ -86,6 +87,7 @@ on:
       - "examples/**"
       - "Cargo.toml"
       - "Cargo.lock"
+      - "scripts/ci/immutable-git-consumer-smoke.sh"
       - "flake.nix"
       - "flake.lock"
       - ".github/actions/setup-nix-cache/**"
@@ -132,6 +134,9 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
+
+      - name: Verify immutable Git consumer and Ledger8 source coherence
+        run: scripts/ci/immutable-git-consumer-smoke.sh
 
       # `cargo fmt --all --check` formats every workspace member — our
       # crates AND each generated `tests-e2e-rust/contracts/*` fixture crate.

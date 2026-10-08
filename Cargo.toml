@@ -64,16 +64,23 @@ members = [
 ]
 
 [workspace.dependencies]
-# Pinned to the same midnight-ledger line the TS runtime uses (ledger-8.0.2 per flake.nix).
-midnight-base-crypto      = "1"
-midnight-transient-crypto = "2"
-midnight-serialize        = "1"
-midnight-storage          = "2"
-midnight-coin-structure   = "2"
-midnight-onchain-state    = "3"
-midnight-onchain-vm       = "3"
-midnight-onchain-runtime  = "3"
-midnight-zswap            = "8"
+# Keep the Rust runtime's complete Ledger 8 cone on one immutable source. A
+# broad crates.io requirement for midnight-zswap does not admit 8.2.0-rc.1 and
+# otherwise creates source-distinct Ledger types in immutable-Git consumers.
+midnight-base-crypto      = { version = "=1.0.1", git = "https://github.com/MediaNoxLabs/midnight-ledger.git", rev = "b85f5d8e503fd1d7a1b128bbc1d7156baf823a65" }
+midnight-transient-crypto = { version = "=2.1.1", git = "https://github.com/MediaNoxLabs/midnight-ledger.git", rev = "b85f5d8e503fd1d7a1b128bbc1d7156baf823a65" }
+midnight-serialize        = { version = "=1.1.1", git = "https://github.com/MediaNoxLabs/midnight-ledger.git", rev = "b85f5d8e503fd1d7a1b128bbc1d7156baf823a65" }
+midnight-storage          = { version = "=2.0.3", git = "https://github.com/MediaNoxLabs/midnight-ledger.git", rev = "b85f5d8e503fd1d7a1b128bbc1d7156baf823a65" }
+midnight-coin-structure   = { version = "=2.0.2", git = "https://github.com/MediaNoxLabs/midnight-ledger.git", rev = "b85f5d8e503fd1d7a1b128bbc1d7156baf823a65" }
+midnight-onchain-state    = { version = "=3.0.1", git = "https://github.com/MediaNoxLabs/midnight-ledger.git", rev = "b85f5d8e503fd1d7a1b128bbc1d7156baf823a65" }
+midnight-onchain-vm       = { version = "=3.1.1", git = "https://github.com/MediaNoxLabs/midnight-ledger.git", rev = "b85f5d8e503fd1d7a1b128bbc1d7156baf823a65" }
+midnight-onchain-runtime  = { version = "=3.1.1", git = "https://github.com/MediaNoxLabs/midnight-ledger.git", rev = "b85f5d8e503fd1d7a1b128bbc1d7156baf823a65" }
+midnight-zswap            = { version = "=8.2.0-rc.1", git = "https://github.com/MediaNoxLabs/midnight-ledger.git", rev = "b85f5d8e503fd1d7a1b128bbc1d7156baf823a65" }
+
+# Ledger8 transient crypto enables `disk-spill`, which is maintained on this
+# Midnight proofs revision and is not present in the crates.io release.
+[patch.crates-io]
+midnight-proofs = { git = "https://github.com/MediaNoxLabs/midnight-zk.git", rev = "532629b044a88473a7175f4a96c2511c91156136" }
 
 [workspace.package]
 version = "0.5.1"

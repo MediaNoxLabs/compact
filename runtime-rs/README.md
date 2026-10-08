@@ -73,7 +73,7 @@ type, we update the prelude here, not in every generated file.
 ### Ledger8 source compatibility
 
 The runtime's complete Ledger dependency cone is pinned to
-`MediaNoxLabs/midnight-ledger@30fd606e5652d9146e8c7d453c5c01ea03962a89`.
+`MediaNoxLabs/midnight-ledger@2cce0f8f26e8ab1398af1c9ed61b087c28611a3f`.
 Keep those crates on one source and revision: Cargo treats otherwise-identical
 types from crates.io and Git as different Rust types. In particular, the
 supported Ledger revision contains the prerelease `midnight-zswap

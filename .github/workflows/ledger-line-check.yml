@@ -86,7 +86,7 @@ jobs:
 
           case "$branch" in
             codegen-rust)
-              stable_git_rev="30fd606e5652d9146e8c7d453c5c01ea03962a89"
+              stable_git_rev="2cce0f8f26e8ab1398af1c9ed61b087c28611a3f"
               if [ -n "$manifest_majors" ]; then
                 fail \
                   "codegen-rust is the ledger 8 stable branch, but Cargo.toml declares git tag pins for ledger $(echo "$manifest_majors" | tr '\n' ' ')." \

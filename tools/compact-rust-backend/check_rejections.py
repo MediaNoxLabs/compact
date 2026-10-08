@@ -20,8 +20,8 @@
 The positive fixture checker cannot detect an unsupported construct that
 quietly emits a plausible Rust library. This gate pins source-level
 refusals and verifies that no generated Cargo library survives. It also
-checks that a later packaging failure cannot publish partial Rust output
-or replace a previously complete directory.
+checks that runtime validation and failed rebuilds preserve output, including
+recovery of a previously complete directory after an interrupted replacement.
 """
 
 import hashlib
@@ -237,9 +237,11 @@ def check_output_publication(compactc: str, directory: Path) -> list[str]:
     invalid_environment = os.environ.copy()
     invalid_environment["COMPACT_RUST_RUNTIME_DIR"] = str(directory / "missing-runtime")
 
-    def run_compiler(environment: dict[str, str]) -> subprocess.CompletedProcess[str]:
+    def run_compiler(
+        environment: dict[str, str], input_source: Path = source,
+    ) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
-            [compactc, "--target", "rust", "--skip-zk", str(source), str(output)],
+            [compactc, "--target", "rust", "--skip-zk", str(input_source), str(output)],
             capture_output=True, text=True, env=environment, check=False,
         )
 
@@ -248,7 +250,7 @@ def check_output_publication(compactc: str, directory: Path) -> list[str]:
 
     rejected = run_compiler(invalid_environment)
     if rejected.returncode == 0 or "runtime source directory is invalid" not in rejected.stderr:
-        failures.append(f"post-render failure was not reported:\n{rejected.stderr}")
+        failures.append(f"invalid runtime source was not rejected:\n{rejected.stderr}")
     if output.exists() or leaked_stage():
         failures.append("failed fresh compile published partial output or left staging debris")
 
@@ -271,9 +273,34 @@ def check_output_publication(compactc: str, directory: Path) -> list[str]:
     preserved = snapshot(output)
     interrupted_backup = directory / f".{output.name}.compactc-stage-42-123-0-previous"
     output.rename(interrupted_backup)
+    interrupted_files = snapshot(directory)
+    interrupted_entries = set(directory.iterdir())
     rejected = run_compiler(invalid_environment)
     if (
         rejected.returncode == 0
+        or "runtime source directory is invalid" not in rejected.stderr
+        or output.exists()
+        or not interrupted_backup.is_dir()
+        or snapshot(directory) != interrupted_files
+        or set(directory.iterdir()) != interrupted_entries
+    ):
+        failures.append("invalid runtime selection mutated interrupted output before recovery")
+
+    # Runtime selection precedes recovery; a frontend refusal with valid runtime
+    # sources reaches recovery and then exercises failed staging cleanup.
+    invalid_source = directory / "publication-invalid.compact"
+    invalid_source.write_text(
+        "export pure circuit value(f: Field): Boolean {\n"
+        "  return !f;\n}\n"
+    )
+    rejected = run_compiler(os.environ.copy(), invalid_source)
+    expected = (
+        "Exception: publication-invalid.compact line 2 char 10:\n"
+        "  expected test to have type Boolean, received Field"
+    )
+    if (
+        rejected.returncode == 0
+        or rejected.stderr.strip() != expected
         or not output.is_dir()
         or snapshot(output) != preserved
         or interrupted_backup.exists()

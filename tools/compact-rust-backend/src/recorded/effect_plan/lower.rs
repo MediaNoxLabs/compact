@@ -12,6 +12,7 @@ use super::{
 };
 use crate::ir::*;
 use std::collections::HashMap;
+mod aggregates;
 mod calls;
 mod counters;
 mod expressions;
@@ -33,14 +34,6 @@ struct Lowerer<'a> {
 }
 
 #[cfg(test)]
-pub(super) fn lower(
-    circuit: &StatefulCircuit,
-    declarations: &Declarations,
-) -> Result<Plan, RecordingGap> {
-    lower_with_calls(circuit, declarations, &HashMap::new())
-}
-
-#[cfg(test)]
 pub(super) fn lower_with_calls<'a>(
     circuit: &StatefulCircuit,
     declarations: &'a Declarations,
@@ -55,6 +48,9 @@ pub(super) fn lower_with_pure_calls<'a>(
     pure: &'a HashMap<&'a str, &'a PureCircuit>,
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
 ) -> Result<(Plan, Certificates), RecordingGap> {
+    declarations
+        .types()
+        .validate_at(&circuit.result, "return_value")?;
     if !surface_type(&circuit.result) {
         return Err(invalid("return_value", "unsupported circuit result type"));
     }
@@ -73,6 +69,9 @@ pub(super) fn lower_with_pure_calls<'a>(
     let mut parameters = Vec::new();
     for (i, p) in circuit.parameters.iter().enumerate() {
         lower.spend(&format!("parameters[{i}]"))?;
+        declarations
+            .types()
+            .validate_at(&p.ty, &format!("parameters[{i}]"))?;
         if !surface_type(&p.ty) {
             return Err(invalid(
                 &format!("parameters[{i}]"),
@@ -162,6 +161,8 @@ impl Lowerer<'_> {
         bindings: &mut Vec<Binding>,
         path: &str,
     ) -> Result<Value, RecordingGap> {
+        self.declarations.types().validate_at(&value.ty, path)?;
+        self.declarations.types().validate_at(ty, path)?;
         if value.ty == *ty {
             return Ok(value);
         }
@@ -200,6 +201,7 @@ impl Lowerer<'_> {
         let LedgerFieldKind::Cell { ty } = &field.declaration else {
             return Err(invalid(path, "expected Cell field"));
         };
+        self.declarations.types().validate_at(ty, path)?;
         if !surface_type(ty) || *ty == Type::Unit {
             return Err(invalid(path, "unsupported Cell value type"));
         }
@@ -305,7 +307,7 @@ impl Lowerer<'_> {
             return Err(invalid(path, "branch result types differ"));
         }
         let ty = then_result.ty.clone();
-        if !scalar(&ty) {
+        if !surface_type(&ty) {
             return Err(invalid(path, "unsupported branch result type"));
         }
         Ok(self.emit(

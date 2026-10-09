@@ -13,7 +13,7 @@ fn name(value: &Value) -> syn::Ident {
 }
 fn value(value: &Value) -> syn::Expr {
     let name = name(value);
-    syn::parse_quote!(#name)
+    crate::retained_value(syn::parse_quote!(#name), &value.ty)
 }
 fn unsigned_max(ty: &crate::ir::Type) -> &str {
     let crate::ir::Type::Unsigned { max } = ty else {
@@ -45,6 +45,7 @@ fn block(body: &Block, declarations: &Declarations) -> Result<Vec<syn::Stmt>, Re
         let expression: syn::Expr = match &binding.operation {
             Operation::Literal(literal) => match literal {
                 Literal::Unit => syn::parse_quote!(()),
+                Literal::Bytes(bytes) => syn::parse_quote!(runtime::FixedBytes::new([#(#bytes),*])),
                 Literal::Boolean(b) => syn::parse_quote!(#b),
                 Literal::Field(bytes) => {
                     syn::parse_quote!(runtime::Field::from_le_bytes(&[#(#bytes),*]).expect("validated Compact Field literal"))
@@ -57,6 +58,36 @@ fn block(body: &Block, declarations: &Declarations) -> Result<Vec<syn::Stmt>, Re
                     syn::parse_quote!(<#ty>::new(#n)?)
                 }
             },
+            Operation::EnumVariant { variant } => {
+                let variant = ident(variant).map_err(|e| invalid(path, e.to_string()))?;
+                syn::parse_quote!(#ty::#variant)
+            }
+            Operation::Default => syn::parse_quote!(<#ty as ::core::default::Default>::default()),
+            Operation::StructConstruct { fields: inputs } => {
+                let crate::ir::Type::Struct { fields, .. } = &binding.value.ty else {
+                    unreachable!("checked struct construction")
+                };
+                let members = fields
+                    .iter()
+                    .map(|f| ident(&f.name))
+                    .collect::<Result<Vec<_>, _>>()
+                    .map_err(|e| invalid(path, e.to_string()))?;
+                let inputs: Vec<_> = inputs.iter().map(value).collect();
+                syn::parse_quote!(#ty { #(#members: #inputs),* })
+            }
+            Operation::StructProject {
+                value: input,
+                field,
+                ..
+            } => {
+                let member = ident(field).map_err(|e| invalid(path, e.to_string()))?;
+                let source = name(input);
+                crate::retained_value(syn::parse_quote!(#source.#member), &binding.value.ty)
+            }
+            Operation::Tuple { elements } => {
+                let elements: Vec<_> = elements.iter().map(value).collect();
+                syn::parse_quote!((#(#elements,)*))
+            }
             Operation::Add(a, b) => {
                 let (a, b) = (value(a), value(b));
                 syn::parse_quote!(#a + #b)

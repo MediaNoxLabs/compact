@@ -39,12 +39,16 @@ pub(super) fn validate(
     if state.active_calls.len() >= crate::resource_limits::recording_call_limits().0 {
         return Err(invalid(path, "recording call depth limit exceeded"));
     }
-    if signature.parameters.len() != arguments.len()
-        || parameters.len() != arguments.len()
-        || signature.result != *result
-        || body.result.ty != *result
-        || !surface_type(result)
-    {
+    if signature.parameters.len() != arguments.len() || parameters.len() != arguments.len() {
+        return Err(invalid(path, "call differs from declared signature"));
+    }
+    declarations.types().validate_at(&signature.result, path)?;
+    declarations.types().validate_at(&body.result.ty, path)?;
+    for (formal, parameter) in signature.parameters.iter().zip(parameters) {
+        declarations.types().validate_at(&formal.ty, path)?;
+        declarations.types().validate_at(&parameter.ty, path)?;
+    }
+    if signature.result != *result || body.result.ty != *result || !surface_type(result) {
         return Err(invalid(path, "call differs from declared signature"));
     }
     state.charge(parameters.len(), path)?;
@@ -53,7 +57,7 @@ pub(super) fn validate(
     for ((formal, argument), parameter) in
         signature.parameters.iter().zip(arguments).zip(parameters)
     {
-        used(argument, caller, path)?;
+        used(argument, caller, declarations, path)?;
         if !surface_type(&formal.ty)
             || formal.ty != argument.ty
             || formal.ty != parameter.ty

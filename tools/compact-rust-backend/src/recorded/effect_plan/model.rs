@@ -36,6 +36,7 @@ pub(super) enum Literal {
     Unsigned(u128),
     /// Canonical little-endian value; declared bound remains on the binding type.
     WideUnsigned([u8; 32]),
+    Bytes(Vec<u8>),
 }
 #[derive(Clone, Copy, Debug)]
 pub(super) enum Conversion {
@@ -45,6 +46,21 @@ pub(super) enum Conversion {
 #[derive(Clone, Debug)]
 pub(super) enum Operation {
     Literal(Literal),
+    EnumVariant {
+        variant: String,
+    },
+    Default,
+    StructConstruct {
+        fields: Vec<Value>,
+    },
+    StructProject {
+        value: Value,
+        field: String,
+        index: usize,
+    },
+    Tuple {
+        elements: Vec<Value>,
+    },
     Add(Value, Value),
     UnsignedAdd(Value, Value),
     Equal(Value, Value),

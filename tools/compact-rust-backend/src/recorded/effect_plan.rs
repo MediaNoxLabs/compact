@@ -17,6 +17,7 @@ mod render;
 mod resource_tests;
 #[cfg(test)]
 mod tests;
+mod type_environment;
 mod validate;
 
 use super::{RecordingGap, RecordingGapCode, typed_plan::TypedPlan};
@@ -38,9 +39,7 @@ pub(super) fn check(
     ledger: &HashMap<&str, &LedgerField>,
     witnesses: &HashMap<&str, &WitnessDeclaration>,
 ) -> Result<CheckedPlan, PlanError> {
-    let declarations = declarations::Declarations::new(ledger, witnesses).with_root(circuit);
-    let plan = lower::lower(circuit, &declarations).map_err(PlanError::Unsupported)?;
-    validate::check(plan, declarations).map_err(PlanError::Invalid)
+    check_with_calls(circuit, ledger, witnesses, &HashMap::new(), &HashMap::new())
 }
 
 pub(super) fn check_with_calls(
@@ -50,7 +49,11 @@ pub(super) fn check_with_calls(
     pure: &HashMap<&str, &PureCircuit>,
     circuits: &HashMap<&str, &StatefulCircuit>,
 ) -> Result<CheckedPlan, PlanError> {
+    let types =
+        type_environment::TypeEnvironment::from_sources(circuit, ledger, witnesses, pure, circuits)
+            .map_err(PlanError::Unsupported)?;
     let declarations = declarations::Declarations::with_calls(ledger, witnesses, pure, circuits)
+        .with_type_environment(types)
         .with_root(circuit);
     let (plan, certificates) = lower::lower_with_pure_calls(circuit, &declarations, pure, circuits)
         .map_err(PlanError::Unsupported)?;

@@ -6,6 +6,7 @@
 use super::{RecordingGap, declarations::Declarations, invalid, model::*};
 use crate::ir::{LedgerFieldKind, Type};
 use std::collections::{HashMap, HashSet};
+mod aggregates;
 mod calls;
 mod pure;
 
@@ -44,16 +45,38 @@ pub(super) fn bound(ty: &Type) -> Option<u128> {
 pub(super) fn scalar(ty: &Type) -> bool {
     matches!(ty, Type::Unit | Type::Boolean | Type::Field) || bound(ty).is_some()
 }
-/// Recorded ABI/storage values; arithmetic and witness signatures remain scalar.
+/// Recorded ABI/storage values; scalar arithmetic retains its separate predicate.
 pub(super) fn surface_type(ty: &Type) -> bool {
-    scalar(ty) || *ty == Type::JubjubPoint
+    scalar(ty)
+        || *ty == Type::JubjubPoint
+        || match ty {
+            Type::Bytes { length } => {
+                *length <= crate::resource_limits::recording_byte_payload_limit()
+            }
+            Type::Enum { variants, .. } => !variants.is_empty(),
+            Type::Struct { fields, .. } => {
+                !fields.is_empty() && fields.iter().all(|f| surface_type(&f.ty))
+            }
+            _ => false,
+        }
 }
-/// Equality deliberately retains its pre-point scalar/wide-local domain.
+/// Products compose equality only when every leaf supports it; points remain excluded.
 pub(super) fn equality_type(ty: &Type) -> bool {
-    scalar(ty) || unsigned_bound(ty).is_some()
+    match ty {
+        Type::JubjubPoint => false,
+        Type::Struct { fields, .. } => {
+            surface_type(ty) && fields.iter().all(|field| equality_type(&field.ty))
+        }
+        // Rust's standard tuple PartialEq implementations stop at arity 12.
+        // Larger tuple temporaries remain valid; only this == operation refuses.
+        Type::Tuple { elements } => elements.len() <= 12 && elements.iter().all(equality_type),
+        _ => value_type(ty),
+    }
 }
-fn value_type(ty: &Type) -> bool {
-    surface_type(ty) || unsigned_bound(ty).is_some()
+pub(super) fn value_type(ty: &Type) -> bool {
+    surface_type(ty)
+        || unsigned_bound(ty).is_some()
+        || matches!(ty, Type::Tuple { elements } if elements.iter().all(value_type))
 }
 pub(super) fn wide_literal_fits(bytes: &[u8; 32], ty: &Type) -> bool {
     let Some(crate::UnsignedMaximum::Wide { high, low }) = unsigned_bound(ty) else {
@@ -69,6 +92,12 @@ pub(super) fn check(plan: Plan, declarations: Declarations) -> Result<CheckedPla
     CheckedPlan::validate(plan, declarations)
 }
 pub(super) fn validate(plan: &Plan, declarations: &Declarations) -> Result<(), RecordingGap> {
+    declarations
+        .types()
+        .validate_at(&plan.result_type, "return_value")?;
+    for value in &plan.parameters {
+        declarations.types().validate_at(&value.ty, "parameters")?;
+    }
     if !surface_type(&plan.result_type) {
         return Err(invalid("return_value", "unsupported circuit result type"));
     }
@@ -80,6 +109,14 @@ pub(super) fn validate(plan: &Plan, declarations: &Declarations) -> Result<(), R
         block_depth: 0,
     };
     if let Some(root) = declarations.root() {
+        declarations
+            .types()
+            .validate_at(&root.result, "return_value")?;
+        for parameter in &root.parameters {
+            declarations
+                .types()
+                .validate_at(&parameter.ty, "parameters")?;
+        }
         if root.result != plan.result_type
             || root.parameters.len() != plan.parameters.len()
             || !root
@@ -118,7 +155,15 @@ pub(super) fn validate(plan: &Plan, declarations: &Declarations) -> Result<(), R
     }
     Ok(())
 }
-fn used(value: &Value, scope: &HashMap<usize, Type>, path: &str) -> Result<(), RecordingGap> {
+fn used(
+    value: &Value,
+    scope: &HashMap<usize, Type>,
+    declarations: &Declarations,
+    path: &str,
+) -> Result<(), RecordingGap> {
+    // References carry their own annotations and may be forged independently of
+    // the definition. Bound and bind them before recursive structural equality.
+    declarations.types().validate_at(&value.ty, path)?;
     if scope.get(&value.id) != Some(&value.ty) {
         return Err(invalid(
             path,
@@ -143,7 +188,8 @@ fn block(
     for binding in &body.bindings {
         let path = &binding.path;
         let ty = &binding.value.ty;
-        let use_value = |v: &Value| used(v, &scope, path);
+        let use_value = |v: &Value| used(v, &scope, declarations, path);
+        declarations.types().validate_at(ty, path)?;
         if !value_type(ty) {
             return Err(invalid(path, "unsupported plan value type"));
         }
@@ -157,7 +203,17 @@ fn block(
                 }
                 Literal::Unsigned(n) => bound(ty).is_some_and(|max| *n <= max),
                 Literal::WideUnsigned(bytes) => wide_literal_fits(bytes, ty),
+                Literal::Bytes(bytes) => {
+                    *ty == (Type::Bytes {
+                        length: bytes.len(),
+                    })
+                }
             },
+            Operation::EnumVariant { .. }
+            | Operation::Default
+            | Operation::StructConstruct { .. }
+            | Operation::StructProject { .. }
+            | Operation::Tuple { .. } => aggregates::validate(binding, declarations, &scope)?,
             Operation::Add(a, b) => {
                 use_value(a)?;
                 use_value(b)?;
@@ -240,17 +296,21 @@ fn block(
                 let witness = declarations
                     .witness(*declaration)
                     .ok_or_else(|| invalid(path, "unknown witness declaration"))?;
+                declarations.types().validate_at(&witness.result, path)?;
+                for parameter in &witness.parameters {
+                    declarations.types().validate_at(&parameter.ty, path)?;
+                }
                 for value in arguments {
                     use_value(value)?;
                 }
-                witness.result == Type::Field
+                surface_type(&witness.result)
                     && witness.result == *ty
                     && witness.parameters.len() == arguments.len()
                     && witness
                         .parameters
                         .iter()
                         .zip(arguments)
-                        .all(|(p, a)| scalar(&p.ty) && p.ty == a.ty)
+                        .all(|(p, a)| surface_type(&p.ty) && p.ty == a.ty)
             }
             Operation::Call { .. } => {
                 calls::validate(binding, declarations, &scope, state)?;
@@ -272,7 +332,7 @@ fn block(
                 use_value(condition)?;
                 block(then, declarations, &scope, state, path)?;
                 block(otherwise, declarations, &scope, state, path)?;
-                scalar(ty)
+                surface_type(ty)
                     && condition.ty == Type::Boolean
                     && then.result.ty == *ty
                     && otherwise.result.ty == *ty
@@ -289,7 +349,7 @@ fn block(
         }
         scope.insert(binding.value.id, ty.clone());
     }
-    used(&body.result, &scope, path)?;
+    used(&body.result, &scope, declarations, path)?;
     state.block_depth -= 1;
     Ok(())
 }
@@ -308,6 +368,7 @@ fn cell<'a>(
     let LedgerFieldKind::Cell { ty } = &field.declaration else {
         return Err(invalid(path, "expected Cell declaration"));
     };
+    declarations.types().validate_at(ty, path)?;
     if !surface_type(ty) || *ty == Type::Unit {
         return Err(invalid(path, "unsupported Cell value type"));
     }

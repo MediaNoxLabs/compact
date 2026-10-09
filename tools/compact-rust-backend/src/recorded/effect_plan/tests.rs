@@ -16,6 +16,12 @@ mod ordinary;
 mod pure_inclusion;
 #[path = "tests/pure_validation.rs"]
 mod pure_validation;
+#[path = "tests/rich_validation.rs"]
+mod rich_validation;
+#[path = "tests/rich_values.rs"]
+mod rich_values;
+#[path = "tests/tuple_equality.rs"]
+mod tuple_equality;
 #[path = "tests/wide_values.rs"]
 mod wide_values;
 use declaration_tests::check_plan;

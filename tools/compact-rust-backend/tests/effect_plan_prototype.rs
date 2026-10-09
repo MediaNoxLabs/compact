@@ -186,7 +186,7 @@ fn certified_pure_helper_is_available_through_public_recording() {
 }
 
 #[test]
-fn unsupported_direct_bytes_still_exposes_the_precise_algebra_diagnostic() {
+fn direct_bytes_temporaries_now_compose_with_recorded_cell_reads() {
     let contract = single(ReturnPlan::Let {
         bindings: vec![LocalBinding {
             name: "unused_bytes".into(),
@@ -202,11 +202,8 @@ fn unsupported_direct_bytes_still_exposes_the_precise_algebra_diagnostic() {
         .iter()
         .find(|c| c.name == "sample")
         .unwrap();
-    assert!(!row.recorded);
-    let gap = row.recording_unavailable.as_ref().unwrap();
-    assert_eq!(gap.code.as_str(), "unsupported_expression");
-    assert_eq!(gap.ir_node, "Expr::BytesLiteral");
-    assert_eq!(gap.path, "return_value.body.bindings[0].value");
+    assert!(row.recorded && row.observed_call);
+    assert!(row.recording_unavailable.is_none());
 }
 
 #[test]

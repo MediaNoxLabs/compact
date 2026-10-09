@@ -210,7 +210,7 @@ fn invalid_jubjub_operands_report_the_first_exact_operand_path() {
 }
 
 #[test]
-fn adding_points_does_not_expand_scalar_operations_or_witness_signatures() {
+fn point_values_do_not_expand_scalar_arithmetic_or_equality() {
     for (expression, result) in [
         (
             Expr::Equal {
@@ -247,17 +247,23 @@ fn adding_points_does_not_expand_scalar_operations_or_witness_signatures() {
             },
             validate::uint("65535"),
         ),
-        (
-            Expr::If {
-                condition: Box::new(Expr::Boolean { value: true }),
-                then: Box::new(parameter("point")),
-                otherwise: Box::new(parameter("point")),
-            },
-            Type::JubjubPoint,
-        ),
     ] {
         refusal(expression, result);
     }
+}
+
+#[test]
+fn point_values_compose_through_surface_branches_and_witnesses() {
+    let branch = candidate(
+        Expr::If {
+            condition: Box::new(Expr::Boolean { value: true }),
+            then: Box::new(parameter("point")),
+            otherwise: Box::new(parameter("point")),
+        },
+        Type::JubjubPoint,
+    );
+    let plan = checked(&contract(), &branch).unwrap();
+    super::super::render(&plan).unwrap();
     let mut contract = contract();
     contract.witnesses.push(WitnessDeclaration {
         source: None,
@@ -275,10 +281,8 @@ fn adding_points_does_not_expand_scalar_operations_or_witness_signatures() {
         },
         Type::Field,
     );
-    assert!(matches!(
-        checked(&contract, &circuit),
-        Err(PlanError::Unsupported(_))
-    ));
+    let plan = checked(&contract, &circuit).unwrap();
+    super::super::render(&plan).unwrap();
     contract.witnesses[0].parameters.clear();
     contract.witnesses[0].result = Type::JubjubPoint;
     let circuit = candidate(
@@ -288,10 +292,8 @@ fn adding_points_does_not_expand_scalar_operations_or_witness_signatures() {
         },
         Type::JubjubPoint,
     );
-    assert!(matches!(
-        checked(&contract, &circuit),
-        Err(PlanError::Unsupported(_))
-    ));
+    let plan = checked(&contract, &circuit).unwrap();
+    super::super::render(&plan).unwrap();
 }
 
 #[test]

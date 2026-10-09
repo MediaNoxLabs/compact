@@ -16,6 +16,7 @@ pub(super) struct Declarations {
     calls: Vec<CallSignature>,
     root: Option<CallSignature>,
     pure: Certificates,
+    types: super::type_environment::TypeEnvironment,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -55,7 +56,18 @@ impl Declarations {
             calls: Vec::new(),
             root: None,
             pure: Certificates::default(),
+            types: Default::default(),
         }
+    }
+    pub(super) fn with_type_environment(
+        mut self,
+        types: super::type_environment::TypeEnvironment,
+    ) -> Self {
+        self.types = types;
+        self
+    }
+    pub(super) fn types(&self) -> &super::type_environment::TypeEnvironment {
+        &self.types
     }
     pub(super) fn with_certificates(
         mut self,

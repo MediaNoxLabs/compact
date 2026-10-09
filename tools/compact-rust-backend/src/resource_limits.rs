@@ -16,9 +16,13 @@
 //! Bounded typed-IR preflight, before recursive rendering. The borrowed visitor
 //! budgets pending batches; graph arithmetic saturates. Pure-cycle facts are
 //! retained for semantic refusal after the renderer's existing checks.
+mod borrowed_types;
 mod policy;
 mod pure;
 use crate::ir::Contract;
+pub(crate) use borrowed_types::{
+    recording_byte_payload_limit, recording_source_types, recording_type_nodes,
+};
 use policy::{LimitError, Limits, ResourceKind as Kind, check};
 pub(crate) use pure::PureBodyBudget;
 

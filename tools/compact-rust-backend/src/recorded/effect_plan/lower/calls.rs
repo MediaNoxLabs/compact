@@ -29,6 +29,12 @@ impl Lowerer<'_> {
             .get(name)
             .copied()
             .ok_or_else(|| invalid(path, "stateful call body is unavailable"))?;
+        for result in [&signature.result, &callee.result] {
+            self.declarations.types().validate_at(result, path)?;
+        }
+        for parameter in signature.parameters.iter().chain(&callee.parameters) {
+            self.declarations.types().validate_at(&parameter.ty, path)?;
+        }
         if signature.name != callee.name
             || signature.parameters != callee.parameters
             || signature.result != callee.result

@@ -54,6 +54,12 @@ impl Lowerer<'_> {
                 };
                 (Operation::Literal(literal), ty)
             }
+            Expr::BytesLiteral { .. }
+            | Expr::EnumVariant { .. }
+            | Expr::Default { .. }
+            | Expr::StructLiteral { .. }
+            | Expr::StructField { .. }
+            | Expr::Tuple { .. } => self.aggregate(expression, scope, bindings, path)?,
             Expr::Let {
                 bindings: locals,
                 body,
@@ -196,21 +202,28 @@ impl Lowerer<'_> {
                     .declarations
                     .resolve_witness(name)
                     .ok_or_else(|| invalid(path, "unknown witness"))?;
-                if declaration.result != Type::Field
+                self.declarations
+                    .types()
+                    .validate_at(&declaration.result, path)?;
+                for parameter in &declaration.parameters {
+                    self.declarations.types().validate_at(&parameter.ty, path)?;
+                }
+                if !validate::surface_type(&declaration.result)
                     || arguments.len() != declaration.parameters.len()
                 {
                     return Err(invalid(
                         path,
-                        "prototype witnesses must return Field and match arity",
+                        "witness result must be supported and arguments must match arity",
                     ));
                 }
                 if declaration
                     .parameters
                     .iter()
-                    .any(|p| !validate::scalar(&p.ty))
+                    .any(|p| !validate::surface_type(&p.ty))
                 {
                     return Err(invalid(path, "unsupported witness parameter type"));
                 }
+                let result = declaration.result.clone();
                 let mut args = Vec::new();
                 for (i, (argument, parameter)) in
                     arguments.iter().zip(&declaration.parameters).enumerate()
@@ -224,11 +237,12 @@ impl Lowerer<'_> {
                         declaration: witness_id,
                         arguments: args,
                     },
-                    Type::Field,
+                    result,
                 )
             }
             _ => return Err(RecordingGap::expression(expression, path.into())),
         };
+        self.declarations.types().validate_at(&ty, path)?;
         Ok(self.emit(operation, ty, bindings, path))
     }
 }

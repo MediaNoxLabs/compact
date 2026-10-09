@@ -57,6 +57,7 @@ mod effect_plan_jubjub;
 #[cfg(feature = "experimental-recording-plan")]
 mod effect_plan_prototype;
 mod effect_plan_pure_calls;
+mod effect_plan_rich_values;
 mod effect_plan_stateful_calls;
 mod effect_plan_wide_source;
 mod effectful_return;

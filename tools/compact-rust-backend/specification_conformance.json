@@ -119,7 +119,7 @@
     "tools/compact-rust-backend/src/recorded/legacy/actions/assertions.rs": "2111fd862692b4d57075f2fa24a41b93821cde0b3f1d6123bd8ca0c3a0dff9a9",
     "tools/compact-rust-backend/src/recorded/legacy/actions/merkle.rs": "3cf42d345080854e220522767c2a4ed27fbec30ea985ba2dc0a565f3ad380247",
     "tools/compact-rust-backend/src/recorded/legacy/actions/control.rs": "d313179d5f5337547a3346c3f451b4181d04402cc77f6e555afb2e7b48083b9e",
-    "tools/compact-rust-backend/src/recorded/legacy/actions/bindings.rs": "5aa51e218a76d4a7aae1f8d332e913c17bae52760d4197161c0ac012f1aa030e",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/bindings.rs": "2a62af50f1e5255c0407b423afe280c8b1c0ce382c21bab6d9944122d82e1112",
     "tools/compact-rust-backend/src/recorded/legacy/actions/collections.rs": "502dd04921b10bfa8ef6bba8ce2c6dbfed5fef7ee715b8e1203f672a925c3ab8",
     "tools/compact-rust-backend/src/recorded/legacy/actions/bindings/closed.rs": "bad1b71b45d3b508fba2bdad0e86a2dfbe28592d9b56e263fa0a49e85e17574a",
     "tools/compact-rust-backend/src/stateful.rs": "d6ea080187ec283adfcda18d9776e0de26395e511699cff4d1a16317ffd1cb57",
@@ -151,7 +151,8 @@
     "tools/compact-rust-backend/src/stateful/actions/collections.rs": "3261b3aea6cac10d7f4020fad4c0862f2b22350c16252fe4950fefeb51f5e990",
     "tools/compact-rust-backend/src/stateful/actions.rs": "fcba035798bd4f47d68cce0038468e6fa816710b69cd54b1354b022d02945c7d",
     "tools/compact-rust-backend/src/recorded/typed_plan/evidence.rs": "b835a76820570715992ab13a54e4b47ca8ce0933f227d5a5e46ea44866661c1f",
-    "tools/compact-rust-backend/src/recorded/typed_plan/evaluation.rs": "5e183182443a44e75bf995cfdd230a807eed3789d336380ca06878a22b3ed427"
+    "tools/compact-rust-backend/src/recorded/typed_plan/evaluation.rs": "5e183182443a44e75bf995cfdd230a807eed3789d336380ca06878a22b3ed427",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/bindings/field.rs": "1e5c56893d6de82a3a5112f95bc4e74860603ae9f7a28439dd347dc4422d6534"
   },
   "grammar_inventory": {
     "format_version": 1,

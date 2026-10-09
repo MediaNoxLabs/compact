@@ -116,6 +116,7 @@ pub(super) fn try_run(
         ("--stateful-assert", _) => Some(recorded::stateful_assert(arguments)),
         ("--effect-plan-counter", _) => Some(recorded::effect_plan_counter(arguments)),
         ("--effect-plan-counter-only", _) => Some(recorded::effect_plan_counter_only(arguments)),
+        ("--effect-plan-jubjub", _) => Some(recorded::effect_plan_jubjub(arguments)),
         ("--effectful-return", _) => Some(recorded::effectful_return(arguments)),
         ("--effect-plan-wide-source", _) => Some(recorded::effect_plan_wide_source(arguments)),
         #[cfg(feature = "experimental-recording-plan")]

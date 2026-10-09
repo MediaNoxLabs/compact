@@ -189,9 +189,9 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (_, runtime::JubjubPoint) =
+            let (frame, __compact_effect_0): (_, runtime::JubjubPoint) =
                 crate::ledger_slots::point.record_read(frame)?;
-            Ok(frame.finish(observed))
+            Ok(frame.finish(__compact_effect_0))
         }
         pub fn set_box<Private>(
             context: runtime::context::CircuitContext<Private>,

@@ -8,12 +8,13 @@ use super::{
     declarations::Declarations,
     invalid,
     model::*,
-    validate::{scalar, uint},
+    validate::{scalar, surface_type, uint},
 };
 use crate::ir::*;
 use std::collections::HashMap;
 mod counters;
 mod expressions;
+mod jubjub;
 mod ordinary;
 
 type Scope = HashMap<String, Value>;
@@ -26,7 +27,7 @@ pub(super) fn lower(
     circuit: &StatefulCircuit,
     declarations: &Declarations,
 ) -> Result<Plan, RecordingGap> {
-    if !scalar(&circuit.result) {
+    if !surface_type(&circuit.result) {
         return Err(invalid("return_value", "unsupported circuit result type"));
     }
     let mut lower = Lowerer {
@@ -36,7 +37,7 @@ pub(super) fn lower(
     let mut scope = Scope::new();
     let mut parameters = Vec::new();
     for (i, p) in circuit.parameters.iter().enumerate() {
-        if !scalar(&p.ty) {
+        if !surface_type(&p.ty) {
             return Err(invalid(
                 &format!("parameters[{i}]"),
                 "unsupported parameter type",
@@ -131,7 +132,7 @@ impl Lowerer<'_> {
         let LedgerFieldKind::Cell { ty } = &field.declaration else {
             return Err(invalid(path, "expected Cell field"));
         };
-        if !scalar(ty) || *ty == Type::Unit {
+        if !surface_type(ty) || *ty == Type::Unit {
             return Err(invalid(path, "unsupported Cell value type"));
         }
         Ok((CellSlot { declaration, index }, ty.clone()))

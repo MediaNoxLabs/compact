@@ -119,3 +119,103 @@ fn witness_points_compose_with_curve_natives_and_keep_transcript_order() {
     let result = generator(context(), &Secret, seed).unwrap();
     assert_oracle(&result, point_json(result.result), &oracle["generator"]);
 }
+
+struct GeneratorWitness(std::cell::RefCell<Vec<(Field, u64)>>);
+
+impl Witnesses<u64> for GeneratorWitness {
+    fn secret_point(
+        &self,
+        _context: WitnessContext<'_, u64, LedgerView<'_>>,
+        _seed: Field,
+    ) -> (u64, JubjubPoint) {
+        panic!("generator must call only the Field witness")
+    }
+
+    fn secret_scalar(
+        &self,
+        context: WitnessContext<'_, u64, LedgerView<'_>>,
+        seed: Field,
+    ) -> (u64, Field) {
+        self.0.borrow_mut().push((seed, *context.private_state));
+        (
+            *context.private_state + 1,
+            seed + Field::from(*context.private_state),
+        )
+    }
+}
+
+#[test]
+fn recorded_generator_preserves_single_field_witness_and_private_transcript() {
+    use compact_rust_witness_jubjub_fixture::ledger_contract::recorded;
+    use midnight_compact_runtime::{ec_mul_generator, jubjub_scalar_from_native};
+    let seed = Field::from(2_u64);
+    let native_witness = GeneratorWitness(Default::default());
+    let recorded_witness = GeneratorWitness(Default::default());
+    let native = generator(context(), &native_witness, seed).unwrap();
+    let recorded = recorded::generator(context(), &recorded_witness, seed).unwrap();
+    assert_eq!(*native_witness.0.borrow(), vec![(seed, 7)]);
+    assert_eq!(*recorded_witness.0.borrow(), *native_witness.0.borrow());
+    assert_eq!(
+        native.result,
+        ec_mul_generator(jubjub_scalar_from_native(Field::from(9_u64))).unwrap()
+    );
+    assert_eq!(recorded.execution.result, native.result);
+    assert_eq!(recorded.execution.context.private_state, 8);
+    assert_eq!(
+        recorded.execution.context.private_state,
+        native.context.private_state
+    );
+    assert_eq!(
+        recorded.execution.context.query.state,
+        native.context.query.state
+    );
+    assert_eq!(
+        recorded.execution.context.query.effects,
+        native.context.query.effects
+    );
+    assert_eq!(recorded.execution.gas_cost, native.gas_cost);
+    assert_eq!(
+        recorded.execution.private_transcript_outputs,
+        native.private_transcript_outputs
+    );
+    assert_eq!(
+        recorded.execution.private_transcript_outputs,
+        vec![midnight_compact_runtime::fab::AlignedValue::from(
+            Field::from(9_u64)
+        )]
+    );
+    assert!(recorded.public.verify_ops().is_empty());
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/witness-jubjub.json"
+    ))
+    .unwrap();
+    assert_oracle(
+        &recorded.execution,
+        point_json(recorded.execution.result),
+        &oracle["generator"],
+    );
+}
+
+#[cfg(feature = "ledger-transaction")]
+#[test]
+fn recorded_generator_empty_public_program_is_not_a_prepared_call() {
+    use compact_rust_witness_jubjub_fixture::ledger_contract::recorded;
+    use midnight_compact_runtime::transaction::{
+        CallSpec, PrepareCallError, VerifierKey, prepare_call,
+    };
+    use midnight_serialize::{Deserializable, Serializable};
+    let witness = GeneratorWitness(Default::default());
+    let seed = Field::from(2_u64);
+    let recorded = recorded::generator(context(), &witness, seed).unwrap();
+    assert!(recorded.public.verify_ops().is_empty());
+    // Empty-program refusal precedes key inspection; this carrier is not a proof key.
+    let mut bytes = Vec::new();
+    Vec::<u8>::new().serialize(&mut bytes).unwrap();
+    let carrier = VerifierKey::deserialize(&mut bytes.as_slice(), 0).unwrap();
+    let spec = CallSpec::new("generator", carrier, seed, Field::from(0_u64));
+    assert!(matches!(
+        prepare_call(recorded, spec),
+        Err(PrepareCallError::EmptyTranscript)
+    ));
+    assert_eq!(*witness.0.borrow(), vec![(seed, 7)]);
+}

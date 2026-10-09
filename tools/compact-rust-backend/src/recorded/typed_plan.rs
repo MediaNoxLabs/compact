@@ -45,6 +45,8 @@ mod field_observations;
 mod funded_mint;
 mod guarded_deposit;
 mod immediate_send;
+#[cfg(test)]
+mod jubjub_reference;
 mod jubjub_values;
 mod phase_reset;
 mod reset_payout;
@@ -2494,6 +2496,7 @@ pub(super) fn lower_unit_composition_checked<'a>(
     composition::lower_checked(circuit, ledger, witnesses, pure, circuits)
 }
 
+#[cfg(test)]
 pub(super) fn lower_jubjub_values<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -2501,5 +2504,5 @@ pub(super) fn lower_jubjub_values<'a>(
     pure: &'a HashMap<&'a str, &'a PureCircuit>,
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
 ) -> Option<TypedPlan> {
-    jubjub_values::lower(circuit, ledger, witnesses, pure, circuits)
+    jubjub_reference::lower(circuit, ledger, witnesses, pure, circuits)
 }

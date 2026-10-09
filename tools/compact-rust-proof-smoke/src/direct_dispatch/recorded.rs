@@ -135,6 +135,27 @@ pub(super) fn effect_plan_counter_only(
     }
 }
 
+pub(super) fn effect_plan_jubjub(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    const USAGE: &str = "usage: compact-rust-proof-smoke --effect-plan-jubjub <proof-output>";
+    let root = arguments.next().ok_or(USAGE)?;
+    if arguments.next().is_some() {
+        return Err(USAGE.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("effect-plan-jubjub-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            crate::effect_plan_jubjub::run(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("Jubjub proof thread panicked".into()),
+    }
+}
+
 pub(super) fn effect_plan_wide_source(
     arguments: &mut impl Iterator<Item = OsString>,
 ) -> Result<(), Box<dyn Error>> {

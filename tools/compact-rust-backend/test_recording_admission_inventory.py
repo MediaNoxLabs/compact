@@ -12,6 +12,9 @@ import tempfile
 import unittest
 
 import recording_admission_inventory as inventory
+import recording_admission_inventory_jubjub as jubjub
+
+JUBJUB_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-517.json")
 
 
 class InventoryTests(unittest.TestCase):
@@ -115,7 +118,8 @@ class InventoryTests(unittest.TestCase):
         instrumentation = json.loads(inventory.INSTRUMENTATION.read_text())
         report = inventory.verify(inventory.ROOT, baseline,
                                   transition=transition, baseline_bytes=baseline_bytes,
-                                  instrumentation=instrumentation)
+                                  instrumentation=instrumentation,
+                                  jubjub_transition=json.loads(JUBJUB_TRANSITION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)
@@ -132,7 +136,8 @@ class RetirementTransitionTests(unittest.TestCase):
         self.transition = json.loads(inventory.BASELINE.with_name(
             'recording_admission_inventory.transition-511.json').read_text())
         self.instrumentation = json.loads(inventory.INSTRUMENTATION.read_text())
-        for relative in {*self.baseline['source_fingerprints'], inventory.ORACLE, *inventory.HOOK_SOURCES}:
+        self.jubjub_transition = json.loads(JUBJUB_TRANSITION.read_text())
+        for relative in {*self.baseline['source_fingerprints'], inventory.ORACLE, jubjub.ORACLE, *inventory.HOOK_SOURCES}:
             destination = self.root / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_bytes((inventory.ROOT / relative).read_bytes())
@@ -140,13 +145,14 @@ class RetirementTransitionTests(unittest.TestCase):
     def report(self):
         return inventory.verify(self.root, self.baseline, transition=self.transition,
                                 baseline_bytes=self.baseline_bytes,
-                                instrumentation=self.instrumentation)
+                                instrumentation=self.instrumentation,
+                                jubjub_transition=self.jubjub_transition)
 
     def test_reviewed_retirement_keeps_frozen_denominator(self):
         report = self.report()
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(report['route_count'], 84)
-        self.assertEqual([row['id'] for row in report['retired_routes']], ['effectful.effectful'])
+        self.assertEqual([row['id'] for row in report['retired_routes']], ['effectful.effectful', 'selector.jubjub-values'])
         self.assertTrue(report['retired_routes'][0]['passed'])
         # Retirement is never implicit: the untransitioned baseline must flag it.
         self.assertFalse(inventory.verify(self.root, self.baseline)['passed'])
@@ -212,7 +218,7 @@ class RetirementTransitionTests(unittest.TestCase):
         report = self.report()
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(report['route_count'], 84)
-        self.assertEqual(len(report['retired_routes']), 1)
+        self.assertEqual(len(report['retired_routes']), 2)
         self.assertEqual(report['reviewed_instrumentation']['issue'], 515)
         self.assertNotIn('coverage', report['reviewed_instrumentation'])
 
@@ -260,6 +266,72 @@ class RetirementTransitionTests(unittest.TestCase):
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
             inventory.main(['--instrumentation', str(manifest), '--output', str(manifest)])
         self.assertEqual(manifest.read_bytes(), before)
+
+
+    def test_jubjub_retirement_is_explicit_and_preserves_original_hook_manifest(self):
+        report = inventory.verify(self.root, self.baseline, transition=self.transition,
+                                  baseline_bytes=self.baseline_bytes, instrumentation=self.instrumentation)
+        self.assertFalse(report['passed'])
+        self.assertEqual(self.instrumentation, json.loads(inventory.INSTRUMENTATION.read_text()))
+        current = self.report()
+        self.assertTrue(current['passed'], current['errors'])
+        self.assertEqual(current['retired_routes'][1]['id'], 'selector.jubjub-values')
+        self.assertEqual(len(current['current_selector']['ordered_calls']), 18)
+        self.assertIn('algebra.jubjub-values', current['reviewed_instrumentation']['instrumented_route_ids'])
+        self.assertNotIn('selector.jubjub-values', current['reviewed_instrumentation']['instrumented_route_ids'])
+
+    def test_jubjub_old_admission_call_cannot_return(self):
+        path = self.root / inventory.SELECTOR
+        path.write_text(path.read_text() + '\nfn accidental() { typed_plan :: lower_jubjub_values (); }\n')
+        self.assertIn('Jubjub retirement: selector reintroduced old admission', self.report()['errors'])
+
+    def test_jubjub_oracle_module_and_wrapper_stay_test_only(self):
+        path = self.root / inventory.TYPED_PLAN
+        original = path.read_text()
+        for declaration in ['mod jubjub_reference;', "pub(super) fn lower_jubjub_values<'a>("]:
+            with self.subTest(declaration=declaration):
+                path.write_text(original.replace('#[cfg(test)]\n' + declaration, declaration))
+                self.assertIn('Jubjub retirement: oracle module and wrapper must each be uniquely cfg(test)', self.report()['errors'])
+        path.write_text(original)
+
+    def test_jubjub_original_admission_body_is_immutable(self):
+        path = self.root / jubjub.ORACLE
+        path.write_text(path.read_text().replace('self.writes == 1', 'self.writes == 2'))
+        self.assertIn('Jubjub retirement: oracle no longer equals original admission body', self.report()['errors'])
+
+    def test_jubjub_shape_audit_cannot_return_to_value_adapter(self):
+        path = self.root / jubjub.ORIGINAL
+        path.write_text(path.read_text() + '\nstruct Audit;\n')
+        self.assertIn('Jubjub retirement: shape admission remains in production value adapter', self.report()['errors'])
+
+    def test_jubjub_transition_cannot_change_other_calls_or_hook_owners(self):
+        original = copy.deepcopy(self.jubjub_transition)
+        calls = self.jubjub_transition['reviewed_selector']['ordered_calls']
+        calls[0], calls[1] = calls[1], calls[0]
+        self.assertFalse(self.report()['passed'])
+        self.jubjub_transition = original
+        self.jubjub_transition['reviewed_source_fingerprints'][inventory.RECORDED] = '0' * 64
+        self.assertFalse(self.report()['passed'])
+
+    def test_jubjub_transition_binds_original_evidence(self):
+        for key in ['baseline_file_sha256', 'original_source_sha256', 'prior_instrumentation_canonical_sha256']:
+            with self.subTest(key=key):
+                original = self.jubjub_transition[key]
+                self.jubjub_transition[key] = '0' * 64
+                self.assertFalse(self.report()['passed'])
+                self.jubjub_transition[key] = original
+
+    def test_jubjub_transition_cannot_retire_unreviewed_family(self):
+        self.jubjub_transition['retired_route'] = 'selector.kernel'
+        self.assertFalse(self.report()['passed'])
+
+    def test_cli_cannot_overwrite_jubjub_transition(self):
+        transition = self.root / 'jubjub-transition.json'
+        transition.write_text(json.dumps(self.jubjub_transition))
+        before = transition.read_bytes()
+        with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            inventory.main(['--jubjub-transition', str(transition), '--output', str(transition)])
+        self.assertEqual(transition.read_bytes(), before)
 
 
 if __name__ == '__main__':

@@ -54,6 +54,28 @@ compiler feature now enables extra test cohorts; it does not control production
 admission for this path. See the
 [recording migration guide](../../examples/rust_backend/effect_plan_prototype/README.md).
 
+## Typed Jubjub recording values
+
+Point-result circuits can use the checked effect algebra at the former Jubjub
+selector priority. The plan represents `jubjubScalarFromNative`, `ecMulGenerator`,
+`ecMul` and `ecAdd` as typed operations and reuses the existing ledger8 runtime
+adapters. Point parameters, locals, results and declared Cell reads/writes compose
+with the supported scalar operations and Unit-valued branches. Operand order,
+fallible multiplication and terminal lexical scope are preserved.
+
+The production one-write Jubjub shape recognizer is retired; its old grammar is
+retained only as a test oracle. Earlier selector priorities remain unchanged,
+and unsupported plans may reach independent later families. Invalid checked
+plans abort compilation. Point-valued conditionals, point equality, point witness
+signatures and additional curve operators remain outside this algebra fragment.
+
+The [source fixture](../../tests-rust-backend/effect-plan-jubjub-source/README.md)
+separates old-family inclusion from new multi-write/branch/read compositions.
+The existing Field-witness generator also gains a recorded API, but its empty
+public trace still meets the runtime's `EmptyTranscript` preparation boundary.
+Recording availability alone does not promise transaction preparation.
+IR20 and runtime ABI50 remain unchanged.
+
 ## Stateful assertion recording
 
 A separate read-only profile records Boolean short-circuit assertions over

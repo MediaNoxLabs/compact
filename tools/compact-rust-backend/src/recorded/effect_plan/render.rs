@@ -61,6 +61,21 @@ fn block(body: &Block, declarations: &Declarations) -> Result<Vec<syn::Stmt>, Re
                 let (a, b) = (value(a), value(b));
                 syn::parse_quote!(#a + #b)
             }
+            Operation::JubjubScalarFromNative(input) => {
+                jubjub(crate::jubjub_value::Operation::Reduce(operand(input)), path)?
+            }
+            Operation::EcMulGenerator(input) => jubjub(
+                crate::jubjub_value::Operation::Generator(operand(input)),
+                path,
+            )?,
+            Operation::EcMul { point, scalar } => jubjub(
+                crate::jubjub_value::Operation::Multiply(operand(point), operand(scalar)),
+                path,
+            )?,
+            Operation::EcAdd { left, right } => jubjub(
+                crate::jubjub_value::Operation::Add(operand(left), operand(right)),
+                path,
+            )?,
             Operation::Equal(a, b) => {
                 let (a, b) = (value(a), value(b));
                 syn::parse_quote!(#a == #b)
@@ -196,4 +211,17 @@ fn slot_name(
         .field(id)
         .ok_or_else(|| invalid(path, "unknown checked ledger declaration"))?;
     ident(&declaration.id).map_err(|e| invalid(path, e.to_string()))
+}
+
+fn operand(input: &Value) -> (syn::Expr, crate::ir::Type) {
+    (value(input), input.ty.clone())
+}
+fn jubjub(
+    operation: crate::jubjub_value::Operation,
+    path: &str,
+) -> Result<syn::Expr, RecordingGap> {
+    operation
+        .lower()
+        .map(|(syntax, _)| syntax)
+        .map_err(|e| invalid(path, e.to_string()))
 }

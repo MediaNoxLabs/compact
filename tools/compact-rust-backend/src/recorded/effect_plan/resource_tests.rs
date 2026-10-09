@@ -12,6 +12,8 @@ use crate::ir::*;
 use std::process::Command;
 use std::time::Instant;
 
+mod jubjub;
+
 const STACK_BYTES: usize = 2 * 1024 * 1024;
 const CHILD_MODE: &str = "COMPACT_EFFECT_PLAN_RESOURCE_CHILD";
 

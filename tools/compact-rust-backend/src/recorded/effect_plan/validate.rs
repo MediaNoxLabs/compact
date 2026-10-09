@@ -26,8 +26,16 @@ pub(super) fn bound(ty: &Type) -> Option<u128> {
 pub(super) fn scalar(ty: &Type) -> bool {
     matches!(ty, Type::Unit | Type::Boolean | Type::Field) || bound(ty).is_some()
 }
-fn value_type(ty: &Type) -> bool {
+/// Recorded ABI/storage values; arithmetic and witness signatures remain scalar.
+pub(super) fn surface_type(ty: &Type) -> bool {
+    scalar(ty) || *ty == Type::JubjubPoint
+}
+/// Equality deliberately retains its pre-point scalar/wide-local domain.
+pub(super) fn equality_type(ty: &Type) -> bool {
     scalar(ty) || unsigned_bound(ty).is_some()
+}
+fn value_type(ty: &Type) -> bool {
+    surface_type(ty) || unsigned_bound(ty).is_some()
 }
 pub(super) fn wide_literal_fits(bytes: &[u8; 32], ty: &Type) -> bool {
     let Some(crate::UnsignedMaximum::Wide { high, low }) = unsigned_bound(ty) else {
@@ -43,13 +51,13 @@ pub(super) fn check(plan: Plan, declarations: Declarations) -> Result<CheckedPla
     CheckedPlan::validate(plan, declarations)
 }
 pub(super) fn validate(plan: &Plan, declarations: &Declarations) -> Result<(), RecordingGap> {
-    if !scalar(&plan.result_type) {
+    if !surface_type(&plan.result_type) {
         return Err(invalid("return_value", "unsupported circuit result type"));
     }
     let mut scope = HashMap::new();
     let mut allocated = HashSet::new();
     for value in &plan.parameters {
-        if !scalar(&value.ty) || !allocated.insert(value.id) {
+        if !surface_type(&value.ty) || !allocated.insert(value.id) {
             return Err(invalid(
                 "parameters",
                 "unsupported or duplicate plan parameter",
@@ -120,7 +128,29 @@ fn block(
             Operation::Equal(a, b) => {
                 use_value(a)?;
                 use_value(b)?;
-                a.ty == b.ty && *ty == Type::Boolean
+                equality_type(&a.ty) && a.ty == b.ty && *ty == Type::Boolean
+            }
+            Operation::JubjubScalarFromNative(value) => {
+                use_value(value)?;
+                value.ty == Type::Field && *ty == Type::Field
+            }
+            Operation::EcMulGenerator(scalar) => {
+                use_value(scalar)?;
+                scalar.ty == Type::Field && *ty == Type::JubjubPoint
+            }
+            Operation::EcMul { point, scalar } => {
+                use_value(point)?;
+                use_value(scalar)?;
+                point.ty == Type::JubjubPoint
+                    && scalar.ty == Type::Field
+                    && *ty == Type::JubjubPoint
+            }
+            Operation::EcAdd { left, right } => {
+                use_value(left)?;
+                use_value(right)?;
+                left.ty == Type::JubjubPoint
+                    && right.ty == Type::JubjubPoint
+                    && *ty == Type::JubjubPoint
             }
             Operation::Convert { value, kind } => {
                 use_value(value)?;
@@ -225,7 +255,7 @@ fn cell<'a>(
     let LedgerFieldKind::Cell { ty } = &field.declaration else {
         return Err(invalid(path, "expected Cell declaration"));
     };
-    if !scalar(ty) || *ty == Type::Unit {
+    if !surface_type(ty) || *ty == Type::Unit {
         return Err(invalid(path, "unsupported Cell value type"));
     }
     Ok(ty)

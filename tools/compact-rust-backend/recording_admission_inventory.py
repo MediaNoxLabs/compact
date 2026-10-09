@@ -24,6 +24,8 @@ from pathlib import Path
 import re
 import sys
 
+import recording_admission_inventory_jubjub as jubjub
+
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE = Path(__file__).with_suffix('.baseline.json')
 SELECTOR = 'tools/compact-rust-backend/src/recorded/profile_selection.rs'
@@ -160,7 +162,7 @@ def validate_transition(baseline: dict, transition: dict, baseline_bytes: bytes 
 
 
 def validate_instrumentation(root: Path, baseline: dict, manifest: dict,
-                             baseline_bytes: bytes | None) -> list[str]:
+                             baseline_bytes: bytes | None, evolution: dict | None = None) -> list[str]:
     """Permit only the reviewed test observation edit, not arbitrary gate drift."""
     errors = []
     if manifest.get('schema_version') != 1 or manifest.get('issue') != 515:
@@ -180,6 +182,8 @@ def validate_instrumentation(root: Path, baseline: dict, manifest: dict,
     if set(fingerprints) != set(HOOK_SOURCES):
         errors.append('instrumentation: reviewed source set differs from observation owners')
         return errors
+    if evolution is not None:
+        fingerprints = {**fingerprints, **evolution['reviewed_source_fingerprints']}
     hook_ids = set()
     hook_pattern = r'(?:record_option!|record_guard!|trace::handled|trace::action|trace::guard)\(\s*"([^"]+)"'
     return_pattern = r'row\.return_dispatch\s*=\s*Some\("([^"]+)"\)'
@@ -194,7 +198,7 @@ def validate_instrumentation(root: Path, baseline: dict, manifest: dict,
             continue
         if actual != expected:
             errors.append(f'instrumentation: reviewed observation owner changed: {relative}')
-    routes = manifest.get('instrumented_route_ids', [])
+    routes = (evolution if evolution is not None else manifest).get('instrumented_route_ids', [])
     if not routes or not all(isinstance(row, str) and row for row in routes):
         errors.append('instrumentation: observation IDs must be nonempty strings')
     elif len(set(routes)) != len(routes) or set(routes) != hook_ids:
@@ -204,7 +208,7 @@ def validate_instrumentation(root: Path, baseline: dict, manifest: dict,
 
 def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
            transition: dict | None = None, baseline_bytes: bytes | None = None,
-           instrumentation: dict | None = None) -> dict:
+           instrumentation: dict | None = None, jubjub_transition: dict | None = None) -> dict:
     errors = validate_baseline(baseline)
     report = {'schema_version': 1, 'baseline_commit': baseline.get('baseline_commit'),
               'claim': 'source route inventory; not language or behavioral coverage',
@@ -215,11 +219,19 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
     if errors:
         report['passed'] = False
         return report
+    reviewed_jubjub = None
+    if jubjub_transition is not None:
+        review_errors = jubjub.validate(baseline, jubjub_transition, baseline_bytes, instrumentation)
+        if transition is None:
+            review_errors.append('Jubjub retirement: preceding effectful transition required')
+        errors.extend(review_errors)
+        if not review_errors:
+            reviewed_jubjub = jubjub_transition
     if instrumentation is not None:
-        errors.extend(validate_instrumentation(root, baseline, instrumentation, baseline_bytes))
+        errors.extend(validate_instrumentation(root, baseline, instrumentation, baseline_bytes, reviewed_jubjub))
         report['reviewed_instrumentation'] = {
             'issue': instrumentation.get('issue'),
-            'instrumented_route_ids': instrumentation.get('instrumented_route_ids', []),
+            'instrumented_route_ids': (reviewed_jubjub or instrumentation).get('instrumented_route_ids', []),
             'claim': 'instrumented boundary IDs; execution of every boundary is not claimed',
         }
     sources = {}
@@ -241,7 +253,8 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
         failures = []
         for anchor in row['anchors']:
             actual = sources.get(anchor['source'], '').count(anchor['text'])
-            expected = 0 if transition is not None and row['id'] == RETIRED_EFFECTFUL else anchor['baseline_occurrences']
+            retired = (transition is not None and row['id'] == RETIRED_EFFECTFUL) or (reviewed_jubjub is not None and row['id'] == jubjub.ROUTE)
+            expected = 0 if retired else anchor['baseline_occurrences']
             if actual != expected:
                 failures.append({'source': anchor['source'], 'anchor': anchor['text'],
                                  'expected': expected, 'actual': actual})
@@ -262,11 +275,21 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
                 row['failures'] for row in report['route_checks'] if row['id'] == RETIRED_EFFECTFUL),
             'evidence': transition,
         })
+    if reviewed_jubjub is not None:
+        retirement_errors = jubjub.check_sources(root, sources, reviewed_jubjub)
+        errors.extend(retirement_errors)
+        report['retired_routes'].append({
+            'id': jubjub.ROUTE,
+            'status': 'retired-from-production-test-oracle-retained',
+            'passed': not retirement_errors and not next(
+                row['failures'] for row in report['route_checks'] if row['id'] == jubjub.ROUTE),
+            'evidence': reviewed_jubjub,
+        })
     if SELECTOR in sources:
         try:
             actual = selector_signature(sources[SELECTOR])
             report['current_selector'] = actual
-            expected = instrumentation.get('reviewed_selector', {}) if instrumentation is not None else baseline['main_selector']
+            expected = (reviewed_jubjub or instrumentation).get('reviewed_selector', {}) if instrumentation is not None else baseline['main_selector']
             if actual != expected:
                 errors.append('main selector changed: review ordered calls and complete function fingerprint')
         except ValueError as error:
@@ -283,8 +306,9 @@ def main(argv=None) -> int:
     parser.add_argument('--strict-fingerprints', action='store_true')
     parser.add_argument('--transition', type=Path, help='explicit reviewed retirement JSON; baseline stays frozen')
     parser.add_argument('--instrumentation', type=Path, help='explicit reviewed test-hook manifest; original selector stays frozen')
+    parser.add_argument('--jubjub-transition', type=Path, help='explicit #517 retirement following #511 and #515 evidence')
     args = parser.parse_args(argv)
-    protected = [args.baseline] + ([args.transition] if args.transition else []) + ([args.instrumentation] if args.instrumentation else [])
+    protected = [args.baseline] + ([args.transition] if args.transition else []) + ([args.instrumentation] if args.instrumentation else []) + ([args.jubjub_transition] if args.jubjub_transition else [])
     if args.output and any(args.output.resolve() == path.resolve() for path in protected):
         parser.error('--output cannot overwrite baseline, transition, or instrumentation evidence')
     try:
@@ -292,7 +316,8 @@ def main(argv=None) -> int:
         baseline = json.loads(baseline_bytes)
         transition = json.loads(args.transition.read_text()) if args.transition else None
         instrumentation = json.loads(args.instrumentation.read_text()) if args.instrumentation else None
-        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation)
+        jubjub_transition = json.loads(args.jubjub_transition.read_text()) if args.jubjub_transition else None
+        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition)
     except (OSError, ValueError, TypeError, KeyError) as error:
         parser.exit(2, f'inventory error: {error}\n')
     rendered = json.dumps(report, indent=2) + '\n'

@@ -53,6 +53,7 @@ mod counter_less_than;
 mod counter_scenario;
 mod effect_plan_counter;
 mod effect_plan_counter_only;
+mod effect_plan_jubjub;
 #[cfg(feature = "experimental-recording-plan")]
 mod effect_plan_prototype;
 mod effect_plan_wide_source;

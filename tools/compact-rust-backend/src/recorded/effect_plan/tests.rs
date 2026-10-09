@@ -6,6 +6,8 @@
 mod counter;
 #[path = "tests/declarations.rs"]
 mod declaration_tests;
+#[path = "tests/jubjub.rs"]
+mod jubjub;
 #[path = "tests/ordinary.rs"]
 mod ordinary;
 #[path = "tests/wide_values.rs"]

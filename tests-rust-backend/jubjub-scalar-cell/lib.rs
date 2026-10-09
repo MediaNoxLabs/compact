@@ -142,18 +142,19 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_plan_0: runtime::Field =
-                runtime::jubjub_scalar_from_native(__compact_param_1);
-            let __compact_plan_1: runtime::Field = __compact_plan_0;
-            let __compact_plan_2: runtime::JubjubPoint =
-                runtime::ec_mul_generator(__compact_plan_1)?;
-            let __compact_plan_3: runtime::JubjubPoint =
-                runtime::ec_mul(__compact_param_0, __compact_plan_1)?;
-            let __compact_plan_4: runtime::JubjubPoint =
-                runtime::ec_add(__compact_plan_2, __compact_plan_3);
-            let __compact_plan_5: runtime::JubjubPoint = __compact_plan_4;
-            let frame = crate::ledger_slots::result.record_write(frame, __compact_plan_5)?;
-            Ok(frame.finish(__compact_plan_5))
+            let __compact_effect_0: runtime::JubjubPoint = __compact_param_0;
+            let __compact_effect_1: runtime::Field = __compact_param_1;
+            let __compact_effect_2: runtime::Field =
+                runtime::jubjub_scalar_from_native(__compact_effect_1);
+            let __compact_effect_3: runtime::JubjubPoint =
+                runtime::ec_mul_generator(__compact_effect_2)?;
+            let __compact_effect_4: runtime::JubjubPoint =
+                runtime::ec_mul(__compact_effect_0, __compact_effect_2)?;
+            let __compact_effect_5: runtime::JubjubPoint =
+                runtime::ec_add(__compact_effect_3, __compact_effect_4);
+            let frame = crate::ledger_slots::result.record_write(frame, __compact_effect_5)?;
+            let __compact_effect_6: () = ();
+            Ok(frame.finish(__compact_effect_5))
         }
         pub fn raw<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -164,11 +165,13 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_plan_0: runtime::JubjubPoint =
-                runtime::ec_mul(__compact_param_0, __compact_param_1)?;
-            let __compact_plan_1: runtime::JubjubPoint = __compact_plan_0;
-            let frame = crate::ledger_slots::result.record_write(frame, __compact_plan_1)?;
-            Ok(frame.finish(__compact_plan_1))
+            let __compact_effect_0: runtime::JubjubPoint = __compact_param_0;
+            let __compact_effect_1: runtime::Field = __compact_param_1;
+            let __compact_effect_2: runtime::JubjubPoint =
+                runtime::ec_mul(__compact_effect_0, __compact_effect_1)?;
+            let frame = crate::ledger_slots::result.record_write(frame, __compact_effect_2)?;
+            let __compact_effect_3: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

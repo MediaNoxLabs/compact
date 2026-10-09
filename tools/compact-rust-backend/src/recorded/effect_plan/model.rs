@@ -46,6 +46,16 @@ pub(super) enum Operation {
     Add(Value, Value),
     UnsignedAdd(Value, Value),
     Equal(Value, Value),
+    JubjubScalarFromNative(Value),
+    EcMulGenerator(Value),
+    EcMul {
+        point: Value,
+        scalar: Value,
+    },
+    EcAdd {
+        left: Value,
+        right: Value,
+    },
     Convert {
         value: Value,
         kind: Conversion,

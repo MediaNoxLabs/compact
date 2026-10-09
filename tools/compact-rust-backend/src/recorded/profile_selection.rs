@@ -36,7 +36,11 @@ use super::guarded_mutations::{
 };
 use super::profile_attempt::ProfileAttempt;
 use super::typed_plan::{self, CompositionRejection, TypedPlan};
-use super::{kernel_plan, zswap_plan};
+use super::{effect_plan, kernel_plan, zswap_plan};
+
+#[cfg(test)]
+#[path = "profile_selection/jubjub_migration_tests.rs"]
+mod jubjub_migration_tests;
 
 /// An admitted step sequence and the evidence retained from declined profiles.
 /// Legacy organizers have no typed result; absence of steps permits legacy
@@ -46,6 +50,33 @@ pub(super) struct ProfileSelection {
     pub(super) typed_result: Option<syn::Expr>,
     pub(super) shielded_send_rejection: Option<RecordingGap>,
     pub(super) composition_rejection: Option<CompositionRejection>,
+}
+
+/// Roll out the declared point result domain at its existing selector priority.
+/// Shape evidence never authorizes this route. Unsupported can try independent
+/// later families; a checked-plan invariant failure aborts before any fallback.
+fn checked_jubjub_domain(
+    circuit: &StatefulCircuit,
+    ledger: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+) -> Result<Option<TypedPlan>, RenderError> {
+    if circuit.result != crate::ir::Type::JubjubPoint {
+        return Ok(None);
+    }
+    resolve_jubjub_plan(effect_plan::lower(circuit, ledger, witnesses))
+}
+
+fn resolve_jubjub_plan(
+    result: Result<TypedPlan, effect_plan::PlanError>,
+) -> Result<Option<TypedPlan>, RenderError> {
+    match result {
+        Ok(plan) => Ok(Some(plan)),
+        Err(effect_plan::PlanError::Unsupported(_)) => Ok(None),
+        Err(effect_plan::PlanError::Invalid(gap)) => Err(RenderError::RecordingPlanInvariant {
+            path: gap.path,
+            detail: gap.detail,
+        }),
+    }
 }
 
 pub(super) fn select(
@@ -99,216 +130,222 @@ pub(super) fn select(
             )?
         ))
     };
-    if organizer_steps.is_none()
-        && let Some(plan) = record_option!(
+    let typed_prefix = if organizer_steps.is_none() {
+        match record_option!(
             "selector.membership-optional",
             typed_plan::lower(circuit, ledger_fields, witnesses, pure_circuits, circuits)
-        )
-        .or_else(|| {
-            record_option!(
-                "selector.jubjub-values",
-                typed_plan::lower_jubjub_values(
+        ) {
+            Some(plan) => Some(plan),
+            None => record_option!(
+                "algebra.jubjub-values",
+                checked_jubjub_domain(circuit, ledger_fields, witnesses)?
+            ),
+        }
+    } else {
+        None
+    };
+    if organizer_steps.is_none()
+        && let Some(plan) = typed_prefix
+            .or_else(|| record_option!("selector.kernel", kernel_plan::lower(circuit, witnesses)))
+            .or_else(|| {
+                record_option!(
+                    "selector.context-query",
+                    typed_plan::lower_context_query(
+                        circuit,
+                        ledger_fields,
+                        witnesses,
+                        pure_circuits,
+                    )
+                )
+            })
+            .or_else(|| {
+                record_option!(
+                    "selector.composite-values",
+                    typed_plan::lower_composite(
+                        circuit,
+                        ledger_fields,
+                        witnesses,
+                        pure_circuits,
+                        circuits,
+                    )
+                )
+            })
+            .or_else(|| {
+                record_option!(
+                    "selector.shielded-receive",
+                    typed_plan::lower_shielded_receive(
+                        circuit,
+                        ledger_fields,
+                        witnesses,
+                        pure_circuits,
+                        circuits,
+                    )
+                )
+            })
+            .or_else(|| {
+                record_option!(
+                    "selector.voting-commit",
+                    typed_plan::lower_voting_commit(
+                        circuit,
+                        ledger_fields,
+                        witnesses,
+                        pure_circuits,
+                        circuits,
+                    )
+                )
+            })
+            .or_else(|| {
+                record_option!(
+                    "selector.funded-mint",
+                    typed_plan::lower_funded_mint(
+                        circuit,
+                        ledger_fields,
+                        witnesses,
+                        pure_circuits,
+                        circuits,
+                    )
+                )
+            })
+            .or_else(|| {
+                record_option!(
+                    "selector.guarded-deposit",
+                    typed_plan::lower_guarded_deposit(
+                        circuit,
+                        ledger_fields,
+                        witnesses,
+                        pure_circuits,
+                        circuits,
+                    )
+                )
+            })
+            .or_else(|| {
+                record_option!(
+                    "selector.shielded-merge",
+                    typed_plan::lower_shielded_merge(
+                        circuit,
+                        ledger_fields,
+                        witnesses,
+                        pure_circuits,
+                        circuits,
+                    )
+                )
+            })
+            .or_else(|| {
+                record_option!(
+                    "selector.immediate-send",
+                    typed_plan::lower_immediate_shielded_send(
+                        circuit,
+                        ledger_fields,
+                        witnesses,
+                        pure_circuits,
+                        circuits,
+                    )
+                )
+            })
+            .or_else(|| {
+                match typed_plan::lower_shielded_send_checked(
                     circuit,
                     ledger_fields,
                     witnesses,
                     pure_circuits,
                     circuits,
-                )
-            )
-        })
-        .or_else(|| record_option!("selector.kernel", kernel_plan::lower(circuit, witnesses)))
-        .or_else(|| {
-            record_option!(
-                "selector.context-query",
-                typed_plan::lower_context_query(circuit, ledger_fields, witnesses, pure_circuits,)
-            )
-        })
-        .or_else(|| {
-            record_option!(
-                "selector.composite-values",
-                typed_plan::lower_composite(
-                    circuit,
-                    ledger_fields,
-                    witnesses,
-                    pure_circuits,
-                    circuits,
-                )
-            )
-        })
-        .or_else(|| {
-            record_option!(
-                "selector.shielded-receive",
-                typed_plan::lower_shielded_receive(
-                    circuit,
-                    ledger_fields,
-                    witnesses,
-                    pure_circuits,
-                    circuits,
-                )
-            )
-        })
-        .or_else(|| {
-            record_option!(
-                "selector.voting-commit",
-                typed_plan::lower_voting_commit(
-                    circuit,
-                    ledger_fields,
-                    witnesses,
-                    pure_circuits,
-                    circuits,
-                )
-            )
-        })
-        .or_else(|| {
-            record_option!(
-                "selector.funded-mint",
-                typed_plan::lower_funded_mint(
-                    circuit,
-                    ledger_fields,
-                    witnesses,
-                    pure_circuits,
-                    circuits,
-                )
-            )
-        })
-        .or_else(|| {
-            record_option!(
-                "selector.guarded-deposit",
-                typed_plan::lower_guarded_deposit(
-                    circuit,
-                    ledger_fields,
-                    witnesses,
-                    pure_circuits,
-                    circuits,
-                )
-            )
-        })
-        .or_else(|| {
-            record_option!(
-                "selector.shielded-merge",
-                typed_plan::lower_shielded_merge(
-                    circuit,
-                    ledger_fields,
-                    witnesses,
-                    pure_circuits,
-                    circuits,
-                )
-            )
-        })
-        .or_else(|| {
-            record_option!(
-                "selector.immediate-send",
-                typed_plan::lower_immediate_shielded_send(
-                    circuit,
-                    ledger_fields,
-                    witnesses,
-                    pure_circuits,
-                    circuits,
-                )
-            )
-        })
-        .or_else(|| {
-            match typed_plan::lower_shielded_send_checked(
-                circuit,
-                ledger_fields,
-                witnesses,
-                pure_circuits,
-                circuits,
-            ) {
-                ProfileAttempt::Admitted(plan) => {
-                    record_option!("selector.shielded-send", Some(plan))
+                ) {
+                    ProfileAttempt::Admitted(plan) => {
+                        record_option!("selector.shielded-send", Some(plan))
+                    }
+                    ProfileAttempt::Rejected(gap) => {
+                        shielded_send_rejection = Some(gap);
+                        record_option!("selector.shielded-send", None)
+                    }
+                    ProfileAttempt::NotApplicable => record_option!("selector.shielded-send", None),
                 }
-                ProfileAttempt::Rejected(gap) => {
-                    shielded_send_rejection = Some(gap);
-                    record_option!("selector.shielded-send", None)
+            })
+            .or_else(|| {
+                record_option!(
+                    "selector.reset-payout",
+                    typed_plan::lower_reset_payout(
+                        circuit,
+                        ledger_fields,
+                        witnesses,
+                        pure_circuits,
+                        circuits,
+                    )
+                )
+            })
+            .or_else(|| {
+                record_option!(
+                    "selector.shielded-payout",
+                    typed_plan::lower_shielded_payout(
+                        circuit,
+                        ledger_fields,
+                        witnesses,
+                        pure_circuits,
+                        circuits,
+                    )
+                )
+            })
+            .or_else(|| {
+                record_option!(
+                    "selector.terminal-returns",
+                    typed_plan::lower_terminal_returns(
+                        circuit,
+                        ledger_fields,
+                        witnesses,
+                        pure_circuits,
+                        circuits,
+                    )
+                )
+            })
+            .or_else(|| {
+                record_option!(
+                    "selector.phase-reset",
+                    typed_plan::lower_phase_reset(
+                        circuit,
+                        ledger_fields,
+                        witnesses,
+                        pure_circuits,
+                        circuits,
+                    )
+                )
+            })
+            .or_else(|| {
+                record_option!(
+                    "selector.unit-actions",
+                    typed_plan::lower_unit_actions(
+                        circuit,
+                        ledger_fields,
+                        witnesses,
+                        pure_circuits,
+                        circuits,
+                    )
+                )
+            })
+            .or_else(|| {
+                match typed_plan::lower_unit_composition_checked(
+                    circuit,
+                    ledger_fields,
+                    witnesses,
+                    pure_circuits,
+                    circuits,
+                ) {
+                    ProfileAttempt::Admitted(plan) => {
+                        record_option!("selector.unit-composition", Some(plan))
+                    }
+                    ProfileAttempt::Rejected(rejection) => {
+                        composition_rejection = Some(rejection);
+                        record_option!("selector.unit-composition", None)
+                    }
+                    ProfileAttempt::NotApplicable => {
+                        record_option!("selector.unit-composition", None)
+                    }
                 }
-                ProfileAttempt::NotApplicable => record_option!("selector.shielded-send", None),
-            }
-        })
-        .or_else(|| {
-            record_option!(
-                "selector.reset-payout",
-                typed_plan::lower_reset_payout(
-                    circuit,
-                    ledger_fields,
-                    witnesses,
-                    pure_circuits,
-                    circuits,
+            })
+            .or_else(|| {
+                record_option!(
+                    "selector.zswap",
+                    zswap_plan::lower(circuit, ledger_fields, circuits, witnesses)
                 )
-            )
-        })
-        .or_else(|| {
-            record_option!(
-                "selector.shielded-payout",
-                typed_plan::lower_shielded_payout(
-                    circuit,
-                    ledger_fields,
-                    witnesses,
-                    pure_circuits,
-                    circuits,
-                )
-            )
-        })
-        .or_else(|| {
-            record_option!(
-                "selector.terminal-returns",
-                typed_plan::lower_terminal_returns(
-                    circuit,
-                    ledger_fields,
-                    witnesses,
-                    pure_circuits,
-                    circuits,
-                )
-            )
-        })
-        .or_else(|| {
-            record_option!(
-                "selector.phase-reset",
-                typed_plan::lower_phase_reset(
-                    circuit,
-                    ledger_fields,
-                    witnesses,
-                    pure_circuits,
-                    circuits,
-                )
-            )
-        })
-        .or_else(|| {
-            record_option!(
-                "selector.unit-actions",
-                typed_plan::lower_unit_actions(
-                    circuit,
-                    ledger_fields,
-                    witnesses,
-                    pure_circuits,
-                    circuits,
-                )
-            )
-        })
-        .or_else(|| {
-            match typed_plan::lower_unit_composition_checked(
-                circuit,
-                ledger_fields,
-                witnesses,
-                pure_circuits,
-                circuits,
-            ) {
-                ProfileAttempt::Admitted(plan) => {
-                    record_option!("selector.unit-composition", Some(plan))
-                }
-                ProfileAttempt::Rejected(rejection) => {
-                    composition_rejection = Some(rejection);
-                    record_option!("selector.unit-composition", None)
-                }
-                ProfileAttempt::NotApplicable => record_option!("selector.unit-composition", None),
-            }
-        })
-        .or_else(|| {
-            record_option!(
-                "selector.zswap",
-                zswap_plan::lower(circuit, ledger_fields, circuits, witnesses)
-            )
-        })
+            })
     {
         organizer_steps = Some(plan.steps);
         typed_result = Some(plan.result);

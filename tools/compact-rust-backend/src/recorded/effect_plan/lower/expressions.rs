@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
 
-//! Scalar expression lowering, preserving evaluation and source-path order.
+//! Value expression lowering, preserving evaluation and source-path order.
 use super::super::validate;
 use super::*;
 impl Lowerer<'_> {
@@ -123,6 +123,10 @@ impl Lowerer<'_> {
                     uint("18446744073709551615"),
                 )
             }
+            Expr::JubjubScalarFromNative { .. }
+            | Expr::EcMulGenerator { .. }
+            | Expr::EcMul { .. }
+            | Expr::EcAdd { .. } => self.jubjub(expression, scope, bindings, path)?,
             Expr::Add { left, right }
             | Expr::Equal { left, right }
             | Expr::UnsignedAdd { left, right, .. } => {
@@ -132,7 +136,9 @@ impl Lowerer<'_> {
                     Expr::Add { .. } if a.ty == Type::Field && b.ty == Type::Field => {
                         (Operation::Add(a, b), Type::Field)
                     }
-                    Expr::Equal { .. } if a.ty == b.ty => (Operation::Equal(a, b), Type::Boolean),
+                    Expr::Equal { .. } if validate::equality_type(&a.ty) && a.ty == b.ty => {
+                        (Operation::Equal(a, b), Type::Boolean)
+                    }
                     Expr::UnsignedAdd { max, .. }
                         if validate::bound(&a.ty).is_some()
                             && validate::bound(&b.ty).is_some()

@@ -15,6 +15,8 @@ the original baseline or retirement evidence. This is not semantic equivalence
 proof; Rust tests separately check evaluation, refusal, and output preservation.
 Call-context plumbing requires --call-extension after these frozen predecessors;
 it retires no additional route and cannot change selector order or hook IDs.
+Terminal retirement requires --terminal-transition after #519 and preserves the
+original denominator, prior retirements, and remaining legacy selector order.
 Human review must classify new/changed routes before a future baseline update.
 """
 from __future__ import annotations
@@ -28,6 +30,7 @@ import sys
 
 import recording_admission_inventory_jubjub as jubjub
 import recording_admission_inventory_calls as calls
+import recording_admission_inventory_terminal as terminal
 
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE = Path(__file__).with_suffix('.baseline.json')
@@ -212,7 +215,7 @@ def validate_instrumentation(root: Path, baseline: dict, manifest: dict,
 def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
            transition: dict | None = None, baseline_bytes: bytes | None = None,
            instrumentation: dict | None = None, jubjub_transition: dict | None = None,
-           call_extension: dict | None = None) -> dict:
+           call_extension: dict | None = None, terminal_transition: dict | None = None) -> dict:
     errors = validate_baseline(baseline)
     report = {'schema_version': 1, 'baseline_commit': baseline.get('baseline_commit'),
               'claim': 'source route inventory; not language or behavioral coverage',
@@ -245,6 +248,16 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
                 'claim': 'reviewed call-context source plumbing; no additional route retirement',
             }
     evolution = reviewed_calls or reviewed_jubjub
+    reviewed_terminal = None
+    if terminal_transition is not None:
+        terminal_errors = terminal.validate(baseline, terminal_transition, baseline_bytes, reviewed_calls, instrumentation)
+        errors.extend(terminal_errors)
+        if not terminal_errors:
+            reviewed_terminal = terminal_transition
+            evolution = {**reviewed_calls, **reviewed_terminal,
+                         'reviewed_source_fingerprints': {
+                             **reviewed_calls['reviewed_source_fingerprints'],
+                             **reviewed_terminal['reviewed_source_fingerprints']}}
     if instrumentation is not None:
         errors.extend(validate_instrumentation(root, baseline, instrumentation, baseline_bytes, evolution))
         report['reviewed_instrumentation'] = {
@@ -271,7 +284,7 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
         failures = []
         for anchor in row['anchors']:
             actual = sources.get(anchor['source'], '').count(anchor['text'])
-            retired = (transition is not None and row['id'] == RETIRED_EFFECTFUL) or (reviewed_jubjub is not None and row['id'] == jubjub.ROUTE)
+            retired = (transition is not None and row['id'] == RETIRED_EFFECTFUL) or (reviewed_jubjub is not None and row['id'] == jubjub.ROUTE) or (reviewed_terminal is not None and row['id'] == terminal.ROUTE)
             expected = 0 if retired else anchor['baseline_occurrences']
             if actual != expected:
                 failures.append({'source': anchor['source'], 'anchor': anchor['text'],
@@ -303,6 +316,16 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
                 row['failures'] for row in report['route_checks'] if row['id'] == jubjub.ROUTE),
             'evidence': reviewed_jubjub,
         })
+    if reviewed_terminal is not None:
+        retirement_errors = terminal.check_sources(root, sources, reviewed_terminal)
+        errors.extend(retirement_errors)
+        report['retired_routes'].append({
+            'id': terminal.ROUTE,
+            'status': 'retired-from-production-test-oracle-retained',
+            'passed': not retirement_errors and not next(
+                row['failures'] for row in report['route_checks'] if row['id'] == terminal.ROUTE),
+            'evidence': reviewed_terminal,
+        })
     if SELECTOR in sources:
         try:
             actual = selector_signature(sources[SELECTOR])
@@ -326,8 +349,9 @@ def main(argv=None) -> int:
     parser.add_argument('--instrumentation', type=Path, help='explicit reviewed test-hook manifest; original selector stays frozen')
     parser.add_argument('--jubjub-transition', type=Path, help='explicit #517 retirement following #511 and #515 evidence')
     parser.add_argument('--call-extension', type=Path, help='explicit #519 call-context plumbing review; no new retirement')
+    parser.add_argument('--terminal-transition', type=Path, help='explicit #521 terminal retirement following #519 evidence')
     args = parser.parse_args(argv)
-    protected = [args.baseline] + ([args.transition] if args.transition else []) + ([args.instrumentation] if args.instrumentation else []) + ([args.jubjub_transition] if args.jubjub_transition else []) + ([args.call_extension] if args.call_extension else [])
+    protected = [args.baseline] + ([args.transition] if args.transition else []) + ([args.instrumentation] if args.instrumentation else []) + ([args.jubjub_transition] if args.jubjub_transition else []) + ([args.call_extension] if args.call_extension else []) + ([args.terminal_transition] if args.terminal_transition else [])
     if args.output and any(args.output.resolve() == path.resolve() for path in protected):
         parser.error('--output cannot overwrite baseline, transition, instrumentation, or call-extension evidence')
     try:
@@ -337,7 +361,8 @@ def main(argv=None) -> int:
         instrumentation = json.loads(args.instrumentation.read_text()) if args.instrumentation else None
         jubjub_transition = json.loads(args.jubjub_transition.read_text()) if args.jubjub_transition else None
         call_extension = json.loads(args.call_extension.read_text()) if args.call_extension else None
-        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension)
+        terminal_transition = json.loads(args.terminal_transition.read_text()) if args.terminal_transition else None
+        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition)
     except (OSError, ValueError, TypeError, KeyError) as error:
         parser.exit(2, f'inventory error: {error}\n')
     rendered = json.dumps(report, indent=2) + '\n'

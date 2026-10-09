@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "issue": 521,
+  "retired_route": "selector.terminal-returns",
+  "replacement_route": "algebra.terminal-returns",
+  "claim": "Third reviewed family retirement; 84 frozen source boundaries are not language coverage.",
+  "baseline_file_sha256": "ef69a6ea6faa03d3bc5fd13a8176a4b1dcd5c1caf7ea602eed4b5aa5aac56e9e",
+  "original_source": "tools/compact-rust-backend/src/recorded/typed_plan/terminal_returns.rs",
+  "original_source_sha256": "527ae4ae14de1e85ffdf39f1d23d2e657e54dd3a251e2c87afb2843ab0e2082e",
+  "original_body_sha256": "35f3b51d84b1534e4477afb6d01d6cd1eab10b3f2f3fa83eb30658b307006374",
+  "oracle_source": "tools/compact-rust-backend/src/recorded/typed_plan/terminal_returns_reference.rs",
+  "oracle_body_start": "fn scalar(ty: &Type) -> bool {",
+  "oracle_body_sha256": "35f3b51d84b1534e4477afb6d01d6cd1eab10b3f2f3fa83eb30658b307006374",
+  "retained_adapter_sha256": "36ca4b1f7fd83200720f4431520e1b9c0039ad1c367c6df8ecf1374898dc36af",
+  "prior_call_extension_canonical_sha256": "4e814060724e33880180cb7df89401a7aa5e73c73b698debf514efde2ea54948",
+  "prior_source_fingerprints": {
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": "91fc68c751889d122fad214feaa02c7c5bf492e05a346d105ff05b5e90db4a73",
+    "tools/compact-rust-backend/src/recorded/admission_probe/trace.rs": "c55cee2bcd365416c3e77bc5ef85874c0e3a8f8e065e9ce231eacbaa60e503ab"
+  },
+  "reviewed_source_fingerprints": {
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": "10ff9f18cf29c19f1e342e0900afa59e722ab6f6b89552a1efb1e9908178e3a4",
+    "tools/compact-rust-backend/src/recorded/admission_probe/trace.rs": "050909b3cf2fed49151bad737c56a182fa660f12caa8534465a9ef76aa8c9353"
+  },
+  "prior_selector": {
+    "ordered_calls": [
+      "typed_plan::lower",
+      "kernel_plan::lower",
+      "typed_plan::lower_context_query",
+      "typed_plan::lower_composite",
+      "typed_plan::lower_shielded_receive",
+      "typed_plan::lower_voting_commit",
+      "typed_plan::lower_funded_mint",
+      "typed_plan::lower_guarded_deposit",
+      "typed_plan::lower_shielded_merge",
+      "typed_plan::lower_immediate_shielded_send",
+      "typed_plan::lower_shielded_send_checked",
+      "typed_plan::lower_reset_payout",
+      "typed_plan::lower_shielded_payout",
+      "typed_plan::lower_terminal_returns",
+      "typed_plan::lower_phase_reset",
+      "typed_plan::lower_unit_actions",
+      "typed_plan::lower_unit_composition_checked",
+      "zswap_plan::lower"
+    ],
+    "function_sha256": "448e3c12eb732f930075168d6b2a07ab247570986d25d98090f196cfb7af22ab"
+  },
+  "reviewed_selector": {
+    "ordered_calls": [
+      "typed_plan::lower",
+      "kernel_plan::lower",
+      "typed_plan::lower_context_query",
+      "typed_plan::lower_composite",
+      "typed_plan::lower_shielded_receive",
+      "typed_plan::lower_voting_commit",
+      "typed_plan::lower_funded_mint",
+      "typed_plan::lower_guarded_deposit",
+      "typed_plan::lower_shielded_merge",
+      "typed_plan::lower_immediate_shielded_send",
+      "typed_plan::lower_shielded_send_checked",
+      "typed_plan::lower_reset_payout",
+      "typed_plan::lower_shielded_payout",
+      "typed_plan::lower_phase_reset",
+      "typed_plan::lower_unit_actions",
+      "typed_plan::lower_unit_composition_checked",
+      "zswap_plan::lower"
+    ],
+    "function_sha256": "5c4e228a02e3cb35a5da04d5e0e96bad937b830e61d4afaf956f1f35ae5113cc"
+  },
+  "instrumented_route_ids": [
+    "algebra.jubjub-values",
+    "algebra.terminal-returns",
+    "early.audited-local",
+    "early.read-only-verification",
+    "effectful.checked-migration",
+    "effectful.start-funding",
+    "guard.closed-opaque-asset-removal",
+    "guard.closed-opaque-map-operation",
+    "guard.closed-opaque-set-operation",
+    "guard.guarded-map-read",
+    "guard.guarded-struct-pure",
+    "guard.guarded-unsigned-product",
+    "guard.opaque-map-write",
+    "guard.opaque-set-mutation",
+    "guard.proved-opaque-set-sequence",
+    "guard.root-let-snapshot",
+    "legacy.action-dispatch",
+    "organizer.enum-advance",
+    "organizer.optional-write",
+    "organizer.organizer",
+    "organizer.witness-merkle",
+    "return.dispatch",
+    "selector.composite-values",
+    "selector.context-query",
+    "selector.funded-mint",
+    "selector.guarded-deposit",
+    "selector.immediate-send",
+    "selector.kernel",
+    "selector.membership-optional",
+    "selector.phase-reset",
+    "selector.reset-payout",
+    "selector.shielded-merge",
+    "selector.shielded-payout",
+    "selector.shielded-receive",
+    "selector.shielded-send",
+    "selector.unit-actions",
+    "selector.unit-composition",
+    "selector.voting-commit",
+    "selector.zswap"
+  ],
+  "retired_route_ids": [
+    "effectful.effectful",
+    "selector.jubjub-values",
+    "selector.terminal-returns"
+  ],
+  "new_retired_routes": [
+    "selector.terminal-returns"
+  ],
+  "reviewed_source_changes": {
+    "selector": "same-priority terminal semantic-domain cutover and shared resolver rename",
+    "trace": "test-only capture_json serialization helper; observation IDs unchanged"
+  }
+}

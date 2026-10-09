@@ -14,9 +14,13 @@ import unittest
 import recording_admission_inventory as inventory
 import recording_admission_inventory_jubjub as jubjub
 import recording_admission_inventory_calls as calls
+import recording_admission_inventory_terminal as terminal
 
 JUBJUB_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-517.json")
 CALL_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.calls-519.json")
+
+
+TERMINAL_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-521.json")
 
 
 class InventoryTests(unittest.TestCase):
@@ -122,7 +126,8 @@ class InventoryTests(unittest.TestCase):
                                   transition=transition, baseline_bytes=baseline_bytes,
                                   instrumentation=instrumentation,
                                   jubjub_transition=json.loads(JUBJUB_TRANSITION.read_text()),
-                                  call_extension=json.loads(CALL_EXTENSION.read_text()))
+                                  call_extension=json.loads(CALL_EXTENSION.read_text()),
+                                  terminal_transition=json.loads(TERMINAL_TRANSITION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)
@@ -141,7 +146,8 @@ class RetirementTransitionTests(unittest.TestCase):
         self.instrumentation = json.loads(inventory.INSTRUMENTATION.read_text())
         self.jubjub_transition = json.loads(JUBJUB_TRANSITION.read_text())
         self.call_extension = json.loads(CALL_EXTENSION.read_text())
-        for relative in {*self.baseline['source_fingerprints'], inventory.ORACLE, jubjub.ORACLE, *inventory.HOOK_SOURCES}:
+        self.terminal_transition = json.loads(TERMINAL_TRANSITION.read_text())
+        for relative in {*self.baseline['source_fingerprints'], inventory.ORACLE, jubjub.ORACLE, terminal.ORACLE, *inventory.HOOK_SOURCES}:
             destination = self.root / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_bytes((inventory.ROOT / relative).read_bytes())
@@ -150,13 +156,14 @@ class RetirementTransitionTests(unittest.TestCase):
         return inventory.verify(self.root, self.baseline, transition=self.transition,
                                 baseline_bytes=self.baseline_bytes,
                                 instrumentation=self.instrumentation,
-                                jubjub_transition=self.jubjub_transition, call_extension=self.call_extension)
+                                jubjub_transition=self.jubjub_transition, call_extension=self.call_extension,
+                                terminal_transition=self.terminal_transition)
 
     def test_reviewed_retirement_keeps_frozen_denominator(self):
         report = self.report()
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(report['route_count'], 84)
-        self.assertEqual([row['id'] for row in report['retired_routes']], ['effectful.effectful', 'selector.jubjub-values'])
+        self.assertEqual([row['id'] for row in report['retired_routes']], terminal.RETIRED)
         self.assertTrue(report['retired_routes'][0]['passed'])
         # Retirement is never implicit: the untransitioned baseline must flag it.
         self.assertFalse(inventory.verify(self.root, self.baseline)['passed'])
@@ -222,7 +229,7 @@ class RetirementTransitionTests(unittest.TestCase):
         report = self.report()
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(report['route_count'], 84)
-        self.assertEqual(len(report['retired_routes']), 2)
+        self.assertEqual(len(report['retired_routes']), 3)
         self.assertEqual(report['reviewed_instrumentation']['issue'], 515)
         self.assertNotIn('coverage', report['reviewed_instrumentation'])
 
@@ -280,7 +287,7 @@ class RetirementTransitionTests(unittest.TestCase):
         current = self.report()
         self.assertTrue(current['passed'], current['errors'])
         self.assertEqual(current['retired_routes'][1]['id'], 'selector.jubjub-values')
-        self.assertEqual(len(current['current_selector']['ordered_calls']), 18)
+        self.assertEqual(len(current['current_selector']['ordered_calls']), 17)
         self.assertIn('algebra.jubjub-values', current['reviewed_instrumentation']['instrumented_route_ids'])
         self.assertNotIn('selector.jubjub-values', current['reviewed_instrumentation']['instrumented_route_ids'])
 
@@ -347,10 +354,10 @@ class CallExtensionTests(unittest.TestCase):
         result = self.report()
         self.assertTrue(result['passed'], result['errors'])
         self.assertEqual(result['route_count'], 84)
-        self.assertEqual([r['id'] for r in result['retired_routes']], calls.RETIRED)
+        self.assertEqual([r['id'] for r in result['retired_routes']], terminal.RETIRED)
         self.assertEqual(result['reviewed_call_extension']['new_retired_routes'], [])
-        self.assertEqual(result['current_selector']['ordered_calls'], self.jubjub_transition['reviewed_selector']['ordered_calls'])
-        self.assertEqual(result['reviewed_instrumentation']['instrumented_route_ids'], self.jubjub_transition['instrumented_route_ids'])
+        self.assertEqual(result['current_selector']['ordered_calls'], self.terminal_transition['reviewed_selector']['ordered_calls'])
+        self.assertEqual(result['reviewed_instrumentation']['instrumented_route_ids'], self.terminal_transition['instrumented_route_ids'])
         self.assertEqual({p: p.read_bytes() for p in before}, before)
 
     def test_current_sources_require_explicit_call_extension(self):
@@ -460,9 +467,131 @@ class CallExtensionTests(unittest.TestCase):
                 '--instrumentation', str(inventory.INSTRUMENTATION), '--jubjub-transition', str(JUBJUB_TRANSITION),
                 '--output', str(output)]
         self.assertEqual(inventory.main(argv), 1)
-        self.assertEqual(inventory.main([*argv, '--call-extension', str(manifest)]), 0)
+        self.assertEqual(inventory.main([*argv, '--call-extension', str(manifest), '--terminal-transition', str(TERMINAL_TRANSITION)]), 0)
         self.assertTrue(json.loads(output.read_text())['passed'])
         self.assertEqual(manifest.read_bytes(), before)
+
+
+class TerminalTransitionTests(unittest.TestCase):
+    setUp = RetirementTransitionTests.setUp
+    report = RetirementTransitionTests.report
+
+    def test_explicit_transition_retires_only_terminal_and_keeps_denominator(self):
+        report = self.report()
+        self.assertTrue(report['passed'], report['errors'])
+        self.assertEqual(report['route_count'], 84)
+        self.assertEqual([r['id'] for r in report['retired_routes']], terminal.RETIRED)
+        self.assertTrue(all(r['passed'] for r in report['retired_routes']))
+        self.assertEqual(len(report['current_selector']['ordered_calls']), 17)
+        ids = report['reviewed_instrumentation']['instrumented_route_ids']
+        self.assertIn(terminal.REPLACEMENT, ids)
+        self.assertNotIn(terminal.ROUTE, ids)
+        without = inventory.verify(self.root, self.baseline, transition=self.transition,
+                                   baseline_bytes=self.baseline_bytes, instrumentation=self.instrumentation,
+                                   jubjub_transition=self.jubjub_transition, call_extension=self.call_extension)
+        self.assertFalse(without['passed'])
+        self.assertEqual(len(without['retired_routes']), 2)
+
+    def test_prior_manifest_and_original_source_bindings_are_required(self):
+        for key in ('baseline_file_sha256', 'original_source_sha256',
+                    'prior_call_extension_canonical_sha256'):
+            with self.subTest(key=key):
+                original = self.terminal_transition[key]
+                self.terminal_transition[key] = '0' * 64
+                self.assertFalse(self.report()['passed'])
+                self.terminal_transition[key] = original
+        for owner in terminal.SOURCES:
+            original = self.terminal_transition['prior_source_fingerprints'][owner]
+            self.terminal_transition['prior_source_fingerprints'][owner] = '0' * 64
+            self.assertFalse(self.report()['passed'])
+            self.terminal_transition['prior_source_fingerprints'][owner] = original
+
+    def test_predecessor_cannot_be_rewritten(self):
+        self.call_extension['claim'] = 'edited historical evidence'
+        self.assertIn('terminal retirement: frozen call extension changed or unavailable', self.report()['errors'])
+
+    def test_selector_call_reintroduction_fails_even_with_whitespace(self):
+        path = self.root / inventory.SELECTOR
+        path.write_text(path.read_text() + '\nfn accidental() { typed_plan :: lower_terminal_returns (); }\n')
+        self.assertIn('terminal retirement: selector reintroduced old admission', self.report()['errors'])
+
+    def test_oracle_module_and_wrapper_remain_test_only(self):
+        path = self.root / inventory.TYPED_PLAN
+        original = path.read_text()
+        for declaration in ('mod terminal_returns_reference;', "pub(super) fn lower_terminal_returns<'a>("):
+            with self.subTest(declaration=declaration):
+                changed = original.replace('#[cfg(test)]\n' + declaration, declaration)
+                self.assertNotEqual(original, changed)
+                path.write_text(changed)
+                self.assertIn('terminal retirement: oracle module and wrapper must each be uniquely cfg(test)', self.report()['errors'])
+        path.write_text(original)
+
+    def test_original_oracle_and_retained_adapter_are_both_pinned(self):
+        for relative, find, replacement, expected in (
+            (terminal.ORACLE, 'Type::Field | Type::Boolean', 'Type::Field', 'oracle no longer equals original admission body'),
+            (terminal.ORIGINAL, 'prefix.is_empty()', 'false', 'retained lexical adapter differs from original'),
+        ):
+            with self.subTest(relative=relative):
+                path = self.root / relative
+                original = path.read_text()
+                self.assertIn(find, original)
+                path.write_text(original.replace(find, replacement, 1))
+                self.assertIn('terminal retirement: ' + expected, self.report()['errors'])
+                path.write_text(original)
+
+    def test_shape_audit_cannot_return_to_production_adapter(self):
+        path = self.root / terminal.ORIGINAL
+        path.write_text(path.read_text() + '\nstruct Audit;\n')
+        self.assertIn('terminal retirement: shape admission remains in production adapter', self.report()['errors'])
+
+    def test_body_fingerprints_cannot_approve_a_different_oracle(self):
+        self.terminal_transition['oracle_body_sha256'] = '0' * 64
+        self.assertIn('terminal retirement: oracle must preserve original admission body exactly', self.report()['errors'])
+
+    def test_unrelated_selector_reordering_is_rejected_even_with_updated_hashes(self):
+        path = self.root / inventory.SELECTOR
+        original = path.read_text()
+        source = original.replace('typed_plan::lower_context_query(', '__swap__(')
+        source = source.replace('typed_plan::lower_composite(', 'typed_plan::lower_context_query(')
+        source = source.replace('__swap__(', 'typed_plan::lower_composite(')
+        self.assertNotEqual(original, source)
+        path.write_text(source)
+        self.terminal_transition['reviewed_source_fingerprints'][inventory.SELECTOR] = inventory.digest(path.read_bytes())
+        self.terminal_transition['reviewed_selector'] = inventory.selector_signature(source)
+        self.assertIn('terminal retirement: unrelated selector calls/order changed', self.report()['errors'])
+
+    def test_source_drift_other_owner_and_hook_ids_cannot_be_approved(self):
+        original = copy.deepcopy(self.terminal_transition)
+        self.terminal_transition['reviewed_source_fingerprints'][inventory.RECORDED] = '0' * 64
+        self.assertFalse(self.report()['passed'])
+        self.terminal_transition = original
+        self.terminal_transition['instrumented_route_ids'].append('algebra.unreviewed')
+        self.assertIn('terminal retirement: unrelated observation IDs changed', self.report()['errors'])
+        self.terminal_transition = json.loads(TERMINAL_TRANSITION.read_text())
+        for owner in terminal.SOURCES:
+            path = self.root / owner
+            original = path.read_bytes()
+            path.write_bytes(original + b'\n// unreviewed edit\n')
+            self.assertTrue(any('observation owner changed' in error for error in self.report()['errors']))
+            path.write_bytes(original)
+
+    def test_retirement_set_cannot_expand_or_forget_prior_retirements(self):
+        original = copy.deepcopy(self.terminal_transition)
+        for ids in (terminal.RETIRED[:-1], terminal.RETIRED[1:], terminal.RETIRED + ['selector.kernel']):
+            self.terminal_transition = copy.deepcopy(original)
+            self.terminal_transition['retired_route_ids'] = ids
+            self.assertIn('terminal retirement: unreviewed retirement set', self.report()['errors'])
+        self.terminal_transition = original
+        self.terminal_transition['new_retired_routes'] = ['selector.kernel']
+        self.assertFalse(self.report()['passed'])
+
+    def test_cli_cannot_overwrite_terminal_evidence(self):
+        manifest = self.root / 'terminal.json'
+        manifest.write_text(json.dumps(self.terminal_transition))
+        before = manifest.read_bytes()
+        with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            inventory.main(['--terminal-transition', str(manifest), '--output', str(manifest)])
+        self.assertEqual(before, manifest.read_bytes())
 
 
 if __name__ == '__main__':

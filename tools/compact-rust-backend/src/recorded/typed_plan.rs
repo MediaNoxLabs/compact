@@ -54,6 +54,8 @@ mod shielded_merge;
 mod shielded_payout;
 mod start_funding;
 mod terminal_returns;
+#[cfg(test)]
+mod terminal_returns_reference;
 mod unit_actions;
 mod voting_commit;
 
@@ -1654,6 +1656,7 @@ pub(super) fn lower_shielded_receive<'a>(
         })
 }
 
+#[cfg(test)]
 pub(super) fn lower_terminal_returns<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -1661,7 +1664,7 @@ pub(super) fn lower_terminal_returns<'a>(
     pure: &'a HashMap<&'a str, &'a PureCircuit>,
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
 ) -> Option<TypedPlan> {
-    terminal_returns::lower(circuit, ledger, witnesses, pure, circuits)
+    terminal_returns_reference::lower(circuit, ledger, witnesses, pure, circuits)
 }
 
 // A send result is a typed pair of the sent coin and optional change. The

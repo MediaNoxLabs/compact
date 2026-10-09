@@ -240,11 +240,11 @@ fn invalid_plan_is_a_fatal_invariant_with_its_original_diagnostic() {
         detail: "wrong point operand".into(),
     };
     assert!(
-        resolve_jubjub_plan(Err(effect_plan::PlanError::Unsupported(gap.clone())))
+        resolve_checked_plan(Err(effect_plan::PlanError::Unsupported(gap.clone())))
             .unwrap()
             .is_none()
     );
-    match resolve_jubjub_plan(Err(effect_plan::PlanError::Invalid(gap))) {
+    match resolve_checked_plan(Err(effect_plan::PlanError::Invalid(gap))) {
         Err(RenderError::RecordingPlanInvariant { path, detail }) => {
             assert_eq!(path, "forged.binding");
             assert_eq!(detail, "wrong point operand");

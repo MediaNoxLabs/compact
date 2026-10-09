@@ -295,7 +295,7 @@ fn nested_call_exposes_a_trace_only_when_every_step_is_supported() {
 }
 
 #[test]
-fn closed_pure_field_call_records_let_value_without_admitting_hashes() {
+fn pure_field_calls_preserve_unit_and_record_ordinary_hashed_returns() {
     let mut contract = Contract {
         schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
@@ -379,9 +379,13 @@ fn closed_pure_field_call_records_let_value_without_admitting_hashes() {
     };
     let returned = render_with_capabilities(&contract).unwrap();
     assert!(returned.capabilities.circuits[0].recorded);
-    assert!(returned
-        .source
-        .contains("let __compact_recorded_pure_return_1: runtime::Field = crate::pure_circuits::literalField()?;"));
+    let recorded = returned.source.split_once("pub mod recorded").unwrap().1;
+    assert_eq!(
+        recorded
+            .matches("crate::pure_circuits::literalField()?")
+            .count(),
+        2
+    );
 
     contract.stateful_circuits[0].actions = vec![StateAction::CellWrite {
         field: "value".into(),
@@ -391,6 +395,23 @@ fn closed_pure_field_call_records_let_value_without_admitting_hashes() {
 
     contract.circuits[1].body = Expr::TransientHash {
         value: Box::new(Expr::FieldLiteral { value: "5".into() }),
+    };
+    let hashed = render_with_capabilities(&contract).unwrap();
+    assert!(hashed.capabilities.circuits[0].recorded);
+    assert!(hashed.capabilities.circuits[0].observed_call);
+    assert!(
+        hashed
+            .source
+            .split_once("pub mod recorded")
+            .unwrap()
+            .1
+            .contains("crate::pure_circuits::literalField()?")
+    );
+
+    // Rich helper internals are certified, while this direct operation remains
+    // outside the current checked recording vocabulary.
+    contract.stateful_circuits[0].return_value = StateReturn::Expression {
+        value: contract.circuits[1].body.clone(),
     };
     let rejected = render_with_capabilities(&contract).unwrap();
     assert!(!rejected.capabilities.circuits[0].recorded);

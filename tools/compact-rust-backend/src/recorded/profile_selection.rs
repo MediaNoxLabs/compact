@@ -41,6 +41,9 @@ use super::{effect_plan, kernel_plan, zswap_plan};
 #[cfg(test)]
 #[path = "profile_selection/jubjub_migration_tests.rs"]
 mod jubjub_migration_tests;
+#[cfg(test)]
+#[path = "profile_selection/terminal_migration_tests.rs"]
+mod terminal_migration_tests;
 
 /// An admitted step sequence and the evidence retained from declined profiles.
 /// Legacy organizers have no typed result; absence of steps permits legacy
@@ -65,12 +68,36 @@ fn checked_jubjub_domain(
     if circuit.result != crate::ir::Type::JubjubPoint {
         return Ok(None);
     }
-    resolve_jubjub_plan(effect_plan::lower_with_calls(
+    resolve_checked_plan(effect_plan::lower_with_calls(
         circuit, ledger, witnesses, pure, circuits,
     ))
 }
 
-fn resolve_jubjub_plan(
+/// Ordinary Field interfaces are the migration boundary; body support follows
+/// checked operations. No one-slot or syntactic read/write evidence is required.
+fn checked_terminal_domain(
+    circuit: &StatefulCircuit,
+    ledger: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+) -> Result<Option<TypedPlan>, RenderError> {
+    use crate::ir::{StateReturn, Type};
+    if circuit.result != Type::Field
+        || !matches!(circuit.return_value, StateReturn::Expression { .. })
+        || !circuit
+            .parameters
+            .iter()
+            .all(|p| matches!(p.ty, Type::Field | Type::Boolean))
+    {
+        return Ok(None);
+    }
+    resolve_checked_plan(effect_plan::lower_with_calls(
+        circuit, ledger, witnesses, pure, circuits,
+    ))
+}
+
+fn resolve_checked_plan(
     result: Result<TypedPlan, effect_plan::PlanError>,
 ) -> Result<Option<TypedPlan>, RenderError> {
     match result {
@@ -148,8 +175,8 @@ pub(super) fn select(
     } else {
         None
     };
-    if organizer_steps.is_none()
-        && let Some(plan) = typed_prefix
+    if organizer_steps.is_none() {
+        let before_terminal = typed_prefix
             .or_else(|| record_option!("selector.kernel", kernel_plan::lower(circuit, witnesses)))
             .or_else(|| {
                 record_option!(
@@ -287,19 +314,23 @@ pub(super) fn select(
                         circuits,
                     )
                 )
-            })
-            .or_else(|| {
-                record_option!(
-                    "selector.terminal-returns",
-                    typed_plan::lower_terminal_returns(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                        circuits,
-                    )
-                )
-            })
+            });
+        // Preserve the lazy selector boundary. Invariant errors abort here,
+        // before any independent later family can hide a checked-plan defect.
+        let through_terminal = match before_terminal {
+            Some(plan) => Some(plan),
+            None => record_option!(
+                "algebra.terminal-returns",
+                checked_terminal_domain(
+                    circuit,
+                    ledger_fields,
+                    witnesses,
+                    pure_circuits,
+                    circuits
+                )?
+            ),
+        };
+        if let Some(plan) = through_terminal
             .or_else(|| {
                 record_option!(
                     "selector.phase-reset",
@@ -350,9 +381,10 @@ pub(super) fn select(
                     zswap_plan::lower(circuit, ledger_fields, circuits, witnesses)
                 )
             })
-    {
-        organizer_steps = Some(plan.steps);
-        typed_result = Some(plan.result);
+        {
+            organizer_steps = Some(plan.steps);
+            typed_result = Some(plan.result);
+        }
     }
     Ok(ProfileSelection {
         organizer_steps,

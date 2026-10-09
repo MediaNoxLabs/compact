@@ -94,6 +94,14 @@ impl Drop for Capture {
     }
 }
 
+/// Inspect actual selector events without exposing private trace record types.
+pub(in crate::recorded) fn capture_json<T>(run: impl FnOnce() -> T) -> (T, serde_json::Value) {
+    let capture = Capture::begin();
+    let result = run();
+    let events = serde_json::to_value(capture.finish()).expect("serializable trace events");
+    (result, events)
+}
+
 pub(in crate::recorded) struct HelperPlanning(Option<Phase>);
 impl HelperPlanning {
     pub fn begin() -> Self {

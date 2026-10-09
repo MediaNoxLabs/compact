@@ -19,8 +19,7 @@
 //! scopes, temporary identifiers, declarations, and the current recording frame.
 
 use crate::ir::{
-    Expr, LedgerField, LedgerFieldKind, PureCircuit, StateAction, StatefulCircuit, Type,
-    WitnessDeclaration,
+    Expr, LedgerField, PureCircuit, StateAction, StatefulCircuit, Type, WitnessDeclaration,
 };
 use crate::recorded::legacy::actions::append_steps;
 use crate::recorded::legacy::actions::bindings::closed::{
@@ -29,10 +28,9 @@ use crate::recorded::legacy::actions::bindings::closed::{
     try_nested_uint4_field_cell_binding, try_nested_uint64_cell_counter_binding,
     try_pure_struct_field_projection_binding,
 };
-use crate::recorded::legacy::expressions::{boolean_expression, field_expression};
+use crate::recorded::legacy::expressions::boolean_expression;
 use crate::recorded::legacy::value_sources::{
-    amount_source, cell_source, conditional_uint64_source, literal_field_pair_hash_source,
-    static_bindings,
+    amount_source, cell_source, conditional_uint64_source, static_bindings,
 };
 use crate::recorded::pure_calls::{
     closed_literal_field_vector_call, closed_pure_assert_call, closed_pure_unsigned_call,
@@ -46,7 +44,9 @@ use proc_macro2::Span;
 use std::collections::{HashMap, HashSet};
 
 mod closed;
+mod crypto;
 mod field;
+mod witness;
 
 // This family retains the original lowering arms and ordered recording state.
 #[expect(
@@ -211,37 +211,19 @@ pub(in crate::recorded) fn append_binding_steps(
                     _ => None,
                 };
                 if let Some((operand, persistent)) = hash {
-                    let Some(operand) =
-                        literal_field_pair_hash_source(operand, &scoped, parameters)
-                    else {
-                        return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
-                            &binding.value,
-                            format!("{path}.bindings[{binding_index}].value"),
-                        )));
-                    };
-                    let pair = syn::Ident::new(
-                        &format!("__compact_recorded_hash_arg_{}", *next_temp),
-                        Span::call_site(),
-                    );
-                    *next_temp += 1;
-                    let result = syn::Ident::new(
-                        &format!("__compact_recorded_hash_{}", *next_temp),
-                        Span::call_site(),
-                    );
-                    *next_temp += 1;
-                    steps.push(syn::parse_quote! {
-                        let #pair: (runtime::Field, runtime::Field) = #operand;
-                    });
-                    if persistent {
-                        steps.push(syn::parse_quote! {
-                            let #result: runtime::FixedBytes<32> = runtime::persistent_hash(#pair);
-                        });
-                    } else {
-                        steps.push(syn::parse_quote! {
-                            let #result: runtime::Field = runtime::transient_hash(#pair);
-                        });
+                    if let RecordingOutcome::Unsupported(gap) = crypto::append_pair_hash_binding(
+                        binding,
+                        binding_index,
+                        path,
+                        operand,
+                        persistent,
+                        &mut scoped,
+                        parameters,
+                        steps,
+                        next_temp,
+                    )? {
+                        return Ok(RecordingOutcome::Unsupported(gap));
                     }
-                    scoped.insert(binding.name.clone(), syn::parse_quote!(#result));
                     continue;
                 }
                 if matches!(binding.ty, Type::Unsigned { .. })
@@ -428,95 +410,32 @@ pub(in crate::recorded) fn append_binding_steps(
                     steps.push(syn::parse_quote!(let #local: #value_ty = #value;));
                     scoped.insert(binding.name.clone(), syn::parse_quote!(#local));
                 } else if let Expr::WitnessCall { name, arguments } = &binding.value {
-                    if !matches!(
-                        binding.ty,
-                        Type::Boolean | Type::Field | Type::Bytes { .. } | Type::Unsigned { .. }
-                    ) && !(matches!(binding.ty, Type::Struct { .. })
-                        && recordable_cell_type(&binding.ty))
-                    {
-                        return Ok(unavailable_action(whole, path));
+                    if let RecordingOutcome::Unsupported(gap) = witness::append_witness_binding(
+                        whole,
+                        binding,
+                        path,
+                        name,
+                        arguments,
+                        &mut scoped,
+                        parameters,
+                        witnesses,
+                        steps,
+                        next_temp,
+                    )? {
+                        return Ok(RecordingOutcome::Unsupported(gap));
                     }
-                    let declaration = witnesses
-                        .get(name.as_str())
-                        .ok_or_else(|| RenderError::UnknownWitness(name.clone()))?;
-                    if arguments.len() != declaration.parameters.len() {
-                        return Err(RenderError::ArgumentCount {
-                            circuit: name.clone(),
-                            expected: declaration.parameters.len(),
-                            actual: arguments.len(),
-                        });
-                    }
-                    if binding.ty != declaration.result {
-                        return Err(RenderError::TypeMismatch {
-                            expected: binding.ty.clone(),
-                            actual: declaration.result.clone(),
-                        });
-                    }
-                    let mut args = Vec::new();
-                    for (argument, parameter) in arguments.iter().zip(&declaration.parameters) {
-                        if matches!(binding.ty, Type::Struct { .. })
-                            && !identity_struct_call_argument(argument)
-                        {
-                            return Ok(unavailable_action(whole, path));
-                        }
-                        let Some(arg) = cell_source(argument, &parameter.ty, &scoped, parameters)
-                        else {
-                            return Ok(unavailable_action(whole, path));
-                        };
-                        args.push(arg);
-                    }
-                    let method = ident(name)?;
-                    let value = syn::Ident::new(
-                        &format!("__compact_witness_{}", *next_temp),
-                        Span::call_site(),
-                    );
-                    *next_temp += 1;
-                    steps.push(syn::parse_quote! {
-                        let (frame, #value) = frame.try_witness_metered(|context, meter| {
-                            witnesses.#method(
-                                context.witness_context_with(super::LedgerView {
-                                    state: context.query.state.get_ref(),
-                                    meter,
-                                }),
-                                #(#args),*
-                            )
-                        })?;
-                    });
-                    scoped.insert(binding.name.clone(), syn::parse_quote!(#value));
                 } else if let (
                     Type::Bytes { length: 32 },
                     Expr::PersistentCommit { value, opening },
                 ) = (&binding.ty, &binding.value)
                 {
-                    if !matches!(value.as_ref(), Expr::FieldLiteral { .. }) {
-                        return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
-                            value,
-                            format!("{path}.bindings[{binding_index}].value.value"),
-                        )));
-                    }
-                    let Expr::CellRead { field, index } = opening.as_ref() else {
-                        return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
-                            opening,
-                            format!("{path}.bindings[{binding_index}].value.opening"),
-                        )));
-                    };
-                    let declaration = ledger_fields
-                        .get(field.as_str())
-                        .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-                    if declaration.declaration
-                        != (LedgerFieldKind::Cell {
-                            ty: Type::Bytes { length: 32 },
-                        })
-                        || declaration.index != *index
-                    {
-                        return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
-                            opening,
-                            format!("{path}.bindings[{binding_index}].value.opening"),
-                        )));
-                    }
-                    let Some(field_value) = field_expression(
+                    if let RecordingOutcome::Unsupported(gap) = crypto::append_commitment_binding(
+                        binding,
+                        binding_index,
+                        path,
                         value,
-                        &scoped,
+                        opening,
+                        &mut scoped,
                         parameters,
                         ledger_fields,
                         witnesses,
@@ -525,33 +444,9 @@ pub(in crate::recorded) fn append_binding_steps(
                         steps,
                         next_temp,
                         visiting,
-                    )?
-                    else {
-                        return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
-                            value,
-                            format!("{path}.bindings[{binding_index}].value.value"),
-                        )));
-                    };
-                    let slot = ident(field)?;
-                    let opening_value = syn::Ident::new(
-                        &format!("__compact_recorded_opening_{}", *next_temp),
-                        Span::call_site(),
-                    );
-                    *next_temp += 1;
-                    let committed = syn::Ident::new(
-                        &format!("__compact_recorded_commitment_{}", *next_temp),
-                        Span::call_site(),
-                    );
-                    *next_temp += 1;
-                    steps.push(syn::parse_quote! {
-                        let (frame, #opening_value): (_, runtime::FixedBytes<32>) =
-                            crate::ledger_slots::#slot.record_read(frame)?;
-                    });
-                    steps.push(syn::parse_quote! {
-                        let #committed: runtime::FixedBytes<32> =
-                            runtime::persistent_commit(#field_value, #opening_value);
-                    });
-                    scoped.insert(binding.name.clone(), syn::parse_quote!(#committed));
+                    )? {
+                        return Ok(RecordingOutcome::Unsupported(gap));
+                    }
                 } else if matches!(binding.ty, Type::Bytes { .. })
                     && let Expr::Call { name, arguments } = &binding.value
                 {

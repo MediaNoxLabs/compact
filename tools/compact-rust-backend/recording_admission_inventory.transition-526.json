@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "issue": 526,
+  "retired_route": "selector.context-query",
+  "replacement_route": "algebra.context-query",
+  "claim": "Fifth reviewed production admission family retirement; shared context predicates and VotingCommit evaluation remain active. The 84 frozen boundaries are not language coverage.",
+  "baseline_file_sha256": "ef69a6ea6faa03d3bc5fd13a8176a4b1dcd5c1caf7ea602eed4b5aa5aac56e9e",
+  "original_source": "tools/compact-rust-backend/src/recorded/typed_plan.rs",
+  "original_source_sha256": "076a98d10acd036fbcc6d72195961e1ff10ae0745336ff12de71b6826a301ef0",
+  "original_body_start": "pub(super) fn lower_context_query<'a>(",
+  "original_body_sha256": "75ee022e9552b163319a883e17fa5320513d2586831bfb3fdbf0b3dd34ef46c9",
+  "oracle_source": "tools/compact-rust-backend/src/recorded/typed_plan/context_query_reference.rs",
+  "oracle_body_start": "pub(super) fn lower<'a>(",
+  "oracle_normalized_body_sha256": "75ee022e9552b163319a883e17fa5320513d2586831bfb3fdbf0b3dd34ef46c9",
+  "retained_predicates_sha256": {
+    "fn context_query_type(": "7a5b53c8fe928a89c8b0fa2c20c75402fae3b20aec894f1fdb276dcf813e6460",
+    "fn context_query_value(": "7e1e81b9221640531d76e3c6c2633b9bf03f5a372b754203621ebd2801a33172"
+  },
+  "canonical_descriptor_body_sha256": "27b38a4031b00c2b05d7d4df3ebb6b39d40740d3c4a7e533e76cf3d4bd0c3258",
+  "prior_unit_transition_canonical_sha256": "1f3043199b893663d83bb8eb089c890f21e48435a03b4c0ad700214d594365a1",
+  "prior_source_fingerprints": {
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": "b2302ef62d7e962d0bec6c7c390a135724f678a8ce1618c5d4a58f98bf660b74"
+  },
+  "reviewed_source_fingerprints": {
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": "c2af76d2bf49acf7f4f448dea2ed174ca4316ef412a565aea00e1301b5ae5591"
+  },
+  "prior_selector": {
+    "ordered_calls": [
+      "typed_plan::lower",
+      "kernel_plan::lower",
+      "typed_plan::lower_context_query",
+      "typed_plan::lower_composite",
+      "typed_plan::lower_shielded_receive",
+      "typed_plan::lower_voting_commit",
+      "typed_plan::lower_funded_mint",
+      "typed_plan::lower_guarded_deposit",
+      "typed_plan::lower_shielded_merge",
+      "typed_plan::lower_immediate_shielded_send",
+      "typed_plan::lower_shielded_send_checked",
+      "typed_plan::lower_reset_payout",
+      "typed_plan::lower_shielded_payout",
+      "typed_plan::lower_phase_reset",
+      "typed_plan::lower_unit_composition_checked",
+      "zswap_plan::lower"
+    ],
+    "function_sha256": "1d38dd6ee50f844991341d5465ebe88adb452b395b98f9731364e030df3b75e5"
+  },
+  "reviewed_selector": {
+    "ordered_calls": [
+      "typed_plan::lower",
+      "kernel_plan::lower",
+      "typed_plan::lower_composite",
+      "typed_plan::lower_shielded_receive",
+      "typed_plan::lower_voting_commit",
+      "typed_plan::lower_funded_mint",
+      "typed_plan::lower_guarded_deposit",
+      "typed_plan::lower_shielded_merge",
+      "typed_plan::lower_immediate_shielded_send",
+      "typed_plan::lower_shielded_send_checked",
+      "typed_plan::lower_reset_payout",
+      "typed_plan::lower_shielded_payout",
+      "typed_plan::lower_phase_reset",
+      "typed_plan::lower_unit_composition_checked",
+      "zswap_plan::lower"
+    ],
+    "function_sha256": "d3836f2806a602cec8538819f3c32d6d318f142f67fe2271fcc59fd820bc4852"
+  },
+  "instrumented_route_ids": [
+    "algebra.context-query",
+    "algebra.jubjub-values",
+    "algebra.terminal-returns",
+    "algebra.unit-actions",
+    "early.audited-local",
+    "early.read-only-verification",
+    "effectful.checked-migration",
+    "effectful.start-funding",
+    "guard.closed-opaque-asset-removal",
+    "guard.closed-opaque-map-operation",
+    "guard.closed-opaque-set-operation",
+    "guard.guarded-map-read",
+    "guard.guarded-struct-pure",
+    "guard.guarded-unsigned-product",
+    "guard.opaque-map-write",
+    "guard.opaque-set-mutation",
+    "guard.proved-opaque-set-sequence",
+    "guard.root-let-snapshot",
+    "legacy.action-dispatch",
+    "organizer.enum-advance",
+    "organizer.optional-write",
+    "organizer.organizer",
+    "organizer.witness-merkle",
+    "return.dispatch",
+    "selector.composite-values",
+    "selector.funded-mint",
+    "selector.guarded-deposit",
+    "selector.immediate-send",
+    "selector.kernel",
+    "selector.membership-optional",
+    "selector.phase-reset",
+    "selector.reset-payout",
+    "selector.shielded-merge",
+    "selector.shielded-payout",
+    "selector.shielded-receive",
+    "selector.shielded-send",
+    "selector.unit-composition",
+    "selector.voting-commit",
+    "selector.zswap"
+  ],
+  "retired_route_ids": [
+    "effectful.effectful",
+    "selector.jubjub-values",
+    "selector.terminal-returns",
+    "selector.unit-actions",
+    "selector.context-query"
+  ],
+  "new_retired_routes": [
+    "selector.context-query"
+  ],
+  "retained_shared_production_symbols": [
+    "context_query_type",
+    "context_query_value",
+    "EvaluationState.context_query",
+    "ir::contract_address_type"
+  ]
+}

@@ -60,6 +60,36 @@ impl Lowerer<'_> {
             | Expr::StructLiteral { .. }
             | Expr::StructField { .. }
             | Expr::Tuple { .. } => self.aggregate(expression, scope, bindings, path)?,
+            Expr::KernelSelf { ty } => {
+                self.declarations.types().validate_at(ty, path)?;
+                if *ty != crate::ir::contract_address_type() {
+                    return Err(invalid(
+                        path,
+                        "kernel self requires canonical ContractAddress",
+                    ));
+                }
+                (Operation::KernelSelf, ty.clone())
+            }
+            Expr::PersistentCommit { value, opening } => {
+                let value = self.expression(value, scope, bindings, &format!("{path}.value"))?;
+                let opening =
+                    self.expression(opening, scope, bindings, &format!("{path}.opening"))?;
+                if value.ty
+                    != (Type::Tuple {
+                        elements: vec![Type::Bytes { length: 32 }; 2],
+                    })
+                    || opening.ty != (Type::Bytes { length: 32 })
+                {
+                    return Err(invalid(
+                        path,
+                        "persistent commitment requires a Bytes32 pair and Bytes32 opening",
+                    ));
+                }
+                (
+                    Operation::PersistentCommit { value, opening },
+                    Type::Bytes { length: 32 },
+                )
+            }
             Expr::Let {
                 bindings: locals,
                 body,

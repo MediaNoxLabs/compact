@@ -39,6 +39,9 @@ use super::typed_plan::{self, CompositionRejection, TypedPlan};
 use super::{effect_plan, kernel_plan, zswap_plan};
 
 #[cfg(test)]
+#[path = "profile_selection/context_migration_tests.rs"]
+mod context_migration_tests;
+#[cfg(test)]
 #[path = "profile_selection/jubjub_migration_tests.rs"]
 mod jubjub_migration_tests;
 #[cfg(test)]
@@ -116,6 +119,27 @@ fn checked_unit_domain(
             .parameters
             .iter()
             .all(|p| matches!(p.ty, Type::Field | Type::Boolean))
+    {
+        return Ok(None);
+    }
+    resolve_checked_plan(effect_plan::lower_with_calls(
+        circuit, ledger, witnesses, pure, circuits,
+    ))
+}
+
+/// Bytes32 expression interfaces enter at the former context-query priority.
+/// Observation counts and whole-body shape audits do not authorize composition.
+fn checked_context_domain(
+    circuit: &StatefulCircuit,
+    ledger: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+) -> Result<Option<TypedPlan>, RenderError> {
+    use crate::ir::{StateReturn, Type};
+    if circuit.result != (Type::Bytes { length: 32 })
+        || !circuit.parameters.is_empty()
+        || !matches!(circuit.return_value, StateReturn::Expression { .. })
     {
         return Ok(None);
     }
@@ -203,19 +227,16 @@ pub(super) fn select(
         None
     };
     if organizer_steps.is_none() {
-        let before_terminal = typed_prefix
-            .or_else(|| record_option!("selector.kernel", kernel_plan::lower(circuit, witnesses)))
-            .or_else(|| {
-                record_option!(
-                    "selector.context-query",
-                    typed_plan::lower_context_query(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                    )
-                )
-            })
+        let before_context = typed_prefix
+            .or_else(|| record_option!("selector.kernel", kernel_plan::lower(circuit, witnesses)));
+        let through_context = match before_context {
+            Some(plan) => Some(plan),
+            None => record_option!(
+                "algebra.context-query",
+                checked_context_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?
+            ),
+        };
+        let before_terminal = through_context
             .or_else(|| {
                 record_option!(
                     "selector.composite-values",

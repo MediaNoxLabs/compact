@@ -13,6 +13,7 @@ use std::process::Command;
 use std::time::Instant;
 
 mod calls;
+mod context_queries;
 mod jubjub;
 
 const STACK_BYTES: usize = 2 * 1024 * 1024;

@@ -18,12 +18,14 @@
 
 use super::*;
 use crate::coin_shapes::{qualified_coin_type, shielded_coin_type, shielded_recipient_type};
-use crate::ir::{KernelClaimKind, ReturnPlan};
+use crate::ir::{KernelClaimKind, ReturnPlan, contract_address_type};
 mod actions;
 mod admission;
 mod aggregates;
 mod arithmetic;
 mod composition;
+#[cfg(test)]
+mod context_query_reference;
 mod control;
 mod crypto;
 mod declarations;
@@ -1149,16 +1151,6 @@ fn optional_string(ty: &Type) -> bool {
     matches!(ty, Type::Struct { fields, .. } if matches!(fields.as_slice(), [present, value] if present.ty == Type::Boolean && value.ty == Type::OpaqueString))
 }
 
-fn contract_address_type() -> Type {
-    Type::Struct {
-        name: "ContractAddress".into(),
-        fields: vec![crate::ir::StructField {
-            name: "bytes".into(),
-            ty: Type::Bytes { length: 32 },
-        }],
-    }
-}
-
 fn wrapped_bytes32(ty: &Type) -> bool {
     matches!(ty, Type::Struct { fields, .. } if matches!(fields.as_slice(), [member] if member.ty == (Type::Bytes { length: 32 })))
 }
@@ -1299,60 +1291,14 @@ fn context_query_value(
         _ => false,
     }
 }
+#[cfg(test)]
 pub(super) fn lower_context_query<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
     witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
     pure: &'a HashMap<&'a str, &'a PureCircuit>,
 ) -> Option<TypedPlan> {
-    if !circuit.parameters.is_empty()
-        || !circuit.actions.is_empty()
-        || circuit.result != (Type::Bytes { length: 32 })
-    {
-        return None;
-    }
-    let StateReturn::Expression { value } = &circuit.return_value else {
-        return None;
-    };
-    if !context_query_value(value, pure, &mut HashSet::new(), true) {
-        return None;
-    }
-    let mut plan = Plan {
-        declarations: Declarations {
-            ledger,
-            witnesses,
-            pure,
-            stateful_circuits: None,
-        },
-        evidence: EffectEvidence::default(),
-        admission: AdmissionPolicy {
-            field_cell_slot: None,
-            effectful_field_cells: false,
-            read_only_assertions: false,
-            unit_actions: false,
-            phase_reset: false,
-            composite_domain: CompositeDomain::None,
-            composition_calls: None,
-            composition_lookup_sites: HashSet::new(),
-            counter_hash_helpers: false,
-        },
-        evaluation: EvaluationState {
-            next: 0,
-            context_query: true,
-            scalar_arguments: false,
-            scalar_body_depth: 0,
-            active_calls: HashSet::new(),
-        },
-    };
-    let mut steps = Vec::new();
-    let result = plan.expression(value, &Scope::new(), &mut steps)?;
-    (result.ty == circuit.result
-        && plan.evidence.kernel_self_reads > 0
-        && plan.evidence.witness_calls == 0)
-        .then_some(TypedPlan {
-            steps,
-            result: result.value,
-        })
+    context_query_reference::lower(circuit, ledger, witnesses, pure)
 }
 
 fn composite_type(ty: &Type, intents: bool) -> bool {

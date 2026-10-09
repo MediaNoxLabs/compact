@@ -24,6 +24,17 @@ use serde::{Deserialize, Serialize};
 
 pub const SCHEMA_VERSION: u32 = 20;
 
+/// Canonical ledger8 address representation shared by native and recorded lowering.
+pub(crate) fn contract_address_type() -> Type {
+    Type::Struct {
+        name: "ContractAddress".into(),
+        fields: vec![crate::ir::StructField {
+            name: "bytes".into(),
+            ty: Type::Bytes { length: 32 },
+        }],
+    }
+}
+
 /// A Compact source position, independent of the compiler checkout path.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]

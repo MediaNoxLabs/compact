@@ -61,6 +61,13 @@ pub(super) enum Operation {
     Tuple {
         elements: Vec<Value>,
     },
+    /// Ordered official VM observation of the current contract address.
+    KernelSelf,
+    /// The ledger8 commitment signature qualified by this rollout is a Bytes32 pair.
+    PersistentCommit {
+        value: Value,
+        opening: Value,
+    },
     Add(Value, Value),
     UnsignedAdd(Value, Value),
     Equal(Value, Value),

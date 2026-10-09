@@ -4,6 +4,8 @@
 
 #[path = "tests/calls.rs"]
 mod calls;
+#[path = "tests/context_queries.rs"]
+mod context_queries;
 #[path = "tests/counter.rs"]
 mod counter;
 #[path = "tests/declarations.rs"]

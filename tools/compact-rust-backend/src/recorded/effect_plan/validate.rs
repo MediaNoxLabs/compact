@@ -214,6 +214,17 @@ fn block(
             | Operation::StructConstruct { .. }
             | Operation::StructProject { .. }
             | Operation::Tuple { .. } => aggregates::validate(binding, declarations, &scope)?,
+            Operation::KernelSelf => *ty == crate::ir::contract_address_type(),
+            Operation::PersistentCommit { value, opening } => {
+                use_value(value)?;
+                use_value(opening)?;
+                value.ty
+                    == (Type::Tuple {
+                        elements: vec![Type::Bytes { length: 32 }; 2],
+                    })
+                    && opening.ty == (Type::Bytes { length: 32 })
+                    && *ty == (Type::Bytes { length: 32 })
+            }
             Operation::Add(a, b) => {
                 use_value(a)?;
                 use_value(b)?;

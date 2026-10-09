@@ -88,6 +88,21 @@ fn block(body: &Block, declarations: &Declarations) -> Result<Vec<syn::Stmt>, Re
                 let elements: Vec<_> = elements.iter().map(value).collect();
                 syn::parse_quote!((#(#elements,)*))
             }
+            Operation::KernelSelf => {
+                let observed = syn::Ident::new(
+                    &format!("__compact_effect_address_{}", binding.value.id),
+                    Span::call_site(),
+                );
+                steps.push(syn::parse_quote!(let (frame, #observed) = frame.kernel_self()?;));
+                syn::parse_quote!(#ty { bytes: runtime::ledger::contract_address_bytes(&#observed) })
+            }
+            Operation::PersistentCommit {
+                value: input,
+                opening,
+            } => {
+                let (input, opening) = (value(input), value(opening));
+                syn::parse_quote!(runtime::persistent_commit(#input, #opening))
+            }
             Operation::Add(a, b) => {
                 let (a, b) = (value(a), value(b));
                 syn::parse_quote!(#a + #b)

@@ -1195,13 +1195,7 @@ fn render_effect_operation(
 ) -> Result<(syn::Expr, Type, bool), RenderError> {
     match value {
         Expr::KernelSelf { ty } => {
-            let expected = Type::Struct {
-                name: "ContractAddress".into(),
-                fields: vec![StructField {
-                    name: "bytes".into(),
-                    ty: Type::Bytes { length: 32 },
-                }],
-            };
+            let expected = crate::ir::contract_address_type();
             if *ty != expected {
                 return Err(RenderError::TypeMismatch {
                     expected,

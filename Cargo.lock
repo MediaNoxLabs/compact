@@ -1238,6 +1238,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-effect-plan-context-query-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-base-crypto",
+ "midnight-compact-runtime",
+ "midnight-serialize",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-effect-plan-counter-only-source-fixture"
 version = "0.1.0"
 dependencies = [
@@ -2594,6 +2605,7 @@ dependencies = [
 name = "compact-rust-test-center-micro-dao-fixture"
 version = "0.1.0"
 dependencies = [
+ "compact-rust-backend",
  "hex",
  "midnight-base-crypto",
  "midnight-coin-structure",

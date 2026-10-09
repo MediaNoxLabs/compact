@@ -114,6 +114,9 @@ pub(super) fn try_run(
         ("--field-observation", _) => Some(expressions::field_observation(arguments)),
         ("--stateful-struct", _) => Some(recorded::stateful_struct(arguments)),
         ("--stateful-assert", _) => Some(recorded::stateful_assert(arguments)),
+        ("--effect-plan-unsigned-arithmetic", _) => {
+            Some(recorded::effect_plan_unsigned_arithmetic(arguments))
+        }
         ("--effect-plan-counter", _) => Some(recorded::effect_plan_counter(arguments)),
         ("--effect-plan-counter-only", _) => Some(recorded::effect_plan_counter_only(arguments)),
         ("--effect-plan-jubjub", _) => Some(recorded::effect_plan_jubjub(arguments)),

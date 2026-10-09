@@ -97,7 +97,10 @@ pub(super) enum Operation {
     /// Persistent FAB hashing of independently checked fixed-byte products.
     PersistentHash(Value),
     Add(Value, Value),
+    /// Checked small unsigned arithmetic; operand and result bounds are independent.
     UnsignedAdd(Value, Value),
+    UnsignedSubtract(Value, Value),
+    UnsignedMultiply(Value, Value),
     Equal(Value, Value),
     JubjubScalarFromNative(Value),
     EcMulGenerator(Value),

@@ -33,7 +33,7 @@ pub(super) fn validate_ir(actual: &[u8], expected: &str) -> Result<(), Box<dyn E
     let actual: serde_json::Value = serde_json::from_slice(actual)?;
     let expected: serde_json::Value = serde_json::from_str(expected)?;
     if actual != expected {
-        return Err("Counter proof artifact IR differs from the generated source fixture".into());
+        return Err("Proof artifact IR differs from the generated source fixture".into());
     }
     Ok(())
 }

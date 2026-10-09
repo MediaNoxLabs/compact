@@ -408,7 +408,7 @@ fn recorded_nested_uint4_composes_typed_arithmetic_and_witness_arms() {
             .circuits[0]
             .recorded
     );
-    // General multiplication has not entered the outer checked vocabulary.
+    // Small unsigned multiplication now composes inside the selected arm.
     let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
         unreachable!()
     };
@@ -435,13 +435,48 @@ fn recorded_nested_uint4_composes_typed_arithmetic_and_witness_arms() {
             max: "2".into(),
         }),
     };
-    assert!(
-        !render_with_capabilities(&contract)
-            .unwrap()
-            .capabilities
-            .circuits[0]
-            .recorded
+    let multiplied = render_with_capabilities(&contract).unwrap();
+    assert!(multiplied.capabilities.circuits[0].recorded);
+    let body = super::lifecycle_recording::generated_body(
+        &multiplied.source,
+        "recorded",
+        &contract.stateful_circuits[0].name,
     );
+    let multiply = body.find("multiply_unsigned").unwrap();
+    assert!(body[..multiply].matches("if ").count() >= 2, "{body}");
+    assert!(multiply < body.find("record_write").unwrap());
+    assert!(compact_generic_syntax(&body).contains("multiply_unsigned::<2,2,2>"));
+
+    // An unselected branch is still type checked: expanding the arithmetic
+    // vocabulary does not permit a Boolean where this unsigned arm is required.
+    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    let Expr::If {
+        condition, then, ..
+    } = &mut bindings[0].value
+    else {
+        unreachable!()
+    };
+    **condition = Expr::Boolean { value: false };
+    let Expr::Coerce { value, .. } = then.as_mut() else {
+        unreachable!()
+    };
+    let Expr::UnsignedCast { value, .. } = value.as_mut() else {
+        unreachable!()
+    };
+    let Expr::If { then, .. } = value.as_mut() else {
+        unreachable!()
+    };
+    **then = Expr::UnsignedMultiply {
+        max: "2".into(),
+        left: Box::new(Expr::Boolean { value: true }),
+        right: Box::new(Expr::UnsignedLiteral {
+            value: "1".into(),
+            max: "2".into(),
+        }),
+    };
+    assert!(render_with_capabilities(&contract).is_err());
 }
 
 #[test]

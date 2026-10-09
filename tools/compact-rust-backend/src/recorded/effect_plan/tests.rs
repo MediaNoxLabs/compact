@@ -443,3 +443,6 @@ mod owned_cells;
 
 #[path = "tests/set_operations.rs"]
 mod set_operations;
+
+#[path = "tests/unsigned_arithmetic.rs"]
+mod unsigned_arithmetic;

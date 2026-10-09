@@ -152,11 +152,23 @@ pub(super) fn render(
             let (a, b) = (value(a), value(b));
             syn::parse_quote!(#a == #b)
         }
-        Operation::UnsignedAdd(a, b) => {
-            let op = crate::ir::Expr::UnsignedAdd {
-                max: unsigned_max(&binding.value.ty).into(),
-                left: Box::new(crate::ir::Expr::Unit),
-                right: Box::new(crate::ir::Expr::Unit),
+        Operation::UnsignedAdd(a, b)
+        | Operation::UnsignedSubtract(a, b)
+        | Operation::UnsignedMultiply(a, b) => {
+            // The native syntax helper only uses the variant as an operation tag;
+            // operands have already been evaluated once in SSA source order.
+            let max = unsigned_max(&binding.value.ty).into();
+            let left = Box::new(crate::ir::Expr::Unit);
+            let right = Box::new(crate::ir::Expr::Unit);
+            let op = match &binding.operation {
+                Operation::UnsignedAdd(..) => crate::ir::Expr::UnsignedAdd { max, left, right },
+                Operation::UnsignedSubtract(..) => {
+                    crate::ir::Expr::UnsignedSubtract { max, left, right }
+                }
+                Operation::UnsignedMultiply(..) => {
+                    crate::ir::Expr::UnsignedMultiply { max, left, right }
+                }
+                _ => unreachable!("unsigned arithmetic arm"),
             };
             crate::unsigned_arithmetic_syntax(
                 &op,

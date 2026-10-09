@@ -26,6 +26,7 @@ default = []
 experimental-recording-plan = ["dep:compact-rust-recording-effect-plan-prototype-fixture"]
 
 [dependencies]
+compact-rust-effect-plan-unsigned-arithmetic-source-fixture = { path = "../../tests-rust-backend/effect-plan-unsigned-arithmetic-source", features = ["ledger-transaction"] }
 compact-rust-effect-plan-jubjub-source-fixture = { path = "../../tests-rust-backend/effect-plan-jubjub-source", features = ["ledger-transaction"] }
 compact-rust-effect-plan-stateful-calls-source-fixture = { path = "../../tests-rust-backend/effect-plan-stateful-calls-source", features = ["ledger-transaction"] }
 compact-rust-effect-plan-pure-calls-source-fixture = { path = "../../tests-rust-backend/effect-plan-pure-calls-source", features = ["ledger-transaction"] }

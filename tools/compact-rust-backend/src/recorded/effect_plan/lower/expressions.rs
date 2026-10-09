@@ -203,7 +203,9 @@ impl Lowerer<'_> {
             | Expr::EcAdd { .. } => self.jubjub(expression, scope, bindings, path)?,
             Expr::Add { left, right }
             | Expr::Equal { left, right }
-            | Expr::UnsignedAdd { left, right, .. } => {
+            | Expr::UnsignedAdd { left, right, .. }
+            | Expr::UnsignedSubtract { left, right, .. }
+            | Expr::UnsignedMultiply { left, right, .. } => {
                 let a = self.expression(left, scope, bindings, &format!("{path}.left"))?;
                 let b = self.expression(right, scope, bindings, &format!("{path}.right"))?;
                 match expression {
@@ -214,11 +216,19 @@ impl Lowerer<'_> {
                         (Operation::Equal(a, b), Type::Boolean)
                     }
                     Expr::UnsignedAdd { max, .. }
+                    | Expr::UnsignedSubtract { max, .. }
+                    | Expr::UnsignedMultiply { max, .. }
                         if validate::bound(&a.ty).is_some()
                             && validate::bound(&b.ty).is_some()
                             && validate::bound(&uint(max)).is_some() =>
                     {
-                        (Operation::UnsignedAdd(a, b), uint(max))
+                        let operation = match expression {
+                            Expr::UnsignedAdd { .. } => Operation::UnsignedAdd(a, b),
+                            Expr::UnsignedSubtract { .. } => Operation::UnsignedSubtract(a, b),
+                            Expr::UnsignedMultiply { .. } => Operation::UnsignedMultiply(a, b),
+                            _ => unreachable!("unsigned arithmetic arm"),
+                        };
+                        (operation, uint(max))
                     }
                     _ => return Err(invalid(path, "invalid arithmetic operand types")),
                 }

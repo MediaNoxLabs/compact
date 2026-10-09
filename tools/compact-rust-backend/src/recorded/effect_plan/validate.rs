@@ -283,7 +283,9 @@ fn block(
                 use_value(b)?;
                 a.ty == Type::Field && b.ty == Type::Field && *ty == Type::Field
             }
-            Operation::UnsignedAdd(a, b) => {
+            Operation::UnsignedAdd(a, b)
+            | Operation::UnsignedSubtract(a, b)
+            | Operation::UnsignedMultiply(a, b) => {
                 use_value(a)?;
                 use_value(b)?;
                 bound(&a.ty).is_some() && bound(&b.ty).is_some() && bound(ty).is_some()

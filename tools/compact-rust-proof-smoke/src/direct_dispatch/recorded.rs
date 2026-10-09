@@ -694,3 +694,18 @@ pub(super) fn effect_plan_rich_values(
         Err(_) => Err("Stateful calls proof thread panicked".into()),
     }
 }
+
+pub(super) fn effect_plan_unsigned_arithmetic(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let root = arguments.next().ok_or(
+        "usage: compact-rust-proof-smoke --effect-plan-unsigned-arithmetic <proof-output>",
+    )?;
+    if arguments.next().is_some() {
+        return Err(
+            "usage: compact-rust-proof-smoke --effect-plan-unsigned-arithmetic <proof-output>"
+                .into(),
+        );
+    }
+    crate::effect_plan_unsigned_arithmetic::run(Path::new(&root))
+}

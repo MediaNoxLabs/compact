@@ -87,6 +87,10 @@ pub(super) enum Operation {
         value: Value,
         opening: Value,
     },
+    /// Canonical little-endian Field encoding, distinct from transient degradation.
+    FieldToBytes32(Value),
+    /// Persistent FAB hashing of independently checked fixed-byte products.
+    PersistentHash(Value),
     Add(Value, Value),
     UnsignedAdd(Value, Value),
     Equal(Value, Value),

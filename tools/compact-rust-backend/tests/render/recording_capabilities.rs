@@ -185,7 +185,7 @@ fn recording_gaps_follow_the_first_definite_ir_failure() {
                         index: 0,
                     },
                     StateAction::Expression {
-                        value: Expr::PersistentHash {
+                        value: Expr::Keccak256 {
                             value: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
                         },
                     },
@@ -248,7 +248,7 @@ fn conditional_recording_rejects_an_unsupported_unselected_branch() {
                     index: 0,
                 }),
                 otherwise: Box::new(StateAction::Expression {
-                    value: Expr::PersistentHash {
+                    value: Expr::Keccak256 {
                         value: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
                     },
                 }),
@@ -326,9 +326,9 @@ fn recording_gaps_include_unsupported_type_and_called_callee_path() {
     assert!(report.circuits[0].recorded && report.circuits[0].observed_call);
 
     // Preserve the nested callee-path objective with an actually unsupported
-    // direct operation (native hashing still renders successfully).
+    // direct Keccak operation (native hashing still renders successfully).
     contract.stateful_circuits[0].actions = vec![StateAction::Expression {
-        value: Expr::PersistentHash {
+        value: Expr::Keccak256 {
             value: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
         },
     }];

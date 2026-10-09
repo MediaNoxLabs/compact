@@ -77,6 +77,23 @@ impl Lowerer<'_> {
                 }
                 (Operation::KernelSelf, ty.clone())
             }
+            Expr::FieldToBytes32 { value } => {
+                let value = self.expression(value, scope, bindings, &format!("{path}.value"))?;
+                if value.ty != Type::Field {
+                    return Err(invalid(path, "FieldToBytes32 requires a Field operand"));
+                }
+                (Operation::FieldToBytes32(value), Type::Bytes { length: 32 })
+            }
+            Expr::PersistentHash { value } => {
+                let value = self.expression(value, scope, bindings, &format!("{path}.value"))?;
+                if !validate::hash_input_type(&value.ty) {
+                    return Err(invalid(
+                        path,
+                        "persistent hash requires a fixed-byte product",
+                    ));
+                }
+                (Operation::PersistentHash(value), Type::Bytes { length: 32 })
+            }
             Expr::PersistentCommit { value, opening } => {
                 let value = self.expression(value, scope, bindings, &format!("{path}.value"))?;
                 let opening =

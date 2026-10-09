@@ -53,7 +53,7 @@ fn earlier_point_route_keeps_priority() {
 }
 #[test]
 fn unsupported_continues_independent_suffix_but_invariant_is_fatal() {
-    let contract = subject(Expr::PersistentHash {
+    let contract = subject(Expr::Keccak256 {
         value: Box::new(project(address())),
     });
     assert!(

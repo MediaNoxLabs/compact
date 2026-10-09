@@ -342,11 +342,11 @@ fn nested_call_exposes_a_trace_only_when_every_step_is_supported() {
     );
 
     // Direct hashing is still outside the checked recording operation domain.
-    // Keep a real nested-step refusal after qualifying the newly supported return.
+    // Keep a real nested-step refusal: native Keccak remains outside the checked algebra.
     contract.stateful_circuits[0]
         .actions
         .push(StateAction::Expression {
-            value: Expr::PersistentHash {
+            value: Expr::Keccak256 {
                 value: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
             },
         });

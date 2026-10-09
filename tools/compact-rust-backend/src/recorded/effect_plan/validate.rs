@@ -9,7 +9,9 @@ use std::collections::{HashMap, HashSet};
 mod aggregates;
 mod calls;
 mod domain;
+mod persistent;
 mod pure;
+pub(super) use persistent::hash_input_type;
 
 struct Validation {
     allocated: HashSet<usize>,
@@ -258,6 +260,14 @@ fn block(
                     })
                     && opening.ty == (Type::Bytes { length: 32 })
                     && *ty == (Type::Bytes { length: 32 })
+            }
+            Operation::FieldToBytes32(value) => {
+                use_value(value)?;
+                value.ty == Type::Field && *ty == (Type::Bytes { length: 32 })
+            }
+            Operation::PersistentHash(value) => {
+                use_value(value)?;
+                hash_input_type(&value.ty) && *ty == (Type::Bytes { length: 32 })
             }
             Operation::Add(a, b) => {
                 use_value(a)?;

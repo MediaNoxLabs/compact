@@ -124,6 +124,11 @@ pub(super) fn render(
             let (input, opening) = (value(input), value(opening));
             syn::parse_quote!(runtime::persistent_commit(#input, #opening))
         }
+        Operation::FieldToBytes32(input) => crate::field_to_bytes_32_syntax(value(input)),
+        Operation::PersistentHash(input) => {
+            let input = value(input);
+            syn::parse_quote!(runtime::persistent_hash(#input))
+        }
         Operation::Add(a, b) => {
             let (a, b) = (value(a), value(b));
             syn::parse_quote!(#a + #b)

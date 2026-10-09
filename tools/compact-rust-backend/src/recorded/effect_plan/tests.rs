@@ -432,3 +432,8 @@ mod composite;
 mod owned_values;
 
 mod receive_owned_domain_probes;
+
+#[path = "tests/counter_hash.rs"]
+mod counter_hash;
+#[path = "tests/counter_hash_inclusion.rs"]
+mod counter_hash_inclusion;

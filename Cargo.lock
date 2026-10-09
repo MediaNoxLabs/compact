@@ -1262,6 +1262,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-effect-plan-counter-hash-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-compact-runtime",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-effect-plan-counter-only-source-fixture"
 version = "0.1.0"
 dependencies = [
@@ -1482,6 +1491,7 @@ dependencies = [
 name = "compact-rust-field-to-bytes32-oracle-fixture"
 version = "0.1.0"
 dependencies = [
+ "compact-rust-backend",
  "hex",
  "midnight-base-crypto",
  "midnight-compact-runtime",

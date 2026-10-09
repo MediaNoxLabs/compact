@@ -332,15 +332,10 @@ fn rich_value_support_does_not_authorize_arithmetic_or_unrelated_nodes() {
             .detail
             .contains("unsigned input")
     );
-    let expression = Expr::PersistentHash {
-        value: Box::new(Expr::Tuple {
-            elements: vec![bytes(1), bytes(2)],
-        }),
+    let expression = Expr::Keccak256 {
+        value: Box::new(bytes(1)),
     };
-    assert_eq!(
-        refusal(expression, bytes_type()).ir_node,
-        "Expr::PersistentHash"
-    );
+    assert_eq!(refusal(expression, bytes_type()).ir_node, "Expr::Keccak256");
 }
 
 #[test]

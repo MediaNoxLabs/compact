@@ -70,6 +70,29 @@ The codegen never names an upstream type directly; it always goes
 through `midnight_compact_runtime::*`. When upstream renames or relocates a
 type, we update the prelude here, not in every generated file.
 
+### Ledger8 source compatibility
+
+The runtime's complete Ledger dependency cone is pinned to
+`MediaNoxLabs/midnight-ledger@8655615e7c4cbf3a1187b3203bf72e69dc09b8dc`.
+Keep those crates on one source and revision: Cargo treats otherwise-identical
+types from crates.io and Git as different Rust types. In particular, the
+supported Ledger revision contains the prerelease `midnight-zswap
+8.2.0-rc.1`, which is not selected by a broad stable `"8"` requirement.
+
+[`scripts/ci/immutable-git-consumer-smoke.sh`](../scripts/ci/immutable-git-consumer-smoke.sh)
+checks the runtime as an external immutable-Git dependency and rejects any
+source-distinct Ledger package before compiling the consumer.
+
+Ledger8 transient crypto also requires the `disk-spill` feature maintained at
+`MediaNoxLabs/midnight-zk@532629b044a88473a7175f4a96c2511c91156136`.
+Because Cargo only applies source patches from the consuming workspace root,
+immutable-Git consumers must carry this root patch:
+
+```toml
+[patch.crates-io]
+midnight-proofs = { git = "https://github.com/MediaNoxLabs/midnight-zk.git", rev = "532629b044a88473a7175f4a96c2511c91156136" }
+```
+
 ## Module map
 
 | File | Purpose |

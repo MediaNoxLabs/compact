@@ -27,7 +27,10 @@ import sys
 import tempfile
 import tomllib
 
-from target_checks import collection_proofs, proof_artifacts, shared_runtime, shielded
+from target_checks import (
+    application_checks, collection_proofs, intent_checks, proof_artifacts,
+    recording_checks, scalar_checks, shared_runtime, shielded,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -898,99 +901,44 @@ def main() -> None:
             check_witness_composition(compiler, base)
             return
         if args.stateful_assert:
-            source = ROOT / "examples/rust_backend/stateful_assert_oracle.compact"
-            output = base / "stateful-assert"
-            run(compiler, "--target", "rust", "--skip-zk", str(source), str(output))
-            report = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert {row["name"] for row in report["circuits"]} == {"checked", "unit_result"}
-            for row in report["circuits"]:
-                assert row["proof_required"] and row["recorded"] and row["observed_call"]
-            run(compiler, "--target", "rust", "--rust-require-recording", "--skip-zk", str(source), str(base / "strict-assert"))
-            if args.proof:
-                proof = base / "stateful-assert-proof"
-                run(compiler, "--target", "rust", "--rust-require-recording", str(source), str(proof))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--stateful-assert", str(proof))
-            original = base / "original-dao"
-            run(compiler, "--target", "rust", "--skip-zk", str(ROOT / "test-center/test-contracts/micro-dao.compact"), str(original))
-            info = json.loads((original / "compiler/contract-info.json").read_text())
-            report = json.loads((original / "contract/rust-capabilities.json").read_text())
-            assert len(info["circuits"]) == 11
-            assert sum(c["proof"] for c in info["circuits"]) == 7
-            assert len(report["circuits"]) == 7
-            assert all(c["proof_required"] for c in report["circuits"])
-            assert {c["name"] for c in report["circuits"] if c["recorded"]} == {"advance", "vote_reveal", "dao_voting_token", "set_topic", "buy_in", "cash_out", "vote_commit"}
-            run("cargo", "+1.99.0", "check", "--offline", "--manifest-path", str(original / "contract/Cargo.toml"))
-            print("nested stateful assertions admitted; original micro-dao native crate checks, all seven proof-required APIs recorded; advance, vote_reveal, dao_voting_token, set_topic, buy_in, cash_out and vote_commit recorded")
+            recording_checks.check_stateful_assert(
+                compiler, base,
+                root=ROOT,
+                proof_requested=args.proof,
+                run=run,
+            )
             return
         if args.wide_add:
-            source = ROOT / "examples/rust_backend/wide_add_oracle.compact"
-            output = base / "wide-add"
-            run(compiler, "--target", "rust", "--skip-zk", str(source), str(output))
-            generated = (output / "contract/lib.rs").read_text()
-            assert "runtime::add_wide_unsigned" in generated
-            assert "runtime::narrow_wide_uint" in generated
-            assert "RUST_RUNTIME_ABI == 50" in generated
-            report = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert len(report["circuits"]) == 1
-            row = report["circuits"][0]
-            assert not row["recorded"] and not row["observed_call"]
-            assert not row["proof_required"] and row["recording_status"] == "not_applicable"
-            original = subprocess.run([compiler, "--target", "rust", "--skip-zk", str(ROOT / "test-center/test-contracts/micro-dao.compact"), str(base / "original-dao")], cwd=ROOT, capture_output=True, text=True)
-            assert original.returncode == 0, original.stderr
-            assert (base / "original-dao/contract/lib.rs").is_file()
-            print("wide addition admitted; original micro-dao emits native Rust")
+            scalar_checks.check_wide_add(
+                compiler, base,
+                root=ROOT,
+                run=run,
+                capture=subprocess.run,
+            )
             return
         if args.transient_receive_send:
-            source = ROOT / "examples/rust_backend/transient_receive_send_oracle.compact"
-            output = base / "transient-receive-send"
-            run(compiler, "--target", "rust", "--rust-require-recording", "--skip-zk", str(source), str(output))
-            info = json.loads((output / "compiler/contract-info.json").read_text())
-            report = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert {c["name"] for c in info["circuits"] if c["proof"]} == {"receive_then_send"}
-            assert len(report["circuits"]) == 1
-            row = report["circuits"][0]
-            assert row["name"] == "receive_then_send" and row["proof_required"] and row["recorded"] and row["observed_call"]
-            run("cargo", "+1.99.0", "check", "--offline", "--manifest-path", str(output / "contract/Cargo.toml"))
-            if args.proof:
-                (output / "keys").mkdir(exist_ok=True)
-                run("zkir", "compile", str(output / "zkir/receive_then_send.zkir"), str(output / "keys/receive_then_send.prover"), str(output / "keys/receive_then_send.verifier"))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--transient-receive-send", str(output))
-            print("unchanged receive/full immediate-send: one proof-required recorded API; optional strict wallet/transient proof")
+            intent_checks.check_transient_receive_send(
+                compiler, base,
+                root=ROOT,
+                proof_requested=args.proof,
+                run=run,
+            )
             return
         if args.canonical_output_order:
-            source = ROOT / "examples/rust_backend/canonical_output_order_oracle.compact"
-            output = base / "canonical-output-order"
-            run(compiler, "--target", "rust", "--rust-require-recording", "--skip-zk", str(source), str(output))
-            info = json.loads((output / "compiler/contract-info.json").read_text())
-            report = json.loads((output / "contract/rust-capabilities.json").read_text())
-            names = {"distribute", "read_coin"}
-            assert {c["name"] for c in info["circuits"] if c["proof"]} == names
-            assert {c["name"] for c in report["circuits"]} == names
-            assert all(c["proof_required"] and c["recorded"] and c["observed_call"] for c in report["circuits"])
-            run("cargo", "+1.99.0", "check", "--offline", "--manifest-path", str(output / "contract/Cargo.toml"))
-            if args.proof:
-                (output / "keys").mkdir(exist_ok=True)
-                run("zkir", "compile", str(output / "zkir/distribute.zkir"), str(output / "keys/distribute.prover"), str(output / "keys/distribute.verifier"))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--canonical-output-order", str(output))
-            print("canonical output source: two proof-required recorded APIs; optional strict proof for both output sort orders")
+            intent_checks.check_canonical_output_order(
+                compiler, base,
+                root=ROOT,
+                proof_requested=args.proof,
+                run=run,
+            )
             return
         if args.terminal_lexical_return:
-            source = ROOT / "examples/rust_backend/terminal_lexical_return_oracle.compact"
-            output = base / "terminal-lexical-return"
-            run(compiler, "--target", "rust", "--rust-require-recording", "--skip-zk", str(source), str(output))
-            info = json.loads((output / "compiler/contract-info.json").read_text())
-            report = json.loads((output / "contract/rust-capabilities.json").read_text())
-            names = {"two", "three", "echo", "nested", "observed"}
-            assert {c["name"] for c in info["circuits"] if c["proof"]} == names
-            assert {c["name"] for c in report["circuits"]} == names
-            assert all(c["proof_required"] and c["recorded"] and c["observed_call"] for c in report["circuits"])
-            run("cargo", "+1.99.0", "check", "--offline", "--manifest-path", str(output / "contract/Cargo.toml"))
-            if args.proof:
-                (output / "keys").mkdir(exist_ok=True)
-                for name in ["two", "three", "nested", "observed"]:
-                    run("zkir", "compile", str(output / f"zkir/{name}.zkir"), str(output / f"keys/{name}.prover"), str(output / f"keys/{name}.verifier"))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--terminal-lexical-return", str(output))
-            print("terminal lexical returns: five proof-required recorded APIs; four new strict Dust proof cases when requested")
+            recording_checks.check_terminal_lexical_return(
+                compiler, base,
+                root=ROOT,
+                proof_requested=args.proof,
+                run=run,
+            )
             return
         if args.micro_dao_token or args.micro_dao_reveal or args.micro_dao_advance or args.micro_dao_set_topic or args.micro_dao_buy_in or args.micro_dao_cash_out or args.micro_dao_vote_commit:
             source = ROOT / "test-center/test-contracts/micro-dao.compact"
@@ -1013,87 +961,38 @@ def main() -> None:
             print("original microDAO: advance, vote_reveal, dao_voting_token, set_topic, buy_in, cash_out and vote_commit recorded, no proof-required gaps retained")
             return
         if args.composite_zswap:
-            outputs = []
-            for stem, names in [("stateful_struct_oracle", {"snapshot", "reverse", "nested", "planned"}), ("composite_zswap_transfer_oracle", {"transfer"})]:
-                output = base / stem
-                run(compiler, "--target", "rust", "--rust-require-recording", *([] if args.proof else ["--skip-zk"]), str(ROOT / f"examples/rust_backend/{stem}.compact"), str(output))
-                report = json.loads((output / "contract/rust-capabilities.json").read_text())
-                assert {row["name"] for row in report["circuits"]} == names
-                assert all(row["recorded"] and row["observed_call"] and row["proof_required"] for row in report["circuits"])
-                outputs.append(output)
-            if args.proof:
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--composite-zswap", *(str(output) for output in outputs))
-            print("composite Unit intents and same-frame Kernel queries admitted; exact offer policy retained")
+            intent_checks.check_composite_zswap(
+                compiler, base,
+                root=ROOT,
+                proof_requested=args.proof,
+                run=run,
+            )
             return
         if args.field_observation:
-            source = ROOT / "examples/rust_backend/field_observation_oracle.compact"
-            output = base / "field-observation"
-            run(compiler, "--target", "rust", "--rust-require-recording",
-                *([] if args.proof else ["--skip-zk"]), str(source), str(output))
-            report = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert {row["name"] for row in report["circuits"]} == {
-                "direct", "snapshot", "via_field_helper", "via_snapshot_helper",
-                "pair", "selected", "optional"}
-            assert all(row["recorded"] and row["observed_call"] and row["proof_required"]
-                       for row in report["circuits"])
-            if args.proof:
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
-                    "--field-observation", str(output))
-            print("Field observations compose into typed structs and scoped helpers; empty selected path refuses preparation")
+            recording_checks.check_field_observation(
+                compiler, base,
+                root=ROOT,
+                proof_requested=args.proof,
+                run=run,
+            )
             return
         if args.stateful_struct:
-            source = ROOT / "examples/rust_backend/stateful_struct_oracle.compact"
-            output = base / "stateful-struct"
-            run(compiler, "--target", "rust", "--skip-zk", str(source), str(output))
-            ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 20
-            encoded = json.dumps(ir)
-            assert '"struct_literal"' in encoded and '"witness_call"' in encoded
-            assert '"create_zswap_output"' in encoded and '"kernel_self"' in encoded
-            report = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert len(report["circuits"]) == 4
-            for row in report["circuits"]:
-                assert row["recorded"]
-                assert row["observed_call"] == row["recorded"]
-                assert row["proof_required"]
-            strict = subprocess.run([compiler, "--target", "rust", "--rust-require-recording", "--skip-zk", str(source), str(base / "strict-struct")], cwd=ROOT, capture_output=True,text=True)
-            assert strict.returncode == 0, strict.stderr
-            if args.proof:
-                proof = base / "stateful-struct-proof"
-                run(compiler,"--target","rust",str(source),str(proof))
-                run("cargo","run","--quiet","-p","compact-rust-proof-smoke","--","--stateful-struct",str(proof))
-            original = subprocess.run([compiler, "--target", "rust", "--skip-zk", str(ROOT / "test-center/test-contracts/micro-dao.compact"), str(base / "original-dao")], cwd=ROOT, capture_output=True, text=True)
-            assert original.returncode == 0, original.stderr
-            assert (base / "original-dao/contract/lib.rs").is_file()
-            print("ordered typed stateful structs admitted; original micro-dao emits native Rust")
+            recording_checks.check_stateful_struct(
+                compiler, base,
+                root=ROOT,
+                proof_requested=args.proof,
+                run=run,
+                capture=subprocess.run,
+            )
             return
         if args.kernel_shielded_effects:
-            source = ROOT / "examples/rust_backend/kernel_shielded_effects_oracle.compact"
-            output = base / "kernel-shielded-effects"
-            run(compiler, "--target", "rust", "--skip-zk", str(source), str(output))
-            ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 20
-            assert [f["id"] for f in ir["ledger_fields"]] == ["marker"]
-            encoded = json.dumps(ir)
-            assert '"kernel_claim"' in encoded and '"kernel_mint_shielded"' in encoded
-            report = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert len(report["circuits"]) == 8
-            for row in report["circuits"]:
-                assert row["recorded"] and row["observed_call"]
-                assert row["proof_required"]
-            rejected = subprocess.run([compiler, "--target", "rust", "--rust-require-recording", "--skip-zk", str(source), str(base / "requires-recording")], cwd=ROOT, capture_output=True, text=True)
-            assert rejected.returncode == 0, rejected.stderr
-            assert (base / "requires-recording/contract/lib.rs").exists()
-            unsupported = base / "unsupported-kernel.compact"
-            unsupported.write_text("import CompactStandardLibrary; export circuit check(): [] { return kernel.checkpoint(); }\n")
-            rejected = subprocess.run([compiler, "--target", "rust", "--skip-zk", str(unsupported), str(base / "unsupported-kernel")], cwd=ROOT, capture_output=True, text=True)
-            assert rejected.returncode != 0 and "Kernel operation checkpoint" in rejected.stderr
-            if args.proof:
-                proof = base / "kernel-shielded-effects-proof"
-                run(compiler, "--target", "rust", "--rust-require-recording", str(source), str(proof))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
-                    "--kernel-shielded-effects", str(proof))
-            print("typed recorded Kernel effects admitted; unsupported operations refused")
+            intent_checks.check_kernel_shielded_effects(
+                compiler, base,
+                root=ROOT,
+                proof_requested=args.proof,
+                run=run,
+                capture=subprocess.run,
+            )
             return
         if args.shielded_receive:
             shielded.check_receive(
@@ -1111,365 +1010,120 @@ def main() -> None:
             )
             return
         if args.native_zswap_intents:
-            output = base / "native-zswap-intents"
-            source = ROOT / "examples/rust_backend/native_zswap_intents_oracle.compact"
-            run(compiler, "--target", "rust", "--skip-zk", str(source), str(output))
-            ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 20
-            encoded = json.dumps(ir)
-            assert '"create_zswap_input"' in encoded and '"create_zswap_output"' in encoded
-            report = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert [(row["name"], row["recorded"], row["observed_call"], row["proof_required"]) for row in report["circuits"]] == [
-                ("produce", False, False, False), ("consume", False, False, False),
-                ("flow", True, True, True), ("witness_order", False, False, False),
-                ("read_coin", True, True, True)]
-            run(compiler, "--target", "rust", "--rust-require-recording", "--skip-zk", str(source), str(base / "requires-recording"))
-            transfer_source = ROOT / "examples/rust_backend/zswap_transfer_oracle.compact"
-            transfer = base / "zswap-transfer"
-            run(compiler, "--target", "rust", "--rust-require-recording", *([] if args.proof else ["--skip-zk"]), str(transfer_source), str(transfer))
-            transfer_report = json.loads((transfer / "contract/rust-capabilities.json").read_text())
-            assert [(row["name"], row["recorded"], row["observed_call"], row["proof_required"]) for row in transfer_report["circuits"]] == [
-                ("transfer", True, True, True), ("read_coin", True, True, True)]
-            if args.proof:
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--zswap-transfer", str(transfer))
-            print("recorded Zswap intents and exact offer-bound transfer admitted; original duplicate flow remains rejection evidence")
+            intent_checks.check_native_zswap_intents(
+                compiler, base,
+                root=ROOT,
+                proof_requested=args.proof,
+                run=run,
+            )
             return
         if args.effectful_return:
-            output = base / "effectful-return"
-            run(compiler, "--target", "rust", "--skip-zk",
-                str(EFFECTFUL_RETURN_SOURCE), str(output))
-            ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 20
-            circuit, = ir["stateful_circuits"]
-            assert circuit["name"] == "choose" and circuit["actions"] == []
-            returned = circuit["return_value"]
-            assert returned["kind"] == "effectful"
-            outer = returned["body"]
-            assert outer["kind"] == "let"
-            assert [(row["name"], row["value"]["kind"]) for row in outer["bindings"]] == [
-                ("before", "cell_read")]
-            sequence = outer["result"]
-            assert sequence["kind"] == "sequence" and len(sequence["actions"]) == 1
-            branch = sequence["result"]
-            assert branch["kind"] == "conditional"
-            assert branch["condition"]["left"]["kind"] == "cell_read"
-            assert branch["then"]["kind"] == "let"
-            assert branch["then"]["bindings"][0]["name"] == "selected"
-            assert branch["then"]["result"]["actions"][0]["kind"] == "cell_write"
-            assert branch["otherwise"]["kind"] == "let"
-            assert branch["otherwise"]["bindings"][0]["name"] == "offset"
-            assert branch["otherwise"]["result"]["actions"][0]["kind"] == "let"
-            caps = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert [(row["name"], row["recorded"], row["observed_call"])
-                    for row in caps["circuits"]] == [("choose", True, True)]
-            run(compiler, "--target", "rust", "--rust-require-recording", "--skip-zk",
-                str(EFFECTFUL_RETURN_SOURCE), str(base / "strict"))
-            for name, source, expected in [
-                ("welcome", TEST_CENTER_WELCOME_SOURCE, 3),
-                ("bboard", TEST_CENTER_BBOARD_SOURCE, 2),
-                ("election", ELECTION_SOURCE, 5),
-            ]:
-                existing = base / name
-                run(compiler, "--target", "rust", "--skip-zk", str(source), str(existing))
-                previous = json.loads((existing / "contract/rust-capabilities.json").read_text())
-                assert len(previous["circuits"]) == expected
-                assert all(row["recorded"] and row["observed_call"] for row in previous["circuits"])
-                existing_ir = json.loads((existing / "contract/compact-rust-ir.json").read_text())
-                assert all(row["return_value"]["kind"] != "effectful"
-                           for row in existing_ir["stateful_circuits"])
-            check_coracle_source(compiler, base)
-            if args.proof:
-                proof = base / "effectful-return-proof"
-                run(compiler, "--target", "rust", "--rust-require-recording",
-                    str(EFFECTFUL_RETURN_SOURCE), str(proof))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
-                    "--effectful-return", str(proof))
-            print("typed effectful Field returns record selected effects and scoped branch results")
+            recording_checks.check_effectful_return(
+                compiler, base,
+                effectful_return_source=EFFECTFUL_RETURN_SOURCE,
+                test_center_welcome_source=TEST_CENTER_WELCOME_SOURCE,
+                test_center_bboard_source=TEST_CENTER_BBOARD_SOURCE,
+                election_source=ELECTION_SOURCE,
+                proof_requested=args.proof,
+                run=run,
+                check_coracle_source=check_coracle_source,
+            )
             return
         if args.qualified_coin_cell:
-            output = base / "qualified-coin-cell"
-            source = ROOT / "examples/rust_backend/qualified_coin_cell_oracle.compact"
-            run(compiler, "--target", "rust", "--skip-zk", str(source), str(output))
-            ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 20
-            action = next(row for row in ir["stateful_circuits"] if row["name"] == "write_coin")["actions"][0]
-            assert action["kind"] == "cell_write_coin"
-            report = json.loads((output / "contract/rust-capabilities.json").read_text())
-            write = next(row for row in report["circuits"] if row["name"] == "write_coin")
-            assert write["recorded"] and write["observed_call"]
-            assert write.get("recording_unavailable") is None
-            run(compiler, "--target", "rust", "--skip-zk", "--rust-require-recording", str(source), str(base / "required"))
-            assert (base / "required/contract/lib.rs").exists()
-            chunked = base / "qualified-coin-cell-chunked"
-            run(compiler, "--target", "rust", "--skip-zk", "--rust-require-recording",
-                str(ROOT / "runtime-rs/tests/fixtures/qualified-coin-cell-chunked.compact"), str(chunked))
-            generated = (chunked / "contract/lib.rs").read_text()
-            assert "&[1u8,14u8]" in "".join(generated.split())
-            assert ".record_write_coin(" in generated
-            chunked_report = json.loads((chunked / "contract/rust-capabilities.json").read_text())
-            chunked_write = next(row for row in chunked_report["circuits"] if row["name"] == "write_coin")
-            assert chunked_write["recorded"] and chunked_write["observed_call"]
-            if args.proof:
-                proof = base / "qualified-coin-cell-proof"
-                run(compiler, "--target", "rust", "--rust-require-recording", str(source), str(proof))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
-                    "--qualified-coin-cell", str(proof))
-            print("qualified-coin Cell recorded/observed admission passed")
+            intent_checks.check_qualified_coin_cell(
+                compiler, base,
+                root=ROOT,
+                proof_requested=args.proof,
+                run=run,
+            )
             return
         if args.counter_less_than:
-            output = base / "counter-less-than"
-            command = [compiler, "--target", "rust", "--rust-require-recording"]
-            if not args.proof:
-                command.append("--skip-zk")
-            run(*command, str(ROOT / "examples/rust_backend/counter_less_than_oracle.compact"), str(output))
-            ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 20
-            report = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert {row["name"] for row in report["circuits"]} == {"compare", "nested", "short_circuit", "checked"}
-            assert all(row["recorded"] and row["observed_call"] for row in report["circuits"])
-            def kinds(value):
-                if isinstance(value, dict):
-                    yield value.get("kind")
-                    for child in value.values():
-                        yield from kinds(child)
-                elif isinstance(value, list):
-                    for child in value:
-                        yield from kinds(child)
-            assert {"counter_less_than", "counter_read"}.issubset(set(kinds(ir)))
-            if args.proof:
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
-                    "--counter-less-than", str(output))
-            print("typed Counter less-than target gate passed")
+            scalar_checks.check_counter_less_than(
+                compiler, base,
+                root=ROOT,
+                proof_requested=args.proof,
+                run=run,
+            )
             return
         if args.literal_bytes_field:
-            run(sys.executable, str(ROOT / "tools/compact-rust-backend/check_literal_bytes_field.py"))
-            if args.proof:
-                output = base / "literal-bytes-field"
-                run(compiler, "--target", "rust", "--rust-require-recording",
-                    str(ROOT / "examples/rust_backend/literal_bytes_field_oracle.compact"), str(output))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
-                    "--literal-bytes-field", str(output))
+            scalar_checks.check_literal_bytes_field(
+                compiler, base,
+                root=ROOT,
+                proof_requested=args.proof,
+                run=run,
+                python_executable=sys.executable,
+            )
             return
         if args.coracle_start:
-            check_coracle_source(compiler, base)
-            output = base / "coracle"
-            if args.proof:
-                (output / "keys").mkdir(exist_ok=True)
-                run("zkir", "compile", str(output / "zkir/start.zkir"), str(output / "keys/start.prover"), str(output / "keys/start.verifier"))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--coracle-start", str(output))
-            print("original Coracle start recorded with exact two-wallet paths; all four proof-required exports have recording APIs")
+            application_checks.check_coracle_start(
+                compiler, base,
+                proof_requested=args.proof,
+                run=run,
+                check_coracle_source=check_coracle_source,
+            )
             return
         if args.coracle_concede:
-            check_coracle_source(compiler, base)
-            output = base / "coracle"
-            if args.proof:
-                (output / "keys").mkdir(exist_ok=True)
-                run("zkir", "compile", str(output / "zkir/concede.zkir"), str(output / "keys/concede.prover"), str(output / "keys/concede.verifier"))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--coracle-concede", str(output))
-            print("original Coracle concede recorded; all four proof-required exports have recording APIs")
+            application_checks.check_coracle_concede(
+                compiler, base,
+                proof_requested=args.proof,
+                run=run,
+                check_coracle_source=check_coracle_source,
+            )
             return
         if args.coracle_withdraw:
-            check_coracle_source(compiler, base)
-            output = base / "coracle"
-            if args.proof:
-                (output / "keys").mkdir(exist_ok=True)
-                run("zkir", "compile", str(output / "zkir/withdraw.zkir"), str(output / "keys/withdraw.prover"), str(output / "keys/withdraw.verifier"))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--coracle-withdraw", str(output))
-            print("original Coracle withdraw recorded; all four proof-required exports have recording APIs")
+            application_checks.check_coracle_withdraw(
+                compiler, base,
+                proof_requested=args.proof,
+                run=run,
+                check_coracle_source=check_coracle_source,
+            )
             return
         if args.coracle_guess:
-            check_coracle_source(compiler, base)
-            output = base / "coracle"
-            if args.proof:
-                (output / "keys").mkdir(exist_ok=True)
-                run("zkir", "compile", str(output / "zkir/guess.zkir"), str(output / "keys/guess.prover"), str(output / "keys/guess.verifier"))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--coracle-guess", str(output))
-            print("original Coracle guess, concede, withdraw and start recorded")
+            application_checks.check_coracle_guess(
+                compiler, base,
+                proof_requested=args.proof,
+                run=run,
+                check_coracle_source=check_coracle_source,
+            )
             return
         if args.coracle_root_let:
-            oracle = base / "root-let-action-return"
-            run(compiler, "--target", "rust", "--rust-require-recording", "--skip-zk",
-                str(ROOT_LET_ACTION_RETURN_SOURCE), str(oracle))
-            ir = json.loads((oracle / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 20
-            circuit, = ir["stateful_circuits"]
-            assert circuit["name"] == "step"
-            assert circuit["return_value"] == {
-                "kind": "expression", "value": {"kind": "parameter", "name": "echo"}}
-            outer, = circuit["actions"]
-            assert outer["kind"] == "let"
-            assert [(row["name"], row["value"]["kind"])
-                    for row in outer["bindings"]] == [("before", "cell_read")]
-            inner, = outer["action"]["actions"]
-            assert inner["kind"] == "let"
-            assert [(row["name"], row["value"]["kind"])
-                    for row in inner["bindings"]] == [("after", "add")]
-            write, = inner["action"]["actions"]
-            assert (write["kind"], write["field"], write["value"]) == (
-                "cell_write", "stored", {"kind": "parameter", "name": "after"})
-            caps = json.loads((oracle / "contract/rust-capabilities.json").read_text())
-            assert [(row["name"], row["proof_required"], row["recorded"], row["observed_call"])
-                    for row in caps["circuits"]] == [("step", True, True, True)]
-            assert "pub mod recorded" in (oracle / "contract/lib.rs").read_text()
-            # An assert-only root Let remains in its established expression
-            # form; extracting it as an action would regress the welcome
-            # source's three recorded and observed exports.
-            welcome = base / "welcome"
-            run(compiler, "--target", "rust", "--rust-require-recording", "--skip-zk",
-                str(TEST_CENTER_WELCOME_SOURCE), str(welcome))
-            welcome_caps = json.loads((welcome / "contract/rust-capabilities.json").read_text())
-            assert [(row["name"], row["recorded"], row["observed_call"])
-                    for row in welcome_caps["circuits"]] == [
-                ("add_participant", True, True),
-                ("add_organizer", True, True),
-                ("check_in", True, True),
-            ]
-            check_coracle_source(compiler, base)
-            if args.proof:
-                proof = base / "root-let-action-return-proof"
-                run(compiler, "--target", "rust", "--rust-require-recording",
-                    str(ROOT_LET_ACTION_RETURN_SOURCE), str(proof))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
-                    "--root-let-action-return", str(proof))
-            print("root Let actions retained; complete Coracle compiles with guess recorded and 3 explicit recording gaps")
+            application_checks.check_coracle_root_let(
+                compiler, base,
+                root_let_action_return_source=ROOT_LET_ACTION_RETURN_SOURCE,
+                test_center_welcome_source=TEST_CENTER_WELCOME_SOURCE,
+                proof_requested=args.proof,
+                run=run,
+                check_coracle_source=check_coracle_source,
+            )
             return
         if args.adt_set_qualified:
-            output = base / "adt-set-qualified"
-            run(compiler, "--target", "rust", "--skip-zk",
-                str(ADT_SET_QUALIFIED_SOURCE), str(output))
-            ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 20
-            def has_coin_insert(value):
-                if isinstance(value, dict):
-                    return value.get("kind") == "set_insert_coin" or any(
-                        has_coin_insert(part) for part in value.values())
-                if isinstance(value, list):
-                    return any(has_coin_insert(part) for part in value)
-                return False
-            assert has_coin_insert(ir["stateful_circuits"][1])
-            metadata = json.loads((output / "compiler/contract-info.json").read_text())
-            assert [(row["name"], row["pure"], row["proof"])
-                    for row in metadata["circuits"]] == [
-                ("test_QualifiedShieldedCoinInfo", False, True),
-                ("test_ShieldedCoinInfo", False, True),
-            ]
-            capabilities = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert [(row["name"], row["proof_required"], row["recorded"], row["observed_call"])
-                    for row in capabilities["circuits"]] == [
-                ("test_QualifiedShieldedCoinInfo", True, True, True),
-                ("test_ShieldedCoinInfo", True, True, True),
-            ]
-            assert all(row.get("recording_unavailable") is None for row in capabilities["circuits"])
-            required = subprocess.run(
-                [compiler, "--target", "rust", "--rust-require-recording", "--skip-zk",
-                 str(ADT_SET_QUALIFIED_SOURCE), str(base / "qualified-requires-recording")],
-                cwd=ROOT, capture_output=True, text=True,
+            intent_checks.check_adt_set_qualified(
+                compiler, base,
+                root=ROOT,
+                adt_set_qualified_source=ADT_SET_QUALIFIED_SOURCE,
+                qualified_coin_oracle_source=QUALIFIED_COIN_ORACLE_SOURCE,
+                proof_requested=args.proof,
+                run=run,
+                capture=subprocess.run,
             )
-            assert required.returncode == 0, required.stderr
-            oracle = base / "qualified-oracle"
-            run(compiler, "--target", "rust", "--skip-zk",
-                str(QUALIFIED_COIN_ORACLE_SOURCE), str(oracle))
-            oracle_capabilities = json.loads((oracle / "contract/rust-capabilities.json").read_text())
-            assert [(row["name"], row["recorded"], row["observed_call"])
-                    for row in oracle_capabilities["circuits"]] == [
-                ("insert_coin", True, True), ("contains", True, True)]
-            # Keep the frontend-reachable nested native path in the maintained
-            # gate. Runtime qualified_set_paths tests execute its VM helper;
-            # this source still has a deliberate generated recording gap.
-            chunked = base / "qualified-coin-set-chunked"
-            run(compiler, "--target", "rust", "--skip-zk",
-                str(ROOT / "runtime-rs/tests/fixtures/qualified-coin-set-chunked.compact"),
-                str(chunked))
-            chunked_ir = json.loads((chunked / "contract/compact-rust-ir.json").read_text())
-            assert has_coin_insert(chunked_ir["stateful_circuits"])
-            generated = (chunked / "contract/lib.rs").read_text()
-            assert "&[1u8,14u8]" in "".join(generated.split())
-            assert "ledger_slots::pot.insert_coin(" in "".join(generated.split())
-            chunked_caps = json.loads((chunked / "contract/rust-capabilities.json").read_text())
-            assert [(row["name"], row["recorded"], row["observed_call"])
-                    for row in chunked_caps["circuits"]] == [
-                ("insert_coin", False, False), ("contains", True, True)]
-            gap = chunked_caps["circuits"][0]["recording_unavailable"]
-            assert (gap["code"], gap["ir_node"]) == ("unsupported_action", "StateAction::SetInsertCoin")
-            if args.proof:
-                adt_proof = base / "adt-qualified-proof"
-                run(compiler, "--target", "rust", "--rust-require-recording",
-                    str(ADT_SET_QUALIFIED_SOURCE), str(adt_proof))
-                oracle_proof = base / "qualified-oracle-proof"
-                run(compiler, "--target", "rust", "--rust-require-recording",
-                    str(QUALIFIED_COIN_ORACLE_SOURCE), str(oracle_proof))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
-                    "--adt-set-qualified-coin-info", str(adt_proof))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
-                    "--qualified-coin-set", str(oracle_proof))
-            print("complete ADT qualified Set source and qualified coin oracle recorded; "
-                  "chunked native path and explicit recording gap checked")
             return
         if args.test_center_bboard:
-            output = base / "test-center-bboard"
-            command = [compiler, "--target", "rust", "--rust-require-recording"]
-            if not args.proof:
-                command.append("--skip-zk")
-            run(*command, str(TEST_CENTER_BBOARD_SOURCE), str(output))
-            ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 20
-            assert [row["name"] for row in ir["circuits"]] == ["some", "none", "public_key"]
-            assert [row["name"] for row in ir["stateful_circuits"]] == ["post", "take_down"]
-            taken = ir["stateful_circuits"][1]
-            assert [action["kind"] for action in taken["actions"]] == ["assert", "assert", "let"]
-            tail = taken["actions"][-1]
-            assert [(binding["name"], binding["ty"]["kind"], binding["value"]["kind"])
-                    for binding in tail["bindings"]] == [
-                ("former_msg", "opaque_string", "struct_field")]
-            assert taken["return_value"] == {
-                "kind": "expression", "value": {"kind": "parameter", "name": "former_msg"}}
-            metadata = json.loads((output / "compiler/contract-info.json").read_text())
-            assert [(row["name"], row["pure"], row["proof"])
-                    for row in metadata["circuits"]] == [
-                ("post", False, True), ("take_down", False, True),
-                ("public_key", True, False)]
-            capabilities = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert [(row["name"], row["proof_required"], row["recorded"], row["observed_call"])
-                    for row in capabilities["circuits"]] == [
-                ("post", True, True, True), ("take_down", True, True, True)]
-            assert all("recording_unavailable" not in row for row in capabilities["circuits"])
-            if args.proof:
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
-                    "--bboard", str(output))
-            print("complete test-center bboard recorded/observed calls accepted")
+            application_checks.check_test_center_bboard(
+                compiler, base,
+                test_center_bboard_source=TEST_CENTER_BBOARD_SOURCE,
+                proof_requested=args.proof,
+                run=run,
+            )
             return
         if args.field_to_bytes32:
-            output = base / "field-to-bytes32"
-            command = [compiler, "--target", "rust"]
-            command.append("--rust-require-recording")
-            if not args.proof:
-                command.append("--skip-zk")
-            run(*command, str(FIELD_TO_BYTES32_SOURCE), str(output))
-            ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 20
-            assert [(row["name"], row["body"]["kind"])
-                    for row in ir["circuits"]] == [("encode", "field_to_bytes32")]
-            assert [(row["name"], row["return_value"]["value"]["kind"])
-                    for row in ir["stateful_circuits"]] == [("snapshot", "field_to_bytes32")]
-            capabilities = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert [(row["name"], row["proof_required"], row["recorded"], row["observed_call"])
-                    for row in capabilities["circuits"]] == [
-                ("snapshot", True, True, True)]
-            if args.proof:
-                for extension in ("prover", "verifier"):
-                    assert (output / "keys" / f"snapshot.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (output / "zkir" / f"snapshot.{extension}").is_file()
-            rejected_source = base / "unsupported-byte-width.compact"
-            rejected_source.write_text("export circuit encode(value: Field): Bytes<31> { return value as Bytes<31>; }\n")
-            rejected = subprocess.run(
-                [compiler, "--target", "rust", "--skip-zk", str(rejected_source),
-                 str(base / "unsupported-byte-width")],
-                cwd=ROOT, capture_output=True, text=True,
+            scalar_checks.check_field_to_bytes32(
+                compiler, base,
+                root=ROOT,
+                field_to_bytes32_source=FIELD_TO_BYTES32_SOURCE,
+                proof_requested=args.proof,
+                run=run,
+                capture=subprocess.run,
             )
-            assert rejected.returncode != 0
-            assert "Field-to-Bytes<32> casts only" in rejected.stderr
-            print("field-to-bytes32 target gate passed")
             return
         run(sys.executable, str(Path(__file__).resolve()), "--qualified-coin-cell",
             *(["--proof"] if args.proof else []))

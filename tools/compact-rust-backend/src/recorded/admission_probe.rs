@@ -74,11 +74,13 @@ fn inspect(contract: &Contract) -> Vec<Row> {
         .stateful_circuits
         .iter()
         .map(|circuit| {
-            let candidate = match effect_plan::lower(circuit, &ledger, &witnesses) {
-                Ok(_) => Candidate::Supported,
-                Err(effect_plan::PlanError::Unsupported(gap)) => Candidate::Unsupported { gap },
-                Err(effect_plan::PlanError::Invalid(gap)) => Candidate::Invalid { gap },
-            };
+            let candidate =
+                match effect_plan::lower_with_calls(circuit, &ledger, &witnesses, &pure, &circuits)
+                {
+                    Ok(_) => Candidate::Supported,
+                    Err(effect_plan::PlanError::Unsupported(gap)) => Candidate::Unsupported { gap },
+                    Err(effect_plan::PlanError::Invalid(gap)) => Candidate::Invalid { gap },
+                };
             LAST_ROUTE.set(None);
             let effectful_route_error =
                 if matches!(circuit.return_value, StateReturn::Effectful { .. }) {

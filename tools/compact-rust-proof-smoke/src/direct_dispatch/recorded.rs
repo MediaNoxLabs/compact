@@ -156,6 +156,28 @@ pub(super) fn effect_plan_jubjub(
     }
 }
 
+pub(super) fn effect_plan_stateful_calls(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    const USAGE: &str =
+        "usage: compact-rust-proof-smoke --effect-plan-stateful-calls <proof-output>";
+    let root = arguments.next().ok_or(USAGE)?;
+    if arguments.next().is_some() {
+        return Err(USAGE.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("effect-plan-stateful-calls-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            crate::effect_plan_stateful_calls::run(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("Stateful calls proof thread panicked".into()),
+    }
+}
+
 pub(super) fn guarded_point_read(
     arguments: &mut impl Iterator<Item = OsString>,
 ) -> Result<(), Box<dyn Error>> {

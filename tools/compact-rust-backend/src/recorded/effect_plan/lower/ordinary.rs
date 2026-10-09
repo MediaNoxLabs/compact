@@ -12,17 +12,23 @@ impl Lowerer<'_> {
         returned: &StateReturn,
         scope: &Scope,
         bindings: &mut Vec<Binding>,
+        base: &str,
     ) -> Result<Value, RecordingGap> {
-        let return_scope = self.terminal_actions(actions, scope, bindings, "actions")?;
+        let return_path = path_at(base, "return_value");
+        let return_scope =
+            self.terminal_actions(actions, scope, bindings, &path_at(base, "actions"))?;
         match returned {
-            StateReturn::Expression { value } => {
-                self.expression(value, &return_scope, bindings, "return_value.value")
-            }
+            StateReturn::Expression { value } => self.expression(
+                value,
+                &return_scope,
+                bindings,
+                &format!("{return_path}.value"),
+            ),
             StateReturn::Unit => Ok(self.emit(
                 Operation::Literal(Literal::Unit),
                 Type::Unit,
                 bindings,
-                "return_value",
+                &return_path,
             )),
             // Specialized ledger returns use the original parameter scope, as native does.
             StateReturn::CellRead { field, index } => self.expression(
@@ -32,7 +38,7 @@ impl Lowerer<'_> {
                 },
                 scope,
                 bindings,
-                "return_value",
+                &return_path,
             ),
             StateReturn::CounterRead { field, index } => self.expression(
                 &Expr::CounterRead {
@@ -41,9 +47,13 @@ impl Lowerer<'_> {
                 },
                 scope,
                 bindings,
-                "return_value",
+                &return_path,
             ),
-            _ => Err(RecordingGap::returned(returned)),
+            _ => {
+                let mut gap = RecordingGap::returned(returned);
+                gap.path = return_path;
+                Err(gap)
+            }
         }
     }
 
@@ -72,6 +82,7 @@ impl Lowerer<'_> {
         bindings: &mut Vec<Binding>,
         path: &str,
     ) -> Result<Scope, RecordingGap> {
+        self.spend(path)?;
         match action {
             StateAction::Sequence { actions } => {
                 self.terminal_actions(actions, scope, bindings, &format!("{path}.actions"))

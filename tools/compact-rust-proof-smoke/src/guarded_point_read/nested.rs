@@ -81,7 +81,7 @@ pub(crate) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
         if format!("{manual:?}") != format!("{prepared:?}") {
             return Err("nested observed/direct call mismatch".into());
         }
-        check_source_preimage(root, "nested", &prepared, Some(outer))?;
+        crate::source_preimage::check(root, "nested", &prepared, Some(outer))?;
         check_transaction(root, "nested", deploy, prepared, &mut rng, |state| {
             if state.data.get_ref() != &expected_state {
                 return Err("nested applied state mismatch".into());

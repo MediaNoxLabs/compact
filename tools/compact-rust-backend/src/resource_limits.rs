@@ -53,6 +53,15 @@ pub(crate) fn validate(contract: &Contract) -> Result<Preflight, crate::RenderEr
             limit: error.limit,
         })
 }
+
+/// Defensive bounds for checked recording calls also entered by private tests.
+/// Public generation still performs the complete borrowed-IR preflight first.
+pub(crate) fn recording_call_limits() -> (usize, usize) {
+    (Limits::DEFAULT.call_depth, Limits::DEFAULT.expanded_work)
+}
+pub(crate) fn recording_block_depth_limit() -> usize {
+    Limits::DEFAULT.expanded_depth
+}
 fn check_frames(metrics: &Metrics, limits: Limits) -> Result<(), LimitError> {
     for (i, kind) in [
         Kind::PurePath,

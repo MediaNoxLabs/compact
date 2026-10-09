@@ -30,8 +30,8 @@ def selected(symbol):
     if "11effect_plan" not in symbol or symbol.startswith("__RNC"):
         return False
     return bool(
-        re.search(r"11effect_plan(?:6render(?:5block|6render)|8validate(?:5block|8validate|5check)|5check|5lower5lower)$", symbol)
-        or re.search(r"7Lowerer(?:6action|6locals|8returned|10expression)$", symbol)
+        re.search(r"11effect_plan(?:6render(?:5block|6render)|8validate(?:5block|8validate|5check|5calls8validate)|5check|16check_with_calls|5lower(?:5lower|16lower_with_calls))$", symbol)
+        or re.search(r"7Lowerer(?:4call|12circuit_body|6action|6locals|8returned|10expression)$", symbol)
         or ("7Lowerer11conditional" in symbol and symbol.startswith("__RINvM"))
         or re.search(r"11CheckedPlan8validate$", symbol)
     )

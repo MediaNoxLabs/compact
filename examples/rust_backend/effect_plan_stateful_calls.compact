@@ -1,0 +1,30 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+
+import CompactStandardLibrary;
+export ledger stored: Field;
+export ledger receipt: Field;
+witness nextValue(seed: Field): Field;
+constructor() { stored = 0; receipt = 0; }
+
+circuit update(collision: Field, right: Field, permit: Boolean): Field {
+  const before = stored;
+  const value = nextValue(collision + right + before);
+  stored = disclose(value);
+  assert(disclose(permit), "helper failed after write");
+  return stored;
+}
+
+export circuit run(selected: Boolean, first: Field, second: Field, permit: Boolean): Field {
+  const collision = first;
+  const pair = update(nextValue(first), nextValue(second), true);
+  const nested = update(update(pair, first, true), second, true);
+  if (disclose(selected)) {
+    receipt = disclose(update(nested, collision, permit));
+    return receipt + collision;
+  } else {
+    receipt = disclose(update(second, nested, permit));
+    return receipt + collision;
+  }
+}

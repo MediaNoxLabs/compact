@@ -16,6 +16,8 @@ pub(super) struct Value {
 pub(super) struct LedgerId(pub usize);
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) struct WitnessId(pub usize);
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) struct CallId(pub usize);
 #[derive(Clone, Copy, Debug)]
 pub(super) struct CellSlot {
     pub declaration: LedgerId,
@@ -86,6 +88,13 @@ pub(super) enum Operation {
     Witness {
         declaration: WitnessId,
         arguments: Vec<Value>,
+    },
+    /// Arguments live in the caller; only fresh formals enter the callee block.
+    Call {
+        declaration: CallId,
+        arguments: Vec<Value>,
+        parameters: Vec<Value>,
+        body: Block,
     },
     Assert {
         condition: Value,

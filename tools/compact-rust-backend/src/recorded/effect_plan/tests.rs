@@ -2,6 +2,8 @@
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
 
+#[path = "tests/calls.rs"]
+mod calls;
 #[path = "tests/counter.rs"]
 mod counter;
 #[path = "tests/declarations.rs"]
@@ -408,3 +410,5 @@ fn small_unsigned_literal_cast_and_add_remain_checked_operations() {
     };
     assert_eq!(check_plan(invalid).unwrap_err().path, "literal");
 }
+
+mod call_validation;

@@ -1276,6 +1276,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-effect-plan-stateful-calls-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-compact-testkit",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-guarded-point-read-source-fixture"
 version = "0.1.0"
 dependencies = [
@@ -2074,6 +2085,7 @@ dependencies = [
  "compact-rust-effect-plan-counter-only-source-fixture",
  "compact-rust-effect-plan-counter-source-fixture",
  "compact-rust-effect-plan-jubjub-source-fixture",
+ "compact-rust-effect-plan-stateful-calls-source-fixture",
  "compact-rust-guarded-point-read-source-fixture",
  "compact-rust-guarded-point-nested-source-fixture",
  "compact-rust-effect-plan-wide-source-fixture",

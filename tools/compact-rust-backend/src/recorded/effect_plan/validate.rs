@@ -6,6 +6,23 @@
 use super::{RecordingGap, declarations::Declarations, invalid, model::*};
 use crate::ir::{LedgerFieldKind, Type};
 use std::collections::{HashMap, HashSet};
+mod calls;
+
+struct Validation {
+    allocated: HashSet<usize>,
+    remaining: usize,
+    active_calls: Vec<String>,
+    block_depth: usize,
+}
+impl Validation {
+    fn charge(&mut self, count: usize, path: &str) -> Result<(), RecordingGap> {
+        self.remaining = self
+            .remaining
+            .checked_sub(count)
+            .ok_or_else(|| invalid(path, "recording plan expanded work limit exceeded"))?;
+        Ok(())
+    }
+}
 
 pub(super) fn uint(max: &str) -> Type {
     Type::Unsigned { max: max.into() }
@@ -55,9 +72,35 @@ pub(super) fn validate(plan: &Plan, declarations: &Declarations) -> Result<(), R
         return Err(invalid("return_value", "unsupported circuit result type"));
     }
     let mut scope = HashMap::new();
-    let mut allocated = HashSet::new();
+    let mut state = Validation {
+        allocated: HashSet::new(),
+        remaining: crate::resource_limits::recording_call_limits().1,
+        active_calls: Vec::new(),
+        block_depth: 0,
+    };
+    if let Some(root) = declarations.root() {
+        if root.result != plan.result_type
+            || root.parameters.len() != plan.parameters.len()
+            || !root
+                .parameters
+                .iter()
+                .zip(&plan.parameters)
+                .all(|(p, v)| p.ty == v.ty)
+        {
+            return Err(invalid(
+                "parameters",
+                "root plan differs from declared signature",
+            ));
+        }
+        let mut names = HashSet::new();
+        if root.parameters.iter().any(|p| !names.insert(&p.name)) {
+            return Err(invalid("parameters", "duplicate root formal name"));
+        }
+        state.active_calls.push(root.name.clone());
+    }
+    state.charge(plan.parameters.len(), "parameters")?;
     for value in &plan.parameters {
-        if !surface_type(&value.ty) || !allocated.insert(value.id) {
+        if !surface_type(&value.ty) || !state.allocated.insert(value.id) {
             return Err(invalid(
                 "parameters",
                 "unsupported or duplicate plan parameter",
@@ -65,13 +108,7 @@ pub(super) fn validate(plan: &Plan, declarations: &Declarations) -> Result<(), R
         }
         scope.insert(value.id, value.ty.clone());
     }
-    block(
-        &plan.body,
-        declarations,
-        &scope,
-        &mut allocated,
-        "return_value",
-    )?;
+    block(&plan.body, declarations, &scope, &mut state, "return_value")?;
     if plan.body.result.ty != plan.result_type {
         return Err(invalid(
             "return_value",
@@ -93,9 +130,14 @@ fn block(
     body: &Block,
     declarations: &Declarations,
     incoming: &HashMap<usize, Type>,
-    allocated: &mut HashSet<usize>,
+    state: &mut Validation,
     path: &str,
 ) -> Result<(), RecordingGap> {
+    if state.block_depth >= crate::resource_limits::recording_block_depth_limit() {
+        return Err(invalid(path, "recording plan block depth limit exceeded"));
+    }
+    state.charge(body.bindings.len().saturating_add(1), path)?;
+    state.block_depth += 1;
     let mut scope = incoming.clone();
     for binding in &body.bindings {
         let path = &binding.path;
@@ -209,6 +251,10 @@ fn block(
                         .zip(arguments)
                         .all(|(p, a)| scalar(&p.ty) && p.ty == a.ty)
             }
+            Operation::Call { .. } => {
+                calls::validate(binding, declarations, &scope, state)?;
+                true
+            }
             Operation::Assert { condition, .. } => {
                 use_value(condition)?;
                 condition.ty == Type::Boolean && *ty == Type::Unit
@@ -219,8 +265,8 @@ fn block(
                 otherwise,
             } => {
                 use_value(condition)?;
-                block(then, declarations, &scope, allocated, path)?;
-                block(otherwise, declarations, &scope, allocated, path)?;
+                block(then, declarations, &scope, state, path)?;
+                block(otherwise, declarations, &scope, state, path)?;
                 scalar(ty)
                     && condition.ty == Type::Boolean
                     && then.result.ty == *ty
@@ -233,12 +279,14 @@ fn block(
                 "operation input/output types are incompatible",
             ));
         }
-        if !allocated.insert(binding.value.id) {
+        if !state.allocated.insert(binding.value.id) {
             return Err(invalid(path, "plan value is defined twice"));
         }
         scope.insert(binding.value.id, ty.clone());
     }
-    used(&body.result, &scope, path)
+    used(&body.result, &scope, path)?;
+    state.block_depth -= 1;
+    Ok(())
 }
 
 fn cell<'a>(

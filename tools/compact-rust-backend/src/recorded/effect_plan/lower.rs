@@ -12,6 +12,7 @@ use super::{
 };
 use crate::ir::*;
 use std::collections::HashMap;
+mod calls;
 mod counters;
 mod expressions;
 mod jubjub;
@@ -20,23 +21,44 @@ mod ordinary;
 type Scope = HashMap<String, Value>;
 struct Lowerer<'a> {
     declarations: &'a Declarations,
+    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
+    call_stack: Vec<String>,
+    expanded_steps: usize,
+    max_call_depth: usize,
+    max_expanded_steps: usize,
     next: usize,
 }
 
+#[cfg(test)]
 pub(super) fn lower(
     circuit: &StatefulCircuit,
     declarations: &Declarations,
 ) -> Result<Plan, RecordingGap> {
+    lower_with_calls(circuit, declarations, &HashMap::new())
+}
+
+pub(super) fn lower_with_calls<'a>(
+    circuit: &StatefulCircuit,
+    declarations: &'a Declarations,
+    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
+) -> Result<Plan, RecordingGap> {
     if !surface_type(&circuit.result) {
         return Err(invalid("return_value", "unsupported circuit result type"));
     }
+    let (max_call_depth, max_expanded_steps) = crate::resource_limits::recording_call_limits();
     let mut lower = Lowerer {
         declarations,
+        circuits,
+        call_stack: vec![circuit.name.clone()],
+        expanded_steps: 0,
+        max_call_depth,
+        max_expanded_steps,
         next: 0,
     };
     let mut scope = Scope::new();
     let mut parameters = Vec::new();
     for (i, p) in circuit.parameters.iter().enumerate() {
+        lower.spend(&format!("parameters[{i}]"))?;
         if !surface_type(&p.ty) {
             return Err(invalid(
                 &format!("parameters[{i}]"),
@@ -50,23 +72,54 @@ pub(super) fn lower(
         parameters.push(value);
     }
     let mut bindings = Vec::new();
-    let value = match &circuit.return_value {
-        StateReturn::Effectful { body } => {
-            if !circuit.actions.is_empty() {
-                return Err(invalid("actions", "effectful return must own all actions"));
-            }
-            lower.returned(body, &scope, &mut bindings, "return_value.body")?
-        }
-        returned => lower.ordinary(&circuit.actions, returned, &scope, &mut bindings)?,
-    };
-    let result = lower.coerce(value, &circuit.result, &mut bindings, "return_value")?;
+    let result = lower.circuit_body(circuit, &scope, &mut bindings, "")?;
     Ok(Plan {
         parameters,
         body: Block { bindings, result },
         result_type: circuit.result.clone(),
     })
 }
+
 impl Lowerer<'_> {
+    /// Defensive fuel for direct candidate callers as well as public preflight.
+    /// Visits are charged before expansion; shared DAG descendants are charged
+    /// for every actual invocation, not once per declaration.
+    fn spend(&mut self, path: &str) -> Result<(), RecordingGap> {
+        if self.expanded_steps >= self.max_expanded_steps {
+            return Err(invalid(
+                path,
+                format!(
+                    "recording expansion work exceeds {}",
+                    self.max_expanded_steps
+                ),
+            ));
+        }
+        self.expanded_steps += 1;
+        Ok(())
+    }
+    fn circuit_body(
+        &mut self,
+        circuit: &StatefulCircuit,
+        scope: &Scope,
+        bindings: &mut Vec<Binding>,
+        base: &str,
+    ) -> Result<Value, RecordingGap> {
+        let returned_path = path_at(base, "return_value");
+        let value = match &circuit.return_value {
+            StateReturn::Effectful { body } => {
+                if !circuit.actions.is_empty() {
+                    return Err(invalid(
+                        &path_at(base, "actions"),
+                        "effectful return must own all actions",
+                    ));
+                }
+                self.returned(body, scope, bindings, &format!("{returned_path}.body"))?
+            }
+            returned => self.ordinary(&circuit.actions, returned, scope, bindings, base)?,
+        };
+        self.coerce(value, &circuit.result, bindings, &returned_path)
+    }
+
     fn fresh(&mut self, ty: Type) -> Value {
         let id = self.next;
         self.next += 1;
@@ -167,6 +220,7 @@ impl Lowerer<'_> {
         bindings: &mut Vec<Binding>,
         path: &str,
     ) -> Result<Value, RecordingGap> {
+        self.spend(path)?;
         match plan {
             ReturnPlan::Value { value } => {
                 self.expression(value, scope, bindings, &format!("{path}.value"))
@@ -263,6 +317,7 @@ impl Lowerer<'_> {
         bindings: &mut Vec<Binding>,
         path: &str,
     ) -> Result<(), RecordingGap> {
+        self.spend(path)?;
         match action {
             StateAction::Sequence { actions } => {
                 for (i, a) in actions.iter().enumerate() {
@@ -339,5 +394,13 @@ impl Lowerer<'_> {
             _ => return Err(RecordingGap::action(action, path.into())),
         }
         Ok(())
+    }
+}
+
+fn path_at(base: &str, field: &str) -> String {
+    if base.is_empty() {
+        field.into()
+    } else {
+        format!("{base}.{field}")
     }
 }

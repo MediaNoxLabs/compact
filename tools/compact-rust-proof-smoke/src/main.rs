@@ -56,6 +56,7 @@ mod effect_plan_counter_only;
 mod effect_plan_jubjub;
 #[cfg(feature = "experimental-recording-plan")]
 mod effect_plan_prototype;
+mod effect_plan_stateful_calls;
 mod effect_plan_wide_source;
 mod effectful_return;
 mod effectful_scenario;
@@ -127,6 +128,7 @@ mod schnorr_attestation;
 mod shielded_merge;
 mod shielded_receive;
 mod shielded_send;
+mod source_preimage;
 mod stateful_assert;
 mod stateful_pair_hash;
 mod stateful_pure_return;

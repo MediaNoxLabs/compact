@@ -175,6 +175,32 @@ fn block(body: &Block, declarations: &Declarations) -> Result<Vec<syn::Stmt>, Re
                 steps.push(syn::parse_quote!(if !#condition { return Err(runtime::CompactError::AssertionFailed(#message.to_owned())); }));
                 syn::parse_quote!(())
             }
+            Operation::Call {
+                arguments,
+                parameters,
+                body,
+                ..
+            } => {
+                let mut formals = Vec::<syn::Stmt>::new();
+                for (parameter, argument) in parameters.iter().zip(arguments) {
+                    let parameter_name = name(parameter);
+                    let argument = value(argument);
+                    let parameter_type =
+                        rust_type(&parameter.ty).map_err(|e| invalid(path, e.to_string()))?;
+                    formals
+                        .push(syn::parse_quote!(let #parameter_name: #parameter_type = #argument;));
+                }
+                let body_steps = block(body, declarations)?;
+                let result = value(&body.result);
+                steps.push(syn::parse_quote! {
+                    let (frame, #output): (_, #ty) = {
+                        #(#formals)*
+                        #(#body_steps)*
+                        (frame, #result)
+                    };
+                });
+                continue;
+            }
             Operation::If {
                 condition,
                 then,

@@ -171,7 +171,9 @@ fn checked_point_domain_does_not_roll_out_other_ordinary_results() {
         checked_jubjub_domain(
             &contract.stateful_circuits[0],
             &context.ledger,
-            &context.witnesses
+            &context.witnesses,
+            &context.pure,
+            &context.circuits
         )
         .unwrap()
         .is_none()

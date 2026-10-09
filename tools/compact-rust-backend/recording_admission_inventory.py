@@ -13,6 +13,8 @@ Test-only observation hooks require an explicit --instrumentation manifest. It
 pins the reviewed source edits and unchanged selector call order without replacing
 the original baseline or retirement evidence. This is not semantic equivalence
 proof; Rust tests separately check evaluation, refusal, and output preservation.
+Call-context plumbing requires --call-extension after these frozen predecessors;
+it retires no additional route and cannot change selector order or hook IDs.
 Human review must classify new/changed routes before a future baseline update.
 """
 from __future__ import annotations
@@ -25,6 +27,7 @@ import re
 import sys
 
 import recording_admission_inventory_jubjub as jubjub
+import recording_admission_inventory_calls as calls
 
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE = Path(__file__).with_suffix('.baseline.json')
@@ -208,7 +211,8 @@ def validate_instrumentation(root: Path, baseline: dict, manifest: dict,
 
 def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
            transition: dict | None = None, baseline_bytes: bytes | None = None,
-           instrumentation: dict | None = None, jubjub_transition: dict | None = None) -> dict:
+           instrumentation: dict | None = None, jubjub_transition: dict | None = None,
+           call_extension: dict | None = None) -> dict:
     errors = validate_baseline(baseline)
     report = {'schema_version': 1, 'baseline_commit': baseline.get('baseline_commit'),
               'claim': 'source route inventory; not language or behavioral coverage',
@@ -227,11 +231,25 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
         errors.extend(review_errors)
         if not review_errors:
             reviewed_jubjub = jubjub_transition
+    reviewed_calls = None
+    if call_extension is not None:
+        call_errors = calls.validate(call_extension, transition, instrumentation, reviewed_jubjub)
+        errors.extend(call_errors)
+        if not call_errors:
+            reviewed_calls = call_extension
+            report['reviewed_call_extension'] = {
+                'issue': call_extension['issue'],
+                'classification': call_extension['classification'],
+                'reviewed_sources': sorted(call_extension['reviewed_source_fingerprints']),
+                'new_retired_routes': [],
+                'claim': 'reviewed call-context source plumbing; no additional route retirement',
+            }
+    evolution = reviewed_calls or reviewed_jubjub
     if instrumentation is not None:
-        errors.extend(validate_instrumentation(root, baseline, instrumentation, baseline_bytes, reviewed_jubjub))
+        errors.extend(validate_instrumentation(root, baseline, instrumentation, baseline_bytes, evolution))
         report['reviewed_instrumentation'] = {
             'issue': instrumentation.get('issue'),
-            'instrumented_route_ids': (reviewed_jubjub or instrumentation).get('instrumented_route_ids', []),
+            'instrumented_route_ids': (evolution or instrumentation).get('instrumented_route_ids', []),
             'claim': 'instrumented boundary IDs; execution of every boundary is not claimed',
         }
     sources = {}
@@ -289,7 +307,7 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
         try:
             actual = selector_signature(sources[SELECTOR])
             report['current_selector'] = actual
-            expected = (reviewed_jubjub or instrumentation).get('reviewed_selector', {}) if instrumentation is not None else baseline['main_selector']
+            expected = (evolution or instrumentation).get('reviewed_selector', {}) if instrumentation is not None else baseline['main_selector']
             if actual != expected:
                 errors.append('main selector changed: review ordered calls and complete function fingerprint')
         except ValueError as error:
@@ -307,17 +325,19 @@ def main(argv=None) -> int:
     parser.add_argument('--transition', type=Path, help='explicit reviewed retirement JSON; baseline stays frozen')
     parser.add_argument('--instrumentation', type=Path, help='explicit reviewed test-hook manifest; original selector stays frozen')
     parser.add_argument('--jubjub-transition', type=Path, help='explicit #517 retirement following #511 and #515 evidence')
+    parser.add_argument('--call-extension', type=Path, help='explicit #519 call-context plumbing review; no new retirement')
     args = parser.parse_args(argv)
-    protected = [args.baseline] + ([args.transition] if args.transition else []) + ([args.instrumentation] if args.instrumentation else []) + ([args.jubjub_transition] if args.jubjub_transition else [])
+    protected = [args.baseline] + ([args.transition] if args.transition else []) + ([args.instrumentation] if args.instrumentation else []) + ([args.jubjub_transition] if args.jubjub_transition else []) + ([args.call_extension] if args.call_extension else [])
     if args.output and any(args.output.resolve() == path.resolve() for path in protected):
-        parser.error('--output cannot overwrite baseline, transition, or instrumentation evidence')
+        parser.error('--output cannot overwrite baseline, transition, instrumentation, or call-extension evidence')
     try:
         baseline_bytes = args.baseline.read_bytes()
         baseline = json.loads(baseline_bytes)
         transition = json.loads(args.transition.read_text()) if args.transition else None
         instrumentation = json.loads(args.instrumentation.read_text()) if args.instrumentation else None
         jubjub_transition = json.loads(args.jubjub_transition.read_text()) if args.jubjub_transition else None
-        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition)
+        call_extension = json.loads(args.call_extension.read_text()) if args.call_extension else None
+        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension)
     except (OSError, ValueError, TypeError, KeyError) as error:
         parser.exit(2, f'inventory error: {error}\n')
     rendered = json.dumps(report, indent=2) + '\n'

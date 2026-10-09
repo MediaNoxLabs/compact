@@ -59,11 +59,15 @@ fn checked_jubjub_domain(
     circuit: &StatefulCircuit,
     ledger: &HashMap<&str, &LedgerField>,
     witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
 ) -> Result<Option<TypedPlan>, RenderError> {
     if circuit.result != crate::ir::Type::JubjubPoint {
         return Ok(None);
     }
-    resolve_jubjub_plan(effect_plan::lower(circuit, ledger, witnesses))
+    resolve_jubjub_plan(effect_plan::lower_with_calls(
+        circuit, ledger, witnesses, pure, circuits,
+    ))
 }
 
 fn resolve_jubjub_plan(
@@ -138,7 +142,7 @@ pub(super) fn select(
             Some(plan) => Some(plan),
             None => record_option!(
                 "algebra.jubjub-values",
-                checked_jubjub_domain(circuit, ledger_fields, witnesses)?
+                checked_jubjub_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?
             ),
         }
     } else {

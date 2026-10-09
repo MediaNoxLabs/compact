@@ -13,8 +13,10 @@ import unittest
 
 import recording_admission_inventory as inventory
 import recording_admission_inventory_jubjub as jubjub
+import recording_admission_inventory_calls as calls
 
 JUBJUB_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-517.json")
+CALL_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.calls-519.json")
 
 
 class InventoryTests(unittest.TestCase):
@@ -119,7 +121,8 @@ class InventoryTests(unittest.TestCase):
         report = inventory.verify(inventory.ROOT, baseline,
                                   transition=transition, baseline_bytes=baseline_bytes,
                                   instrumentation=instrumentation,
-                                  jubjub_transition=json.loads(JUBJUB_TRANSITION.read_text()))
+                                  jubjub_transition=json.loads(JUBJUB_TRANSITION.read_text()),
+                                  call_extension=json.loads(CALL_EXTENSION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)
@@ -137,6 +140,7 @@ class RetirementTransitionTests(unittest.TestCase):
             'recording_admission_inventory.transition-511.json').read_text())
         self.instrumentation = json.loads(inventory.INSTRUMENTATION.read_text())
         self.jubjub_transition = json.loads(JUBJUB_TRANSITION.read_text())
+        self.call_extension = json.loads(CALL_EXTENSION.read_text())
         for relative in {*self.baseline['source_fingerprints'], inventory.ORACLE, jubjub.ORACLE, *inventory.HOOK_SOURCES}:
             destination = self.root / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
@@ -146,7 +150,7 @@ class RetirementTransitionTests(unittest.TestCase):
         return inventory.verify(self.root, self.baseline, transition=self.transition,
                                 baseline_bytes=self.baseline_bytes,
                                 instrumentation=self.instrumentation,
-                                jubjub_transition=self.jubjub_transition)
+                                jubjub_transition=self.jubjub_transition, call_extension=self.call_extension)
 
     def test_reviewed_retirement_keeps_frozen_denominator(self):
         report = self.report()
@@ -332,6 +336,133 @@ class RetirementTransitionTests(unittest.TestCase):
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
             inventory.main(['--jubjub-transition', str(transition), '--output', str(transition)])
         self.assertEqual(transition.read_bytes(), before)
+
+
+class CallExtensionTests(unittest.TestCase):
+    setUp = RetirementTransitionTests.setUp
+    report = RetirementTransitionTests.report
+
+    def test_explicit_extension_passes_without_changing_routes_or_prior_evidence(self):
+        before = {p: p.read_bytes() for p in (inventory.BASELINE, inventory.INSTRUMENTATION, JUBJUB_TRANSITION)}
+        result = self.report()
+        self.assertTrue(result['passed'], result['errors'])
+        self.assertEqual(result['route_count'], 84)
+        self.assertEqual([r['id'] for r in result['retired_routes']], calls.RETIRED)
+        self.assertEqual(result['reviewed_call_extension']['new_retired_routes'], [])
+        self.assertEqual(result['current_selector']['ordered_calls'], self.jubjub_transition['reviewed_selector']['ordered_calls'])
+        self.assertEqual(result['reviewed_instrumentation']['instrumented_route_ids'], self.jubjub_transition['instrumented_route_ids'])
+        self.assertEqual({p: p.read_bytes() for p in before}, before)
+
+    def test_current_sources_require_explicit_call_extension(self):
+        result = inventory.verify(self.root, self.baseline, transition=self.transition,
+                                  baseline_bytes=self.baseline_bytes, instrumentation=self.instrumentation,
+                                  jubjub_transition=self.jubjub_transition)
+        self.assertFalse(result['passed'])
+        self.assertNotIn('reviewed_call_extension', result)
+        self.assertTrue(any('observation owner changed' in e for e in result['errors']))
+        self.assertTrue(any('main selector changed' in e for e in result['errors']))
+
+    def test_frozen_predecessor_hashes_and_three_original_owners_are_bound(self):
+        for key in ('prior_effectful_transition_canonical_sha256',
+                    'prior_instrumentation_canonical_sha256', 'prior_jubjub_transition_canonical_sha256'):
+            with self.subTest(key=key):
+                original = self.call_extension[key]
+                self.call_extension[key] = '0' * 64
+                self.assertTrue(any('frozen predecessor' in e for e in self.report()['errors']))
+                self.call_extension[key] = original
+        for owner in calls.SOURCES:
+            with self.subTest(owner=owner):
+                original = self.call_extension['prior_source_fingerprints'][owner]
+                self.call_extension['prior_source_fingerprints'][owner] = '0' * 64
+                self.assertTrue(any('prior source fingerprints' in e for e in self.report()['errors']))
+                self.call_extension['prior_source_fingerprints'][owner] = original
+
+    def test_predecessor_manifest_content_cannot_be_rewritten(self):
+        self.jubjub_transition['claim'] += ' changed'
+        self.assertTrue(any('prior_jubjub_transition' in e for e in self.report()['errors']))
+
+    def test_selector_order_and_prior_selector_cannot_change(self):
+        original = copy.deepcopy(self.call_extension)
+        ordered = self.call_extension['reviewed_selector']['ordered_calls']
+        ordered[0], ordered[1] = ordered[1], ordered[0]
+        self.assertIn('call extension: legacy selector calls or order changed', self.report()['errors'])
+        self.call_extension = original
+        self.call_extension['prior_selector']['function_sha256'] = '0' * 64
+        self.assertIn('call extension: prior selector is not bound to frozen evidence', self.report()['errors'])
+
+    def test_current_hashes_are_checked_against_exact_source_and_selector(self):
+        original = copy.deepcopy(self.call_extension)
+        for owner in calls.SOURCES:
+            with self.subTest(owner=owner):
+                self.call_extension = copy.deepcopy(original)
+                self.call_extension['reviewed_source_fingerprints'][owner] = '0' * 64
+                self.assertTrue(any('observation owner changed' in e for e in self.report()['errors']))
+        self.call_extension = original
+        self.call_extension['reviewed_selector']['function_sha256'] = '0' * 64
+        self.assertTrue(any('main selector changed' in e for e in self.report()['errors']))
+
+    def test_extension_cannot_authorize_new_owners_or_observation_ids(self):
+        original = copy.deepcopy(self.call_extension)
+        self.call_extension['reviewed_source_fingerprints'][inventory.HOOK_SOURCES[-1]] = '0' * 64
+        self.assertFalse(self.report()['passed'])
+        self.call_extension = original
+        self.call_extension['instrumented_route_ids'].append('selector.unreviewed')
+        self.assertIn('call extension: observation IDs changed', self.report()['errors'])
+
+    def test_unreviewed_source_drift_remains_fatal(self):
+        for relative in (*sorted(calls.SOURCES), inventory.HOOK_SOURCES[-1]):
+            with self.subTest(relative=relative):
+                path = self.root / relative
+                original = path.read_bytes()
+                path.write_bytes(original + b'\n// unreviewed drift\n')
+                self.assertTrue(any('observation owner changed' in e for e in self.report()['errors']))
+                path.write_bytes(original)
+
+    def test_selector_reordering_cannot_be_hidden_by_updated_digests(self):
+        path = self.root / inventory.SELECTOR
+        source = path.read_text().replace('typed_plan::lower_context_query(', '__swap__(')
+        source = source.replace('typed_plan::lower_composite(', 'typed_plan::lower_context_query(')
+        source = source.replace('__swap__(', 'typed_plan::lower_composite(')
+        path.write_text(source)
+        self.call_extension['reviewed_source_fingerprints'][inventory.SELECTOR] = inventory.digest(path.read_bytes())
+        self.call_extension['reviewed_selector'] = inventory.selector_signature(source)
+        self.assertIn('call extension: legacy selector calls or order changed', self.report()['errors'])
+
+    def test_retired_ids_cannot_be_removed_reordered_or_added(self):
+        original = copy.deepcopy(self.call_extension)
+        for ids in (calls.RETIRED[:-1], list(reversed(calls.RETIRED)), calls.RETIRED + ['selector.kernel']):
+            self.call_extension = copy.deepcopy(original)
+            self.call_extension['retired_route_ids'] = ids
+            self.assertIn('call extension: existing retirements changed or new retirement claimed', self.report()['errors'])
+        self.call_extension = original
+        self.call_extension['new_retired_routes'] = ['selector.terminal-returns']
+        self.assertFalse(self.report()['passed'])
+
+    def test_call_extension_needs_all_predecessors(self):
+        for key in ('transition', 'instrumentation', 'jubjub_transition'):
+            args = dict(transition=self.transition, instrumentation=self.instrumentation,
+                        jubjub_transition=self.jubjub_transition)
+            args[key] = None
+            result = inventory.verify(self.root, self.baseline, baseline_bytes=self.baseline_bytes,
+                                      call_extension=self.call_extension, **args)
+            self.assertFalse(result['passed'])
+            self.assertNotIn('reviewed_call_extension', result)
+
+    def test_cli_preserves_call_manifest_and_requires_explicit_flag(self):
+        manifest = self.root / 'calls.json'
+        manifest.write_text(json.dumps(self.call_extension))
+        before = manifest.read_bytes()
+        with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            inventory.main(['--call-extension', str(manifest), '--output', str(manifest)])
+        self.assertEqual(manifest.read_bytes(), before)
+        output = self.root / 'report.json'
+        argv = ['--root', str(self.root), '--transition', str(inventory.BASELINE.with_name('recording_admission_inventory.transition-511.json')),
+                '--instrumentation', str(inventory.INSTRUMENTATION), '--jubjub-transition', str(JUBJUB_TRANSITION),
+                '--output', str(output)]
+        self.assertEqual(inventory.main(argv), 1)
+        self.assertEqual(inventory.main([*argv, '--call-extension', str(manifest)]), 0)
+        self.assertTrue(json.loads(output.read_text())['passed'])
+        self.assertEqual(manifest.read_bytes(), before)
 
 
 if __name__ == '__main__':

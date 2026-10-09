@@ -19,7 +19,7 @@ mod tests;
 mod validate;
 
 use super::{RecordingGap, RecordingGapCode, typed_plan::TypedPlan};
-use crate::ir::{LedgerField, StatefulCircuit, WitnessDeclaration};
+use crate::ir::{LedgerField, PureCircuit, StatefulCircuit, WitnessDeclaration};
 pub(super) use model::CheckedPlan;
 use std::collections::HashMap;
 
@@ -31,20 +31,49 @@ pub(super) enum PlanError {
     Invalid(RecordingGap),
 }
 
+#[cfg(test)]
 pub(super) fn check(
     circuit: &StatefulCircuit,
     ledger: &HashMap<&str, &LedgerField>,
     witnesses: &HashMap<&str, &WitnessDeclaration>,
 ) -> Result<CheckedPlan, PlanError> {
-    let declarations = declarations::Declarations::new(ledger, witnesses);
+    let declarations = declarations::Declarations::new(ledger, witnesses).with_root(circuit);
     let plan = lower::lower(circuit, &declarations).map_err(PlanError::Unsupported)?;
     validate::check(plan, declarations).map_err(PlanError::Invalid)
+}
+
+pub(super) fn check_with_calls(
+    circuit: &StatefulCircuit,
+    ledger: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+) -> Result<CheckedPlan, PlanError> {
+    let declarations = declarations::Declarations::with_calls(ledger, witnesses, pure, circuits)
+        .with_root(circuit);
+    let plan = lower::lower_with_calls(circuit, &declarations, circuits)
+        .map_err(PlanError::Unsupported)?;
+    validate::check(plan, declarations).map_err(PlanError::Invalid)
+}
+
+pub(super) fn lower_with_calls(
+    circuit: &StatefulCircuit,
+    ledger: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+) -> Result<TypedPlan, PlanError> {
+    render(&check_with_calls(
+        circuit, ledger, witnesses, pure, circuits,
+    )?)
+    .map_err(PlanError::Invalid)
 }
 
 pub(super) fn render(plan: &CheckedPlan) -> Result<TypedPlan, RecordingGap> {
     render::render(plan)
 }
 
+#[cfg(test)]
 pub(super) fn lower(
     circuit: &StatefulCircuit,
     ledger: &HashMap<&str, &LedgerField>,

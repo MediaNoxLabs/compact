@@ -13,6 +13,7 @@ impl Lowerer<'_> {
         bindings: &mut Vec<Binding>,
         path: &str,
     ) -> Result<Value, RecordingGap> {
+        self.spend(path)?;
         let (operation, ty) = match expression {
             Expr::Parameter { name } => {
                 return scope
@@ -186,6 +187,9 @@ impl Lowerer<'_> {
                     },
                     Type::Unit,
                 )
+            }
+            Expr::Call { name, arguments } => {
+                return self.call(expression, name, arguments, scope, bindings, path);
             }
             Expr::WitnessCall { name, arguments } => {
                 let (witness_id, declaration) = self

@@ -590,17 +590,19 @@ fn lower_effectful_return(
     pure_circuits: &HashMap<&str, &PureCircuit>,
     circuits: &HashMap<&str, &StatefulCircuit>,
 ) -> Result<RecordingOutcome<typed_plan::TypedPlan>, RenderError> {
-    let algebra_gap = match checked_effectful_return(circuit, ledger_fields, witnesses)? {
-        RecordingOutcome::Supported(plan) => {
-            #[cfg(test)]
-            {
-                admission_probe::observe(admission_probe::Route::Algebra);
-                admission_probe::trace::handled("effectful.checked-migration");
+    let algebra_gap =
+        match checked_effectful_return(circuit, ledger_fields, witnesses, pure_circuits, circuits)?
+        {
+            RecordingOutcome::Supported(plan) => {
+                #[cfg(test)]
+                {
+                    admission_probe::observe(admission_probe::Route::Algebra);
+                    admission_probe::trace::handled("effectful.checked-migration");
+                }
+                return Ok(RecordingOutcome::Supported(plan));
             }
-            return Ok(RecordingOutcome::Supported(plan));
-        }
-        RecordingOutcome::Unsupported(gap) => gap,
-    };
+            RecordingOutcome::Unsupported(gap) => gap,
+        };
 
     // Independent family, retained until its operations have checked lowering.
     // Only Unsupported reaches this attempt; invariant failures propagate above.
@@ -623,8 +625,11 @@ fn checked_effectful_return(
     circuit: &StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,
     witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure_circuits: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
 ) -> Result<RecordingOutcome<typed_plan::TypedPlan>, RenderError> {
-    match effect_plan::lower(circuit, ledger_fields, witnesses) {
+    match effect_plan::lower_with_calls(circuit, ledger_fields, witnesses, pure_circuits, circuits)
+    {
         Ok(plan) => Ok(RecordingOutcome::Supported(plan)),
         Err(effect_plan::PlanError::Unsupported(gap)) => Ok(RecordingOutcome::Unsupported(gap)),
         Err(effect_plan::PlanError::Invalid(gap)) => Err(RenderError::RecordingPlanInvariant {

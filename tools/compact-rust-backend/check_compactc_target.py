@@ -27,7 +27,7 @@ import sys
 import tempfile
 import tomllib
 
-from target_checks import shared_runtime, shielded
+from target_checks import proof_artifacts, shared_runtime, shielded
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -1669,10 +1669,7 @@ def main() -> None:
             run(compiler, "--target", "rust", "--rust-require-recording", str(SOURCE), str(proof))
             check_manifest(proof)
             for circuit in ("increment", "read_round"):
-                for extension in ("prover", "verifier"):
-                    assert (proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(proof, circuit)
             check_observed_call_consumer(proof, base)
             test_center_counter_proof = base / "test-center-counter-proof"
             run(compiler, "--target", "rust", "--rust-require-recording",
@@ -1683,18 +1680,12 @@ def main() -> None:
             assert [(row["name"], row["proof_required"], row["recording_status"])
                     for row in test_center_capabilities["circuits"]] == [
                 ("increment", True, "available")]
-            for extension in ("prover", "verifier"):
-                assert (test_center_counter_proof / "keys" / f"increment.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (test_center_counter_proof / "zkir" / f"increment.{extension}").is_file()
+            proof_artifacts.require_circuit_files(test_center_counter_proof, 'increment')
             counter_parameter_proof = base / "counter-parameter-proof"
             run(compiler, "--target", "rust", "--rust-require-recording", str(COUNTER_PARAMETER_SOURCE), str(counter_parameter_proof))
             check_manifest(counter_parameter_proof)
             for circuit in ("increment_by", "reset_round"):
-                for extension in ("prover", "verifier"):
-                    assert (counter_parameter_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (counter_parameter_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(counter_parameter_proof, circuit)
             unsigned_proofs = {}
             for label, source, circuits in (
                 ("bounded-uint", BOUNDED_UINT_SOURCE, ("set_small",)),
@@ -1712,17 +1703,11 @@ def main() -> None:
                 assert {row["name"] for row in capabilities["circuits"]} == set(circuits)
                 assert all(row["recorded"] and row["observed_call"] for row in capabilities["circuits"])
                 for circuit in circuits:
-                    for extension in ("prover", "verifier"):
-                        assert (unsigned_proof / "keys" / f"{circuit}.{extension}").is_file()
-                    for extension in ("zkir", "bzkir"):
-                        assert (unsigned_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                    proof_artifacts.require_circuit_files(unsigned_proof, circuit)
             cell_proof = base / "cell-proof"
             run(compiler, "--target", "rust", str(CELL_SOURCE), str(cell_proof))
             check_manifest(cell_proof)
-            for extension in ("prover", "verifier"):
-                assert (cell_proof / "keys" / f"set_flag.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (cell_proof / "zkir" / f"set_flag.{extension}").is_file()
+            proof_artifacts.require_circuit_files(cell_proof, 'set_flag')
             root_let_proof = base / "root-let-action-return-proof"
             run(compiler, "--target", "rust", "--rust-require-recording",
                 str(ROOT_LET_ACTION_RETURN_SOURCE), str(root_let_proof))
@@ -1754,27 +1739,18 @@ def main() -> None:
             cell_read_proof = base / "cell-read-proof"
             run(compiler, "--target", "rust", str(CELL_READ_SOURCE), str(cell_read_proof))
             check_manifest(cell_read_proof)
-            for extension in ("prover", "verifier"):
-                assert (cell_read_proof / "keys" / f"read_flag.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (cell_read_proof / "zkir" / f"read_flag.{extension}").is_file()
+            proof_artifacts.require_circuit_files(cell_read_proof, 'read_flag')
             composite_cell_proof = base / "composite-cell-proof"
             run(compiler, "--target", "rust", "--rust-require-recording", str(CELL_STRUCT_SOURCE), str(composite_cell_proof))
             check_manifest(composite_cell_proof)
             for circuit in ("set_record", "read_record"):
-                for extension in ("prover", "verifier"):
-                    assert (composite_cell_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (composite_cell_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(composite_cell_proof, circuit)
             witness_proof = base / "witness-proof"
             run(compiler, "--target", "rust", str(WITNESS_CELL_SOURCE), str(witness_proof))
             check_manifest(witness_proof)
             check_observed_witness_call_consumer(witness_proof, base)
             for circuit in ("write_twice", "write_offset", "write_nested_twice"):
-                for extension in ("prover", "verifier"):
-                    assert (witness_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (witness_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(witness_proof, circuit)
             assert_witness_proof = base / "assert-witness-proof"
             run(compiler, "--target", "rust", str(ASSERT_WITNESS_SOURCE),
                 str(assert_witness_proof))
@@ -1786,26 +1762,17 @@ def main() -> None:
                                  if circuit["name"] == "checked_write")
             assert checked_write["proof_required"] and checked_write["recorded"] \
                 and checked_write["observed_call"]
-            for extension in ("prover", "verifier"):
-                assert (assert_witness_proof / "keys" / f"checked_write.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (assert_witness_proof / "zkir" / f"checked_write.{extension}").is_file()
+            proof_artifacts.require_circuit_files(assert_witness_proof, 'checked_write')
             nested_proof = base / "nested-proof"
             run(compiler, "--target", "rust", str(NESTED_COUNTER_SOURCE), str(nested_proof))
             check_manifest(nested_proof)
             for circuit in ("bump_twice", "add_twice"):
-                for extension in ("prover", "verifier"):
-                    assert (nested_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (nested_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(nested_proof, circuit)
             nested_witness_proof = base / "nested-witness-proof"
             run(compiler, "--target", "rust", str(NESTED_WITNESS_SOURCE), str(nested_witness_proof))
             check_manifest(nested_witness_proof)
             for circuit in ("outer", "outerValue", "outerValue2", "outerValueExpr"):
-                for extension in ("prover", "verifier"):
-                    assert (nested_witness_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (nested_witness_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(nested_witness_proof, circuit)
             set_proof = base / "set-proof"
             run(compiler, "--target", "rust", str(SET_BOOLEAN_SOURCE), str(set_proof))
             check_manifest(set_proof)
@@ -1813,17 +1780,11 @@ def main() -> None:
                 "add", "contains", "remove", "seen_size", "seen_is_empty",
                 "add_field", "contains_field", "reset_fields", "choose",
             ):
-                for extension in ("prover", "verifier"):
-                    assert (set_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (set_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(set_proof, circuit)
             set_oracle_proof = base / "set-oracle-proof"
             run(compiler, "--target", "rust", str(SET_SOURCE), str(set_oracle_proof))
             check_manifest(set_oracle_proof)
-            for extension in ("prover", "verifier"):
-                assert (set_oracle_proof / "keys" / f"check.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (set_oracle_proof / "zkir" / f"check.{extension}").is_file()
+            proof_artifacts.require_circuit_files(set_oracle_proof, 'check')
             map_proof = base / "map-proof"
             run(compiler, "--target", "rust", str(MAP_BOOLEAN_SOURCE), str(map_proof))
             check_manifest(map_proof)
@@ -1832,34 +1793,22 @@ def main() -> None:
                 "put", "put_pair", "put_default", "has", "get", "remove_key",
                 "table_size", "table_is_empty", "reset_table",
             ):
-                for extension in ("prover", "verifier"):
-                    assert (map_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (map_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(map_proof, circuit)
             constructor_map_proof = base / "constructor-map-proof"
             run(compiler, "--target", "rust", str(CONSTRUCTOR_MAP_SOURCE), str(constructor_map_proof))
             check_manifest(constructor_map_proof)
             for circuit in ("table_size", "history_size", "get_true", "get_false_history"):
-                for extension in ("prover", "verifier"):
-                    assert (constructor_map_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (constructor_map_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(constructor_map_proof, circuit)
             list_proof = base / "list-proof"
             run(compiler, "--target", "rust", str(LIST_SOURCE), str(list_proof))
             check_manifest(list_proof)
             for circuit in ("item_count", "items_empty", "first_item", "prepend", "drop_first", "clear_items"):
-                for extension in ("prover", "verifier"):
-                    assert (list_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (list_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(list_proof, circuit)
             list_shapes_proof = base / "list-shapes-proof"
             run(compiler, "--target", "rust", str(LIST_SHAPES_SOURCE), str(list_shapes_proof))
             check_manifest(list_shapes_proof)
             for circuit in ("push_flag", "push_count", "push_tag", "push_choice", "push_packet", "first_packet", "first_choice"):
-                for extension in ("prover", "verifier"):
-                    assert (list_shapes_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (list_shapes_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(list_shapes_proof, circuit)
             zerocash_mint_proof = base / "zerocash-mint-proof"
             run(compiler, "--target", "rust", str(ZEROCASH_SOURCE), str(zerocash_mint_proof))
             check_manifest(zerocash_mint_proof)
@@ -1867,10 +1816,7 @@ def main() -> None:
             for name in ("zerocash_mint", "spend"):
                 circuit = next(row for row in capabilities["circuits"] if row["name"] == name)
                 assert circuit["proof_required"] and circuit["recorded"] and circuit["observed_call"]
-                for extension in ("prover", "verifier"):
-                    assert (zerocash_mint_proof / "keys" / f"{name}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (zerocash_mint_proof / "zkir" / f"{name}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(zerocash_mint_proof, name)
             bboard_proof = base / "bboard-proof"
             run(compiler, "--target", "rust", "--rust-require-recording",
                 str(TEST_CENTER_BBOARD_SOURCE), str(bboard_proof))
@@ -1884,10 +1830,7 @@ def main() -> None:
             for circuit in ("set_topic", "advance", "add_voter", "vote$commit", "vote$reveal"):
                 row = next(row for row in election_capabilities["circuits"] if row["name"] == circuit)
                 assert row["proof_required"] and row["recorded"] and row["observed_call"]
-                for extension in ("prover", "verifier"):
-                    assert (election_topic_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (election_topic_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(election_topic_proof, circuit)
             inline_type_scope_proof = base / "inline-type-scope-proof"
             run(compiler, "--target", "rust", "--rust-require-recording",
                 str(INLINE_TYPE_SCOPE_SOURCE), str(inline_type_scope_proof))
@@ -1903,12 +1846,7 @@ def main() -> None:
                 assert circuit["proof_required"] and circuit["recorded"] \
                     and circuit["observed_call"]
                 if circuit["name"] != "setHash":
-                    for extension in ("prover", "verifier"):
-                        assert (inline_type_scope_proof / "keys" /
-                                f"{circuit['name']}.{extension}").is_file()
-                    for extension in ("zkir", "bzkir"):
-                        assert (inline_type_scope_proof / "zkir" /
-                                f"{circuit['name']}.{extension}").is_file()
+                    proof_artifacts.require_circuit_files(inline_type_scope_proof, circuit['name'])
             merkle_proof = base / "merkle-proof"
             run(compiler, "--target", "rust", "--rust-require-recording", str(MERKLE_SOURCE), str(merkle_proof))
             check_manifest(merkle_proof)
@@ -1916,10 +1854,7 @@ def main() -> None:
             by_name = {circuit["name"]: circuit for circuit in capabilities["circuits"]}
             for circuit in ("append", "place", "place_default", "full", "append_hash", "place_hash", "known", "reset_tree"):
                 assert by_name[circuit]["recorded"] and by_name[circuit]["observed_call"]
-                for extension in ("prover", "verifier"):
-                    assert (merkle_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (merkle_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(merkle_proof, circuit)
             merkle_verify_proof = base / "merkle-verify-proof"
             run(compiler, "--target", "rust", str(MERKLE_VERIFY_SOURCE), str(merkle_verify_proof))
             check_manifest(merkle_verify_proof)
@@ -1927,10 +1862,7 @@ def main() -> None:
             by_name = {circuit["name"]: circuit for circuit in capabilities["circuits"]}
             for circuit in ("verify", "replace"):
                 assert by_name[circuit]["recorded"] and by_name[circuit]["observed_call"]
-                for extension in ("prover", "verifier"):
-                    assert (merkle_verify_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (merkle_verify_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(merkle_verify_proof, circuit)
             persistent_commit_proof = base / "persistent-commit-proof"
             run(compiler, "--target", "rust", str(PERSISTENT_COMMIT_SOURCE),
                 str(persistent_commit_proof))
@@ -1950,36 +1882,13 @@ def main() -> None:
                                   if circuit["name"] == name)
                 assert capability["proof_required"] and capability["recorded"] \
                     and capability["observed_call"]
-            for extension in ("prover", "verifier"):
-                assert (persistent_commit_proof / "keys" / f"commitSmall.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (persistent_commit_proof / "zkir" / f"commitSmall.{extension}").is_file()
-            for extension in ("prover", "verifier"):
-                assert (persistent_commit_proof / "keys" /
-                        f"bridgeTupleIntoVec.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (persistent_commit_proof / "zkir" /
-                        f"bridgeTupleIntoVec.{extension}").is_file()
-            for extension in ("prover", "verifier"):
-                assert (persistent_commit_proof / "keys" /
-                        f"witnessBare.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (persistent_commit_proof / "zkir" /
-                        f"witnessBare.{extension}").is_file()
-            for extension in ("prover", "verifier"):
-                assert (persistent_commit_proof / "keys" /
-                        f"impureConst.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (persistent_commit_proof / "zkir" /
-                        f"impureConst.{extension}").is_file()
+            proof_artifacts.require_circuit_files(persistent_commit_proof, 'commitSmall')
+            proof_artifacts.require_circuit_files(persistent_commit_proof, 'bridgeTupleIntoVec')
+            proof_artifacts.require_circuit_files(persistent_commit_proof, 'witnessBare')
+            proof_artifacts.require_circuit_files(persistent_commit_proof, 'impureConst')
             for name in ("impureBare", "impureInIfArm", "inlinedAssert",
                          "hashPersistentVec", "hashTransientVec"):
-                for extension in ("prover", "verifier"):
-                    assert (persistent_commit_proof / "keys" /
-                            f"{name}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (persistent_commit_proof / "zkir" /
-                            f"{name}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(persistent_commit_proof, name)
             witness_vector_action_proof = base / "witness-vector-action-proof"
             run(compiler, "--target", "rust", "--rust-require-recording",
                 str(WITNESS_VECTOR_ACTION_SOURCE), str(witness_vector_action_proof))
@@ -1991,12 +1900,7 @@ def main() -> None:
                            if circuit["name"] == "discardResult")
             assert discard["proof_required"] and discard["recorded"] \
                 and discard["observed_call"]
-            for extension in ("prover", "verifier"):
-                assert (witness_vector_action_proof / "keys" /
-                        f"discardResult.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (witness_vector_action_proof / "zkir" /
-                        f"discardResult.{extension}").is_file()
+            proof_artifacts.require_circuit_files(witness_vector_action_proof, 'discardResult')
             internal_pure_call_proof = base / "internal-pure-call-proof"
             run(compiler, "--target", "rust", str(INTERNAL_PURE_CALL_SOURCE),
                 str(internal_pure_call_proof))
@@ -2007,10 +1911,7 @@ def main() -> None:
             save = next(circuit for circuit in capabilities["circuits"]
                         if circuit["name"] == "save")
             assert save["proof_required"] and save["recorded"] and save["observed_call"]
-            for extension in ("prover", "verifier"):
-                assert (internal_pure_call_proof / "keys" / f"save.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (internal_pure_call_proof / "zkir" / f"save.{extension}").is_file()
+            proof_artifacts.require_circuit_files(internal_pure_call_proof, 'save')
             stateful_pure_call_proof = base / "stateful-pure-call-proof"
             run(compiler, "--target", "rust", str(STATEFUL_PURE_CALL_SOURCE),
                 str(stateful_pure_call_proof))
@@ -2021,10 +1922,7 @@ def main() -> None:
             save = next(circuit for circuit in capabilities["circuits"]
                         if circuit["name"] == "save")
             assert save["proof_required"] and save["recorded"] and save["observed_call"]
-            for extension in ("prover", "verifier"):
-                assert (stateful_pure_call_proof / "keys" / f"save.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (stateful_pure_call_proof / "zkir" / f"save.{extension}").is_file()
+            proof_artifacts.require_circuit_files(stateful_pure_call_proof, 'save')
             unsigned_recording_proofs = {}
             for label, source, circuit in (
                 ("field-cast-uint128", FIELD_CAST_UINT128_SOURCE, "save"),
@@ -2037,10 +1935,7 @@ def main() -> None:
                 capabilities = json.loads((proof_output / "contract/rust-capabilities.json").read_text())
                 capability = next(row for row in capabilities["circuits"] if row["name"] == circuit)
                 assert capability["proof_required"] and capability["recorded"] and capability["observed_call"]
-                for extension in ("prover", "verifier"):
-                    assert (proof_output / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (proof_output / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(proof_output, circuit)
                 unsigned_recording_proofs[label] = proof_output
             ternary_cond_proof = base / "ternary-cond-proof"
             run(compiler, "--target", "rust", str(TERNARY_COND_SOURCE), str(ternary_cond_proof))
@@ -2059,10 +1954,7 @@ def main() -> None:
             for name in ("walkerConstAnnotated", "walkerWrite", "streamCallPure", "streamCallWitness", "streamAssertEq",
                          "walkerNestedIf", "streamNestedIf",
                          "walkerNativeArg", "streamNativeArg", "streamVectorElement"):
-                for extension in ("prover", "verifier"):
-                    assert (ternary_cond_proof / "keys" / f"{name}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (ternary_cond_proof / "zkir" / f"{name}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(ternary_cond_proof, name)
             nested_stateful_ternary_proof = base / "nested-stateful-ternary-proof"
             run(compiler, "--target", "rust", str(NESTED_STATEFUL_TERNARY_SOURCE),
                 str(nested_stateful_ternary_proof))
@@ -2074,20 +1966,14 @@ def main() -> None:
                                   if row["name"] == "run")
             assert run_capability["proof_required"] and run_capability["recorded"] \
                 and run_capability["observed_call"]
-            for extension in ("prover", "verifier"):
-                assert (nested_stateful_ternary_proof / "keys" / f"run.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (nested_stateful_ternary_proof / "zkir" / f"run.{extension}").is_file()
+            proof_artifacts.require_circuit_files(nested_stateful_ternary_proof, 'run')
             vector_map_proofs = []
             for stem in ("map_fn_oracle", "map_lambda_oracle"):
                 output = base / f"{stem}-proof"
                 run(compiler, "--target", "rust", "--rust-require-recording",
                     str(ROOT / "examples/rust_backend" / f"{stem}.compact"), str(output))
                 check_manifest(output)
-                for extension in ("prover", "verifier"):
-                    assert (output / "keys" / f"ping.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (output / "zkir" / f"ping.{extension}").is_file()
+                proof_artifacts.require_circuit_files(output, 'ping')
                 vector_map_proofs.append(output)
             unused_field_read_proofs = []
             for name in ("seven", "eight_a", "eight_b"):
@@ -2108,10 +1994,7 @@ def main() -> None:
                                       if row["name"] == "replace")
             assert replace_capability["proof_required"] and replace_capability["recorded"] \
                 and replace_capability["observed_call"]
-            for extension in ("prover", "verifier"):
-                assert (let_return_proof / "keys" / f"replace.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (let_return_proof / "zkir" / f"replace.{extension}").is_file()
+            proof_artifacts.require_circuit_files(let_return_proof, 'replace')
             asset_writable_proof = base / "asset-writable-proof"
             run(compiler, "--target", "rust", str(ASSET_REGISTRY_SOURCE),
                 str(asset_writable_proof))
@@ -2125,10 +2008,7 @@ def main() -> None:
                                   if item["name"] == circuit)
                 assert capability["proof_required"] and capability["recorded"] \
                     and capability["observed_call"]
-                for extension in ("prover", "verifier"):
-                    assert (asset_writable_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (asset_writable_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(asset_writable_proof, circuit)
             schnorr_proof = base / "schnorr-attestation-proof"
             run(compiler, "--target", "rust", "--rust-require-recording",
                 str(SCHNORR_ATTEST_SOURCE), str(schnorr_proof))
@@ -2138,10 +2018,7 @@ def main() -> None:
                 capability = next(row for row in capabilities["circuits"] if row["name"] == circuit)
                 assert capability["proof_required"] and capability["recorded"] \
                     and capability["observed_call"]
-                for extension in ("prover", "verifier"):
-                    assert (schnorr_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (schnorr_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(schnorr_proof, circuit)
             historic_merkle_proof = base / "historic-merkle-proof"
             run(compiler, "--target", "rust", str(HISTORIC_MERKLE_SOURCE), str(historic_merkle_proof))
             check_manifest(historic_merkle_proof)
@@ -2149,27 +2026,18 @@ def main() -> None:
             by_name = {circuit["name"]: circuit for circuit in capabilities["circuits"]}
             for circuit in ("append", "place", "append_hash", "place_hash", "forget_history", "reset_tree", "full", "known"):
                 assert by_name[circuit]["recorded"] and by_name[circuit]["observed_call"]
-                for extension in ("prover", "verifier"):
-                    assert (historic_merkle_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (historic_merkle_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(historic_merkle_proof, circuit)
             historic_merkle_default_proof = base / "historic-merkle-default-proof"
             run(compiler, "--target", "rust", str(HISTORIC_MERKLE_DEFAULT_SOURCE), str(historic_merkle_default_proof))
             check_manifest(historic_merkle_default_proof)
             capabilities = json.loads((historic_merkle_default_proof / "contract/rust-capabilities.json").read_text())
             assert capabilities["circuits"][0]["name"] == "add_default"
             assert capabilities["circuits"][0]["recorded"] and capabilities["circuits"][0]["observed_call"]
-            for extension in ("prover", "verifier"):
-                assert (historic_merkle_default_proof / "keys" / f"add_default.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (historic_merkle_default_proof / "zkir" / f"add_default.{extension}").is_file()
+            proof_artifacts.require_circuit_files(historic_merkle_default_proof, 'add_default')
             vector_key_proof = base / "vector-key-proof"
             run(compiler, "--target", "rust", str(VECTOR_KEY_SOURCE), str(vector_key_proof))
             check_manifest(vector_key_proof)
-            for extension in ("prover", "verifier"):
-                assert (vector_key_proof / "keys" / f"setInsert.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (vector_key_proof / "zkir" / f"setInsert.{extension}").is_file()
+            proof_artifacts.require_circuit_files(vector_key_proof, 'setInsert')
             composite_key_proof = base / "composite-key-proof"
             run(compiler, "--target", "rust", str(COMPOSITE_KEY_SOURCE), str(composite_key_proof))
             check_manifest(composite_key_proof)
@@ -2177,19 +2045,13 @@ def main() -> None:
                 "insert_vector", "insert_tuple", "insert_struct",
                 "roundtrip_tuple", "roundtrip_struct", "record_twelve",
             ):
-                for extension in ("prover", "verifier"):
-                    assert (composite_key_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (composite_key_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(composite_key_proof, circuit)
             check_observed_composite_key_consumer(composite_key_proof, base)
             chunked_set_proof = base / "chunked-set-proof"
             run(compiler, "--target", "rust", str(CHUNKED_SET_SOURCE), str(chunked_set_proof))
             check_manifest(chunked_set_proof)
             for circuit in ("insert_key", "roundtrip_key", "key_count", "empty"):
-                for extension in ("prover", "verifier"):
-                    assert (chunked_set_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (chunked_set_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(chunked_set_proof, circuit)
             check_chunked_set_consumer(chunked_set_proof, base)
             chunked_list_proof = base / "chunked-list-proof"
             run(compiler, "--target", "rust", str(CHUNKED_LIST_SOURCE), str(chunked_list_proof))
@@ -2197,10 +2059,7 @@ def main() -> None:
             for circuit in (
                 "item_count", "items_empty", "first_item", "prepend", "drop_first", "clear_items",
             ):
-                for extension in ("prover", "verifier"):
-                    assert (chunked_list_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (chunked_list_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(chunked_list_proof, circuit)
             check_chunked_list_consumer(chunked_list_proof, base)
             chunked_map_proof = base / "chunked-map-proof"
             run(compiler, "--target", "rust", str(CHUNKED_MAP_SOURCE), str(chunked_map_proof))
@@ -2209,10 +2068,7 @@ def main() -> None:
                 "put", "put_pair", "put_default", "has", "get", "remove_key",
                 "table_size", "table_is_empty", "reset_table",
             ):
-                for extension in ("prover", "verifier"):
-                    assert (chunked_map_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (chunked_map_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(chunked_map_proof, circuit)
             check_chunked_map_consumer(chunked_map_proof, base)
             chunked_cell_proof = base / "chunked-cell-proof"
             run(compiler, "--target", "rust", "--rust-require-recording", str(CHUNKED_CELL_SOURCE), str(chunked_cell_proof))
@@ -2224,41 +2080,26 @@ def main() -> None:
                 "set_amount", "get_amount", "add_amount", "active_equals", "plus_amount",
                 "subtract_amount", "multiply_amount",
             ):
-                for extension in ("prover", "verifier"):
-                    assert (chunked_cell_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (chunked_cell_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(chunked_cell_proof, circuit)
             check_chunked_cell_consumer(chunked_cell_proof, base)
             constructor_list_proof = base / "constructor-list-proof"
             run(compiler, "--target", "rust", str(CONSTRUCTOR_LIST_SOURCE), str(constructor_list_proof))
             check_manifest(constructor_list_proof)
             for circuit in ("item_count", "history_count", "first_item", "drop_first", "clear_items"):
-                for extension in ("prover", "verifier"):
-                    assert (constructor_list_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (constructor_list_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(constructor_list_proof, circuit)
             enum_cell_proof = base / "enum-cell-proof"
             run(compiler, "--target", "rust", str(RECORDED_ENUM_SOURCE), str(enum_cell_proof))
             check_manifest(enum_cell_proof)
-            for extension in ("prover", "verifier"):
-                assert (enum_cell_proof / "keys" / f"choose.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (enum_cell_proof / "zkir" / f"choose.{extension}").is_file()
+            proof_artifacts.require_circuit_files(enum_cell_proof, 'choose')
             tiny_proof = base / "tiny-proof"
             run(compiler, "--target", "rust", str(TINY_SOURCE), str(tiny_proof))
             check_manifest(tiny_proof)
             for circuit in ("clear", "set", "get"):
-                for extension in ("prover", "verifier"):
-                    assert (tiny_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (tiny_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(tiny_proof, circuit)
             nested_map_shape_proof = base / "nested-map-shape-proof"
             run(compiler, "--target", "rust", str(NESTED_MAP_SHAPE_SOURCE), str(nested_map_shape_proof))
             check_manifest(nested_map_shape_proof)
-            for extension in ("prover", "verifier"):
-                assert (nested_map_shape_proof / "keys" / f"check_nested_empty.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (nested_map_shape_proof / "zkir" / f"check_nested_empty.{extension}").is_file()
+            proof_artifacts.require_circuit_files(nested_map_shape_proof, 'check_nested_empty')
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 str(proof), str(cell_proof), str(cell_read_proof), str(witness_proof), str(nested_proof),

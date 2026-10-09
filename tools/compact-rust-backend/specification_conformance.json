@@ -55,7 +55,7 @@
     "examples/rust_backend/witness_effect_order.compact": "d2b4b4b2ad94776aa27a4354e6c1fe9253b342e267fa4eb4bf05a3e9450f9a58",
     "tests-rust-backend/witness-effect-order/lib.rs": "5b1668cad2ff7e06012d81b6f4de7fba3a18b7b67ac15d39f223f4e56f5cf642",
     "runtime-rs/tests/fixtures/witness-effect-order.json": "463a1a2eac9b18cf1a2fe0c8828cc9acd53ed9733054bb89f5fe1d88a68a245f",
-    "tools/compact-rust-backend/src/recorded.rs": "dcee2fa15f1154587af8951ad77d46f633fb10c4ce3cef73c437c3922ddf5b4a",
+    "tools/compact-rust-backend/src/recorded.rs": "4795069cf64e978fd2680e44c71918f9964d21bc4814baaf03cabde38fa642c4",
     "tools/compact-rust-backend/src/capabilities.rs": "43dee1f3ae38b1dca85e0965c09c2ba2a7d7b0e3dbdb128a18996c0f86b1184c",
     "specification/src/Semantics/Static/Lsrc/Lsrc.lagda.md": "636b1c02f2e291bdf76bc00f43c31fcd7ada458391ed775be5817172f8397de9",
     "specification/src/Syntax/json/Lsrc.json": "1b192f03d15b88cd8d4c8634c87ecb754690bc28f350331fd2b38d539da09668",
@@ -164,7 +164,8 @@
     "tools/compact-rust-backend/src/recorded/legacy/returns/collections/set.rs": "4af78214478447906a3a018e577f2b6aa69859ac6aad17bdf8fe6d07372fce98",
     "tools/compact-rust-backend/src/recorded/typed_plan/tests.rs": "1c4ae6fdafd2131bea12b0658a30d5af2bcae3bc066039ff55fef31d10d940c0",
     "tools/compact-rust-backend/src/recorded/typed_plan/shielded_receive_tests.rs": "cd613c72628f52df5e9950e6e37d79a99318b8b2439bad4eece208344d62ef50",
-    "tools/compact-rust-backend/src/recorded/typed_plan/shielded_send_tests.rs": "e22d3f1029e6899ff093ba19391a3ecbf0dba2db268826b8c2507bdb35defc30"
+    "tools/compact-rust-backend/src/recorded/typed_plan/shielded_send_tests.rs": "e22d3f1029e6899ff093ba19391a3ecbf0dba2db268826b8c2507bdb35defc30",
+    "tools/compact-rust-backend/src/recorded/item.rs": "3cc30c5235992b717f8b7ce0f5058c4abf827fabc83f7bb81fe0a5cbdad4fe07"
   },
   "grammar_inventory": {
     "format_version": 1,
@@ -6960,7 +6961,7 @@
         {
           "path": "tools/compact-rust-backend/src/recorded.rs",
           "line": 548,
-          "sha256": "dcee2fa15f1154587af8951ad77d46f633fb10c4ce3cef73c437c3922ddf5b4a"
+          "sha256": "4795069cf64e978fd2680e44c71918f9964d21bc4814baaf03cabde38fa642c4"
         },
         {
           "path": "tools/compact-rust-backend/src/recorded/diagnostics.rs",

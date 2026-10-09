@@ -32,10 +32,10 @@ use legacy::opaque_set::closed_guarded_opaque_set_mutation_steps;
 mod facade;
 mod guarded_mutations;
 mod helpers;
+mod item;
 mod profile_attempt;
 mod profile_selection;
 mod pure_calls;
-use helpers::helper_ident;
 pub(crate) use helpers::plan_recorded_helpers;
 use profile_attempt::ProfileAttempt;
 use pure_calls::closed_pure_field_call;
@@ -1337,92 +1337,18 @@ fn render_recorded_item(
     }
 
     let uses_witness = circuit_uses_witness(circuit, circuits, &mut HashSet::new())?;
-    let item = if helper {
-        let body_name = helper_ident(&circuit.name, circuits)?;
-        if uses_witness {
-            syn::parse_quote! {
-                fn #body_name<Private, W: super::TryWitnesses<Private>>(
-                    frame: runtime::recording::RecordingFrame<Private>,
-                    witnesses: &W,
-                    #(#args),*
-                ) -> Result<(runtime::recording::RecordingFrame<Private>, #result_ty), runtime::CompactError> {
-                    #(#steps)*
-                    #(#return_steps)*
-                    Ok((frame, #result))
-                }
-            }
-        } else {
-            syn::parse_quote! {
-                fn #body_name<Private>(
-                    frame: runtime::recording::RecordingFrame<Private>,
-                    #(#args),*
-                ) -> Result<(runtime::recording::RecordingFrame<Private>, #result_ty), runtime::CompactError> {
-                    #(#steps)*
-                    #(#return_steps)*
-                    Ok((frame, #result))
-                }
-            }
-        }
-    } else if shared_callees.contains(&circuit.name) {
-        let body_name = helper_ident(&circuit.name, circuits)?;
-        // Parameter order must follow the Compact declaration, not HashMap order.
-        let call_args: Vec<_> = circuit
-            .parameters
-            .iter()
-            .enumerate()
-            .map(|(index, _)| {
-                syn::Ident::new(&format!("__compact_param_{index}"), Span::call_site())
-            })
-            .collect();
-        if uses_witness {
-            syn::parse_quote! {
-                pub fn #name<Private, W: super::TryWitnesses<Private>>(
-                    context: runtime::context::CircuitContext<Private>,
-                    witnesses: &W,
-                    #(#args),*
-                ) -> Result<runtime::recording::RecordedCircuitResult<Private, #result_ty>, runtime::CompactError> {
-                    let frame = runtime::recording::RecordingFrame::new(context);
-                    let (frame, result) = #body_name(frame, witnesses, #(#call_args),*)?;
-                    Ok(frame.finish(result))
-                }
-            }
-        } else {
-            syn::parse_quote! {
-                pub fn #name<Private>(
-                    context: runtime::context::CircuitContext<Private>,
-                    #(#args),*
-                ) -> Result<runtime::recording::RecordedCircuitResult<Private, #result_ty>, runtime::CompactError> {
-                    let frame = runtime::recording::RecordingFrame::new(context);
-                    let (frame, result) = #body_name(frame, #(#call_args),*)?;
-                    Ok(frame.finish(result))
-                }
-            }
-        }
-    } else if uses_witness {
-        syn::parse_quote! {
-            pub fn #name<Private, W: super::TryWitnesses<Private>>(
-                context: runtime::context::CircuitContext<Private>,
-                witnesses: &W,
-                #(#args),*
-            ) -> Result<runtime::recording::RecordedCircuitResult<Private, #result_ty>, runtime::CompactError> {
-                let frame = runtime::recording::RecordingFrame::new(context);
-                #(#steps)*
-                #(#return_steps)*
-                Ok(frame.finish(#result))
-            }
-        }
-    } else {
-        syn::parse_quote! {
-        pub fn #name<Private>(
-            context: runtime::context::CircuitContext<Private>,
-            #(#args),*
-        ) -> Result<runtime::recording::RecordedCircuitResult<Private, #result_ty>, runtime::CompactError> {
-            let frame = runtime::recording::RecordingFrame::new(context);
-            #(#steps)*
-            #(#return_steps)*
-            Ok(frame.finish(#result))
-        }
-        }
-    };
+    let item = item::assemble(
+        circuit,
+        circuits,
+        shared_callees,
+        helper,
+        uses_witness,
+        &name,
+        &args,
+        &steps,
+        &return_steps,
+        &result,
+        &result_ty,
+    )?;
     Ok(RecordingOutcome::Supported(item))
 }

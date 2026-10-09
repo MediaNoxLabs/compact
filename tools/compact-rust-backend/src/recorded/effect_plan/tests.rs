@@ -12,6 +12,10 @@ mod declaration_tests;
 mod jubjub;
 #[path = "tests/ordinary.rs"]
 mod ordinary;
+#[path = "tests/pure_inclusion.rs"]
+mod pure_inclusion;
+#[path = "tests/pure_validation.rs"]
+mod pure_validation;
 #[path = "tests/wide_values.rs"]
 mod wide_values;
 use declaration_tests::check_plan;

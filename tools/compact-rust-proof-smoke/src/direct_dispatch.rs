@@ -117,6 +117,7 @@ pub(super) fn try_run(
         ("--effect-plan-counter", _) => Some(recorded::effect_plan_counter(arguments)),
         ("--effect-plan-counter-only", _) => Some(recorded::effect_plan_counter_only(arguments)),
         ("--effect-plan-jubjub", _) => Some(recorded::effect_plan_jubjub(arguments)),
+        ("--effect-plan-pure-calls", _) => Some(recorded::effect_plan_pure_calls(arguments)),
         ("--effect-plan-stateful-calls", _) => {
             Some(recorded::effect_plan_stateful_calls(arguments))
         }

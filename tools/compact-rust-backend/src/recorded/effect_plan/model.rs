@@ -96,6 +96,11 @@ pub(super) enum Operation {
         parameters: Vec<Value>,
         body: Block,
     },
+    /// Invoke a certified context-free function after evaluating its arguments.
+    PureCall {
+        declaration: CallId,
+        arguments: Vec<Value>,
+    },
     Assert {
         condition: Value,
         message: String,

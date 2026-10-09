@@ -5,6 +5,7 @@
 //! Immutable contract declarations, retained independently of lowered operations.
 //! IDs are deterministic within this environment and are never serialized.
 use super::model::{CallId, LedgerId, WitnessId};
+use super::pure_certification::{Certificates, CertifiedPure};
 use crate::ir::{LedgerField, Parameter, PureCircuit, StatefulCircuit, Type, WitnessDeclaration};
 use std::collections::HashMap;
 
@@ -14,6 +15,7 @@ pub(super) struct Declarations {
     witnesses: Vec<WitnessDeclaration>,
     calls: Vec<CallSignature>,
     root: Option<CallSignature>,
+    pure: Certificates,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -30,6 +32,14 @@ pub(super) struct CallSignature {
     pub result: Type,
     pub kind: CallKind,
 }
+impl CallSignature {
+    fn matches_pure(&self, source: &PureCircuit) -> bool {
+        self.kind == CallKind::Pure
+            && self.name == source.name
+            && self.parameters == source.parameters
+            && self.result == source.result
+    }
+}
 impl Declarations {
     pub(super) fn new(
         ledger: &HashMap<&str, &LedgerField>,
@@ -44,7 +54,38 @@ impl Declarations {
             witnesses,
             calls: Vec::new(),
             root: None,
+            pure: Certificates::default(),
         }
+    }
+    pub(super) fn with_certificates(
+        mut self,
+        certificates: Certificates,
+        pure: &HashMap<&str, &PureCircuit>,
+    ) -> Result<Self, super::RecordingGap> {
+        certificates.verify_bindings(pure)?;
+        // The whole reachable graph must belong to this destination registry,
+        // including helpers never invoked directly by a recording operation.
+        for (name, certified) in certificates.iter() {
+            let path = format!("pure[{name}]");
+            let (_, signature) = self.resolve_call(name).ok_or_else(|| {
+                super::invalid(&path, "certified pure declaration is missing or ambiguous")
+            })?;
+            if !signature.matches_pure(certified.source()) {
+                return Err(super::invalid(
+                    &path,
+                    "certified pure signature differs from destination declaration",
+                ));
+            }
+        }
+        self.pure = certificates;
+        Ok(self)
+    }
+    pub(super) fn certified_pure(&self, id: CallId) -> Option<&CertifiedPure> {
+        let signature = self.call(id)?;
+        let certified = self.pure.get(&signature.name)?;
+        signature
+            .matches_pure(certified.source())
+            .then_some(certified)
     }
     pub(super) fn with_root(mut self, circuit: &StatefulCircuit) -> Self {
         self.root = Some(CallSignature {

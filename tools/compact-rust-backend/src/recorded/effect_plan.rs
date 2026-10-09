@@ -11,6 +11,7 @@ mod lower;
 mod model;
 #[cfg(all(test, feature = "experimental-recording-plan"))]
 mod property_tests;
+mod pure_certification;
 mod render;
 #[cfg(all(test, feature = "experimental-recording-plan"))]
 mod resource_tests;
@@ -51,8 +52,11 @@ pub(super) fn check_with_calls(
 ) -> Result<CheckedPlan, PlanError> {
     let declarations = declarations::Declarations::with_calls(ledger, witnesses, pure, circuits)
         .with_root(circuit);
-    let plan = lower::lower_with_calls(circuit, &declarations, circuits)
+    let (plan, certificates) = lower::lower_with_pure_calls(circuit, &declarations, pure, circuits)
         .map_err(PlanError::Unsupported)?;
+    let declarations = declarations
+        .with_certificates(certificates, pure)
+        .map_err(PlanError::Invalid)?;
     validate::check(plan, declarations).map_err(PlanError::Invalid)
 }
 

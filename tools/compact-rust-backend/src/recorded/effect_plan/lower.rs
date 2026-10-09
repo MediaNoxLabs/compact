@@ -17,11 +17,14 @@ mod counters;
 mod expressions;
 mod jubjub;
 mod ordinary;
+mod pure;
+use super::pure_certification::{Certificates, Certifier};
 
 type Scope = HashMap<String, Value>;
 struct Lowerer<'a> {
     declarations: &'a Declarations,
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
+    pure: Certifier<'a>,
     call_stack: Vec<String>,
     expanded_steps: usize,
     max_call_depth: usize,
@@ -37,11 +40,21 @@ pub(super) fn lower(
     lower_with_calls(circuit, declarations, &HashMap::new())
 }
 
+#[cfg(test)]
 pub(super) fn lower_with_calls<'a>(
     circuit: &StatefulCircuit,
     declarations: &'a Declarations,
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
 ) -> Result<Plan, RecordingGap> {
+    lower_with_pure_calls(circuit, declarations, &HashMap::new(), circuits).map(|(plan, _)| plan)
+}
+
+pub(super) fn lower_with_pure_calls<'a>(
+    circuit: &StatefulCircuit,
+    declarations: &'a Declarations,
+    pure: &'a HashMap<&'a str, &'a PureCircuit>,
+    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
+) -> Result<(Plan, Certificates), RecordingGap> {
     if !surface_type(&circuit.result) {
         return Err(invalid("return_value", "unsupported circuit result type"));
     }
@@ -49,6 +62,7 @@ pub(super) fn lower_with_calls<'a>(
     let mut lower = Lowerer {
         declarations,
         circuits,
+        pure: Certifier::new(pure, circuits),
         call_stack: vec![circuit.name.clone()],
         expanded_steps: 0,
         max_call_depth,
@@ -73,11 +87,12 @@ pub(super) fn lower_with_calls<'a>(
     }
     let mut bindings = Vec::new();
     let result = lower.circuit_body(circuit, &scope, &mut bindings, "")?;
-    Ok(Plan {
+    let plan = Plan {
         parameters,
         body: Block { bindings, result },
         result_type: circuit.result.clone(),
-    })
+    };
+    Ok((plan, lower.pure.into_certificates()))
 }
 
 impl Lowerer<'_> {

@@ -158,7 +158,7 @@ fn malformed_types_and_escaped_references_are_hard_native_errors() {
 }
 
 #[test]
-fn both_declining_paths_expose_the_precise_algebra_diagnostic() {
+fn certified_pure_helper_is_available_through_public_recording() {
     let mut contract = single(value(Expr::Call {
         name: "identity".into(),
         arguments: vec![parameter("x")],
@@ -181,11 +181,32 @@ fn both_declining_paths_expose_the_precise_algebra_diagnostic() {
         .iter()
         .find(|c| c.name == "sample")
         .unwrap();
+    assert!(row.recorded && row.observed_call);
+    assert!(row.recording_unavailable.is_none());
+}
+
+#[test]
+fn unsupported_direct_bytes_still_exposes_the_precise_algebra_diagnostic() {
+    let contract = single(ReturnPlan::Let {
+        bindings: vec![LocalBinding {
+            name: "unused_bytes".into(),
+            ty: Type::Bytes { length: 1 },
+            value: Expr::BytesLiteral { bytes: vec![0] },
+        }],
+        result: Box::new(value(read())),
+    });
+    let rendered = render_with_capabilities(&contract).unwrap();
+    let row = rendered
+        .capabilities
+        .circuits
+        .iter()
+        .find(|c| c.name == "sample")
+        .unwrap();
     assert!(!row.recorded);
     let gap = row.recording_unavailable.as_ref().unwrap();
     assert_eq!(gap.code.as_str(), "unsupported_expression");
-    assert_eq!(gap.ir_node, "Expr::Call");
-    assert_eq!(gap.path, "return_value.body.value");
+    assert_eq!(gap.ir_node, "Expr::BytesLiteral");
+    assert_eq!(gap.path, "return_value.body.bindings[0].value");
 }
 
 #[test]

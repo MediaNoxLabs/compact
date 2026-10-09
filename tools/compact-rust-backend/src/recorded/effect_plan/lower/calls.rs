@@ -19,8 +19,8 @@ impl Lowerer<'_> {
         let Some((declaration, signature)) = self.declarations.resolve_call(name) else {
             return Err(RecordingGap::expression(expression, path.into()));
         };
-        if signature.kind != CallKind::Stateful {
-            return Err(RecordingGap::expression(expression, path.into()));
+        if signature.kind == CallKind::Pure {
+            return self.pure_call(declaration, name, arguments, scope, bindings, path);
         }
         // Borrow the original body. The immutable signature snapshot is checked
         // against it before binding any formals; no recursive IR clone occurs.

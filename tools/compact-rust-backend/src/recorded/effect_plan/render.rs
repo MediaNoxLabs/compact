@@ -201,6 +201,18 @@ fn block(body: &Block, declarations: &Declarations) -> Result<Vec<syn::Stmt>, Re
                 });
                 continue;
             }
+            Operation::PureCall {
+                declaration,
+                arguments,
+            } => {
+                let certified = declarations
+                    .certified_pure(*declaration)
+                    .ok_or_else(|| invalid(path, "missing checked pure declaration"))?;
+                let method =
+                    ident(&certified.source().name).map_err(|e| invalid(path, e.to_string()))?;
+                let arguments: Vec<_> = arguments.iter().map(value).collect();
+                syn::parse_quote!(crate::pure_circuits::#method(#(#arguments),*)?)
+            }
             Operation::If {
                 condition,
                 then,

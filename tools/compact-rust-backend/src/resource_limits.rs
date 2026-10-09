@@ -17,8 +17,10 @@
 //! budgets pending batches; graph arithmetic saturates. Pure-cycle facts are
 //! retained for semantic refusal after the renderer's existing checks.
 mod policy;
+mod pure;
 use crate::ir::Contract;
 use policy::{LimitError, Limits, ResourceKind as Kind, check};
+pub(crate) use pure::PureBodyBudget;
 
 /// Resources have been checked, but an otherwise valid pure call cycle must
 /// still be refused before publishing the rendered source.

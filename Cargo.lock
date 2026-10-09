@@ -1276,30 +1276,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-effect-plan-pure-calls-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-compact-testkit",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-effect-plan-stateful-calls-source-fixture"
-version = "0.1.0"
-dependencies = [
- "compact-rust-backend",
- "hex",
- "midnight-compact-runtime",
- "midnight-compact-testkit",
- "serde_json",
-]
-
-[[package]]
-name = "compact-rust-guarded-point-read-source-fixture"
-version = "0.1.0"
-dependencies = [
- "compact-rust-effect-plan-jubjub-source-fixture",
- "compact-rust-backend",
- "hex",
- "midnight-compact-runtime",
- "midnight-compact-testkit",
- "serde_json",
-]
-
-[[package]]
-name = "compact-rust-guarded-point-nested-source-fixture"
 version = "0.1.0"
 dependencies = [
  "compact-rust-backend",
@@ -1455,6 +1443,29 @@ dependencies = [
  "midnight-onchain-state",
  "midnight-serialize",
  "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
+name = "compact-rust-guarded-point-nested-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-compact-testkit",
+ "serde_json",
+]
+
+[[package]]
+name = "compact-rust-guarded-point-read-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "compact-rust-effect-plan-jubjub-source-fixture",
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-compact-testkit",
  "serde_json",
 ]
 
@@ -2085,9 +2096,8 @@ dependencies = [
  "compact-rust-effect-plan-counter-only-source-fixture",
  "compact-rust-effect-plan-counter-source-fixture",
  "compact-rust-effect-plan-jubjub-source-fixture",
+ "compact-rust-effect-plan-pure-calls-source-fixture",
  "compact-rust-effect-plan-stateful-calls-source-fixture",
- "compact-rust-guarded-point-read-source-fixture",
- "compact-rust-guarded-point-nested-source-fixture",
  "compact-rust-effect-plan-wide-source-fixture",
  "compact-rust-effectful-return-oracle-fixture",
  "compact-rust-election-oracle-fixture",
@@ -2095,6 +2105,8 @@ dependencies = [
  "compact-rust-field-observation-oracle-fixture",
  "compact-rust-field-to-bytes32-oracle-fixture",
  "compact-rust-guarded-assert-arith-oracle-fixture",
+ "compact-rust-guarded-point-nested-source-fixture",
+ "compact-rust-guarded-point-read-source-fixture",
  "compact-rust-hmt-default-oracle-fixture",
  "compact-rust-hmt-insert-oracle-fixture",
  "compact-rust-inline-type-scope-oracle-fixture",

@@ -7,6 +7,7 @@ use super::{RecordingGap, declarations::Declarations, invalid, model::*};
 use crate::ir::{LedgerFieldKind, Type};
 use std::collections::{HashMap, HashSet};
 mod calls;
+mod pure;
 
 struct Validation {
     allocated: HashSet<usize>,
@@ -253,6 +254,10 @@ fn block(
             }
             Operation::Call { .. } => {
                 calls::validate(binding, declarations, &scope, state)?;
+                true
+            }
+            Operation::PureCall { .. } => {
+                pure::validate(binding, declarations, &scope, state)?;
                 true
             }
             Operation::Assert { condition, .. } => {

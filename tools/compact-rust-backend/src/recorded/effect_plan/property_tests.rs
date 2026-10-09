@@ -235,7 +235,7 @@ fn source_order_selects_the_first_refusal_across_conditions_and_branches() {
     }
 }
 #[test]
-fn helper_calls_remain_outside_the_plan_even_when_native_declarations_exist() {
+fn pure_helper_calls_require_the_certified_declaration_environment() {
     let mut candidate = contract(returned(Expr::Call {
         name: "identity".into(),
         arguments: vec![parameter("x")],
@@ -263,8 +263,40 @@ fn helper_calls_remain_outside_the_plan_even_when_native_declarations_exist() {
         .iter()
         .find(|c| c.name == "sample")
         .unwrap();
-    assert!(!row.recorded);
-    assert_eq!(row.recording_unavailable.as_ref().unwrap(), &gap);
+    assert!(row.recorded && row.observed_call);
+    assert!(row.recording_unavailable.is_none());
+    let ledger = candidate
+        .ledger_fields
+        .iter()
+        .map(|f| (f.id.as_str(), f))
+        .collect();
+    let witnesses = candidate
+        .witnesses
+        .iter()
+        .map(|w| (w.name.as_str(), w))
+        .collect();
+    let pure = candidate
+        .circuits
+        .iter()
+        .map(|c| (c.name.as_str(), c))
+        .collect();
+    let checked = check_with_calls(
+        &candidate.stateful_circuits[0],
+        &ledger,
+        &witnesses,
+        &pure,
+        &HashMap::new(),
+    )
+    .unwrap();
+    assert!(
+        checked
+            .plan()
+            .body
+            .bindings
+            .iter()
+            .any(|binding| { matches!(binding.operation, Operation::PureCall { .. }) })
+    );
+    render(&checked).unwrap();
 }
 #[test]
 fn previously_fallback_wide_literal_now_has_a_checked_plan() {

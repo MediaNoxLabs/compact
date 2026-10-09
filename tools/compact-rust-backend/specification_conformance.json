@@ -55,7 +55,7 @@
     "examples/rust_backend/witness_effect_order.compact": "d2b4b4b2ad94776aa27a4354e6c1fe9253b342e267fa4eb4bf05a3e9450f9a58",
     "tests-rust-backend/witness-effect-order/lib.rs": "5b1668cad2ff7e06012d81b6f4de7fba3a18b7b67ac15d39f223f4e56f5cf642",
     "runtime-rs/tests/fixtures/witness-effect-order.json": "463a1a2eac9b18cf1a2fe0c8828cc9acd53ed9733054bb89f5fe1d88a68a245f",
-    "tools/compact-rust-backend/src/recorded.rs": "3f16512deaa5638741cbb5a9f64b260968f2a16ba32d617e72f5c3c367f4895f",
+    "tools/compact-rust-backend/src/recorded.rs": "86cabb47837d4daf63b1d0394a01484ce69915edeea659249d34242c5522dfbf",
     "tools/compact-rust-backend/src/capabilities.rs": "43dee1f3ae38b1dca85e0965c09c2ba2a7d7b0e3dbdb128a18996c0f86b1184c",
     "specification/src/Semantics/Static/Lsrc/Lsrc.lagda.md": "636b1c02f2e291bdf76bc00f43c31fcd7ada458391ed775be5817172f8397de9",
     "specification/src/Syntax/json/Lsrc.json": "1b192f03d15b88cd8d4c8634c87ecb754690bc28f350331fd2b38d539da09668",
@@ -153,9 +153,10 @@
     "tools/compact-rust-backend/src/recorded/typed_plan/evidence.rs": "b835a76820570715992ab13a54e4b47ca8ce0933f227d5a5e46ea44866661c1f",
     "tools/compact-rust-backend/src/recorded/typed_plan/evaluation.rs": "5e183182443a44e75bf995cfdd230a807eed3789d336380ca06878a22b3ed427",
     "tools/compact-rust-backend/src/recorded/legacy/actions/bindings/field.rs": "1e5c56893d6de82a3a5112f95bc4e74860603ae9f7a28439dd347dc4422d6534",
-    "tools/compact-rust-backend/src/recorded/legacy/returns.rs": "8f53e5437e4d24f1f147b8bd1068e207a2fabed5d8428c8cbada1f87c3dde18a",
+    "tools/compact-rust-backend/src/recorded/legacy/returns.rs": "46838506c55fd843ba43f9f748e564121f955aad49d5583d299ed2fdfd0e88b8",
     "tools/compact-rust-backend/src/recorded/legacy/returns/conditional.rs": "d19bb07c30f96749d3f7e9789fff5fa5a671a43c504d29625525c79088caef46",
     "tools/compact-rust-backend/src/recorded/typed_plan/admission.rs": "656254b82f89f77bff1bca3c78b4b3a2bca22680d27550b0e6e1529cf3dc1675",
+    "tools/compact-rust-backend/src/recorded/legacy/returns/merkle.rs": "888560623c2d26bad5e6c17de8f2859e4daa596cabf54770c470a57c8adabd4d",
     "tools/compact-rust-backend/src/recorded/typed_plan/declarations.rs": "986288e4b5f6fce6b620421fa2b9a089f3fa8ca36d23707e75b2723be1b902ef"
   },
   "grammar_inventory": {
@@ -6951,8 +6952,8 @@
       "implementation_sources": [
         {
           "path": "tools/compact-rust-backend/src/recorded.rs",
-          "line": 551,
-          "sha256": "3f16512deaa5638741cbb5a9f64b260968f2a16ba32d617e72f5c3c367f4895f"
+          "line": 550,
+          "sha256": "86cabb47837d4daf63b1d0394a01484ce69915edeea659249d34242c5522dfbf"
         },
         {
           "path": "tools/compact-rust-backend/src/recorded/diagnostics.rs",

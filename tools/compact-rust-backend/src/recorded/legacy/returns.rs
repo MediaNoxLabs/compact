@@ -18,3 +18,4 @@
 //! Admission guards and rejection refinement remain with the orchestrator.
 
 pub(in crate::recorded) mod conditional;
+pub(in crate::recorded) mod merkle;

@@ -28,7 +28,6 @@ use legacy::guarded_pure::{
 };
 use legacy::opaque_map::closed_typed_opaque_map_write_steps;
 use legacy::opaque_set::closed_guarded_opaque_set_mutation_steps;
-use legacy::value_sources::cell_source;
 
 mod facade;
 mod guarded_mutations;
@@ -1361,84 +1360,35 @@ fn render_recorded_item(
         | StateReturn::HistoricMerkleCheckRoot { field, index, root }
             if circuit.result == Type::Boolean && circuit.actions.is_empty() =>
         {
-            let declaration = ledger_fields
-                .get(field.as_str())
-                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-            let Expr::Parameter { name } = root else {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                    &circuit.return_value,
-                )));
-            };
-            let Some((root_ty, _)) = parameters.get(name.as_str()) else {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                    &circuit.return_value,
-                )));
-            };
-            let historic = matches!(
-                circuit.return_value,
-                StateReturn::HistoricMerkleCheckRoot { .. }
-            );
-            let declaration_historic = match declaration.declaration {
-                LedgerFieldKind::MerkleTree { .. } => false,
-                LedgerFieldKind::HistoricMerkleTree { .. } => true,
-                _ => {
-                    return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                        &circuit.return_value,
-                    )));
+            match legacy::returns::merkle::check_root(
+                field,
+                *index,
+                root,
+                &circuit.return_value,
+                &parameters,
+                ledger_fields,
+            )? {
+                RecordingOutcome::Supported(result) => result,
+                RecordingOutcome::Unsupported(gap) => {
+                    return Ok(RecordingOutcome::Unsupported(gap));
                 }
-            };
-            if declaration.index != *index
-                || (historic && declaration.physical_path().len() != 1)
-                || historic != declaration_historic
-                || !matches!(root_ty, Type::Struct { name, fields }
-                    if name == "MerkleTreeDigest" && fields.len() == 1
-                        && fields[0].name == "field" && fields[0].ty == Type::Field)
-            {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                    &circuit.return_value,
-                )));
             }
-            let Some(root) = cell_source(root, root_ty, &HashMap::new(), &parameters) else {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                    &circuit.return_value,
-                )));
-            };
-            let slot = ident(field)?;
-            (
-                vec![syn::parse_quote!(
-                    let (frame, observed): (_, bool) =
-                        crate::ledger_slots::#slot.record_check_root(frame, #root)?;
-                )],
-                syn::parse_quote!(observed),
-            )
         }
         StateReturn::MerkleIsFull { field, index }
         | StateReturn::HistoricMerkleIsFull { field, index }
             if circuit.result == Type::Boolean && circuit.actions.is_empty() =>
         {
-            let declaration = ledger_fields
-                .get(field.as_str())
-                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-            let historic = matches!(
-                circuit.return_value,
-                StateReturn::HistoricMerkleIsFull { .. }
-            );
-            let declaration_historic = match declaration.declaration {
-                LedgerFieldKind::MerkleTree { .. } => false,
-                LedgerFieldKind::HistoricMerkleTree { .. } => true,
-                _ => return Err(RenderError::UnknownLedgerField(field.clone())),
-            };
-            if declaration.index != *index || historic != declaration_historic {
-                return Err(RenderError::UnknownLedgerField(field.clone()));
+            match legacy::returns::merkle::is_full(
+                field,
+                *index,
+                &circuit.return_value,
+                ledger_fields,
+            )? {
+                RecordingOutcome::Supported(result) => result,
+                RecordingOutcome::Unsupported(gap) => {
+                    return Ok(RecordingOutcome::Unsupported(gap));
+                }
             }
-            let slot = ident(field)?;
-            (
-                vec![syn::parse_quote!(
-                    let (frame, observed): (_, bool) =
-                        crate::ledger_slots::#slot.record_is_full(frame)?;
-                )],
-                syn::parse_quote!(observed),
-            )
         }
         StateReturn::Expression {
             value: Expr::Let { bindings, body },
@@ -1447,95 +1397,18 @@ fn render_recorded_item(
             && bindings.len() == 1
             && matches!(body.as_ref(), Expr::MerkleCheckRoot { .. }) =>
         {
-            let binding = &bindings[0];
-            let Expr::MerkleCheckRoot { field, index, root } = body.as_ref() else {
-                unreachable!("guarded by MerkleCheckRoot expression")
-            };
-            let declaration = ledger_fields
-                .get(field.as_str())
-                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-            if !matches!(declaration.declaration, LedgerFieldKind::MerkleTree { .. })
-                || declaration.index != *index
-                || !matches!(root.as_ref(), Expr::Parameter { name } if *name == binding.name)
-            {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
-                    body,
-                    "return_value.value".to_owned(),
-                )));
+            match legacy::returns::merkle::witnessed_path_root(
+                bindings,
+                body,
+                ledger_fields,
+                pure_circuits,
+                witnesses,
+            )? {
+                RecordingOutcome::Supported(result) => result,
+                RecordingOutcome::Unsupported(gap) => {
+                    return Ok(RecordingOutcome::Unsupported(gap));
+                }
             }
-            let Expr::Call { name, arguments } = &binding.value else {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
-                    &binding.value,
-                    "return_value.value.bindings[0].value".to_owned(),
-                )));
-            };
-            let pure = pure_circuits
-                .get(name.as_str())
-                .ok_or_else(|| RenderError::UnknownCircuit(name.clone()))?;
-            if name != "merkleTreePathRoot"
-                || pure.result != binding.ty
-                || !matches!(&binding.ty, Type::Struct { name, .. } if name == "MerkleTreeDigest")
-                || pure.parameters.len() != 1
-                || arguments.len() != 1
-            {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
-                    &binding.value,
-                    "return_value.value.bindings[0].value".to_owned(),
-                )));
-            }
-            let path_ty = &pure.parameters[0].ty;
-            let path = match &arguments[0] {
-                Expr::Coerce { value, ty } if ty == path_ty => value.as_ref(),
-                other => other,
-            };
-            let Expr::WitnessCall {
-                name: witness_name,
-                arguments: witness_args,
-            } = path
-            else {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
-                    path,
-                    "return_value.value.bindings[0].value.arguments[0]".to_owned(),
-                )));
-            };
-            let witness = witnesses
-                .get(witness_name.as_str())
-                .ok_or_else(|| RenderError::UnknownWitness(witness_name.clone()))?;
-            if witness.result != *path_ty
-                || !witness.parameters.is_empty()
-                || !witness_args.is_empty()
-            {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
-                    path,
-                    "return_value.value.bindings[0].value.arguments[0]".to_owned(),
-                )));
-            }
-            let slot = ident(field)?;
-            let witness_method = ident(witness_name)?;
-            let pure_method = ident(name)?;
-            let root_ty = rust_type(&binding.ty)?;
-            (
-                vec![
-                    syn::parse_quote! {
-                        let (frame, path) = frame.try_witness_metered(|context, meter| {
-                            witnesses.#witness_method(
-                                context.witness_context_with(super::LedgerView {
-                                    state: context.query.state.get_ref(),
-                                    meter,
-                                }),
-                            )
-                        })?;
-                    },
-                    syn::parse_quote! {
-                        let root: #root_ty = crate::pure_circuits::#pure_method(path)?;
-                    },
-                    syn::parse_quote! {
-                        let (frame, observed): (_, bool) =
-                            crate::ledger_slots::#slot.record_check_root(frame, root)?;
-                    },
-                ],
-                syn::parse_quote!(observed),
-            )
         }
         _ => {
             let gap = shielded_send_rejection

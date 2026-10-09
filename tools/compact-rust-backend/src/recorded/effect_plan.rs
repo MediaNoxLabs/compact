@@ -10,6 +10,8 @@ mod lower;
 mod model;
 mod render;
 #[cfg(test)]
+mod resource_tests;
+#[cfg(test)]
 mod tests;
 mod validate;
 

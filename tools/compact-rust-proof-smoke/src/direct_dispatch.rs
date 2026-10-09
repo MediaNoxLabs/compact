@@ -115,6 +115,12 @@ pub(super) fn try_run(
         ("--stateful-struct", _) => Some(recorded::stateful_struct(arguments)),
         ("--stateful-assert", _) => Some(recorded::stateful_assert(arguments)),
         ("--effectful-return", _) => Some(recorded::effectful_return(arguments)),
+        #[cfg(feature = "experimental-recording-plan")]
+        ("--effect-plan-prototype", _) => Some(recorded::effect_plan_prototype(arguments)),
+        #[cfg(not(feature = "experimental-recording-plan"))]
+        ("--effect-plan-prototype", _) => Some(Err(
+            "--effect-plan-prototype requires the experimental-recording-plan Cargo feature".into(),
+        )),
         ("--root-let-action-return", _) => Some(recorded::root_let_action_return(arguments)),
         ("--counter-less-than", _) => Some(recorded::counter_less_than(arguments)),
         ("--pair-hash-cell", _) => Some(recorded::pair_hash_cell(arguments)),

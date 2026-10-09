@@ -3,7 +3,8 @@
 This experiment adds an **opt-in** recording lowerer. It demonstrates two real
 Compact circuits whose primitive operations already exist in the runtime, but
 whose combinations the legacy effectful-return profile refuses. It does not
-replace the default recorder or establish proof/transaction qualification.
+replace the default recorder. The selected cases have an explicit offline proof
+and ledger-application gate under the shared unbalanced test policy.
 
 ## Run the experiment
 
@@ -108,6 +109,51 @@ node runtime-rs/tests/fixtures/capture-effect-plan-prototype.mjs \
   > runtime-rs/tests/fixtures/effect-plan-prototype.json
 ```
 
+## Proof and ledger-application gate
+
+Put the matching ledger8 `zkir` 2.1.0 on `PATH`, then compile the same source
+without `--skip-zk`. Use the experimental compiler built above:
+
+```sh
+target/debug/compactc --target rust --rust-require-recording \
+  --rust-runtime-root "$PWD" \
+  examples/rust_backend/effect_plan_prototype/compositions.compact \
+  /tmp/effect-plan-proof
+cargo run -p compact-rust-proof-smoke --features experimental-recording-plan -- \
+  --effect-plan-prototype /tmp/effect-plan-proof
+```
+
+The runner checks that the artifact directory's IR matches the retained IR,
+compares direct recording with typed observed-call preparation, then proves,
+verifies and ledger-applies all eight successful cases. It uses the official
+`LocalProvingProvider`, resolver and parameter interfaces. The shared test policy
+**disables balancing**; real proof verification and the other default ledger
+checks remain enabled. This is offline contract acceptance, not funded network
+transaction qualification. IR equality is a local artifact sanity check, not
+an authenticated build-provenance mechanism.
+
+## Resource boundary checks
+
+```sh
+cargo test -p compact-rust-backend --features experimental-recording-plan \
+  --lib recorded::effect_plan::resource_tests -- --nocapture --test-threads=1
+```
+
+These process-isolated tests request a 2 MiB worker stack, exercise direct
+plan checking/rendering and the public compiler pipeline, and test the first
+rejected value beyond each selected boundary. They cover syntax depth48
+(branches, arithmetic and lexical scopes), 4,092 local bindings and 3,275
+sibling branches under the current conjunctive preflight limits. They do not
+raise any resource ceiling. Measurements qualify these shapes on the tested
+host/toolchain; arbitrary combinations and other platforms require evidence.
+
+For Darwin ARM64 debug builds, `tools/compact-rust-backend/calibrate_effect_plan_frames.py`
+can retain symbol prologues and binary/source hashes. Its static entry
+reservations are not measurements of live stack usage. The validator currently
+clones visible scope for each branch, giving quadratic aggregate copy work for
+some wide inputs; the tested maximum is bounded, and a future optimization must
+preserve branch scope and use-before-definition checks.
+
 ## Promotion gates
 
 This experiment selects only `StateReturn::Effectful` at compiler integration.
@@ -115,9 +161,10 @@ It deliberately leaves general helpers, collections, cryptographic operations
 and Zswap on the legacy path. Its scalar unsigned domain is bounded by `u128`.
 Precise nested source spans remain separate work; diagnostic IR paths are used.
 
-Before default promotion: qualify real proofs, verification and ledger application
-under a stated policy; validate resource/stack assumptions for the new traversal;
-expand negative/composition coverage; and review legacy fallback retirement.
-Do not infer full language parity, formal equivalence, or code-size reduction
-from these examples. Planning, decisions and execution receipts remain in the
-Obsidian midnight vault until milestone publication.
+The selected proof/application and resource regressions provide evidence for
+this bounded prototype. Before default promotion: expand composition/property
+coverage and mixed-shape/platform resource evidence, then review migration and
+legacy fallback retirement. The established unbalanced application policy does
+not qualify all transaction policies. Do not infer full language parity, formal
+equivalence, or code-size reduction from these examples. Planning, decisions and
+execution receipts remain in the Obsidian midnight vault until publication.

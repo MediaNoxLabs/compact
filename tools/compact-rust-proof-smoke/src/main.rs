@@ -50,6 +50,8 @@ mod coracle_withdraw;
 #[path = "../../../tests-rust-backend/test-center-coracle/support/withdraw.rs"]
 mod coracle_withdraw_support;
 mod counter_less_than;
+#[cfg(feature = "experimental-recording-plan")]
+mod effect_plan_prototype;
 mod effectful_return;
 mod election_commit;
 #[path = "../../../tests-rust-backend/election-oracle/support/commit.rs"]

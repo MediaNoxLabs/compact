@@ -777,9 +777,7 @@ pub(super) fn lower_checked<'a>(
         ledger,
         witnesses,
         pure,
-        next: 0,
         evidence: EffectEvidence::default(),
-        context_query: false,
         field_cell_slot: None,
         effectful_field_cells: false,
         read_only_assertions: false,
@@ -789,9 +787,13 @@ pub(super) fn lower_checked<'a>(
         composition_calls: Some(audit.calls),
         composition_lookup_sites: audit.checked_lookup_sites,
         counter_hash_helpers: false,
-        scalar_arguments: false,
-        scalar_body_depth: 0,
-        active_calls: HashSet::new(),
+        evaluation: EvaluationState {
+            next: 0,
+            context_query: false,
+            scalar_arguments: false,
+            scalar_body_depth: 0,
+            active_calls: HashSet::new(),
+        },
         stateful_circuits: Some(circuits),
     };
     let scope: Scope = circuit

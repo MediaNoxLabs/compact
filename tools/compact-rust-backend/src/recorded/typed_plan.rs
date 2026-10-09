@@ -25,10 +25,12 @@ mod composition;
 mod control;
 mod crypto;
 mod effects;
+mod evaluation;
 mod evidence;
 mod leaves;
 mod observations;
 pub(super) use composition::CompositionRejection;
+use evaluation::EvaluationState;
 use evidence::EffectEvidence;
 mod field_observations;
 mod funded_mint;
@@ -154,9 +156,7 @@ struct Plan<'a> {
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
     witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
     pure: &'a HashMap<&'a str, &'a PureCircuit>,
-    next: usize,
     evidence: EffectEvidence,
-    context_query: bool,
     field_cell_slot: Option<(String, u8)>,
     effectful_field_cells: bool,
     read_only_assertions: bool,
@@ -166,16 +166,17 @@ struct Plan<'a> {
     composition_calls: Option<composition::Calls<'a>>,
     composition_lookup_sites: HashSet<*const Expr>,
     counter_hash_helpers: bool,
-    scalar_arguments: bool,
-    scalar_body_depth: usize,
-    active_calls: HashSet<String>,
+    evaluation: EvaluationState,
     stateful_circuits: Option<&'a HashMap<&'a str, &'a StatefulCircuit>>,
 }
 
 impl Plan<'_> {
     fn fresh(&mut self) -> syn::Ident {
-        let id = syn::Ident::new(&format!("__compact_plan_{}", self.next), Span::call_site());
-        self.next += 1;
+        let id = syn::Ident::new(
+            &format!("__compact_plan_{}", self.evaluation.next),
+            Span::call_site(),
+        );
+        self.evaluation.next += 1;
         id
     }
 
@@ -528,7 +529,9 @@ impl Plan<'_> {
                 if self.composite_domain.values() && !self.composite_domain.shielded_helpers() {
                     return None;
                 } // preserve ADR0187 admission
-                if self.context_query || (self.unit_actions && !self.composite_domain.intents()) {
+                if self.evaluation.context_query
+                    || (self.unit_actions && !self.composite_domain.intents())
+                {
                     self.inline_call(
                         name,
                         &callee.parameters,
@@ -583,8 +586,8 @@ impl Plan<'_> {
                         && callee.result == (Type::Bytes { length: 32 })
                         && context_query_value(value, self.pure, &mut HashSet::new(), true);
                     if scalar || context {
-                        let old = self.context_query;
-                        self.context_query = context;
+                        let old = self.evaluation.context_query;
+                        self.evaluation.context_query = context;
                         let result = self.inline_call(
                             name,
                             &callee.parameters,
@@ -596,7 +599,7 @@ impl Plan<'_> {
                             steps,
                             scalar,
                         );
-                        self.context_query = old;
+                        self.evaluation.context_query = old;
                         return result;
                     }
                 }
@@ -749,12 +752,12 @@ impl Plan<'_> {
         }
         // Arguments belong to the caller; even repeated finite calls evaluate
         // before entering the callee's cycle guard and isolated parameter scope.
-        let old_arguments = self.scalar_arguments;
-        self.scalar_arguments = scalar;
+        let old_arguments = self.evaluation.scalar_arguments;
+        self.evaluation.scalar_arguments = scalar;
         let arguments = self.arguments(arguments, parameters, scope, steps);
-        self.scalar_arguments = old_arguments;
+        self.evaluation.scalar_arguments = old_arguments;
         let arguments = arguments?;
-        if !self.active_calls.insert(name.to_owned()) {
+        if !self.evaluation.active_calls.insert(name.to_owned()) {
             return None;
         }
         let isolated = parameters
@@ -771,7 +774,7 @@ impl Plan<'_> {
             })
             .collect();
         if scalar {
-            self.scalar_body_depth += 1;
+            self.evaluation.scalar_body_depth += 1;
         }
         let value = if self.composite_domain == CompositeDomain::TerminalReturns
             || (self.composite_domain == CompositeDomain::ActionfulShieldedPayout
@@ -787,10 +790,10 @@ impl Plan<'_> {
             })()
         };
         if scalar {
-            self.scalar_body_depth -= 1;
+            self.evaluation.scalar_body_depth -= 1;
             self.evidence.scalar_helper_calls += 1;
         }
-        self.active_calls.remove(name);
+        self.evaluation.active_calls.remove(name);
         let value = value?;
         (value.ty == *result).then_some(value)
     }
@@ -1539,9 +1542,7 @@ pub(super) fn lower_effectful<'a>(
         ledger,
         witnesses,
         pure,
-        next: 0,
         evidence: EffectEvidence::default(),
-        context_query: false,
         field_cell_slot: None,
         effectful_field_cells: true,
         read_only_assertions: false,
@@ -1551,9 +1552,13 @@ pub(super) fn lower_effectful<'a>(
         composition_calls: None,
         composition_lookup_sites: HashSet::new(),
         counter_hash_helpers: false,
-        scalar_arguments: false,
-        scalar_body_depth: 0,
-        active_calls: HashSet::new(),
+        evaluation: EvaluationState {
+            next: 0,
+            context_query: false,
+            scalar_arguments: false,
+            scalar_body_depth: 0,
+            active_calls: HashSet::new(),
+        },
         stateful_circuits: None,
     };
     let scope = circuit
@@ -1732,9 +1737,7 @@ pub(super) fn lower_context_query<'a>(
         ledger,
         witnesses,
         pure,
-        next: 0,
         evidence: EffectEvidence::default(),
-        context_query: true,
         field_cell_slot: None,
         effectful_field_cells: false,
         read_only_assertions: false,
@@ -1744,9 +1747,13 @@ pub(super) fn lower_context_query<'a>(
         composition_calls: None,
         composition_lookup_sites: HashSet::new(),
         counter_hash_helpers: false,
-        scalar_arguments: false,
-        scalar_body_depth: 0,
-        active_calls: HashSet::new(),
+        evaluation: EvaluationState {
+            next: 0,
+            context_query: true,
+            scalar_arguments: false,
+            scalar_body_depth: 0,
+            active_calls: HashSet::new(),
+        },
         stateful_circuits: None,
     };
     let mut steps = Vec::new();
@@ -2012,9 +2019,7 @@ pub(super) fn lower_shielded_receive<'a>(
         ledger,
         witnesses,
         pure,
-        next: 0,
         evidence: EffectEvidence::default(),
-        context_query: false,
         field_cell_slot: None,
         effectful_field_cells: false,
         read_only_assertions: false,
@@ -2024,9 +2029,13 @@ pub(super) fn lower_shielded_receive<'a>(
         composition_calls: None,
         composition_lookup_sites: HashSet::new(),
         counter_hash_helpers: false,
-        scalar_arguments: false,
-        scalar_body_depth: 0,
-        active_calls: HashSet::new(),
+        evaluation: EvaluationState {
+            next: 0,
+            context_query: false,
+            scalar_arguments: false,
+            scalar_body_depth: 0,
+            active_calls: HashSet::new(),
+        },
         stateful_circuits: Some(circuits),
     };
     let parameter = &circuit.parameters[0];
@@ -2324,9 +2333,7 @@ fn shielded_plan<'a>(
         ledger,
         witnesses,
         pure,
-        next: 0,
         evidence: EffectEvidence::default(),
-        context_query: false,
         field_cell_slot: None,
         effectful_field_cells: false,
         read_only_assertions: false,
@@ -2336,9 +2343,13 @@ fn shielded_plan<'a>(
         composition_calls: None,
         composition_lookup_sites: HashSet::new(),
         counter_hash_helpers: false,
-        scalar_arguments: false,
-        scalar_body_depth: 0,
-        active_calls: HashSet::new(),
+        evaluation: EvaluationState {
+            next: 0,
+            context_query: false,
+            scalar_arguments: false,
+            scalar_body_depth: 0,
+            active_calls: HashSet::new(),
+        },
         stateful_circuits: Some(circuits),
     }
 }
@@ -2512,9 +2523,7 @@ pub(super) fn lower_composite<'a>(
         ledger,
         witnesses,
         pure,
-        next: 0,
         evidence: EffectEvidence::default(),
-        context_query: false,
         field_cell_slot: None,
         effectful_field_cells: false,
         read_only_assertions: false,
@@ -2524,9 +2533,13 @@ pub(super) fn lower_composite<'a>(
         composition_calls: None,
         composition_lookup_sites: HashSet::new(),
         counter_hash_helpers: false,
-        scalar_arguments: false,
-        scalar_body_depth: 0,
-        active_calls: HashSet::new(),
+        evaluation: EvaluationState {
+            next: 0,
+            context_query: false,
+            scalar_arguments: false,
+            scalar_body_depth: 0,
+            active_calls: HashSet::new(),
+        },
         stateful_circuits: Some(circuits),
     };
     let scope = circuit
@@ -2638,9 +2651,7 @@ pub(super) fn lower<'a>(
         ledger,
         witnesses,
         pure,
-        next: 0,
         evidence: EffectEvidence::default(),
-        context_query: false,
         field_cell_slot: field_cell_slot.clone(),
         effectful_field_cells: false,
         read_only_assertions: assertion_entry,
@@ -2650,9 +2661,13 @@ pub(super) fn lower<'a>(
         composition_calls: None,
         composition_lookup_sites: HashSet::new(),
         counter_hash_helpers: circuit.parameters.is_empty() && circuit.result == Type::Unit,
-        scalar_arguments: false,
-        scalar_body_depth: 0,
-        active_calls: HashSet::new(),
+        evaluation: EvaluationState {
+            next: 0,
+            context_query: false,
+            scalar_arguments: false,
+            scalar_body_depth: 0,
+            active_calls: HashSet::new(),
+        },
         stateful_circuits: Some(circuits),
     };
     let scope: Scope = circuit
@@ -3167,9 +3182,7 @@ mod tests {
             ledger: &ledger,
             witnesses: &witnesses,
             pure: &pure,
-            next: 0,
             evidence: EffectEvidence::default(),
-            context_query: false,
             field_cell_slot: None,
             effectful_field_cells: false,
             read_only_assertions: false,
@@ -3179,9 +3192,13 @@ mod tests {
             composition_calls: None,
             composition_lookup_sites: HashSet::new(),
             counter_hash_helpers: false,
-            scalar_arguments: false,
-            scalar_body_depth: 0,
-            active_calls: HashSet::new(),
+            evaluation: EvaluationState {
+                next: 0,
+                context_query: false,
+                scalar_arguments: false,
+                scalar_body_depth: 0,
+                active_calls: HashSet::new(),
+            },
             stateful_circuits: None,
         };
         let actual = Type::Unsigned { max: "255".into() };
@@ -3240,9 +3257,7 @@ mod tests {
             ledger: &ledger,
             witnesses: &witnesses,
             pure: &pure,
-            next: 0,
             evidence: EffectEvidence::default(),
-            context_query: false,
             field_cell_slot: None,
             effectful_field_cells: false,
             read_only_assertions: false,
@@ -3252,9 +3267,13 @@ mod tests {
             composition_calls: None,
             composition_lookup_sites: HashSet::new(),
             counter_hash_helpers: false,
-            scalar_arguments: false,
-            scalar_body_depth: 0,
-            active_calls: HashSet::new(),
+            evaluation: EvaluationState {
+                next: 0,
+                context_query: false,
+                scalar_arguments: false,
+                scalar_body_depth: 0,
+                active_calls: HashSet::new(),
+            },
             stateful_circuits: None,
         };
         let action = StateAction::CounterIncrement {

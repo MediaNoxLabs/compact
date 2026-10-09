@@ -29,7 +29,7 @@ impl Plan<'_> {
         steps: &mut Vec<syn::Stmt>,
     ) -> Option<TypedValue> {
         match expression {
-            Expr::PersistentCommit { value, opening } if self.context_query => {
+            Expr::PersistentCommit { value, opening } if self.evaluation.context_query => {
                 let value = self.expression(value, scope, steps)?;
                 let opening = self.expression(opening, scope, steps)?;
                 if opening.ty != (Type::Bytes { length: 32 })
@@ -47,13 +47,19 @@ impl Plan<'_> {
                     steps,
                 )
             }
-            Expr::PersistentHash { value } if self.scalar_body_depth > 0 || self.unit_actions => {
+            Expr::PersistentHash { value }
+                if self.evaluation.scalar_body_depth > 0 || self.unit_actions =>
+            {
                 let value = self.expression(value, scope, steps)?;
                 if value.ty
                     != (Type::Tuple {
                         elements: vec![
                             Type::Bytes { length: 32 };
-                            if self.scalar_body_depth > 0 { 3 } else { 2 }
+                            if self.evaluation.scalar_body_depth > 0 {
+                                3
+                            } else {
+                                2
+                            }
                         ],
                     })
                 {

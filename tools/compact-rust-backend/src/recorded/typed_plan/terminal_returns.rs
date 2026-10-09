@@ -177,9 +177,7 @@ pub(super) fn lower<'a>(
         ledger,
         witnesses,
         pure,
-        next: 0,
         evidence: EffectEvidence::default(),
-        context_query: false,
         field_cell_slot: None,
         effectful_field_cells: true,
         read_only_assertions: false,
@@ -189,9 +187,13 @@ pub(super) fn lower<'a>(
         composition_calls: None,
         composition_lookup_sites: Default::default(),
         counter_hash_helpers: false,
-        scalar_arguments: false,
-        scalar_body_depth: 0,
-        active_calls: HashSet::new(),
+        evaluation: EvaluationState {
+            next: 0,
+            context_query: false,
+            scalar_arguments: false,
+            scalar_body_depth: 0,
+            active_calls: HashSet::new(),
+        },
         stateful_circuits: Some(circuits),
     };
 

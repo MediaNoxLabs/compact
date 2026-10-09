@@ -70,8 +70,8 @@ impl Plan<'_> {
                 self.bind(projected, member.ty.clone(), steps)
             }
             Expr::Tuple { elements }
-                if self.context_query
-                    || self.scalar_body_depth > 0
+                if self.evaluation.context_query
+                    || self.evaluation.scalar_body_depth > 0
                     || self.unit_actions
                     || self.composite_domain.shielded_helpers() =>
             {

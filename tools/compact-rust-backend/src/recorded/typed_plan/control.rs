@@ -89,7 +89,8 @@ impl Plan<'_> {
                     || (!self.composite_domain.values()
                         && !(self.unit_actions && then.ty == Type::Unit)
                         && then.ty != Type::Boolean
-                        && !(self.scalar_arguments && then.ty == (Type::Bytes { length: 32 })))
+                        && !(self.evaluation.scalar_arguments
+                            && then.ty == (Type::Bytes { length: 32 })))
                 {
                     return None;
                 }

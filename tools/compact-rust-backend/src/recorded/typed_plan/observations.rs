@@ -66,7 +66,7 @@ impl Plan<'_> {
                 let observed = self.fresh();
                 steps.push(syn::parse_quote!(let (frame, #observed) = crate::ledger_slots::#slot.record_read(frame)?;));
                 self.evidence.counter_reads += 1;
-                if self.scalar_body_depth > 0 {
+                if self.evaluation.scalar_body_depth > 0 {
                     self.evidence.scalar_counter_reads += 1;
                 }
                 self.bind(syn::parse_quote!(runtime::BoundedUint::<18446744073709551615>::new(#observed as u128)?), Type::Unsigned { max: "18446744073709551615".into() }, steps)

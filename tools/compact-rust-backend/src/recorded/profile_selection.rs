@@ -36,7 +36,7 @@ use super::guarded_mutations::{
 };
 use super::profile_attempt::ProfileAttempt;
 use super::typed_plan::{self, CompositionRejection, TypedPlan};
-use super::{effect_plan, kernel_plan, zswap_plan};
+use super::{effect_plan, zswap_plan};
 
 #[cfg(test)]
 #[path = "profile_selection/context_migration_tests.rs"]
@@ -44,6 +44,9 @@ mod context_migration_tests;
 #[cfg(test)]
 #[path = "profile_selection/jubjub_migration_tests.rs"]
 mod jubjub_migration_tests;
+#[cfg(test)]
+#[path = "profile_selection/kernel_migration_tests.rs"]
+mod kernel_migration_tests;
 #[cfg(test)]
 #[path = "profile_selection/terminal_migration_tests.rs"]
 mod terminal_migration_tests;
@@ -148,6 +151,36 @@ fn checked_context_domain(
     ))
 }
 
+/// Kernel interfaces roll out here; actual effects follow checked composition.
+fn checked_kernel_domain(
+    circuit: &StatefulCircuit,
+    ledger: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+) -> Result<Option<TypedPlan>, RenderError> {
+    use crate::ir::{StateReturn, Type};
+    if circuit.internal
+        || circuit.result != Type::Unit
+        || !matches!(
+            circuit.return_value,
+            StateReturn::Unit | StateReturn::Expression { .. }
+        )
+        || !circuit.parameters.iter().all(|p| {
+            matches!(p.ty, Type::Boolean | Type::Bytes { length: 32 })
+                || p.ty
+                    == (Type::Unsigned {
+                        max: u64::MAX.to_string(),
+                    })
+        })
+    {
+        return Ok(None);
+    }
+    resolve_checked_plan(effect_plan::lower_with_calls(
+        circuit, ledger, witnesses, pure, circuits,
+    ))
+}
+
 fn resolve_checked_plan(
     result: Result<TypedPlan, effect_plan::PlanError>,
 ) -> Result<Option<TypedPlan>, RenderError> {
@@ -227,8 +260,13 @@ pub(super) fn select(
         None
     };
     if organizer_steps.is_none() {
-        let before_context = typed_prefix
-            .or_else(|| record_option!("selector.kernel", kernel_plan::lower(circuit, witnesses)));
+        let before_context = match typed_prefix {
+            Some(plan) => Some(plan),
+            None => record_option!(
+                "algebra.kernel",
+                checked_kernel_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?
+            ),
+        };
         let through_context = match before_context {
             Some(plan) => Some(plan),
             None => record_option!(

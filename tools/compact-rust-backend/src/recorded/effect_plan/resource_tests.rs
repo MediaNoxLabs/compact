@@ -15,6 +15,7 @@ use std::time::Instant;
 mod calls;
 mod context_queries;
 mod jubjub;
+mod kernel;
 
 const STACK_BYTES: usize = 2 * 1024 * 1024;
 const CHILD_MODE: &str = "COMPACT_EFFECT_PLAN_RESOURCE_CHILD";

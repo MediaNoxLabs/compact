@@ -63,6 +63,14 @@ pub(super) enum Operation {
     },
     /// Ordered official VM observation of the current contract address.
     KernelSelf,
+    KernelClaim {
+        kind: crate::ir::KernelClaimKind,
+        value: Value,
+    },
+    KernelMintShielded {
+        domain: Value,
+        amount: Value,
+    },
     /// The ledger8 commitment signature qualified by this rollout is a Bytes32 pair.
     PersistentCommit {
         value: Value,

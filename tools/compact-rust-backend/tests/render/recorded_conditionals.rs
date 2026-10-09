@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Closed typed branch profiles and exact conditional operand shapes.
+//! Typed branch composition and remaining unsupported conditional operands.
 
 use super::support::identity;
 use compact_rust_backend::ir::{
@@ -22,8 +22,16 @@ use compact_rust_backend::ir::{
 };
 use compact_rust_backend::render_with_capabilities;
 
+// prettyplease may wrap generic arguments and add a trailing comma.
+fn compact_generic_syntax(source: &str) -> String {
+    source
+        .split_whitespace()
+        .collect::<String>()
+        .replace(",>", ">")
+}
+
 #[test]
-fn recorded_nested_uint64_projection_rejects_other_widths_and_effects() {
+fn recorded_nested_unsigned_projection_composes_widths_and_effects() {
     let mut contract: Contract = serde_json::from_str(include_str!(
         "../../fixtures/recorded-nested-uint64-cell-counter.json"
     ))
@@ -31,11 +39,9 @@ fn recorded_nested_uint64_projection_rejects_other_widths_and_effects() {
     contract.schema_version = SCHEMA_VERSION;
     let rendered = render_with_capabilities(&contract).unwrap();
     assert!(rendered.capabilities.circuits[0].recorded);
-    assert!(
-        rendered
-            .source
-            .contains("__compact_recorded_nested_uint64_")
-    );
+    let recorded = rendered.source.split_once("pub mod recorded").unwrap().1;
+    assert!(compact_generic_syntax(recorded).contains("cast_unsigned::<4,18446744073709551615>"));
+    assert!(recorded.find("record_write").unwrap() < recorded.find("record_increment").unwrap());
 
     let closed = contract.clone();
     let StateAction::Let { action, .. } = &mut contract.stateful_circuits[0].actions[0] else {
@@ -57,7 +63,7 @@ fn recorded_nested_uint64_projection_rejects_other_widths_and_effects() {
     };
     *ty = Type::Unsigned { max: "255".into() };
     assert!(
-        !render_with_capabilities(&contract)
+        render_with_capabilities(&contract)
             .unwrap()
             .capabilities
             .circuits[0]
@@ -79,7 +85,7 @@ fn recorded_nested_uint64_projection_rejects_other_widths_and_effects() {
         max: "65535".into(),
     };
     assert!(
-        !render_with_capabilities(&contract)
+        render_with_capabilities(&contract)
             .unwrap()
             .capabilities
             .circuits[0]
@@ -104,7 +110,7 @@ fn recorded_nested_uint64_projection_rejects_other_widths_and_effects() {
         arguments: vec![],
     };
     assert!(
-        !render_with_capabilities(&contract)
+        render_with_capabilities(&contract)
             .unwrap()
             .capabilities
             .circuits[0]
@@ -176,7 +182,7 @@ fn recorded_conditional_field_pair_rejects_unrecorded_predicates_and_arms() {
 }
 
 #[test]
-fn recorded_annotated_uint8_rejects_unrecorded_predicates_and_arms() {
+fn recorded_annotated_uint8_composes_recorded_predicates_and_arms() {
     let mut contract: Contract = serde_json::from_str(include_str!(
         "../../fixtures/recorded-annotated-uint8-conditional.json"
     ))
@@ -184,11 +190,9 @@ fn recorded_annotated_uint8_rejects_unrecorded_predicates_and_arms() {
     contract.schema_version = SCHEMA_VERSION;
     let rendered = render_with_capabilities(&contract).unwrap();
     assert!(rendered.capabilities.circuits[0].recorded);
-    assert!(
-        rendered
-            .source
-            .contains("__compact_recorded_annotated_uint8_")
-    );
+    let recorded = rendered.source.split_once("pub mod recorded").unwrap().1;
+    assert!(compact_generic_syntax(recorded).contains("cast_unsigned::<2,255>"));
+    assert!(recorded.contains("record_write"));
     assert!(rendered.source.contains("runtime::Field::from"));
 
     let closed = contract.clone();
@@ -206,7 +210,7 @@ fn recorded_annotated_uint8_rejects_unrecorded_predicates_and_arms() {
         index: 0,
     };
     assert!(
-        !render_with_capabilities(&contract)
+        render_with_capabilities(&contract)
             .unwrap()
             .capabilities
             .circuits[0]
@@ -237,7 +241,7 @@ fn recorded_annotated_uint8_rejects_unrecorded_predicates_and_arms() {
         ty: Type::Unsigned { max: "2".into() },
     };
     assert!(
-        !render_with_capabilities(&contract)
+        render_with_capabilities(&contract)
             .unwrap()
             .capabilities
             .circuits[0]
@@ -318,14 +322,16 @@ fn recorded_closed_curve_argument_rejects_effectful_predicates_and_arms() {
 }
 
 #[test]
-fn recorded_nested_uint4_accepts_only_closed_typed_arms() {
+fn recorded_nested_uint4_composes_typed_arithmetic_and_witness_arms() {
     let mut contract: Contract =
         serde_json::from_str(include_str!("../../fixtures/recorded-nested-uint4.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
     let rendered = render_with_capabilities(&contract).unwrap();
     assert!(rendered.capabilities.circuits[0].recorded);
     assert!(rendered.source.contains("BoundedUint::<4>::new"));
-    assert!(rendered.source.contains("__compact_recorded_nested_field_"));
+    let recorded = rendered.source.split_once("pub mod recorded").unwrap().1;
+    assert!(recorded.contains("if "));
+    assert!(recorded.contains("record_write"));
 
     let closed = contract.clone();
 
@@ -359,7 +365,7 @@ fn recorded_nested_uint4_accepts_only_closed_typed_arms() {
         ty: Type::Unsigned { max: "2".into() },
     };
     assert!(
-        !render_with_capabilities(&contract)
+        render_with_capabilities(&contract)
             .unwrap()
             .capabilities
             .circuits[0]
@@ -394,6 +400,40 @@ fn recorded_nested_uint4_accepts_only_closed_typed_arms() {
             arguments: vec![],
         }),
         ty: Type::Unsigned { max: "2".into() },
+    };
+    assert!(
+        render_with_capabilities(&contract)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
+    );
+    // General multiplication has not entered the outer checked vocabulary.
+    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    let Expr::If { then, .. } = &mut bindings[0].value else {
+        unreachable!()
+    };
+    let Expr::Coerce { value, .. } = then.as_mut() else {
+        unreachable!()
+    };
+    let Expr::UnsignedCast { value, .. } = value.as_mut() else {
+        unreachable!()
+    };
+    let Expr::If { then, .. } = value.as_mut() else {
+        unreachable!()
+    };
+    **then = Expr::UnsignedMultiply {
+        max: "2".into(),
+        left: Box::new(Expr::UnsignedLiteral {
+            value: "1".into(),
+            max: "2".into(),
+        }),
+        right: Box::new(Expr::UnsignedLiteral {
+            value: "1".into(),
+            max: "2".into(),
+        }),
     };
     assert!(
         !render_with_capabilities(&contract)

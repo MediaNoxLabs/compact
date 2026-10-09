@@ -414,7 +414,7 @@ fn kernel_effects_have_typed_arguments_and_no_fictional_ledger_slots() {
 }
 
 #[test]
-fn kernel_recording_rejects_public_slot_composition_and_escaped_scopes() {
+fn kernel_recording_composes_public_slots_but_rejects_escaped_scopes() {
     let mut contract: Contract =
         serde_json::from_str(include_str!("../kernel-shielded-effects-schema20-ir.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
@@ -436,7 +436,13 @@ fn kernel_recording_rejects_public_slot_composition_and_escaped_scopes() {
         .iter()
         .find(|c| c.name == "mint")
         .unwrap();
-    assert!(!mint.recorded && !mint.observed_call);
+    assert!(mint.recorded && mint.observed_call);
+    let recorded = rendered.source.split("pub mod recorded").nth(1).unwrap();
+    let mint_body = recorded.split("pub fn nullifier").next().unwrap();
+    assert!(
+        mint_body.find(".record_write(frame,").unwrap()
+            < mint_body.find(".kernel_mint_shielded(").unwrap()
+    );
 
     let mut escaped = contract.clone();
     let circuit = escaped
@@ -444,6 +450,7 @@ fn kernel_recording_rejects_public_slot_composition_and_escaped_scopes() {
         .iter_mut()
         .find(|c| c.name == "witness_order")
         .unwrap();
+    // The first Let is followed by a sibling action: its locals cannot escape.
     circuit.actions.push(StateAction::Expression {
         value: Expr::KernelClaim {
             claim: compact_rust_backend::ir::KernelClaimKind::CoinSpend,

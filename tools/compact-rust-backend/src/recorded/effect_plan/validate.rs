@@ -215,6 +215,17 @@ fn block(
             | Operation::StructProject { .. }
             | Operation::Tuple { .. } => aggregates::validate(binding, declarations, &scope)?,
             Operation::KernelSelf => *ty == crate::ir::contract_address_type(),
+            Operation::KernelClaim { value, .. } => {
+                use_value(value)?;
+                value.ty == (Type::Bytes { length: 32 }) && *ty == Type::Unit
+            }
+            Operation::KernelMintShielded { domain, amount } => {
+                use_value(domain)?;
+                use_value(amount)?;
+                domain.ty == (Type::Bytes { length: 32 })
+                    && amount.ty == uint("18446744073709551615")
+                    && *ty == Type::Unit
+            }
             Operation::PersistentCommit { value, opening } => {
                 use_value(value)?;
                 use_value(opening)?;

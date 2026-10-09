@@ -287,7 +287,7 @@ fn typed_field_helper_hash_then_cell_read_preserves_order_and_rejects_effects() 
 }
 
 #[test]
-fn closed_field_pair_hash_call_records_typed_bridge_without_admitting_other_hashes() {
+fn certified_pure_hash_bridge_records_body_variants_but_direct_hashes_remain_bounded() {
     let vector = Type::Vector {
         element: Box::new(Type::Field),
         length: 2,
@@ -390,15 +390,30 @@ fn closed_field_pair_hash_call_records_typed_bridge_without_admitting_other_hash
     contract.circuits[0].body = Expr::TransientHash {
         value: Box::new(Expr::FieldLiteral { value: "3".into() }),
     };
+    // Certification checks the complete native pure body, so a scalar hash is
+    // accepted inside the helper even though it is outside the old pair shape.
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    let body = rendered.source.split("pub mod recorded").nth(1).unwrap();
+    assert_eq!(body.matches("pure_circuits::bridge()?").count(), 1);
+    assert!(
+        body.find("pure_circuits::bridge()?").unwrap() < body.find("record_write(frame").unwrap()
+    );
+
+    // Direct recorded hash lowering still has its own bounded domain. Pure
+    // certification must not accidentally authorize an unrelated IR operation.
+    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    bindings[0].value = Expr::TransientHash {
+        value: Box::new(Expr::FieldLiteral { value: "3".into() }),
+    };
     let rejected = render_with_capabilities(&contract).unwrap();
     assert!(!rejected.capabilities.circuits[0].recorded);
-    assert_eq!(
+    assert!(
         rejected.capabilities.circuits[0]
             .recording_unavailable
-            .as_ref()
-            .unwrap()
-            .ir_node,
-        "Expr::Call"
+            .is_some()
     );
 }
 
@@ -473,14 +488,44 @@ fn composite_recording_does_not_erase_local_argument_widening() {
     let mut contract: Contract =
         serde_json::from_str(include_str!("../struct-helper-widening-schema13-ir.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
-    let available = |contract: &Contract| {
-        render_with_capabilities(contract)
-            .unwrap()
-            .capabilities
-            .circuits[0]
-            .recorded
+    let assert_widening_order = |contract: &Contract, call: &str| {
+        let rendered = render_with_capabilities(contract).unwrap();
+        assert_eq!(rendered.capabilities.circuits.len(), 1);
+        assert!(rendered.capabilities.circuits[0].recorded);
+        // Prettyplease may split the witness receiver and generic arguments
+        // across lines, including a trailing generic comma. Compare tokens
+        // while preserving the exact cast bounds and operation order.
+        let body = rendered.source.split("pub mod recorded").nth(1).unwrap();
+        let body = body
+            .chars()
+            .filter(|character| !character.is_whitespace())
+            .collect::<String>()
+            .replace(",>", ">");
+        assert_eq!(body.matches("witnesses.small(").count(), 1);
+        assert_eq!(body.matches("cast_unsigned::<255,65535>").count(), 1);
+        assert_eq!(body.matches(call).count(), 1);
+        let witness = body.find("witnesses.small(").unwrap();
+        let widening = body.find("cast_unsigned::<255,65535>").unwrap();
+        let helper = body.find(call).unwrap();
+        let write = body.find("record_write(frame").unwrap();
+        assert!(witness < widening && widening < helper && helper < write);
     };
-    assert!(!available(&contract));
+    assert_widening_order(&contract, "pure_circuits::wrap(");
+
+    // An explicit widening is required by the native pure-call signature. The
+    // newly supported composition must not erase that type check.
+    let mut wrong_width = contract.clone();
+    let StateAction::Let { action, .. } = &mut wrong_width.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    let StateAction::Let { bindings, .. } = action.as_mut() else {
+        unreachable!()
+    };
+    let Expr::Call { arguments, .. } = &mut bindings[0].value else {
+        unreachable!()
+    };
+    arguments[0] = Expr::Parameter { name: "n".into() };
+    assert!(render_with_capabilities(&wrong_width).is_err());
     // Exercise the same conversion through a struct-returning witness.
     let helper = contract
         .circuits
@@ -521,5 +566,5 @@ fn composite_recording_does_not_erase_local_argument_widening() {
     for action in &mut contract.stateful_circuits[0].actions {
         replace(action);
     }
-    assert!(!available(&contract));
+    assert_widening_order(&contract, "witnesses.wrap(");
 }

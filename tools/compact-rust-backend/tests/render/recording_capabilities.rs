@@ -185,7 +185,9 @@ fn recording_gaps_follow_the_first_definite_ir_failure() {
                         index: 0,
                     },
                     StateAction::Expression {
-                        value: Expr::Boolean { value: true },
+                        value: Expr::PersistentHash {
+                            value: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
+                        },
                     },
                     StateAction::Expression {
                         value: Expr::Boolean { value: false },
@@ -202,15 +204,9 @@ fn recording_gaps_follow_the_first_definite_ir_failure() {
 
     contract.stateful_circuits[0].actions.clear();
     let report = render_with_capabilities(&contract).unwrap().capabilities;
-    assert_eq!(
-        report.circuits[0]
-            .recording_unavailable
-            .as_ref()
-            .unwrap()
-            .code
-            .as_str(),
-        "no_recorded_effect"
-    );
+    // Compositional Unit recording can be empty; preparation is a separate gate.
+    assert!(report.circuits[0].recorded && report.circuits[0].observed_call);
+    assert!(report.circuits[0].recording_unavailable.is_none());
 
     contract.stateful_circuits[0].result = Type::Boolean;
     contract.stateful_circuits[0].return_value = StateReturn::Expression {
@@ -252,7 +248,9 @@ fn conditional_recording_rejects_an_unsupported_unselected_branch() {
                     index: 0,
                 }),
                 otherwise: Box::new(StateAction::Expression {
-                    value: Expr::Boolean { value: false },
+                    value: Expr::PersistentHash {
+                        value: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
+                    },
                 }),
             }],
         }],

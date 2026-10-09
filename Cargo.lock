@@ -1287,6 +1287,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-effect-plan-kernel-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-base-crypto",
+ "midnight-compact-runtime",
+ "midnight-serialize",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-effect-plan-pure-calls-source-fixture"
 version = "0.1.0"
 dependencies = [
@@ -1665,6 +1676,7 @@ dependencies = [
 name = "compact-rust-kernel-shielded-effects-oracle-fixture"
 version = "0.1.0"
 dependencies = [
+ "compact-rust-backend",
  "hex",
  "midnight-base-crypto",
  "midnight-coin-structure",
@@ -2349,6 +2361,17 @@ dependencies = [
  "midnight-onchain-state",
  "midnight-serialize",
  "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
+name = "compact-rust-scope-identity-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-base-crypto",
+ "midnight-compact-runtime",
+ "midnight-serialize",
  "serde_json",
 ]
 

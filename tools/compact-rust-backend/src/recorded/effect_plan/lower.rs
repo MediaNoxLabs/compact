@@ -17,6 +17,7 @@ mod calls;
 mod counters;
 mod expressions;
 mod jubjub;
+mod kernel;
 mod ordinary;
 mod pure;
 use super::pure_certification::{Certificates, Certifier};

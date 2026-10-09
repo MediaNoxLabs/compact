@@ -22,8 +22,40 @@ use compact_rust_backend::ir::{
 };
 use compact_rust_backend::{RenderError, render, render_with_capabilities};
 
+// Inspect only the requested recorded function, excluding native and observed APIs.
+fn recorded_function(source: &str, name: &str) -> String {
+    use quote::ToTokens;
+    fn find(items: &[syn::Item], name: &str) -> Option<String> {
+        for item in items {
+            if let syn::Item::Mod(module) = item
+                && let Some((_, items)) = &module.content
+            {
+                if module.ident == "recorded" {
+                    return items.iter().find_map(|item| match item {
+                        syn::Item::Fn(function) if function.sig.ident == name => {
+                            Some(function.block.to_token_stream().to_string())
+                        }
+                        _ => None,
+                    });
+                }
+                if let Some(found) = find(items, name) {
+                    return Some(found);
+                }
+            }
+        }
+        None
+    }
+    find(&syn::parse_file(source).unwrap().items, name).expect("recorded function")
+}
+fn assert_scoped_witness_write(source: &str, name: &str) {
+    let body = recorded_function(source, name);
+    assert_eq!(body.matches("try_witness_metered").count(), 1, "{name}");
+    assert_eq!(body.matches("record_write").count(), 1, "{name}");
+    assert!(body.find("try_witness_metered").unwrap() < body.find("record_write").unwrap());
+}
+
 #[test]
-fn recorded_field_returning_helper_is_shared_across_callers() {
+fn recorded_field_returning_helpers_compose_once_in_each_caller() {
     let mut contract = identity(Type::Unit, Expr::Unit);
     contract.ledger_fields = vec![LedgerField {
         source: None,
@@ -91,10 +123,13 @@ fn recorded_field_returning_helper_is_shared_across_callers() {
     );
     assert_eq!(
         source.matches("__compact_recorded_body_innerValue").count(),
-        3
+        1
     );
     assert!(source.contains("pub fn outerA<Private"));
     assert!(source.contains("pub fn outerB<Private"));
+    for name in ["outerA", "outerB"] {
+        assert_scoped_witness_write(&source, name);
+    }
 
     contract.stateful_circuits[0].parameters = vec![
         Parameter {
@@ -144,13 +179,14 @@ fn recorded_field_returning_helper_is_shared_across_callers() {
     );
     assert_eq!(
         source.matches("__compact_recorded_body_innerValue").count(),
-        3
+        1
     );
     assert!(source.contains("__compact_param_0: runtime::Field"));
     assert!(source.contains("__compact_param_1: runtime::Field"));
 
     // The compiler lowers `value = innerValue(1, 2) + 3` to a Field
-    // action binding with an expression-nested call. Reuse the same body.
+    // action binding with an expression-nested call. Its checked scoped body
+    // still observes the witness once before the caller writes the result.
     let mut nested = contract.stateful_circuits[1].clone();
     nested.name = "outerNested".into();
     let StateAction::Let { bindings, .. } = &mut nested.actions[0] else {
@@ -177,9 +213,10 @@ fn recorded_field_returning_helper_is_shared_across_callers() {
     );
     assert_eq!(
         source.matches("__compact_recorded_body_innerValue").count(),
-        4
+        1
     );
     assert!(source.contains("pub fn outerNested<Private"));
+    assert_scoped_witness_write(&source, "outerNested");
 
     contract
         .stateful_circuits
@@ -195,7 +232,7 @@ fn recorded_field_returning_helper_is_shared_across_callers() {
         nested_only
             .matches("__compact_recorded_body_innerValue")
             .count(),
-        2
+        1
     );
 
     contract.stateful_circuits[0].return_value = StateReturn::Expression {
@@ -365,10 +402,12 @@ fn pure_field_calls_preserve_unit_and_record_ordinary_hashed_returns() {
     let rendered = render_with_capabilities(&contract).unwrap();
     assert!(rendered.capabilities.circuits[0].recorded);
     assert!(rendered.capabilities.circuits[0].observed_call);
-    assert!(rendered
-        .source
-        .contains("let __compact_recorded_pure_field_0: runtime::Field = crate::pure_circuits::literalField()?;"));
-    assert!(rendered.source.contains("record_write(frame"));
+    let recorded = recorded_function(&rendered.source, "writeLiteral");
+    assert_eq!(recorded.matches("pure_circuits :: literalField").count(), 1);
+    assert!(
+        recorded.find("pure_circuits :: literalField").unwrap()
+            < recorded.find("record_write").unwrap()
+    );
 
     contract.stateful_circuits[0].result = Type::Field;
     contract.stateful_circuits[0].return_value = StateReturn::Expression {

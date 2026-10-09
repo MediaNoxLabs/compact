@@ -65,6 +65,7 @@ mod effect_plan;
 #[cfg(test)]
 mod effectful_migration_tests;
 mod intent_effect;
+#[cfg(test)]
 mod kernel_plan;
 mod typed_plan;
 mod zswap_plan;

@@ -446,7 +446,7 @@ fn recorded_pure_assert_call_rejects_extra_pure_steps() {
 }
 
 #[test]
-fn conditional_assertion_folds_only_closed_same_type_unsigned_equality() {
+fn conditional_assertion_keeps_typed_equality_and_branch_local_observations() {
     let mut contract = identity(Type::Unit, Expr::Unit);
     contract.circuits.clear();
     contract.ledger_fields = vec![LedgerField {
@@ -495,11 +495,9 @@ fn conditional_assertion_folds_only_closed_same_type_unsigned_equality() {
     }];
     let rendered = render_with_capabilities(&contract).unwrap();
     assert!(rendered.capabilities.circuits[0].recorded);
-    assert!(
-        rendered
-            .source
-            .contains("__compact_recorded_conditional_bool_0: bool = !(__compact_param_0)")
-    );
+    let recorded = rendered.source.split_once("pub mod recorded").unwrap().1;
+    assert!(recorded.contains(" == "));
+    assert!(recorded.find("AssertionFailed").unwrap() < recorded.find("record_write").unwrap());
     assert!(rendered.source.contains("closed equality denied"));
     assert!(rendered.source.contains("record_write(frame"));
 
@@ -515,6 +513,56 @@ fn conditional_assertion_folds_only_closed_same_type_unsigned_equality() {
         left: Box::new(Expr::CellRead {
             field: "fieldCell".into(),
             index: 0,
+        }),
+        right: Box::new(Expr::FieldLiteral { value: "1".into() }),
+    };
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    let recorded = rendered.source.split_once("pub mod recorded").unwrap().1;
+    assert_eq!(recorded.matches("record_read(frame)").count(), 1);
+    assert!(
+        recorded.find("record_read(frame)").unwrap() < recorded.find("AssertionFailed").unwrap()
+    );
+    // Inspect syntax to ensure the observation remains in the selected arm.
+    use quote::ToTokens;
+    use syn::visit_mut::VisitMut;
+    struct SelectedRead(usize);
+    impl VisitMut for SelectedRead {
+        fn visit_expr_if_mut(&mut self, branch: &mut syn::ExprIf) {
+            if branch
+                .then_branch
+                .to_token_stream()
+                .to_string()
+                .contains("record_read")
+            {
+                assert!(
+                    !branch
+                        .cond
+                        .to_token_stream()
+                        .to_string()
+                        .contains("record_read")
+                );
+                self.0 += 1;
+            }
+            syn::visit_mut::visit_expr_if_mut(self, branch);
+        }
+    }
+    let mut syntax = syn::parse_file(&rendered.source).unwrap();
+    let mut selected = SelectedRead(0);
+    selected.visit_file_mut(&mut syntax);
+    assert_eq!(selected.0, 1);
+
+    // A direct transient hash is still outside the checked recording vocabulary.
+    let StateAction::Assert {
+        condition: Expr::If { then, .. },
+        ..
+    } = &mut contract.stateful_circuits[0].actions[0]
+    else {
+        unreachable!()
+    };
+    **then = Expr::Equal {
+        left: Box::new(Expr::TransientHash {
+            value: Box::new(Expr::FieldLiteral { value: "1".into() }),
         }),
         right: Box::new(Expr::FieldLiteral { value: "1".into() }),
     };

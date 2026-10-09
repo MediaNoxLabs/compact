@@ -60,6 +60,9 @@ impl Lowerer<'_> {
             | Expr::StructLiteral { .. }
             | Expr::StructField { .. }
             | Expr::Tuple { .. } => self.aggregate(expression, scope, bindings, path)?,
+            Expr::KernelClaim { .. } | Expr::KernelMintShielded { .. } => {
+                self.kernel(expression, scope, bindings, path)?
+            }
             Expr::KernelSelf { ty } => {
                 self.declarations.types().validate_at(ty, path)?;
                 if *ty != crate::ir::contract_address_type() {

@@ -88,6 +88,34 @@ fn block(body: &Block, declarations: &Declarations) -> Result<Vec<syn::Stmt>, Re
                 let elements: Vec<_> = elements.iter().map(value).collect();
                 syn::parse_quote!((#(#elements,)*))
             }
+            Operation::KernelClaim { kind, value: input } => {
+                use crate::ir::KernelClaimKind;
+                let input = value(input);
+                let claim: syn::Expr = match kind {
+                    KernelClaimKind::Nullifier => {
+                        syn::parse_quote!(runtime::ledger::KernelClaim::Nullifier(
+                        runtime::ledger::CoinNullifier(runtime::ledger::HashOutput((#input).into_array()))))
+                    }
+                    KernelClaimKind::CoinSpend => {
+                        syn::parse_quote!(runtime::ledger::KernelClaim::CoinSpend(
+                        runtime::ledger::CoinCommitment(runtime::ledger::HashOutput((#input).into_array()))))
+                    }
+                    KernelClaimKind::CoinReceive => {
+                        syn::parse_quote!(runtime::ledger::KernelClaim::CoinReceive(
+                        runtime::ledger::CoinCommitment(runtime::ledger::HashOutput((#input).into_array()))))
+                    }
+                };
+                steps.push(syn::parse_quote!(let frame = frame.kernel_claim(#claim)?;));
+                syn::parse_quote!(())
+            }
+            Operation::KernelMintShielded { domain, amount } => {
+                let (domain, amount) = (value(domain), value(amount));
+                // The checked exact Uint64 signature proves this conversion fits.
+                steps.push(syn::parse_quote!(let frame = frame.kernel_mint_shielded(
+                    runtime::ledger::HashOutput((#domain).into_array()), (#amount).value() as u64,
+                )?;));
+                syn::parse_quote!(())
+            }
             Operation::KernelSelf => {
                 let observed = syn::Ident::new(
                     &format!("__compact_effect_address_{}", binding.value.id),

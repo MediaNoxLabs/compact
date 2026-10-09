@@ -12,6 +12,8 @@ mod counter;
 mod declaration_tests;
 #[path = "tests/jubjub.rs"]
 mod jubjub;
+#[path = "tests/kernel.rs"]
+mod kernel;
 #[path = "tests/ordinary.rs"]
 mod ordinary;
 #[path = "tests/pure_inclusion.rs"]

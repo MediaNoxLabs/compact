@@ -32,14 +32,57 @@
     (definitions
       (define (object . fields) fields)
 
-      ;; Lowering can create distinct temporaries with the same source
-      ;; symbol. Preserve their ID identity in the Rust IR so nested lets
-      ;; cannot silently shadow an earlier operand.
+      ;; Distinct lexical source IDs can share a spelling. The Rust IR uses
+      ;; names as binding identities, so retain a stable unique name for every
+      ;; ID in one callable (including all of its export aliases). Root formals
+      ;; are reserved before any return/body emission, independent of evaluation
+      ;; order. Rust-compatible spellings stay unchanged unless a collision is
+      ;; encountered. Compact '$' is normalized like Rust naming::ident; later
+      ;; source names resembling suffixes are checked too.
+      (define current-rust-variable-names (make-parameter #f))
+      (define current-rust-used-variable-names (make-parameter #f))
       (define (rust-var-name var-name)
-        (let ([base (symbol->string (id-sym var-name))])
-          (if (id-temp? var-name)
-              (format "~a_~a" base (id-uniq var-name))
-              base)))
+        (let ([names (current-rust-variable-names)]
+              [used (current-rust-used-variable-names)])
+          (unless (and names used)
+            (internal-errorf 'rust-var-name "missing callable binding environment"))
+          (or (eq-hashtable-ref names var-name #f)
+              (let* ([base (list->string
+                             (map (lambda (char) (if (char=? char #\$) #\_ char))
+                                  (string->list (symbol->string (id-sym var-name)))))]
+                     [preferred (if (id-temp? var-name)
+                                    (format "~a_~a" base (id-uniq var-name))
+                                    base)])
+                (let loop ([name preferred] [suffix 1])
+                  (if (hashtable-contains? used name)
+                      (loop (format "~a_Compact~a" preferred suffix) (+ suffix 1))
+                      (begin
+                        (hashtable-set! used name #t)
+                        (eq-hashtable-set! names var-name name)
+                        name)))))))
+
+      (define (with-rust-variable-names pelt owner thunk)
+        (parameterize ([current-rust-variable-names (make-eq-hashtable)]
+                       [current-rust-used-variable-names (make-hashtable string-hash string=?)])
+          (define (reserve-arguments args)
+            (for-each (lambda (arg)
+                        (nanopass-case (Lnodisclose Argument) arg
+                          [(,var-name ,type) (rust-var-name var-name)]))
+                      args))
+          (nanopass-case (Lnodisclose Program-Element) pelt
+            [(circuit ,src ,function-name (,arg* ...) ,type ,expr)
+             (when (or (and (eq? owner 'pure) (id-pure? function-name))
+                       (and (eq? owner 'stateful) (not (id-pure? function-name))))
+               (reserve-arguments arg*))]
+            [(witness ,src ,function-name (,arg* ...) ,type)
+             (when (eq? owner 'witness) (reserve-arguments arg*))]
+            [(public-ledger-declaration ,pl-array ,lconstructor)
+             (when (eq? owner 'constructor)
+               (nanopass-case (Lnodisclose Ledger-Constructor) lconstructor
+                 [(constructor ,src ((,var-name* ,type*) ...) ,expr)
+                  (for-each rust-var-name var-name*)]))]
+            [else (void)])
+          (thunk)))
 
       (define call-argument-types (make-eq-hashtable))
       (define function-rust-names (make-eq-hashtable))
@@ -994,7 +1037,7 @@
           [(safe-cast ,src ,type ,type^ ,expr)
            (counter-amount-ir expr environment owner-src)]
           [(var-ref ,src ,var-name)
-           (let ([entry (assq (id-sym var-name) environment)])
+           (let ([entry (assq var-name environment)])
              (if entry
                  (cdr entry)
                  (source-errorf src "Rust backend cannot resolve Counter increment amount")))]
@@ -1045,7 +1088,7 @@
                      (lambda (environment local value)
                        (nanopass-case (Lnodisclose Argument) local
                          [(,var-name ,type)
-                          (cons (cons (id-sym var-name)
+                          (cons (cons var-name
                                       (object (cons "kind" "parameter")
                                               (cons "name" (rust-var-name var-name))))
                                 environment)]))
@@ -1250,7 +1293,7 @@
         (nanopass-case (Lnodisclose Expression) value-expr
           [(return ,src ,expr) (tail-return-variable expr)]
           [(seq ,src ,expr* ... ,expr) (tail-return-variable expr)]
-          [(var-ref ,src ,var-name) (id-sym var-name)]
+          [(var-ref ,src ,var-name) var-name]
           [else #f]))
 
       (define (let-return-uses-binding? local* body)
@@ -1258,7 +1301,7 @@
           (and returned
                (exists (lambda (local)
                          (nanopass-case (Lnodisclose Argument) local
-                           [(,var-name ,type) (eq? (id-sym var-name) returned)]))
+                           [(,var-name ,type) (eq? var-name returned)]))
                        local*))))
 
       (define (stateful-body-has-cell-write? value-expr)
@@ -1303,7 +1346,7 @@
                          (lambda (environment local value)
                            (nanopass-case (Lnodisclose Argument) local
                              [(,var-name ,type)
-                              (cons (cons (id-sym var-name)
+                              (cons (cons var-name
                                           (object (cons "kind" "parameter")
                                                   (cons "name" (rust-var-name var-name))))
                                     environment)]))
@@ -1387,7 +1430,7 @@
                      (lambda (current local value)
                        (nanopass-case (Lnodisclose Argument) local
                          [(,var-name ,type)
-                          (cons (cons (id-sym var-name)
+                          (cons (cons var-name
                                       (object (cons "kind" "parameter")
                                               (cons "name" (rust-var-name var-name))))
                                 current)]))
@@ -2023,7 +2066,7 @@
                                                               (map (lambda (arg)
                                                                      (nanopass-case (Lnodisclose Argument) arg
                                                                        [(,var-name ,type)
-                                                                        (cons (id-sym var-name)
+                                                                        (cons var-name
                                                                               (object (cons "kind" "parameter")
                                                                                       (cons "name" (rust-var-name var-name))))]))
                                                                    arg*) witness-ids)))
@@ -2035,7 +2078,7 @@
                                                 (map (lambda (arg)
                                                        (nanopass-case (Lnodisclose Argument) arg
                                                          [(,var-name ,type)
-                                                          (cons (id-sym var-name)
+                                                          (cons var-name
                                                                 (object (cons "kind" "parameter")
                                                                         (cons "name" (rust-var-name var-name))))]))
                                                      arg*) witness-ids))))
@@ -2067,7 +2110,7 @@
             '() bindings)
           (map (lambda (name)
                  (cons name (object (cons "kind" "parameter")
-                                    (cons "name" (symbol->string name)))))
+                                    (cons "name" (rust-var-name name)))))
                parameters)))
 
       ;; Constructor literals retain the same expected-type inference as pure
@@ -2086,10 +2129,10 @@
       (define (constructor-value-ir expr expected-type parameters bindings owner-src witness-ids)
         (nanopass-case (Lnodisclose Expression) expr
           [(var-ref ,src ,var-name)
-           (let ([binding (assq (id-sym var-name) bindings)])
+           (let ([binding (assq var-name bindings)])
              (cond
                [binding (expression-ir expr src)]
-               [(memq (id-sym var-name) parameters) (expression-ir expr src)]
+               [(memq var-name parameters) (expression-ir expr src)]
                [else (source-errorf src "Rust constructor value must be a parameter or typed literal")]))]
           [else (constructor-typed-expression-ir expr expected-type owner-src witness-ids)]))
 
@@ -2105,7 +2148,7 @@
                '()
                (source-errorf src "Rust constructor fold body must have unit effects"))]
           [(var-ref ,src ,var-name)
-           (if (eq? (id-sym var-name) accumulator)
+           (if (eq? var-name accumulator)
                '()
                (source-errorf src "Rust constructor fold must return its accumulator"))]
           [(if ,src ,expr0 ,expr1 ,expr2)
@@ -2165,7 +2208,7 @@
                             (source-errorf src2 "Rust constructor fold length differs from its iterable"))
                           (object (cons "kind" "for_each")
                                   (cons "binding"
-                                        (object (cons "name" (symbol->string (id-sym item-name)))
+                                        (object (cons "name" (rust-var-name item-name))
                                                 (cons "ty" (type-ir item-type src))))
                                   (cons "values"
                                         (list->vector
@@ -2177,22 +2220,22 @@
                                                tuple-arg*)))
                                   (cons "steps"
                                         (list->vector
-                                          (constructor-fold-body-ir expr1 (id-sym acc-name)
-                                                                    (cons (id-sym item-name) parameters)
+                                          (constructor-fold-body-ir expr1 acc-name
+                                                                    (cons item-name parameters)
                                                                     src1 witness-ids))))]
                          [(var-ref ,src2 ,var-name)
-                          (unless (memq (id-sym var-name) parameters)
+                          (unless (memq var-name parameters)
                             (source-errorf src2 "Rust constructor Vector iterable must be a constructor parameter"))
                           (object (cons "kind" "for_each_vector")
                                   (cons "binding"
-                                        (object (cons "name" (symbol->string (id-sym item-name)))
+                                        (object (cons "name" (rust-var-name item-name))
                                                 (cons "ty" (type-ir item-type src))))
                                   (cons "source" (typed-expression-ir expr2 type src2))
                                   (cons "length" len)
                                   (cons "steps"
                                         (list->vector
-                                          (constructor-fold-body-ir expr1 (id-sym acc-name)
-                                                                    (cons (id-sym item-name) parameters)
+                                          (constructor-fold-body-ir expr1 acc-name
+                                                                    (cons item-name parameters)
                                                                     src1 witness-ids))))]
                          [else (source-errorf src "Rust constructor fold needs a literal or parameter Vector iterable")])]))]))])]
              [else (source-errorf src "Rust constructor fold needs an inline circuit body")])]
@@ -2202,7 +2245,7 @@
                      (lambda (bindings local value)
                        (nanopass-case (Lnodisclose Argument) local
                          [(,var-name ,type)
-                          (cons (cons (id-sym var-name) (constructor-typed-expression-ir value type src witness-ids)) bindings)]))
+                          (cons (cons var-name (constructor-typed-expression-ir value type src witness-ids)) bindings)]))
                      bindings local* expr*)])
              (object (cons "kind" "let")
                      (cons "bindings"
@@ -2297,8 +2340,8 @@
                 [(and (eq? adt-name '__compact_Cell) (eq? ledger-op 'write) (= (length expr*) 1))
                  (nanopass-case (Lnodisclose Expression) (car expr*)
                    [(var-ref ,src1 ,var-name)
-                    (let ([binding (assq (id-sym var-name) bindings)])
-                      (unless (or binding (memq (id-sym var-name) parameters))
+                    (let ([binding (assq var-name bindings)])
+                      (unless (or binding (memq var-name parameters))
                         (source-errorf src1 "Rust constructor Cell initializer must be a constructor parameter or literal"))
                       (object (cons "kind" "cell_write")
                               (cons "field" (symbol->string (id-sym ledger-field-name)))
@@ -2365,14 +2408,14 @@
           [(public-ledger-declaration ,pl-array ,lconstructor)
            (nanopass-case (Lnodisclose Ledger-Constructor) lconstructor
              [(constructor ,src ((,var-name* ,type*) ...) ,expr)
-              (let ([steps (constructor-steps-ir expr (map id-sym var-name*) src witness-ids)])
+              (let ([steps (constructor-steps-ir expr var-name* src witness-ids)])
                 (if (and (null? var-name*) (null? steps))
                     #f
                     (with-source src
                       (object (cons "parameters"
                                   (list->vector
                                     (map (lambda (name ty)
-                                           (object (cons "name" (symbol->string (id-sym name)))
+                                           (object (cons "name" (rust-var-name name))
                                                    (cons "ty" (type-ir ty src))))
                                          var-name* type*)))
                               (cons "steps" (list->vector steps))))))])]
@@ -2390,7 +2433,10 @@
        (for-each index-call-argument-types pelt*)
        (let* ([witness-ids (witness-id-table pelt*)]
               [constructor* (filter (lambda (value) value)
-                                    (map (lambda (pelt) (constructor-ir pelt witness-ids)) pelt*))]
+                                    (map (lambda (pelt)
+                                           (with-rust-variable-names pelt 'constructor
+                                             (lambda () (constructor-ir pelt witness-ids))))
+                                         pelt*))]
               [export-alist (map cons export-name* name*)])
          (when (> (length constructor*) 1)
            (source-errorf src "Rust backend found multiple constructors"))
@@ -2404,17 +2450,25 @@
                            (fold-right (lambda (pelt fields) (ledger-fields-ir pelt fields src)) '() pelt*)))
                    (cons "witnesses"
                          (list->vector
-                           (fold-right witness-declaration-ir '() pelt*)))
+                           (fold-right
+                             (lambda (pelt declarations)
+                               (with-rust-variable-names pelt 'witness
+                                 (lambda () (witness-declaration-ir pelt declarations))))
+                             '() pelt*)))
                    (cons "circuits"
                          (list->vector
                            (fold-right
-                             (lambda (pelt circuits) (circuit-ir pelt export-alist circuits))
+                             (lambda (pelt circuits)
+                               (with-rust-variable-names pelt 'pure
+                                 (lambda () (circuit-ir pelt export-alist circuits))))
                              '()
                              pelt*)))
                    (cons "stateful_circuits"
                          (list->vector
                            (fold-right
-                             (lambda (pelt circuits) (stateful-circuit-ir pelt export-alist witness-ids circuits))
+                             (lambda (pelt circuits)
+                               (with-rust-variable-names pelt 'stateful
+                                 (lambda () (stateful-circuit-ir pelt export-alist witness-ids circuits))))
                              '()
                              pelt*))))
                    (if (null? constructor*) '() (list (cons "constructor" (car constructor*)))))))

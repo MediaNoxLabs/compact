@@ -103,6 +103,7 @@ mod positional_lists;
 mod positional_maps;
 mod positional_merkle;
 mod positional_sets;
+mod positional_suite;
 mod positional_unsigned;
 mod positional_witnesses;
 mod proof_material;
@@ -3273,131 +3274,8 @@ fn run() -> Result<(), Box<dyn Error>> {
             Err(_) => Err("historic indexed Merkle proof thread panicked".into()),
         };
     }
-    let positional_inputs::PositionalInputs {
-        counter_root,
-        cell_root,
-        cell_read_root,
-        witness_root,
-        nested_root,
-        expression_root,
-        set_root,
-        set_oracle_root,
-        map_root,
-        constructor_map_root,
-        list_root,
-        constructor_list_root,
-        enum_cell_root,
-        tiny_root,
-        nested_map_shape_root,
-        list_shapes_root,
-        merkle_root,
-        historic_merkle_root,
-        vector_key_root,
-        counter_parameter_root,
-        composite_key_root,
-        chunked_set_root,
-        chunked_list_root,
-        chunked_map_root,
-        chunked_cell_root,
-        uints_root,
-        wide_root,
-    } = positional_inputs::PositionalInputs::parse(first, &mut arguments)?;
-    let counter_root = Path::new(&counter_root);
-    let cell_root = Path::new(&cell_root);
-    let cell_read_root = Path::new(&cell_read_root);
-    let handoff_config = HandoffConfig::from_env()?;
-    let mut rng = StdRng::seed_from_u64(0x434f4d50414354);
-    positional_counters::check_binding_and_handoff(
-        counter_root,
-        cell_root,
-        &handoff_config,
-        &mut rng,
-    )?;
-
-    if let Some(root) = counter_parameter_root.as_ref() {
-        let root = Path::new(root);
-        positional_counters::check_parameterized(root, &mut rng)?;
-    }
-
-    positional_cells::check_write_and_read(cell_root, cell_read_root, &mut rng)?;
-
-    if let Some(witness_root) = witness_root {
-        let witness_root = Path::new(&witness_root);
-        positional_witnesses::check_cell_witnesses(witness_root, &mut rng)?;
-    }
-    if let Some(nested_root) = nested_root {
-        let nested_root = Path::new(&nested_root);
-        positional_counters::check_nested_calls(nested_root, &mut rng)?;
-    }
-    if let Some(expression_root) = expression_root {
-        let expression_root = Path::new(&expression_root);
-        positional_witnesses::check_nested_expressions(expression_root, &mut rng)?;
-    }
-    if let Some(set_root) = set_root {
-        let set_root = Path::new(&set_root);
-        positional_sets::check_operations(set_root, &mut rng)?;
-    }
-    if let Some(set_oracle_root) = set_oracle_root {
-        let set_oracle_root = Path::new(&set_oracle_root);
-        positional_sets::check_membership_oracle(set_oracle_root, &mut rng)?;
-    }
-    if let Some(map_root) = map_root {
-        let map_root = Path::new(&map_root);
-        positional_maps::check_operations(map_root, &mut rng)?;
-    }
-    if let Some(constructor_map_root) = constructor_map_root {
-        let constructor_map_root = Path::new(&constructor_map_root);
-        positional_maps::check_constructor_actions(constructor_map_root, &mut rng)?;
-    }
-    if let Some(list_root) = list_root {
-        let list_root = Path::new(&list_root);
-        positional_lists::check_operations(list_root, &mut rng)?;
-    }
-    if let Some(constructor_list_root) = constructor_list_root {
-        let constructor_list_root = Path::new(&constructor_list_root);
-        positional_lists::check_constructor_actions(constructor_list_root, &mut rng)?;
-    }
-    if let Some(list_shapes_root) = list_shapes_root.as_ref().map(Path::new) {
-        positional_lists::check_witness_shapes(list_shapes_root, &mut rng)?;
-    }
-    if let Some(enum_cell_root) = enum_cell_root.as_ref().map(Path::new) {
-        positional_cells::check_enum_value(enum_cell_root, &mut rng)?;
-    }
-    if let Some(tiny_root) = tiny_root.as_ref().map(Path::new) {
-        positional_cells::check_optional_value(tiny_root, &mut rng)?;
-    }
-    if let Some(shape_root) = nested_map_shape_root.as_ref().map(Path::new) {
-        positional_maps::check_nested_shape(shape_root, &mut rng)?;
-    }
-    if let Some(merkle_root) = merkle_root.as_ref().map(Path::new) {
-        positional_merkle::check_plain(merkle_root, &mut rng)?;
-    }
-    if let Some(historic_root) = historic_merkle_root.as_ref().map(Path::new) {
-        positional_merkle::check_historic(historic_root, &mut rng)?;
-    }
-    if let Some(vector_root) = vector_key_root.as_ref().map(Path::new) {
-        positional_keys::check_vector(vector_root, &mut rng)?;
-    }
-    if let Some(composite_root) = composite_key_root.as_ref().map(Path::new) {
-        positional_keys::check_composite(composite_root, &mut rng)?;
-    }
-    if let Some(chunked_root) = chunked_set_root.as_ref().map(Path::new) {
-        positional_sets::check_chunked_layout(chunked_root, &mut rng)?;
-    }
-    if let Some(chunked_root) = chunked_list_root.as_ref().map(Path::new) {
-        positional_lists::check_chunked_layout(chunked_root, &mut rng)?;
-    }
-    if let Some(chunked_root) = chunked_map_root.as_ref().map(Path::new) {
-        positional_maps::check_chunked_layout(chunked_root, &mut rng)?;
-    }
-    if let Some(chunked_root) = chunked_cell_root.as_ref().map(Path::new) {
-        positional_cells::check_chunked_layout(chunked_root, &mut rng)?;
-    }
-    if let Some(root) = uints_root.as_ref().map(Path::new) {
-        positional_unsigned::check_bounded(root, &mut rng)?;
-    }
-    if let Some(root) = wide_root.as_ref().map(Path::new) {
-        positional_unsigned::check_wide(root, &mut rng)?;
-    }
-    Ok(())
+    positional_suite::run(positional_inputs::PositionalInputs::parse(
+        first,
+        &mut arguments,
+    )?)
 }

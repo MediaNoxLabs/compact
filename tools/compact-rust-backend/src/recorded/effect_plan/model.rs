@@ -62,6 +62,17 @@ pub(super) enum Operation {
         slot: CounterSlot,
         amount: Value,
     },
+    CounterDecrement {
+        slot: CounterSlot,
+        amount: Value,
+    },
+    CounterReset {
+        slot: CounterSlot,
+    },
+    CounterLessThan {
+        slot: CounterSlot,
+        threshold: Value,
+    },
     Witness {
         declaration: WitnessId,
         arguments: Vec<Value>,

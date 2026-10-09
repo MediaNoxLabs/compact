@@ -114,6 +114,7 @@ pub(super) fn try_run(
         ("--field-observation", _) => Some(expressions::field_observation(arguments)),
         ("--stateful-struct", _) => Some(recorded::stateful_struct(arguments)),
         ("--stateful-assert", _) => Some(recorded::stateful_assert(arguments)),
+        ("--effect-plan-counter", _) => Some(recorded::effect_plan_counter(arguments)),
         ("--effectful-return", _) => Some(recorded::effectful_return(arguments)),
         ("--effect-plan-wide-source", _) => Some(recorded::effect_plan_wide_source(arguments)),
         #[cfg(feature = "experimental-recording-plan")]

@@ -112,11 +112,30 @@ fn block(body: &Block, declarations: &Declarations) -> Result<Vec<syn::Stmt>, Re
                 steps.push(syn::parse_quote!(let (frame,#raw) = crate::ledger_slots::#slot.record_read(frame)?;));
                 syn::parse_quote!(<#ty>::new(#raw as u128)?)
             }
-            Operation::CounterIncrement { slot, amount } => {
+            Operation::CounterIncrement { slot, amount }
+            | Operation::CounterDecrement { slot, amount } => {
                 let slot = slot_name(declarations, slot.declaration, path)?;
                 let amount = value(amount);
-                steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_increment(frame,(#amount).value() as u16)?;));
+                let method = if matches!(&binding.operation, Operation::CounterIncrement { .. }) {
+                    syn::Ident::new("record_increment", Span::call_site())
+                } else {
+                    syn::Ident::new("record_decrement", Span::call_site())
+                };
+                steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.#method(frame,(#amount).value() as u16)?;));
                 syn::parse_quote!(())
+            }
+            Operation::CounterReset { slot } => {
+                let slot = slot_name(declarations, slot.declaration, path)?;
+                steps.push(
+                    syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_reset(frame)?;),
+                );
+                syn::parse_quote!(())
+            }
+            Operation::CounterLessThan { slot, threshold } => {
+                let slot = slot_name(declarations, slot.declaration, path)?;
+                let threshold = value(threshold);
+                steps.push(syn::parse_quote!(let (frame,#output): (_,#ty) = crate::ledger_slots::#slot.record_less_than(frame,(#threshold).value() as u64)?;));
+                continue;
             }
             Operation::Witness {
                 declaration,

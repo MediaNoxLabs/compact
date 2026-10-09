@@ -2,6 +2,8 @@
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
 
+#[path = "tests/counter.rs"]
+mod counter;
 #[path = "tests/declarations.rs"]
 mod declaration_tests;
 #[path = "tests/wide_values.rs"]

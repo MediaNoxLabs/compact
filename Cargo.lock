@@ -1238,6 +1238,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-effect-plan-counter-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-compact-runtime",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-effect-plan-wide-source-fixture"
 version = "0.1.0"
 dependencies = [
@@ -2010,6 +2019,7 @@ dependencies = [
  "compact-rust-did-relation-nested-reducer-fixture",
  "compact-rust-did-relation-two-reducer-fixture",
  "compact-rust-did-service-map-reducer-fixture",
+ "compact-rust-effect-plan-counter-source-fixture",
  "compact-rust-effect-plan-wide-source-fixture",
  "compact-rust-effectful-return-oracle-fixture",
  "compact-rust-election-oracle-fixture",

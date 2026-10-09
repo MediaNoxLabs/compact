@@ -12,6 +12,7 @@ use super::{
 };
 use crate::ir::*;
 use std::collections::HashMap;
+mod counters;
 mod expressions;
 
 type Scope = HashMap<String, Value>;
@@ -362,37 +363,10 @@ impl Lowerer<'_> {
                     path,
                 );
             }
-            StateAction::CounterIncrement {
-                field,
-                index,
-                amount,
-            } => {
-                let slot = self.counter(field, *index, path)?;
-                let amount = match amount {
-                    CounterAmount::Literal { value } => self.emit(
-                        Operation::Literal(Literal::Unsigned(u128::from(*value))),
-                        uint("65535"),
-                        bindings,
-                        &format!("{path}.amount"),
-                    ),
-                    CounterAmount::Parameter { name } => {
-                        scope.get(name).cloned().ok_or_else(|| {
-                            invalid(&format!("{path}.amount"), "unbound counter amount")
-                        })?
-                    }
-                };
-                if amount.ty != uint("65535") {
-                    return Err(invalid(
-                        &format!("{path}.amount"),
-                        "counter amount must be Uint<16>",
-                    ));
-                }
-                self.emit(
-                    Operation::CounterIncrement { slot, amount },
-                    Type::Unit,
-                    bindings,
-                    path,
-                );
+            StateAction::CounterIncrement { .. }
+            | StateAction::CounterDecrement { .. }
+            | StateAction::CounterReset { .. } => {
+                self.counter_action(action, scope, bindings, path)?;
             }
             _ => return Err(RecordingGap::action(action, path.into())),
         }

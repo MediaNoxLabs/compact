@@ -145,10 +145,20 @@ fn block(
                 counter(declarations, *slot, path)?;
                 *ty == uint("18446744073709551615")
             }
-            Operation::CounterIncrement { slot, amount } => {
+            Operation::CounterIncrement { slot, amount }
+            | Operation::CounterDecrement { slot, amount } => {
                 counter(declarations, *slot, path)?;
                 use_value(amount)?;
                 amount.ty == uint("65535") && *ty == Type::Unit
+            }
+            Operation::CounterReset { slot } => {
+                counter(declarations, *slot, path)?;
+                *ty == Type::Unit
+            }
+            Operation::CounterLessThan { slot, threshold } => {
+                counter(declarations, *slot, path)?;
+                use_value(threshold)?;
+                threshold.ty == uint("18446744073709551615") && *ty == Type::Boolean
             }
             Operation::Witness {
                 declaration,

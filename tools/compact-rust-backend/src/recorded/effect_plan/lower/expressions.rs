@@ -97,6 +97,25 @@ impl Lowerer<'_> {
                 let (slot, ty) = self.cell(field, *index, path)?;
                 (Operation::CellRead(slot), ty)
             }
+            Expr::CounterLessThan {
+                field,
+                index,
+                threshold,
+            } => {
+                let slot = self.counter(field, *index, path)?;
+                let threshold_path = format!("{path}.threshold");
+                let threshold = self.expression(threshold, scope, bindings, &threshold_path)?;
+                if threshold.ty != uint("18446744073709551615") {
+                    return Err(invalid(
+                        &threshold_path,
+                        "counter threshold must be Uint<64>",
+                    ));
+                }
+                (
+                    Operation::CounterLessThan { slot, threshold },
+                    Type::Boolean,
+                )
+            }
             Expr::CounterRead { field, index } => {
                 let slot = self.counter(field, *index, path)?;
                 (

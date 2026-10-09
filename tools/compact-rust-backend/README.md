@@ -19,7 +19,8 @@ witness-only VM queries; the Rust result sums the observed query costs.
 
 `StateReturn::Effectful` roots now lower directly through the checked recording
 effect algebra. Supported scalar values, lexical scopes, branches, Cell reads
-and writes, Counter operations, assertions and Field-returning witnesses compose
+and writes, Counter read/increment/decrement/reset/less-than operations,
+assertions and Field-returning witnesses compose
 without the former whole-body Field Cell recognizer. Local wide unsigned
 literals, equality and Field coercion use the existing bound domain below
 `2^248`; wide ABI surfaces, arithmetic and explicit wide FieldCast remain outside
@@ -30,6 +31,12 @@ preflight still run first, and invalid checked plans are hard compiler errors.
 Unsupported algebra may try the independent start-funding family. The retired
 family's old recognizer exists only in a test reference; ordinary-return profiles
 and other recording families still have their separate admission mechanisms.
+
+The frontend still selects Effectful returns through a terminal Cell-write
+conditional. Counter-only terminal mutation branches can fail before reaching
+this algebra ([#513](https://github.com/MediaNoxLabs/compact/issues/513)). The
+[Counter source fixture](../../tests-rust-backend/effect-plan-counter-source/README.md)
+qualifies mixed Cell/Counter composition and documents this boundary.
 
 `effectful_return_oracle.compact` retains independent TS/native/recorded controls.
 The two compositional source examples and the standalone wide-source fixture

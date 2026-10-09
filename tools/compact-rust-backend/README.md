@@ -32,6 +32,16 @@ policy. This does not establish funded transaction admission or recording parity
 for arbitrary effectful returns. The earlier single-slot root-Let profile keeps
 its separate admission rules. IR schema 20 and runtime ABI 46 are unchanged.
 
+The default emitter preserves this family's complete legacy admission check,
+then lowers supported inputs through a checked, syntax-independent effect plan.
+Unsupported plan fragments retain legacy lowering; start-funding keeps its
+separate path. `experimental-recording-plan` expands admission to additional
+algebra compositions and remains off by default. See the
+[prototype and migration guide](../../examples/rust_backend/effect_plan_prototype/README.md).
+The transition preserves generated public signatures and runtime ABI, but makes
+`RenderError::RecordingPlanInvariant` available in default compiler builds;
+exhaustive matches over that public enum may need updating.
+
 ## Stateful assertion recording
 
 A separate read-only profile records Boolean short-circuit assertions over

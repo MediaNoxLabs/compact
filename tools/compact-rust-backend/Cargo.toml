@@ -26,7 +26,8 @@ readme = "README.md"
 include = ["Cargo.toml", "README.md", "src/**", "tests/**", "fixtures/**"]
 
 [features]
-# ADR0355 / #485: isolated experiment; default recording remains unchanged.
+# ADR0355 / #485: expand admission beyond the legacy effectful-return family.
+# Default lowering uses checked plans inside the existing admission boundary.
 experimental-recording-plan = []
 
 [dependencies]

@@ -2,16 +2,16 @@
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
 
-//! Experimental syntax-independent recording plans (ADR-0355).
+//! Syntax-independent recording plans with staged admission (ADR-0355).
 //! Checking promises this bounded fragment can render, not transaction readiness
 //! or proof validity. Replay, transcript partitioning and proof remain runtime gates.
 
 mod lower;
 mod model;
-#[cfg(test)]
+#[cfg(all(test, feature = "experimental-recording-plan"))]
 mod property_tests;
 mod render;
-#[cfg(test)]
+#[cfg(all(test, feature = "experimental-recording-plan"))]
 mod resource_tests;
 #[cfg(test)]
 mod tests;

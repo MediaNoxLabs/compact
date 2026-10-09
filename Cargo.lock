@@ -1241,6 +1241,7 @@ dependencies = [
 name = "compact-rust-effectful-return-oracle-fixture"
 version = "0.1.0"
 dependencies = [
+ "compact-rust-backend",
  "hex",
  "midnight-compact-runtime",
  "midnight-onchain-state",

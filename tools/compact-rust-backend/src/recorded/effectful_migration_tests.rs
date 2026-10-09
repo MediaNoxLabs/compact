@@ -1,0 +1,242 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+
+//! Routing controls for the first effect-algebra migration. Token comparisons
+//! identify the selected renderer; generated-runtime tests check its behavior.
+
+use super::*;
+use crate::ir::{Contract, ReturnPlan};
+use quote::quote;
+
+mod resources;
+
+fn effectful_fixture() -> Contract {
+    serde_json::from_str(include_str!(
+        "../../tests/effectful-return-schema20-ir.json"
+    ))
+    .unwrap()
+}
+
+struct Context<'a> {
+    ledger: HashMap<&'a str, &'a LedgerField>,
+    witnesses: HashMap<&'a str, &'a WitnessDeclaration>,
+    pure: HashMap<&'a str, &'a PureCircuit>,
+    circuits: HashMap<&'a str, &'a StatefulCircuit>,
+}
+
+impl<'a> Context<'a> {
+    fn new(contract: &'a Contract) -> Self {
+        Self {
+            ledger: contract
+                .ledger_fields
+                .iter()
+                .map(|f| (f.id.as_str(), f))
+                .collect(),
+            witnesses: contract
+                .witnesses
+                .iter()
+                .map(|w| (w.name.as_str(), w))
+                .collect(),
+            pure: contract
+                .circuits
+                .iter()
+                .map(|c| (c.name.as_str(), c))
+                .collect(),
+            circuits: contract
+                .stateful_circuits
+                .iter()
+                .map(|c| (c.name.as_str(), c))
+                .collect(),
+        }
+    }
+
+    fn selected(&self, circuit: &StatefulCircuit) -> RecordingOutcome<typed_plan::TypedPlan> {
+        lower_effectful_return(
+            circuit,
+            &self.ledger,
+            &self.witnesses,
+            &self.pure,
+            &self.circuits,
+        )
+        .unwrap()
+    }
+
+    fn legacy(&self, circuit: &StatefulCircuit) -> Option<typed_plan::TypedPlan> {
+        typed_plan::lower_effectful(circuit, &self.ledger, &self.witnesses, &self.pure)
+    }
+
+    fn algebra(
+        &self,
+        circuit: &StatefulCircuit,
+    ) -> Result<typed_plan::TypedPlan, effect_plan::PlanError> {
+        effect_plan::lower(circuit, &self.ledger, &self.witnesses)
+    }
+}
+
+fn tokens(plan: &typed_plan::TypedPlan) -> String {
+    let steps = &plan.steps;
+    let result = &plan.result;
+    quote! { #(#steps)* #result }.to_string()
+}
+
+fn supported(outcome: RecordingOutcome<typed_plan::TypedPlan>) -> typed_plan::TypedPlan {
+    match outcome {
+        RecordingOutcome::Supported(plan) => plan,
+        RecordingOutcome::Unsupported(gap) => panic!("expected recording support: {gap:?}"),
+    }
+}
+
+#[test]
+fn legacy_admitted_intersection_uses_the_algebra_renderer() {
+    let contract = effectful_fixture();
+    let context = Context::new(&contract);
+    let circuit = &contract.stateful_circuits[0];
+    let legacy = context.legacy(circuit).expect("legacy admission control");
+    let algebra = context
+        .algebra(circuit)
+        .expect("algebra intersection control");
+    assert_ne!(
+        tokens(&legacy),
+        tokens(&algebra),
+        "fixture must distinguish the renderers"
+    );
+    assert_eq!(
+        tokens(&supported(context.selected(circuit))),
+        tokens(&algebra)
+    );
+    assert!(
+        crate::render_with_capabilities(&contract)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
+    );
+}
+
+#[test]
+fn unsupported_wide_scalar_retains_the_exact_legacy_plan() {
+    let mut contract = effectful_fixture();
+    let StateReturn::Effectful { body } = &mut contract.stateful_circuits[0].return_value else {
+        panic!("fixture effectful return")
+    };
+    let max = "340282366920938463463374607431768211456";
+    *body = ReturnPlan::Let {
+        bindings: vec![LocalBinding {
+            name: "unused_wide".into(),
+            ty: Type::Unsigned { max: max.into() },
+            value: Expr::UnsignedLiteral {
+                value: "1".into(),
+                max: max.into(),
+            },
+        }],
+        result: Box::new(body.clone()),
+    };
+    let context = Context::new(&contract);
+    let circuit = &contract.stateful_circuits[0];
+    let legacy = context
+        .legacy(circuit)
+        .expect("wide scalar remains legacy-supported");
+    assert!(matches!(
+        context.algebra(circuit),
+        Err(effect_plan::PlanError::Unsupported(_))
+    ));
+    assert_eq!(
+        tokens(&supported(context.selected(circuit))),
+        tokens(&legacy)
+    );
+}
+
+#[test]
+fn start_funding_still_uses_its_separate_legacy_profile() {
+    let contract: Contract =
+        serde_json::from_str(include_str!("../../tests/coracle-start-schema20-ir.json")).unwrap();
+    let context = Context::new(&contract);
+    let circuit = context.circuits["start"];
+    assert!(
+        context.legacy(circuit).is_none(),
+        "start is outside the migrating family"
+    );
+    assert!(matches!(
+        context.algebra(circuit),
+        Err(effect_plan::PlanError::Unsupported(_))
+    ));
+    let start = typed_plan::lower_start_funding(
+        circuit,
+        &context.ledger,
+        &context.witnesses,
+        &context.pure,
+        &context.circuits,
+    )
+    .expect("retained start-funding admission");
+    assert_eq!(
+        tokens(&supported(context.selected(circuit))),
+        tokens(&start)
+    );
+}
+
+#[test]
+fn broader_compositions_remain_opt_in_after_renderer_migration() {
+    let contract: Contract = serde_json::from_str(include_str!(
+        "../../tests/effect-plan-prototype-schema20-ir.json"
+    ))
+    .unwrap();
+    let context = Context::new(&contract);
+    for circuit in &contract.stateful_circuits {
+        assert!(context.legacy(circuit).is_none());
+        let algebra = context
+            .algebra(circuit)
+            .expect("experimental composition control");
+        let selected = context.selected(circuit);
+        assert_eq!(
+            matches!(&selected, RecordingOutcome::Supported(_)),
+            cfg!(feature = "experimental-recording-plan")
+        );
+        match selected {
+            RecordingOutcome::Supported(selected) => {
+                assert_eq!(tokens(&selected), tokens(&algebra));
+            }
+            RecordingOutcome::Unsupported(gap) => {
+                assert_eq!(gap, RecordingGap::returned(&circuit.return_value));
+            }
+        }
+    }
+}
+
+#[test]
+fn new_literal_bindings_do_not_expand_default_recording_admission() {
+    let mut contract = effectful_fixture();
+    let circuit = &mut contract.stateful_circuits[0];
+    circuit.source = None;
+    circuit.return_value = StateReturn::Effectful {
+        body: ReturnPlan::Value {
+            value: Expr::FieldLiteral { value: "9".into() },
+        },
+    };
+    let context = Context::new(&contract);
+    let circuit = &contract.stateful_circuits[0];
+    assert!(context.legacy(circuit).is_none());
+    let algebra = context
+        .algebra(circuit)
+        .expect("literal is algebra-supported");
+    assert!(
+        !algebra.steps.is_empty(),
+        "literal binding is not a VM effect"
+    );
+    let rendered = crate::render_with_capabilities(&contract).unwrap();
+    let capability = &rendered.capabilities.circuits[0];
+    assert_eq!(
+        capability.recorded,
+        cfg!(feature = "experimental-recording-plan")
+    );
+    assert_eq!(
+        capability.observed_call,
+        cfg!(feature = "experimental-recording-plan")
+    );
+    if !cfg!(feature = "experimental-recording-plan") {
+        assert_eq!(
+            capability.recording_unavailable.as_ref(),
+            Some(&RecordingGap::returned(&circuit.return_value))
+        );
+    }
+}

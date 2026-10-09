@@ -1,10 +1,11 @@
 # Compositional recording prototype — #485 / ADR0355
 
-This experiment adds an **opt-in** recording lowerer. It demonstrates two real
-Compact circuits whose primitive operations already exist in the runtime, but
-whose combinations the legacy effectful-return profile refuses. It does not
-replace the default recorder. The selected cases have an explicit offline proof
-and ledger-application gate under the shared unbalanced test policy.
+The default compiler now uses the checked effect plan inside the existing
+legacy-admitted effectful-return family, with legacy fallback for unsupported
+fragments. The **opt-in** feature additionally admits algebra compositions that
+the legacy profile refuses. The two real Compact circuits here demonstrate that
+broader admission; they still require the feature. Their explicit offline proof
+and ledger-application gate retains the shared unbalanced test policy.
 
 ## Run the experiment
 
@@ -19,8 +20,8 @@ cargo test -p compact-rust-recording-effect-plan-prototype-fixture \
 The fixture's build script generates Rust into Cargo's `OUT_DIR` from the
 retained schema20 frontend IR, retaining its two exports and adding nine
 backend-only test exports. No generated Rust copy needs manual maintenance.
-With the feature disabled the fixture is inert, and the existing backend remains
-the default. The feature applies to the compiler build; it is not a runtime flag.
+With the feature disabled this experimental fixture is inert; the default
+compiler retains the legacy admission boundary. The feature applies to the compiler build; it is not a runtime flag.
 
 To compile the Compact source through a compatible ledger8 Scheme frontend:
 
@@ -144,7 +145,7 @@ cargo test -p compact-rust-backend --features experimental-recording-plan \
 
 These process-isolated tests request a 2 MiB worker stack, exercise direct
 plan checking/rendering and the public compiler pipeline, and test the first
-rejected value beyond each selected boundary. They cover syntax depth48
+rejected value beyond each selected boundary. They cover syntax depth 48
 (branches, arithmetic and lexical scopes), 4,092 local bindings and 3,275
 sibling branches under the current conjunctive preflight limits. They do not
 raise any resource ceiling. Measurements qualify these shapes on the tested
@@ -194,22 +195,41 @@ Zswap fall back to legacy lowering. The scalar unsigned domain is bounded by
 `u128`. Precise nested source spans remain separate work; diagnostics use IR
 paths.
 
-A local 198-contract feature-versus-default census found unchanged capabilities
-and IR for every contract; only the existing effectful-return oracle's Rust
-syntax changed. Only two roots in that corpus use `StateReturn::Effectful`
+A local 198-contract comparison of the staged default compiler against the
+pre-migration baseline found unchanged capabilities and IR for every contract;
+only the existing effectful-return oracle's Rust syntax changed. Only two roots in that corpus use `StateReturn::Effectful`
 (`choose` and coracle's `start`), so 198 is a regression count, not experimental
 language coverage. The coracle fallback remained byte-identical.
 
-The migration review recommends preserving legacy admission and diagnostics
-for a first default migration of the existing effectful-return family. Use the
-new lowering in that admitted intersection, retain fallback on genuine
-unsupported fragments, and leave the start-funding route intact. Broader
-algebra admission should be a separate reviewed change. This recommendation
-has not been implemented: the experiment remains opt-in.
+## Staged default migration
 
-Default promotion still requires that admission policy, coverage of added
-scalar/arithmetic/error facets, and mixed-shape/platform resource evidence.
-The selected proof/application tests use the established unbalanced policy;
-they do not qualify all transaction policies. Do not infer full language parity,
-formal equivalence, or code-size reduction. Planning, decisions and execution
-receipts remain in the Obsidian midnight vault until publication.
+Default integration first runs the complete legacy `lower_effectful` lowering,
+including its read/write evidence checks. If admitted, it prefers the checked
+plan; a genuine Unsupported result retains the legacy plan. An invalid plan is
+a hard compiler error. When that family declines, the start-funding route and
+generic default refusal remain unchanged. No new default admission is added.
+The feature retains its experiment-first path for broader combinations.
+
+This transition deliberately constructs the old plan before the new one. Both
+can temporarily coexist; it does not remove recognition cost or promise a
+compiler speedup. New default resource controls cover legacy-admitted depth 48
+and a shape-specific maximum of 4,090 local bindings on requested 2 MiB workers,
+plus neighboring preflight refusals. They qualify the tested macOS ARM64 debug
+configuration, not arbitrary platforms or a universal live-stack bound.
+
+The effectful-return fixture now compiles current default output at build time
+and compares it with frozen legacy source. Its original TS controls remain,
+plus 120 success inputs and 4 callback failure/skip inputs. Both original proof
+branches use that fresh default fixture. See
+[the migration oracle](../../../tests-rust-backend/effectful-return-oracle/README.md).
+
+Generated public signatures, runtime ABI and IR schema remain unchanged.
+`RenderError::RecordingPlanInvariant` is now also available in default compiler
+builds; consumers exhaustively matching that public enum may need a new arm.
+
+Broader default admission and retirement of legacy admission remain future work:
+review scalar/arithmetic/error facets, transaction preparation policy and
+mixed-shape/platform resource evidence first. The selected proof tests use the
+established unbalanced policy. Do not infer full language parity, formal
+equivalence, or code-size reduction. Decisions and execution receipts remain in
+the Obsidian midnight vault until publication.

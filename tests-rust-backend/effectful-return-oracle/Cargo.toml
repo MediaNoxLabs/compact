@@ -20,7 +20,7 @@ edition = "2024"
 license = "Apache-2.0"
 
 [lib]
-path = "lib.rs"
+path = "fixture.rs"
 
 [features]
 ledger-transaction = ["midnight-compact-runtime/ledger-transaction"]
@@ -34,3 +34,7 @@ hex = "0.4"
 midnight-onchain-state = "=3.0.0"
 midnight-serialize = "=1.0.0"
 midnight-storage = "=2.0.1"
+
+[build-dependencies]
+compact-rust-backend = { path = "../../tools/compact-rust-backend" }
+serde_json = "1"

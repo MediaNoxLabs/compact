@@ -94,7 +94,6 @@ pub enum RenderError {
         location: ir::SourceLocation,
         error: Box<RenderError>,
     },
-    #[cfg(feature = "experimental-recording-plan")]
     RecordingPlanInvariant {
         path: String,
         detail: String,
@@ -176,12 +175,8 @@ impl fmt::Display for RenderError {
                 "{} line {} char {}: {}",
                 location.file, location.line, location.column, error
             ),
-            #[cfg(feature = "experimental-recording-plan")]
             Self::RecordingPlanInvariant { path, detail } => {
-                write!(
-                    f,
-                    "experimental recording plan invariant at {path}: {detail}"
-                )
+                write!(f, "recording plan invariant at {path}: {detail}")
             }
             Self::SchemaVersion(version) => {
                 write!(f, "unsupported Rust backend IR schema {version}")

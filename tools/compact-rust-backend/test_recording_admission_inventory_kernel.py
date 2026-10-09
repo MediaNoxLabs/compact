@@ -11,6 +11,7 @@ import unittest
 
 import recording_admission_inventory as inventory
 import recording_admission_inventory_kernel as kernel
+import recording_admission_inventory_composite as composite
 import test_recording_admission_inventory as previous
 
 
@@ -22,9 +23,9 @@ class KernelTransitionTests(unittest.TestCase):
         report = self.report()
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(report['route_count'], 84)
-        self.assertEqual([row['id'] for row in report['retired_routes']], kernel.RETIRED)
+        self.assertEqual([row['id'] for row in report['retired_routes']], composite.RETIRED)
         self.assertTrue(all(row['passed'] for row in report['retired_routes']))
-        self.assertEqual(len(report['current_selector']['ordered_calls']), 14)
+        self.assertEqual(len(report['current_selector']['ordered_calls']), 13)
         ids = report['reviewed_instrumentation']['instrumented_route_ids']
         self.assertIn(kernel.REPLACEMENT, ids)
         self.assertNotIn(kernel.ROUTE, ids)
@@ -104,9 +105,9 @@ class KernelTransitionTests(unittest.TestCase):
     def test_unrelated_selector_reordering_cannot_be_hidden_by_new_fingerprints(self):
         path = self.root / inventory.SELECTOR
         original = path.read_text()
-        changed = original.replace('typed_plan::lower_composite(', '__swap__(')
-        changed = changed.replace('typed_plan::lower_shielded_receive(', 'typed_plan::lower_composite(')
-        changed = changed.replace('__swap__(', 'typed_plan::lower_shielded_receive(')
+        changed = original.replace('typed_plan::lower_shielded_receive(', '__swap__(')
+        changed = changed.replace('typed_plan::lower_voting_commit(', 'typed_plan::lower_shielded_receive(')
+        changed = changed.replace('__swap__(', 'typed_plan::lower_voting_commit(')
         self.assertNotEqual(original, changed)
         path.write_text(changed)
         self.kernel_transition['reviewed_source_fingerprints'][inventory.SELECTOR] = inventory.digest(path.read_bytes())

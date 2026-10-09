@@ -257,9 +257,9 @@ fn native_zswap_intents_validate_types_and_record_bounded_unit_helpers() {
             .iter()
             .find(|c| c.name == name)
             .unwrap();
-        let proof_required = matches!(name, "flow" | "read_coin");
-        assert_eq!(circuit.recorded, proof_required, "{name}");
-        assert_eq!(circuit.observed_call, proof_required, "{name}");
+        let recorded = matches!(name, "flow" | "witness_order" | "read_coin");
+        assert_eq!(circuit.recorded, recorded, "{name}");
+        assert_eq!(circuit.observed_call, recorded, "{name}");
     }
     assert!(rendered.source.contains(".create_zswap_output("));
     assert!(rendered.source.contains(".create_zswap_input("));
@@ -612,7 +612,7 @@ fn zswap_recording_does_not_adopt_query_helpers_or_escaped_bindings() {
 }
 
 #[test]
-fn composite_intents_require_public_queries_and_exact_typed_effect_operands() {
+fn composite_intents_compose_without_public_queries_and_require_exact_typed_operands() {
     let original: Contract =
         serde_json::from_str(include_str!("../stateful-struct-schema20-ir.json")).unwrap();
     let transfer: Contract =
@@ -691,12 +691,15 @@ fn composite_intents_require_public_queries_and_exact_typed_effect_operands() {
         .iter()
         .find(|c| c.name == "planned")
         .unwrap();
-    assert!(!planned.recorded && !planned.observed_call);
-    // Mint composition has no evidence in this narrowly admitted value profile.
-    let mut unsupported = transfer.clone();
+    // A checked recording may contain only private intent events. The actual
+    // source fixture separately checks EmptyTranscript at preparation time.
+    assert!(planned.recorded && planned.observed_call);
+    // The algebra composes typed mint and transfer effects without a profile
+    // allowlist. This compiler check makes no balanced-offer/proof claim.
+    let mut composed = transfer.clone();
     let StateReturn::Expression {
         value: Expr::StructLiteral { fields, .. },
-    } = &mut unsupported.stateful_circuits[0].return_value
+    } = &mut composed.stateful_circuits[0].return_value
     else {
         panic!("transfer literal")
     };
@@ -709,6 +712,7 @@ fn composite_intents_require_public_queries_and_exact_typed_effect_operands() {
             max: u64::MAX.to_string(),
         }),
     };
-    let out = render_with_capabilities(&unsupported).unwrap();
-    assert!(!out.capabilities.circuits[0].recorded);
+    let out = render_with_capabilities(&composed).unwrap();
+    assert!(out.capabilities.circuits[0].recorded);
+    assert!(out.capabilities.circuits[0].observed_call);
 }

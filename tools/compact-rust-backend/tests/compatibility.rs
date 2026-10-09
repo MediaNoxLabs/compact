@@ -344,7 +344,9 @@ printf '\n// ordinary source edit during generation\n' >> "$SELECTED_RUNTIME_SRC
     let error = String::from_utf8(result.stderr).unwrap();
     assert!(
         error.contains("source changed during generation"),
-        "{error}"
+        "child status {:?}: {error}; stdout: {}",
+        result.status,
+        String::from_utf8_lossy(&result.stdout)
     );
     assert_eq!(
         fs::read(output.join("sentinel")).unwrap(),

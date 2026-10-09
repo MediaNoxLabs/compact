@@ -426,3 +426,5 @@ fn small_unsigned_literal_cast_and_add_remain_checked_operations() {
 }
 
 mod call_validation;
+
+mod composite;

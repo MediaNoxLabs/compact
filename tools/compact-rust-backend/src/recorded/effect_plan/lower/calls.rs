@@ -6,10 +6,25 @@
 use super::super::declarations::CallKind;
 use super::*;
 
+#[derive(Clone, Copy)]
+pub(super) enum CallSite<'a> {
+    Expression(&'a Expr),
+    Statement(&'a StateAction),
+}
+
+impl CallSite<'_> {
+    fn missing(self, path: &str) -> RecordingGap {
+        match self {
+            Self::Expression(expression) => RecordingGap::expression(expression, path.into()),
+            Self::Statement(action) => RecordingGap::action(action, path.into()),
+        }
+    }
+}
+
 impl Lowerer<'_> {
     pub(super) fn call(
         &mut self,
-        expression: &Expr,
+        site: CallSite<'_>,
         name: &str,
         arguments: &[Expr],
         scope: &Scope,
@@ -17,8 +32,11 @@ impl Lowerer<'_> {
         path: &str,
     ) -> Result<Value, RecordingGap> {
         let Some((declaration, signature)) = self.declarations.resolve_call(name) else {
-            return Err(RecordingGap::expression(expression, path.into()));
+            return Err(site.missing(path));
         };
+        if matches!(site, CallSite::Statement(_)) && signature.kind != CallKind::Stateful {
+            return Err(site.missing(path));
+        }
         if signature.kind == CallKind::Pure {
             return self.pure_call(declaration, name, arguments, scope, bindings, path);
         }
@@ -65,7 +83,19 @@ impl Lowerer<'_> {
         for (i, (argument, parameter)) in arguments.iter().zip(&callee.parameters).enumerate() {
             let argument_path = format!("{path}.arguments[{i}]");
             let value = self.expression(argument, scope, bindings, &argument_path)?;
-            args.push(self.coerce(value, &parameter.ty, bindings, &argument_path)?);
+            let value = match site {
+                CallSite::Expression(_) => {
+                    self.coerce(value, &parameter.ty, bindings, &argument_path)?
+                }
+                CallSite::Statement(_) if value.ty == parameter.ty => value,
+                CallSite::Statement(_) => {
+                    return Err(invalid(
+                        &argument_path,
+                        "statement call argument type differs from declared parameter",
+                    ));
+                }
+            };
+            args.push(value);
         }
         let mut child_scope = Scope::new();
         let mut parameters = Vec::new();

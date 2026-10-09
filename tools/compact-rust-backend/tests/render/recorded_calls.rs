@@ -328,7 +328,36 @@ fn nested_call_exposes_a_trace_only_when_every_step_is_supported() {
         field: "round".into(),
         index: 0,
     };
-    assert!(!render(&contract).unwrap().contains("pub mod recorded"));
+    // Statement calls discard the result, not the Counter observation.
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert_eq!(rendered.capabilities.circuits.len(), 1);
+    assert_eq!(rendered.capabilities.circuits[0].name, "outer");
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].observed_call);
+    assert_eq!(
+        recorded_function(&rendered.source, "outer")
+            .matches("record_read")
+            .count(),
+        1
+    );
+
+    // Direct hashing is still outside the checked recording operation domain.
+    // Keep a real nested-step refusal after qualifying the newly supported return.
+    contract.stateful_circuits[0]
+        .actions
+        .push(StateAction::Expression {
+            value: Expr::PersistentHash {
+                value: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
+            },
+        });
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(!rendered.capabilities.circuits[0].recorded);
+    assert!(!rendered.capabilities.circuits[0].observed_call);
+    assert!(
+        rendered.capabilities.circuits[0]
+            .recording_unavailable
+            .is_some()
+    );
 }
 
 #[test]

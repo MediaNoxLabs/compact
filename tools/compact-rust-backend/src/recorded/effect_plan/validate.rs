@@ -214,6 +214,17 @@ fn block(
             | Operation::StructConstruct { .. }
             | Operation::StructProject { .. }
             | Operation::Tuple { .. } => aggregates::validate(binding, declarations, &scope)?,
+            Operation::CreateZswapInput { coin } => {
+                use_value(coin)?;
+                coin.ty == crate::coin_shapes::qualified_coin_type() && *ty == Type::Unit
+            }
+            Operation::CreateZswapOutput { coin, recipient } => {
+                use_value(coin)?;
+                use_value(recipient)?;
+                coin.ty == crate::coin_shapes::shielded_coin_type()
+                    && recipient.ty == crate::coin_shapes::shielded_recipient_type()
+                    && *ty == Type::Unit
+            }
             Operation::KernelSelf => *ty == crate::ir::contract_address_type(),
             Operation::KernelClaim { value, .. } => {
                 use_value(value)?;

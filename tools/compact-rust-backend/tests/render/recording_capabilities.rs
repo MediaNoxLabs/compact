@@ -319,6 +319,19 @@ fn recording_gaps_include_unsupported_type_and_called_callee_path() {
         arguments: vec![],
     }];
     contract.stateful_circuits.push(outer);
+    // A discarded Boolean expression in a checked statement call is supported.
+    let report = render_with_capabilities(&contract).unwrap().capabilities;
+    assert_eq!(report.circuits.len(), 1);
+    assert_eq!(report.circuits[0].name, "outer");
+    assert!(report.circuits[0].recorded && report.circuits[0].observed_call);
+
+    // Preserve the nested callee-path objective with an actually unsupported
+    // direct operation (native hashing still renders successfully).
+    contract.stateful_circuits[0].actions = vec![StateAction::Expression {
+        value: Expr::PersistentHash {
+            value: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
+        },
+    }];
     let report = render_with_capabilities(&contract).unwrap().capabilities;
     let gap = report.circuits[0].recording_unavailable.as_ref().unwrap();
     assert_eq!(gap.code.as_str(), "unsupported_action");

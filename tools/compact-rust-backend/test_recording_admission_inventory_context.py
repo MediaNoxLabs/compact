@@ -12,6 +12,7 @@ import unittest
 import recording_admission_inventory as inventory
 import recording_admission_inventory_context as context
 import recording_admission_inventory_kernel as kernel
+import recording_admission_inventory_composite as composite
 import test_recording_admission_inventory as previous
 
 
@@ -23,9 +24,9 @@ class ContextQueryTransitionTests(unittest.TestCase):
         report = self.report()
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(report['route_count'], 84)
-        self.assertEqual([row['id'] for row in report['retired_routes']], kernel.RETIRED)
+        self.assertEqual([row['id'] for row in report['retired_routes']], composite.RETIRED)
         self.assertTrue(all(row['passed'] for row in report['retired_routes']))
-        self.assertEqual(len(report['current_selector']['ordered_calls']), 14)
+        self.assertEqual(len(report['current_selector']['ordered_calls']), 13)
         ids = report['reviewed_instrumentation']['instrumented_route_ids']
         self.assertIn(context.REPLACEMENT, ids)
         self.assertNotIn(context.ROUTE, ids)

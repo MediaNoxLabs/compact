@@ -1,0 +1,20 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export struct Receipt { consumed: []; emitted: []; kept: ShieldedCoinInfo; }
+witness choose_coin(coin: ShieldedCoinInfo): ShieldedCoinInfo;
+witness choose_recipient(recipient: Either<ZswapCoinPublicKey, ContractAddress>): Either<ZswapCoinPublicKey, ContractAddress>;
+circuit emit(coin: ShieldedCoinInfo, recipient: Either<ZswapCoinPublicKey, ContractAddress>): [] {
+  return createZswapOutput(coin, recipient);
+}
+export circuit compose(input: QualifiedShieldedCoinInfo, coin: ShieldedCoinInfo,
+                       recipient: Either<ZswapCoinPublicKey, ContractAddress>, selected: Boolean): Receipt {
+  createZswapInput(input);
+  if (disclose(selected)) { emit(coin, recipient); }
+  return Receipt {
+    consumed: createZswapInput(input),
+    emitted: createZswapOutput(choose_coin(coin), choose_recipient(recipient)),
+    kept: coin
+  };
+}

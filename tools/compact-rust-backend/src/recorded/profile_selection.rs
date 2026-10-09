@@ -39,6 +39,9 @@ use super::typed_plan::{self, CompositionRejection, TypedPlan};
 use super::{effect_plan, zswap_plan};
 
 #[cfg(test)]
+#[path = "profile_selection/composite_migration_tests.rs"]
+mod composite_migration_tests;
+#[cfg(test)]
 #[path = "profile_selection/context_migration_tests.rs"]
 mod context_migration_tests;
 #[cfg(test)]
@@ -181,6 +184,26 @@ fn checked_kernel_domain(
     ))
 }
 
+/// Struct expression interfaces compose at the old composite selector priority.
+/// Internal helpers retain eligibility; body effects, not evidence counts, decide.
+fn checked_composite_domain(
+    circuit: &StatefulCircuit,
+    ledger: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+) -> Result<Option<TypedPlan>, RenderError> {
+    use crate::ir::{StateReturn, Type};
+    if !matches!(circuit.result, Type::Struct { .. })
+        || !matches!(circuit.return_value, StateReturn::Expression { .. })
+    {
+        return Ok(None);
+    }
+    resolve_checked_plan(effect_plan::lower_with_calls(
+        circuit, ledger, witnesses, pure, circuits,
+    ))
+}
+
 fn resolve_checked_plan(
     result: Result<TypedPlan, effect_plan::PlanError>,
 ) -> Result<Option<TypedPlan>, RenderError> {
@@ -274,19 +297,20 @@ pub(super) fn select(
                 checked_context_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?
             ),
         };
-        let before_terminal = through_context
-            .or_else(|| {
-                record_option!(
-                    "selector.composite-values",
-                    typed_plan::lower_composite(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                        circuits,
-                    )
-                )
-            })
+        let through_composite = match through_context {
+            Some(plan) => Some(plan),
+            None => record_option!(
+                "algebra.composite-values",
+                checked_composite_domain(
+                    circuit,
+                    ledger_fields,
+                    witnesses,
+                    pure_circuits,
+                    circuits
+                )?
+            ),
+        };
+        let before_terminal = through_composite
             .or_else(|| {
                 record_option!(
                     "selector.shielded-receive",

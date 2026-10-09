@@ -20,6 +20,7 @@ mod jubjub;
 mod kernel;
 mod ordinary;
 mod pure;
+mod zswap;
 use super::pure_certification::{Certificates, Certifier};
 
 type Scope = HashMap<String, Value>;
@@ -377,6 +378,19 @@ impl Lowerer<'_> {
             }
             StateAction::Expression { value } => {
                 self.expression(value, scope, bindings, &format!("{path}.value"))?;
+            }
+            StateAction::CircuitCall { name, arguments } => {
+                // Statement calls resolve only stateful declarations, just as native
+                // lowering does. The shared call checker owns arguments and body;
+                // discarding its result does not discard the body's ordered effects.
+                self.call(
+                    calls::CallSite::Statement(action),
+                    name,
+                    arguments,
+                    scope,
+                    bindings,
+                    path,
+                )?;
             }
             StateAction::Assert { condition, message } => {
                 self.expression(

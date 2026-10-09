@@ -18,6 +18,7 @@ import recording_admission_inventory_terminal as terminal
 import recording_admission_inventory_unit as unit
 import recording_admission_inventory_context as context
 import recording_admission_inventory_kernel as kernel
+import recording_admission_inventory_composite as composite
 
 JUBJUB_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-517.json")
 CALL_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.calls-519.json")
@@ -33,6 +34,7 @@ CONTEXT_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory
 
 
 KERNEL_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-527.json")
+COMPOSITE_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-529.json")
 
 
 class InventoryTests(unittest.TestCase):
@@ -142,7 +144,8 @@ class InventoryTests(unittest.TestCase):
                                   terminal_transition=json.loads(TERMINAL_TRANSITION.read_text()),
                                   unit_actions_transition=json.loads(UNIT_TRANSITION.read_text()),
                                   context_query_transition=json.loads(CONTEXT_TRANSITION.read_text()),
-                                  kernel_transition=json.loads(KERNEL_TRANSITION.read_text()))
+                                  kernel_transition=json.loads(KERNEL_TRANSITION.read_text()),
+                                  composite_transition=json.loads(COMPOSITE_TRANSITION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)
@@ -165,7 +168,8 @@ class RetirementTransitionTests(unittest.TestCase):
         self.unit_transition = json.loads(UNIT_TRANSITION.read_text())
         self.context_transition = json.loads(CONTEXT_TRANSITION.read_text())
         self.kernel_transition = json.loads(KERNEL_TRANSITION.read_text())
-        for relative in {*self.baseline['source_fingerprints'], inventory.ORACLE, jubjub.ORACLE, terminal.ORACLE, unit.ORACLE, context.ORACLE, context.IR, *context.SHARED_ANCHORS, *inventory.HOOK_SOURCES}:
+        self.composite_transition = json.loads(COMPOSITE_TRANSITION.read_text())
+        for relative in {*self.baseline['source_fingerprints'], inventory.ORACLE, jubjub.ORACLE, terminal.ORACLE, unit.ORACLE, context.ORACLE, context.IR, composite.ORACLE, composite.FIELD, *context.SHARED_ANCHORS, *inventory.HOOK_SOURCES}:
             destination = self.root / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_bytes((inventory.ROOT / relative).read_bytes())
@@ -176,13 +180,14 @@ class RetirementTransitionTests(unittest.TestCase):
                                 instrumentation=self.instrumentation,
                                 jubjub_transition=self.jubjub_transition, call_extension=self.call_extension,
                                 terminal_transition=self.terminal_transition, unit_actions_transition=self.unit_transition,
-                                context_query_transition=self.context_transition, kernel_transition=self.kernel_transition)
+                                context_query_transition=self.context_transition, kernel_transition=self.kernel_transition,
+                                composite_transition=self.composite_transition)
 
     def test_reviewed_retirement_keeps_frozen_denominator(self):
         report = self.report()
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(report['route_count'], 84)
-        self.assertEqual([row['id'] for row in report['retired_routes']], kernel.RETIRED)
+        self.assertEqual([row['id'] for row in report['retired_routes']], composite.RETIRED)
         self.assertTrue(report['retired_routes'][0]['passed'])
         # Retirement is never implicit: the untransitioned baseline must flag it.
         self.assertFalse(inventory.verify(self.root, self.baseline)['passed'])
@@ -248,7 +253,7 @@ class RetirementTransitionTests(unittest.TestCase):
         report = self.report()
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(report['route_count'], 84)
-        self.assertEqual(len(report['retired_routes']), 6)
+        self.assertEqual(len(report['retired_routes']), 7)
         self.assertEqual(report['reviewed_instrumentation']['issue'], 515)
         self.assertNotIn('coverage', report['reviewed_instrumentation'])
 
@@ -306,7 +311,7 @@ class RetirementTransitionTests(unittest.TestCase):
         current = self.report()
         self.assertTrue(current['passed'], current['errors'])
         self.assertEqual(current['retired_routes'][1]['id'], 'selector.jubjub-values')
-        self.assertEqual(len(current['current_selector']['ordered_calls']), 14)
+        self.assertEqual(len(current['current_selector']['ordered_calls']), 13)
         self.assertIn('algebra.jubjub-values', current['reviewed_instrumentation']['instrumented_route_ids'])
         self.assertNotIn('selector.jubjub-values', current['reviewed_instrumentation']['instrumented_route_ids'])
 
@@ -373,10 +378,10 @@ class CallExtensionTests(unittest.TestCase):
         result = self.report()
         self.assertTrue(result['passed'], result['errors'])
         self.assertEqual(result['route_count'], 84)
-        self.assertEqual([r['id'] for r in result['retired_routes']], kernel.RETIRED)
+        self.assertEqual([r['id'] for r in result['retired_routes']], composite.RETIRED)
         self.assertEqual(result['reviewed_call_extension']['new_retired_routes'], [])
-        self.assertEqual(result['current_selector']['ordered_calls'], self.kernel_transition['reviewed_selector']['ordered_calls'])
-        self.assertEqual(result['reviewed_instrumentation']['instrumented_route_ids'], self.kernel_transition['instrumented_route_ids'])
+        self.assertEqual(result['current_selector']['ordered_calls'], self.composite_transition['reviewed_selector']['ordered_calls'])
+        self.assertEqual(result['reviewed_instrumentation']['instrumented_route_ids'], self.composite_transition['instrumented_route_ids'])
         self.assertEqual({p: p.read_bytes() for p in before}, before)
 
     def test_current_sources_require_explicit_call_extension(self):
@@ -486,7 +491,7 @@ class CallExtensionTests(unittest.TestCase):
                 '--instrumentation', str(inventory.INSTRUMENTATION), '--jubjub-transition', str(JUBJUB_TRANSITION),
                 '--output', str(output)]
         self.assertEqual(inventory.main(argv), 1)
-        self.assertEqual(inventory.main([*argv, '--call-extension', str(manifest), '--terminal-transition', str(TERMINAL_TRANSITION), '--unit-actions-transition', str(UNIT_TRANSITION), '--context-query-transition', str(CONTEXT_TRANSITION), '--kernel-transition', str(KERNEL_TRANSITION)]), 0)
+        self.assertEqual(inventory.main([*argv, '--call-extension', str(manifest), '--terminal-transition', str(TERMINAL_TRANSITION), '--unit-actions-transition', str(UNIT_TRANSITION), '--context-query-transition', str(CONTEXT_TRANSITION), '--kernel-transition', str(KERNEL_TRANSITION), '--composite-transition', str(COMPOSITE_TRANSITION)]), 0)
         self.assertTrue(json.loads(output.read_text())['passed'])
         self.assertEqual(manifest.read_bytes(), before)
 
@@ -499,9 +504,9 @@ class TerminalTransitionTests(unittest.TestCase):
         report = self.report()
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(report['route_count'], 84)
-        self.assertEqual([r['id'] for r in report['retired_routes']], kernel.RETIRED)
+        self.assertEqual([r['id'] for r in report['retired_routes']], composite.RETIRED)
         self.assertTrue(all(r['passed'] for r in report['retired_routes']))
-        self.assertEqual(len(report['current_selector']['ordered_calls']), 14)
+        self.assertEqual(len(report['current_selector']['ordered_calls']), 13)
         ids = report['reviewed_instrumentation']['instrumented_route_ids']
         self.assertIn(terminal.REPLACEMENT, ids)
         self.assertNotIn(terminal.ROUTE, ids)

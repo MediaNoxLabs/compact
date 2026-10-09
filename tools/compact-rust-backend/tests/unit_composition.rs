@@ -48,17 +48,60 @@ fn flat_and_chunked_declared_helpers_compose_on_one_recording_frame() {
     }
 }
 #[test]
-fn complete_audit_rejects_hidden_unsupported_effects_in_unselected_branch() {
+fn checked_hidden_effects_compose_but_unselected_unsupported_effects_are_refused() {
     for chunked in [false, true] {
         let mut v = fixture(chunked);
-        circuit(&mut v,"guard")["actions"].as_array_mut().unwrap().push(json!({
+        let actions = circuit(&mut v, "guard")["actions"].as_array_mut().unwrap();
+        let index = actions.len();
+        actions.push(json!({
             "kind":"if", "condition":{"kind":"boolean","value":true},
             "then":{"kind":"sequence","actions":[]},
             "otherwise":{"kind":"expression","value":{"kind":"kernel_self","ty":{"kind":"struct","name":"ContractAddress","fields":[{"name":"bytes","ty":{"kind":"bytes","length":32}}]}}}
         }));
-        assert!(!recorded(v));
+        // KernelSelf is a checked operation, including inside an unselected
+        // stateful helper branch. The branch must remain in generated recording.
+        let contract: Contract = serde_json::from_value(v.clone()).unwrap();
+        let output = render_with_capabilities(&contract).unwrap();
+        let capability = output
+            .capabilities
+            .circuits
+            .iter()
+            .find(|c| c.name == "close")
+            .unwrap();
+        assert!(
+            capability.recorded && capability.observed_call,
+            "chunked={chunked}"
+        );
+        assert!(
+            output
+                .source
+                .split("pub mod recorded")
+                .nth(1)
+                .unwrap()
+                .contains("kernel_self()")
+        );
+
+        // The native public-key witness has a private output and remains outside
+        // the checked action domain. Auditing must inspect this unselected arm.
+        circuit(&mut v, "guard")["actions"][index]["otherwise"] = json!({
+            "kind":"native_witness_call", "builtin":"own_public_key"
+        });
+        let contract: Contract = serde_json::from_value(v).unwrap();
+        let output = render_with_capabilities(&contract).unwrap();
+        let capability = output
+            .capabilities
+            .circuits
+            .iter()
+            .find(|c| c.name == "close")
+            .unwrap();
+        assert!(
+            !capability.recorded && !capability.observed_call,
+            "chunked={chunked}"
+        );
+        assert!(capability.recording_unavailable.is_some());
     }
 }
+
 #[test]
 fn wrong_helper_arity_type_and_scope_never_fall_back_to_native_helper() {
     let mut v = fixture(false);

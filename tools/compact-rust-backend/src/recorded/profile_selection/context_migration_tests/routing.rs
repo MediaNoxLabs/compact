@@ -38,6 +38,7 @@ fn context_owner_runs_once_and_stops_later_profiles() {
         1
     );
     assert!(!attempted.contains(&"selector.context-query"));
+    assert!(!attempted.contains(&"algebra.composite-values"));
     assert!(!attempted.contains(&"selector.composite-values"));
 }
 #[test]
@@ -64,7 +65,7 @@ fn unsupported_continues_independent_suffix_but_invariant_is_fatal() {
     let row = trace(&contract);
     let attempted = attempts(&row);
     let position = |name| attempted.iter().position(|r| *r == name).unwrap();
-    assert!(position("algebra.context-query") < position("selector.composite-values"));
+    assert!(position("algebra.context-query") < position("algebra.composite-values"));
     assert!(!attempted.contains(&"selector.context-query"));
     let gap = crate::recorded::RecordingGap {
         code: crate::recorded::RecordingGapCode::UnsupportedExpression,

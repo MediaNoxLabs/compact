@@ -60,6 +60,9 @@ impl Lowerer<'_> {
             | Expr::StructLiteral { .. }
             | Expr::StructField { .. }
             | Expr::Tuple { .. } => self.aggregate(expression, scope, bindings, path)?,
+            Expr::CreateZswapInput { .. } | Expr::CreateZswapOutput { .. } => {
+                self.zswap(expression, scope, bindings, path)?
+            }
             Expr::KernelClaim { .. } | Expr::KernelMintShielded { .. } => {
                 self.kernel(expression, scope, bindings, path)?
             }
@@ -228,7 +231,14 @@ impl Lowerer<'_> {
                 )
             }
             Expr::Call { name, arguments } => {
-                return self.call(expression, name, arguments, scope, bindings, path);
+                return self.call(
+                    calls::CallSite::Expression(expression),
+                    name,
+                    arguments,
+                    scope,
+                    bindings,
+                    path,
+                );
             }
             Expr::WitnessCall { name, arguments } => {
                 let (witness_id, declaration) = self

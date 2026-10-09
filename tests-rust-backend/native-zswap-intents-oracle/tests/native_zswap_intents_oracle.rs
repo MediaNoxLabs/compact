@@ -128,17 +128,26 @@ fn native_intents_match_independent_typescript_order_state_gas_and_private_outpu
             _ => unreachable!(),
         }
         .unwrap();
-        if name == "flow" {
+        if matches!(name, "flow" | "witness_order") {
             let mut recorded_context = initial();
             recorded_context.set_zswap_output_start(start).unwrap();
-            let recorded = ledger_contract::recorded::flow(
-                recorded_context,
-                qualified(),
-                coin(),
-                recipient(left),
-                selected,
-            )
+            let recorded = match name {
+                "flow" => ledger_contract::recorded::flow(
+                    recorded_context,
+                    qualified(),
+                    coin(),
+                    recipient(left),
+                    selected,
+                ),
+                "witness_order" => ledger_contract::recorded::witness_order(
+                    recorded_context,
+                    &Witnesses(left),
+                    selected,
+                ),
+                _ => unreachable!(),
+            }
             .unwrap();
+            // Both entry points return Unit; compare their observable effects.
             assert_eq!(
                 recorded.execution.context.circuit_zswap(),
                 out.context.circuit_zswap()

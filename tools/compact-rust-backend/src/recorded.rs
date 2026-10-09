@@ -1080,101 +1080,13 @@ fn render_recorded_item(
                     otherwise,
                 },
         } => {
-            #[expect(
-                clippy::too_many_arguments,
-                reason = "branch lowering threads typed circuit context and recursive state explicitly"
-            )]
-            fn pure_branch(
-                value: &Expr,
-                expected: &Type,
-                parameters: &HashMap<&str, (&Type, syn::Ident)>,
-                ledger_fields: &HashMap<&str, &LedgerField>,
-                witnesses: &HashMap<&str, &WitnessDeclaration>,
-                pure_circuits: &HashMap<&str, &PureCircuit>,
-                circuits: &HashMap<&str, &StatefulCircuit>,
-                next_temp: &mut usize,
-                visiting: &mut HashSet<String>,
-            ) -> Result<Option<(Vec<syn::Stmt>, syn::Expr)>, RenderError> {
-                let Expr::Call { name, arguments } = value else {
-                    return Ok(None);
-                };
-                let Some(callee) = pure_circuits.get(name.as_str()) else {
-                    return Ok(None);
-                };
-                if callee.result != *expected || arguments.len() != callee.parameters.len() {
-                    return Ok(None);
-                }
-                let mut steps = Vec::new();
-                let mut args = Vec::new();
-                for (argument, parameter) in arguments.iter().zip(&callee.parameters) {
-                    let value = if parameter.ty == Type::Field {
-                        field_expression(
-                            argument,
-                            &HashMap::new(),
-                            parameters,
-                            ledger_fields,
-                            witnesses,
-                            circuits,
-                            &HashSet::new(),
-                            &mut steps,
-                            next_temp,
-                            visiting,
-                        )?
-                    } else {
-                        cell_source(argument, &parameter.ty, &HashMap::new(), parameters)
-                    };
-                    let Some(value) = value else { return Ok(None) };
-                    let arg = syn::Ident::new(
-                        &format!("__compact_recorded_arg_{}", *next_temp),
-                        Span::call_site(),
-                    );
-                    *next_temp += 1;
-                    steps.push(syn::parse_quote!(let #arg = #value;));
-                    args.push(arg);
-                }
-                let method = ident(name)?;
-                Ok(Some((
-                    steps,
-                    syn::parse_quote!(crate::pure_circuits::#method(#(#args),*)?),
-                )))
-            }
-
-            let mut return_steps = Vec::new();
-            let Some(condition) = boolean_expression(
+            match legacy::returns::conditional::lower(
                 condition,
-                &HashMap::new(),
-                &parameters,
-                ledger_fields,
-                witnesses,
-                circuits,
-                &mut return_steps,
-                &mut next_temp,
-                &mut visiting,
-            )?
-            else {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                    &circuit.return_value,
-                )));
-            };
-            let Some((then_steps, then_result)) = pure_branch(
                 then,
-                &circuit.result,
-                &parameters,
-                ledger_fields,
-                witnesses,
-                pure_circuits,
-                circuits,
-                &mut next_temp,
-                &mut visiting,
-            )?
-            else {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                    &circuit.return_value,
-                )));
-            };
-            let Some((otherwise_steps, otherwise_result)) = pure_branch(
                 otherwise,
                 &circuit.result,
+                &circuit.return_value,
+                &result_ty,
                 &parameters,
                 ledger_fields,
                 witnesses,
@@ -1182,22 +1094,12 @@ fn render_recorded_item(
                 circuits,
                 &mut next_temp,
                 &mut visiting,
-            )?
-            else {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                    &circuit.return_value,
-                )));
-            };
-            return_steps.push(syn::parse_quote! {
-                let (frame, observed): (_, #result_ty) = if #condition {
-                    #(#then_steps)*
-                    (frame, #then_result)
-                } else {
-                    #(#otherwise_steps)*
-                    (frame, #otherwise_result)
-                };
-            });
-            (return_steps, syn::parse_quote!(observed))
+            )? {
+                RecordingOutcome::Supported(result) => result,
+                RecordingOutcome::Unsupported(gap) => {
+                    return Ok(RecordingOutcome::Unsupported(gap));
+                }
+            }
         }
         StateReturn::SetMember {
             field,

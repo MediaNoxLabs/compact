@@ -8,6 +8,8 @@
 
 mod lower;
 mod model;
+#[cfg(test)]
+mod property_tests;
 mod render;
 #[cfg(test)]
 mod resource_tests;

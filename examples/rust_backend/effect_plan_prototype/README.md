@@ -13,11 +13,12 @@ From the repository root:
 ```sh
 cargo test -p compact-rust-backend --features experimental-recording-plan
 cargo test -p compact-rust-recording-effect-plan-prototype-fixture \
-  --features experimental-recording-plan
+  --features experimental-recording-plan,ledger-transaction
 ```
 
 The fixture's build script generates Rust into Cargo's `OUT_DIR` from the
-retained schema20 frontend IR. No generated Rust copy needs manual maintenance.
+retained schema20 frontend IR, retaining its two exports and adding nine
+backend-only test exports. No generated Rust copy needs manual maintenance.
 With the feature disabled the fixture is inert, and the existing backend remains
 the default. The feature applies to the compiler build; it is not a runtime flag.
 
@@ -71,6 +72,8 @@ The implementation is in `tools/compact-rust-backend/src/recorded/effect_plan/`:
 | `validate.rs` | Check use-before-definition, value types, signatures and branch joins |
 | `render.rs` | Convert a checked plan into `syn` syntax using existing runtime operations |
 | `tests.rs` | Exercise invalid plans, source paths, scalar conversions and fixture lowering |
+| `property_tests.rs`, `property_tests/corpus.rs` | Check finite composition laws, lexical scope and refusal/fallback boundaries |
+| `resource_tests.rs` | Exercise selected depth and width limits in isolated processes |
 
 An unsupported fragment may fall back to legacy recording. A violated plan
 invariant or post-validation rendering failure is a hard compiler error.
@@ -154,17 +157,59 @@ clones visible scope for each branch, giving quadratic aggregate copy work for
 some wide inputs; the tested maximum is bounded, and a future optimization must
 preserve branch scope and use-before-definition checks.
 
+## Composition and migration controls
+
+The deterministic compiler corpus checks 32 capture-avoiding alpha-renaming
+pairs, 91 action-sequence split points with two regroupings each, shadowed
+initializers and scope restoration, and unsupported children in unused bindings
+and unselected branches. These are finite properties, not an exhaustive proof.
+Public compiler tests run with the feature both enabled and disabled: malformed
+native types/references remain errors; a valid wide unsigned literal outside the
+experimental domain still records through legacy fallback. When both lowerers
+refuse, the feature intentionally returns a more precise diagnostic IR path.
+
+The generated fixture adds eight cumulative rewrites of the two original
+circuits: alpha renaming, sequence regrouping with empty identities, identity
+parameter shadow scopes, and negated conditions with swapped branches. Tests
+compare 96 variant input cases with 24 base cases through native and recorded
+execution. They check exact failures and witness prefixes, successful results,
+ledger/private state, effects, private outputs, public programs and all four
+execution/replay gas dimensions. These synthetic IR variants have no new
+Compact source, independent TS capture or proof claim. The original two exports
+remain unchanged and retain their separate TS and proof gates.
+
+A ninth synthetic export selects a branch with no public operations. Native and
+recorded execution both succeed; transaction preparation returns exactly
+`PrepareCallError::EmptyTranscript`. Compiler controls show that the legacy
+lowerer also admits a potentially empty selected branch. Thus `recorded` and
+`observed_call` describe API availability, not guaranteed transaction
+preparability for every input. This experiment does not change that boundary.
+
 ## Promotion gates
 
-This experiment selects only `StateReturn::Effectful` at compiler integration.
-It deliberately leaves general helpers, collections, cryptographic operations
-and Zswap on the legacy path. Its scalar unsigned domain is bounded by `u128`.
-Precise nested source spans remain separate work; diagnostic IR paths are used.
+The feature attempts **every native-valid `StateReturn::Effectful` root**, not
+just the two source examples. The supported algebra can therefore admit other
+combinations. Unsupported helpers, collections, cryptographic operations and
+Zswap fall back to legacy lowering. The scalar unsigned domain is bounded by
+`u128`. Precise nested source spans remain separate work; diagnostics use IR
+paths.
 
-The selected proof/application and resource regressions provide evidence for
-this bounded prototype. Before default promotion: expand composition/property
-coverage and mixed-shape/platform resource evidence, then review migration and
-legacy fallback retirement. The established unbalanced application policy does
-not qualify all transaction policies. Do not infer full language parity, formal
-equivalence, or code-size reduction from these examples. Planning, decisions and
-execution receipts remain in the Obsidian midnight vault until publication.
+A local 198-contract feature-versus-default census found unchanged capabilities
+and IR for every contract; only the existing effectful-return oracle's Rust
+syntax changed. Only two roots in that corpus use `StateReturn::Effectful`
+(`choose` and coracle's `start`), so 198 is a regression count, not experimental
+language coverage. The coracle fallback remained byte-identical.
+
+The migration review recommends preserving legacy admission and diagnostics
+for a first default migration of the existing effectful-return family. Use the
+new lowering in that admitted intersection, retain fallback on genuine
+unsupported fragments, and leave the start-funding route intact. Broader
+algebra admission should be a separate reviewed change. This recommendation
+has not been implemented: the experiment remains opt-in.
+
+Default promotion still requires that admission policy, coverage of added
+scalar/arithmetic/error facets, and mixed-shape/platform resource evidence.
+The selected proof/application tests use the established unbalanced policy;
+they do not qualify all transaction policies. Do not infer full language parity,
+formal equivalence, or code-size reduction. Planning, decisions and execution
+receipts remain in the Obsidian midnight vault until publication.

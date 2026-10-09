@@ -122,7 +122,7 @@
     "tools/compact-rust-backend/src/recorded/legacy/actions/bindings.rs": "5aa51e218a76d4a7aae1f8d332e913c17bae52760d4197161c0ac012f1aa030e",
     "tools/compact-rust-backend/src/recorded/legacy/actions/collections.rs": "502dd04921b10bfa8ef6bba8ce2c6dbfed5fef7ee715b8e1203f672a925c3ab8",
     "tools/compact-rust-backend/src/recorded/legacy/actions/bindings/closed.rs": "bad1b71b45d3b508fba2bdad0e86a2dfbe28592d9b56e263fa0a49e85e17574a",
-    "tools/compact-rust-backend/src/stateful.rs": "3aad50c6f2aa73f20ff20e534b0b54417b48c4e276a74999ba9d616f5a2260a7",
+    "tools/compact-rust-backend/src/stateful.rs": "d6ea080187ec283adfcda18d9776e0de26395e511699cff4d1a16317ffd1cb57",
     "tools/compact-rust-backend/src/stateful/returns.rs": "148556047644c07ad98e9c6b52aa424c16b3c48d778f597a586c694a70e2339d",
     "tools/compact-rust-backend/src/recorded/typed_plan/control.rs": "757902f701aeb092597b29b3b9b2b0581e3608482ce4ec7ae43716b24039fba6",
     "tools/compact-rust-backend/src/recorded/typed_plan/aggregates.rs": "5a9ab37e97b4cd245e53e27e1d23ba627ae15609477bb5adf62925de828c08b0",
@@ -144,6 +144,12 @@
     "tools/compact-rust-backend/src/recorded/typed_plan/terminal_returns.rs": "f1a78e8b3921a95774a3e8eda62b94c1b2096073de907e8b5dbff1fdf3a95f42",
     "tools/compact-rust-backend/src/recorded/typed_plan/unit_actions.rs": "566f6ede45050f7c5ab916526b8163ebd0ae283b37359cd83f85faba1a4baf7d",
     "tools/compact-rust-backend/src/recorded/typed_plan/voting_commit.rs": "f7271b502a8f94ea8a2602c61202f646e16372d060aac023171d960f705cf573",
+    "tools/compact-rust-backend/src/stateful/actions/merkle.rs": "504715603dd82538346e333af3e1f169686671d762c1035f57f17ff778fa56d2",
+    "tools/compact-rust-backend/src/stateful/actions/effects.rs": "912dea7c91f5cb221c788937dda67a2f258f3ceb7f8e888c87d1ceb8697d7b0e",
+    "tools/compact-rust-backend/src/stateful/actions/coins.rs": "e35e53b45596561bf06cead5fa0b8fac3a5546fb9e88042ecc63e075486d50df",
+    "tools/compact-rust-backend/src/stateful/actions/cells_counters.rs": "aeba1c168c010cf82854500b10a9af60b3b1dcc0924df3930154a7c6e040c822",
+    "tools/compact-rust-backend/src/stateful/actions/collections.rs": "3261b3aea6cac10d7f4020fad4c0862f2b22350c16252fe4950fefeb51f5e990",
+    "tools/compact-rust-backend/src/stateful/actions.rs": "fcba035798bd4f47d68cce0038468e6fa816710b69cd54b1354b022d02945c7d",
     "tools/compact-rust-backend/src/recorded/typed_plan/evidence.rs": "b835a76820570715992ab13a54e4b47ca8ce0933f227d5a5e46ea44866661c1f"
   },
   "grammar_inventory": {

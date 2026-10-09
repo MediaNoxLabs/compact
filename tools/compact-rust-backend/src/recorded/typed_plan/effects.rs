@@ -57,17 +57,17 @@ impl Plan<'_> {
                     })
                     .collect::<Option<Vec<_>>>()?;
                 let effect = intent_effect::emit(expression, &operands)?;
-                self.intent_effects += usize::from(effect.intent);
-                self.intent_queries += usize::from(effect.public_query);
-                self.zswap_inputs +=
+                self.evidence.intent_effects += usize::from(effect.intent);
+                self.evidence.intent_queries += usize::from(effect.public_query);
+                self.evidence.zswap_inputs +=
                     usize::from(matches!(expression, Expr::CreateZswapInput { .. }));
-                self.zswap_outputs +=
+                self.evidence.zswap_outputs +=
                     usize::from(matches!(expression, Expr::CreateZswapOutput { .. }));
                 steps.push(effect.statement);
                 self.bind(syn::parse_quote!(()), Type::Unit, steps)
             }
             Expr::KernelSelf { ty } if *ty == contract_address_type() => {
-                self.kernel_self_reads += 1;
+                self.evidence.kernel_self_reads += 1;
                 let rust_ty = rust_type(ty).ok()?;
                 let observed = self.fresh();
                 steps.push(syn::parse_quote!(let (frame, #observed) = frame.kernel_self()?;));
@@ -113,7 +113,7 @@ impl Plan<'_> {
                 }
                 let args = self.arguments(arguments, &declaration.parameters, scope, steps)?;
                 let method = ident(name).ok()?;
-                self.witness_calls += 1;
+                self.evidence.witness_calls += 1;
                 let observed = self.fresh();
                 let ty = rust_type(&declaration.result).ok()?;
                 steps.push(syn::parse_quote! {

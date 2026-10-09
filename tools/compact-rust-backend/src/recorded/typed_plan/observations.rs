@@ -55,7 +55,7 @@ impl Plan<'_> {
                 let slot = ident(field).ok()?;
                 let observed = self.fresh();
                 steps.push(syn::parse_quote!(let (frame, #observed) = crate::ledger_slots::#slot.record_less_than(frame, (#threshold).value() as u64)?;));
-                self.counter_comparisons += 1;
+                self.evidence.counter_comparisons += 1;
                 self.bind(syn::parse_quote!(#observed), Type::Boolean, steps)
             }
             Expr::CounterRead { field, index } => {
@@ -65,9 +65,9 @@ impl Plan<'_> {
                 let slot = ident(field).ok()?;
                 let observed = self.fresh();
                 steps.push(syn::parse_quote!(let (frame, #observed) = crate::ledger_slots::#slot.record_read(frame)?;));
-                self.counter_reads += 1;
+                self.evidence.counter_reads += 1;
                 if self.scalar_body_depth > 0 {
-                    self.scalar_counter_reads += 1;
+                    self.evidence.scalar_counter_reads += 1;
                 }
                 self.bind(syn::parse_quote!(runtime::BoundedUint::<18446744073709551615>::new(#observed as u128)?), Type::Unsigned { max: "18446744073709551615".into() }, steps)
             }
@@ -135,9 +135,9 @@ impl Plan<'_> {
                     return None;
                 }
                 let ty = ty.clone();
-                self.cell_reads += 1;
+                self.evidence.cell_reads += 1;
                 if optional_string(&ty) {
-                    self.optional_cells += 1;
+                    self.evidence.optional_cells += 1;
                 }
                 self.observe(field, "record_read", vec![], ty, steps)
             }
@@ -157,7 +157,7 @@ impl Plan<'_> {
                     return None;
                 }
                 if ty == qualified_coin_type() {
-                    self.qualified_set_reads += 1;
+                    self.evidence.qualified_set_reads += 1;
                 }
                 let value = self.expression(value, scope, steps)?;
                 if value.ty != ty {
@@ -189,7 +189,7 @@ impl Plan<'_> {
                 if *ty != qualified_coin_type() {
                     return None;
                 }
-                self.qualified_set_reads += 1;
+                self.evidence.qualified_set_reads += 1;
                 if matches!(expression, Expr::SetSize { .. }) {
                     let slot = ident(field).ok()?;
                     let name = self.fresh();
@@ -209,7 +209,7 @@ impl Plan<'_> {
                 {
                     return None;
                 }
-                self.historic_roots += 1;
+                self.evidence.historic_roots += 1;
                 self.observe(
                     field,
                     "record_check_root",
@@ -233,7 +233,7 @@ impl Plan<'_> {
                 {
                     return None;
                 }
-                self.root_observations += 1;
+                self.evidence.root_observations += 1;
                 self.observe(
                     field,
                     "record_check_root",

@@ -356,19 +356,19 @@ pub(super) fn lower<'a>(
     }
     // Counts are structural (both branches), while generated execution retains
     // exactly the selected branch. No counters, collections or hidden effects.
-    (plan.witness_calls == 1
-        && plan.cell_reads == 5
-        && plan.cell_writes == 4
-        && plan.qualified_cell_writes == 2
-        && plan.kernel_self_reads == 4
-        && plan.zswap_inputs == 2
-        && plan.zswap_outputs == 2
-        && plan.intent_queries == 5
-        && plan.counter_reads == 0
-        && plan.counter_writes == 0
-        && plan.counter_comparisons == 0
-        && plan.tree_writes == 0
-        && plan.set_writes == 0)
+    (plan.evidence.witness_calls == 1
+        && plan.evidence.cell_reads == 5
+        && plan.evidence.cell_writes == 4
+        && plan.evidence.qualified_cell_writes == 2
+        && plan.evidence.kernel_self_reads == 4
+        && plan.evidence.zswap_inputs == 2
+        && plan.evidence.zswap_outputs == 2
+        && plan.evidence.intent_queries == 5
+        && plan.evidence.counter_reads == 0
+        && plan.evidence.counter_writes == 0
+        && plan.evidence.counter_comparisons == 0
+        && plan.evidence.tree_writes == 0
+        && plan.evidence.set_writes == 0)
         .then_some(TypedPlan {
             steps,
             result: syn::parse_quote!(()),

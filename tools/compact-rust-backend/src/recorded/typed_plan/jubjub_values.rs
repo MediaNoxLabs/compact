@@ -89,18 +89,8 @@ pub(super) fn lower<'a>(
         witnesses,
         pure,
         next: 0,
-        witness_calls: 0,
-        kernel_self_reads: 0,
+        evidence: EffectEvidence::default(),
         context_query: false,
-        root_observations: 0,
-        tree_writes: 0,
-        set_writes: 0,
-        counter_writes: 0,
-        counter_reads: 0,
-        counter_comparisons: 0,
-        cell_reads: 0,
-        cell_writes: 0,
-        field_cell_writes: 0,
         field_cell_slot: None,
         effectful_field_cells: false,
         read_only_assertions: false,
@@ -109,24 +99,11 @@ pub(super) fn lower<'a>(
         composite_domain: CompositeDomain::JubjubValues,
         composition_calls: None,
         composition_lookup_sites: Default::default(),
-        intent_effects: 0,
-        intent_queries: 0,
-        zswap_inputs: 0,
-        zswap_outputs: 0,
         counter_hash_helpers: false,
         scalar_arguments: false,
         scalar_body_depth: 0,
-        scalar_helper_calls: 0,
-        scalar_counter_reads: 0,
         active_calls: HashSet::new(),
         stateful_circuits: Some(circuits),
-        optional_cells: 0,
-        opaque_cells: 0,
-        historic_roots: 0,
-        historic_writes: 0,
-        qualified_set_reads: 0,
-        qualified_set_writes: 0,
-        qualified_cell_writes: 0,
     };
 
     let scope: Scope = circuit
@@ -150,7 +127,7 @@ pub(super) fn lower<'a>(
     let mut steps = Vec::new();
     let body = terminal_returns::adapt(&circuit.actions, returned);
     let result = plan.return_plan(&body, &scope, &mut steps)?;
-    (result.ty == Type::JubjubPoint && plan.cell_writes == 1).then_some(TypedPlan {
+    (result.ty == Type::JubjubPoint && plan.evidence.cell_writes == 1).then_some(TypedPlan {
         steps,
         result: result.value,
     })

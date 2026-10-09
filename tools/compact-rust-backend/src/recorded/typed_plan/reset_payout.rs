@@ -146,17 +146,17 @@ pub(super) fn lower<'a>(
     let result = plan.expression(value, &Scope::new(), &mut steps)?;
     // Require the effect family, not a source identity or arbitrary exact node count.
     (result.ty == circuit.result
-        && plan.witness_calls == 0
-        && plan.cell_reads > 0
-        && plan.counter_reads > 0
-        && plan.counter_comparisons > 0
-        && plan.zswap_inputs > 0
-        && plan.zswap_outputs > 0
-        && plan.intent_queries > 0
-        && plan.cell_writes > 0
-        && plan.counter_writes > 0
-        && plan.tree_writes > 0
-        && plan.set_writes > 0)
+        && plan.evidence.witness_calls == 0
+        && plan.evidence.cell_reads > 0
+        && plan.evidence.counter_reads > 0
+        && plan.evidence.counter_comparisons > 0
+        && plan.evidence.zswap_inputs > 0
+        && plan.evidence.zswap_outputs > 0
+        && plan.evidence.intent_queries > 0
+        && plan.evidence.cell_writes > 0
+        && plan.evidence.counter_writes > 0
+        && plan.evidence.tree_writes > 0
+        && plan.evidence.set_writes > 0)
         .then_some(TypedPlan {
             steps,
             result: result.value,

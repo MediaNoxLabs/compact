@@ -25,9 +25,11 @@ mod composition;
 mod control;
 mod crypto;
 mod effects;
+mod evidence;
 mod leaves;
 mod observations;
 pub(super) use composition::CompositionRejection;
+use evidence::EffectEvidence;
 mod field_observations;
 mod funded_mint;
 mod guarded_deposit;
@@ -153,18 +155,8 @@ struct Plan<'a> {
     witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
     pure: &'a HashMap<&'a str, &'a PureCircuit>,
     next: usize,
-    witness_calls: usize,
-    kernel_self_reads: usize,
+    evidence: EffectEvidence,
     context_query: bool,
-    root_observations: usize,
-    tree_writes: usize,
-    set_writes: usize,
-    counter_writes: usize,
-    counter_reads: usize,
-    counter_comparisons: usize,
-    cell_reads: usize,
-    cell_writes: usize,
-    field_cell_writes: usize,
     field_cell_slot: Option<(String, u8)>,
     effectful_field_cells: bool,
     read_only_assertions: bool,
@@ -173,24 +165,11 @@ struct Plan<'a> {
     composite_domain: CompositeDomain,
     composition_calls: Option<composition::Calls<'a>>,
     composition_lookup_sites: HashSet<*const Expr>,
-    intent_effects: usize,
-    intent_queries: usize,
-    zswap_inputs: usize,
-    zswap_outputs: usize,
     counter_hash_helpers: bool,
     scalar_arguments: bool,
     scalar_body_depth: usize,
-    scalar_helper_calls: usize,
-    scalar_counter_reads: usize,
     active_calls: HashSet<String>,
     stateful_circuits: Option<&'a HashMap<&'a str, &'a StatefulCircuit>>,
-    optional_cells: usize,
-    opaque_cells: usize,
-    historic_roots: usize,
-    historic_writes: usize,
-    qualified_set_reads: usize,
-    qualified_set_writes: usize,
-    qualified_cell_writes: usize,
 }
 
 impl Plan<'_> {
@@ -809,7 +788,7 @@ impl Plan<'_> {
         };
         if scalar {
             self.scalar_body_depth -= 1;
-            self.scalar_helper_calls += 1;
+            self.evidence.scalar_helper_calls += 1;
         }
         self.active_calls.remove(name);
         let value = value?;
@@ -1030,15 +1009,15 @@ impl Plan<'_> {
                 let value = value.value;
                 let slot = ident(field).ok()?;
                 steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_write(frame, #value)?;));
-                self.cell_writes += 1;
+                self.evidence.cell_writes += 1;
                 if ty == Type::Field {
-                    self.field_cell_writes += 1;
+                    self.evidence.field_cell_writes += 1;
                 }
                 if ty == Type::OpaqueBytes {
-                    self.opaque_cells += 1;
+                    self.evidence.opaque_cells += 1;
                 }
                 if optional_string(&ty) {
-                    self.optional_cells += 1;
+                    self.evidence.optional_cells += 1;
                 }
             }
             StateAction::CellWriteCoin {
@@ -1070,7 +1049,7 @@ impl Plan<'_> {
                         #recipient.is_left, #recipient.left.bytes, #recipient.right.bytes,
                     ),
                 )?;));
-                self.qualified_cell_writes += 1;
+                self.evidence.qualified_cell_writes += 1;
             }
             StateAction::CounterReset { field, index }
                 if self.phase_reset
@@ -1083,7 +1062,7 @@ impl Plan<'_> {
                 steps.push(
                     syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_reset(frame)?;),
                 );
-                self.counter_writes += 1;
+                self.evidence.counter_writes += 1;
             }
             StateAction::MerkleResetToDefault { field, index }
                 if self.phase_reset
@@ -1100,7 +1079,7 @@ impl Plan<'_> {
                 }
                 let slot = ident(field).ok()?;
                 steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_reset_to_default(frame)?;));
-                self.tree_writes += 1;
+                self.evidence.tree_writes += 1;
             }
             StateAction::CounterIncrement {
                 field,
@@ -1131,7 +1110,7 @@ impl Plan<'_> {
                 };
                 let slot = ident(field).ok()?;
                 steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_increment(frame, #amount)?;));
-                self.counter_writes += 1;
+                self.evidence.counter_writes += 1;
             }
             StateAction::Assert { condition, message } => {
                 let condition = self.expression(condition, scope, steps)?;
@@ -1205,22 +1184,22 @@ impl Plan<'_> {
                             ty: Type::Bytes { length: 32 },
                             ..
                         },
-                    ) => self.tree_writes += 1,
+                    ) => self.evidence.tree_writes += 1,
                     (StateAction::SetInsert { .. }, LedgerFieldKind::Set { ty })
                         if bytes32_key(ty)
                             || (self.composition_calls.is_some() && *ty == Type::OpaqueString) =>
                     {
-                        self.set_writes += 1
+                        self.evidence.set_writes += 1
                     }
                     (StateAction::SetInsert { .. }, LedgerFieldKind::Set { ty })
                         if *ty == qualified_coin_type() =>
                     {
-                        self.qualified_set_writes += 1
+                        self.evidence.qualified_set_writes += 1
                     }
                     (
                         StateAction::HistoricMerkleInsert { .. },
                         LedgerFieldKind::HistoricMerkleTree { ty, .. },
-                    ) if wrapped_bytes32(ty) => self.historic_writes += 1,
+                    ) if wrapped_bytes32(ty) => self.evidence.historic_writes += 1,
                     _ => return None,
                 }
                 let ty = match &declaration.declaration {
@@ -1259,9 +1238,9 @@ impl Plan<'_> {
                 let value = value.value;
                 steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_remove(frame, #value)?;));
                 if ty == qualified_coin_type() {
-                    self.qualified_set_writes += 1;
+                    self.evidence.qualified_set_writes += 1;
                 } else {
-                    self.set_writes += 1;
+                    self.evidence.set_writes += 1;
                 }
             }
             StateAction::MapInsert {
@@ -1328,9 +1307,9 @@ impl Plan<'_> {
                     syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_reset(frame)?;),
                 );
                 if *ty == qualified_coin_type() {
-                    self.qualified_set_writes += 1;
+                    self.evidence.qualified_set_writes += 1;
                 } else {
-                    self.set_writes += 1;
+                    self.evidence.set_writes += 1;
                 }
             }
             StateAction::SetInsertCoin {
@@ -1360,7 +1339,7 @@ impl Plan<'_> {
                         #recipient.is_left, #recipient.left.bytes, #recipient.right.bytes,
                     ),
                 )?;));
-                self.qualified_set_writes += 1;
+                self.evidence.qualified_set_writes += 1;
             }
             _ => return None,
         }
@@ -1561,18 +1540,8 @@ pub(super) fn lower_effectful<'a>(
         witnesses,
         pure,
         next: 0,
-        witness_calls: 0,
-        kernel_self_reads: 0,
+        evidence: EffectEvidence::default(),
         context_query: false,
-        root_observations: 0,
-        tree_writes: 0,
-        set_writes: 0,
-        counter_writes: 0,
-        counter_reads: 0,
-        counter_comparisons: 0,
-        cell_reads: 0,
-        cell_writes: 0,
-        field_cell_writes: 0,
         field_cell_slot: None,
         effectful_field_cells: true,
         read_only_assertions: false,
@@ -1581,24 +1550,11 @@ pub(super) fn lower_effectful<'a>(
         composite_domain: CompositeDomain::None,
         composition_calls: None,
         composition_lookup_sites: HashSet::new(),
-        intent_effects: 0,
-        intent_queries: 0,
-        zswap_inputs: 0,
-        zswap_outputs: 0,
         counter_hash_helpers: false,
         scalar_arguments: false,
         scalar_body_depth: 0,
-        scalar_helper_calls: 0,
-        scalar_counter_reads: 0,
         active_calls: HashSet::new(),
         stateful_circuits: None,
-        optional_cells: 0,
-        opaque_cells: 0,
-        historic_roots: 0,
-        historic_writes: 0,
-        qualified_set_reads: 0,
-        qualified_set_writes: 0,
-        qualified_cell_writes: 0,
     };
     let scope = circuit
         .parameters
@@ -1618,11 +1574,11 @@ pub(super) fn lower_effectful<'a>(
     let mut steps = Vec::new();
     let result = plan.return_plan(body, &scope, &mut steps)?;
     if result.ty != circuit.result
-        || plan.cell_reads == 0
-        || plan.cell_writes == 0
-        || plan.cell_writes != plan.field_cell_writes
-        || plan.optional_cells != 0
-        || plan.opaque_cells != 0
+        || plan.evidence.cell_reads == 0
+        || plan.evidence.cell_writes == 0
+        || plan.evidence.cell_writes != plan.evidence.field_cell_writes
+        || plan.evidence.optional_cells != 0
+        || plan.evidence.opaque_cells != 0
     {
         return None;
     }
@@ -1777,18 +1733,8 @@ pub(super) fn lower_context_query<'a>(
         witnesses,
         pure,
         next: 0,
-        witness_calls: 0,
-        kernel_self_reads: 0,
+        evidence: EffectEvidence::default(),
         context_query: true,
-        root_observations: 0,
-        tree_writes: 0,
-        set_writes: 0,
-        counter_writes: 0,
-        counter_reads: 0,
-        counter_comparisons: 0,
-        cell_reads: 0,
-        cell_writes: 0,
-        field_cell_writes: 0,
         field_cell_slot: None,
         effectful_field_cells: false,
         read_only_assertions: false,
@@ -1797,28 +1743,17 @@ pub(super) fn lower_context_query<'a>(
         composite_domain: CompositeDomain::None,
         composition_calls: None,
         composition_lookup_sites: HashSet::new(),
-        intent_effects: 0,
-        intent_queries: 0,
-        zswap_inputs: 0,
-        zswap_outputs: 0,
         counter_hash_helpers: false,
         scalar_arguments: false,
         scalar_body_depth: 0,
-        scalar_helper_calls: 0,
-        scalar_counter_reads: 0,
         active_calls: HashSet::new(),
         stateful_circuits: None,
-        optional_cells: 0,
-        opaque_cells: 0,
-        historic_roots: 0,
-        historic_writes: 0,
-        qualified_set_reads: 0,
-        qualified_set_writes: 0,
-        qualified_cell_writes: 0,
     };
     let mut steps = Vec::new();
     let result = plan.expression(value, &Scope::new(), &mut steps)?;
-    (result.ty == circuit.result && plan.kernel_self_reads > 0 && plan.witness_calls == 0)
+    (result.ty == circuit.result
+        && plan.evidence.kernel_self_reads > 0
+        && plan.evidence.witness_calls == 0)
         .then_some(TypedPlan {
             steps,
             result: result.value,
@@ -2078,18 +2013,8 @@ pub(super) fn lower_shielded_receive<'a>(
         witnesses,
         pure,
         next: 0,
-        witness_calls: 0,
-        kernel_self_reads: 0,
+        evidence: EffectEvidence::default(),
         context_query: false,
-        root_observations: 0,
-        tree_writes: 0,
-        set_writes: 0,
-        counter_writes: 0,
-        counter_reads: 0,
-        counter_comparisons: 0,
-        cell_reads: 0,
-        cell_writes: 0,
-        field_cell_writes: 0,
         field_cell_slot: None,
         effectful_field_cells: false,
         read_only_assertions: false,
@@ -2098,24 +2023,11 @@ pub(super) fn lower_shielded_receive<'a>(
         composite_domain: CompositeDomain::ShieldedReceive,
         composition_calls: None,
         composition_lookup_sites: HashSet::new(),
-        intent_effects: 0,
-        intent_queries: 0,
-        zswap_inputs: 0,
-        zswap_outputs: 0,
         counter_hash_helpers: false,
         scalar_arguments: false,
         scalar_body_depth: 0,
-        scalar_helper_calls: 0,
-        scalar_counter_reads: 0,
         active_calls: HashSet::new(),
         stateful_circuits: Some(circuits),
-        optional_cells: 0,
-        opaque_cells: 0,
-        historic_roots: 0,
-        historic_writes: 0,
-        qualified_set_reads: 0,
-        qualified_set_writes: 0,
-        qualified_cell_writes: 0,
     };
     let parameter = &circuit.parameters[0];
     let scope = Scope::from([(
@@ -2129,16 +2041,16 @@ pub(super) fn lower_shielded_receive<'a>(
     for action in &circuit.actions {
         plan.action(action, &scope, &mut steps)?;
     }
-    (plan.kernel_self_reads == 1
-        && plan.intent_effects == 1
-        && plan.intent_queries == 1
-        && plan.witness_calls == 0
-        && plan.cell_reads == 0
-        && plan.cell_writes == 0
-        && plan.tree_writes == 0
-        && plan.set_writes == 0
-        && plan.counter_reads == 0
-        && plan.counter_writes == 0)
+    (plan.evidence.kernel_self_reads == 1
+        && plan.evidence.intent_effects == 1
+        && plan.evidence.intent_queries == 1
+        && plan.evidence.witness_calls == 0
+        && plan.evidence.cell_reads == 0
+        && plan.evidence.cell_writes == 0
+        && plan.evidence.tree_writes == 0
+        && plan.evidence.set_writes == 0
+        && plan.evidence.counter_reads == 0
+        && plan.evidence.counter_writes == 0)
         .then_some(TypedPlan {
             steps,
             result: syn::parse_quote!(()),
@@ -2413,18 +2325,8 @@ fn shielded_plan<'a>(
         witnesses,
         pure,
         next: 0,
-        witness_calls: 0,
-        kernel_self_reads: 0,
+        evidence: EffectEvidence::default(),
         context_query: false,
-        root_observations: 0,
-        tree_writes: 0,
-        set_writes: 0,
-        counter_writes: 0,
-        counter_reads: 0,
-        counter_comparisons: 0,
-        cell_reads: 0,
-        cell_writes: 0,
-        field_cell_writes: 0,
         field_cell_slot: None,
         effectful_field_cells: false,
         read_only_assertions: false,
@@ -2433,24 +2335,11 @@ fn shielded_plan<'a>(
         composite_domain: domain,
         composition_calls: None,
         composition_lookup_sites: HashSet::new(),
-        intent_effects: 0,
-        intent_queries: 0,
-        zswap_inputs: 0,
-        zswap_outputs: 0,
         counter_hash_helpers: false,
         scalar_arguments: false,
         scalar_body_depth: 0,
-        scalar_helper_calls: 0,
-        scalar_counter_reads: 0,
         active_calls: HashSet::new(),
         stateful_circuits: Some(circuits),
-        optional_cells: 0,
-        opaque_cells: 0,
-        historic_roots: 0,
-        historic_writes: 0,
-        qualified_set_reads: 0,
-        qualified_set_writes: 0,
-        qualified_cell_writes: 0,
     }
 }
 
@@ -2523,17 +2412,17 @@ pub(super) fn lower_shielded_send_checked<'a>(
         return ProfileAttempt::Rejected(rejected_return());
     };
     if result.ty == circuit.result
-        && plan.zswap_inputs > 0
-        && plan.zswap_outputs > 0
-        && plan.intent_queries > 0
-        && plan.witness_calls == 0
-        && plan.cell_reads == 0
-        && plan.cell_writes == 0
-        && plan.counter_reads == 0
-        && plan.counter_comparisons == 0
-        && plan.counter_writes == 0
-        && plan.tree_writes == 0
-        && plan.set_writes == 0
+        && plan.evidence.zswap_inputs > 0
+        && plan.evidence.zswap_outputs > 0
+        && plan.evidence.intent_queries > 0
+        && plan.evidence.witness_calls == 0
+        && plan.evidence.cell_reads == 0
+        && plan.evidence.cell_writes == 0
+        && plan.evidence.counter_reads == 0
+        && plan.evidence.counter_comparisons == 0
+        && plan.evidence.counter_writes == 0
+        && plan.evidence.tree_writes == 0
+        && plan.evidence.set_writes == 0
     {
         ProfileAttempt::Admitted(TypedPlan {
             steps,
@@ -2624,18 +2513,8 @@ pub(super) fn lower_composite<'a>(
         witnesses,
         pure,
         next: 0,
-        witness_calls: 0,
-        kernel_self_reads: 0,
+        evidence: EffectEvidence::default(),
         context_query: false,
-        root_observations: 0,
-        tree_writes: 0,
-        set_writes: 0,
-        counter_writes: 0,
-        counter_reads: 0,
-        counter_comparisons: 0,
-        cell_reads: 0,
-        cell_writes: 0,
-        field_cell_writes: 0,
         field_cell_slot: None,
         effectful_field_cells: false,
         read_only_assertions: false,
@@ -2644,24 +2523,11 @@ pub(super) fn lower_composite<'a>(
         composite_domain: domain,
         composition_calls: None,
         composition_lookup_sites: HashSet::new(),
-        intent_effects: 0,
-        intent_queries: 0,
-        zswap_inputs: 0,
-        zswap_outputs: 0,
         counter_hash_helpers: false,
         scalar_arguments: false,
         scalar_body_depth: 0,
-        scalar_helper_calls: 0,
-        scalar_counter_reads: 0,
         active_calls: HashSet::new(),
         stateful_circuits: Some(circuits),
-        optional_cells: 0,
-        opaque_cells: 0,
-        historic_roots: 0,
-        historic_writes: 0,
-        qualified_set_reads: 0,
-        qualified_set_writes: 0,
-        qualified_cell_writes: 0,
     };
     let scope = circuit
         .parameters
@@ -2685,8 +2551,9 @@ pub(super) fn lower_composite<'a>(
     let result = plan.expression(value, &scope, &mut steps)?;
     (result.ty == circuit.result
         && (domain != CompositeDomain::Intents
-            || (plan.intent_effects > 0 && plan.kernel_self_reads + plan.intent_queries > 0))
-        && (domain != CompositeDomain::FieldObservations || plan.cell_reads > 0))
+            || (plan.evidence.intent_effects > 0
+                && plan.evidence.kernel_self_reads + plan.evidence.intent_queries > 0))
+        && (domain != CompositeDomain::FieldObservations || plan.evidence.cell_reads > 0))
         .then_some(TypedPlan {
             steps,
             result: result.value,
@@ -2772,18 +2639,8 @@ pub(super) fn lower<'a>(
         witnesses,
         pure,
         next: 0,
-        witness_calls: 0,
-        kernel_self_reads: 0,
+        evidence: EffectEvidence::default(),
         context_query: false,
-        root_observations: 0,
-        tree_writes: 0,
-        set_writes: 0,
-        counter_writes: 0,
-        counter_reads: 0,
-        counter_comparisons: 0,
-        cell_reads: 0,
-        cell_writes: 0,
-        field_cell_writes: 0,
         field_cell_slot: field_cell_slot.clone(),
         effectful_field_cells: false,
         read_only_assertions: assertion_entry,
@@ -2792,24 +2649,11 @@ pub(super) fn lower<'a>(
         composite_domain: CompositeDomain::None,
         composition_calls: None,
         composition_lookup_sites: HashSet::new(),
-        intent_effects: 0,
-        intent_queries: 0,
-        zswap_inputs: 0,
-        zswap_outputs: 0,
         counter_hash_helpers: circuit.parameters.is_empty() && circuit.result == Type::Unit,
         scalar_arguments: false,
         scalar_body_depth: 0,
-        scalar_helper_calls: 0,
-        scalar_counter_reads: 0,
         active_calls: HashSet::new(),
         stateful_circuits: Some(circuits),
-        optional_cells: 0,
-        opaque_cells: 0,
-        historic_roots: 0,
-        historic_writes: 0,
-        qualified_set_reads: 0,
-        qualified_set_writes: 0,
-        qualified_cell_writes: 0,
     };
     let scope: Scope = circuit
         .parameters
@@ -2847,74 +2691,76 @@ pub(super) fn lower<'a>(
         }
         _ => return None,
     };
-    let ordinary = plan.opaque_cells == 0
-        && plan.historic_roots == 0
-        && plan.historic_writes == 0
-        && plan.qualified_cell_writes == 0;
+    let ordinary = plan.evidence.opaque_cells == 0
+        && plan.evidence.historic_roots == 0
+        && plan.evidence.historic_writes == 0
+        && plan.evidence.qualified_cell_writes == 0;
     let membership = ordinary
         && circuit.result == Type::Unit
-        && plan.root_observations > 0
-        && plan.set_writes > 0
-        && plan.cell_writes == 0
-        && plan.optional_cells == 0
-        && (plan.counter_reads == 0
-            || (plan.scalar_helper_calls > 0
-                && plan.counter_reads == plan.scalar_counter_reads
-                && plan.scalar_counter_reads == plan.scalar_helper_calls
-                && plan.kernel_self_reads == 0
-                && plan.counter_comparisons == 0))
+        && plan.evidence.root_observations > 0
+        && plan.evidence.set_writes > 0
+        && plan.evidence.cell_writes == 0
+        && plan.evidence.optional_cells == 0
+        && (plan.evidence.counter_reads == 0
+            || (plan.evidence.scalar_helper_calls > 0
+                && plan.evidence.counter_reads == plan.evidence.scalar_counter_reads
+                && plan.evidence.scalar_counter_reads == plan.evidence.scalar_helper_calls
+                && plan.evidence.kernel_self_reads == 0
+                && plan.evidence.counter_comparisons == 0))
         && if enum_entry {
-            plan.tree_writes > 0 && plan.counter_writes == 0
+            plan.evidence.tree_writes > 0 && plan.evidence.counter_writes == 0
         } else {
-            circuit.parameters.is_empty() && plan.counter_writes > 0 && plan.tree_writes == 0
+            circuit.parameters.is_empty()
+                && plan.evidence.counter_writes > 0
+                && plan.evidence.tree_writes == 0
         };
     let cell_lifecycle = ordinary
-        && plan.root_observations == 0
-        && plan.set_writes == 0
-        && plan.tree_writes == 0
-        && plan.cell_writes > 0
-        && plan.optional_cells > 0
-        && plan.counter_reads > 0
-        && ((opaque_entry && circuit.result == Type::Unit && plan.counter_writes == 0)
+        && plan.evidence.root_observations == 0
+        && plan.evidence.set_writes == 0
+        && plan.evidence.tree_writes == 0
+        && plan.evidence.cell_writes > 0
+        && plan.evidence.optional_cells > 0
+        && plan.evidence.counter_reads > 0
+        && ((opaque_entry && circuit.result == Type::Unit && plan.evidence.counter_writes == 0)
             || (circuit.parameters.is_empty()
                 && circuit.result == Type::OpaqueString
-                && plan.counter_writes > 0));
+                && plan.evidence.counter_writes > 0));
     let historic_spend = spend_entry
         && circuit.result == Type::Unit
-        && plan.qualified_cell_writes == 0
-        && plan.root_observations == 0
-        && plan.tree_writes == 0
-        && plan.optional_cells == 0
-        && plan.counter_reads == 0
-        && plan.counter_writes == 0
-        && plan.historic_roots > 0
-        && plan.historic_writes > 0
-        && plan.set_writes > 0
-        && plan.opaque_cells > 0
-        && plan.cell_writes == plan.opaque_cells;
+        && plan.evidence.qualified_cell_writes == 0
+        && plan.evidence.root_observations == 0
+        && plan.evidence.tree_writes == 0
+        && plan.evidence.optional_cells == 0
+        && plan.evidence.counter_reads == 0
+        && plan.evidence.counter_writes == 0
+        && plan.evidence.historic_roots > 0
+        && plan.evidence.historic_writes > 0
+        && plan.evidence.set_writes > 0
+        && plan.evidence.opaque_cells > 0
+        && plan.evidence.cell_writes == plan.evidence.opaque_cells;
     let counter_comparison = counter_entry
-        && plan.witness_calls == 0
+        && plan.evidence.witness_calls == 0
         && ordinary
         && matches!(circuit.result, Type::Boolean | Type::Unit)
-        && plan.counter_comparisons > 0
-        && plan.counter_writes == 0
-        && plan.tree_writes == 0
-        && plan.root_observations == 0
-        && plan.set_writes == 0
-        && plan.cell_writes == 0
-        && plan.optional_cells == 0;
+        && plan.evidence.counter_comparisons > 0
+        && plan.evidence.counter_writes == 0
+        && plan.evidence.tree_writes == 0
+        && plan.evidence.root_observations == 0
+        && plan.evidence.set_writes == 0
+        && plan.evidence.cell_writes == 0
+        && plan.evidence.optional_cells == 0;
     let qualified_set_lifecycle = circuit.result == Type::Unit
-        && plan.qualified_set_writes > 0
-        && plan.qualified_cell_writes == 0
-        && plan.root_observations == 0
-        && plan.tree_writes == 0
-        && plan.set_writes == 0
-        && plan.counter_writes == 0
-        && plan.counter_reads == 0
-        && plan.cell_writes == 0
-        && plan.historic_roots == 0
-        && plan.historic_writes == 0
-        && ((circuit.parameters.is_empty() && plan.qualified_set_reads > 0)
+        && plan.evidence.qualified_set_writes > 0
+        && plan.evidence.qualified_cell_writes == 0
+        && plan.evidence.root_observations == 0
+        && plan.evidence.tree_writes == 0
+        && plan.evidence.set_writes == 0
+        && plan.evidence.counter_writes == 0
+        && plan.evidence.counter_reads == 0
+        && plan.evidence.cell_writes == 0
+        && plan.evidence.historic_roots == 0
+        && plan.evidence.historic_writes == 0
+        && ((circuit.parameters.is_empty() && plan.evidence.qualified_set_reads > 0)
             || matches!(circuit.parameters.as_slice(), [coin, recipient]
                 if coin.ty == shielded_coin_type()
                     && recipient.ty == shielded_recipient_type()));
@@ -2922,34 +2768,34 @@ pub(super) fn lower<'a>(
         && matches!(circuit.parameters.as_slice(), [coin, recipient]
             if coin.ty == shielded_coin_type()
                 && recipient.ty == shielded_recipient_type())
-        && plan.qualified_cell_writes == 1
-        && plan.qualified_set_reads == 0
-        && plan.qualified_set_writes == 0
-        && plan.root_observations == 0
-        && plan.tree_writes == 0
-        && plan.set_writes == 0
-        && plan.counter_writes == 0
-        && plan.counter_reads == 0
-        && plan.cell_writes == 0
-        && plan.historic_roots == 0
-        && plan.historic_writes == 0;
+        && plan.evidence.qualified_cell_writes == 1
+        && plan.evidence.qualified_set_reads == 0
+        && plan.evidence.qualified_set_writes == 0
+        && plan.evidence.root_observations == 0
+        && plan.evidence.tree_writes == 0
+        && plan.evidence.set_writes == 0
+        && plan.evidence.counter_writes == 0
+        && plan.evidence.counter_reads == 0
+        && plan.evidence.cell_writes == 0
+        && plan.evidence.historic_roots == 0
+        && plan.evidence.historic_writes == 0;
     let field_cell_root = field_cell_slot.is_some()
-        && plan.witness_calls == 0
+        && plan.evidence.witness_calls == 0
         && ordinary
-        && plan.qualified_set_reads == 0
-        && plan.qualified_set_writes == 0
-        && plan.qualified_cell_writes == 0
-        && plan.cell_reads == 1
-        && plan.cell_writes == 1
-        && plan.field_cell_writes == 1
-        && plan.root_observations == 0
-        && plan.tree_writes == 0
-        && plan.set_writes == 0
-        && plan.counter_reads == 0
-        && plan.counter_comparisons == 0
-        && plan.counter_writes == 0
-        && plan.optional_cells == 0;
-    (if plan.scalar_helper_calls > 0 {
+        && plan.evidence.qualified_set_reads == 0
+        && plan.evidence.qualified_set_writes == 0
+        && plan.evidence.qualified_cell_writes == 0
+        && plan.evidence.cell_reads == 1
+        && plan.evidence.cell_writes == 1
+        && plan.evidence.field_cell_writes == 1
+        && plan.evidence.root_observations == 0
+        && plan.evidence.tree_writes == 0
+        && plan.evidence.set_writes == 0
+        && plan.evidence.counter_reads == 0
+        && plan.evidence.counter_comparisons == 0
+        && plan.evidence.counter_writes == 0
+        && plan.evidence.optional_cells == 0;
+    (if plan.evidence.scalar_helper_calls > 0 {
         membership
     } else {
         membership
@@ -3322,18 +3168,8 @@ mod tests {
             witnesses: &witnesses,
             pure: &pure,
             next: 0,
-            witness_calls: 0,
-            kernel_self_reads: 0,
+            evidence: EffectEvidence::default(),
             context_query: false,
-            root_observations: 0,
-            tree_writes: 0,
-            set_writes: 0,
-            counter_writes: 0,
-            counter_reads: 0,
-            counter_comparisons: 0,
-            cell_reads: 0,
-            cell_writes: 0,
-            field_cell_writes: 0,
             field_cell_slot: None,
             effectful_field_cells: false,
             read_only_assertions: false,
@@ -3342,24 +3178,11 @@ mod tests {
             composite_domain: CompositeDomain::None,
             composition_calls: None,
             composition_lookup_sites: HashSet::new(),
-            intent_effects: 0,
-            intent_queries: 0,
-            zswap_inputs: 0,
-            zswap_outputs: 0,
             counter_hash_helpers: false,
             scalar_arguments: false,
             scalar_body_depth: 0,
-            scalar_helper_calls: 0,
-            scalar_counter_reads: 0,
             active_calls: HashSet::new(),
             stateful_circuits: None,
-            optional_cells: 0,
-            opaque_cells: 0,
-            historic_roots: 0,
-            historic_writes: 0,
-            qualified_set_reads: 0,
-            qualified_set_writes: 0,
-            qualified_cell_writes: 0,
         };
         let actual = Type::Unsigned { max: "255".into() };
         let target = Type::Unsigned {
@@ -3418,18 +3241,8 @@ mod tests {
             witnesses: &witnesses,
             pure: &pure,
             next: 0,
-            witness_calls: 0,
-            kernel_self_reads: 0,
+            evidence: EffectEvidence::default(),
             context_query: false,
-            root_observations: 0,
-            tree_writes: 0,
-            set_writes: 0,
-            counter_writes: 0,
-            counter_reads: 0,
-            counter_comparisons: 0,
-            cell_reads: 0,
-            cell_writes: 0,
-            field_cell_writes: 0,
             field_cell_slot: None,
             effectful_field_cells: false,
             read_only_assertions: false,
@@ -3438,24 +3251,11 @@ mod tests {
             composite_domain: CompositeDomain::None,
             composition_calls: None,
             composition_lookup_sites: HashSet::new(),
-            intent_effects: 0,
-            intent_queries: 0,
-            zswap_inputs: 0,
-            zswap_outputs: 0,
             counter_hash_helpers: false,
             scalar_arguments: false,
             scalar_body_depth: 0,
-            scalar_helper_calls: 0,
-            scalar_counter_reads: 0,
             active_calls: HashSet::new(),
             stateful_circuits: None,
-            optional_cells: 0,
-            opaque_cells: 0,
-            historic_roots: 0,
-            historic_writes: 0,
-            qualified_set_reads: 0,
-            qualified_set_writes: 0,
-            qualified_cell_writes: 0,
         };
         let action = StateAction::CounterIncrement {
             field: "tally_yes".into(),

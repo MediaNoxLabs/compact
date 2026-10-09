@@ -14,6 +14,7 @@ use crate::ir::*;
 use std::collections::HashMap;
 mod counters;
 mod expressions;
+mod ordinary;
 
 type Scope = HashMap<String, Value>;
 struct Lowerer<'a> {
@@ -55,41 +56,7 @@ pub(super) fn lower(
             }
             lower.returned(body, &scope, &mut bindings, "return_value.body")?
         }
-        returned => {
-            for (i, action) in circuit.actions.iter().enumerate() {
-                lower.action(action, &scope, &mut bindings, &format!("actions[{i}]"))?;
-            }
-            match returned {
-                StateReturn::Unit => lower.emit(
-                    Operation::Literal(Literal::Unit),
-                    Type::Unit,
-                    &mut bindings,
-                    "return_value",
-                ),
-                StateReturn::Expression { value } => {
-                    lower.expression(value, &scope, &mut bindings, "return_value.value")?
-                }
-                StateReturn::CellRead { field, index } => lower.expression(
-                    &Expr::CellRead {
-                        field: field.clone(),
-                        index: *index,
-                    },
-                    &scope,
-                    &mut bindings,
-                    "return_value",
-                )?,
-                StateReturn::CounterRead { field, index } => lower.expression(
-                    &Expr::CounterRead {
-                        field: field.clone(),
-                        index: *index,
-                    },
-                    &scope,
-                    &mut bindings,
-                    "return_value",
-                )?,
-                _ => return Err(RecordingGap::returned(returned)),
-            }
-        }
+        returned => lower.ordinary(&circuit.actions, returned, &scope, &mut bindings)?,
     };
     let result = lower.coerce(value, &circuit.result, &mut bindings, "return_value")?;
     Ok(Plan {

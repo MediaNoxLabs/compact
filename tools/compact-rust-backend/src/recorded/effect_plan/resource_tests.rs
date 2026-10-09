@@ -266,3 +266,120 @@ fn maximum_sibling_branch_width_on_two_mib_worker() {
         reject(&sibling_branches(width + 1), "nodes", 32768, None);
     });
 }
+
+fn ordinary_continuation(depth: usize, width: usize) -> Contract {
+    let snapshot = || LocalBinding {
+        name: "snapshot".into(),
+        ty: Type::Field,
+        value: Expr::CellRead {
+            field: "state".into(),
+            index: 0,
+        },
+    };
+    let mut action = StateAction::CellWrite {
+        field: "state".into(),
+        index: 0,
+        value: Expr::FieldLiteral { value: "0".into() },
+    };
+    for _ in 0..depth {
+        let mut bindings: Vec<_> = (0..width)
+            .map(|i| LocalBinding {
+                name: format!("local{i}"),
+                ty: Type::Field,
+                value: Expr::FieldLiteral { value: "1".into() },
+            })
+            .collect();
+        bindings.push(snapshot());
+        action = StateAction::Sequence {
+            actions: vec![StateAction::Let {
+                bindings,
+                action: Box::new(action),
+            }],
+        };
+    }
+    let mut contract = contract(read());
+    let circuit = &mut contract.stateful_circuits[0];
+    circuit.actions = vec![StateAction::Let {
+        bindings: vec![snapshot()],
+        action: Box::new(action),
+    }];
+    circuit.return_value = StateReturn::Expression {
+        value: Expr::Parameter {
+            name: "snapshot".into(),
+        },
+    };
+    contract
+}
+
+/// Bracket the first refusal without constructing an arbitrarily deep value.
+fn maximum_ordinary_depth() -> usize {
+    let make = |depth| ordinary_continuation(depth, 0);
+    let (mut accepted, mut refused) = (0, 1);
+    preflight(&make(accepted)).unwrap();
+    while preflight(&make(refused)).is_ok() {
+        accepted = refused;
+        refused *= 2;
+    }
+    while refused - accepted > 1 {
+        let middle = accepted + (refused - accepted) / 2;
+        match preflight(&make(middle)) {
+            Ok(()) => accepted = middle,
+            Err(RenderError::ResourceLimit { .. }) => refused = middle,
+            Err(error) => panic!("unexpected preflight error: {error}"),
+        }
+    }
+    accepted
+}
+
+fn qualify_ordinary_candidate(contract: &Contract) {
+    preflight(contract).expect("accepted ordinary continuation boundary");
+    let ledger = contract
+        .ledger_fields
+        .iter()
+        .map(|f| (f.id.as_str(), f))
+        .collect();
+    let checked = check(&contract.stateful_circuits[0], &ledger, &HashMap::new()).unwrap();
+    let body = &checked.plan().body;
+    let snapshot = body
+        .bindings
+        .iter()
+        .rev()
+        .find(|binding| matches!(binding.operation, model::Operation::CellRead(_)))
+        .unwrap();
+    assert_eq!(
+        body.result, snapshot.value,
+        "return the innermost prewrite snapshot"
+    );
+    assert!(matches!(
+        body.bindings.last().unwrap().operation,
+        model::Operation::CellWrite { .. }
+    ));
+    assert!(!render(&checked).unwrap().steps.is_empty());
+    // This is the direct candidate API, not public ordinary-root algebra routing.
+}
+
+#[test]
+fn ordinary_continuation_boundaries_on_two_mib_worker() {
+    isolated("ordinary_continuation_boundaries_on_two_mib_worker", || {
+        let depth = maximum_ordinary_depth();
+        let width = maximum_width(|width| ordinary_continuation(1, width));
+        eprintln!("ordinary candidate maximum continuation depth={depth}, local width={width}");
+        for (accepted, next) in [
+            (
+                ordinary_continuation(depth, 0),
+                ordinary_continuation(depth + 1, 0),
+            ),
+            (
+                ordinary_continuation(1, width),
+                ordinary_continuation(1, width + 1),
+            ),
+        ] {
+            qualify_ordinary_candidate(&accepted);
+            // The next member must be rejected before candidate check/render is called.
+            assert!(matches!(
+                preflight(&next),
+                Err(RenderError::ResourceLimit { .. })
+            ));
+        }
+    });
+}

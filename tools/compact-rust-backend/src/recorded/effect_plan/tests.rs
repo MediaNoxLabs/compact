@@ -6,6 +6,8 @@
 mod counter;
 #[path = "tests/declarations.rs"]
 mod declaration_tests;
+#[path = "tests/ordinary.rs"]
+mod ordinary;
 #[path = "tests/wide_values.rs"]
 mod wide_values;
 use declaration_tests::check_plan;

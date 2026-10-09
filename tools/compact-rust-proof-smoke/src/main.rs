@@ -28,6 +28,7 @@ mod adt_set_enum;
 mod adt_set_qualified_coin_info;
 mod adt_set_vector;
 mod asset_custody_grant;
+mod asset_dispatch;
 mod asset_freshness;
 mod asset_grant_effective;
 mod asset_record_write;
@@ -1760,45 +1761,9 @@ fn run() -> Result<(), Box<dyn Error>> {
         }
         return guarded_recording::run(Path::new(&root));
     }
-    if first.as_deref() == Some(OsStr::new("--asset-freshness")) {
-        let root = arguments
-            .next()
-            .ok_or("usage: compact-rust-proof-smoke --asset-freshness <proof-output>")?;
-        if arguments.next().is_some() {
-            return Err("usage: compact-rust-proof-smoke --asset-freshness <proof-output>".into());
-        }
-        return asset_freshness::run(Path::new(&root));
-    }
-    if first.as_deref() == Some(OsStr::new("--asset-writable")) {
-        let root = arguments
-            .next()
-            .ok_or("usage: compact-rust-proof-smoke --asset-writable <proof-output>")?;
-        if arguments.next().is_some() {
-            return Err("usage: compact-rust-proof-smoke --asset-writable <proof-output>".into());
-        }
-        return asset_writable::run(Path::new(&root));
-    }
-    if first.as_deref() == Some(OsStr::new("--asset-custody-grant")) {
-        let root = arguments
-            .next()
-            .ok_or("usage: compact-rust-proof-smoke --asset-custody-grant <proof-output>")?;
-        if arguments.next().is_some() {
-            return Err(
-                "usage: compact-rust-proof-smoke --asset-custody-grant <proof-output>".into(),
-            );
-        }
-        return asset_custody_grant::run(Path::new(&root));
-    }
-    if first.as_deref() == Some(OsStr::new("--asset-record-write")) {
-        let root = arguments
-            .next()
-            .ok_or("usage: compact-rust-proof-smoke --asset-record-write <proof-output>")?;
-        if arguments.next().is_some() {
-            return Err(
-                "usage: compact-rust-proof-smoke --asset-record-write <proof-output>".into(),
-            );
-        }
-        return asset_record_write::run(Path::new(&root));
+    if let Some(proof) = asset_dispatch::AssetProof::from_selector(first.as_deref()) {
+        let root = proof.parse_root(&mut arguments)?;
+        return proof.run(&root);
     }
     if first.as_deref() == Some(OsStr::new("--schnorr-attestation")) {
         let root = arguments
@@ -1810,48 +1775,6 @@ fn run() -> Result<(), Box<dyn Error>> {
             );
         }
         return schnorr_attestation::run(Path::new(&root));
-    }
-    if first.as_deref() == Some(OsStr::new("--asset-watch-write")) {
-        let root = arguments
-            .next()
-            .ok_or("usage: compact-rust-proof-smoke --asset-watch-write <proof-output>")?;
-        if arguments.next().is_some() {
-            return Err(
-                "usage: compact-rust-proof-smoke --asset-watch-write <proof-output>".into(),
-            );
-        }
-        return asset_watch_write::run(Path::new(&root));
-    }
-    if first.as_deref() == Some(OsStr::new("--asset-removal")) {
-        let root = arguments
-            .next()
-            .ok_or("usage: compact-rust-proof-smoke --asset-removal <proof-output>")?;
-        if arguments.next().is_some() {
-            return Err("usage: compact-rust-proof-smoke --asset-removal <proof-output>".into());
-        }
-        return asset_removal::run(Path::new(&root));
-    }
-    if first.as_deref() == Some(OsStr::new("--asset-grant-effective")) {
-        let root = arguments
-            .next()
-            .ok_or("usage: compact-rust-proof-smoke --asset-grant-effective <proof-output>")?;
-        if arguments.next().is_some() {
-            return Err(
-                "usage: compact-rust-proof-smoke --asset-grant-effective <proof-output>".into(),
-            );
-        }
-        return asset_grant_effective::run(Path::new(&root));
-    }
-    if first.as_deref() == Some(OsStr::new("--asset-stored-record-fresh")) {
-        let root = arguments
-            .next()
-            .ok_or("usage: compact-rust-proof-smoke --asset-stored-record-fresh <proof-output>")?;
-        if arguments.next().is_some() {
-            return Err(
-                "usage: compact-rust-proof-smoke --asset-stored-record-fresh <proof-output>".into(),
-            );
-        }
-        return asset_stored_record_fresh::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--zswap-transfer")) {
         let root = arguments

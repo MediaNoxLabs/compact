@@ -61,10 +61,9 @@ pub(super) fn surface_type(ty: &Type) -> bool {
             _ => false,
         }
 }
-/// Products compose equality only when every leaf supports it; points remain excluded.
+/// Same-type equality composes the runtime wrappers and supported Rust products.
 pub(super) fn equality_type(ty: &Type) -> bool {
     match ty {
-        Type::JubjubPoint => false,
         Type::Struct { fields, .. } => {
             value_type(ty) && fields.iter().all(|field| equality_type(&field.ty))
         }

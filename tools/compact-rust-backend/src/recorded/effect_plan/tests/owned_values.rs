@@ -5,6 +5,8 @@
 use super::*;
 #[path = "owned_values/coercion.rs"]
 mod coercion;
+#[path = "owned_values/empty.rs"]
+mod empty;
 #[path = "owned_values/validation.rs"]
 mod validation;
 fn param(name: &str) -> Expr {
@@ -271,6 +273,7 @@ fn owned_and_vector_external_storage_witness_and_stateful_interfaces_stay_refuse
         Type::OpaqueBytes,
         vector(Type::Field, 2),
         carrier(),
+        empty::empty_type(),
     ] {
         assert!(validate::value_type(&ty));
         assert!(!validate::surface_type(&ty));
@@ -461,6 +464,12 @@ fn owned_actuals_do_not_expand_witness_stateful_parameters_or_cell_writes() {
             construct_vector(vec![field(1), field(2)], Type::Field),
         ),
         (carrier(), Expr::Default { ty: carrier() }),
+        (
+            empty::empty_type(),
+            Expr::Default {
+                ty: empty::empty_type(),
+            },
+        ),
     ];
     for (ty, value) in cases {
         // The actual expression itself is accepted; failures must come from the interface.

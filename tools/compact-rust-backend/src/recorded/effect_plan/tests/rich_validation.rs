@@ -345,7 +345,7 @@ fn noncopy_product_reuse_retains_each_consumed_tuple_operand() {
 }
 
 #[test]
-fn point_equality_cannot_be_hidden_in_tuple_products() {
+fn point_tuple_equality_checks_operand_identity_and_result_type() {
     let point = value(0, Type::JubjubPoint);
     let ty = Type::Tuple {
         elements: vec![Type::JubjubPoint],
@@ -365,7 +365,27 @@ fn point_equality_cannot_be_hidden_in_tuple_products() {
         ],
         value(2, Type::Boolean),
     );
-    assert_eq!(reject(plan).path, "forged[2]");
+    render(&accept(plan.clone())).unwrap();
+    for mutation in 0..3 {
+        let mut forged = plan.clone();
+        match mutation {
+            0 => {
+                let Operation::Equal(_, right) = &mut forged.body.bindings[1].operation else {
+                    unreachable!()
+                };
+                *right = value(0, Type::JubjubPoint);
+            }
+            1 => {
+                let Operation::Equal(_, right) = &mut forged.body.bindings[1].operation else {
+                    unreachable!()
+                };
+                right.id = 99;
+            }
+            2 => forged.body.bindings[1].value.ty = Type::Field,
+            _ => unreachable!(),
+        }
+        assert_eq!(reject(forged).path, "forged[2]");
+    }
     let hidden_point = Type::Struct {
         name: "PointHolder".into(),
         fields: vec![StructField {
@@ -373,7 +393,7 @@ fn point_equality_cannot_be_hidden_in_tuple_products() {
             ty: Type::JubjubPoint,
         }],
     };
-    assert!(!validate::equality_type(&hidden_point));
+    assert!(validate::equality_type(&hidden_point));
 }
 
 #[test]

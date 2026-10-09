@@ -138,7 +138,7 @@ fn nested_vector_cannot_replace_canonical_owned_member_definition() {
     assert!(validate::check(bad, environment(&owner)).is_err());
 }
 #[test]
-fn point_equality_is_refused_recursively_through_vectors_products_and_tuples() {
+fn point_equality_composes_through_vectors_products_and_tuples() {
     for ty in [
         vector(Type::JubjubPoint, 2),
         Type::Struct {
@@ -151,13 +151,20 @@ fn point_equality_is_refused_recursively_through_vectors_products_and_tuples() {
         tuple(vec![vector(Type::JubjubPoint, 0)]),
     ] {
         assert!(validate::value_type(&ty));
-        assert!(!validate::equality_type(&ty));
+        assert!(validate::equality_type(&ty));
         let (mut plan, owner) = convert(ty.clone(), ty.clone());
         plan.body.bindings[2] = binding(
             2,
             Type::Boolean,
             Operation::Equal(value(1, ty.clone()), value(1, ty)),
         );
+        let checked = validate::check(plan.clone(), environment(&owner)).unwrap();
+        render(&checked).unwrap();
+        // A live but differently typed operand must still fail independent checking.
+        let Operation::Equal(_, right) = &mut plan.body.bindings[2].operation else {
+            unreachable!()
+        };
+        *right = value(0, owner.clone());
         assert!(validate::check(plan, environment(&owner)).is_err());
     }
 }

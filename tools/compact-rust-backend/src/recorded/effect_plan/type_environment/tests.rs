@@ -251,12 +251,11 @@ fn tuples_and_owned_values_are_local_types_but_ledger_maps_remain_refused() {
         name: "Empty".into(),
         fields: vec![],
     };
-    assert!(
-        environment(&root(empty.clone()))
-            .unwrap()
-            .validate(&empty)
-            .is_err()
-    );
+    environment(&root(empty.clone()))
+        .unwrap()
+        .validate(&empty)
+        .unwrap();
+    assert!(TypeEnvironment::default().validate(&empty).is_err());
 }
 
 #[test]

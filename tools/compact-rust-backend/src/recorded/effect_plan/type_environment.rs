@@ -81,10 +81,10 @@ impl TypeEnvironment {
                     }
                 }
                 Type::Struct { name, fields } => {
-                    if fields.is_empty() || self.structs.get(name) != Some(fields) {
+                    if self.structs.get(name) != Some(fields) {
                         return Err(invalid(
                             path,
-                            "struct definition is empty or not canonical source type",
+                            "struct definition is not canonical source type",
                         ));
                     }
                 }

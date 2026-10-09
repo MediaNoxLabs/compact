@@ -123,9 +123,22 @@ fn validator_checks_each_jubjub_operand_result_and_scope_independently() {
     }
 }
 #[test]
+fn validator_accepts_point_equality_only_with_live_matching_operands_and_boolean_result() {
+    validate_operation(Operation::Equal(point(0), point(2)), Type::Boolean).unwrap();
+    for (operation, result) in [
+        (Operation::Equal(point(0), scalar(1)), Type::Boolean),
+        (Operation::Equal(point(0), point(1)), Type::Boolean),
+        (Operation::Equal(point(0), point(9)), Type::Boolean),
+        (Operation::Equal(point(0), point(2)), Type::JubjubPoint),
+    ] {
+        let gap = validate_operation(operation, result).unwrap_err();
+        assert_eq!(gap.path, "point_operation");
+    }
+}
+
+#[test]
 fn validator_keeps_existing_scalar_operation_domains_closed() {
     for (operation, ty) in [
-        (Operation::Equal(point(0), point(2)), Type::Boolean),
         (Operation::Add(point(0), point(2)), Type::Field),
         (
             Operation::UnsignedAdd(point(0), point(2)),

@@ -1,7 +1,7 @@
 // This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
-//! Three confirmed old-family value gaps now qualify checked local ownership.
+//! Old-family value controls qualify checked local ownership and equality.
 use crate::ir::{Contract, Expr, LocalBinding, PureCircuit, StateAction, Type};
 use crate::recorded::{effect_plan, typed_plan};
 use quote::quote;
@@ -152,5 +152,91 @@ fn old_receive_accepts_default_struct_with_owned_and_vector_children() {
     qualify(
         &contract,
         "Default<Struct<OpaqueString,OpaqueBytes,Vector<Field,2>>>",
+    );
+}
+
+#[test]
+fn receive_point_equality_is_accepted_by_both_engines() {
+    let point_box = Type::Struct {
+        name: "ReceivePointBox".into(),
+        fields: vec![crate::ir::StructField {
+            name: "point".into(),
+            ty: Type::JubjubPoint,
+        }],
+    };
+    for projected in [false, true] {
+        let mut contract = source();
+        let operand = if projected {
+            Expr::StructField {
+                value: Box::new(Expr::Default {
+                    ty: point_box.clone(),
+                }),
+                field: "point".into(),
+                index: 0,
+            }
+        } else {
+            Expr::Default {
+                ty: point_box.clone(),
+            }
+        };
+        prepend(
+            &mut contract,
+            Type::Boolean,
+            Expr::Equal {
+                left: Box::new(operand.clone()),
+                right: Box::new(operand),
+            },
+        );
+        qualify(
+            &contract,
+            if projected {
+                "projected point equality"
+            } else {
+                "point-containing struct equality"
+            },
+        );
+    }
+}
+
+#[test]
+fn receive_empty_named_struct_is_accepted_by_both_engines() {
+    let empty = Type::Struct {
+        name: "ReceiveEmpty".into(),
+        fields: vec![],
+    };
+    for value in [
+        Expr::Default { ty: empty.clone() },
+        Expr::StructLiteral {
+            ty: empty.clone(),
+            fields: vec![],
+        },
+    ] {
+        let mut contract = source();
+        prepend(&mut contract, empty.clone(), value);
+        qualify(&contract, "empty named struct");
+    }
+}
+
+#[test]
+fn receive_direct_enum_and_identity_coerce_have_checked_support() {
+    let mut contract = source();
+    let ty = Type::Enum {
+        name: "ReceiveState".into(),
+        variants: vec!["Initial".into(), "Ready".into()],
+    };
+    prepend(
+        &mut contract,
+        ty.clone(),
+        Expr::Coerce {
+            value: Box::new(Expr::EnumVariant {
+                ty: ty.clone(),
+                variant: "Ready".into(),
+            }),
+            ty,
+        },
+    );
+    qualify(
+        &contract,
+        "direct enum variant through exact identity coercion",
     );
 }

@@ -210,15 +210,23 @@ fn invalid_jubjub_operands_report_the_first_exact_operand_path() {
 }
 
 #[test]
-fn point_values_do_not_expand_scalar_arithmetic_or_equality() {
+fn point_equality_does_not_expand_scalar_arithmetic() {
+    let equal = candidate(
+        Expr::Equal {
+            left: Box::new(parameter("point")),
+            right: Box::new(parameter("point")),
+        },
+        Type::Boolean,
+    );
+    super::super::render(&checked(&contract(), &equal).unwrap()).unwrap();
+    refusal(
+        Expr::Equal {
+            left: Box::new(parameter("point")),
+            right: Box::new(parameter("scalar")),
+        },
+        Type::Boolean,
+    );
     for (expression, result) in [
-        (
-            Expr::Equal {
-                left: Box::new(parameter("point")),
-                right: Box::new(parameter("point")),
-            },
-            Type::Boolean,
-        ),
         (
             Expr::Add {
                 left: Box::new(parameter("point")),

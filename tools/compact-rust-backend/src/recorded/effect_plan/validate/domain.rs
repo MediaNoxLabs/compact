@@ -9,12 +9,9 @@ pub(super) fn value_type(ty: &Type) -> bool {
         Type::OpaqueString | Type::OpaqueBytes => true,
         Type::Vector { element, .. } => value_type(element),
         Type::Tuple { elements } => elements.iter().all(value_type),
-        Type::Struct { fields, .. } => {
-            !fields.is_empty()
-                && fields
-                    .iter()
-                    .all(|field| value_type(&field.ty) && derives_supported(&field.ty))
-        }
+        Type::Struct { fields, .. } => fields
+            .iter()
+            .all(|field| value_type(&field.ty) && derives_supported(&field.ty)),
         _ => surface_type(ty) || unsigned_bound(ty).is_some(),
     }
 }

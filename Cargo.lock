@@ -1331,6 +1331,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-effect-plan-receive-values-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-compact-runtime",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-effect-plan-rich-values-source-fixture"
 version = "0.1.0"
 dependencies = [

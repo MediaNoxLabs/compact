@@ -89,15 +89,17 @@ pub(super) fn lower<'a>(
         witnesses,
         pure,
         evidence: EffectEvidence::default(),
-        field_cell_slot: None,
-        effectful_field_cells: false,
-        read_only_assertions: false,
-        unit_actions: false,
-        phase_reset: false,
-        composite_domain: CompositeDomain::JubjubValues,
-        composition_calls: None,
-        composition_lookup_sites: Default::default(),
-        counter_hash_helpers: false,
+        admission: AdmissionPolicy {
+            field_cell_slot: None,
+            effectful_field_cells: false,
+            read_only_assertions: false,
+            unit_actions: false,
+            phase_reset: false,
+            composite_domain: CompositeDomain::JubjubValues,
+            composition_calls: None,
+            composition_lookup_sites: Default::default(),
+            counter_hash_helpers: false,
+        },
         evaluation: EvaluationState {
             next: 0,
             context_query: false,
@@ -142,7 +144,7 @@ pub(super) fn expression(
     scope: &Scope,
     steps: &mut Vec<syn::Stmt>,
 ) -> Option<TypedValue> {
-    if plan.composite_domain != CompositeDomain::JubjubValues {
+    if plan.admission.composite_domain != CompositeDomain::JubjubValues {
         return None;
     }
     let mut operand = |v: &Expr| {

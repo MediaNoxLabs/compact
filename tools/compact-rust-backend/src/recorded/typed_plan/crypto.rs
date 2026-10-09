@@ -48,7 +48,7 @@ impl Plan<'_> {
                 )
             }
             Expr::PersistentHash { value }
-                if self.evaluation.scalar_body_depth > 0 || self.unit_actions =>
+                if self.evaluation.scalar_body_depth > 0 || self.admission.unit_actions =>
             {
                 let value = self.expression(value, scope, steps)?;
                 if value.ty
@@ -72,7 +72,7 @@ impl Plan<'_> {
                     steps,
                 )
             }
-            Expr::TransientCommit { value, opening } if self.unit_actions => {
+            Expr::TransientCommit { value, opening } if self.admission.unit_actions => {
                 let value = self.expression(value, scope, steps)?;
                 let opening = self.expression(opening, scope, steps)?;
                 if !unit_actions::field_structure(&value.ty) || opening.ty != Type::Field {
@@ -85,7 +85,9 @@ impl Plan<'_> {
                     steps,
                 )
             }
-            Expr::DegradeToTransient { value } if self.composite_domain.shielded_helpers() => {
+            Expr::DegradeToTransient { value }
+                if self.admission.composite_domain.shielded_helpers() =>
+            {
                 let value = self.expression(value, scope, steps)?;
                 if value.ty != (Type::Bytes { length: 32 }) {
                     return None;
@@ -97,7 +99,7 @@ impl Plan<'_> {
                     steps,
                 )
             }
-            Expr::TransientHash { value } if self.composite_domain.shielded_helpers() => {
+            Expr::TransientHash { value } if self.admission.composite_domain.shielded_helpers() => {
                 let value = self.expression(value, scope, steps)?;
                 if value.ty
                     != (Type::Tuple {
@@ -113,7 +115,9 @@ impl Plan<'_> {
                     steps,
                 )
             }
-            Expr::UpgradeFromTransient { value } if self.composite_domain.shielded_helpers() => {
+            Expr::UpgradeFromTransient { value }
+                if self.admission.composite_domain.shielded_helpers() =>
+            {
                 let value = self.expression(value, scope, steps)?;
                 if value.ty != Type::Field {
                     return None;

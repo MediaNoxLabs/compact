@@ -72,8 +72,8 @@ impl Plan<'_> {
             Expr::Tuple { elements }
                 if self.evaluation.context_query
                     || self.evaluation.scalar_body_depth > 0
-                    || self.unit_actions
-                    || self.composite_domain.shielded_helpers() =>
+                    || self.admission.unit_actions
+                    || self.admission.composite_domain.shielded_helpers() =>
             {
                 let values = elements
                     .iter()

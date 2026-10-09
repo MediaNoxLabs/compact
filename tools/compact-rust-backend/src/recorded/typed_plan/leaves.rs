@@ -33,11 +33,11 @@ impl Plan<'_> {
     ) -> Option<TypedValue> {
         match expression {
             Expr::Unit
-                if self.read_only_assertions
-                    || self.unit_actions
-                    || self.phase_reset
-                    || self.composite_domain.shielded_helpers()
-                    || self.composition_calls.is_some() =>
+                if self.admission.read_only_assertions
+                    || self.admission.unit_actions
+                    || self.admission.phase_reset
+                    || self.admission.composite_domain.shielded_helpers()
+                    || self.admission.composition_calls.is_some() =>
             {
                 Some(TypedValue {
                     ty: Type::Unit,

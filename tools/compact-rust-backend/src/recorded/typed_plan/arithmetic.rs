@@ -31,13 +31,13 @@ impl Plan<'_> {
     ) -> Option<TypedValue> {
         match expression {
             Expr::UnsignedCast { value, max }
-                if self.composite_domain.values() || self.phase_reset =>
+                if self.admission.composite_domain.values() || self.admission.phase_reset =>
             {
                 let value = self.expression(value, scope, steps)?;
                 let Type::Unsigned { max: source_max } = value.ty else {
                     return None;
                 };
-                if self.phase_reset
+                if self.admission.phase_reset
                     && !matches!(
                         (source_max.as_str(), max.as_str()),
                         ("18446744073709551615", phase_reset::WIDENED)
@@ -46,19 +46,19 @@ impl Plan<'_> {
                 {
                     return None;
                 }
-                if self.composite_domain.shielded_merge()
+                if self.admission.composite_domain.shielded_merge()
                     && !matches!(
                         (source_max.as_str(), max.as_str()),
                         (shielded_merge::INPUT, shielded_merge::WIDENED)
                             | (shielded_merge::SUM, shielded_merge::INPUT)
                     )
                     && !(matches!(
-                        self.composite_domain,
+                        self.admission.composite_domain,
                         CompositeDomain::GuardedShieldedDeposit
                             | CompositeDomain::FundedShieldedMint
                     ) && source_max == u64::MAX.to_string()
                         && max == shielded_merge::INPUT)
-                    && !(self.composite_domain == CompositeDomain::FundedShieldedMint
+                    && !(self.admission.composite_domain == CompositeDomain::FundedShieldedMint
                         && ((source_max == u64::MAX.to_string() && max == funded_mint::PRODUCT)
                             || (source_max == shielded_merge::INPUT
                                 && max == shielded_merge::INPUT)))
@@ -69,25 +69,26 @@ impl Plan<'_> {
                 self.bind(converted, Type::Unsigned { max: max.clone() }, steps)
             }
             Expr::UnsignedMultiply { max, left, right }
-                if self.composite_domain == CompositeDomain::FundedShieldedMint =>
+                if self.admission.composite_domain == CompositeDomain::FundedShieldedMint =>
             {
                 self.funded_multiply(expression, left, right, max, scope, steps)
             }
             Expr::NotEqual { left, right }
-                if self.composite_domain == CompositeDomain::FundedShieldedMint =>
+                if self.admission.composite_domain == CompositeDomain::FundedShieldedMint =>
             {
                 self.funded_not_equal(left, right, scope, steps)
             }
-            Expr::NotEqual { left, right } if self.composition_calls.is_some() => {
+            Expr::NotEqual { left, right } if self.admission.composition_calls.is_some() => {
                 self.composition_scalar_not_equal(left, right, scope, steps)
             }
             Expr::JubjubPointX { value } | Expr::JubjubPointY { value }
-                if self.composition_calls.is_some() =>
+                if self.admission.composition_calls.is_some() =>
             {
                 self.composition_point_coordinate(expression, value, scope, steps)
             }
             Expr::UnsignedAdd { max, left, right }
-                if self.phase_reset || self.composite_domain.shielded_merge() =>
+                if self.admission.phase_reset
+                    || self.admission.composite_domain.shielded_merge() =>
             {
                 let left = self.expression(left, scope, steps)?;
                 let right = self.expression(right, scope, steps)?;
@@ -97,7 +98,7 @@ impl Plan<'_> {
                 let Type::Unsigned { max: right_max } = right.ty else {
                     return None;
                 };
-                let (operand_bound, result_bound) = if self.phase_reset {
+                let (operand_bound, result_bound) = if self.admission.phase_reset {
                     (phase_reset::WIDENED, phase_reset::SUM)
                 } else {
                     (shielded_merge::WIDENED, shielded_merge::SUM)
@@ -117,7 +118,7 @@ impl Plan<'_> {
                 self.bind(value, Type::Unsigned { max: max.clone() }, steps)
             }
             Expr::UnsignedSubtract { max, left, right }
-                if self.composite_domain.shielded_send() =>
+                if self.admission.composite_domain.shielded_send() =>
             {
                 let left = self.expression(left, scope, steps)?;
                 let right = self.expression(right, scope, steps)?;
@@ -155,7 +156,8 @@ impl Plan<'_> {
                 self.bind(syn::parse_quote!(#left == #right), Type::Boolean, steps)
             }
             Expr::Add { left, right }
-                if self.field_cell_slot.is_some() || self.effectful_field_cells =>
+                if self.admission.field_cell_slot.is_some()
+                    || self.admission.effectful_field_cells =>
             {
                 let left = self.expression(left, scope, steps)?;
                 let right = self.expression(right, scope, steps)?;
@@ -170,7 +172,7 @@ impl Plan<'_> {
                 let Type::Unsigned { max } = &value.ty else {
                     return None;
                 };
-                if if self.effectful_field_cells {
+                if if self.admission.effectful_field_cells {
                     !matches!(
                         crate::unsigned_maximum(max).ok()?,
                         crate::UnsignedMaximum::Small(_)

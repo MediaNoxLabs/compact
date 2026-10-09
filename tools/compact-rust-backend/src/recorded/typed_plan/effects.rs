@@ -34,14 +34,14 @@ impl Plan<'_> {
     ) -> Option<TypedValue> {
         match expression {
             Expr::KernelMintShielded { domain, amount }
-                if self.composite_domain == CompositeDomain::FundedShieldedMint =>
+                if self.admission.composite_domain == CompositeDomain::FundedShieldedMint =>
             {
                 self.funded_mint(expression, domain, amount, scope, steps)
             }
             Expr::CreateZswapInput { .. }
             | Expr::CreateZswapOutput { .. }
             | Expr::KernelClaim { .. }
-                if self.composite_domain.intents() =>
+                if self.admission.composite_domain.intents() =>
             {
                 let operands: Vec<&Expr> = match expression {
                     Expr::CreateZswapInput { coin } => vec![coin],
@@ -81,26 +81,26 @@ impl Plan<'_> {
             }
             Expr::WitnessCall { name, arguments } => {
                 let declaration = *self.witnesses.get(name.as_str())?;
-                if self.composite_domain == CompositeDomain::ResetShieldedPayout {
+                if self.admission.composite_domain == CompositeDomain::ResetShieldedPayout {
                     return None;
                 }
-                if self.composite_domain == CompositeDomain::GuardedShieldedDeposit
+                if self.admission.composite_domain == CompositeDomain::GuardedShieldedDeposit
                     && (declaration.result != (Type::Bytes { length: 32 })
                         || !declaration.parameters.is_empty())
                 {
                     return None;
                 }
-                if self.composite_domain == CompositeDomain::ShieldedPayout
+                if self.admission.composite_domain == CompositeDomain::ShieldedPayout
                     && declaration.result != (Type::Bytes { length: 32 })
                 {
                     return None;
                 }
-                if self.composite_domain == CompositeDomain::ActionfulShieldedPayout
+                if self.admission.composite_domain == CompositeDomain::ActionfulShieldedPayout
                     && !shielded_payout::witness_type(&declaration.result)
                 {
                     return None;
                 }
-                if self.composite_domain == CompositeDomain::StartFunding
+                if self.admission.composite_domain == CompositeDomain::StartFunding
                     && !start_funding::witness_type(&declaration.result)
                 {
                     return None;
@@ -131,7 +131,7 @@ impl Plan<'_> {
             Expr::NativeWitnessCall {
                 builtin: builtin @ crate::ir::NativeWitnessBuiltin::OwnPublicKey,
             } if matches!(
-                self.composite_domain,
+                self.admission.composite_domain,
                 CompositeDomain::ShieldedPayout
                     | CompositeDomain::ActionfulShieldedPayout
                     | CompositeDomain::FundedShieldedMint

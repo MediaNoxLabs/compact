@@ -19,6 +19,7 @@
 use super::*;
 use crate::coin_shapes::{qualified_coin_type, shielded_coin_type, shielded_recipient_type};
 use crate::ir::{KernelClaimKind, ReturnPlan};
+mod admission;
 mod aggregates;
 mod arithmetic;
 mod composition;
@@ -29,6 +30,7 @@ mod evaluation;
 mod evidence;
 mod leaves;
 mod observations;
+use admission::AdmissionPolicy;
 pub(super) use composition::CompositionRejection;
 use evaluation::EvaluationState;
 use evidence::EffectEvidence;
@@ -157,15 +159,7 @@ struct Plan<'a> {
     witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
     pure: &'a HashMap<&'a str, &'a PureCircuit>,
     evidence: EffectEvidence,
-    field_cell_slot: Option<(String, u8)>,
-    effectful_field_cells: bool,
-    read_only_assertions: bool,
-    unit_actions: bool,
-    phase_reset: bool,
-    composite_domain: CompositeDomain,
-    composition_calls: Option<composition::Calls<'a>>,
-    composition_lookup_sites: HashSet<*const Expr>,
-    counter_hash_helpers: bool,
+    admission: AdmissionPolicy<'a>,
     evaluation: EvaluationState,
     stateful_circuits: Option<&'a HashMap<&'a str, &'a StatefulCircuit>>,
 }
@@ -232,19 +226,19 @@ impl Plan<'_> {
     fn pure_value(&self, value: &Expr, visiting: &mut HashSet<String>) -> bool {
         match value {
             Expr::UnsignedLiteral { value, max }
-                if self.composite_domain.singleton_bridge()
+                if self.admission.composite_domain.singleton_bridge()
                     && value == "0"
                     && max == &u64::MAX.to_string() =>
             {
                 true
             }
             Expr::FieldCast { value } | Expr::UpgradeFromTransient { value }
-                if self.composite_domain == CompositeDomain::FundedShieldedMint =>
+                if self.admission.composite_domain == CompositeDomain::FundedShieldedMint =>
             {
                 self.pure_value(value, visiting)
             }
             Expr::PersistentCommit { value, opening }
-                if self.composite_domain == CompositeDomain::FundedShieldedMint =>
+                if self.admission.composite_domain == CompositeDomain::FundedShieldedMint =>
             {
                 self.pure_value(value, visiting) && self.pure_value(opening, visiting)
             }
@@ -315,7 +309,8 @@ impl Plan<'_> {
         let declaration = *self.ledger.get(field)?;
         (declaration.index == index
             && (declaration.physical_path().len() == 1
-                || (self.composition_calls.is_some() && composition::slot_path(declaration))))
+                || (self.admission.composition_calls.is_some()
+                    && composition::slot_path(declaration))))
         .then_some(declaration)
     }
 
@@ -455,7 +450,7 @@ impl Plan<'_> {
         scope: &Scope,
         steps: &mut Vec<syn::Stmt>,
     ) -> Option<TypedValue> {
-        if let Some(calls) = &self.composition_calls {
+        if let Some(calls) = &self.admission.composition_calls {
             let call = *calls.get(name)?;
             return match call {
                 composition::AuditedCall::PureValue(callee) => {
@@ -526,11 +521,13 @@ impl Plan<'_> {
             .copied();
         match (pure, stateful) {
             (Some(callee), None) => {
-                if self.composite_domain.values() && !self.composite_domain.shielded_helpers() {
+                if self.admission.composite_domain.values()
+                    && !self.admission.composite_domain.shielded_helpers()
+                {
                     return None;
                 } // preserve ADR0187 admission
                 if self.evaluation.context_query
-                    || (self.unit_actions && !self.composite_domain.intents())
+                    || (self.admission.unit_actions && !self.admission.composite_domain.intents())
                 {
                     self.inline_call(
                         name,
@@ -557,7 +554,7 @@ impl Plan<'_> {
                 }
             }
             (None, Some(callee)) => {
-                if self.composite_domain == CompositeDomain::ResetShieldedPayout
+                if self.admission.composite_domain == CompositeDomain::ResetShieldedPayout
                     && phase_reset::helper_signature(callee)
                 {
                     if !reset_payout::true_arguments(arguments)
@@ -577,7 +574,7 @@ impl Plan<'_> {
                         false,
                     );
                 }
-                if self.composite_domain == CompositeDomain::VotingCommit
+                if self.admission.composite_domain == CompositeDomain::VotingCommit
                     && callee.actions.is_empty()
                     && let StateReturn::Expression { value } = &callee.return_value
                 {
@@ -603,8 +600,10 @@ impl Plan<'_> {
                         return result;
                     }
                 }
-                if self.composite_domain.shielded_helpers() {
-                    if self.composite_domain.singleton_bridge() && shielded_unit_signature(callee) {
+                if self.admission.composite_domain.shielded_helpers() {
+                    if self.admission.composite_domain.singleton_bridge()
+                        && shielded_unit_signature(callee)
+                    {
                         return self.inline_call(
                             name,
                             &callee.parameters,
@@ -621,7 +620,8 @@ impl Plan<'_> {
                         return None;
                     };
                     if !callee.actions.is_empty()
-                        && !(self.composite_domain == CompositeDomain::ActionfulShieldedPayout
+                        && !(self.admission.composite_domain
+                            == CompositeDomain::ActionfulShieldedPayout
                             && shielded_payout::action_shape(&callee.actions, self.pure) == Some(1))
                     {
                         return None;
@@ -638,7 +638,7 @@ impl Plan<'_> {
                         false,
                     );
                 }
-                if self.composite_domain == CompositeDomain::TerminalReturns {
+                if self.admission.composite_domain == CompositeDomain::TerminalReturns {
                     let StateReturn::Expression { value } = &callee.return_value else {
                         return None;
                     };
@@ -657,7 +657,7 @@ impl Plan<'_> {
                         false,
                     );
                 }
-                if self.phase_reset {
+                if self.admission.phase_reset {
                     if !phase_reset::helper_signature(callee)
                         || !phase_reset::false_arguments(arguments)
                     {
@@ -675,8 +675,9 @@ impl Plan<'_> {
                         false,
                     );
                 }
-                if self.unit_actions {
-                    if !(self.composite_domain.intents() && shielded_unit_signature(callee))
+                if self.admission.unit_actions {
+                    if !(self.admission.composite_domain.intents()
+                        && shielded_unit_signature(callee))
                         && !unit_actions::helper_signature(callee)
                     {
                         return None;
@@ -696,7 +697,8 @@ impl Plan<'_> {
                 let value = match &callee.return_value {
                     StateReturn::Expression { value } => value.clone(),
                     StateReturn::CellRead { field, index }
-                        if self.composite_domain == CompositeDomain::FieldObservations =>
+                        if self.admission.composite_domain
+                            == CompositeDomain::FieldObservations =>
                     {
                         Expr::CellRead {
                             field: field.clone(),
@@ -708,8 +710,9 @@ impl Plan<'_> {
                 if !callee.actions.is_empty() {
                     return None;
                 }
-                let scalar = self.counter_hash_helpers && scalar_counter_hash(callee, self.ledger);
-                if !self.composite_domain.values() && !scalar {
+                let scalar =
+                    self.admission.counter_hash_helpers && scalar_counter_hash(callee, self.ledger);
+                if !self.admission.composite_domain.values() && !scalar {
                     return None;
                 }
                 self.inline_call(
@@ -776,8 +779,8 @@ impl Plan<'_> {
         if scalar {
             self.evaluation.scalar_body_depth += 1;
         }
-        let value = if self.composite_domain == CompositeDomain::TerminalReturns
-            || (self.composite_domain == CompositeDomain::ActionfulShieldedPayout
+        let value = if self.admission.composite_domain == CompositeDomain::TerminalReturns
+            || (self.admission.composite_domain == CompositeDomain::ActionfulShieldedPayout
                 && !actions.is_empty())
         {
             self.return_plan(&terminal_returns::adapt(actions, body), &isolated, steps)
@@ -963,44 +966,45 @@ impl Plan<'_> {
                 let LedgerFieldKind::Cell { ty } = &self.field(field, *index)?.declaration else {
                     return None;
                 };
-                if self.effectful_field_cells && *ty != Type::Field {
+                if self.admission.effectful_field_cells && *ty != Type::Field {
                     return None;
                 }
-                if self.composite_domain == CompositeDomain::FundedShieldedMint
+                if self.admission.composite_domain == CompositeDomain::FundedShieldedMint
                     && *ty != Type::Boolean
                 {
                     return None;
                 }
-                if self.composite_domain == CompositeDomain::GuardedShieldedDeposit
+                if self.admission.composite_domain == CompositeDomain::GuardedShieldedDeposit
                     && !guarded_deposit::write_type(ty)
                 {
                     return None;
                 }
-                if self.composite_domain == CompositeDomain::ResetShieldedPayout
+                if self.admission.composite_domain == CompositeDomain::ResetShieldedPayout
                     && !reset_payout::write_type(ty)
                 {
                     return None;
                 }
-                if self.composite_domain == CompositeDomain::StartFunding
+                if self.admission.composite_domain == CompositeDomain::StartFunding
                     && !start_funding::cell_type(ty)
                 {
                     return None;
                 }
                 if !cell_type(ty)
-                    && !(self.composite_domain == CompositeDomain::JubjubValues
+                    && !(self.admission.composite_domain == CompositeDomain::JubjubValues
                         && *ty == Type::JubjubPoint)
-                    && !(self.composite_domain == CompositeDomain::ResetShieldedPayout
+                    && !(self.admission.composite_domain == CompositeDomain::ResetShieldedPayout
                         && reset_payout::write_type(ty))
-                    && !(self.composite_domain == CompositeDomain::GuardedShieldedDeposit
+                    && !(self.admission.composite_domain == CompositeDomain::GuardedShieldedDeposit
                         && guarded_deposit::write_type(ty))
-                    && !(self.composite_domain == CompositeDomain::StartFunding
+                    && !(self.admission.composite_domain == CompositeDomain::StartFunding
                         && start_funding::cell_type(ty))
-                    && !(self.unit_actions && unit_actions::value_type(ty))
-                    && !(self.composition_calls.is_some() && composition::write_type(ty))
-                    && !(self.phase_reset && phase_reset::cell_type(ty))
+                    && !(self.admission.unit_actions && unit_actions::value_type(ty))
+                    && !(self.admission.composition_calls.is_some() && composition::write_type(ty))
+                    && !(self.admission.phase_reset && phase_reset::cell_type(ty))
                     && !(ty == &Type::Field
-                        && (self.effectful_field_cells
-                            || self.field_cell_slot.as_ref() == Some(&(field.clone(), *index))))
+                        && (self.admission.effectful_field_cells
+                            || self.admission.field_cell_slot.as_ref()
+                                == Some(&(field.clone(), *index))))
                 {
                     return None;
                 }
@@ -1055,8 +1059,8 @@ impl Plan<'_> {
                 self.evidence.qualified_cell_writes += 1;
             }
             StateAction::CounterReset { field, index }
-                if self.phase_reset
-                    || self.composite_domain == CompositeDomain::ResetShieldedPayout =>
+                if self.admission.phase_reset
+                    || self.admission.composite_domain == CompositeDomain::ResetShieldedPayout =>
             {
                 if self.field(field, *index)?.declaration != LedgerFieldKind::Counter {
                     return None;
@@ -1068,8 +1072,8 @@ impl Plan<'_> {
                 self.evidence.counter_writes += 1;
             }
             StateAction::MerkleResetToDefault { field, index }
-                if self.phase_reset
-                    || self.composite_domain == CompositeDomain::ResetShieldedPayout =>
+                if self.admission.phase_reset
+                    || self.admission.composite_domain == CompositeDomain::ResetShieldedPayout =>
             {
                 if !matches!(
                     self.field(field, *index)?.declaration,
@@ -1133,15 +1137,17 @@ impl Plan<'_> {
                 }
             }
             StateAction::Expression { value }
-                if self.unit_actions && self.composite_domain.intents() =>
+                if self.admission.unit_actions && self.admission.composite_domain.intents() =>
             {
                 if self.expression(value, scope, steps)?.ty != Type::Unit {
                     return None;
                 }
             }
-            StateAction::PureCall { name, arguments } if self.composition_calls.is_some() => {
+            StateAction::PureCall { name, arguments }
+                if self.admission.composition_calls.is_some() =>
+            {
                 if !matches!(
-                    self.composition_calls.as_ref()?.get(name),
+                    self.admission.composition_calls.as_ref()?.get(name),
                     Some(composition::AuditedCall::PureUnitGuard(_))
                 ) {
                     return None;
@@ -1152,13 +1158,13 @@ impl Plan<'_> {
                 }
             }
             StateAction::CircuitCall { name, arguments }
-                if (self.unit_actions && self.composite_domain.intents())
-                    || self.phase_reset
-                    || self.composition_calls.is_some() =>
+                if (self.admission.unit_actions && self.admission.composite_domain.intents())
+                    || self.admission.phase_reset
+                    || self.admission.composition_calls.is_some() =>
             {
                 let result = self.call(name, arguments, scope, steps)?;
                 if result.ty != Type::Unit
-                    && !(self.composite_domain == CompositeDomain::VotingCommit
+                    && !(self.admission.composite_domain == CompositeDomain::VotingCommit
                         && shielded_send_result(&result.ty))
                 {
                     return None;
@@ -1190,7 +1196,8 @@ impl Plan<'_> {
                     ) => self.evidence.tree_writes += 1,
                     (StateAction::SetInsert { .. }, LedgerFieldKind::Set { ty })
                         if bytes32_key(ty)
-                            || (self.composition_calls.is_some() && *ty == Type::OpaqueString) =>
+                            || (self.admission.composition_calls.is_some()
+                                && *ty == Type::OpaqueString) =>
                     {
                         self.evidence.set_writes += 1
                     }
@@ -1228,7 +1235,7 @@ impl Plan<'_> {
                     return None;
                 };
                 if *ty != qualified_coin_type()
-                    && !(self.composition_calls.is_some() && *ty == Type::OpaqueString)
+                    && !(self.admission.composition_calls.is_some() && *ty == Type::OpaqueString)
                 {
                     return None;
                 }
@@ -1251,7 +1258,7 @@ impl Plan<'_> {
                 index,
                 key,
                 value,
-            } if self.composition_calls.is_some() => {
+            } if self.admission.composition_calls.is_some() => {
                 let LedgerFieldKind::Map {
                     key: key_ty,
                     value: value_ty,
@@ -1277,7 +1284,9 @@ impl Plan<'_> {
                 let (key, value) = (key.value, value.value);
                 steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_insert(frame, #key, #value)?;));
             }
-            StateAction::MapRemove { field, index, key } if self.composition_calls.is_some() => {
+            StateAction::MapRemove { field, index, key }
+                if self.admission.composition_calls.is_some() =>
+            {
                 if !composition::checked_product_map(&self.field(field, *index)?.declaration) {
                     return None;
                 }
@@ -1293,14 +1302,14 @@ impl Plan<'_> {
                 let LedgerFieldKind::Set { ty } = &self.field(field, *index)?.declaration else {
                     return None;
                 };
-                if self.composite_domain == CompositeDomain::ResetShieldedPayout
+                if self.admission.composite_domain == CompositeDomain::ResetShieldedPayout
                     && *ty != (Type::Bytes { length: 32 })
                 {
                     return None;
                 }
                 if *ty != qualified_coin_type()
-                    && !((self.phase_reset
-                        || self.composite_domain == CompositeDomain::ResetShieldedPayout)
+                    && !((self.admission.phase_reset
+                        || self.admission.composite_domain == CompositeDomain::ResetShieldedPayout)
                         && *ty == (Type::Bytes { length: 32 }))
                 {
                     return None;
@@ -1543,15 +1552,17 @@ pub(super) fn lower_effectful<'a>(
         witnesses,
         pure,
         evidence: EffectEvidence::default(),
-        field_cell_slot: None,
-        effectful_field_cells: true,
-        read_only_assertions: false,
-        unit_actions: false,
-        phase_reset: false,
-        composite_domain: CompositeDomain::None,
-        composition_calls: None,
-        composition_lookup_sites: HashSet::new(),
-        counter_hash_helpers: false,
+        admission: AdmissionPolicy {
+            field_cell_slot: None,
+            effectful_field_cells: true,
+            read_only_assertions: false,
+            unit_actions: false,
+            phase_reset: false,
+            composite_domain: CompositeDomain::None,
+            composition_calls: None,
+            composition_lookup_sites: HashSet::new(),
+            counter_hash_helpers: false,
+        },
         evaluation: EvaluationState {
             next: 0,
             context_query: false,
@@ -1738,15 +1749,17 @@ pub(super) fn lower_context_query<'a>(
         witnesses,
         pure,
         evidence: EffectEvidence::default(),
-        field_cell_slot: None,
-        effectful_field_cells: false,
-        read_only_assertions: false,
-        unit_actions: false,
-        phase_reset: false,
-        composite_domain: CompositeDomain::None,
-        composition_calls: None,
-        composition_lookup_sites: HashSet::new(),
-        counter_hash_helpers: false,
+        admission: AdmissionPolicy {
+            field_cell_slot: None,
+            effectful_field_cells: false,
+            read_only_assertions: false,
+            unit_actions: false,
+            phase_reset: false,
+            composite_domain: CompositeDomain::None,
+            composition_calls: None,
+            composition_lookup_sites: HashSet::new(),
+            counter_hash_helpers: false,
+        },
         evaluation: EvaluationState {
             next: 0,
             context_query: true,
@@ -2020,15 +2033,17 @@ pub(super) fn lower_shielded_receive<'a>(
         witnesses,
         pure,
         evidence: EffectEvidence::default(),
-        field_cell_slot: None,
-        effectful_field_cells: false,
-        read_only_assertions: false,
-        unit_actions: true,
-        phase_reset: false,
-        composite_domain: CompositeDomain::ShieldedReceive,
-        composition_calls: None,
-        composition_lookup_sites: HashSet::new(),
-        counter_hash_helpers: false,
+        admission: AdmissionPolicy {
+            field_cell_slot: None,
+            effectful_field_cells: false,
+            read_only_assertions: false,
+            unit_actions: true,
+            phase_reset: false,
+            composite_domain: CompositeDomain::ShieldedReceive,
+            composition_calls: None,
+            composition_lookup_sites: HashSet::new(),
+            counter_hash_helpers: false,
+        },
         evaluation: EvaluationState {
             next: 0,
             context_query: false,
@@ -2334,15 +2349,17 @@ fn shielded_plan<'a>(
         witnesses,
         pure,
         evidence: EffectEvidence::default(),
-        field_cell_slot: None,
-        effectful_field_cells: false,
-        read_only_assertions: false,
-        unit_actions: domain.singleton_bridge(),
-        phase_reset: false,
-        composite_domain: domain,
-        composition_calls: None,
-        composition_lookup_sites: HashSet::new(),
-        counter_hash_helpers: false,
+        admission: AdmissionPolicy {
+            field_cell_slot: None,
+            effectful_field_cells: false,
+            read_only_assertions: false,
+            unit_actions: domain.singleton_bridge(),
+            phase_reset: false,
+            composite_domain: domain,
+            composition_calls: None,
+            composition_lookup_sites: HashSet::new(),
+            counter_hash_helpers: false,
+        },
         evaluation: EvaluationState {
             next: 0,
             context_query: false,
@@ -2524,15 +2541,17 @@ pub(super) fn lower_composite<'a>(
         witnesses,
         pure,
         evidence: EffectEvidence::default(),
-        field_cell_slot: None,
-        effectful_field_cells: false,
-        read_only_assertions: false,
-        unit_actions: false,
-        phase_reset: false,
-        composite_domain: domain,
-        composition_calls: None,
-        composition_lookup_sites: HashSet::new(),
-        counter_hash_helpers: false,
+        admission: AdmissionPolicy {
+            field_cell_slot: None,
+            effectful_field_cells: false,
+            read_only_assertions: false,
+            unit_actions: false,
+            phase_reset: false,
+            composite_domain: domain,
+            composition_calls: None,
+            composition_lookup_sites: HashSet::new(),
+            counter_hash_helpers: false,
+        },
         evaluation: EvaluationState {
             next: 0,
             context_query: false,
@@ -2652,15 +2671,17 @@ pub(super) fn lower<'a>(
         witnesses,
         pure,
         evidence: EffectEvidence::default(),
-        field_cell_slot: field_cell_slot.clone(),
-        effectful_field_cells: false,
-        read_only_assertions: assertion_entry,
-        unit_actions: false,
-        phase_reset: false,
-        composite_domain: CompositeDomain::None,
-        composition_calls: None,
-        composition_lookup_sites: HashSet::new(),
-        counter_hash_helpers: circuit.parameters.is_empty() && circuit.result == Type::Unit,
+        admission: AdmissionPolicy {
+            field_cell_slot: field_cell_slot.clone(),
+            effectful_field_cells: false,
+            read_only_assertions: assertion_entry,
+            unit_actions: false,
+            phase_reset: false,
+            composite_domain: CompositeDomain::None,
+            composition_calls: None,
+            composition_lookup_sites: HashSet::new(),
+            counter_hash_helpers: circuit.parameters.is_empty() && circuit.result == Type::Unit,
+        },
         evaluation: EvaluationState {
             next: 0,
             context_query: false,
@@ -3183,15 +3204,17 @@ mod tests {
             witnesses: &witnesses,
             pure: &pure,
             evidence: EffectEvidence::default(),
-            field_cell_slot: None,
-            effectful_field_cells: false,
-            read_only_assertions: false,
-            unit_actions: false,
-            phase_reset: false,
-            composite_domain: CompositeDomain::None,
-            composition_calls: None,
-            composition_lookup_sites: HashSet::new(),
-            counter_hash_helpers: false,
+            admission: AdmissionPolicy {
+                field_cell_slot: None,
+                effectful_field_cells: false,
+                read_only_assertions: false,
+                unit_actions: false,
+                phase_reset: false,
+                composite_domain: CompositeDomain::None,
+                composition_calls: None,
+                composition_lookup_sites: HashSet::new(),
+                counter_hash_helpers: false,
+            },
             evaluation: EvaluationState {
                 next: 0,
                 context_query: false,
@@ -3258,15 +3281,17 @@ mod tests {
             witnesses: &witnesses,
             pure: &pure,
             evidence: EffectEvidence::default(),
-            field_cell_slot: None,
-            effectful_field_cells: false,
-            read_only_assertions: false,
-            unit_actions: false,
-            phase_reset: false,
-            composite_domain: CompositeDomain::None,
-            composition_calls: None,
-            composition_lookup_sites: HashSet::new(),
-            counter_hash_helpers: false,
+            admission: AdmissionPolicy {
+                field_cell_slot: None,
+                effectful_field_cells: false,
+                read_only_assertions: false,
+                unit_actions: false,
+                phase_reset: false,
+                composite_domain: CompositeDomain::None,
+                composition_calls: None,
+                composition_lookup_sites: HashSet::new(),
+                counter_hash_helpers: false,
+            },
             evaluation: EvaluationState {
                 next: 0,
                 context_query: false,

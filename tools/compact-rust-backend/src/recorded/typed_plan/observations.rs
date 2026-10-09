@@ -76,61 +76,65 @@ impl Plan<'_> {
                 let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
                     return None;
                 };
-                if self.composite_domain == CompositeDomain::ShieldedPayout
+                if self.admission.composite_domain == CompositeDomain::ShieldedPayout
                     && !shielded_payout::cell_type(ty)
                 {
                     return None;
                 }
-                if self.composite_domain == CompositeDomain::ActionfulShieldedPayout
+                if self.admission.composite_domain == CompositeDomain::ActionfulShieldedPayout
                     && !shielded_payout::actionful_cell_type(ty)
                 {
                     return None;
                 }
-                if self.effectful_field_cells && *ty != Type::Field {
+                if self.admission.effectful_field_cells && *ty != Type::Field {
                     return None;
                 }
-                if self.read_only_assertions && *ty != Type::Boolean {
+                if self.admission.read_only_assertions && *ty != Type::Boolean {
                     return None;
                 }
                 if matches!(
-                    self.composite_domain,
+                    self.admission.composite_domain,
                     CompositeDomain::GuardedShieldedDeposit | CompositeDomain::FundedShieldedMint
                 ) && !guarded_deposit::read_type(ty)
                 {
                     return None;
                 }
-                if self.composite_domain == CompositeDomain::ResetShieldedPayout
+                if self.admission.composite_domain == CompositeDomain::ResetShieldedPayout
                     && !reset_payout::read_type(ty)
                 {
                     return None;
                 }
-                if self.composite_domain == CompositeDomain::StartFunding
+                if self.admission.composite_domain == CompositeDomain::StartFunding
                     && !start_funding::cell_type(ty)
                 {
                     return None;
                 }
                 if !cell_type(ty)
-                    && !(self.composition_calls.is_some() && composition::observed_value_type(ty))
+                    && !(self.admission.composition_calls.is_some()
+                        && composition::observed_value_type(ty))
                     && !(matches!(
-                        self.composite_domain,
+                        self.admission.composite_domain,
                         CompositeDomain::GuardedShieldedDeposit
                             | CompositeDomain::FundedShieldedMint
                     ) && guarded_deposit::read_type(ty))
-                    && !(self.composite_domain == CompositeDomain::ResetShieldedPayout
+                    && !(self.admission.composite_domain == CompositeDomain::ResetShieldedPayout
                         && reset_payout::read_type(ty))
-                    && !(self.composite_domain == CompositeDomain::StartFunding
+                    && !(self.admission.composite_domain == CompositeDomain::StartFunding
                         && start_funding::cell_type(ty))
-                    && !(self.composite_domain == CompositeDomain::ShieldedPayout
+                    && !(self.admission.composite_domain == CompositeDomain::ShieldedPayout
                         && shielded_payout::cell_type(ty))
-                    && !(self.composite_domain == CompositeDomain::ActionfulShieldedPayout
+                    && !(self.admission.composite_domain
+                        == CompositeDomain::ActionfulShieldedPayout
                         && shielded_payout::actionful_cell_type(ty))
-                    && !(self.unit_actions && unit_actions::value_type(ty))
-                    && !(self.phase_reset && phase_reset::cell_type(ty))
-                    && !(self.read_only_assertions && *ty == Type::Boolean)
+                    && !(self.admission.unit_actions && unit_actions::value_type(ty))
+                    && !(self.admission.phase_reset && phase_reset::cell_type(ty))
+                    && !(self.admission.read_only_assertions && *ty == Type::Boolean)
                     && !(ty == &Type::Field
-                        && (self.effectful_field_cells
-                            || self.composite_domain == CompositeDomain::FieldObservations
-                            || self.field_cell_slot.as_ref() == Some(&(field.clone(), *index))))
+                        && (self.admission.effectful_field_cells
+                            || self.admission.composite_domain
+                                == CompositeDomain::FieldObservations
+                            || self.admission.field_cell_slot.as_ref()
+                                == Some(&(field.clone(), *index))))
                 {
                     return None;
                 }
@@ -152,7 +156,7 @@ impl Plan<'_> {
                 let ty = ty.clone();
                 if !bytes32_key(&ty)
                     && ty != qualified_coin_type()
-                    && !(self.composition_calls.is_some() && ty == Type::OpaqueString)
+                    && !(self.admission.composition_calls.is_some() && ty == Type::OpaqueString)
                 {
                     return None;
                 }
@@ -171,12 +175,13 @@ impl Plan<'_> {
                     steps,
                 )
             }
-            Expr::MapMember { field, index, key } if self.composition_calls.is_some() => {
+            Expr::MapMember { field, index, key } if self.admission.composition_calls.is_some() => {
                 self.composition_map_member(field, *index, key, scope, steps)
             }
             Expr::MapLookup { field, index, key }
-                if self.composition_calls.is_some()
+                if self.admission.composition_calls.is_some()
                     && self
+                        .admission
                         .composition_lookup_sites
                         .contains(&(expression as *const Expr)) =>
             {

@@ -279,7 +279,7 @@ pub(super) fn lower<'a>(
     if !zero_user_target(recipient, pure) || !plan.pure_value(recipient, &mut HashSet::new()) {
         return None;
     }
-    plan.counter_hash_helpers = true;
+    plan.admission.counter_hash_helpers = true;
     let scope = circuit
         .parameters
         .iter()

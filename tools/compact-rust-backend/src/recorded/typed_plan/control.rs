@@ -33,9 +33,9 @@ impl Plan<'_> {
             Expr::Sequence {
                 steps: expressions,
                 value,
-            } if self.read_only_assertions
-                || self.unit_actions
-                || self.composite_domain.shielded_helpers() =>
+            } if self.admission.read_only_assertions
+                || self.admission.unit_actions
+                || self.admission.composite_domain.shielded_helpers() =>
             {
                 for expression in expressions {
                     if self.expression(expression, scope, steps)?.ty != Type::Unit {
@@ -45,15 +45,15 @@ impl Plan<'_> {
                 self.expression(value, scope, steps)
             }
             Expr::Assert { condition, message }
-                if self.read_only_assertions
-                    || self.unit_actions
+                if self.admission.read_only_assertions
+                    || self.admission.unit_actions
                     || matches!(
-                        self.composite_domain,
+                        self.admission.composite_domain,
                         CompositeDomain::ShieldedPayout
                             | CompositeDomain::ActionfulShieldedPayout
                             | CompositeDomain::ResetShieldedPayout
                     )
-                    || self.composite_domain.shielded_merge() =>
+                    || self.admission.composite_domain.shielded_merge() =>
             {
                 let condition = self.expression(condition, scope, steps)?;
                 if condition.ty != Type::Boolean {
@@ -86,8 +86,8 @@ impl Plan<'_> {
                 let mut else_steps = Vec::new();
                 let otherwise = self.expression(otherwise, scope, &mut else_steps)?;
                 if then.ty != otherwise.ty
-                    || (!self.composite_domain.values()
-                        && !(self.unit_actions && then.ty == Type::Unit)
+                    || (!self.admission.composite_domain.values()
+                        && !(self.admission.unit_actions && then.ty == Type::Unit)
                         && then.ty != Type::Boolean
                         && !(self.evaluation.scalar_arguments
                             && then.ty == (Type::Bytes { length: 32 })))

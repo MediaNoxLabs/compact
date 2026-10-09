@@ -2,6 +2,10 @@
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
 
+#[path = "tests/declarations.rs"]
+mod declaration_tests;
+use declaration_tests::check_plan;
+
 use super::model::*;
 use super::*;
 use crate::ir::*;
@@ -27,7 +31,7 @@ fn plan(bindings: Vec<Binding>, result: Value) -> Plan {
 }
 #[test]
 fn no_effect_count_is_required() {
-    assert!(validate::check(plan(vec![literal(0)], field(0))).is_ok());
+    assert!(check_plan(plan(vec![literal(0)], field(0))).is_ok());
 }
 #[test]
 fn validator_rejects_use_before_definition_and_duplicate_ids() {
@@ -37,12 +41,12 @@ fn validator_rejects_use_before_definition_and_duplicate_ids() {
         path: "first".into(),
     };
     assert_eq!(
-        validate::check(plan(vec![forward, literal(1)], field(0)))
+        check_plan(plan(vec![forward, literal(1)], field(0)))
             .unwrap_err()
             .path,
         "first"
     );
-    assert!(validate::check(plan(vec![literal(0), literal(0)], field(0))).is_err());
+    assert!(check_plan(plan(vec![literal(0), literal(0)], field(0))).is_err());
 }
 #[test]
 fn validator_rejects_branch_scope_escape_and_mismatched_join() {
@@ -70,7 +74,7 @@ fn validator_rejects_branch_scope_escape_and_mismatched_join() {
         },
         path: "branch".into(),
     };
-    assert!(validate::check(plan(vec![cond.clone(), branch.clone()], field(1))).is_err());
+    assert!(check_plan(plan(vec![cond.clone(), branch.clone()], field(1))).is_err());
     let mut bad = branch;
     if let Operation::If { otherwise, .. } = &mut bad.operation {
         otherwise.result = Value {
@@ -78,7 +82,7 @@ fn validator_rejects_branch_scope_escape_and_mismatched_join() {
             ty: Type::Boolean,
         };
     }
-    assert!(validate::check(plan(vec![cond, bad], field(3))).is_err());
+    assert!(check_plan(plan(vec![cond, bad], field(3))).is_err());
 }
 #[test]
 fn unsupported_children_report_first_source_path() {
@@ -137,8 +141,8 @@ fn narrowing_coercion_is_rejected_but_explicit_cast_is_checked() {
         },
         result_type: output.ty.clone(),
     };
-    assert!(validate::check(candidate(Conversion::Coerce)).is_err());
-    let checked = validate::check(candidate(Conversion::UnsignedCast)).unwrap();
+    assert!(check_plan(candidate(Conversion::Coerce)).is_err());
+    let checked = check_plan(candidate(Conversion::UnsignedCast)).unwrap();
     let rendered = render(&checked).unwrap();
     let steps = rendered.steps;
     assert!(
@@ -164,8 +168,7 @@ fn operation_contracts_reject_incompatible_inputs() {
             "witness_arity",
             Type::Field,
             Operation::Witness {
-                name: "mark".into(),
-                parameters: vec![Type::Field],
+                declaration: WitnessId(0),
                 arguments: vec![],
             },
         ),
@@ -173,8 +176,7 @@ fn operation_contracts_reject_incompatible_inputs() {
             "witness_type",
             Type::Field,
             Operation::Witness {
-                name: "mark".into(),
-                parameters: vec![Type::Field],
+                declaration: WitnessId(0),
                 arguments: vec![boolean.clone()],
             },
         ),
@@ -182,9 +184,9 @@ fn operation_contracts_reject_incompatible_inputs() {
             "cell_value",
             Type::Unit,
             Operation::CellWrite {
-                slot: Slot {
-                    name: "state".into(),
-                    ty: Type::Field,
+                slot: CellSlot {
+                    declaration: LedgerId(1),
+                    index: 0,
                 },
                 value: boolean.clone(),
             },
@@ -193,7 +195,10 @@ fn operation_contracts_reject_incompatible_inputs() {
             "counter_amount",
             Type::Unit,
             Operation::CounterIncrement {
-                field: "round".into(),
+                slot: CounterSlot {
+                    declaration: LedgerId(0),
+                    index: 1,
+                },
                 amount: small.clone(),
             },
         ),
@@ -228,7 +233,7 @@ fn operation_contracts_reject_incompatible_inputs() {
             },
             result_type: ty,
         };
-        assert_eq!(validate::check(candidate).unwrap_err().path, path);
+        assert_eq!(check_plan(candidate).unwrap_err().path, path);
     }
 }
 
@@ -260,7 +265,7 @@ fn value_ids_are_unique_across_sibling_branches() {
         },
         result_type: Type::Field,
     };
-    assert_eq!(validate::check(candidate).unwrap_err().path, "steps[1]");
+    assert_eq!(check_plan(candidate).unwrap_err().path, "steps[1]");
 }
 
 #[test]
@@ -372,7 +377,7 @@ fn small_unsigned_literal_cast_and_add_remain_checked_operations() {
         },
         result_type: Type::Field,
     };
-    let rendered = render(&validate::check(candidate).unwrap()).unwrap();
+    let rendered = render(&check_plan(candidate).unwrap()).unwrap();
     let steps = rendered.steps;
     let source = quote::quote!(#(#steps)*).to_string();
     assert!(source.contains("add_unsigned"));
@@ -393,5 +398,5 @@ fn small_unsigned_literal_cast_and_add_remain_checked_operations() {
         },
         result_type: too_large.ty,
     };
-    assert_eq!(validate::check(invalid).unwrap_err().path, "literal");
+    assert_eq!(check_plan(invalid).unwrap_err().path, "literal");
 }

@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! Scope, use-before-definition, operation signatures and branch joins.
-use super::{RecordingGap, invalid, model::*};
-use crate::ir::Type;
+use super::{RecordingGap, declarations::Declarations, invalid, model::*};
+use crate::ir::{LedgerFieldKind, Type};
 use std::collections::{HashMap, HashSet};
 
 pub(super) fn uint(max: &str) -> Type {
@@ -22,10 +22,10 @@ pub(super) fn bound(ty: &Type) -> Option<u128> {
 pub(super) fn scalar(ty: &Type) -> bool {
     matches!(ty, Type::Unit | Type::Boolean | Type::Field) || bound(ty).is_some()
 }
-pub(super) fn check(plan: Plan) -> Result<CheckedPlan, RecordingGap> {
-    CheckedPlan::validate(plan)
+pub(super) fn check(plan: Plan, declarations: Declarations) -> Result<CheckedPlan, RecordingGap> {
+    CheckedPlan::validate(plan, declarations)
 }
-pub(super) fn validate(plan: &Plan) -> Result<(), RecordingGap> {
+pub(super) fn validate(plan: &Plan, declarations: &Declarations) -> Result<(), RecordingGap> {
     let mut scope = HashMap::new();
     let mut allocated = HashSet::new();
     for value in &plan.parameters {
@@ -37,7 +37,13 @@ pub(super) fn validate(plan: &Plan) -> Result<(), RecordingGap> {
         }
         scope.insert(value.id, value.ty.clone());
     }
-    block(&plan.body, &scope, &mut allocated, "return_value")?;
+    block(
+        &plan.body,
+        declarations,
+        &scope,
+        &mut allocated,
+        "return_value",
+    )?;
     if plan.body.result.ty != plan.result_type {
         return Err(invalid(
             "return_value",
@@ -57,6 +63,7 @@ fn used(value: &Value, scope: &HashMap<usize, Type>, path: &str) -> Result<(), R
 }
 fn block(
     body: &Block,
+    declarations: &Declarations,
     incoming: &HashMap<usize, Type>,
     allocated: &mut HashSet<usize>,
     path: &str,
@@ -105,30 +112,41 @@ fn block(
                     Conversion::UnsignedCast => bound(&value.ty).is_some() && bound(ty).is_some(),
                 }
             }
-            Operation::CellRead(slot) => slot.ty == *ty && *ty != Type::Unit,
+            Operation::CellRead(slot) => {
+                cell(declarations, *slot, path)? == ty && *ty != Type::Unit
+            }
             Operation::CellWrite { slot, value } => {
                 use_value(value)?;
-                slot.ty == value.ty && slot.ty != Type::Unit && *ty == Type::Unit
+                let declared = cell(declarations, *slot, path)?;
+                *declared == value.ty && *declared != Type::Unit && *ty == Type::Unit
             }
-            Operation::CounterRead { .. } => *ty == uint("18446744073709551615"),
-            Operation::CounterIncrement { amount, .. } => {
+            Operation::CounterRead { slot } => {
+                counter(declarations, *slot, path)?;
+                *ty == uint("18446744073709551615")
+            }
+            Operation::CounterIncrement { slot, amount } => {
+                counter(declarations, *slot, path)?;
                 use_value(amount)?;
                 amount.ty == uint("65535") && *ty == Type::Unit
             }
             Operation::Witness {
-                parameters,
+                declaration,
                 arguments,
-                ..
             } => {
+                let witness = declarations
+                    .witness(*declaration)
+                    .ok_or_else(|| invalid(path, "unknown witness declaration"))?;
                 for value in arguments {
                     use_value(value)?;
                 }
-                *ty == Type::Field
-                    && parameters.len() == arguments.len()
-                    && parameters
+                witness.result == Type::Field
+                    && witness.result == *ty
+                    && witness.parameters.len() == arguments.len()
+                    && witness
+                        .parameters
                         .iter()
                         .zip(arguments)
-                        .all(|(p, a)| scalar(p) && *p == a.ty)
+                        .all(|(p, a)| scalar(&p.ty) && p.ty == a.ty)
             }
             Operation::Assert { condition, .. } => {
                 use_value(condition)?;
@@ -140,8 +158,8 @@ fn block(
                 otherwise,
             } => {
                 use_value(condition)?;
-                block(then, &scope, allocated, path)?;
-                block(otherwise, &scope, allocated, path)?;
+                block(then, declarations, &scope, allocated, path)?;
+                block(otherwise, declarations, &scope, allocated, path)?;
                 condition.ty == Type::Boolean && then.result.ty == *ty && otherwise.result.ty == *ty
             }
         };
@@ -157,4 +175,33 @@ fn block(
         scope.insert(binding.value.id, ty.clone());
     }
     used(&body.result, &scope, path)
+}
+
+fn cell<'a>(
+    declarations: &'a Declarations,
+    slot: CellSlot,
+    path: &str,
+) -> Result<&'a Type, RecordingGap> {
+    let field = declarations
+        .field(slot.declaration)
+        .ok_or_else(|| invalid(path, "unknown Cell declaration"))?;
+    if field.index != slot.index {
+        return Err(invalid(path, "Cell declaration index mismatch"));
+    }
+    let LedgerFieldKind::Cell { ty } = &field.declaration else {
+        return Err(invalid(path, "expected Cell declaration"));
+    };
+    Ok(ty)
+}
+fn counter(declarations: &Declarations, slot: CounterSlot, path: &str) -> Result<(), RecordingGap> {
+    let field = declarations
+        .field(slot.declaration)
+        .ok_or_else(|| invalid(path, "unknown Counter declaration"))?;
+    if field.index != slot.index {
+        return Err(invalid(path, "Counter declaration index mismatch"));
+    }
+    if field.declaration != LedgerFieldKind::Counter {
+        return Err(invalid(path, "expected Counter declaration"));
+    }
+    Ok(())
 }

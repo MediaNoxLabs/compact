@@ -4,7 +4,9 @@
 
 //! Source-order lowering into typed blocks; unsupported children retain their paths.
 use super::{
-    RecordingGap, invalid,
+    RecordingGap,
+    declarations::Declarations,
+    invalid,
     model::*,
     validate::{scalar, uint},
 };
@@ -13,20 +15,17 @@ use std::collections::HashMap;
 mod expressions;
 
 type Scope = HashMap<String, Value>;
-struct Lowerer<'a, 'b> {
-    ledger: &'a HashMap<&'b str, &'b LedgerField>,
-    witnesses: &'a HashMap<&'b str, &'b WitnessDeclaration>,
+struct Lowerer<'a> {
+    declarations: &'a Declarations,
     next: usize,
 }
 
 pub(super) fn lower(
     circuit: &StatefulCircuit,
-    ledger: &HashMap<&str, &LedgerField>,
-    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    declarations: &Declarations,
 ) -> Result<Plan, RecordingGap> {
     let mut lower = Lowerer {
-        ledger,
-        witnesses,
+        declarations,
         next: 0,
     };
     let mut scope = Scope::new();
@@ -95,7 +94,7 @@ pub(super) fn lower(
         result_type: circuit.result.clone(),
     })
 }
-impl Lowerer<'_, '_> {
+impl Lowerer<'_> {
     fn fresh(&mut self, ty: Type) -> Value {
         let id = self.next;
         self.next += 1;
@@ -145,30 +144,33 @@ impl Lowerer<'_, '_> {
             path,
         ))
     }
-    fn field(&self, name: &str, index: u8, path: &str) -> Result<&LedgerField, RecordingGap> {
-        self.ledger
-            .get(name)
-            .copied()
-            .filter(|f| f.index == index)
+    fn field(
+        &self,
+        name: &str,
+        index: u8,
+        path: &str,
+    ) -> Result<(LedgerId, &LedgerField), RecordingGap> {
+        self.declarations
+            .resolve_field(name)
+            .filter(|(_, f)| f.index == index)
             .ok_or_else(|| invalid(path, "unknown ledger field or inconsistent index"))
     }
-    fn cell(&self, name: &str, index: u8, path: &str) -> Result<Slot, RecordingGap> {
-        let LedgerFieldKind::Cell { ty } = &self.field(name, index, path)?.declaration else {
+    fn cell(&self, name: &str, index: u8, path: &str) -> Result<(CellSlot, Type), RecordingGap> {
+        let (declaration, field) = self.field(name, index, path)?;
+        let LedgerFieldKind::Cell { ty } = &field.declaration else {
             return Err(invalid(path, "expected Cell field"));
         };
         if !scalar(ty) || *ty == Type::Unit {
             return Err(invalid(path, "unsupported Cell value type"));
         }
-        Ok(Slot {
-            name: name.into(),
-            ty: ty.clone(),
-        })
+        Ok((CellSlot { declaration, index }, ty.clone()))
     }
-    fn counter(&self, name: &str, index: u8, path: &str) -> Result<(), RecordingGap> {
-        if self.field(name, index, path)?.declaration != LedgerFieldKind::Counter {
+    fn counter(&self, name: &str, index: u8, path: &str) -> Result<CounterSlot, RecordingGap> {
+        let (declaration, field) = self.field(name, index, path)?;
+        if field.declaration != LedgerFieldKind::Counter {
             return Err(invalid(path, "expected Counter field"));
         }
-        Ok(())
+        Ok(CounterSlot { declaration, index })
     }
     fn locals(
         &mut self,
@@ -344,9 +346,9 @@ impl Lowerer<'_, '_> {
                 index,
                 value,
             } => {
-                let slot = self.cell(field, *index, path)?;
+                let (slot, ty) = self.cell(field, *index, path)?;
                 let value = self.expression(value, scope, bindings, &format!("{path}.value"))?;
-                let value = self.coerce(value, &slot.ty, bindings, &format!("{path}.value"))?;
+                let value = self.coerce(value, &ty, bindings, &format!("{path}.value"))?;
                 self.emit(
                     Operation::CellWrite { slot, value },
                     Type::Unit,
@@ -359,7 +361,7 @@ impl Lowerer<'_, '_> {
                 index,
                 amount,
             } => {
-                self.counter(field, *index, path)?;
+                let slot = self.counter(field, *index, path)?;
                 let amount = match amount {
                     CounterAmount::Literal { value } => self.emit(
                         Operation::Literal(Literal::Unsigned(u128::from(*value))),
@@ -380,10 +382,7 @@ impl Lowerer<'_, '_> {
                     ));
                 }
                 self.emit(
-                    Operation::CounterIncrement {
-                        field: field.clone(),
-                        amount,
-                    },
+                    Operation::CounterIncrement { slot, amount },
                     Type::Unit,
                     bindings,
                     path,

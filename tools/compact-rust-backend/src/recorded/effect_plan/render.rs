@@ -4,7 +4,7 @@
 
 //! Rust syntax is created only after semantic plan validation.
 use super::super::typed_plan::TypedPlan;
-use super::{RecordingGap, invalid, model::*};
+use super::{RecordingGap, declarations::Declarations, invalid, model::*};
 use crate::{ident, rust_type};
 use proc_macro2::Span;
 
@@ -30,13 +30,13 @@ pub(super) fn render(checked: &CheckedPlan) -> Result<TypedPlan, RecordingGap> {
         let ty = rust_type(&parameter.ty).map_err(|e| invalid("parameters", e.to_string()))?;
         steps.push(syn::parse_quote!(let #target: #ty = #source;));
     }
-    steps.extend(block(&plan.body)?);
+    steps.extend(block(&plan.body, checked.declarations())?);
     Ok(TypedPlan {
         steps,
         result: value(&plan.body.result),
     })
 }
-fn block(body: &Block) -> Result<Vec<syn::Stmt>, RecordingGap> {
+fn block(body: &Block, declarations: &Declarations) -> Result<Vec<syn::Stmt>, RecordingGap> {
     let mut steps = Vec::new();
     for binding in &body.bindings {
         let path = &binding.path;
@@ -90,18 +90,18 @@ fn block(body: &Block) -> Result<Vec<syn::Stmt>, RecordingGap> {
             }
             .map_err(|e| invalid(path, e.to_string()))?,
             Operation::CellRead(slot) => {
-                let slot = ident(&slot.name).map_err(|e| invalid(path, e.to_string()))?;
+                let slot = slot_name(declarations, slot.declaration, path)?;
                 steps.push(syn::parse_quote!(let (frame,#output): (_,#ty) = crate::ledger_slots::#slot.record_read(frame)?;));
                 continue;
             }
             Operation::CellWrite { slot, value: input } => {
-                let slot = ident(&slot.name).map_err(|e| invalid(path, e.to_string()))?;
+                let slot = slot_name(declarations, slot.declaration, path)?;
                 let input = value(input);
                 steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_write(frame,#input)?;));
                 syn::parse_quote!(())
             }
-            Operation::CounterRead { field } => {
-                let slot = ident(field).map_err(|e| invalid(path, e.to_string()))?;
+            Operation::CounterRead { slot } => {
+                let slot = slot_name(declarations, slot.declaration, path)?;
                 let raw = syn::Ident::new(
                     &format!("__compact_effect_raw_{}", binding.value.id),
                     Span::call_site(),
@@ -109,18 +109,20 @@ fn block(body: &Block) -> Result<Vec<syn::Stmt>, RecordingGap> {
                 steps.push(syn::parse_quote!(let (frame,#raw) = crate::ledger_slots::#slot.record_read(frame)?;));
                 syn::parse_quote!(<#ty>::new(#raw as u128)?)
             }
-            Operation::CounterIncrement { field, amount } => {
-                let slot = ident(field).map_err(|e| invalid(path, e.to_string()))?;
+            Operation::CounterIncrement { slot, amount } => {
+                let slot = slot_name(declarations, slot.declaration, path)?;
                 let amount = value(amount);
                 steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_increment(frame,(#amount).value() as u16)?;));
                 syn::parse_quote!(())
             }
             Operation::Witness {
-                name: method,
+                declaration,
                 arguments,
-                ..
             } => {
-                let method = ident(method).map_err(|e| invalid(path, e.to_string()))?;
+                let witness = declarations
+                    .witness(*declaration)
+                    .ok_or_else(|| invalid(path, "unknown checked witness"))?;
+                let method = ident(&witness.name).map_err(|e| invalid(path, e.to_string()))?;
                 let args: Vec<_> = arguments.iter().map(value).collect();
                 steps.push(syn::parse_quote! {
                     let (frame,#output): (_,#ty) = frame.try_witness_metered(|context,meter| {
@@ -142,8 +144,8 @@ fn block(body: &Block) -> Result<Vec<syn::Stmt>, RecordingGap> {
                 otherwise,
             } => {
                 let condition = value(condition);
-                let then_steps = block(then)?;
-                let else_steps = block(otherwise)?;
+                let then_steps = block(then, declarations)?;
+                let else_steps = block(otherwise, declarations)?;
                 let then_value = value(&then.result);
                 let else_value = value(&otherwise.result);
                 steps.push(syn::parse_quote! {
@@ -161,4 +163,15 @@ fn block(body: &Block) -> Result<Vec<syn::Stmt>, RecordingGap> {
         steps.push(syn::parse_quote!(let #output: #ty = #expression;));
     }
     Ok(steps)
+}
+
+fn slot_name(
+    declarations: &Declarations,
+    id: LedgerId,
+    path: &str,
+) -> Result<syn::Ident, RecordingGap> {
+    let declaration = declarations
+        .field(id)
+        .ok_or_else(|| invalid(path, "unknown checked ledger declaration"))?;
+    ident(&declaration.id).map_err(|e| invalid(path, e.to_string()))
 }

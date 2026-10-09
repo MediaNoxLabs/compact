@@ -5,7 +5,7 @@
 //! Scalar expression lowering, preserving evaluation and source-path order.
 use super::super::validate;
 use super::*;
-impl Lowerer<'_, '_> {
+impl Lowerer<'_> {
     pub(super) fn expression(
         &mut self,
         expression: &Expr,
@@ -82,16 +82,13 @@ impl Lowerer<'_, '_> {
                 );
             }
             Expr::CellRead { field, index } => {
-                let slot = self.cell(field, *index, path)?;
-                let ty = slot.ty.clone();
+                let (slot, ty) = self.cell(field, *index, path)?;
                 (Operation::CellRead(slot), ty)
             }
             Expr::CounterRead { field, index } => {
-                self.counter(field, *index, path)?;
+                let slot = self.counter(field, *index, path)?;
                 (
-                    Operation::CounterRead {
-                        field: field.clone(),
-                    },
+                    Operation::CounterRead { slot },
                     uint("18446744073709551615"),
                 )
             }
@@ -154,10 +151,9 @@ impl Lowerer<'_, '_> {
                 )
             }
             Expr::WitnessCall { name, arguments } => {
-                let declaration = self
-                    .witnesses
-                    .get(name.as_str())
-                    .copied()
+                let (witness_id, declaration) = self
+                    .declarations
+                    .resolve_witness(name)
                     .ok_or_else(|| invalid(path, "unknown witness"))?;
                 if declaration.result != Type::Field
                     || arguments.len() != declaration.parameters.len()
@@ -177,12 +173,7 @@ impl Lowerer<'_, '_> {
                 }
                 (
                     Operation::Witness {
-                        name: name.clone(),
-                        parameters: declaration
-                            .parameters
-                            .iter()
-                            .map(|p| p.ty.clone())
-                            .collect(),
+                        declaration: witness_id,
                         arguments: args,
                     },
                     Type::Field,

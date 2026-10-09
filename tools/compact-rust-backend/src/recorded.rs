@@ -39,6 +39,8 @@ mod pure_calls;
 pub(crate) use helpers::plan_recorded_helpers;
 use profile_attempt::ProfileAttempt;
 use pure_calls::closed_pure_field_call;
+#[cfg(test)]
+mod admission_probe;
 mod effect_plan;
 #[cfg(test)]
 mod effectful_migration_tests;
@@ -560,7 +562,11 @@ fn lower_effectful_return(
 ) -> Result<RecordingOutcome<typed_plan::TypedPlan>, RenderError> {
     #[cfg(feature = "experimental-recording-plan")]
     let experimental_gap = match checked_effectful_return(circuit, ledger_fields, witnesses)? {
-        RecordingOutcome::Supported(plan) => return Ok(RecordingOutcome::Supported(plan)),
+        RecordingOutcome::Supported(plan) => {
+            #[cfg(test)]
+            admission_probe::observe(admission_probe::Route::AlgebraExperimental);
+            return Ok(RecordingOutcome::Supported(plan));
+        }
         RecordingOutcome::Unsupported(gap) => gap,
     };
 
@@ -571,11 +577,23 @@ fn lower_effectful_return(
     {
         #[cfg(not(feature = "experimental-recording-plan"))]
         let selected = match checked_effectful_return(circuit, ledger_fields, witnesses)? {
-            RecordingOutcome::Supported(plan) => plan,
-            RecordingOutcome::Unsupported(_) => legacy,
+            RecordingOutcome::Supported(plan) => {
+                #[cfg(test)]
+                admission_probe::observe(admission_probe::Route::AlgebraIntersection);
+                plan
+            }
+            RecordingOutcome::Unsupported(_) => {
+                #[cfg(test)]
+                admission_probe::observe(admission_probe::Route::LegacyEffectful);
+                legacy
+            }
         };
         #[cfg(feature = "experimental-recording-plan")]
-        let selected = legacy;
+        let selected = {
+            #[cfg(test)]
+            admission_probe::observe(admission_probe::Route::LegacyEffectful);
+            legacy
+        };
         return Ok(RecordingOutcome::Supported(selected));
     }
 
@@ -583,8 +601,12 @@ fn lower_effectful_return(
     if let Some(plan) =
         typed_plan::lower_start_funding(circuit, ledger_fields, witnesses, pure_circuits, circuits)
     {
+        #[cfg(test)]
+        admission_probe::observe(admission_probe::Route::LegacyStartFunding);
         return Ok(RecordingOutcome::Supported(plan));
     }
+    #[cfg(test)]
+    admission_probe::observe(admission_probe::Route::Unsupported);
     Ok(RecordingOutcome::Unsupported({
         #[cfg(feature = "experimental-recording-plan")]
         {

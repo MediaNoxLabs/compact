@@ -6,6 +6,7 @@
 //! Checking promises this bounded fragment can render, not transaction readiness
 //! or proof validity. Replay, transcript partitioning and proof remain runtime gates.
 
+mod declarations;
 mod lower;
 mod model;
 #[cfg(all(test, feature = "experimental-recording-plan"))]
@@ -35,8 +36,9 @@ pub(super) fn check(
     ledger: &HashMap<&str, &LedgerField>,
     witnesses: &HashMap<&str, &WitnessDeclaration>,
 ) -> Result<CheckedPlan, PlanError> {
-    let plan = lower::lower(circuit, ledger, witnesses).map_err(PlanError::Unsupported)?;
-    validate::check(plan).map_err(PlanError::Invalid)
+    let declarations = declarations::Declarations::new(ledger, witnesses);
+    let plan = lower::lower(circuit, &declarations).map_err(PlanError::Unsupported)?;
+    validate::check(plan, declarations).map_err(PlanError::Invalid)
 }
 
 pub(super) fn render(plan: &CheckedPlan) -> Result<TypedPlan, RecordingGap> {

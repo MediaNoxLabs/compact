@@ -1,0 +1,1759 @@
+{
+  "schema_version": 1,
+  "baseline_commit": "2704c624430ff000dfbf8fe4e97818b47f6ff1c4",
+  "epic": 508,
+  "package": "EA-00",
+  "claim": "Production source admission-route inventory. Counts are not language, fixture, behavioral, preparation, or proof coverage.",
+  "frozen_baseline": true,
+  "route_count_meaning": "Each row is one explicitly grouped production decision or dispatch boundary; rows are not equally sized.",
+  "main_selector": {
+    "ordered_calls": [
+      "typed_plan::lower",
+      "typed_plan::lower_jubjub_values",
+      "kernel_plan::lower",
+      "typed_plan::lower_context_query",
+      "typed_plan::lower_composite",
+      "typed_plan::lower_shielded_receive",
+      "typed_plan::lower_voting_commit",
+      "typed_plan::lower_funded_mint",
+      "typed_plan::lower_guarded_deposit",
+      "typed_plan::lower_shielded_merge",
+      "typed_plan::lower_immediate_shielded_send",
+      "typed_plan::lower_shielded_send_checked",
+      "typed_plan::lower_reset_payout",
+      "typed_plan::lower_shielded_payout",
+      "typed_plan::lower_terminal_returns",
+      "typed_plan::lower_phase_reset",
+      "typed_plan::lower_unit_actions",
+      "typed_plan::lower_unit_composition_checked",
+      "zswap_plan::lower"
+    ],
+    "function_sha256": "f5b5732d382ec047590745d42c91a634c67f331a854bcb4632badb65d4609c8d"
+  },
+  "source_fingerprints": {
+    "tools/compact-rust-backend/src/lib.rs": "8207fc4b09740df3523af5be6009298e0ff1f1914c640fbd635e72edff80288a",
+    "tools/compact-rust-backend/src/recorded.rs": "241e6f2b64716a90819b76565a4fc9ba498f77a22901946b2d61ec18faf7151a",
+    "tools/compact-rust-backend/src/recorded/audited_local.rs": "ff0717f8cd31d1b9e092bba2d45f558e06d2cfa7c1fc4ee63fbead1822b0a96d",
+    "tools/compact-rust-backend/src/recorded/effect_plan.rs": "29a3fa19b4223eb4e68cfa069dab765318c849194044cf23dce3d2c38a565332",
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower.rs": "ed26ec4de2259ecdb8915636440912fb4b7dbdc7f4a0f69c66b5746b8d5a1d83",
+    "tools/compact-rust-backend/src/recorded/effect_plan/model.rs": "506202ef852d6b20c4dceec7403fffde9dfe48e5150cf77bb140b23d1b4e5f39",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate.rs": "002e6443c3151e75277a0d7c13a1fc5e6af23753e101b83161c364f612ba1c52",
+    "tools/compact-rust-backend/src/recorded/guarded_mutations.rs": "3f32e37efb6577e6687c258e992dab209e780abb24813a8b64d940a636aefc4b",
+    "tools/compact-rust-backend/src/recorded/helpers.rs": "a6c6dc132d744c1e959311e75a5c7e1ad3ff592462a0a9e31967575384e1bcc6",
+    "tools/compact-rust-backend/src/recorded/item.rs": "3cc30c5235992b717f8b7ce0f5058c4abf827fabc83f7bb81fe0a5cbdad4fe07",
+    "tools/compact-rust-backend/src/recorded/kernel_plan.rs": "c206dbd758f791db3130e0ab22a882dde86011a3cdd91fdc9f6bc84ce4fd7ff8",
+    "tools/compact-rust-backend/src/recorded/legacy/actions.rs": "56efd8dfd63c4782c8de29fe5d3e4d81618dec215ecfd99a37400878596cb22a",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/assertions.rs": "2111fd862692b4d57075f2fa24a41b93821cde0b3f1d6123bd8ca0c3a0dff9a9",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/bindings.rs": "2a04775606628608067e3fc76c5ae8657d30c9e86d17ead77c81e3a2a32a93d2",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/collections.rs": "502dd04921b10bfa8ef6bba8ce2c6dbfed5fef7ee715b8e1203f672a925c3ab8",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/control.rs": "d313179d5f5337547a3346c3f451b4181d04402cc77f6e555afb2e7b48083b9e",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/merkle.rs": "3cf42d345080854e220522767c2a4ed27fbec30ea985ba2dc0a565f3ad380247",
+    "tools/compact-rust-backend/src/recorded/legacy/expressions/boolean.rs": "181baf6286d611ede3ca28520626acfe59f819b4d22018c0aa32baf8af164de7",
+    "tools/compact-rust-backend/src/recorded/legacy/expressions/field.rs": "4c1369c843dff595ecd5a14324c2867037b2643de7f225f3f7eb7163eae2890a",
+    "tools/compact-rust-backend/src/recorded/legacy/expressions/scalar.rs": "1ba60d53b08ec9fcb7598348ecbee14c986861f46d7b4e4007485f63bd516bd7",
+    "tools/compact-rust-backend/src/recorded/legacy/guarded_map.rs": "84f8f1d308bdd893b4e12fee9063ed55d87b6f8fa059ba86565d890f026e60cf",
+    "tools/compact-rust-backend/src/recorded/legacy/guarded_pure.rs": "777cb193a357ad0b91adb2ff34b5a3c71eff756a11201782c0a9acd97e1fff5b",
+    "tools/compact-rust-backend/src/recorded/legacy/opaque_map.rs": "c0a913f3ddc6d829f32e6fffbcf1924ec62ccbd41977014eef82dd3e7c26ea3f",
+    "tools/compact-rust-backend/src/recorded/legacy/opaque_set.rs": "5aa90c2adece625033b46a4341c7fd74b40e67514d828b9d84379404cc115ba0",
+    "tools/compact-rust-backend/src/recorded/legacy/returns/collections/list.rs": "75512baedb07ab0630405416661ad93bd50799b8b4dfbbe7892f36c7f4affef1",
+    "tools/compact-rust-backend/src/recorded/legacy/returns/collections/map.rs": "91cc6bcf2a47c856548ee11e480e66cf6f70e5f4a47d21a673c5325afa4ba89f",
+    "tools/compact-rust-backend/src/recorded/legacy/returns/collections/set.rs": "4af78214478447906a3a018e577f2b6aa69859ac6aad17bdf8fe6d07372fce98",
+    "tools/compact-rust-backend/src/recorded/legacy/returns/conditional.rs": "d19bb07c30f96749d3f7e9789fff5fa5a671a43c504d29625525c79088caef46",
+    "tools/compact-rust-backend/src/recorded/legacy/returns/merkle.rs": "888560623c2d26bad5e6c17de8f2859e4daa596cabf54770c470a57c8adabd4d",
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": "dd2809d88402d069cef45762fc3da8f3e22be690ef34a7f844c812cbfc64ad6b",
+    "tools/compact-rust-backend/src/recorded/pure_calls.rs": "7fdf62d9afea8867b98f7551d0ec73042fc69f0d7d361ebb786c2cf8126d052e",
+    "tools/compact-rust-backend/src/recorded/read_only_verification.rs": "5c1ee7e834db6a351eb512834680c87356584b62a7aa047ff6be81376950340d",
+    "tools/compact-rust-backend/src/recorded/typed_plan.rs": "076a98d10acd036fbcc6d72195961e1ff10ae0745336ff12de71b6826a301ef0",
+    "tools/compact-rust-backend/src/recorded/typed_plan/admission.rs": "656254b82f89f77bff1bca3c78b4b3a2bca22680d27550b0e6e1529cf3dc1675",
+    "tools/compact-rust-backend/src/recorded/typed_plan/composition.rs": "126c7f8922b304828021dc9124bded8729de64c72ccfb96794db9fb6537aa4a0",
+    "tools/compact-rust-backend/src/recorded/typed_plan/composition/nested_map_preflight.rs": "83a10b56aadb0ee06ddfb3b16de192fcf988cee593ec576f5f6c7d30548152c6",
+    "tools/compact-rust-backend/src/recorded/typed_plan/composition/relation_root_preflight.rs": "b6b5c282b6cca3e2d1c26faed94924268b82c732608d392c7f63e4c0df2436f8",
+    "tools/compact-rust-backend/src/recorded/typed_plan/composition/selected_set_preflight.rs": "f1d4a2d580afcaa1f500be7ae498a1b9c2a526fab8aab6bf234a7d36354a8ce1",
+    "tools/compact-rust-backend/src/recorded/typed_plan/evidence.rs": "b835a76820570715992ab13a54e4b47ca8ce0933f227d5a5e46ea44866661c1f",
+    "tools/compact-rust-backend/src/recorded/typed_plan/funded_mint.rs": "a7ee91d7c739088adce9ce0edd630f43efa2b007519a92fe835a1a0540758a2e",
+    "tools/compact-rust-backend/src/recorded/typed_plan/guarded_deposit.rs": "d7c41e82b00576d5afd2f0857c92cd453e205a29571383ac80fe34a1f0f78c07",
+    "tools/compact-rust-backend/src/recorded/typed_plan/immediate_send.rs": "91ff83866f77e2ca57f26e7c7644134887e674e1009ba3949b8f1a84c429fce6",
+    "tools/compact-rust-backend/src/recorded/typed_plan/jubjub_values.rs": "f02229d90056fdf98fc02dbc841575d953031bb6c4d10ab7b1e54b680e5d5ea1",
+    "tools/compact-rust-backend/src/recorded/typed_plan/phase_reset.rs": "782df26e0640a4dbc58924385dafd5d85188d276990bf717f2aa952956768d8c",
+    "tools/compact-rust-backend/src/recorded/typed_plan/reset_payout.rs": "9f3d798a39e08f91aa5d33b2aff2771ab4be93848f6fd5a7f04bbd20fb11efc5",
+    "tools/compact-rust-backend/src/recorded/typed_plan/shielded_merge.rs": "65a451b226b35a308575c10393a07313f73d4f28a18e3da0172807f96e5b4ffc",
+    "tools/compact-rust-backend/src/recorded/typed_plan/shielded_payout.rs": "7a13d8a6bacba6204cf4853f8fa350d8fb576248cce24b61f0256fcedd594049",
+    "tools/compact-rust-backend/src/recorded/typed_plan/start_funding.rs": "48bae139027a353b2ae462554b7735b839a9a85ba6ce4e4ad376483ceac950b5",
+    "tools/compact-rust-backend/src/recorded/typed_plan/terminal_returns.rs": "527ae4ae14de1e85ffdf39f1d23d2e657e54dd3a251e2c87afb2843ab0e2082e",
+    "tools/compact-rust-backend/src/recorded/typed_plan/unit_actions.rs": "677c0aad7aa63d90d2842a965e7f28afb1d3cafc512c476fd06c7cf11c972c41",
+    "tools/compact-rust-backend/src/recorded/typed_plan/voting_commit.rs": "7a16bf5d0552c3ba82e680a32978280b68106f8373f2ea0eca63df4ddc8e1a40",
+    "tools/compact-rust-backend/src/recorded/zswap_plan.rs": "8a45fbd7203c3f4f533e8e2ae0516eecbeb6722624e39413446447f9840af37d"
+  },
+  "routes": [
+    {
+      "id": "selector.membership-optional",
+      "family": "lazy-profile-selection",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-05"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+          "text": "typed_plan::lower(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+        "tools/compact-rust-backend/src/recorded/typed_plan.rs"
+      ]
+    },
+    {
+      "id": "selector.jubjub-values",
+      "family": "lazy-profile-selection",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-07"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+          "text": "typed_plan::lower_jubjub_values(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+        "tools/compact-rust-backend/src/recorded/typed_plan/jubjub_values.rs"
+      ]
+    },
+    {
+      "id": "selector.kernel",
+      "family": "lazy-profile-selection",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-08"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+          "text": "kernel_plan::lower(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+        "tools/compact-rust-backend/src/recorded/kernel_plan.rs"
+      ]
+    },
+    {
+      "id": "selector.context-query",
+      "family": "lazy-profile-selection",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-08"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+          "text": "typed_plan::lower_context_query(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+        "tools/compact-rust-backend/src/recorded/typed_plan.rs"
+      ]
+    },
+    {
+      "id": "selector.composite-values",
+      "family": "lazy-profile-selection",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-02",
+        "EA-05"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+          "text": "typed_plan::lower_composite(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+        "tools/compact-rust-backend/src/recorded/typed_plan.rs"
+      ]
+    },
+    {
+      "id": "selector.shielded-receive",
+      "family": "lazy-profile-selection",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-09",
+        "EA-10"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+          "text": "typed_plan::lower_shielded_receive(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+        "tools/compact-rust-backend/src/recorded/typed_plan.rs"
+      ]
+    },
+    {
+      "id": "selector.voting-commit",
+      "family": "lazy-profile-selection",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-10"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+          "text": "typed_plan::lower_voting_commit(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+        "tools/compact-rust-backend/src/recorded/typed_plan/voting_commit.rs"
+      ]
+    },
+    {
+      "id": "selector.funded-mint",
+      "family": "lazy-profile-selection",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-10"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+          "text": "typed_plan::lower_funded_mint(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+        "tools/compact-rust-backend/src/recorded/typed_plan/funded_mint.rs"
+      ]
+    },
+    {
+      "id": "selector.guarded-deposit",
+      "family": "lazy-profile-selection",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-10"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+          "text": "typed_plan::lower_guarded_deposit(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+        "tools/compact-rust-backend/src/recorded/typed_plan/guarded_deposit.rs"
+      ]
+    },
+    {
+      "id": "selector.shielded-merge",
+      "family": "lazy-profile-selection",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-09",
+        "EA-10"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+          "text": "typed_plan::lower_shielded_merge(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+        "tools/compact-rust-backend/src/recorded/typed_plan/shielded_merge.rs"
+      ]
+    },
+    {
+      "id": "selector.immediate-send",
+      "family": "lazy-profile-selection",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-09",
+        "EA-10"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+          "text": "typed_plan::lower_immediate_shielded_send(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+        "tools/compact-rust-backend/src/recorded/typed_plan/immediate_send.rs"
+      ]
+    },
+    {
+      "id": "selector.shielded-send",
+      "family": "lazy-profile-selection",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-09",
+        "EA-10"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+          "text": "typed_plan::lower_shielded_send_checked(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+        "tools/compact-rust-backend/src/recorded/typed_plan.rs"
+      ]
+    },
+    {
+      "id": "selector.reset-payout",
+      "family": "lazy-profile-selection",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-10"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+          "text": "typed_plan::lower_reset_payout(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+        "tools/compact-rust-backend/src/recorded/typed_plan/reset_payout.rs"
+      ]
+    },
+    {
+      "id": "selector.shielded-payout",
+      "family": "lazy-profile-selection",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-10"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+          "text": "typed_plan::lower_shielded_payout(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+        "tools/compact-rust-backend/src/recorded/typed_plan/shielded_payout.rs"
+      ]
+    },
+    {
+      "id": "selector.terminal-returns",
+      "family": "lazy-profile-selection",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-03"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+          "text": "typed_plan::lower_terminal_returns(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+        "tools/compact-rust-backend/src/recorded/typed_plan/terminal_returns.rs"
+      ]
+    },
+    {
+      "id": "selector.phase-reset",
+      "family": "lazy-profile-selection",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-03"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+          "text": "typed_plan::lower_phase_reset(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+        "tools/compact-rust-backend/src/recorded/typed_plan/phase_reset.rs"
+      ]
+    },
+    {
+      "id": "selector.unit-actions",
+      "family": "lazy-profile-selection",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-03"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+          "text": "typed_plan::lower_unit_actions(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+        "tools/compact-rust-backend/src/recorded/typed_plan/unit_actions.rs"
+      ]
+    },
+    {
+      "id": "selector.unit-composition",
+      "family": "lazy-profile-selection",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-04",
+        "EA-06"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+          "text": "typed_plan::lower_unit_composition_checked(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+        "tools/compact-rust-backend/src/recorded/typed_plan/composition.rs"
+      ]
+    },
+    {
+      "id": "selector.zswap",
+      "family": "lazy-profile-selection",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-09"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+          "text": "zswap_plan::lower(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+        "tools/compact-rust-backend/src/recorded/zswap_plan.rs"
+      ]
+    },
+    {
+      "id": "organizer.organizer",
+      "family": "eager-organizer-selection",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-03",
+        "EA-04"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+          "text": "closed_organizer_gate_steps(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+        "tools/compact-rust-backend/src/recorded/guarded_mutations.rs"
+      ]
+    },
+    {
+      "id": "organizer.optional-write",
+      "family": "eager-organizer-selection",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-03",
+        "EA-04"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+          "text": "closed_authorized_optional_write_steps(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+        "tools/compact-rust-backend/src/recorded/guarded_mutations.rs"
+      ]
+    },
+    {
+      "id": "organizer.enum-advance",
+      "family": "eager-organizer-selection",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-03",
+        "EA-04"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+          "text": "closed_authorized_enum_advance_steps(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+        "tools/compact-rust-backend/src/recorded/guarded_mutations.rs"
+      ]
+    },
+    {
+      "id": "organizer.witness-merkle",
+      "family": "eager-organizer-selection",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-07"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+          "text": "closed_witness_admitted_merkle_insert_steps(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/profile_selection.rs",
+        "tools/compact-rust-backend/src/recorded/guarded_mutations.rs"
+      ]
+    },
+    {
+      "id": "effectful.effectful",
+      "family": "effectful-admission",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-02",
+        "EA-03"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "typed_plan::lower_effectful(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs",
+        "tools/compact-rust-backend/src/recorded/typed_plan.rs"
+      ]
+    },
+    {
+      "id": "effectful.start-funding",
+      "family": "effectful-admission",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-09",
+        "EA-10"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "typed_plan::lower_start_funding(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs",
+        "tools/compact-rust-backend/src/recorded/typed_plan/start_funding.rs"
+      ]
+    },
+    {
+      "id": "effectful.checked-migration",
+      "family": "checked-algebra-integration",
+      "baseline_status": "production-active",
+      "disposition": "preserve-semantic",
+      "planned_packages": [
+        "EA-03"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "fn checked_effectful_return(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs",
+        "tools/compact-rust-backend/src/recorded/effect_plan.rs",
+        "tools/compact-rust-backend/src/recorded/effect_plan/model.rs",
+        "tools/compact-rust-backend/src/recorded/effect_plan/lower.rs",
+        "tools/compact-rust-backend/src/recorded/effect_plan/validate.rs"
+      ]
+    },
+    {
+      "id": "early.audited-local",
+      "family": "early-complete-renderer",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-04",
+        "EA-07"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "audited_local::render(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs",
+        "tools/compact-rust-backend/src/recorded/audited_local.rs"
+      ]
+    },
+    {
+      "id": "early.read-only-verification",
+      "family": "early-complete-renderer",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-04",
+        "EA-06",
+        "EA-07"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "read_only_verification::render(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs",
+        "tools/compact-rust-backend/src/recorded/read_only_verification.rs"
+      ]
+    },
+    {
+      "id": "guard.guarded-map-read",
+      "family": "post-selector-guard",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-05",
+        "EA-06"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "closed_guarded_struct_map_read_steps(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs",
+        "tools/compact-rust-backend/src/recorded/legacy/guarded_map.rs"
+      ]
+    },
+    {
+      "id": "guard.opaque-map-write",
+      "family": "post-selector-guard",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-05"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "closed_typed_opaque_map_write_steps(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs",
+        "tools/compact-rust-backend/src/recorded/legacy/opaque_map.rs"
+      ]
+    },
+    {
+      "id": "guard.opaque-set-mutation",
+      "family": "post-selector-guard",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-05"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "closed_guarded_opaque_set_mutation_steps(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs",
+        "tools/compact-rust-backend/src/recorded/legacy/opaque_set.rs"
+      ]
+    },
+    {
+      "id": "guard.guarded-struct-pure",
+      "family": "post-selector-guard",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-02",
+        "EA-04"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "closed_guarded_struct_pure_steps(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs",
+        "tools/compact-rust-backend/src/recorded/legacy/guarded_pure.rs"
+      ]
+    },
+    {
+      "id": "guard.guarded-unsigned-product",
+      "family": "post-selector-guard",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-02",
+        "EA-04"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "closed_guarded_unsigned_product_steps(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs",
+        "tools/compact-rust-backend/src/recorded/legacy/guarded_pure.rs"
+      ]
+    },
+    {
+      "id": "guard.proved-opaque-set-sequence",
+      "family": "opaque-whole-circuit-guard",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-05"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "fn proved_opaque_set_sequence(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs"
+      ]
+    },
+    {
+      "id": "guard.closed-opaque-set-operation",
+      "family": "opaque-whole-circuit-guard",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-05"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "fn closed_opaque_set_operation(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs"
+      ]
+    },
+    {
+      "id": "guard.closed-opaque-map-operation",
+      "family": "opaque-whole-circuit-guard",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-05"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "fn closed_opaque_map_operation(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs"
+      ]
+    },
+    {
+      "id": "guard.closed-opaque-asset-removal",
+      "family": "opaque-whole-circuit-guard",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-05"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "fn closed_opaque_asset_removal(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs"
+      ]
+    },
+    {
+      "id": "guard.root-let-snapshot",
+      "family": "snapshot-special-case",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-03"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "let root_field_return = if !organizer_gate",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs"
+      ]
+    },
+    {
+      "id": "final.opaque-parameter-allowlist",
+      "family": "post-lowering-policy",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-05",
+        "EA-12"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "parameter.ty == Type::OpaqueString",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs"
+      ]
+    },
+    {
+      "id": "final.no-emitted-statements",
+      "family": "post-lowering-policy",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-01",
+        "EA-12"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "if steps.is_empty() && return_steps.is_empty()",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs"
+      ]
+    },
+    {
+      "id": "final.internal-export",
+      "family": "post-lowering-policy",
+      "baseline_status": "production-active",
+      "disposition": "preserve-semantic",
+      "planned_packages": [
+        "EA-04",
+        "EA-12"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "if circuit.internal && !helper",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs"
+      ]
+    },
+    {
+      "id": "final.shielded-gap-precedence",
+      "family": "post-lowering-policy",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-12"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "if !organizer_gate\n        && !guarded_map_read_gate",
+          "baseline_occurrences": 3
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs"
+      ]
+    },
+    {
+      "id": "legacy.action-dispatch",
+      "family": "generic-recursive-dispatch",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-12"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/legacy/actions.rs",
+          "text": "fn append_steps(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/legacy/actions.rs"
+      ]
+    },
+    {
+      "id": "legacy.action-bindings",
+      "family": "generic-recursive-dispatch",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-02",
+        "EA-04"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/legacy/actions/bindings.rs",
+          "text": "fn append_binding_steps(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/legacy/actions/bindings.rs"
+      ]
+    },
+    {
+      "id": "legacy.action-assertions",
+      "family": "generic-recursive-dispatch",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-02",
+        "EA-04"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/legacy/actions/assertions.rs",
+          "text": "fn append_assertion_steps(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/legacy/actions/assertions.rs"
+      ]
+    },
+    {
+      "id": "legacy.action-control",
+      "family": "generic-recursive-dispatch",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-03",
+        "EA-04"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/legacy/actions/control.rs",
+          "text": "fn append_control_steps(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/legacy/actions/control.rs"
+      ]
+    },
+    {
+      "id": "legacy.action-collections",
+      "family": "generic-recursive-dispatch",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-05"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/legacy/actions/collections.rs",
+          "text": "fn append_collection_steps(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/legacy/actions/collections.rs"
+      ]
+    },
+    {
+      "id": "legacy.action-merkle",
+      "family": "generic-recursive-dispatch",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-07"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/legacy/actions/merkle.rs",
+          "text": "fn append_merkle_steps(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/legacy/actions/merkle.rs"
+      ]
+    },
+    {
+      "id": "legacy.return-conditional",
+      "family": "generic-recursive-dispatch",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-02",
+        "EA-03"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/legacy/returns/conditional.rs",
+          "text": "fn lower(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/legacy/returns/conditional.rs"
+      ]
+    },
+    {
+      "id": "return.unit",
+      "family": "generic-return-special-case",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-03"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "StateReturn::Unit if circuit.result == Type::Unit",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs"
+      ]
+    },
+    {
+      "id": "return.cell",
+      "family": "generic-return-special-case",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-03"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "StateReturn::CellRead { field, index } if recordable_cell_type",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs"
+      ]
+    },
+    {
+      "id": "return.counter",
+      "family": "generic-return-special-case",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-03"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "StateReturn::CounterRead { field, index }",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs"
+      ]
+    },
+    {
+      "id": "return.discarded-read",
+      "family": "generic-return-special-case",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-03"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "bindings\n                .iter()\n                .any(|binding| contains_cell_read(&binding.value))",
+          "baseline_occurrences": 2
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs"
+      ]
+    },
+    {
+      "id": "return.set",
+      "family": "generic-return-domain",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-05"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "legacy::returns::collections::set::member(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs",
+        "tools/compact-rust-backend/src/recorded/legacy/returns/collections/set.rs"
+      ]
+    },
+    {
+      "id": "return.list",
+      "family": "generic-return-domain",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-05"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "legacy::returns::collections::list::length(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs",
+        "tools/compact-rust-backend/src/recorded/legacy/returns/collections/list.rs"
+      ]
+    },
+    {
+      "id": "return.map",
+      "family": "generic-return-domain",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-05"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "legacy::returns::collections::map::member_or_lookup(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs",
+        "tools/compact-rust-backend/src/recorded/legacy/returns/collections/map.rs"
+      ]
+    },
+    {
+      "id": "return.merkle",
+      "family": "generic-return-domain",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-07"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "legacy::returns::merkle::check_root(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs",
+        "tools/compact-rust-backend/src/recorded/legacy/returns/merkle.rs"
+      ]
+    },
+    {
+      "id": "return.pure-field-call",
+      "family": "generic-return-domain",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-02",
+        "EA-04"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "closed_pure_field_call(name,",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs",
+        "tools/compact-rust-backend/src/recorded/pure_calls.rs"
+      ]
+    },
+    {
+      "id": "helper.discovery",
+      "family": "shared-helper-routing",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-04"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/helpers.rs",
+          "text": "fn collect_shared_callees(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/helpers.rs"
+      ]
+    },
+    {
+      "id": "helper.field-call-discovery",
+      "family": "shared-helper-routing",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-04"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/helpers.rs",
+          "text": "fn collect_field_callees(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/helpers.rs"
+      ]
+    },
+    {
+      "id": "helper.transitive-admission",
+      "family": "shared-helper-routing",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-04"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/helpers.rs",
+          "text": "fn plan_recorded_helpers(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/helpers.rs"
+      ]
+    },
+    {
+      "id": "helper.unit-field-shape",
+      "family": "shared-helper-routing",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-04"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/helpers.rs",
+          "text": "let direct_field_body = circuit.result == Type::Field",
+          "baseline_occurrences": 2
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/helpers.rs"
+      ]
+    },
+    {
+      "id": "permit.nested-map",
+      "family": "nested-composition-permit",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-06"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/typed_plan/composition/nested_map_preflight.rs",
+          "text": "struct NestedMapRead",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/typed_plan/composition/nested_map_preflight.rs"
+      ]
+    },
+    {
+      "id": "permit.relation-root",
+      "family": "nested-composition-permit",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-06"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/typed_plan/composition/relation_root_preflight.rs",
+          "text": "enum RelationPermit",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/typed_plan/composition/relation_root_preflight.rs"
+      ]
+    },
+    {
+      "id": "permit.selected-set",
+      "family": "nested-composition-permit",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-06"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/typed_plan/composition/selected_set_preflight.rs",
+          "text": "struct SelectedSetFamily",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/typed_plan/composition/selected_set_preflight.rs"
+      ]
+    },
+    {
+      "id": "permit.exact-lookup-site",
+      "family": "nested-composition-permit",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-06"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/typed_plan/composition.rs",
+          "text": "checked_lookup_sites: HashSet<*const Expr>",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/typed_plan/composition.rs"
+      ]
+    },
+    {
+      "id": "boundary.native-first",
+      "family": "semantic-and-structural-boundary",
+      "baseline_status": "production-active",
+      "disposition": "preserve-semantic",
+      "planned_packages": [
+        "EA-01"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/lib.rs",
+          "text": "stateful::render_stateful_circuit(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/lib.rs"
+      ]
+    },
+    {
+      "id": "boundary.resource-preflight",
+      "family": "semantic-and-structural-boundary",
+      "baseline_status": "production-active",
+      "disposition": "preserve-semantic",
+      "planned_packages": [
+        "EA-11"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/lib.rs",
+          "text": "let preflight = resource_limits::validate(contract)?;",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/lib.rs"
+      ]
+    },
+    {
+      "id": "boundary.observed-name-collision",
+      "family": "semantic-and-structural-boundary",
+      "baseline_status": "production-active",
+      "disposition": "preserve-semantic",
+      "planned_packages": [
+        "EA-12"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/lib.rs",
+          "text": "let observed_call = recorded.is_supported()",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/lib.rs"
+      ]
+    },
+    {
+      "id": "boundary.witness-facade",
+      "family": "semantic-and-structural-boundary",
+      "baseline_status": "production-active",
+      "disposition": "preserve-semantic",
+      "planned_packages": [
+        "EA-04",
+        "EA-12"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/item.rs",
+          "text": "fn assemble(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/item.rs"
+      ]
+    },
+    {
+      "id": "boundary.admission-flags",
+      "family": "semantic-and-structural-boundary",
+      "baseline_status": "production-active",
+      "disposition": "replace-shape",
+      "planned_packages": [
+        "EA-12"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/typed_plan/admission.rs",
+          "text": "struct AdmissionPolicy",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/typed_plan/admission.rs"
+      ]
+    },
+    {
+      "id": "boundary.syntactic-effect-counts",
+      "family": "semantic-and-structural-boundary",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-01",
+        "EA-12"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/typed_plan/evidence.rs",
+          "text": "struct EffectEvidence",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/typed_plan/evidence.rs"
+      ]
+    },
+    {
+      "id": "value.field-expression",
+      "family": "value-and-call-subdomain",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-02"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/legacy/expressions/field.rs",
+          "text": "fn field_expression(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/legacy/expressions/field.rs"
+      ]
+    },
+    {
+      "id": "value.boolean-expression",
+      "family": "value-and-call-subdomain",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-02"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/legacy/expressions/boolean.rs",
+          "text": "fn boolean_expression(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/legacy/expressions/boolean.rs"
+      ]
+    },
+    {
+      "id": "value.scalar-expression",
+      "family": "value-and-call-subdomain",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-02"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/legacy/expressions/scalar.rs",
+          "text": "fn scalar_expression(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/legacy/expressions/scalar.rs"
+      ]
+    },
+    {
+      "id": "value.pure-call-audit",
+      "family": "value-and-call-subdomain",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-02",
+        "EA-04"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/pure_calls.rs",
+          "text": "fn closed_pure_field_call(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/pure_calls.rs"
+      ]
+    },
+    {
+      "id": "value.local-call-audit",
+      "family": "value-and-call-subdomain",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-04",
+        "EA-07"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/audited_local.rs",
+          "text": "fn unit_helper(",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/audited_local.rs"
+      ]
+    },
+    {
+      "id": "value.composite-domain",
+      "family": "value-and-call-subdomain",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-10",
+        "EA-12"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/typed_plan.rs",
+          "text": "enum CompositeDomain",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded/typed_plan.rs"
+      ]
+    },
+    {
+      "id": "return.dispatch",
+      "family": "generic-return-special-case",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-12"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "let (return_steps, result): (Vec<syn::Stmt>, syn::Expr)",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs"
+      ]
+    },
+    {
+      "id": "return.counter-to-bytes",
+      "family": "generic-return-special-case",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-02",
+        "EA-03"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "value: Expr::FieldToBytes32 { value },",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs"
+      ]
+    },
+    {
+      "id": "return.saved-root-value",
+      "family": "generic-return-special-case",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-03"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "recorded_root_return.expect(\"matching root local\").1",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs"
+      ]
+    },
+    {
+      "id": "return.opaque-map-ensure",
+      "family": "generic-return-special-case",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-05"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "Some(ClosedOpaqueMapOperation::Ensure { .. })",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs"
+      ]
+    },
+    {
+      "id": "return.direct-field-expression",
+      "family": "generic-return-special-case",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-02",
+        "EA-04"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "&& (helper || (contains_cell_read(value)",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs"
+      ]
+    },
+    {
+      "id": "return.direct-boolean-expression",
+      "family": "generic-return-special-case",
+      "baseline_status": "production-active",
+      "disposition": "split-semantic-from-shape",
+      "planned_packages": [
+        "EA-02",
+        "EA-03"
+      ],
+      "anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "&& circuit.result == Type::Boolean\n                && circuit.actions.is_empty()",
+          "baseline_occurrences": 1
+        }
+      ],
+      "source_owners": [
+        "tools/compact-rust-backend/src/recorded.rs"
+      ]
+    }
+  ]
+}

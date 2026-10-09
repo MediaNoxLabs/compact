@@ -49,6 +49,9 @@ fn block(body: &Block, declarations: &Declarations) -> Result<Vec<syn::Stmt>, Re
                 Literal::Field(bytes) => {
                     syn::parse_quote!(runtime::Field::from_le_bytes(&[#(#bytes),*]).expect("validated Compact Field literal"))
                 }
+                Literal::WideUnsigned(bytes) => {
+                    syn::parse_quote!(<#ty>::from_le_bytes(&[#(#bytes),*])?)
+                }
                 Literal::Unsigned(n) => {
                     let n = syn::LitInt::new(&format!("{n}u128"), Span::call_site());
                     syn::parse_quote!(<#ty>::new(#n)?)

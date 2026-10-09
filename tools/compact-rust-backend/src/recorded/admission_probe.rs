@@ -106,7 +106,7 @@ fn fixture() -> Contract {
 }
 
 #[test]
-fn actual_route_distinguishes_checked_intersection_from_legacy_fallback() {
+fn actual_route_reports_small_and_wide_checked_intersections() {
     let mut contract = fixture();
     let rows = inspect(&contract);
     assert!(matches!(rows[0].candidate, Candidate::Supported));
@@ -135,8 +135,15 @@ fn actual_route_distinguishes_checked_intersection_from_legacy_fallback() {
         result: Box::new(body.clone()),
     };
     let rows = inspect(&contract);
-    assert!(matches!(rows[0].candidate, Candidate::Unsupported { .. }));
-    assert_eq!(rows[0].effectful_route, Some(Route::LegacyEffectful));
+    assert!(matches!(rows[0].candidate, Candidate::Supported));
+    assert_eq!(
+        rows[0].effectful_route,
+        Some(if cfg!(feature = "experimental-recording-plan") {
+            Route::AlgebraExperimental
+        } else {
+            Route::AlgebraIntersection
+        })
+    );
 }
 
 #[test]

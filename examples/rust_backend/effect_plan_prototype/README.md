@@ -165,8 +165,9 @@ pairs, 91 action-sequence split points with two regroupings each, shadowed
 initializers and scope restoration, and unsupported children in unused bindings
 and unselected branches. These are finite properties, not an exhaustive proof.
 Public compiler tests run with the feature both enabled and disabled: malformed
-native types/references remain errors; a valid wide unsigned literal outside the
-experimental domain still records through legacy fallback. When both lowerers
+native types/references remain errors. The former wide-literal fallback control
+now lowers through the checked plan (#510); legacy admission still governs the
+default family. When both lowerers
 refuse, the feature intentionally returns a more precise diagnostic IR path.
 
 The generated fixture adds eight cumulative rewrites of the two original
@@ -191,9 +192,11 @@ preparability for every input. This experiment does not change that boundary.
 The feature attempts **every native-valid `StateReturn::Effectful` root**, not
 just the two source examples. The supported algebra can therefore admit other
 combinations. Unsupported helpers, collections, cryptographic operations and
-Zswap fall back to legacy lowering. The scalar unsigned domain is bounded by
-`u128`. Precise nested source spans remain separate work; diagnostics use IR
-paths.
+Zswap can still reach independently admitted legacy paths. Unsigned arithmetic,
+casts and ABI surfaces remain bounded by `u128`. Local wide literals, references,
+equality and coercion to Field use the existing canonical unsigned domain below
+`2^248`; this does not add wide arithmetic or explicit wide `FieldCast` support.
+Precise nested source spans remain separate work; diagnostics use IR paths.
 
 A local 198-contract comparison of the staged default compiler against the
 pre-migration baseline found unchanged capabilities and IR for every contract;

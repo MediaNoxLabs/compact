@@ -24,6 +24,9 @@ pub(super) fn lower(
     circuit: &StatefulCircuit,
     declarations: &Declarations,
 ) -> Result<Plan, RecordingGap> {
+    if !scalar(&circuit.result) {
+        return Err(invalid("return_value", "unsupported circuit result type"));
+    }
     let mut lower = Lowerer {
         declarations,
         next: 0,
@@ -126,7 +129,7 @@ impl Lowerer<'_> {
             return Ok(value);
         }
         let valid = scalar(ty)
-            && ((super::validate::bound(&value.ty).is_some() && *ty == Type::Field)
+            && ((super::validate::unsigned_bound(&value.ty).is_some() && *ty == Type::Field)
                 || matches!((super::validate::bound(&value.ty), super::validate::bound(ty)), (Some(a),Some(b)) if a <= b));
         if !valid {
             return Err(invalid(
@@ -264,6 +267,9 @@ impl Lowerer<'_> {
             return Err(invalid(path, "branch result types differ"));
         }
         let ty = then_result.ty.clone();
+        if !scalar(&ty) {
+            return Err(invalid(path, "unsupported branch result type"));
+        }
         Ok(self.emit(
             Operation::If {
                 condition,

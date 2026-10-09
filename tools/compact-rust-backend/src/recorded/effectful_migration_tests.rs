@@ -115,7 +115,7 @@ fn legacy_admitted_intersection_uses_the_algebra_renderer() {
 }
 
 #[test]
-fn unsupported_wide_scalar_retains_the_exact_legacy_plan() {
+fn wide_scalar_in_legacy_family_uses_checked_algebra() {
     let mut contract = effectful_fixture();
     let StateReturn::Effectful { body } = &mut contract.stateful_circuits[0].return_value else {
         panic!("fixture effectful return")
@@ -137,14 +137,38 @@ fn unsupported_wide_scalar_retains_the_exact_legacy_plan() {
     let legacy = context
         .legacy(circuit)
         .expect("wide scalar remains legacy-supported");
-    assert!(matches!(
-        context.algebra(circuit),
-        Err(effect_plan::PlanError::Unsupported(_))
-    ));
+    let algebra = context
+        .algebra(circuit)
+        .expect("wide values are checked algebra operations");
+    assert_ne!(tokens(&algebra), tokens(&legacy));
     assert_eq!(
         tokens(&supported(context.selected(circuit))),
-        tokens(&legacy)
+        tokens(&algebra)
     );
+}
+
+#[test]
+fn real_source_wide_equality_uses_algebra_with_legacy_admission() {
+    let contract: Contract = serde_json::from_str(include_str!(
+        "../../tests/effect-plan-wide-schema20-ir.json"
+    ))
+    .unwrap();
+    let context = Context::new(&contract);
+    let circuit = &contract.stateful_circuits[0];
+    let legacy = context
+        .legacy(circuit)
+        .expect("real source remains in legacy family");
+    let algebra = context
+        .algebra(circuit)
+        .expect("real source wide values lower through algebra");
+    assert_ne!(tokens(&legacy), tokens(&algebra));
+    assert_eq!(
+        tokens(&supported(context.selected(circuit))),
+        tokens(&algebra)
+    );
+    let rendered = crate::render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].observed_call);
 }
 
 #[test]

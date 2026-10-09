@@ -32,6 +32,8 @@ pub(super) enum Literal {
     Boolean(bool),
     Field([u8; 32]),
     Unsigned(u128),
+    /// Canonical little-endian value; declared bound remains on the binding type.
+    WideUnsigned([u8; 32]),
 }
 #[derive(Clone, Copy, Debug)]
 pub(super) enum Conversion {

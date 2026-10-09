@@ -4,6 +4,8 @@
 
 #[path = "tests/declarations.rs"]
 mod declaration_tests;
+#[path = "tests/wide_values.rs"]
+mod wide_values;
 use declaration_tests::check_plan;
 
 use super::model::*;

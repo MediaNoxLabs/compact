@@ -10,11 +10,15 @@ use std::collections::{HashMap, HashSet};
 pub(super) fn uint(max: &str) -> Type {
     Type::Unsigned { max: max.into() }
 }
-pub(super) fn bound(ty: &Type) -> Option<u128> {
+/// Value-only unsigned bounds. ABI surfaces and arithmetic still use `bound`.
+pub(super) fn unsigned_bound(ty: &Type) -> Option<crate::UnsignedMaximum> {
     let Type::Unsigned { max } = ty else {
         return None;
     };
-    match crate::unsigned_maximum(max).ok()? {
+    crate::unsigned_maximum(max).ok()
+}
+pub(super) fn bound(ty: &Type) -> Option<u128> {
+    match unsigned_bound(ty)? {
         crate::UnsignedMaximum::Small(n) => Some(n),
         _ => None,
     }
@@ -22,10 +26,26 @@ pub(super) fn bound(ty: &Type) -> Option<u128> {
 pub(super) fn scalar(ty: &Type) -> bool {
     matches!(ty, Type::Unit | Type::Boolean | Type::Field) || bound(ty).is_some()
 }
+fn value_type(ty: &Type) -> bool {
+    scalar(ty) || unsigned_bound(ty).is_some()
+}
+pub(super) fn wide_literal_fits(bytes: &[u8; 32], ty: &Type) -> bool {
+    let Some(crate::UnsignedMaximum::Wide { high, low }) = unsigned_bound(ty) else {
+        return false;
+    };
+    let value_low = u128::from_le_bytes(bytes[..16].try_into().expect("low limb"));
+    let value_high = u128::from_le_bytes(bytes[16..].try_into().expect("high limb"));
+    bytes[31] == 0
+        && (value_high, value_low) <= (high, low)
+        && midnight_transient_crypto::curve::Fr::from_le_bytes(bytes).is_some()
+}
 pub(super) fn check(plan: Plan, declarations: Declarations) -> Result<CheckedPlan, RecordingGap> {
     CheckedPlan::validate(plan, declarations)
 }
 pub(super) fn validate(plan: &Plan, declarations: &Declarations) -> Result<(), RecordingGap> {
+    if !scalar(&plan.result_type) {
+        return Err(invalid("return_value", "unsupported circuit result type"));
+    }
     let mut scope = HashMap::new();
     let mut allocated = HashSet::new();
     for value in &plan.parameters {
@@ -73,7 +93,7 @@ fn block(
         let path = &binding.path;
         let ty = &binding.value.ty;
         let use_value = |v: &Value| used(v, &scope, path);
-        if !scalar(ty) {
+        if !value_type(ty) {
             return Err(invalid(path, "unsupported plan value type"));
         }
         let valid = match &binding.operation {
@@ -85,6 +105,7 @@ fn block(
                         && midnight_transient_crypto::curve::Fr::from_le_bytes(bytes).is_some()
                 }
                 Literal::Unsigned(n) => bound(ty).is_some_and(|max| *n <= max),
+                Literal::WideUnsigned(bytes) => wide_literal_fits(bytes, ty),
             },
             Operation::Add(a, b) => {
                 use_value(a)?;
@@ -106,7 +127,7 @@ fn block(
                 match kind {
                     Conversion::Coerce => {
                         value.ty == *ty
-                            || (bound(&value.ty).is_some() && *ty == Type::Field)
+                            || (unsigned_bound(&value.ty).is_some() && *ty == Type::Field)
                             || matches!((bound(&value.ty), bound(ty)), (Some(a),Some(b)) if a <= b)
                     }
                     Conversion::UnsignedCast => bound(&value.ty).is_some() && bound(ty).is_some(),
@@ -160,7 +181,10 @@ fn block(
                 use_value(condition)?;
                 block(then, declarations, &scope, allocated, path)?;
                 block(otherwise, declarations, &scope, allocated, path)?;
-                condition.ty == Type::Boolean && then.result.ty == *ty && otherwise.result.ty == *ty
+                scalar(ty)
+                    && condition.ty == Type::Boolean
+                    && then.result.ty == *ty
+                    && otherwise.result.ty == *ty
             }
         };
         if !valid {
@@ -191,6 +215,9 @@ fn cell<'a>(
     let LedgerFieldKind::Cell { ty } = &field.declaration else {
         return Err(invalid(path, "expected Cell declaration"));
     };
+    if !scalar(ty) || *ty == Type::Unit {
+        return Err(invalid(path, "unsupported Cell value type"));
+    }
     Ok(ty)
 }
 fn counter(declarations: &Declarations, slot: CounterSlot, path: &str) -> Result<(), RecordingGap> {

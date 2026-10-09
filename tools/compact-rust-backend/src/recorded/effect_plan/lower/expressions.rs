@@ -32,14 +32,26 @@ impl Lowerer<'_> {
             ),
             Expr::UnsignedLiteral { value, max } => {
                 let ty = uint(max);
-                let bound = validate::bound(&ty)
+                let bound = validate::unsigned_bound(&ty)
                     .ok_or_else(|| invalid(path, "unsupported unsigned bound"))?;
-                let value = value
-                    .parse::<u128>()
-                    .ok()
-                    .filter(|v| *v <= bound)
-                    .ok_or_else(|| invalid(path, "unsigned literal outside bound"))?;
-                (Operation::Literal(Literal::Unsigned(value)), ty)
+                let bytes = crate::field_literal_bytes(value)
+                    .map_err(|_| invalid(path, "noncanonical unsigned literal"))?;
+                let literal = match bound {
+                    crate::UnsignedMaximum::Small(max) => {
+                        let low = u128::from_le_bytes(bytes[..16].try_into().expect("low limb"));
+                        if bytes[16..].iter().any(|b| *b != 0) || low > max {
+                            return Err(invalid(path, "unsigned literal outside bound"));
+                        }
+                        Literal::Unsigned(low)
+                    }
+                    crate::UnsignedMaximum::Wide { .. } => {
+                        if !validate::wide_literal_fits(&bytes, &ty) {
+                            return Err(invalid(path, "unsigned literal outside bound"));
+                        }
+                        Literal::WideUnsigned(bytes)
+                    }
+                };
+                (Operation::Literal(literal), ty)
             }
             Expr::Let {
                 bindings: locals,
@@ -162,6 +174,13 @@ impl Lowerer<'_> {
                         path,
                         "prototype witnesses must return Field and match arity",
                     ));
+                }
+                if declaration
+                    .parameters
+                    .iter()
+                    .any(|p| !validate::scalar(&p.ty))
+                {
+                    return Err(invalid(path, "unsupported witness parameter type"));
                 }
                 let mut args = Vec::new();
                 for (i, (argument, parameter)) in

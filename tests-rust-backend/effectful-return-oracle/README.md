@@ -37,3 +37,26 @@ cargo test -p compact-rust-effectful-return-oracle-fixture
 The retained legacy source is test evidence. Do not refresh it when regenerating
 ordinary fixture snapshots. No extra source-language coverage is claimed by the
 parameter matrix.
+
+## Wide-value inclusion probes — #510 / ADR0370
+
+`build_support/wide_values.rs` generates a separate `wide_contract.rs` for
+`tests/wide_values.rs`. It retains the actual `choose` body from
+`examples/rust_backend/effect_plan_wide.compact` and its saved schema20 IR, then
+adds three explicitly synthetic IR exports. The original package API, snapshot
+and frozen legacy reference remain unchanged.
+
+The probes exercise values above u128, the maximum current 248-bit value,
+equality, Field coercion into writes/returns/witness arguments, witness failure
+and skipped callbacks. Tests compare native and recorded execution exactly,
+including all execution gas dimensions. An independently constructed public
+program checks transcript and replay state/effects/gas; per-query execution gas
+is not equated with batched public replay gas.
+
+The combined probe contract has no matching proof artifact set. Its runtime
+checks are not a prove/verify/apply claim. The original proof command above
+continues to use only the original source and freshly generated original API.
+
+```sh
+cargo test -p compact-rust-effectful-return-oracle-fixture --test wide_values
+```

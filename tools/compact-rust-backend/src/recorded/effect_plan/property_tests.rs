@@ -267,7 +267,7 @@ fn helper_calls_remain_outside_the_plan_even_when_native_declarations_exist() {
     assert_eq!(row.recording_unavailable.as_ref().unwrap(), &gap);
 }
 #[test]
-fn legacy_fallback_can_admit_a_wide_unused_literal_after_plan_refusal() {
+fn previously_fallback_wide_literal_now_has_a_checked_plan() {
     let mut candidate: Contract = serde_json::from_str(include_str!(
         "../../../tests/effectful-return-schema20-ir.json"
     ))
@@ -288,8 +288,8 @@ fn legacy_fallback_can_admit_a_wide_unused_literal_after_plan_refusal() {
         }],
         result: Box::new(body.clone()),
     };
-    let gap = refusal(&candidate);
-    assert_eq!(gap.path, "return_value.body.bindings[0].value");
+    let checked = checked(&candidate);
+    render(&checked).unwrap();
     let ledger = candidate
         .ledger_fields
         .iter()

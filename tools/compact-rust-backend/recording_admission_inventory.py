@@ -9,6 +9,10 @@ Exact anchor counts and the main selector's ordered calls/function digest are
 checked. Other source drift is reported, or rejected by --strict-fingerprints.
 A reviewed retirement is applied only with --transition; the original baseline
 stays immutable. A transition never suppresses unrelated anchor/selector errors.
+Test-only observation hooks require an explicit --instrumentation manifest. It
+pins the reviewed source edits and unchanged selector call order without replacing
+the original baseline or retirement evidence. This is not semantic equivalence
+proof; Rust tests separately check evaluation, refusal, and output preservation.
 Human review must classify new/changed routes before a future baseline update.
 """
 from __future__ import annotations
@@ -28,6 +32,14 @@ RETIRED_EFFECTFUL = 'effectful.effectful'
 RECORDED = 'tools/compact-rust-backend/src/recorded.rs'
 TYPED_PLAN = 'tools/compact-rust-backend/src/recorded/typed_plan.rs'
 ORACLE = 'tools/compact-rust-backend/src/recorded/typed_plan/effectful_reference.rs'
+INSTRUMENTATION = Path(__file__).with_name('recording_admission_inventory.instrumentation-515.json')
+HOOK_SOURCES = (
+    RECORDED, SELECTOR,
+    'tools/compact-rust-backend/src/recorded/helpers.rs',
+    'tools/compact-rust-backend/src/recorded/admission_probe.rs',
+    'tools/compact-rust-backend/src/recorded/admission_probe/trace.rs',
+    'tools/compact-rust-backend/src/recorded/admission_probe/attribution.rs',
+)
 DISPOSITIONS = {'replace-shape', 'preserve-semantic', 'split-semantic-from-shape'}
 
 
@@ -146,8 +158,53 @@ def validate_transition(baseline: dict, transition: dict, baseline_bytes: bytes 
     return errors
 
 
+
+def validate_instrumentation(root: Path, baseline: dict, manifest: dict,
+                             baseline_bytes: bytes | None) -> list[str]:
+    """Permit only the reviewed test observation edit, not arbitrary gate drift."""
+    errors = []
+    if manifest.get('schema_version') != 1 or manifest.get('issue') != 515:
+        errors.append('instrumentation: unsupported reviewed observation manifest')
+    if baseline_bytes is None or digest(baseline_bytes) != manifest.get('baseline_file_sha256'):
+        errors.append('instrumentation: frozen baseline file fingerprint changed or unavailable')
+    elif json.loads(baseline_bytes) != baseline:
+        errors.append('instrumentation: decoded baseline differs from frozen bytes')
+    if manifest.get('baseline_selector') != baseline.get('main_selector'):
+        errors.append('instrumentation: original selector is not bound to frozen baseline')
+    current = manifest.get('reviewed_selector', {})
+    if current.get('ordered_calls') != baseline.get('main_selector', {}).get('ordered_calls'):
+        errors.append('instrumentation: selector calls or order changed')
+    if not re.fullmatch('[0-9a-f]{64}', current.get('function_sha256', '')):
+        errors.append('instrumentation: invalid reviewed selector fingerprint')
+    fingerprints = manifest.get('reviewed_source_fingerprints', {})
+    if set(fingerprints) != set(HOOK_SOURCES):
+        errors.append('instrumentation: reviewed source set differs from observation owners')
+        return errors
+    hook_ids = set()
+    hook_pattern = r'(?:record_option!|record_guard!|trace::handled|trace::action|trace::guard)\(\s*"([^"]+)"'
+    return_pattern = r'row\.return_dispatch\s*=\s*Some\("([^"]+)"\)'
+    for relative, expected in fingerprints.items():
+        try:
+            data = (root / relative).read_bytes()
+            actual = digest(data)
+            hook_ids.update(re.findall(hook_pattern, data.decode()))
+            hook_ids.update(re.findall(return_pattern, data.decode()))
+        except OSError:
+            errors.append(f'instrumentation: unreadable observation owner: {relative}')
+            continue
+        if actual != expected:
+            errors.append(f'instrumentation: reviewed observation owner changed: {relative}')
+    routes = manifest.get('instrumented_route_ids', [])
+    if not routes or not all(isinstance(row, str) and row for row in routes):
+        errors.append('instrumentation: observation IDs must be nonempty strings')
+    elif len(set(routes)) != len(routes) or set(routes) != hook_ids:
+        errors.append('instrumentation: IDs differ from source observation hooks')
+    return errors
+
+
 def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
-           transition: dict | None = None, baseline_bytes: bytes | None = None) -> dict:
+           transition: dict | None = None, baseline_bytes: bytes | None = None,
+           instrumentation: dict | None = None) -> dict:
     errors = validate_baseline(baseline)
     report = {'schema_version': 1, 'baseline_commit': baseline.get('baseline_commit'),
               'claim': 'source route inventory; not language or behavioral coverage',
@@ -158,6 +215,13 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
     if errors:
         report['passed'] = False
         return report
+    if instrumentation is not None:
+        errors.extend(validate_instrumentation(root, baseline, instrumentation, baseline_bytes))
+        report['reviewed_instrumentation'] = {
+            'issue': instrumentation.get('issue'),
+            'instrumented_route_ids': instrumentation.get('instrumented_route_ids', []),
+            'claim': 'instrumented boundary IDs; execution of every boundary is not claimed',
+        }
     sources = {}
     for relative, expected in baseline['source_fingerprints'].items():
         path = root / relative
@@ -202,7 +266,8 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
         try:
             actual = selector_signature(sources[SELECTOR])
             report['current_selector'] = actual
-            if actual != baseline['main_selector']:
+            expected = instrumentation.get('reviewed_selector', {}) if instrumentation is not None else baseline['main_selector']
+            if actual != expected:
                 errors.append('main selector changed: review ordered calls and complete function fingerprint')
         except ValueError as error:
             errors.append(str(error))
@@ -217,15 +282,17 @@ def main(argv=None) -> int:
     parser.add_argument('--output', type=Path, help='current verification JSON; must differ from baseline')
     parser.add_argument('--strict-fingerprints', action='store_true')
     parser.add_argument('--transition', type=Path, help='explicit reviewed retirement JSON; baseline stays frozen')
+    parser.add_argument('--instrumentation', type=Path, help='explicit reviewed test-hook manifest; original selector stays frozen')
     args = parser.parse_args(argv)
-    protected = [args.baseline] + ([args.transition] if args.transition else [])
+    protected = [args.baseline] + ([args.transition] if args.transition else []) + ([args.instrumentation] if args.instrumentation else [])
     if args.output and any(args.output.resolve() == path.resolve() for path in protected):
-        parser.error('--output cannot overwrite baseline or transition evidence')
+        parser.error('--output cannot overwrite baseline, transition, or instrumentation evidence')
     try:
         baseline_bytes = args.baseline.read_bytes()
         baseline = json.loads(baseline_bytes)
         transition = json.loads(args.transition.read_text()) if args.transition else None
-        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes)
+        instrumentation = json.loads(args.instrumentation.read_text()) if args.instrumentation else None
+        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation)
     except (OSError, ValueError, TypeError, KeyError) as error:
         parser.exit(2, f'inventory error: {error}\n')
     rendered = json.dumps(report, indent=2) + '\n'

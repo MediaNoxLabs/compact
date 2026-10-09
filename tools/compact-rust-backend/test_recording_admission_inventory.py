@@ -112,8 +112,10 @@ class InventoryTests(unittest.TestCase):
         baseline = json.loads(baseline_bytes)
         transition = json.loads(inventory.BASELINE.with_name(
             'recording_admission_inventory.transition-511.json').read_text())
+        instrumentation = json.loads(inventory.INSTRUMENTATION.read_text())
         report = inventory.verify(inventory.ROOT, baseline,
-                                  transition=transition, baseline_bytes=baseline_bytes)
+                                  transition=transition, baseline_bytes=baseline_bytes,
+                                  instrumentation=instrumentation)
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)
@@ -129,14 +131,16 @@ class RetirementTransitionTests(unittest.TestCase):
         self.baseline = json.loads(self.baseline_bytes)
         self.transition = json.loads(inventory.BASELINE.with_name(
             'recording_admission_inventory.transition-511.json').read_text())
-        for relative in [*self.baseline['source_fingerprints'], inventory.ORACLE]:
+        self.instrumentation = json.loads(inventory.INSTRUMENTATION.read_text())
+        for relative in {*self.baseline['source_fingerprints'], inventory.ORACLE, *inventory.HOOK_SOURCES}:
             destination = self.root / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_bytes((inventory.ROOT / relative).read_bytes())
 
     def report(self):
         return inventory.verify(self.root, self.baseline, transition=self.transition,
-                                baseline_bytes=self.baseline_bytes)
+                                baseline_bytes=self.baseline_bytes,
+                                instrumentation=self.instrumentation)
 
     def test_reviewed_retirement_keeps_frozen_denominator(self):
         report = self.report()
@@ -198,6 +202,64 @@ class RetirementTransitionTests(unittest.TestCase):
     def test_transition_cannot_retire_another_route(self):
         self.transition['retired_route'] = 'selector.zswap'
         self.assertFalse(self.report()['passed'])
+
+
+    def test_observation_review_is_explicit_and_does_not_change_denominator(self):
+        report = inventory.verify(self.root, self.baseline, transition=self.transition,
+                                  baseline_bytes=self.baseline_bytes)
+        self.assertFalse(report['passed'])
+        self.assertTrue(any('main selector changed' in error for error in report['errors']))
+        report = self.report()
+        self.assertTrue(report['passed'], report['errors'])
+        self.assertEqual(report['route_count'], 84)
+        self.assertEqual(len(report['retired_routes']), 1)
+        self.assertEqual(report['reviewed_instrumentation']['issue'], 515)
+        self.assertNotIn('coverage', report['reviewed_instrumentation'])
+
+    def test_changed_observation_owner_fails_without_hiding_retirement_errors(self):
+        path = self.root / inventory.RECORDED
+        path.write_text(path.read_text() + '\n// unreviewed change\n')
+        report = self.report()
+        self.assertFalse(report['passed'])
+        self.assertTrue(any('observation owner changed' in error for error in report['errors']))
+        self.assertTrue(report['retired_routes'][0]['passed'])
+
+    def test_observation_manifest_cannot_authorize_reordered_selector_calls(self):
+        calls = self.instrumentation['reviewed_selector']['ordered_calls']
+        calls[0], calls[1] = calls[1], calls[0]
+        self.assertIn('instrumentation: selector calls or order changed', self.report()['errors'])
+
+    def test_reviewed_source_digest_cannot_hide_new_selector_call(self):
+        path = self.root / inventory.SELECTOR
+        path.write_text(path.read_text() + '\nfn accidental() { typed_plan::lower_new_route(); }\n')
+        self.instrumentation['reviewed_source_fingerprints'][inventory.SELECTOR] = inventory.digest(path.read_bytes())
+        report = self.report()
+        self.assertFalse(report['passed'])
+        self.assertTrue(any('main selector changed' in error for error in report['errors']))
+
+    def test_observation_original_selector_binding_cannot_change(self):
+        self.instrumentation['baseline_selector']['function_sha256'] = '0' * 64
+        self.assertFalse(self.report()['passed'])
+
+    def test_observation_source_set_is_exact_and_missing_owner_fails(self):
+        original = copy.deepcopy(self.instrumentation)
+        self.instrumentation['reviewed_source_fingerprints'].pop(inventory.RECORDED)
+        self.assertFalse(self.report()['passed'])
+        self.instrumentation = original
+        (self.root / inventory.HOOK_SOURCES[-1]).unlink()
+        self.assertFalse(self.report()['passed'])
+
+    def test_observation_ids_must_match_actual_hooks(self):
+        self.instrumentation['instrumented_route_ids'].pop()
+        self.assertIn('instrumentation: IDs differ from source observation hooks', self.report()['errors'])
+
+    def test_cli_cannot_overwrite_observation_manifest(self):
+        manifest = self.root / 'observations.json'
+        manifest.write_text(json.dumps(self.instrumentation))
+        before = manifest.read_bytes()
+        with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            inventory.main(['--instrumentation', str(manifest), '--output', str(manifest)])
+        self.assertEqual(manifest.read_bytes(), before)
 
 
 if __name__ == '__main__':

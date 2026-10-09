@@ -16,6 +16,26 @@
 //! Emit complete replayable traces from supported typed stateful IR.
 //! Unsupported effect shapes have no generated recorded entry point.
 
+// Pass-through observations compile out of production. The expression is
+// evaluated once in its original scope, preserving `?`, eager/lazy selection,
+// and validation order. Hooks never choose a plan.
+macro_rules! record_option {
+    ($route:literal, $value:expr) => {{
+        let value = $value;
+        #[cfg(test)]
+        $crate::recorded::admission_probe::trace::option($route, value.is_some());
+        value
+    }};
+}
+macro_rules! record_guard {
+    ($route:literal, $value:expr) => {{
+        let value = $value;
+        #[cfg(test)]
+        $crate::recorded::admission_probe::trace::guard($route, value);
+        value
+    }};
+}
+
 mod diagnostics;
 pub(crate) use diagnostics::RecordingOutcome;
 pub use diagnostics::{RecordingGap, RecordingGapCode};
@@ -520,7 +540,9 @@ pub(crate) fn render_recorded_circuit(
     circuits: &HashMap<&str, &StatefulCircuit>,
     shared_callees: &HashSet<String>,
 ) -> Result<RecordingOutcome<syn::Item>, RenderError> {
-    render_recorded_item(
+    #[cfg(test)]
+    let trace = admission_probe::trace::Scope::begin(circuit, false);
+    let result = render_recorded_item(
         circuit,
         ledger_fields,
         witnesses,
@@ -528,7 +550,10 @@ pub(crate) fn render_recorded_circuit(
         circuits,
         shared_callees,
         false,
-    )
+    );
+    #[cfg(test)]
+    trace.finish(&result);
+    result
 }
 
 pub(crate) fn render_recorded_helper(
@@ -539,7 +564,9 @@ pub(crate) fn render_recorded_helper(
     circuits: &HashMap<&str, &StatefulCircuit>,
     shared_callees: &HashSet<String>,
 ) -> Result<RecordingOutcome<syn::Item>, RenderError> {
-    render_recorded_item(
+    #[cfg(test)]
+    let trace = admission_probe::trace::Scope::begin(circuit, true);
+    let result = render_recorded_item(
         circuit,
         ledger_fields,
         witnesses,
@@ -547,7 +574,10 @@ pub(crate) fn render_recorded_helper(
         circuits,
         shared_callees,
         true,
-    )
+    );
+    #[cfg(test)]
+    trace.finish(&result);
+    result
 }
 
 /// Checked effect composition is the admission authority for Effectful roots.
@@ -563,7 +593,10 @@ fn lower_effectful_return(
     let algebra_gap = match checked_effectful_return(circuit, ledger_fields, witnesses)? {
         RecordingOutcome::Supported(plan) => {
             #[cfg(test)]
-            admission_probe::observe(admission_probe::Route::Algebra);
+            {
+                admission_probe::observe(admission_probe::Route::Algebra);
+                admission_probe::trace::handled("effectful.checked-migration");
+            }
             return Ok(RecordingOutcome::Supported(plan));
         }
         RecordingOutcome::Unsupported(gap) => gap,
@@ -575,7 +608,10 @@ fn lower_effectful_return(
         typed_plan::lower_start_funding(circuit, ledger_fields, witnesses, pure_circuits, circuits)
     {
         #[cfg(test)]
-        admission_probe::observe(admission_probe::Route::LegacyStartFunding);
+        {
+            admission_probe::observe(admission_probe::Route::LegacyStartFunding);
+            admission_probe::trace::handled("effectful.start-funding");
+        }
         return Ok(RecordingOutcome::Supported(plan));
     }
     #[cfg(test)]
@@ -622,12 +658,16 @@ fn render_recorded_item(
     if !helper
         && let Some(item) = audited_local::render(circuit, ledger_fields, witnesses, circuits)?
     {
+        #[cfg(test)]
+        admission_probe::trace::handled("early.audited-local");
         return Ok(item);
     }
     if !helper
         && let Some(item) =
             read_only_verification::render(circuit, ledger_fields, witnesses, circuits)?
     {
+        #[cfg(test)]
+        admission_probe::trace::handled("early.read-only-verification");
         return Ok(item);
     }
 
@@ -662,31 +702,51 @@ fn render_recorded_item(
     )?;
     let organizer_gate = organizer_steps.is_some();
     let opaque_map_operation = closed_opaque_map_operation(circuit, ledger_fields);
-    let opaque_asset_removal = closed_opaque_asset_removal(circuit, ledger_fields);
-    let guarded_map_read_steps =
-        closed_guarded_struct_map_read_steps(circuit, &parameters, ledger_fields, pure_circuits)?;
+    let opaque_asset_removal = record_guard!(
+        "guard.closed-opaque-asset-removal",
+        closed_opaque_asset_removal(circuit, ledger_fields)
+    );
+    #[cfg(test)]
+    admission_probe::trace::guard(
+        "guard.closed-opaque-map-operation",
+        opaque_map_operation.is_some(),
+    );
+    let guarded_map_read_steps = record_option!(
+        "guard.guarded-map-read",
+        closed_guarded_struct_map_read_steps(circuit, &parameters, ledger_fields, pure_circuits)?
+    );
     let guarded_map_read_gate = guarded_map_read_steps.is_some();
-    let typed_map_write_steps = closed_typed_opaque_map_write_steps(
-        circuit,
-        &parameters,
-        ledger_fields,
-        pure_circuits,
-        circuits,
-        shared_callees,
-    )?;
+    let typed_map_write_steps = record_option!(
+        "guard.opaque-map-write",
+        closed_typed_opaque_map_write_steps(
+            circuit,
+            &parameters,
+            ledger_fields,
+            pure_circuits,
+            circuits,
+            shared_callees,
+        )?
+    );
     let typed_map_write_gate = typed_map_write_steps.is_some();
-    let guarded_set_mutation_steps = closed_guarded_opaque_set_mutation_steps(
-        circuit,
-        &parameters,
-        ledger_fields,
-        circuits,
-        shared_callees,
-    )?;
+    let guarded_set_mutation_steps = record_option!(
+        "guard.opaque-set-mutation",
+        closed_guarded_opaque_set_mutation_steps(
+            circuit,
+            &parameters,
+            ledger_fields,
+            circuits,
+            shared_callees,
+        )?
+    );
     let guarded_set_mutation_gate = guarded_set_mutation_steps.is_some();
-    let guarded_pure_steps =
-        closed_guarded_struct_pure_steps(circuit, &parameters, pure_circuits, circuits)?.or(
-            closed_guarded_unsigned_product_steps(circuit, &parameters, pure_circuits)?,
-        );
+    let guarded_pure_steps = record_option!(
+        "guard.guarded-struct-pure",
+        closed_guarded_struct_pure_steps(circuit, &parameters, pure_circuits, circuits)?
+    )
+    .or(record_option!(
+        "guard.guarded-unsigned-product",
+        closed_guarded_unsigned_product_steps(circuit, &parameters, pure_circuits)?
+    ));
     let guarded_pure_call = guarded_pure_steps.is_some();
     let mut steps = organizer_steps
         .or(guarded_map_read_steps)
@@ -747,6 +807,8 @@ fn render_recorded_item(
         && !guarded_set_mutation_gate
     {
         if let Some((name, field, action)) = root_field_return {
+            #[cfg(test)]
+            admission_probe::trace::action("guard.root-let-snapshot");
             let slot = ident(field)?;
             let saved = syn::Ident::new("__compact_recorded_root_return", Span::call_site());
             steps.push(syn::parse_quote! {
@@ -773,6 +835,10 @@ fn render_recorded_item(
             }
             recorded_root_return = Some((name, syn::parse_quote!(#saved)));
         } else {
+            #[cfg(test)]
+            if !circuit.actions.is_empty() {
+                admission_probe::trace::action("legacy.action-dispatch");
+            }
             for (index, action) in circuit.actions.iter().enumerate() {
                 if guarded_pure_call && index == 0 {
                     continue;
@@ -820,6 +886,10 @@ fn render_recorded_item(
         return Ok(RecordingOutcome::Unsupported(gap.clone()));
     }
     let result_ty = rust_type(&circuit.result)?;
+    #[cfg(test)]
+    if typed_result.is_none() {
+        admission_probe::trace::returned();
+    }
     let (return_steps, result): (Vec<syn::Stmt>, syn::Expr) = match &circuit.return_value {
         _ if typed_result.is_some() => (
             Vec::new(),
@@ -1358,8 +1428,14 @@ fn render_recorded_item(
         .parameters
         .iter()
         .any(|parameter| parameter.ty == Type::OpaqueString)
-        && !proved_opaque_set_sequence(circuit)
-        && !closed_opaque_set_operation(circuit, ledger_fields)
+        && !record_guard!(
+            "guard.proved-opaque-set-sequence",
+            proved_opaque_set_sequence(circuit)
+        )
+        && !record_guard!(
+            "guard.closed-opaque-set-operation",
+            closed_opaque_set_operation(circuit, ledger_fields)
+        )
         && opaque_map_operation.is_none()
         && !opaque_asset_removal
         && !guarded_map_read_gate

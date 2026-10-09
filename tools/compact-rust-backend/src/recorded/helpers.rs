@@ -77,6 +77,8 @@ pub(crate) fn plan_recorded_helpers(
     pure_circuits: &HashMap<&str, &PureCircuit>,
     circuits: &HashMap<&str, &StatefulCircuit>,
 ) -> Result<(HashSet<String>, Vec<syn::Item>), RenderError> {
+    #[cfg(test)]
+    let _phase = admission_probe::trace::HelperPlanning::begin();
     let mut roots_with_calls = HashSet::new();
     for circuit in ordered_circuits.iter().filter(|circuit| !circuit.internal) {
         let mut calls = HashSet::new();

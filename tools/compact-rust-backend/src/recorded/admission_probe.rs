@@ -4,10 +4,13 @@
 
 //! Test-only admission diagnostics. Candidate lowering never uses a fallback.
 //! This probes compilation, never executes witnesses, and does not promise
-//! replay/preparation/proof support. Effectful route observations come from
-//! actual dispatch; ordinary roots are explicitly outside route instrumentation.
+//! replay/preparation/proof support. Full-compilation attribution observes actual
+//! ordinary and effectful dispatch; candidate lowering is reported separately.
 
 use super::*;
+mod attribution;
+pub(super) mod trace;
+mod trace_tests;
 use crate::ir::Contract;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
@@ -29,7 +32,7 @@ pub(super) fn observe(route: Route) {
     LAST_ROUTE.set(Some(route));
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 #[serde(tag = "status", rename_all = "snake_case")]
 enum Candidate {
     Supported,
@@ -224,6 +227,8 @@ fn export_candidate_admission_report() {
     let mut accepted_contracts = 0;
     let mut rejected_contracts = 0;
     let mut inspected_stateful_rows = 0;
+    let mut attribution_errors = 0;
+    let mut attributed_exports = Vec::new();
     for path in files {
         let bytes = std::fs::read(&path).unwrap();
         let source = path
@@ -241,10 +246,16 @@ fn export_candidate_admission_report() {
             }
         };
         let fingerprint = format!("{:x}", Sha256::digest(&bytes));
-        match crate::render_with_capabilities(&contract) {
+        let capture = trace::Capture::begin();
+        let rendered = crate::render_with_capabilities(&contract);
+        let invocations = capture.finish();
+        match rendered {
             Ok(rendered) => {
                 accepted_contracts += 1;
                 let rows = inspect(&contract);
+                let attribution = attribution::join(&rendered.capabilities, &rows, &invocations);
+                attribution_errors += attribution.errors.len();
+                attributed_exports.extend(attribution.exports.clone());
                 inspected_stateful_rows += rows.len();
                 invariant_failures += rows
                     .iter()
@@ -256,7 +267,8 @@ fn export_candidate_admission_report() {
                 records.push(serde_json::json!({
                     "source": source, "ir_sha256": fingerprint,
                     "full_compilation": "accepted", "capabilities": rendered.capabilities,
-                    "candidate_rows": rows,
+                    "candidate_rows": rows, "attribution": attribution,
+                    "recording_invocations": invocations,
                 }));
             }
             Err(error) => {
@@ -267,17 +279,23 @@ fn export_candidate_admission_report() {
                     "source": source, "ir_sha256": fingerprint,
                     "compilation": "full_compilation_rejected",
                     "recording_invariant": invariant, "error": error.to_string(),
+                    "recording_invocations": invocations,
                 }));
             }
         }
     }
     assert!(!records.is_empty(), "no retained contract IR was inspected");
     let report = serde_json::json!({
-        "schema_version": 2,
+        "schema_version": 3,
         "experimental_feature": cfg!(feature = "experimental-recording-plan"),
         "effectful_admission": "checked_algebra",
         "scope": "finite saved-IR compilation census; not language coverage or execution/proof evidence",
-        "routing_scope": "effectful lowering only; public capabilities also apply outer facade rules",
+        "historical_effectful_route_scope": "candidate diagnostic rerender limited to Effectful roots; actual attribution uses recording_invocations captured during full compilation",
+        "routing_scope": "actual full recording invocations; final exports separated from helper planning; observed-call availability from actual capabilities",
+        "attribution_scope": "top-level body/dispatch ownership and final outcome; not every recursive operation or static inventory boundary",
+        "attribution_errors": attribution_errors,
+        "attributed_export_count": attributed_exports.len(),
+        "export_counts_by_owner": attribution::by_owner(&attributed_exports),
         "records": records, "skipped_inputs": skipped,
         "invariant_failures": invariant_failures,
         "accepted_contracts": accepted_contracts,
@@ -288,6 +306,10 @@ fn export_candidate_admission_report() {
     assert!(
         inspected_stateful_rows > 0,
         "no stateful candidate was inspected"
+    );
+    assert_eq!(
+        attribution_errors, 0,
+        "actual export attribution incomplete; inspect report"
     );
     assert_eq!(
         invariant_failures, 0,

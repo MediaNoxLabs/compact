@@ -95,6 +95,7 @@ mod opaque_string_map;
 mod opaque_string_set;
 mod pair_hash_cell;
 mod persistent_commit;
+mod positional_inputs;
 mod positional_lists;
 mod positional_maps;
 mod positional_sets;
@@ -3285,45 +3286,35 @@ fn run() -> Result<(), Box<dyn Error>> {
             Err(_) => Err("historic indexed Merkle proof thread panicked".into()),
         };
     }
-    let counter_root = first.ok_or(
-        "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output>",
-    )?;
-    let cell_root = arguments.next().ok_or(
-        "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output>",
-    )?;
-    let cell_read_root = arguments.next().ok_or(
-        "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output>",
-    )?;
-    let witness_root = arguments.next();
-    let nested_root = arguments.next();
-    let expression_root = arguments.next();
-    let set_root = arguments.next();
-    let set_oracle_root = arguments.next();
-    let map_root = arguments.next();
-    let constructor_map_root = arguments.next();
-    let list_root = arguments.next();
-    let constructor_list_root = arguments.next();
-    let enum_cell_root = arguments.next();
-    let tiny_root = arguments.next();
-    let nested_map_shape_root = arguments.next();
-    let list_shapes_root = arguments.next();
-    let merkle_root = arguments.next();
-    let historic_merkle_root = arguments.next();
-    let vector_key_root = arguments.next();
-    let counter_parameter_root = arguments.next();
-    let composite_key_root = arguments.next();
-    let chunked_set_root = arguments.next();
-    let chunked_list_root = arguments.next();
-    let chunked_map_root = arguments.next();
-    let chunked_cell_root = arguments.next();
-    let uints_root = arguments.next();
-    let wide_root = arguments.next();
-    if arguments.next().is_some() {
-        return Err(
-            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output] [map-output] [constructor-map-output] [list-output] [constructor-list-output] [enum-cell-output] [tiny-output] [nested-map-shape-output] [list-shapes-output] [merkle-output] [historic-merkle-output] [vector-key-output] [counter-parameter-output] [composite-key-output] [chunked-set-output] [chunked-list-output] [chunked-map-output] [chunked-cell-output] [uints-output] [wide-uint-output]"
-                .into(),
-        );
-    }
+    let positional_inputs::PositionalInputs {
+        counter_root,
+        cell_root,
+        cell_read_root,
+        witness_root,
+        nested_root,
+        expression_root,
+        set_root,
+        set_oracle_root,
+        map_root,
+        constructor_map_root,
+        list_root,
+        constructor_list_root,
+        enum_cell_root,
+        tiny_root,
+        nested_map_shape_root,
+        list_shapes_root,
+        merkle_root,
+        historic_merkle_root,
+        vector_key_root,
+        counter_parameter_root,
+        composite_key_root,
+        chunked_set_root,
+        chunked_list_root,
+        chunked_map_root,
+        chunked_cell_root,
+        uints_root,
+        wide_root,
+    } = positional_inputs::PositionalInputs::parse(first, &mut arguments)?;
     let counter_root = Path::new(&counter_root);
     let cell_root = Path::new(&cell_root);
     let cell_read_root = Path::new(&cell_read_root);

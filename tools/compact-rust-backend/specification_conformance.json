@@ -108,7 +108,7 @@
     "tools/compact-rust-backend/tests/render/state_validation.rs": "f132618d06f3b03e038755ed85b4944561a4bd636203e0df65ad99861259b00a",
     "tools/compact-rust-backend/tests/render/support.rs": "d262860152f9d7836d3164d48151f344c88df46af535ddf7a94f0b9deda9251d",
     "tools/compact-rust-backend/tests/render/value_types.rs": "b6de9b144176659e287cc8c01332dcf6c1d047a9cea833248e6bc6c7dee9ac75",
-    "tools/compact-rust-backend/src/recorded/typed_plan.rs": "cd7c29821e7d53a4a0e4a24b08e65e3d1f853423e7cf20b3bbda9150f1fd7afb",
+    "tools/compact-rust-backend/src/recorded/typed_plan.rs": "c20d64456a87978c7923396b8e2b21c1f4e91973505f50f4bbbc8aa9cb3cfbf7",
     "tools/compact-rust-backend/src/recorded/profile_selection.rs": "dd2809d88402d069cef45762fc3da8f3e22be690ef34a7f844c812cbfc64ad6b",
     "tools/compact-rust-backend/src/recorded/legacy/actions.rs": "56efd8dfd63c4782c8de29fe5d3e4d81618dec215ecfd99a37400878596cb22a",
     "tools/compact-rust-backend/src/recorded/legacy/expressions.rs": "cb5b299be4df0d2055ab98a5b6bced9437fb875270168fd8742d02f4f1a7c9df",
@@ -121,7 +121,14 @@
     "tools/compact-rust-backend/src/recorded/legacy/actions/control.rs": "d313179d5f5337547a3346c3f451b4181d04402cc77f6e555afb2e7b48083b9e",
     "tools/compact-rust-backend/src/recorded/legacy/actions/bindings.rs": "5aa51e218a76d4a7aae1f8d332e913c17bae52760d4197161c0ac012f1aa030e",
     "tools/compact-rust-backend/src/recorded/legacy/actions/collections.rs": "502dd04921b10bfa8ef6bba8ce2c6dbfed5fef7ee715b8e1203f672a925c3ab8",
-    "tools/compact-rust-backend/src/recorded/legacy/actions/bindings/closed.rs": "bad1b71b45d3b508fba2bdad0e86a2dfbe28592d9b56e263fa0a49e85e17574a"
+    "tools/compact-rust-backend/src/recorded/legacy/actions/bindings/closed.rs": "bad1b71b45d3b508fba2bdad0e86a2dfbe28592d9b56e263fa0a49e85e17574a",
+    "tools/compact-rust-backend/src/recorded/typed_plan/control.rs": "757902f701aeb092597b29b3b9b2b0581e3608482ce4ec7ae43716b24039fba6",
+    "tools/compact-rust-backend/src/recorded/typed_plan/aggregates.rs": "5a9ab37e97b4cd245e53e27e1d23ba627ae15609477bb5adf62925de828c08b0",
+    "tools/compact-rust-backend/src/recorded/typed_plan/arithmetic.rs": "c45ea369d6d9d7791815b542ac3a6ae31f4005aa6a73f2c02617ed77a7760f49",
+    "tools/compact-rust-backend/src/recorded/typed_plan/crypto.rs": "23c814bf2dfb8ae1d49f56e1c1a3b92edc24b303f2d613bddb197b8188a5b6a9",
+    "tools/compact-rust-backend/src/recorded/typed_plan/observations.rs": "fa7eb154a20bc6200ab1a742fbe9902a67dc81dcfad0c648df76068c5e931787",
+    "tools/compact-rust-backend/src/recorded/typed_plan/effects.rs": "e02ff7d553f3e7b6e547bfb4cb738416e0fa8c3882416f826c8168c5b088be46",
+    "tools/compact-rust-backend/src/recorded/typed_plan/leaves.rs": "cd2ef930763fbf94e7dfb3d34519aedc10abcf3dff676761b835fb4bf53a0b0e"
   },
   "grammar_inventory": {
     "format_version": 1,

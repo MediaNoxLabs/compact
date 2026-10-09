@@ -108,7 +108,7 @@
     "tools/compact-rust-backend/tests/render/state_validation.rs": "f132618d06f3b03e038755ed85b4944561a4bd636203e0df65ad99861259b00a",
     "tools/compact-rust-backend/tests/render/support.rs": "d262860152f9d7836d3164d48151f344c88df46af535ddf7a94f0b9deda9251d",
     "tools/compact-rust-backend/tests/render/value_types.rs": "b6de9b144176659e287cc8c01332dcf6c1d047a9cea833248e6bc6c7dee9ac75",
-    "tools/compact-rust-backend/src/recorded/typed_plan.rs": "7df6c8dbe976e5c438310b9e2a3b6844c8ed209b30b7905f304db977fddb9a7e",
+    "tools/compact-rust-backend/src/recorded/typed_plan.rs": "456e7dedfd5af80d9d21759874f14cf3d025a4eddd31f3d19a7299fbad8145ba",
     "tools/compact-rust-backend/src/recorded/profile_selection.rs": "dd2809d88402d069cef45762fc3da8f3e22be690ef34a7f844c812cbfc64ad6b",
     "tools/compact-rust-backend/src/recorded/legacy/actions.rs": "56efd8dfd63c4782c8de29fe5d3e4d81618dec215ecfd99a37400878596cb22a",
     "tools/compact-rust-backend/src/recorded/legacy/expressions.rs": "cb5b299be4df0d2055ab98a5b6bced9437fb875270168fd8742d02f4f1a7c9df",
@@ -161,7 +161,10 @@
     "tools/compact-rust-backend/src/recorded/legacy/returns/collections.rs": "d3575d06f07035e223b70dd760e7e9075816e29e2dd3529ec00068a8b2158c5c",
     "tools/compact-rust-backend/src/recorded/legacy/returns/collections/list.rs": "75512baedb07ab0630405416661ad93bd50799b8b4dfbbe7892f36c7f4affef1",
     "tools/compact-rust-backend/src/recorded/legacy/returns/collections/map.rs": "91cc6bcf2a47c856548ee11e480e66cf6f70e5f4a47d21a673c5325afa4ba89f",
-    "tools/compact-rust-backend/src/recorded/legacy/returns/collections/set.rs": "4af78214478447906a3a018e577f2b6aa69859ac6aad17bdf8fe6d07372fce98"
+    "tools/compact-rust-backend/src/recorded/legacy/returns/collections/set.rs": "4af78214478447906a3a018e577f2b6aa69859ac6aad17bdf8fe6d07372fce98",
+    "tools/compact-rust-backend/src/recorded/typed_plan/tests.rs": "1c4ae6fdafd2131bea12b0658a30d5af2bcae3bc066039ff55fef31d10d940c0",
+    "tools/compact-rust-backend/src/recorded/typed_plan/shielded_receive_tests.rs": "cd613c72628f52df5e9950e6e37d79a99318b8b2439bad4eece208344d62ef50",
+    "tools/compact-rust-backend/src/recorded/typed_plan/shielded_send_tests.rs": "e22d3f1029e6899ff093ba19391a3ecbf0dba2db268826b8c2507bdb35defc30"
   },
   "grammar_inventory": {
     "format_version": 1,

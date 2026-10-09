@@ -283,13 +283,11 @@ fn discarded_field_binding_keeps_reads_but_rejects_wrong_slot_type_and_nonunit_b
         unreachable!()
     };
     bindings[0].value = Expr::Parameter { name: "a".into() };
-    assert!(
-        !render_with_capabilities(&pure_only)
-            .unwrap()
-            .capabilities
-            .circuits[0]
-            .recorded
-    );
+    // A pure Unit composition can record an empty program. Preparation still
+    // rejects EmptyTranscript; source-fixture tests qualify that separate gate.
+    let pure_rendered = render_with_capabilities(&pure_only).unwrap();
+    assert!(pure_rendered.capabilities.circuits[0].recorded);
+    assert!(pure_rendered.capabilities.circuits[0].observed_call);
 
     let mut unsupported = contract.clone();
     let StateReturn::Expression {

@@ -1,0 +1,10 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+
+//! Exact source-bound Unit action compositions; no synthetic exports.
+include!(concat!(env!("OUT_DIR"), "/contract.rs"));
+
+pub const RETAINED_IR: &str = include_str!(
+    "../../tools/compact-rust-backend/tests/effect-plan-unit-actions-schema20-ir.json"
+);

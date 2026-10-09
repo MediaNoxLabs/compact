@@ -44,6 +44,9 @@ mod jubjub_migration_tests;
 #[cfg(test)]
 #[path = "profile_selection/terminal_migration_tests.rs"]
 mod terminal_migration_tests;
+#[cfg(test)]
+#[path = "profile_selection/unit_migration_tests.rs"]
+mod unit_migration_tests;
 
 /// An admitted step sequence and the evidence retained from declined profiles.
 /// Legacy organizers have no typed result; absence of steps permits legacy
@@ -84,6 +87,30 @@ fn checked_terminal_domain(
 ) -> Result<Option<TypedPlan>, RenderError> {
     use crate::ir::{StateReturn, Type};
     if circuit.result != Type::Field
+        || !matches!(circuit.return_value, StateReturn::Expression { .. })
+        || !circuit
+            .parameters
+            .iter()
+            .all(|p| matches!(p.ty, Type::Field | Type::Boolean))
+    {
+        return Ok(None);
+    }
+    resolve_checked_plan(effect_plan::lower_with_calls(
+        circuit, ledger, witnesses, pure, circuits,
+    ))
+}
+
+/// Unit expression interfaces enter at the former unit-action priority. Body
+/// support is compositional: no helper/write counts or flat Cell paths authorize it.
+fn checked_unit_domain(
+    circuit: &StatefulCircuit,
+    ledger: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+) -> Result<Option<TypedPlan>, RenderError> {
+    use crate::ir::{StateReturn, Type};
+    if circuit.result != Type::Unit
         || !matches!(circuit.return_value, StateReturn::Expression { .. })
         || !circuit
             .parameters
@@ -330,31 +357,27 @@ pub(super) fn select(
                 )?
             ),
         };
-        if let Some(plan) = through_terminal
-            .or_else(|| {
-                record_option!(
-                    "selector.phase-reset",
-                    typed_plan::lower_phase_reset(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                        circuits,
-                    )
+        let through_phase_reset = through_terminal.or_else(|| {
+            record_option!(
+                "selector.phase-reset",
+                typed_plan::lower_phase_reset(
+                    circuit,
+                    ledger_fields,
+                    witnesses,
+                    pure_circuits,
+                    circuits,
                 )
-            })
-            .or_else(|| {
-                record_option!(
-                    "selector.unit-actions",
-                    typed_plan::lower_unit_actions(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                        circuits,
-                    )
-                )
-            })
+            )
+        });
+        // An invalid checked plan is fatal before later legacy alternatives.
+        let through_unit = match through_phase_reset {
+            Some(plan) => Some(plan),
+            None => record_option!(
+                "algebra.unit-actions",
+                checked_unit_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?
+            ),
+        };
+        if let Some(plan) = through_unit
             .or_else(|| {
                 match typed_plan::lower_unit_composition_checked(
                     circuit,

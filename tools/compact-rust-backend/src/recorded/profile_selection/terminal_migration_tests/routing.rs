@@ -49,7 +49,7 @@ fn migrated_owner_is_actual_once_and_stops_the_later_chain() {
     );
     assert!(!attempted.contains(&"selector.terminal-returns"));
     assert!(!attempted.contains(&"selector.phase-reset"));
-    assert!(!attempted.contains(&"selector.unit-actions"));
+    assert!(!attempted.contains(&"algebra.unit-actions"));
 }
 
 #[test]
@@ -88,8 +88,8 @@ fn unsupported_in_domain_body_keeps_independent_later_attempts() {
     let attempted = attempts(&row);
     let position = |name| attempted.iter().position(|id| *id == name).unwrap();
     assert!(position("algebra.terminal-returns") < position("selector.phase-reset"));
-    assert!(position("selector.phase-reset") < position("selector.unit-actions"));
-    assert!(position("selector.unit-actions") < position("selector.unit-composition"));
+    assert!(position("selector.phase-reset") < position("algebra.unit-actions"));
+    assert!(position("algebra.unit-actions") < position("selector.unit-composition"));
     assert!(position("selector.unit-composition") < position("selector.zswap"));
     assert!(!attempted.contains(&"selector.terminal-returns"));
 }
@@ -135,7 +135,7 @@ fn later_unit_family_still_wins_outside_declared_field_domain() {
     );
     let (selected, row) = selected_trace(&contract);
     assert!(selected.typed_result.is_some());
-    assert_eq!(row["body_owner"], "selector.unit-actions");
+    assert_eq!(row["body_owner"], "algebra.unit-actions");
     let attempted = attempts(&row);
     assert!(attempted.contains(&"algebra.terminal-returns"));
     assert!(!attempted.contains(&"selector.unit-composition"));

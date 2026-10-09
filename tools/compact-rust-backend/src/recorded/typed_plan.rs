@@ -57,6 +57,8 @@ mod terminal_returns;
 #[cfg(test)]
 mod terminal_returns_reference;
 mod unit_actions;
+#[cfg(test)]
+mod unit_actions_reference;
 mod voting_commit;
 
 #[derive(Clone)]
@@ -2079,6 +2081,7 @@ pub(super) fn lower_phase_reset<'a>(
     phase_reset::lower(circuit, ledger, witnesses, pure, circuits)
 }
 
+#[cfg(test)]
 pub(super) fn lower_unit_actions<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -2086,7 +2089,7 @@ pub(super) fn lower_unit_actions<'a>(
     pure: &'a HashMap<&'a str, &'a PureCircuit>,
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
 ) -> Option<TypedPlan> {
-    unit_actions::lower(circuit, ledger, witnesses, pure, circuits)
+    unit_actions_reference::lower(circuit, ledger, witnesses, pure, circuits)
 }
 
 pub(super) fn lower_composite<'a>(

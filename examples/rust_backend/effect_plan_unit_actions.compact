@@ -1,0 +1,25 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+
+import CompactStandardLibrary;
+export ledger stored: Field;
+export ledger pad01: Field;
+export ledger pad02: Field;
+export ledger pad03: Field;
+export ledger pad04: Field;
+export ledger pad05: Field;
+export ledger pad06: Field;
+export ledger pad07: Field;
+export ledger pad08: Field;
+export ledger pad09: Field;
+export ledger pad10: Field;
+export ledger pad11: Field;
+export ledger pad12: Field;
+export ledger pad13: Field;
+export ledger pad14: Field;
+export ledger pad15: Field;
+witness notifyOnce(): [];
+circuit check(value: Field): [] { assert(stored == value, "stored value differs"); }
+export circuit verify(value: Field): [] { return check(value); }
+export circuit no_helper(): [] { return notifyOnce(); }

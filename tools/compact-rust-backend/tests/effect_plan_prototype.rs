@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
 
-//! Opt-in admission and native-validation boundaries for ADR0355.
+//! Default compositional admission and native-validation boundaries for ADR0371.
 use compact_rust_backend::{ir::Contract, render_with_capabilities};
 
 fn fixture() -> Contract {
@@ -10,24 +10,18 @@ fn fixture() -> Contract {
 }
 
 #[test]
-fn two_real_source_compositions_require_explicit_opt_in() {
+fn two_real_source_compositions_have_default_recording_admission() {
     let rendered = render_with_capabilities(&fixture()).unwrap();
     assert_eq!(rendered.capabilities.circuits.len(), 2);
     for circuit in rendered.capabilities.circuits {
-        assert_eq!(
-            circuit.recorded,
-            cfg!(feature = "experimental-recording-plan")
-        );
-        assert_eq!(
-            circuit.observed_call,
-            cfg!(feature = "experimental-recording-plan")
-        );
+        assert!(circuit.recorded);
+        assert!(circuit.observed_call);
         assert_eq!(circuit.recording_unavailable.is_none(), circuit.recorded);
     }
 }
 
 #[test]
-fn invalid_ledger_declarations_fail_before_experimental_admission() {
+fn invalid_ledger_declarations_fail_before_recording_admission() {
     let mut contract = fixture();
     contract.ledger_fields[0].index = 1;
     assert!(render_with_capabilities(&contract).is_err());
@@ -164,7 +158,7 @@ fn malformed_types_and_escaped_references_are_hard_native_errors() {
 }
 
 #[test]
-fn both_declining_paths_expose_the_intended_feature_specific_diagnostic() {
+fn both_declining_paths_expose_the_precise_algebra_diagnostic() {
     let mut contract = single(value(Expr::Call {
         name: "identity".into(),
         arguments: vec![parameter("x")],
@@ -189,15 +183,9 @@ fn both_declining_paths_expose_the_intended_feature_specific_diagnostic() {
         .unwrap();
     assert!(!row.recorded);
     let gap = row.recording_unavailable.as_ref().unwrap();
-    if cfg!(feature = "experimental-recording-plan") {
-        assert_eq!(gap.code.as_str(), "unsupported_expression");
-        assert_eq!(gap.ir_node, "Expr::Call");
-        assert_eq!(gap.path, "return_value.body.value");
-    } else {
-        assert_eq!(gap.code.as_str(), "unsupported_return");
-        assert_eq!(gap.ir_node, "StateReturn::Effectful");
-        assert_eq!(gap.path, "return_value");
-    }
+    assert_eq!(gap.code.as_str(), "unsupported_expression");
+    assert_eq!(gap.ir_node, "Expr::Call");
+    assert_eq!(gap.path, "return_value.body.value");
 }
 
 #[test]

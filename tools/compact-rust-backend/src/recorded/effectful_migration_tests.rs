@@ -9,6 +9,7 @@ use super::*;
 use crate::ir::{Contract, ReturnPlan};
 use quote::quote;
 
+mod inclusion;
 mod resources;
 
 fn effectful_fixture() -> Contract {
@@ -200,7 +201,7 @@ fn start_funding_still_uses_its_separate_legacy_profile() {
 }
 
 #[test]
-fn broader_compositions_remain_opt_in_after_renderer_migration() {
+fn broader_effectful_compositions_use_default_algebra_admission() {
     let contract: Contract = serde_json::from_str(include_str!(
         "../../tests/effect-plan-prototype-schema20-ir.json"
     ))
@@ -210,25 +211,24 @@ fn broader_compositions_remain_opt_in_after_renderer_migration() {
         assert!(context.legacy(circuit).is_none());
         let algebra = context
             .algebra(circuit)
-            .expect("experimental composition control");
-        let selected = context.selected(circuit);
+            .expect("checked composition control");
         assert_eq!(
-            matches!(&selected, RecordingOutcome::Supported(_)),
-            cfg!(feature = "experimental-recording-plan")
+            tokens(&supported(context.selected(circuit))),
+            tokens(&algebra)
         );
-        match selected {
-            RecordingOutcome::Supported(selected) => {
-                assert_eq!(tokens(&selected), tokens(&algebra));
-            }
-            RecordingOutcome::Unsupported(gap) => {
-                assert_eq!(gap, RecordingGap::returned(&circuit.return_value));
-            }
-        }
     }
+    let rendered = crate::render_with_capabilities(&contract).unwrap();
+    assert!(
+        rendered
+            .capabilities
+            .circuits
+            .iter()
+            .all(|c| c.recorded && c.observed_call)
+    );
 }
 
 #[test]
-fn new_literal_bindings_do_not_expand_default_recording_admission() {
+fn pure_effectful_recording_api_does_not_promise_a_nonempty_transcript() {
     let mut contract = effectful_fixture();
     let circuit = &mut contract.stateful_circuits[0];
     circuit.source = None;
@@ -247,20 +247,38 @@ fn new_literal_bindings_do_not_expand_default_recording_admission() {
         !algebra.steps.is_empty(),
         "literal binding is not a VM effect"
     );
+    assert_eq!(
+        tokens(&supported(context.selected(circuit))),
+        tokens(&algebra)
+    );
     let rendered = crate::render_with_capabilities(&contract).unwrap();
     let capability = &rendered.capabilities.circuits[0];
-    assert_eq!(
-        capability.recorded,
-        cfg!(feature = "experimental-recording-plan")
-    );
-    assert_eq!(
-        capability.observed_call,
-        cfg!(feature = "experimental-recording-plan")
-    );
-    if !cfg!(feature = "experimental-recording-plan") {
-        assert_eq!(
-            capability.recording_unavailable.as_ref(),
-            Some(&RecordingGap::returned(&circuit.return_value))
-        );
-    }
+    // Availability describes the recording/observed-call API, not successful
+    // preparation. The runtime still refuses an actual empty public transcript.
+    assert!(capability.recorded && capability.observed_call);
+    assert!(capability.recording_unavailable.is_none());
+}
+
+#[test]
+fn unsupported_effectful_nodes_keep_the_exact_algebra_refusal() {
+    let mut contract = effectful_fixture();
+    contract.stateful_circuits[0].return_value = StateReturn::Effectful {
+        body: ReturnPlan::Value {
+            value: Expr::Call {
+                name: "unsupported_helper".into(),
+                arguments: vec![],
+            },
+        },
+    };
+    let context = Context::new(&contract);
+    let circuit = &contract.stateful_circuits[0];
+    let Err(effect_plan::PlanError::Unsupported(expected)) = context.algebra(circuit) else {
+        panic!("expected unsupported helper");
+    };
+    let RecordingOutcome::Unsupported(actual) = context.selected(circuit) else {
+        panic!("missing helper cannot be recorded");
+    };
+    assert_eq!(actual, expected);
+    assert_eq!(actual.path, "return_value.body.value");
+    assert_eq!(actual.ir_node, "Expr::Call");
 }

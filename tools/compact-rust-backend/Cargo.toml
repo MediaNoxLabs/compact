@@ -26,8 +26,8 @@ readme = "README.md"
 include = ["Cargo.toml", "README.md", "src/**", "tests/**", "fixtures/**"]
 
 [features]
-# ADR0355 / #485: expand admission beyond the legacy effectful-return family.
-# Default lowering uses checked plans inside the existing admission boundary.
+# Compatibility switch retained for prototype property/resource test cohorts.
+# ADR0371 / #511: Effectful recording admission uses checked plans by default.
 experimental-recording-plan = []
 
 [dependencies]

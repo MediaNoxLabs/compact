@@ -52,7 +52,9 @@ mod coracle_withdraw_support;
 mod counter_less_than;
 #[cfg(feature = "experimental-recording-plan")]
 mod effect_plan_prototype;
+mod effect_plan_wide_source;
 mod effectful_return;
+mod effectful_scenario;
 mod election_commit;
 #[path = "../../../tests-rust-backend/election-oracle/support/commit.rs"]
 mod election_membership_support;

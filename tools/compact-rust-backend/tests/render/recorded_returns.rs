@@ -51,7 +51,7 @@ fn effectful_recording_audits_both_branches_slots_and_lexical_scope() {
     let mut wrong_witness = source.clone();
     wrong_witness["witnesses"][0]["result"] = serde_json::json!({"kind":"boolean"});
     assert!(render(&parse(wrong_witness)).is_err());
-    // Even a statically unselected branch must fit the audited action domain.
+    // Statically unselected branches are checked; Assert is a supported effect.
     let mut unsupported = source.clone();
     unsupported
         .pointer_mut(&format!("{branch}/condition"))
@@ -60,10 +60,9 @@ fn effectful_recording_audits_both_branches_slots_and_lexical_scope() {
     unsupported.pointer_mut(&format!("{branch}/otherwise/result/actions")).unwrap().as_array_mut().unwrap().push(
         serde_json::json!({"kind":"assert", "condition":{"kind":"boolean", "value":true}, "message":"outside effectful recording profile"}));
     let report = render_with_capabilities(&parse(unsupported)).unwrap();
-    // The opt-in algebra composes Assert; the legacy profile still refuses it.
-    let composed = cfg!(feature = "experimental-recording-plan");
-    assert_eq!(report.capabilities.circuits[0].recorded, composed);
-    assert_eq!(report.capabilities.circuits[0].observed_call, composed);
+    // Default algebra admission composes Assert without a whole-body profile.
+    assert!(report.capabilities.circuits[0].recorded);
+    assert!(report.capabilities.circuits[0].observed_call);
     let mut missing_slot = source.clone();
     missing_slot["ledger_fields"]
         .as_array_mut()

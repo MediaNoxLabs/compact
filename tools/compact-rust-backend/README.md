@@ -17,30 +17,34 @@ witness-only VM queries; the Rust result sums the observed query costs.
 
 ## Effectful return recording
 
-The bounded Field Cell profile records an ordered return body containing lexical
-bindings, reads/writes, and conditional Field returns. Conditions execute after
-preceding effects; only the selected branch consumes witnesses or emits VM
-operations. Field witnesses, Field addition/equality, and literal unsigned locals
-explicitly cast to Field preserve their declared types. Each branch returns the
-updated recording frame with its typed result. Both branches are audited before
-recording is advertised; unsupported effects and types remain explicit gaps.
+`StateReturn::Effectful` roots now lower directly through the checked recording
+effect algebra. Supported scalar values, lexical scopes, branches, Cell reads
+and writes, Counter operations, assertions and Field-returning witnesses compose
+without the former whole-body Field Cell recognizer. Local wide unsigned
+literals, equality and Field coercion use the existing bound domain below
+`2^248`; wide ABI surfaces, arithmetic and explicit wide FieldCast remain outside
+this fragment. Unsupported operations retain precise IR-node/path diagnostics.
 
-`effectful_return_oracle.compact` has independent TypeScript/native/recorded
-transcript, state, private-output, query-gas and replay-gas parity, plus both-branch
-proof verification and ledger application under the existing unbalanced smoke
-policy. This does not establish funded transaction admission or recording parity
-for arbitrary effectful returns. The earlier single-slot root-Let profile keeps
-its separate admission rules. IR schema 20 and runtime ABI 46 are unchanged.
+Only the selected branch executes effects. Native validation and resource
+preflight still run first, and invalid checked plans are hard compiler errors.
+Unsupported algebra may try the independent start-funding family. The retired
+family's old recognizer exists only in a test reference; ordinary-return profiles
+and other recording families still have their separate admission mechanisms.
 
-The default emitter preserves this family's complete legacy admission check,
-then lowers supported inputs through a checked, syntax-independent effect plan.
-Unsupported plan fragments retain legacy lowering; start-funding keeps its
-separate path. `experimental-recording-plan` expands admission to additional
-algebra compositions and remains off by default. See the
-[prototype and migration guide](../../examples/rust_backend/effect_plan_prototype/README.md).
-The transition preserves generated public signatures and runtime ABI, but makes
-`RenderError::RecordingPlanInvariant` available in default compiler builds;
-exhaustive matches over that public enum may need updating.
+`effectful_return_oracle.compact` retains independent TS/native/recorded controls.
+The two compositional source examples and the standalone wide-source fixture
+have separate local proof routes using the existing unbalanced smoke policy.
+These are finite cases, not arbitrary-language or funded-network qualification.
+Recorded and observed-call availability does not guarantee preparation for every
+input: empty public traces still meet the runtime's `EmptyTranscript` boundary.
+
+IR schema 20 and runtime ABI 50 are unchanged. Existing generated method
+signatures are preserved, while more Effectful circuits can now expose recording
+methods by default. Default unsupported diagnostics can change from generic
+return refusals to precise algebra gaps. The `experimental-recording-plan`
+compiler feature now enables extra test cohorts; it does not control production
+admission for this path. See the
+[recording migration guide](../../examples/rust_backend/effect_plan_prototype/README.md).
 
 ## Stateful assertion recording
 

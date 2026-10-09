@@ -1,12 +1,14 @@
 # Compositional recording prototype — #485 / ADR0355
 
-The default compiler now uses the checked effect plan inside the existing
-legacy-admitted effectful-return family, with legacy fallback for unsupported
-fragments. The **opt-in** feature additionally admits algebra compositions that
-the legacy profile refuses. The two real Compact circuits here demonstrate that
-broader admission; they still require the feature. Their explicit offline proof
-and ledger-application gate retains the shared unbalanced test policy.
+The default compiler now admits supported `StateReturn::Effectful` compositions
+through the checked effect plan (#511 / ADR0371). The old effectful shape
+recognizer is test-only; independent start-funding and ordinary-root profiles
+remain. Both real Compact circuits here work with the default backend. Their
+explicit offline proof/application gate uses the shared unbalanced test policy.
 
+The compatibility feature name `experimental-recording-plan` remains for the
+prototype test/proof cohort and extra compiler property/resource tests. It no
+longer changes production Effectful admission.
 ## Run the experiment
 
 From the repository root:
@@ -20,23 +22,23 @@ cargo test -p compact-rust-recording-effect-plan-prototype-fixture \
 The fixture's build script generates Rust into Cargo's `OUT_DIR` from the
 retained schema20 frontend IR, retaining its two exports and adding nine
 backend-only test exports. No generated Rust copy needs manual maintenance.
-With the feature disabled this experimental fixture is inert; the default
-compiler retains the legacy admission boundary. The feature applies to the compiler build; it is not a runtime flag.
+With the feature disabled this particular test fixture is inert. Enabling its
+cohort does not enable a different backend admission mode; its build dependency
+uses the default compiler. The feature is not a generated runtime flag.
 
 To compile the Compact source through a compatible ledger8 Scheme frontend:
 
 ```sh
 export COMPACTC_SCHEME=/path/to/compatible/compactc-scheme
-cargo build -p compact-rust-backend --bin compactc \
-  --features experimental-recording-plan
+cargo build -p compact-rust-backend --bin compactc
 target/debug/compactc --target rust --skip-zk --rust-require-recording \
   --rust-runtime-root "$PWD" \
   examples/rust_backend/effect_plan_prototype/compositions.compact \
   /tmp/effect-plan-prototype
 ```
 
-Both exports must report `recorded: true` and `observed_call: true`. Without the
-feature they remain native-valid but fail `--rust-require-recording`.
+Both exports must report `recorded: true` and `observed_call: true` with the
+default compiler and satisfy `--rust-require-recording`.
 `proof_required: true` identifies a proof obligation; it does not report a proof
 run. `--skip-zk` does not prove or verify the new compositions.
 
@@ -76,7 +78,7 @@ The implementation is in `tools/compact-rust-backend/src/recorded/effect_plan/`:
 | `property_tests.rs`, `property_tests/corpus.rs` | Check finite composition laws, lexical scope and refusal/fallback boundaries |
 | `resource_tests.rs` | Exercise selected depth and width limits in isolated processes |
 
-An unsupported fragment may fall back to legacy recording. A violated plan
+An unsupported fragment may try independent start-funding admission. A violated plan
 invariant or post-validation rendering failure is a hard compiler error.
 Native validation and resource preflight run before recording. Declaration
 resolution is trusted from the private lowerer; plan validation is not a second
@@ -166,9 +168,9 @@ initializers and scope restoration, and unsupported children in unused bindings
 and unselected branches. These are finite properties, not an exhaustive proof.
 Public compiler tests run with the feature both enabled and disabled: malformed
 native types/references remain errors. The former wide-literal fallback control
-now lowers through the checked plan (#510); legacy admission still governs the
-default family. When both lowerers
-refuse, the feature intentionally returns a more precise diagnostic IR path.
+now lowers through the checked plan (#510), and production admission is now
+independent (#511). When algebra and start-funding both refuse, the default
+compiler returns the precise algebra diagnostic IR path.
 
 The generated fixture adds eight cumulative rewrites of the two original
 circuits: alpha renaming, sequence regrouping with empty identities, identity
@@ -187,9 +189,9 @@ lowerer also admits a potentially empty selected branch. Thus `recorded` and
 `observed_call` describe API availability, not guaranteed transaction
 preparability for every input. This experiment does not change that boundary.
 
-## Promotion gates
+## Current support boundary
 
-The feature attempts **every native-valid `StateReturn::Effectful` root**, not
+The default recorder attempts **every native-valid `StateReturn::Effectful` root**, not
 just the two source examples. The supported algebra can therefore admit other
 combinations. Unsupported helpers, collections, cryptographic operations and
 Zswap can still reach independently admitted legacy paths. Unsigned arithmetic,
@@ -204,7 +206,7 @@ only the existing effectful-return oracle's Rust syntax changed. Only two roots 
 (`choose` and coracle's `start`), so 198 is a regression count, not experimental
 language coverage. The coracle fallback remained byte-identical.
 
-## Staged default migration
+## Historical staged migration — before #511
 
 Default integration first runs the complete legacy `lower_effectful` lowering,
 including its read/write evidence checks. If admitted, it prefers the checked
@@ -230,9 +232,31 @@ Generated public signatures, runtime ABI and IR schema remain unchanged.
 `RenderError::RecordingPlanInvariant` is now also available in default compiler
 builds; consumers exhaustively matching that public enum may need a new arm.
 
-Broader default admission and retirement of legacy admission remain future work:
-review scalar/arithmetic/error facets, transaction preparation policy and
-mixed-shape/platform resource evidence first. The selected proof tests use the
-established unbalanced policy. Do not infer full language parity, formal
-equivalence, or code-size reduction. Decisions and execution receipts remain in
-the Obsidian midnight vault until publication.
+## First production family retirement — #511
+
+Default Effectful admission now uses the algebra directly. The old five
+recognizer/entry functions live behind `cfg(test)` as an entry-level regression
+reference with shared legacy helpers. Finite inclusion controls require old
+admission first for every generated case, then checked support and matching
+selected output. This is a reviewed rule mapping plus finite tests, not a formal
+inclusion proof. Independent start-funding and ordinary-root selection remain.
+
+The baseline admission inventory is preserved. Apply its reviewed transition:
+
+```sh
+python3 -B tools/compact-rust-backend/recording_admission_inventory.py \
+  --transition tools/compact-rust-backend/recording_admission_inventory.transition-511.json
+```
+
+The gate verifies removal of the production call/definitions, test-only ownership
+and reference fingerprints. Its 84 source boundaries and one retired route are
+source-accounting metrics, not a language coverage percentage. Source changes
+outside exact anchors/selector checks still need review.
+
+More recording APIs can now be generated by default; Unsupported diagnostics use
+the actual algebra node/path. Empty-public-trace preparation policy is unchanged.
+The [wide-source proof fixture](../../../tests-rust-backend/effect-plan-wide-source/README.md)
+uses its own exact generated contract and matching source artifacts. Broader
+recognizer retirement, ordinary-route attribution, exhaustive IR classification
+and mixed-platform qualification remain part of epic #508. Decisions and progress
+remain in the Obsidian midnight vault until publication.

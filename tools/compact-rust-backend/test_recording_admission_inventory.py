@@ -108,12 +108,96 @@ class InventoryTests(unittest.TestCase):
         self.assertEqual(baseline.read_bytes(), before)
 
     def test_checked_in_inventory_resolves_current_routes(self):
-        baseline = json.loads(inventory.BASELINE.read_text())
-        report = inventory.verify(inventory.ROOT, baseline)
+        baseline_bytes = inventory.BASELINE.read_bytes()
+        baseline = json.loads(baseline_bytes)
+        transition = json.loads(inventory.BASELINE.with_name(
+            'recording_admission_inventory.transition-511.json').read_text())
+        report = inventory.verify(inventory.ROOT, baseline,
+                                  transition=transition, baseline_bytes=baseline_bytes)
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)
         self.assertEqual(sum(row['family'] == 'early-complete-renderer' for row in baseline['routes']), 2)
+
+
+class RetirementTransitionTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+        self.baseline_bytes = inventory.BASELINE.read_bytes()
+        self.baseline = json.loads(self.baseline_bytes)
+        self.transition = json.loads(inventory.BASELINE.with_name(
+            'recording_admission_inventory.transition-511.json').read_text())
+        for relative in [*self.baseline['source_fingerprints'], inventory.ORACLE]:
+            destination = self.root / relative
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_bytes((inventory.ROOT / relative).read_bytes())
+
+    def report(self):
+        return inventory.verify(self.root, self.baseline, transition=self.transition,
+                                baseline_bytes=self.baseline_bytes)
+
+    def test_reviewed_retirement_keeps_frozen_denominator(self):
+        report = self.report()
+        self.assertTrue(report['passed'], report['errors'])
+        self.assertEqual(report['route_count'], 84)
+        self.assertEqual([row['id'] for row in report['retired_routes']], ['effectful.effectful'])
+        self.assertTrue(report['retired_routes'][0]['passed'])
+        # Retirement is never implicit: the untransitioned baseline must flag it.
+        self.assertFalse(inventory.verify(self.root, self.baseline)['passed'])
+
+    def test_call_reintroduction_fails_even_with_whitespace(self):
+        path = self.root / inventory.RECORDED
+        path.write_text(path.read_text() + '\nfn accidental() { typed_plan :: lower_effectful (); }\n')
+        report = self.report()
+        self.assertFalse(report['passed'])
+        self.assertIn('retirement: recorded.rs reintroduced a lower_effectful call', report['errors'])
+
+    def test_stripped_test_cfg_fails_for_module_and_reexport(self):
+        path = self.root / inventory.TYPED_PLAN
+        original = path.read_text()
+        for declaration in ('mod effectful_reference;', 'pub(super) use effectful_reference::lower_effectful;'):
+            with self.subTest(declaration=declaration):
+                path.write_text(original.replace('#[cfg(test)]\n' + declaration, declaration))
+                self.assertFalse(self.report()['passed'])
+        path.write_text(original)
+
+    def test_production_lowerer_definition_cannot_return(self):
+        path = self.root / inventory.TYPED_PLAN
+        path.write_text(path.read_text() + '\nfn lower_effectful() {}\n')
+        self.assertFalse(self.report()['passed'])
+
+    def test_altered_test_oracle_fails(self):
+        path = self.root / inventory.ORACLE
+        path.write_text(path.read_text().replace('branches == 0', 'branches == 99'))
+        report = self.report()
+        self.assertFalse(report['passed'])
+        self.assertIn('retirement: test oracle differs from frozen original body', report['errors'])
+
+    def test_changed_baseline_bytes_or_decoded_content_fail(self):
+        self.baseline_bytes += b'\n'
+        self.assertFalse(self.report()['passed'])
+        self.baseline_bytes = inventory.BASELINE.read_bytes()
+        self.baseline['claim'] = 'edited baseline'
+        self.assertFalse(self.report()['passed'])
+
+    def test_original_source_fingerprint_binding_is_required(self):
+        self.transition['original_source_sha256'] = '0' * 64
+        self.assertFalse(self.report()['passed'])
+
+    def test_unrelated_anchor_and_selector_still_fail(self):
+        path = self.root / inventory.RECORDED
+        path.write_text(path.read_text().replace('closed_opaque_asset_removal', 'removed_asset_gate'))
+        self.assertFalse(self.report()['passed'])
+        path.write_bytes((inventory.ROOT / inventory.RECORDED).read_bytes())
+        selector = self.root / inventory.SELECTOR
+        selector.write_text(selector.read_text() + '\nfn new_unreviewed_gate() {}\n')
+        self.assertFalse(self.report()['passed'])
+
+    def test_transition_cannot_retire_another_route(self):
+        self.transition['retired_route'] = 'selector.zswap'
+        self.assertFalse(self.report()['passed'])
 
 
 if __name__ == '__main__':

@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "issue": 511,
+  "package": "EA-03",
+  "retired_route": "effectful.effectful",
+  "baseline_commit": "2704c624430ff000dfbf8fe4e97818b47f6ff1c4",
+  "baseline_file_sha256": "ef69a6ea6faa03d3bc5fd13a8176a4b1dcd5c1caf7ea602eed4b5aa5aac56e9e",
+  "original_source": "tools/compact-rust-backend/src/recorded/typed_plan.rs",
+  "original_source_sha256": "076a98d10acd036fbcc6d72195961e1ff10ae0745336ff12de71b6826a301ef0",
+  "oracle_source": "tools/compact-rust-backend/src/recorded/typed_plan/effectful_reference.rs",
+  "oracle_body_start": "// Bounded admission is separate from the existing single-slot root-Let profile.",
+  "original_body_sha256": "aa596b8ad23f72ee304811b8f1e626730a0cfd6ce34713ab444429d545f5c086",
+  "oracle_body_sha256": "f887d787f8cdaf282accba80ece20685501d8632379708244787232784ee58fb",
+  "visibility_adaptation": {
+    "from": "pub(super) fn lower_effectful",
+    "to": "pub(in crate::recorded) fn lower_effectful"
+  },
+  "original_body_end_exclusive": "// Read-only assertion bodies have their own admission boundary.",
+  "claim": "One production admission route retired; frozen oracle retained only for tests. Counts do not imply language or behavior coverage."
+}

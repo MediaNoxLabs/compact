@@ -16,9 +16,7 @@ use std::{cell::Cell, path::Path};
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub(super) enum Route {
-    AlgebraExperimental,
-    AlgebraIntersection,
-    LegacyEffectful,
+    Algebra,
     LegacyStartFunding,
     Unsupported,
 }
@@ -106,18 +104,11 @@ fn fixture() -> Contract {
 }
 
 #[test]
-fn actual_route_reports_small_and_wide_checked_intersections() {
+fn actual_route_reports_small_and_wide_algebra_admission() {
     let mut contract = fixture();
     let rows = inspect(&contract);
     assert!(matches!(rows[0].candidate, Candidate::Supported));
-    assert_eq!(
-        rows[0].effectful_route,
-        Some(if cfg!(feature = "experimental-recording-plan") {
-            Route::AlgebraExperimental
-        } else {
-            Route::AlgebraIntersection
-        })
-    );
+    assert_eq!(rows[0].effectful_route, Some(Route::Algebra));
 
     let StateReturn::Effectful { body } = &mut contract.stateful_circuits[0].return_value else {
         panic!("expected effectful fixture");
@@ -136,33 +127,31 @@ fn actual_route_reports_small_and_wide_checked_intersections() {
     };
     let rows = inspect(&contract);
     assert!(matches!(rows[0].candidate, Candidate::Supported));
-    assert_eq!(
-        rows[0].effectful_route,
-        Some(if cfg!(feature = "experimental-recording-plan") {
-            Route::AlgebraExperimental
-        } else {
-            Route::AlgebraIntersection
-        })
-    );
+    assert_eq!(rows[0].effectful_route, Some(Route::Algebra));
 }
 
 #[test]
-fn independently_supported_candidate_does_not_imply_default_admission() {
+fn effectful_candidate_admission_is_default_without_legacy_shape_checks() {
     let contract: Contract = serde_json::from_str(include_str!(
         "../../tests/effect-plan-prototype-schema20-ir.json"
     ))
     .unwrap();
     for row in inspect(&contract) {
         assert!(matches!(row.candidate, Candidate::Supported));
-        assert_eq!(
-            row.effectful_route,
-            Some(if cfg!(feature = "experimental-recording-plan") {
-                Route::AlgebraExperimental
-            } else {
-                Route::Unsupported
-            })
-        );
+        assert_eq!(row.effectful_route, Some(Route::Algebra));
     }
+}
+
+#[test]
+fn ordinary_root_candidates_do_not_enter_effectful_algebra_routing() {
+    let mut contract = fixture();
+    contract.stateful_circuits[0].return_value = StateReturn::Expression {
+        value: Expr::FieldLiteral { value: "9".into() },
+    };
+    let rows = inspect(&contract);
+    assert!(matches!(rows[0].candidate, Candidate::Supported));
+    assert_eq!(rows[0].effectful_route, None);
+    assert_eq!(rows[0].effectful_route_error, None);
 }
 
 #[test]
@@ -284,8 +273,9 @@ fn export_candidate_admission_report() {
     }
     assert!(!records.is_empty(), "no retained contract IR was inspected");
     let report = serde_json::json!({
-        "schema_version": 1,
+        "schema_version": 2,
         "experimental_feature": cfg!(feature = "experimental-recording-plan"),
+        "effectful_admission": "checked_algebra",
         "scope": "finite saved-IR compilation census; not language coverage or execution/proof evidence",
         "routing_scope": "effectful lowering only; public capabilities also apply outer facade rules",
         "records": records, "skipped_inputs": skipped,

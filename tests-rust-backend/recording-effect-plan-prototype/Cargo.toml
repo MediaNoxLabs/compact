@@ -14,10 +14,10 @@ path = "lib.rs"
 
 [features]
 default = []
+# Retained switch enables this test cohort; compiler admission is now default.
 experimental-recording-plan = [
     "dep:compact-rust-backend",
     "dep:serde_json",
-    "compact-rust-backend/experimental-recording-plan",
 ]
 ledger-transaction = ["midnight-compact-runtime/ledger-transaction"]
 

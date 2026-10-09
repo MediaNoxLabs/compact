@@ -550,9 +550,9 @@ pub(crate) fn render_recorded_helper(
     )
 }
 
-/// Preserve legacy admission while migrating its effectful-return lowering.
-/// The opt-in feature additionally admits new algebra compositions. Native
-/// validation and resource preflight have already run for either path.
+/// Checked effect composition is the admission authority for Effectful roots.
+/// Native validation and resource preflight have already run. The compatibility
+/// feature no longer changes this route; ordinary root routing remains separate.
 fn lower_effectful_return(
     circuit: &StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,
@@ -560,44 +560,17 @@ fn lower_effectful_return(
     pure_circuits: &HashMap<&str, &PureCircuit>,
     circuits: &HashMap<&str, &StatefulCircuit>,
 ) -> Result<RecordingOutcome<typed_plan::TypedPlan>, RenderError> {
-    #[cfg(feature = "experimental-recording-plan")]
-    let experimental_gap = match checked_effectful_return(circuit, ledger_fields, witnesses)? {
+    let algebra_gap = match checked_effectful_return(circuit, ledger_fields, witnesses)? {
         RecordingOutcome::Supported(plan) => {
             #[cfg(test)]
-            admission_probe::observe(admission_probe::Route::AlgebraExperimental);
+            admission_probe::observe(admission_probe::Route::Algebra);
             return Ok(RecordingOutcome::Supported(plan));
         }
         RecordingOutcome::Unsupported(gap) => gap,
     };
 
-    // The complete legacy lowering is still the admission authority, including
-    // its read/write evidence. A syntax-only shape check would widen support.
-    if let Some(legacy) =
-        typed_plan::lower_effectful(circuit, ledger_fields, witnesses, pure_circuits)
-    {
-        #[cfg(not(feature = "experimental-recording-plan"))]
-        let selected = match checked_effectful_return(circuit, ledger_fields, witnesses)? {
-            RecordingOutcome::Supported(plan) => {
-                #[cfg(test)]
-                admission_probe::observe(admission_probe::Route::AlgebraIntersection);
-                plan
-            }
-            RecordingOutcome::Unsupported(_) => {
-                #[cfg(test)]
-                admission_probe::observe(admission_probe::Route::LegacyEffectful);
-                legacy
-            }
-        };
-        #[cfg(feature = "experimental-recording-plan")]
-        let selected = {
-            #[cfg(test)]
-            admission_probe::observe(admission_probe::Route::LegacyEffectful);
-            legacy
-        };
-        return Ok(RecordingOutcome::Supported(selected));
-    }
-
-    // This separately admitted family retains its existing lowering and order.
+    // Independent family, retained until its operations have checked lowering.
+    // Only Unsupported reaches this attempt; invariant failures propagate above.
     if let Some(plan) =
         typed_plan::lower_start_funding(circuit, ledger_fields, witnesses, pure_circuits, circuits)
     {
@@ -607,16 +580,7 @@ fn lower_effectful_return(
     }
     #[cfg(test)]
     admission_probe::observe(admission_probe::Route::Unsupported);
-    Ok(RecordingOutcome::Unsupported({
-        #[cfg(feature = "experimental-recording-plan")]
-        {
-            experimental_gap
-        }
-        #[cfg(not(feature = "experimental-recording-plan"))]
-        {
-            RecordingGap::returned(&circuit.return_value)
-        }
-    }))
+    Ok(RecordingOutcome::Unsupported(algebra_gap))
 }
 
 fn checked_effectful_return(

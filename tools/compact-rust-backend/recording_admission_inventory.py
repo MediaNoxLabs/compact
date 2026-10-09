@@ -22,6 +22,7 @@ legacy predicates and policy remain active for independent families.
 Context-query retirement requires --context-query-transition after #525; shared
 context predicates and VotingCommit evaluation remain active.
 Whole composite retirement requires --composite-transition after #527.
+Whole receive retirement requires --receive-transition after #529.
 Kernel retirement requires --kernel-transition after #526; its unchanged planner
 is compiled only for tests and cannot be a production selector dependency.
 Human review must classify new/changed routes before a future baseline update.
@@ -42,6 +43,7 @@ import recording_admission_inventory_unit as unit
 import recording_admission_inventory_context as context
 import recording_admission_inventory_kernel as kernel
 import recording_admission_inventory_composite as composite
+import recording_admission_inventory_receive as receive
 
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE = Path(__file__).with_suffix('.baseline.json')
@@ -230,7 +232,8 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
            unit_actions_transition: dict | None = None,
            context_query_transition: dict | None = None,
            kernel_transition: dict | None = None,
-           composite_transition: dict | None = None) -> dict:
+           composite_transition: dict | None = None,
+           receive_transition: dict | None = None) -> dict:
     errors = validate_baseline(baseline)
     report = {'schema_version': 1, 'baseline_commit': baseline.get('baseline_commit'),
               'claim': 'source route inventory; not language or behavioral coverage',
@@ -313,6 +316,16 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
                          'reviewed_source_fingerprints': {
                              **evolution['reviewed_source_fingerprints'],
                              **reviewed_composite['reviewed_source_fingerprints']}}
+    reviewed_receive = None
+    if receive_transition is not None:
+        receive_errors = receive.validate(baseline, receive_transition, baseline_bytes, reviewed_composite)
+        errors.extend(receive_errors)
+        if not receive_errors:
+            reviewed_receive = receive_transition
+            evolution = {**evolution, **reviewed_receive,
+                         'reviewed_source_fingerprints': {
+                             **evolution['reviewed_source_fingerprints'],
+                             **reviewed_receive['reviewed_source_fingerprints']}}
     if instrumentation is not None:
         errors.extend(validate_instrumentation(root, baseline, instrumentation, baseline_bytes, evolution))
         report['reviewed_instrumentation'] = {
@@ -339,7 +352,7 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
         failures = []
         for anchor in row['anchors']:
             actual = sources.get(anchor['source'], '').count(anchor['text'])
-            retired = (transition is not None and row['id'] == RETIRED_EFFECTFUL) or (reviewed_jubjub is not None and row['id'] == jubjub.ROUTE) or (reviewed_terminal is not None and row['id'] == terminal.ROUTE) or (reviewed_unit is not None and row['id'] == unit.ROUTE) or (reviewed_context is not None and row['id'] == context.ROUTE) or (reviewed_kernel is not None and row['id'] == kernel.ROUTE) or (reviewed_composite is not None and row['id'] == composite.ROUTE)
+            retired = (transition is not None and row['id'] == RETIRED_EFFECTFUL) or (reviewed_jubjub is not None and row['id'] == jubjub.ROUTE) or (reviewed_terminal is not None and row['id'] == terminal.ROUTE) or (reviewed_unit is not None and row['id'] == unit.ROUTE) or (reviewed_context is not None and row['id'] == context.ROUTE) or (reviewed_kernel is not None and row['id'] == kernel.ROUTE) or (reviewed_composite is not None and row['id'] == composite.ROUTE) or (reviewed_receive is not None and row['id'] == receive.ROUTE)
             expected = 0 if retired else anchor['baseline_occurrences']
             if actual != expected:
                 failures.append({'source': anchor['source'], 'anchor': anchor['text'],
@@ -382,7 +395,8 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
             'evidence': reviewed_terminal,
         })
     if reviewed_unit is not None:
-        retirement_errors = unit.check_sources(root, sources, reviewed_unit)
+        retirement_errors = unit.check_sources(root, sources, reviewed_unit,
+                                                reviewed_receive['relocated_shared_anchors'] if reviewed_receive else None)
         errors.extend(retirement_errors)
         report['retired_routes'].append({
             'id': unit.ROUTE,
@@ -421,6 +435,16 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
                 row['failures'] for row in report['route_checks'] if row['id'] == composite.ROUTE),
             'evidence': reviewed_composite,
         })
+    if reviewed_receive is not None:
+        retirement_errors = receive.check_sources(root, sources, reviewed_receive)
+        errors.extend(retirement_errors)
+        report['retired_routes'].append({
+            'id': receive.ROUTE,
+            'status': 'retired-from-production-test-oracle-retained',
+            'passed': not retirement_errors and not next(
+                row['failures'] for row in report['route_checks'] if row['id'] == receive.ROUTE),
+            'evidence': reviewed_receive,
+        })
     if SELECTOR in sources:
         try:
             actual = selector_signature(sources[SELECTOR])
@@ -449,8 +473,9 @@ def main(argv=None) -> int:
     parser.add_argument('--context-query-transition', type=Path, help='explicit #526 context-query retirement following #525 evidence')
     parser.add_argument('--kernel-transition', type=Path, help='explicit #527 kernel retirement following #526 evidence')
     parser.add_argument('--composite-transition', type=Path, help='explicit #529 whole composite retirement following #527 evidence')
+    parser.add_argument('--receive-transition', type=Path, help='explicit #536 whole receive retirement following #529 evidence')
     args = parser.parse_args(argv)
-    protected = [args.baseline] + ([args.transition] if args.transition else []) + ([args.instrumentation] if args.instrumentation else []) + ([args.jubjub_transition] if args.jubjub_transition else []) + ([args.call_extension] if args.call_extension else []) + ([args.terminal_transition] if args.terminal_transition else []) + ([args.unit_actions_transition] if args.unit_actions_transition else []) + ([args.context_query_transition] if args.context_query_transition else []) + ([args.kernel_transition] if args.kernel_transition else []) + ([args.composite_transition] if args.composite_transition else [])
+    protected = [args.baseline] + ([args.transition] if args.transition else []) + ([args.instrumentation] if args.instrumentation else []) + ([args.jubjub_transition] if args.jubjub_transition else []) + ([args.call_extension] if args.call_extension else []) + ([args.terminal_transition] if args.terminal_transition else []) + ([args.unit_actions_transition] if args.unit_actions_transition else []) + ([args.context_query_transition] if args.context_query_transition else []) + ([args.kernel_transition] if args.kernel_transition else []) + ([args.composite_transition] if args.composite_transition else []) + ([args.receive_transition] if args.receive_transition else [])
     if args.output and any(args.output.resolve() == path.resolve() for path in protected):
         parser.error('--output cannot overwrite baseline, transition, instrumentation, or call-extension evidence')
     try:
@@ -465,7 +490,8 @@ def main(argv=None) -> int:
         context_query_transition = json.loads(args.context_query_transition.read_text()) if args.context_query_transition else None
         kernel_transition = json.loads(args.kernel_transition.read_text()) if args.kernel_transition else None
         composite_transition = json.loads(args.composite_transition.read_text()) if args.composite_transition else None
-        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition)
+        receive_transition = json.loads(args.receive_transition.read_text()) if args.receive_transition else None
+        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition)
     except (OSError, ValueError, TypeError, KeyError) as error:
         parser.exit(2, f'inventory error: {error}\n')
     rendered = json.dumps(report, indent=2) + '\n'

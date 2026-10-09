@@ -1331,6 +1331,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-effect-plan-receive-composition-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-compact-runtime",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-effect-plan-receive-values-source-fixture"
 version = "0.1.0"
 dependencies = [
@@ -2460,6 +2469,7 @@ dependencies = [
 name = "compact-rust-shielded-merge-oracle-fixture"
 version = "0.1.0"
 dependencies = [
+ "compact-rust-backend",
  "hex",
  "midnight-base-crypto",
  "midnight-coin-structure",
@@ -2476,6 +2486,7 @@ dependencies = [
 name = "compact-rust-shielded-receive-oracle-fixture"
 version = "0.1.0"
 dependencies = [
+ "compact-rust-backend",
  "hex",
  "midnight-base-crypto",
  "midnight-coin-structure",
@@ -2712,6 +2723,7 @@ dependencies = [
 name = "compact-rust-transient-receive-send-oracle-fixture"
 version = "0.1.0"
 dependencies = [
+ "compact-rust-backend",
  "hex",
  "midnight-base-crypto",
  "midnight-coin-structure",

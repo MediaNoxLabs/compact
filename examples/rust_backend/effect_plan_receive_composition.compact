@@ -1,0 +1,15 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger accepted: Boolean;
+constructor() { accepted = true; }
+witness choose(value: Uint<128>): Boolean;
+export circuit acceptSelected(coin: ShieldedCoinInfo): [] {
+  accepted = false;
+  const selected = choose(coin.value);
+  if (disclose(selected)) {
+    receiveShielded(disclose(coin));
+    accepted = true;
+  }
+}

@@ -14,6 +14,7 @@ import recording_admission_inventory_unit as unit
 import recording_admission_inventory_context as context
 import recording_admission_inventory_kernel as kernel
 import recording_admission_inventory_composite as composite
+import recording_admission_inventory_receive as receive
 import test_recording_admission_inventory as previous
 
 
@@ -25,9 +26,9 @@ class UnitActionsTransitionTests(unittest.TestCase):
         report = self.report()
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(report['route_count'], 84)
-        self.assertEqual([row['id'] for row in report['retired_routes']], composite.RETIRED)
+        self.assertEqual([row['id'] for row in report['retired_routes']], receive.RETIRED)
         self.assertTrue(all(row['passed'] for row in report['retired_routes']))
-        self.assertEqual(len(report['current_selector']['ordered_calls']), 13)
+        self.assertEqual(len(report['current_selector']['ordered_calls']), 12)
         ids = report['reviewed_instrumentation']['instrumented_route_ids']
         self.assertIn(unit.REPLACEMENT, ids)
         self.assertNotIn(unit.ROUTE, ids)
@@ -88,7 +89,8 @@ class UnitActionsTransitionTests(unittest.TestCase):
         for relative, anchors in unit.SHARED_ANCHORS.items():
             for anchor in anchors:
                 with self.subTest(anchor=anchor):
-                    path = self.root / relative
+                    relocated = relative == unit.TYPED and anchor == 'unit_actions: true,'
+                    path = self.root / (receive.ORACLE if relocated else relative)
                     original = path.read_text()
                     self.assertIn(anchor, original)
                     path.write_text(original.replace(anchor, '// removed shared policy', 1))
@@ -105,9 +107,9 @@ class UnitActionsTransitionTests(unittest.TestCase):
     def test_unrelated_selector_reordering_cannot_be_hidden_by_refreshed_fingerprints(self):
         path = self.root / inventory.SELECTOR
         original = path.read_text()
-        changed = original.replace('typed_plan::lower_composite(', '__swap__(')
-        changed = changed.replace('typed_plan::lower_shielded_receive(', 'typed_plan::lower_composite(')
-        changed = changed.replace('__swap__(', 'typed_plan::lower_shielded_receive(')
+        changed = original.replace('typed_plan::lower_voting_commit(', '__swap__(')
+        changed = changed.replace('typed_plan::lower_funded_mint(', 'typed_plan::lower_voting_commit(')
+        changed = changed.replace('__swap__(', 'typed_plan::lower_funded_mint(')
         self.assertNotEqual(original, changed)
         path.write_text(changed)
         self.unit_transition['reviewed_source_fingerprints'][inventory.SELECTOR] = inventory.digest(path.read_bytes())

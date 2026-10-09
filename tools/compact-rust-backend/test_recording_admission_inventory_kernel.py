@@ -12,6 +12,7 @@ import unittest
 import recording_admission_inventory as inventory
 import recording_admission_inventory_kernel as kernel
 import recording_admission_inventory_composite as composite
+import recording_admission_inventory_receive as receive
 import test_recording_admission_inventory as previous
 
 
@@ -23,9 +24,9 @@ class KernelTransitionTests(unittest.TestCase):
         report = self.report()
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(report['route_count'], 84)
-        self.assertEqual([row['id'] for row in report['retired_routes']], composite.RETIRED)
+        self.assertEqual([row['id'] for row in report['retired_routes']], receive.RETIRED)
         self.assertTrue(all(row['passed'] for row in report['retired_routes']))
-        self.assertEqual(len(report['current_selector']['ordered_calls']), 13)
+        self.assertEqual(len(report['current_selector']['ordered_calls']), 12)
         ids = report['reviewed_instrumentation']['instrumented_route_ids']
         self.assertIn(kernel.REPLACEMENT, ids)
         self.assertNotIn(kernel.ROUTE, ids)

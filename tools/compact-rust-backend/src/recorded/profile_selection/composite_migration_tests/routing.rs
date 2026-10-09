@@ -152,7 +152,7 @@ fn composite_selection_is_lazy_between_earlier_context_and_later_shielded_routes
         assert!(
             !attempts
                 .iter()
-                .any(|a| a["route"] == "selector.shielded-receive")
+                .any(|a| a["route"] == "algebra.shielded-receive")
         );
     }
 }

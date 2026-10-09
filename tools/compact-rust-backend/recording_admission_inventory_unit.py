@@ -73,7 +73,7 @@ def validate(baseline, transition, baseline_bytes, terminal_transition):
     return errors
 
 
-def check_sources(root, sources, transition):
+def check_sources(root, sources, transition, relocated_anchors=None):
     errors = []
     if re.search(r'\blower_unit_actions\s*\(', sources.get(SELECTOR, '')):
         errors.append('unit retirement: selector reintroduced old admission')
@@ -85,7 +85,20 @@ def check_sources(root, sources, transition):
             errors.append('unit retirement: oracle module and wrapper must each be uniquely cfg(test)')
     for source, anchors in SHARED_ANCHORS.items():
         for anchor in anchors:
-            if sources.get(source, '').count(anchor) != 1:
+            relocations = [entry for entry in (relocated_anchors or [])
+                           if entry['source'] == source and entry['text'] == anchor]
+            valid = sources.get(source, '').count(anchor) == 1
+            if relocations:
+                # Only a later independently validated transition can authorize
+                # this exact source->oracle move; every other anchor stays live.
+                entry = relocations[0]
+                try:
+                    valid = (len(relocations) == 1
+                             and sources.get(source, '').count(anchor) == entry['source_occurrences']
+                             and (root / entry['target']).read_text().count(anchor) == entry['target_occurrences'])
+                except (OSError, UnicodeError):
+                    valid = False
+            if not valid:
                 errors.append('unit retirement: retained shared policy or caller changed: ' + anchor)
     shared = sources.get(ORIGINAL, '')
     if re.search(r'\b(?:struct\s+Audit|impl\s+Audit|fn\s+lower\s*\()', shared):

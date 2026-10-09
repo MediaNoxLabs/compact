@@ -51,6 +51,9 @@ mod jubjub_migration_tests;
 #[path = "profile_selection/kernel_migration_tests.rs"]
 mod kernel_migration_tests;
 #[cfg(test)]
+#[path = "profile_selection/receive_migration_tests.rs"]
+mod receive_migration_tests;
+#[cfg(test)]
 #[path = "profile_selection/terminal_migration_tests.rs"]
 mod terminal_migration_tests;
 #[cfg(test)]
@@ -204,6 +207,28 @@ fn checked_composite_domain(
     ))
 }
 
+/// Receive interfaces enter at the old receive priority, including internal helpers.
+/// Typed composition decides body support without wrapper or intent-count shape gates.
+fn checked_receive_domain(
+    circuit: &StatefulCircuit,
+    ledger: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+) -> Result<Option<TypedPlan>, RenderError> {
+    use crate::ir::{StateReturn, Type};
+    if circuit.result != Type::Unit
+        || circuit.return_value != StateReturn::Unit
+        || !matches!(circuit.parameters.as_slice(), [parameter]
+            if parameter.ty == crate::coin_shapes::shielded_coin_type())
+    {
+        return Ok(None);
+    }
+    resolve_checked_plan(effect_plan::lower_with_calls(
+        circuit, ledger, witnesses, pure, circuits,
+    ))
+}
+
 fn resolve_checked_plan(
     result: Result<TypedPlan, effect_plan::PlanError>,
 ) -> Result<Option<TypedPlan>, RenderError> {
@@ -310,19 +335,14 @@ pub(super) fn select(
                 )?
             ),
         };
-        let before_terminal = through_composite
-            .or_else(|| {
-                record_option!(
-                    "selector.shielded-receive",
-                    typed_plan::lower_shielded_receive(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                        circuits,
-                    )
-                )
-            })
+        let through_receive = match through_composite {
+            Some(plan) => Some(plan),
+            None => record_option!(
+                "algebra.shielded-receive",
+                checked_receive_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?
+            ),
+        };
+        let before_terminal = through_receive
             .or_else(|| {
                 record_option!(
                     "selector.voting-commit",

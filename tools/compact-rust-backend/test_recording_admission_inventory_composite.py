@@ -11,6 +11,7 @@ import unittest
 
 import recording_admission_inventory as inventory
 import recording_admission_inventory_composite as composite
+import recording_admission_inventory_receive as receive
 import test_recording_admission_inventory as previous
 
 
@@ -22,9 +23,9 @@ class CompositeTransitionTests(unittest.TestCase):
         report = self.report()
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(report['route_count'], 84)
-        self.assertEqual([row['id'] for row in report['retired_routes']], composite.RETIRED)
+        self.assertEqual([row['id'] for row in report['retired_routes']], receive.RETIRED)
         self.assertTrue(all(row['passed'] for row in report['retired_routes']))
-        self.assertEqual(len(report['current_selector']['ordered_calls']), 13)
+        self.assertEqual(len(report['current_selector']['ordered_calls']), 12)
         self.assertNotIn('value.composite-domain', composite.RETIRED)
         ids = report['reviewed_instrumentation']['instrumented_route_ids']
         self.assertIn(composite.REPLACEMENT, ids)
@@ -116,9 +117,9 @@ class CompositeTransitionTests(unittest.TestCase):
     def test_unrelated_selector_order_is_not_authorized_by_refreshed_hashes(self):
         path = self.root / composite.SELECTOR
         before = path.read_text()
-        changed = before.replace('typed_plan::lower_shielded_receive(', '__swap__(')
-        changed = changed.replace('typed_plan::lower_voting_commit(', 'typed_plan::lower_shielded_receive(')
-        changed = changed.replace('__swap__(', 'typed_plan::lower_voting_commit(')
+        changed = before.replace('typed_plan::lower_voting_commit(', '__swap__(')
+        changed = changed.replace('typed_plan::lower_funded_mint(', 'typed_plan::lower_voting_commit(')
+        changed = changed.replace('__swap__(', 'typed_plan::lower_funded_mint(')
         self.assertNotEqual(before, changed)
         path.write_text(changed)
         self.composite_transition['reviewed_source_fingerprints'][composite.SELECTOR] = inventory.digest(path.read_bytes())

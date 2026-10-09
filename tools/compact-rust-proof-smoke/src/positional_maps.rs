@@ -22,11 +22,13 @@ use std::error::Error;
 use std::fs;
 use std::path::Path;
 
+use compact_rust_chunked_map_fixture::ledger_contract as chunked_map_contract;
 use compact_rust_constructor_map_actions_fixture::ledger_contract as constructor_map_contract;
 use compact_rust_map_boolean_field_fixture::ledger_contract as map_contract;
+use compact_rust_nested_map_shape_fixture::ledger_contract as nested_map_shape_contract;
 use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::ConstructorContext;
-use midnight_compact_runtime::ledger::StateValue;
+use midnight_compact_runtime::ledger::{StateValue, map_view_at_path};
 use midnight_compact_runtime::transaction::{
     Observation, ObservedContractState, decode_verifier_key,
 };
@@ -280,6 +282,226 @@ pub(super) fn check_constructor_actions(
                 Ok(())
             },
         )?;
+    }
+    Ok(())
+}
+
+pub(super) fn check_nested_shape(
+    shape_root: &Path,
+    rng: &mut StdRng,
+) -> Result<(), Box<dyn Error>> {
+    let circuit = "check_nested_empty";
+    let initial = nested_map_shape_contract::initial_state(ConstructorContext::new(()))?;
+    let deploy = make_deploy(
+        shape_root,
+        circuit,
+        initial.ledger_state.get_ref().clone(),
+        rng,
+    )?;
+    let context = initial.into_circuit_context(deploy.address());
+    let recorded = nested_map_shape_contract::Contract::default()
+        .recording
+        .check_nested_empty(context)?;
+    if !recorded.execution.result {
+        return Err("new nested Map unexpectedly nonempty".into());
+    }
+    let call = check_generated_trace(shape_root, circuit, recorded, ())?;
+    check_transaction(shape_root, circuit, deploy, call, rng, |contract| {
+        let StateValue::Array(fields) = contract.data.get_ref() else {
+            return Err("nested Map state is not an array".into());
+        };
+        let StateValue::Map(map) = fields.get(0).ok_or("nested Map field missing")? else {
+            return Err("nested Map field has wrong ledger shape".into());
+        };
+        if map.size() != 0 {
+            return Err("proven nested Map shape read changed the Map".into());
+        }
+        Ok(())
+    })?;
+    Ok(())
+}
+
+pub(super) fn check_chunked_layout(
+    chunked_root: &Path,
+    rng: &mut StdRng,
+) -> Result<(), Box<dyn Error>> {
+    let contract = chunked_map_contract::Contract::default();
+    for circuit in [
+        "put",
+        "put_pair",
+        "put_default",
+        "has",
+        "get",
+        "remove_key",
+        "table_size",
+        "table_is_empty",
+        "reset_table",
+    ] {
+        let initial = chunked_map_contract::initial_state(ConstructorContext::new(()))?;
+        let deploy = make_deploy(
+            chunked_root,
+            circuit,
+            initial.ledger_state.get_ref().clone(),
+            rng,
+        )?;
+        let context = initial.into_circuit_context(deploy.address());
+        let observed = ObservedContractState::new(
+            deploy.address(),
+            deploy.initial_state.clone(),
+            Observation {
+                transaction_hash: [0; 32],
+                block_hash: [0; 32],
+                block_height: 0,
+            },
+        );
+        let verifier = decode_verifier_key(&fs::read(
+            chunked_root.join(format!("keys/{circuit}.verifier")),
+        )?)?;
+        let (manual, typed) = match circuit {
+            "put" => {
+                let recorded = contract.recording.put(context, false, Field::from(7_u64))?;
+                let manual = check_generated_trace(
+                    chunked_root,
+                    circuit,
+                    recorded,
+                    (false, Field::from(7_u64)),
+                )?;
+                let typed = contract
+                    .recording
+                    .put_call(&observed, (), false, Field::from(7_u64))?
+                    .prepare(verifier, Fr::from(0_u64))?;
+                (manual, typed)
+            }
+            "put_pair" => {
+                let recorded =
+                    contract
+                        .recording
+                        .put_pair(context, true, false, Field::from(42_u64))?;
+                let manual = check_generated_trace(
+                    chunked_root,
+                    circuit,
+                    recorded,
+                    (true, false, Field::from(42_u64)),
+                )?;
+                let typed = contract
+                    .recording
+                    .put_pair_call(&observed, (), true, false, Field::from(42_u64))?
+                    .prepare(verifier, Fr::from(0_u64))?;
+                (manual, typed)
+            }
+            "put_default" => {
+                let recorded = contract.recording.put_default(context, false)?;
+                let manual = check_generated_trace(chunked_root, circuit, recorded, false)?;
+                let typed = contract
+                    .recording
+                    .put_default_call(&observed, (), false)?
+                    .prepare(verifier, Fr::from(0_u64))?;
+                (manual, typed)
+            }
+            "has" => {
+                let recorded = contract.recording.has(context, true)?;
+                if !recorded.execution.result {
+                    return Err("seeded chunked Map key is absent".into());
+                }
+                let manual = check_generated_trace(chunked_root, circuit, recorded, true)?;
+                let typed = contract
+                    .recording
+                    .has_call(&observed, (), true)?
+                    .prepare(verifier, Fr::from(0_u64))?;
+                (manual, typed)
+            }
+            "get" => {
+                let recorded = contract.recording.get(context, true)?;
+                if recorded.execution.result != Field::from(1_u64) {
+                    return Err("seeded chunked Map value differs".into());
+                }
+                let manual = check_generated_trace(chunked_root, circuit, recorded, true)?;
+                let typed = contract
+                    .recording
+                    .get_call(&observed, (), true)?
+                    .prepare(verifier, Fr::from(0_u64))?;
+                (manual, typed)
+            }
+            "remove_key" => {
+                let recorded = contract.recording.remove_key(context, true)?;
+                let manual = check_generated_trace(chunked_root, circuit, recorded, true)?;
+                let typed = contract
+                    .recording
+                    .remove_key_call(&observed, (), true)?
+                    .prepare(verifier, Fr::from(0_u64))?;
+                (manual, typed)
+            }
+            "table_size" => {
+                let recorded = contract.recording.table_size(context)?;
+                if recorded.execution.result.value() != 1 {
+                    return Err("seeded chunked Map size differs".into());
+                }
+                let manual = check_generated_trace(chunked_root, circuit, recorded, ())?;
+                let typed = contract
+                    .recording
+                    .table_size_call(&observed, ())?
+                    .prepare(verifier, Fr::from(0_u64))?;
+                (manual, typed)
+            }
+            "table_is_empty" => {
+                let recorded = contract.recording.table_is_empty(context)?;
+                if recorded.execution.result {
+                    return Err("seeded chunked Map is empty".into());
+                }
+                let manual = check_generated_trace(chunked_root, circuit, recorded, ())?;
+                let typed = contract
+                    .recording
+                    .table_is_empty_call(&observed, ())?
+                    .prepare(verifier, Fr::from(0_u64))?;
+                (manual, typed)
+            }
+            "reset_table" => {
+                let recorded = contract.recording.reset_table(context)?;
+                let manual = check_generated_trace(chunked_root, circuit, recorded, ())?;
+                let typed = contract
+                    .recording
+                    .reset_table_call(&observed, ())?
+                    .prepare(verifier, Fr::from(0_u64))?;
+                (manual, typed)
+            }
+            _ => unreachable!(),
+        };
+        check_observed_call_parity(chunked_root, circuit, &deploy, &manual, &typed)?;
+        check_transaction(chunked_root, circuit, deploy, typed, rng, |state| {
+            let view = map_view_at_path::<bool, Field, _>(state.data.get_ref(), &[1, 14])?;
+            let generated = chunked_map_contract::PublicStateView::from(state).table()?;
+            if generated.size()? != view.size()?
+                || generated.member(true) != view.member(true)
+                || generated.is_empty() != view.is_empty()
+            {
+                return Err("generated chunked Map view differs from raw applied state".into());
+            }
+            if view.member(true) && generated.lookup(true)? != view.lookup(true)? {
+                return Err("generated chunked Map value differs from raw applied state".into());
+            }
+            let expected_size = match circuit {
+                "put" | "put_pair" | "put_default" => 2,
+                "remove_key" | "reset_table" => 0,
+                _ => 1,
+            };
+            if view.size()?.value() != expected_size {
+                return Err("proven chunked Map size differs".into());
+            }
+            let expected_true = match circuit {
+                "put_pair" => Some(Field::from(42_u64)),
+                "remove_key" | "reset_table" => None,
+                _ => Some(Field::from(1_u64)),
+            };
+            if view.member(true) != expected_true.is_some() {
+                return Err("proven chunked Map membership differs".into());
+            }
+            if let Some(value) = expected_true
+                && view.lookup(true)? != value
+            {
+                return Err("proven chunked Map value differs".into());
+            }
+            Ok(())
+        })?;
     }
     Ok(())
 }

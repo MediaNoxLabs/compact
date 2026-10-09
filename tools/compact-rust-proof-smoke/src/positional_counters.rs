@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Counter binding, decoder, handoff, and parameterized positional scenarios.
+//! Counter binding, decoder, handoff, parameterized, and nested-call scenarios.
 //!
 //! The caller owns the shared RNG and handoff configuration. Wallet/deployment
 //! output paths are still read only after the baseline counter proof succeeds.
@@ -26,6 +26,7 @@ use std::path::{Path, PathBuf};
 
 use compact_rust_counter_fixture::ledger_contract as counter_contract;
 use compact_rust_counter_parameter_fixture::ledger_contract as counter_parameter_contract;
+use compact_rust_stateful_circuit_call_fixture::ledger_contract as nested_contract;
 use midnight_compact_runtime::BoundedUint;
 use midnight_compact_runtime::context::ConstructorContext;
 use midnight_compact_runtime::ledger::{StateValue, read_counter};
@@ -289,5 +290,93 @@ pub(super) fn check_parameterized(root: &Path, rng: &mut StdRng) -> Result<(), B
         }
         Ok(())
     })?;
+    Ok(())
+}
+
+pub(super) fn check_nested_calls(
+    nested_root: &Path,
+    rng: &mut StdRng,
+) -> Result<(), Box<dyn Error>> {
+    let nested_initial = nested_contract::initial_state(ConstructorContext::new(()))?;
+    let nested_deploy = make_deploy(
+        nested_root,
+        "bump_twice",
+        nested_initial.ledger_state.get_ref().clone(),
+        rng,
+    )?;
+    let context = nested_initial.into_circuit_context(nested_deploy.address());
+    let recorded = nested_contract::Contract::default()
+        .recording
+        .bump_twice(context)?;
+    let nested_call = check_generated_trace(nested_root, "bump_twice", recorded, ())?;
+    check_transaction(
+        nested_root,
+        "bump_twice",
+        nested_deploy,
+        nested_call,
+        rng,
+        |contract| {
+            let StateValue::Array(fields) = contract.data.get_ref() else {
+                return Err("nested Counter state is not an array".into());
+            };
+            if read_counter(fields.get(0).ok_or("nested Counter missing")?)? != 2 {
+                return Err("proven nested call did not increment twice".into());
+            }
+            Ok(())
+        },
+    )?;
+
+    let parameterized_initial = nested_contract::initial_state(ConstructorContext::new(()))?;
+    let parameterized_deploy = make_deploy(
+        nested_root,
+        "add_twice",
+        parameterized_initial.ledger_state.get_ref().clone(),
+        rng,
+    )?;
+    let context = parameterized_initial.into_circuit_context(parameterized_deploy.address());
+    let amount = BoundedUint::<65535>::new(3)?;
+    let recorded = nested_contract::Contract::default()
+        .recording
+        .add_twice(context, amount)?;
+    let parameterized_manual = check_generated_trace(nested_root, "add_twice", recorded, amount)?;
+    let parameterized_observed = ObservedContractState::new(
+        parameterized_deploy.address(),
+        parameterized_deploy.initial_state.clone(),
+        Observation {
+            transaction_hash: [0; 32],
+            block_hash: [0; 32],
+            block_height: 0,
+        },
+    );
+    let parameterized_verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
+        nested_root.join("keys/add_twice.verifier"),
+    )?))?;
+    let parameterized_call = nested_contract::Contract::default()
+        .recording
+        .add_twice_call(&parameterized_observed, (), amount)?
+        .prepare(parameterized_verifier, Fr::from(0u64))?;
+    check_observed_call_parity(
+        nested_root,
+        "add_twice",
+        &parameterized_deploy,
+        &parameterized_manual,
+        &parameterized_call,
+    )?;
+    check_transaction(
+        nested_root,
+        "add_twice",
+        parameterized_deploy,
+        parameterized_call,
+        rng,
+        |contract| {
+            let StateValue::Array(fields) = contract.data.get_ref() else {
+                return Err("parameterized Counter state is not an array".into());
+            };
+            if read_counter(fields.get(0).ok_or("parameterized Counter missing")?)? != 6 {
+                return Err("proven parameterized call did not increment twice".into());
+            }
+            Ok(())
+        },
+    )?;
     Ok(())
 }

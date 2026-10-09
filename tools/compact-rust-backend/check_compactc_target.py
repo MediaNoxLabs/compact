@@ -27,7 +27,7 @@ import sys
 import tempfile
 import tomllib
 
-from target_checks import proof_artifacts, shared_runtime, shielded
+from target_checks import collection_proofs, proof_artifacts, shared_runtime, shielded
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -1773,42 +1773,17 @@ def main() -> None:
             check_manifest(nested_witness_proof)
             for circuit in ("outer", "outerValue", "outerValue2", "outerValueExpr"):
                 proof_artifacts.require_circuit_files(nested_witness_proof, circuit)
-            set_proof = base / "set-proof"
-            run(compiler, "--target", "rust", str(SET_BOOLEAN_SOURCE), str(set_proof))
-            check_manifest(set_proof)
-            for circuit in (
-                "add", "contains", "remove", "seen_size", "seen_is_empty",
-                "add_field", "contains_field", "reset_fields", "choose",
-            ):
-                proof_artifacts.require_circuit_files(set_proof, circuit)
-            set_oracle_proof = base / "set-oracle-proof"
-            run(compiler, "--target", "rust", str(SET_SOURCE), str(set_oracle_proof))
-            check_manifest(set_oracle_proof)
-            proof_artifacts.require_circuit_files(set_oracle_proof, 'check')
-            map_proof = base / "map-proof"
-            run(compiler, "--target", "rust", str(MAP_BOOLEAN_SOURCE), str(map_proof))
-            check_manifest(map_proof)
-            check_observed_map_call_consumer(map_proof, base)
-            for circuit in (
-                "put", "put_pair", "put_default", "has", "get", "remove_key",
-                "table_size", "table_is_empty", "reset_table",
-            ):
-                proof_artifacts.require_circuit_files(map_proof, circuit)
-            constructor_map_proof = base / "constructor-map-proof"
-            run(compiler, "--target", "rust", str(CONSTRUCTOR_MAP_SOURCE), str(constructor_map_proof))
-            check_manifest(constructor_map_proof)
-            for circuit in ("table_size", "history_size", "get_true", "get_false_history"):
-                proof_artifacts.require_circuit_files(constructor_map_proof, circuit)
-            list_proof = base / "list-proof"
-            run(compiler, "--target", "rust", str(LIST_SOURCE), str(list_proof))
-            check_manifest(list_proof)
-            for circuit in ("item_count", "items_empty", "first_item", "prepend", "drop_first", "clear_items"):
-                proof_artifacts.require_circuit_files(list_proof, circuit)
-            list_shapes_proof = base / "list-shapes-proof"
-            run(compiler, "--target", "rust", str(LIST_SHAPES_SOURCE), str(list_shapes_proof))
-            check_manifest(list_shapes_proof)
-            for circuit in ("push_flag", "push_count", "push_tag", "push_choice", "push_packet", "first_packet", "first_choice"):
-                proof_artifacts.require_circuit_files(list_shapes_proof, circuit)
+            collections = collection_proofs.prepare(
+                compiler, base,
+                set_source=SET_BOOLEAN_SOURCE,
+                set_oracle_source=SET_SOURCE,
+                map_source=MAP_BOOLEAN_SOURCE,
+                constructor_map_source=CONSTRUCTOR_MAP_SOURCE,
+                list_source=LIST_SOURCE,
+                list_shapes_source=LIST_SHAPES_SOURCE,
+                run=run, check_manifest=check_manifest,
+                check_observed_map_call_consumer=check_observed_map_call_consumer,
+            )
             zerocash_mint_proof = base / "zerocash-mint-proof"
             run(compiler, "--target", "rust", str(ZEROCASH_SOURCE), str(zerocash_mint_proof))
             check_manifest(zerocash_mint_proof)
@@ -2103,12 +2078,12 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 str(proof), str(cell_proof), str(cell_read_proof), str(witness_proof), str(nested_proof),
-                str(nested_witness_proof), str(set_proof), str(set_oracle_proof),
-                str(map_proof), str(constructor_map_proof), str(list_proof), str(constructor_list_proof),
+                str(nested_witness_proof), str(collections.set), str(collections.set_oracle),
+                str(collections.map), str(collections.constructor_map), str(collections.list), str(constructor_list_proof),
                 str(enum_cell_proof),
                 str(tiny_proof),
                 str(nested_map_shape_proof),
-                str(list_shapes_proof),
+                str(collections.list_shapes),
                 str(merkle_proof),
                 str(historic_merkle_proof),
                 str(vector_key_proof),
@@ -2287,7 +2262,7 @@ def main() -> None:
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
-                "--conditional-set", str(set_proof),
+                "--conditional-set", str(collections.set),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

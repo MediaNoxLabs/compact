@@ -19,6 +19,7 @@
 use super::*;
 use crate::coin_shapes::{qualified_coin_type, shielded_coin_type, shielded_recipient_type};
 use crate::ir::{KernelClaimKind, ReturnPlan};
+mod actions;
 mod admission;
 mod aggregates;
 mod arithmetic;
@@ -974,69 +975,7 @@ impl Plan<'_> {
                 index,
                 value,
             } => {
-                let LedgerFieldKind::Cell { ty } = &self.field(field, *index)?.declaration else {
-                    return None;
-                };
-                if self.admission.effectful_field_cells && *ty != Type::Field {
-                    return None;
-                }
-                if self.admission.composite_domain == CompositeDomain::FundedShieldedMint
-                    && *ty != Type::Boolean
-                {
-                    return None;
-                }
-                if self.admission.composite_domain == CompositeDomain::GuardedShieldedDeposit
-                    && !guarded_deposit::write_type(ty)
-                {
-                    return None;
-                }
-                if self.admission.composite_domain == CompositeDomain::ResetShieldedPayout
-                    && !reset_payout::write_type(ty)
-                {
-                    return None;
-                }
-                if self.admission.composite_domain == CompositeDomain::StartFunding
-                    && !start_funding::cell_type(ty)
-                {
-                    return None;
-                }
-                if !cell_type(ty)
-                    && !(self.admission.composite_domain == CompositeDomain::JubjubValues
-                        && *ty == Type::JubjubPoint)
-                    && !(self.admission.composite_domain == CompositeDomain::ResetShieldedPayout
-                        && reset_payout::write_type(ty))
-                    && !(self.admission.composite_domain == CompositeDomain::GuardedShieldedDeposit
-                        && guarded_deposit::write_type(ty))
-                    && !(self.admission.composite_domain == CompositeDomain::StartFunding
-                        && start_funding::cell_type(ty))
-                    && !(self.admission.unit_actions && unit_actions::value_type(ty))
-                    && !(self.admission.composition_calls.is_some() && composition::write_type(ty))
-                    && !(self.admission.phase_reset && phase_reset::cell_type(ty))
-                    && !(ty == &Type::Field
-                        && (self.admission.effectful_field_cells
-                            || self.admission.field_cell_slot.as_ref()
-                                == Some(&(field.clone(), *index))))
-                {
-                    return None;
-                }
-                let ty = ty.clone();
-                let value = self.expression(value, scope, steps)?;
-                if value.ty != ty {
-                    return None;
-                }
-                let value = value.value;
-                let slot = ident(field).ok()?;
-                steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_write(frame, #value)?;));
-                self.evidence.cell_writes += 1;
-                if ty == Type::Field {
-                    self.evidence.field_cell_writes += 1;
-                }
-                if ty == Type::OpaqueBytes {
-                    self.evidence.opaque_cells += 1;
-                }
-                if optional_string(&ty) {
-                    self.evidence.optional_cells += 1;
-                }
+                self.lower_cell_write(field, *index, value, scope, steps)?;
             }
             StateAction::CellWriteCoin {
                 field,
@@ -1044,142 +983,51 @@ impl Plan<'_> {
                 coin,
                 recipient,
             } => {
-                let LedgerFieldKind::Cell { ty } =
-                    &self.qualified_cell_field(field, *index)?.declaration
-                else {
-                    return None;
-                };
-                if *ty != qualified_coin_type() {
-                    return None;
-                }
-                let coin = self.expression(coin, scope, steps)?;
-                let recipient = self.expression(recipient, scope, steps)?;
-                if coin.ty != shielded_coin_type() || recipient.ty != shielded_recipient_type() {
-                    return None;
-                }
-                let slot = ident(field).ok()?;
-                let coin = coin.value;
-                let recipient = recipient.value;
-                steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_write_coin(
-                    frame,
-                    runtime::ledger::coin_info_from_compact(#coin.nonce, #coin.color, #coin.value.value()),
-                    runtime::ledger::coin_recipient_from_compact(
-                        #recipient.is_left, #recipient.left.bytes, #recipient.right.bytes,
-                    ),
-                )?;));
-                self.evidence.qualified_cell_writes += 1;
+                self.lower_cell_coin_write(field, *index, coin, recipient, scope, steps)?;
             }
             StateAction::CounterReset { field, index }
                 if self.admission.phase_reset
                     || self.admission.composite_domain == CompositeDomain::ResetShieldedPayout =>
             {
-                if self.field(field, *index)?.declaration != LedgerFieldKind::Counter {
-                    return None;
-                }
-                let slot = ident(field).ok()?;
-                steps.push(
-                    syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_reset(frame)?;),
-                );
-                self.evidence.counter_writes += 1;
+                self.lower_counter_reset(field, *index, steps)?;
             }
             StateAction::MerkleResetToDefault { field, index }
                 if self.admission.phase_reset
                     || self.admission.composite_domain == CompositeDomain::ResetShieldedPayout =>
             {
-                if !matches!(
-                    self.field(field, *index)?.declaration,
-                    LedgerFieldKind::MerkleTree {
-                        depth: 10,
-                        ty: Type::Bytes { length: 32 }
-                    }
-                ) {
-                    return None;
-                }
-                let slot = ident(field).ok()?;
-                steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_reset_to_default(frame)?;));
-                self.evidence.tree_writes += 1;
+                self.lower_merkle_reset(field, *index, steps)?;
             }
             StateAction::CounterIncrement {
                 field,
                 index,
                 amount,
             } => {
-                if self.field(field, *index)?.declaration != LedgerFieldKind::Counter {
-                    return None;
-                }
-                let amount: syn::Expr = match amount {
-                    CounterAmount::Literal { value } => {
-                        let value = syn::LitInt::new(&format!("{value}u16"), Span::call_site());
-                        syn::parse_quote!(#value)
-                    }
-                    CounterAmount::Parameter { name } => {
-                        let value =
-                            self.expression(&Expr::Parameter { name: name.clone() }, scope, steps)?;
-                        if value.ty
-                            != (Type::Unsigned {
-                                max: "65535".into(),
-                            })
-                        {
-                            return None;
-                        }
-                        let value = value.value;
-                        syn::parse_quote!((#value).value() as u16)
-                    }
-                };
-                let slot = ident(field).ok()?;
-                steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_increment(frame, #amount)?;));
-                self.evidence.counter_writes += 1;
+                self.lower_counter_increment(field, *index, amount, scope, steps)?;
             }
             StateAction::Assert { condition, message } => {
-                let condition = self.expression(condition, scope, steps)?;
-                if condition.ty != Type::Boolean {
-                    return None;
-                }
-                let condition = condition.value;
-                steps.push(syn::parse_quote! {
-                    if !#condition { return Err(runtime::CompactError::AssertionFailed(#message.to_owned())); }
-                });
+                self.lower_assertion(condition, message, scope, steps)?;
             }
             StateAction::Expression {
                 value: value @ Expr::WitnessCall { .. },
             } => {
-                if self.expression(value, scope, steps)?.ty != Type::Unit {
-                    return None;
-                }
+                self.lower_unit_expression(value, scope, steps)?;
             }
             StateAction::Expression { value }
                 if self.admission.unit_actions && self.admission.composite_domain.intents() =>
             {
-                if self.expression(value, scope, steps)?.ty != Type::Unit {
-                    return None;
-                }
+                self.lower_unit_expression(value, scope, steps)?;
             }
             StateAction::PureCall { name, arguments }
                 if self.admission.composition_calls.is_some() =>
             {
-                if !matches!(
-                    self.admission.composition_calls.as_ref()?.get(name),
-                    Some(composition::AuditedCall::PureUnitGuard(_))
-                ) {
-                    return None;
-                }
-                let value = self.call(name, arguments, scope, steps)?;
-                if value.ty != Type::Unit {
-                    return None;
-                }
+                self.lower_pure_guard_call(name, arguments, scope, steps)?;
             }
             StateAction::CircuitCall { name, arguments }
                 if (self.admission.unit_actions && self.admission.composite_domain.intents())
                     || self.admission.phase_reset
                     || self.admission.composition_calls.is_some() =>
             {
-                let result = self.call(name, arguments, scope, steps)?;
-                if result.ty != Type::Unit
-                    && !(self.admission.composite_domain == CompositeDomain::VotingCommit
-                        && shielded_send_result(&result.ty))
-                {
-                    return None;
-                }
+                self.lower_unit_circuit_call(name, arguments, scope, steps)?;
             }
             StateAction::MerkleInsert {
                 field,
@@ -1196,73 +1044,14 @@ impl Plan<'_> {
                 index,
                 value,
             } => {
-                let declaration = self.field(field, *index)?.clone();
-                match (action, &declaration.declaration) {
-                    (
-                        StateAction::MerkleInsert { .. },
-                        LedgerFieldKind::MerkleTree {
-                            ty: Type::Bytes { length: 32 },
-                            ..
-                        },
-                    ) => self.evidence.tree_writes += 1,
-                    (StateAction::SetInsert { .. }, LedgerFieldKind::Set { ty })
-                        if bytes32_key(ty)
-                            || (self.admission.composition_calls.is_some()
-                                && *ty == Type::OpaqueString) =>
-                    {
-                        self.evidence.set_writes += 1
-                    }
-                    (StateAction::SetInsert { .. }, LedgerFieldKind::Set { ty })
-                        if *ty == qualified_coin_type() =>
-                    {
-                        self.evidence.qualified_set_writes += 1
-                    }
-                    (
-                        StateAction::HistoricMerkleInsert { .. },
-                        LedgerFieldKind::HistoricMerkleTree { ty, .. },
-                    ) if wrapped_bytes32(ty) => self.evidence.historic_writes += 1,
-                    _ => return None,
-                }
-                let ty = match &declaration.declaration {
-                    LedgerFieldKind::MerkleTree { ty, .. }
-                    | LedgerFieldKind::HistoricMerkleTree { ty, .. }
-                    | LedgerFieldKind::Set { ty } => ty.clone(),
-                    _ => return None,
-                };
-                let value = self.expression(value, scope, steps)?;
-                if value.ty != ty {
-                    return None;
-                }
-                let slot = ident(field).ok()?;
-                let value = value.value;
-                steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_insert(frame, #value)?;));
+                self.lower_collection_insert(action, field, *index, value, scope, steps)?;
             }
             StateAction::SetRemove {
                 field,
                 index,
                 value,
             } => {
-                let LedgerFieldKind::Set { ty } = &self.field(field, *index)?.declaration else {
-                    return None;
-                };
-                if *ty != qualified_coin_type()
-                    && !(self.admission.composition_calls.is_some() && *ty == Type::OpaqueString)
-                {
-                    return None;
-                }
-                let ty = ty.clone();
-                let value = self.expression(value, scope, steps)?;
-                if value.ty != ty {
-                    return None;
-                }
-                let slot = ident(field).ok()?;
-                let value = value.value;
-                steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_remove(frame, #value)?;));
-                if ty == qualified_coin_type() {
-                    self.evidence.qualified_set_writes += 1;
-                } else {
-                    self.evidence.set_writes += 1;
-                }
+                self.lower_set_remove(field, *index, value, scope, steps)?;
             }
             StateAction::MapInsert {
                 field,
@@ -1270,70 +1059,15 @@ impl Plan<'_> {
                 key,
                 value,
             } if self.admission.composition_calls.is_some() => {
-                let LedgerFieldKind::Map {
-                    key: key_ty,
-                    value: value_ty,
-                } = &self.field(field, *index)?.declaration
-                else {
-                    return None;
-                };
-                if *key_ty != Type::OpaqueString
-                    || !composition::checked_product_map(&self.field(field, *index)?.declaration)
-                {
-                    return None;
-                }
-                let value_ty = value_ty.clone();
-                let key = self.expression(key, scope, steps)?;
-                if key.ty != Type::OpaqueString {
-                    return None;
-                }
-                let value = self.expression(value, scope, steps)?;
-                if value.ty != value_ty {
-                    return None;
-                }
-                let slot = ident(field).ok()?;
-                let (key, value) = (key.value, value.value);
-                steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_insert(frame, #key, #value)?;));
+                self.lower_map_insert(field, *index, key, value, scope, steps)?;
             }
             StateAction::MapRemove { field, index, key }
                 if self.admission.composition_calls.is_some() =>
             {
-                if !composition::checked_product_map(&self.field(field, *index)?.declaration) {
-                    return None;
-                }
-                let key = self.expression(key, scope, steps)?;
-                if key.ty != Type::OpaqueString {
-                    return None;
-                }
-                let slot = ident(field).ok()?;
-                let key = key.value;
-                steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_remove(frame, #key)?;));
+                self.lower_map_remove(field, *index, key, scope, steps)?;
             }
             StateAction::SetReset { field, index } => {
-                let LedgerFieldKind::Set { ty } = &self.field(field, *index)?.declaration else {
-                    return None;
-                };
-                if self.admission.composite_domain == CompositeDomain::ResetShieldedPayout
-                    && *ty != (Type::Bytes { length: 32 })
-                {
-                    return None;
-                }
-                if *ty != qualified_coin_type()
-                    && !((self.admission.phase_reset
-                        || self.admission.composite_domain == CompositeDomain::ResetShieldedPayout)
-                        && *ty == (Type::Bytes { length: 32 }))
-                {
-                    return None;
-                }
-                let slot = ident(field).ok()?;
-                steps.push(
-                    syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_reset(frame)?;),
-                );
-                if *ty == qualified_coin_type() {
-                    self.evidence.qualified_set_writes += 1;
-                } else {
-                    self.evidence.set_writes += 1;
-                }
+                self.lower_set_reset(field, *index, steps)?;
             }
             StateAction::SetInsertCoin {
                 field,
@@ -1341,28 +1075,7 @@ impl Plan<'_> {
                 coin,
                 recipient,
             } => {
-                let LedgerFieldKind::Set { ty } = &self.field(field, *index)?.declaration else {
-                    return None;
-                };
-                if *ty != qualified_coin_type() {
-                    return None;
-                }
-                let coin = self.expression(coin, scope, steps)?;
-                let recipient = self.expression(recipient, scope, steps)?;
-                if coin.ty != shielded_coin_type() || recipient.ty != shielded_recipient_type() {
-                    return None;
-                }
-                let slot = ident(field).ok()?;
-                let coin = coin.value;
-                let recipient = recipient.value;
-                steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_insert_coin(
-                    frame,
-                    runtime::ledger::coin_info_from_compact(#coin.nonce, #coin.color, #coin.value.value()),
-                    runtime::ledger::coin_recipient_from_compact(
-                        #recipient.is_left, #recipient.left.bytes, #recipient.right.bytes,
-                    ),
-                )?;));
-                self.evidence.qualified_set_writes += 1;
+                self.lower_set_coin_insert(field, *index, coin, recipient, scope, steps)?;
             }
             _ => return None,
         }

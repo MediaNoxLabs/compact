@@ -1,0 +1,24 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+
+import CompactStandardLibrary;
+export ledger count: Counter;
+witness gate(): Boolean;
+pure circuit check(value: Field): [] { assert(value == 1, "check"); }
+export circuit asserted(selected: Boolean): Field {
+  if (disclose(selected)) { assert(count.lessThan(10), "count"); return 1 as Field; }
+  else { return 0 as Field; }
+}
+export circuit called(selected: Boolean, value: Field): Field {
+  if (disclose(selected)) { check(value); return count as Field; }
+  else { return 0 as Field; }
+}
+export circuit witnessed(selected: Boolean): Field {
+  if (disclose(selected)) { assert(disclose(gate()), "gate"); return count as Field; }
+  else { return 0 as Field; }
+}
+export circuit subtracted(selected: Boolean, value: Uint<16>): Uint<16> {
+  if (count.lessThan(10)) { return disclose(selected) ? value - 1 : value; }
+  else { return value; }
+}

@@ -1333,19 +1333,41 @@
                    (vector->list (stateful-body-ir expr src1 environment witness-ids)))))]
           [else (vector)]))
 
-      ;; Keep a terminal conditional and its selected effects in one ordered
-      ;; return body. In particular, a condition must not be rebuilt after a
-      ;; branch has changed the ledger cell that it read.
-      (define (terminal-cell-write-conditional? expr)
-        (nanopass-case (Lnodisclose Expression) expr
-          [(return ,src ,expr) (terminal-cell-write-conditional? expr)]
+      ;; Contract storage operations carry a nonempty ledger path. Mutation
+      ;; classes require StateAction lowering; read-only operations and the
+      ;; empty-path Kernel domain already have effect-bearing Expr forms.
+      ;; This classification follows ledger metadata, never an ADT allowlist.
+      (define (stateful-body-has-storage-mutation? value-expr)
+        (nanopass-case (Lnodisclose Expression) value-expr
+          [(return ,src ,expr) (stateful-body-has-storage-mutation? expr)]
           [(let* ,src ([,local* ,expr*] ...) ,expr)
-           (terminal-cell-write-conditional? expr)]
+           (stateful-body-has-storage-mutation? expr)]
           [(seq ,src ,expr* ... ,expr)
-           (terminal-cell-write-conditional? expr)]
+           (or (exists stateful-body-has-storage-mutation? expr*)
+               (stateful-body-has-storage-mutation? expr))]
           [(if ,src ,expr0 ,expr1 ,expr2)
-           (or (stateful-body-has-cell-write? expr1)
-               (stateful-body-has-cell-write? expr2))]
+           (or (stateful-body-has-storage-mutation? expr1)
+               (stateful-body-has-storage-mutation? expr2))]
+          [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
+           (nanopass-case (Lnodisclose ADT-Op) adt-op
+             [(,ledger-op ,op-class (,adt-name (,adt-formal* ,adt-arg*) ...) ((,var-name* ,type*) ...) ,type ,vm-code)
+              (and (pair? path-elt*) (not (eq? op-class 'read)))])]
+          [else #f]))
+
+      ;; Preserve a terminal conditional and its selected storage mutations in
+      ;; one ordered return body. Re-evaluating its condition after a mutation
+      ;; could select a different branch. Expression-only effects retain their
+      ;; existing representation and recording capabilities.
+      (define (terminal-storage-mutation-conditional? expr)
+        (nanopass-case (Lnodisclose Expression) expr
+          [(return ,src ,expr) (terminal-storage-mutation-conditional? expr)]
+          [(let* ,src ([,local* ,expr*] ...) ,expr)
+           (terminal-storage-mutation-conditional? expr)]
+          [(seq ,src ,expr* ... ,expr)
+           (terminal-storage-mutation-conditional? expr)]
+          [(if ,src ,expr0 ,expr1 ,expr2)
+           (or (stateful-body-has-storage-mutation? expr1)
+               (stateful-body-has-storage-mutation? expr2))]
           [else #f]))
 
       (define (unit-return-type? ty)
@@ -1384,13 +1406,19 @@
                      (cons "result"
                            (stateful-return-plan-ir expr expected-type src environment^ witness-ids))))]
           [(seq ,src ,expr* ... ,expr)
-           (object (cons "kind" "sequence")
-                   (cons "actions"
-                         (list->vector
-                           (map (lambda (action)
-                                  (state-action-ir action src environment witness-ids)) expr*)))
-                   (cons "result"
-                         (stateful-return-plan-ir expr expected-type src environment witness-ids)))]
+           (if (checked-unsigned-subtraction? expr* expr)
+               ;; Keep the compiler-inserted guard folded into the same checked
+               ;; arithmetic value, as on the ordinary expression path.
+               (object (cons "kind" "value")
+                       (cons "value"
+                             (stateful-typed-expression-ir expr expected-type src witness-ids)))
+               (object (cons "kind" "sequence")
+                       (cons "actions"
+                             (list->vector
+                               (map (lambda (action)
+                                      (state-action-ir action src environment witness-ids)) expr*)))
+                       (cons "result"
+                             (stateful-return-plan-ir expr expected-type src environment witness-ids))))]
           [(if ,src ,expr0 ,expr1 ,expr2)
            (object (cons "kind" "conditional")
                    (cons "condition" (stateful-expression-ir expr0 src witness-ids))
@@ -1976,7 +2004,7 @@
                (let* ([names (exported-names function-name export-alist)]
                       [internal-name (rust-function-name function-name)]
                       [effectful-return? (and (not (unit-return-type? type))
-                                              (terminal-cell-write-conditional? expr))]
+                                              (terminal-storage-mutation-conditional? expr))]
                       [all-names (if (member internal-name names)
                                      names
                                      (append names (list internal-name)))])

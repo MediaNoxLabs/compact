@@ -5,11 +5,11 @@ This crate freshly generates the exact schema20 IR for
 queried Counter threshold, lessThan, selected decrement/reset and a Field
 outcome. No synthetic exports are added.
 
-The current frontend chooses Effectful return plans only when a terminal branch
-contains a Cell write. This source genuinely writes its post-operation outcome
-to a Field Cell. A Counter-only version is still refused during Rust IR emission;
-this fixture does not claim that frontend limitation is fixed. Ordinary-root
-recording policy remains separate.
+This source writes its post-operation outcome to a Field Cell. The separate
+[Counter-only fixture](../effect-plan-counter-only-source/README.md) qualifies
+terminal storage-mutation classification without that Cell. Both use the shared
+boundary suite while retaining their own source, generated crate and proof keys.
+Ordinary-root recording policy remains separate.
 
 The generated execution tests use 108 finite boundary cases with Counter states
 and thresholds at zero, one and u64::MAX, Uint16 amounts including u16::MAX,

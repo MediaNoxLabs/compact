@@ -27,6 +27,7 @@ experimental-recording-plan = ["dep:compact-rust-recording-effect-plan-prototype
 
 [dependencies]
 compact-rust-effect-plan-counter-source-fixture = { path = "../../tests-rust-backend/effect-plan-counter-source", features = ["ledger-transaction"] }
+compact-rust-effect-plan-counter-only-source-fixture = { path = "../../tests-rust-backend/effect-plan-counter-only-source", features = ["ledger-transaction"] }
 compact-rust-effect-plan-wide-source-fixture = { path = "../../tests-rust-backend/effect-plan-wide-source", features = ["ledger-transaction"] }
 compact-rust-recording-effect-plan-prototype-fixture = { path = "../../tests-rust-backend/recording-effect-plan-prototype", optional = true, features = ["experimental-recording-plan", "ledger-transaction"] }
 compact-rust-shielded-merge-oracle-fixture = { path = "../../tests-rust-backend/shielded-merge-oracle", features = ["ledger-transaction"] }

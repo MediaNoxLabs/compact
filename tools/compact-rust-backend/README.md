@@ -32,11 +32,12 @@ Unsupported algebra may try the independent start-funding family. The retired
 family's old recognizer exists only in a test reference; ordinary-return profiles
 and other recording families still have their separate admission mechanisms.
 
-The frontend still selects Effectful returns through a terminal Cell-write
-conditional. Counter-only terminal mutation branches can fail before reaching
-this algebra ([#513](https://github.com/MediaNoxLabs/compact/issues/513)). The
-[Counter source fixture](../../tests-rust-backend/effect-plan-counter-source/README.md)
-qualifies mixed Cell/Counter composition and documents this boundary.
+The frontend identifies terminal contract-storage mutations from their ledger
+path and operation class. Counter-only branches can therefore reach this algebra
+without a Cell write. See the
+[Counter-only source fixture](../../tests-rust-backend/effect-plan-counter-only-source/README.md).
+Value wrappers around the entire conditional and some lexical normalization
+remain separate frontend work ([#516](https://github.com/MediaNoxLabs/compact/issues/516)).
 
 `effectful_return_oracle.compact` retains independent TS/native/recorded controls.
 The two compositional source examples and the standalone wide-source fixture

@@ -50,7 +50,9 @@ mod coracle_withdraw;
 #[path = "../../../tests-rust-backend/test-center-coracle/support/withdraw.rs"]
 mod coracle_withdraw_support;
 mod counter_less_than;
+mod counter_scenario;
 mod effect_plan_counter;
+mod effect_plan_counter_only;
 #[cfg(feature = "experimental-recording-plan")]
 mod effect_plan_prototype;
 mod effect_plan_wide_source;

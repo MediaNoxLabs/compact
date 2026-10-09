@@ -39,6 +39,8 @@ mod pure_calls;
 pub(crate) use helpers::plan_recorded_helpers;
 use profile_attempt::ProfileAttempt;
 use pure_calls::closed_pure_field_call;
+#[cfg(feature = "experimental-recording-plan")]
+mod effect_plan;
 mod intent_effect;
 mod kernel_plan;
 mod typed_plan;
@@ -545,6 +547,52 @@ pub(crate) fn render_recorded_helper(
     )
 }
 
+/// The experiment changes only effectful-return admission. Native validation and
+/// resource preflight run before recording; an experimental refusal may still be
+/// admitted by an existing profile. Default builds retain the original ordering.
+fn lower_effectful_return(
+    circuit: &StatefulCircuit,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure_circuits: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+) -> Result<RecordingOutcome<typed_plan::TypedPlan>, RenderError> {
+    #[cfg(feature = "experimental-recording-plan")]
+    let experimental_gap = match effect_plan::lower(circuit, ledger_fields, witnesses) {
+        Ok(plan) => return Ok(RecordingOutcome::Supported(plan)),
+        Err(effect_plan::PlanError::Unsupported(gap)) => gap,
+        Err(effect_plan::PlanError::Invalid(gap)) => {
+            return Err(RenderError::RecordingPlanInvariant {
+                path: gap.path,
+                detail: gap.detail,
+            });
+        }
+    };
+    let legacy = typed_plan::lower_effectful(circuit, ledger_fields, witnesses, pure_circuits)
+        .or_else(|| {
+            typed_plan::lower_start_funding(
+                circuit,
+                ledger_fields,
+                witnesses,
+                pure_circuits,
+                circuits,
+            )
+        });
+    Ok(match legacy {
+        Some(plan) => RecordingOutcome::Supported(plan),
+        None => RecordingOutcome::Unsupported({
+            #[cfg(feature = "experimental-recording-plan")]
+            {
+                experimental_gap
+            }
+            #[cfg(not(feature = "experimental-recording-plan"))]
+            {
+                RecordingGap::returned(&circuit.return_value)
+            }
+        }),
+    })
+}
+
 fn render_recorded_item(
     circuit: &StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,
@@ -556,24 +604,10 @@ fn render_recorded_item(
 ) -> Result<RecordingOutcome<syn::Item>, RenderError> {
     // Audit the complete ordered plan before any ordinary specialized gate.
     let effectful_plan = if matches!(circuit.return_value, StateReturn::Effectful { .. }) {
-        let Some(plan) =
-            typed_plan::lower_effectful(circuit, ledger_fields, witnesses, pure_circuits).or_else(
-                || {
-                    typed_plan::lower_start_funding(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                        circuits,
-                    )
-                },
-            )
-        else {
-            return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                &circuit.return_value,
-            )));
-        };
-        Some(plan)
+        match lower_effectful_return(circuit, ledger_fields, witnesses, pure_circuits, circuits)? {
+            RecordingOutcome::Supported(plan) => Some(plan),
+            RecordingOutcome::Unsupported(gap) => return Ok(RecordingOutcome::Unsupported(gap)),
+        }
     } else {
         None
     };

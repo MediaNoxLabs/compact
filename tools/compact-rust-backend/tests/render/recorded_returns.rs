@@ -60,8 +60,10 @@ fn effectful_recording_audits_both_branches_slots_and_lexical_scope() {
     unsupported.pointer_mut(&format!("{branch}/otherwise/result/actions")).unwrap().as_array_mut().unwrap().push(
         serde_json::json!({"kind":"assert", "condition":{"kind":"boolean", "value":true}, "message":"outside effectful recording profile"}));
     let report = render_with_capabilities(&parse(unsupported)).unwrap();
-    assert!(!report.capabilities.circuits[0].recorded);
-    assert!(!report.capabilities.circuits[0].observed_call);
+    // The opt-in algebra composes Assert; the legacy profile still refuses it.
+    let composed = cfg!(feature = "experimental-recording-plan");
+    assert_eq!(report.capabilities.circuits[0].recorded, composed);
+    assert_eq!(report.capabilities.circuits[0].observed_call, composed);
     let mut missing_slot = source.clone();
     missing_slot["ledger_fields"]
         .as_array_mut()

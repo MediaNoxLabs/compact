@@ -2159,6 +2159,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-recording-effect-plan-prototype-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-repeated-unit-helper-fixture"
 version = "0.1.0"
 dependencies = [

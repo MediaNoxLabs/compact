@@ -18,6 +18,37 @@
 use compact_rust_backend::ir::{Contract, Expr, SCHEMA_VERSION, StateAction, StateReturn};
 use compact_rust_backend::{render, render_with_capabilities};
 
+// Limit semantic order checks to the chosen generated API, excluding its native twin.
+fn generated_body(source: &str, module_name: &str, function_name: &str) -> String {
+    use quote::ToTokens;
+    fn find(items: &[syn::Item], module_name: &str, function_name: &str) -> Option<String> {
+        for item in items {
+            if let syn::Item::Mod(module) = item
+                && let Some((_, items)) = &module.content
+            {
+                if module.ident == module_name {
+                    return items.iter().find_map(|item| match item {
+                        syn::Item::Fn(function) if function.sig.ident == function_name => {
+                            Some(function.block.to_token_stream().to_string())
+                        }
+                        _ => None,
+                    });
+                }
+                if let Some(body) = find(items, module_name, function_name) {
+                    return Some(body);
+                }
+            }
+        }
+        None
+    }
+    find(
+        &syn::parse_file(source).unwrap().items,
+        module_name,
+        function_name,
+    )
+    .expect("requested generated function")
+}
+
 #[test]
 fn welcome_organizer_recording_requires_the_closed_witness_hash_guard() {
     let mut contract: Contract =
@@ -205,7 +236,7 @@ fn authorized_optional_cell_write_is_structural_and_fails_closed() {
 }
 
 #[test]
-fn authorized_enum_advance_requires_closed_successor_and_ordered_optional_read() {
+fn enum_advance_composes_certified_successors_and_preserves_source_read_order() {
     let source = include_str!("../election-schema13-ir.json");
     let mut contract: Contract = serde_json::from_str(source).unwrap();
     contract.schema_version = SCHEMA_VERSION;
@@ -249,7 +280,38 @@ fn authorized_enum_advance_requires_closed_successor_and_ordered_optional_read()
         }],
         value: Box::new(helper.body.clone()),
     };
-    assert!(!available(&guarded_successor, "advance"));
+    // A pure assertion is a valid certified helper body; it need not match the
+    // former closed successor recognizer once the owned topic Cell is supported.
+    assert!(available(&guarded_successor, "advance"));
+    let rendered = render_with_capabilities(&guarded_successor).unwrap();
+    let helper_body = generated_body(&rendered.source, "pure_circuits", "successor");
+    assert!(helper_body.contains("AssertionFailed") && helper_body.contains("\"extra\""));
+    let recorded = generated_body(&rendered.source, "recorded", "advance");
+    assert!(recorded.contains("pure_circuits :: successor"));
+    assert!(
+        recorded.find("authority . record_read").unwrap()
+            < recorded.find("topic . record_read").unwrap()
+    );
+    assert!(
+        recorded.find("topic . record_read").unwrap()
+            < recorded.find("state . record_write").unwrap()
+    );
+
+    // Actual state effects remain invalid inside a declared pure helper.
+    let mut impure_successor = guarded_successor.clone();
+    let helper = impure_successor
+        .circuits
+        .iter_mut()
+        .find(|c| c.name == "successor")
+        .unwrap();
+    let Expr::Sequence { steps, .. } = &mut helper.body else {
+        unreachable!()
+    };
+    steps.push(Expr::CellRead {
+        field: "topic".into(),
+        index: 2,
+    });
+    assert!(render_with_capabilities(&impure_successor).is_err());
     let mut reordered = contract.clone();
     let circuit = reordered
         .stateful_circuits
@@ -266,7 +328,19 @@ fn authorized_enum_advance_requires_closed_successor_and_ordered_optional_read()
         unreachable!()
     };
     actions.swap(0, 1);
-    assert!(!available(&reordered, "advance"));
+    // Reordering two valid assertions changes contract behavior, not recording
+    // eligibility. The recorded function must retain that changed read order.
+    assert!(available(&reordered, "advance"));
+    let rendered = render_with_capabilities(&reordered).unwrap();
+    let recorded = generated_body(&rendered.source, "recorded", "advance");
+    assert!(
+        recorded.find("topic . record_read").unwrap()
+            < recorded.find("authority . record_read").unwrap()
+    );
+    assert!(
+        recorded.find("authority . record_read").unwrap()
+            < recorded.find("state . record_write").unwrap()
+    );
     let mut wrong_index = contract;
     let field = wrong_index
         .ledger_fields

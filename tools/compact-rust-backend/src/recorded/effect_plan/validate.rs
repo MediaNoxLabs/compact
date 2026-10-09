@@ -48,7 +48,7 @@ pub(super) fn bound(ty: &Type) -> Option<u128> {
 pub(super) fn scalar(ty: &Type) -> bool {
     matches!(ty, Type::Unit | Type::Boolean | Type::Field) || bound(ty).is_some()
 }
-/// Recorded ABI/storage values; scalar arithmetic retains its separate predicate.
+/// Recorded ABI values; Cell storage and scalar arithmetic use separate predicates.
 pub(super) fn surface_type(ty: &Type) -> bool {
     scalar(ty)
         || *ty == Type::JubjubPoint
@@ -62,6 +62,10 @@ pub(super) fn surface_type(ty: &Type) -> bool {
             }
             _ => false,
         }
+}
+/// Declared Cell storage may own opaque values without widening interfaces.
+pub(super) fn cell_type(ty: &Type) -> bool {
+    domain::cell_type(ty)
 }
 /// Same-type equality composes the runtime wrappers and supported Rust products.
 pub(super) fn equality_type(ty: &Type) -> bool {
@@ -420,7 +424,7 @@ fn cell<'a>(
         return Err(invalid(path, "expected Cell declaration"));
     };
     declarations.types().validate_at(ty, path)?;
-    if !surface_type(ty) || *ty == Type::Unit {
+    if !cell_type(ty) {
         return Err(invalid(path, "unsupported Cell value type"));
     }
     Ok(ty)

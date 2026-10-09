@@ -215,30 +215,7 @@ fn whole_old_voting_plan_still_reports_a_separate_set_membership_gap() {
     assert_eq!(gap.ir_node, "Expr::SetMember");
 }
 
-#[test]
-fn old_first_optional_string_cell_projection_is_a_distinct_uncovered_domain() {
-    let mut contract = source();
-    let topic = contract
-        .ledger_fields
-        .iter()
-        .find(|v| v.id == "topic")
-        .unwrap();
-    let LedgerFieldKind::Cell {
-        ty: Type::Struct { fields, .. },
-    } = &topic.declaration
-    else {
-        panic!("retained topic must be a named optional-string Cell")
-    };
-    assert_eq!(fields[0].ty, Type::Boolean);
-    assert_eq!(fields[1].ty, Type::OpaqueString);
-    let projection = Expr::StructField {
-        value: Box::new(Expr::CellRead {
-            field: topic.id.clone(),
-            index: topic.index,
-        }),
-        field: fields[0].name.clone(),
-        index: 0,
-    };
+fn phase_assertion(contract: &mut Contract) -> &mut Expr {
     let root = contract
         .stateful_circuits
         .iter_mut()
@@ -247,23 +224,134 @@ fn old_first_optional_string_cell_projection_is_a_distinct_uncovered_domain() {
     let StateAction::Sequence { actions } = &mut root.actions[0] else {
         panic!("source sequence")
     };
-    let StateAction::Assert {
-        condition: Expr::If { condition, .. },
-        ..
-    } = &mut actions[0]
-    else {
+    let StateAction::Assert { condition, .. } = &mut actions[0] else {
         panic!("source phase assertion")
     };
-    // Preserve the selected local_state witness and both branches, so the
-    // legacy planner must still validate all original static effect counts.
-    **condition = projection;
-    let env = Environment::new(&contract);
-    env.old_first("optional-string Cell presence projection");
-    let PlanError::Unsupported(gap) = env.checked("vote_commit").unwrap_err() else {
-        panic!("expected an unsupported owned Cell read")
+    condition
+}
+
+#[test]
+fn old_first_optional_string_cell_observations_progress_to_set_membership() {
+    // Three finite Boolean contexts preserve one Cell read and the original
+    // local_state witness. Each complete old planner acceptance is mandatory.
+    for mode in ["presence", "identity", "equal_false"] {
+        let mut contract = source();
+        let topic = contract
+            .ledger_fields
+            .iter()
+            .find(|v| v.id == "topic")
+            .unwrap();
+        let LedgerFieldKind::Cell {
+            ty: Type::Struct { fields, .. },
+        } = &topic.declaration
+        else {
+            panic!("retained topic must be a named optional-string Cell")
+        };
+        assert_eq!(fields[0].ty, Type::Boolean);
+        assert_eq!(fields[1].ty, Type::OpaqueString);
+        let projection = Expr::StructField {
+            value: Box::new(Expr::CellRead {
+                field: topic.id.clone(),
+                index: topic.index,
+            }),
+            field: fields[0].name.clone(),
+            index: 0,
+        };
+        let observation = match mode {
+            "presence" => projection,
+            "identity" => Expr::Coerce {
+                value: Box::new(projection),
+                ty: Type::Boolean,
+            },
+            "equal_false" => Expr::Equal {
+                left: Box::new(projection),
+                right: Box::new(Expr::Boolean { value: false }),
+            },
+            _ => unreachable!(),
+        };
+        let Expr::If { condition, .. } = phase_assertion(&mut contract) else {
+            panic!("source conditional phase assertion")
+        };
+        **condition = observation;
+        let env = Environment::new(&contract);
+        env.old_first(mode);
+        let PlanError::Unsupported(gap) = env.checked("vote_commit").unwrap_err() else {
+            panic!("expected a remaining unsupported source operation")
+        };
+        eprintln!("old-first optional-string {mode} next gap: {gap:?}");
+        assert_eq!(gap.ir_node, "Expr::SetMember", "{mode}: {gap:?}");
+    }
+}
+
+#[test]
+fn old_first_opaque_bytes_cell_does_not_admit_an_opaque_witness_interface() {
+    let mut contract = source();
+    let topic = contract
+        .ledger_fields
+        .iter_mut()
+        .find(|v| v.id == "topic")
+        .unwrap();
+    topic.declaration = LedgerFieldKind::Cell {
+        ty: Type::OpaqueBytes,
     };
-    eprintln!("old-first optional-string Cell gap: {gap:?}");
+    let read = Expr::CellRead {
+        field: topic.id.clone(),
+        index: topic.index,
+    };
+    let witness = contract
+        .witnesses
+        .iter_mut()
+        .find(|v| v.name == "local_state")
+        .unwrap();
+    assert!(witness.parameters.is_empty());
+    witness.result = Type::OpaqueBytes;
+    // Replace the whole assertion condition: one Cell read and one zero-arg
+    // witness remain, retaining every legacy root effect-count obligation.
+    *phase_assertion(&mut contract) = Expr::Equal {
+        left: Box::new(read.clone()),
+        right: Box::new(Expr::WitnessCall {
+            name: "local_state".into(),
+            arguments: vec![],
+        }),
+    };
+    let env = Environment::new(&contract);
+    env.old_first("opaque bytes Cell compared with declared opaque witness");
+
+    // Isolate the exact same read from that old-accepted full root. Its value
+    // stays local; neither the isolated root result nor its ABI is opaque.
+    let isolated = StatefulCircuit {
+        source: None,
+        name: "owned_read_probe".into(),
+        internal: false,
+        parameters: vec![],
+        result: Type::Unit,
+        return_value: StateReturn::Unit,
+        actions: vec![StateAction::Let {
+            bindings: vec![LocalBinding {
+                name: "observed".into(),
+                ty: Type::OpaqueBytes,
+                value: read,
+            }],
+            action: Box::new(StateAction::Sequence { actions: vec![] }),
+        }],
+    };
+    let checked = check_with_calls(
+        &isolated,
+        &env.ledger,
+        &env.witnesses,
+        &env.pure,
+        &env.stateful,
+    )
+    .expect("old-accepted OpaqueBytes Cell read must be a checked local value");
+    render(&checked).unwrap();
+    let PlanError::Unsupported(gap) = env.checked("vote_commit").unwrap_err() else {
+        panic!("opaque witness interface must retain its independent refusal")
+    };
+    eprintln!("old-first opaque bytes next gap: {gap:?}");
     assert_eq!(gap.ir_node, "RecordedPlan");
-    assert_eq!(gap.detail, "unsupported Cell value type");
-    assert!(gap.path.starts_with("actions[0]"), "{gap:?}");
+    assert_eq!(
+        gap.detail,
+        "witness result must be supported and arguments must match arity"
+    );
+    assert!(gap.path.ends_with(".right"), "{gap:?}");
 }

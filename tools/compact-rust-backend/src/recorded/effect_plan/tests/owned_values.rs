@@ -1,7 +1,7 @@
 // This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
-//! Owned locals and pure interfaces do not widen recorded external/storage surfaces.
+//! Owned local and Cell policies are independent of recorded external interfaces.
 use super::*;
 #[path = "owned_values/coercion.rs"]
 mod coercion;
@@ -267,7 +267,7 @@ fn opaque_default_stays_in_certified_pure_body_or_named_struct() {
     ));
 }
 #[test]
-fn owned_and_vector_external_storage_witness_and_stateful_interfaces_stay_refused() {
+fn owned_cells_are_independent_of_refused_external_witness_and_stateful_interfaces() {
     for ty in [
         Type::OpaqueString,
         Type::OpaqueBytes,
@@ -308,14 +308,18 @@ fn owned_and_vector_external_storage_witness_and_stateful_interfaces_stay_refuse
             },
             boolean(),
         );
-        assert!(matches!(
-            check(
-                &root(expr),
-                &HashMap::from([("owned", &cell)]),
-                &HashMap::new()
-            ),
-            Err(PlanError::Unsupported(_))
-        ));
+        let storage = check(
+            &root(expr),
+            &HashMap::from([("owned", &cell)]),
+            &HashMap::new(),
+        );
+        if matches!(ty, Type::OpaqueString | Type::OpaqueBytes) {
+            // Owned Cell reads now have a separately qualified storage domain.
+            render(&storage.unwrap()).unwrap();
+        } else {
+            // The carrier contains a Vector; vectors and empty products remain excluded.
+            assert!(matches!(storage, Err(PlanError::Unsupported(_))));
+        }
         let witness = WitnessDeclaration {
             source: None,
             name: "owned".into(),
@@ -449,7 +453,7 @@ fn complete_retained_owned_value_source_uses_checked_operations() {
     }
 }
 #[test]
-fn owned_actuals_do_not_expand_witness_stateful_parameters_or_cell_writes() {
+fn owned_cell_writes_do_not_expand_witness_stateful_or_vector_storage_interfaces() {
     let cases = vec![
         (
             Type::OpaqueString,
@@ -531,16 +535,18 @@ fn owned_actuals_do_not_expand_witness_stateful_parameters_or_cell_writes() {
             id: "owned".into(),
             index: 0,
             path: vec![0],
-            declaration: LedgerFieldKind::Cell { ty },
+            declaration: LedgerFieldKind::Cell { ty: ty.clone() },
         };
         caller.actions = vec![StateAction::CellWrite {
             field: "owned".into(),
             index: 0,
             value,
         }];
-        assert!(matches!(
-            check(&caller, &HashMap::from([("owned", &cell)]), &HashMap::new()),
-            Err(PlanError::Unsupported(_))
-        ));
+        let storage = check(&caller, &HashMap::from([("owned", &cell)]), &HashMap::new());
+        if matches!(ty, Type::OpaqueString | Type::OpaqueBytes) {
+            render(&storage.unwrap()).unwrap();
+        } else {
+            assert!(matches!(storage, Err(PlanError::Unsupported(_))));
+        }
     }
 }

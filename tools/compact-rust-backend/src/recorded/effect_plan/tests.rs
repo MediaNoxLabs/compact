@@ -437,3 +437,6 @@ mod receive_owned_domain_probes;
 mod counter_hash;
 #[path = "tests/counter_hash_inclusion.rs"]
 mod counter_hash_inclusion;
+
+#[path = "tests/owned_cells.rs"]
+mod owned_cells;

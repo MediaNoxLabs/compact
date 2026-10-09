@@ -8,7 +8,7 @@ use super::{
     declarations::Declarations,
     invalid,
     model::*,
-    validate::{surface_type, uint},
+    validate::{cell_type, surface_type, uint},
 };
 use crate::ir::*;
 use std::collections::HashMap;
@@ -202,7 +202,7 @@ impl Lowerer<'_> {
             return Err(invalid(path, "expected Cell field"));
         };
         self.declarations.types().validate_at(ty, path)?;
-        if !surface_type(ty) || *ty == Type::Unit {
+        if !cell_type(ty) {
             return Err(invalid(path, "unsupported Cell value type"));
         }
         Ok((CellSlot { declaration, index }, ty.clone()))

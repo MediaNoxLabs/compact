@@ -1,10 +1,13 @@
-# Guarded point reads can feed zero coordinates into unselected curve operations
+# Guarded point operands in ZKIR v2
 
 This is the exact original source for the #517 qualification failure, retained
-before the proof-compatible source hoisted its shared point read. See CoPS-004 /
-issue #518 for required shared-compiler follow-up.
+before the proof-compatible source hoisted its shared point read. Issue #518 /
+CoPS-004 track the shared compiler correction below.
 
-Native and recorded execution pass. `compose` proves and applies. Proving
+## Historical failure (before #518)
+
+With the pre-fix compiler, native and recorded execution pass. `compose` proves
+and applies. Proving
 `read_branch(false, generator(7), 3)` reaches an official subgroup-conversion
 panic: the unselected branch's guarded public inputs become `(0,0)` and its
 unguarded `ec_add` still executes. `(0,0)` is not Compact's identity `(0,1)`.
@@ -27,13 +30,51 @@ COMPACTC_SCHEME=/path/to/compactc-scheme compactc --target ts --skip-zk \
 ```
 
 For the original failure receipt, the then-current proof adapter was generated
-from this exact IR and ran `--effect-plan-jubjub` with matching keys. The current
-adapter deliberately rejects this old IR before loading keys, because its
-source-bound fixture now uses the documented hoisted-read mitigation. Reproduce
-the original proving case with an isolated fixture generated from this source;
-do not bypass the current adapter's input pairing guard.
+from this exact IR and ran `--effect-plan-jubjub` with matching keys. The `--effect-plan-jubjub`
+adapter deliberately rejects this IR before loading keys, because its
+source-bound fixture uses the documented hoisted-read mitigation. The separate
+`--guarded-point-read` adapter uses the exact original source retained here.
+Neither adapter accepts the other source's IR; do not bypass this pairing check.
 
 No proof keys are committed. The local failure receipt retains source, IR,
 backtrace and key/ZKIR hashes. Hoisting the shared read is a source-level
 mitigation for the positive qualification fixture, not a compiler repair or
 proof support claim for this original form.
+
+## Shared compiler correction
+
+At a guarded, resolved `ecAdd`/`ecMul` call, the v2 emitter selects `(0, 1)`
+for each inactive point operand immediately before the curve gate. Active
+coordinates and multiplication scalars remain unchanged. Public/private input
+zero constraints and transcript operations retain their original behavior.
+Constant-true calls keep their previous artifacts. Affected ZKIR requires fresh
+keys; key compatibility is not claimed.
+
+## Local regression gates
+
+Run these against distinct isolated pre-fix and candidate Scheme builds:
+
+```sh
+python3 tools/compact-rust-backend/guarded_point_zkir.py \
+  --baseline-compiler /path/to/baseline/compactc \
+  --candidate-compiler /path/to/candidate/compactc \
+  --output /tmp/guarded-point-emission
+python3 tools/compact-rust-backend/test_guarded_point_zkir.py \
+  --artifacts /tmp/guarded-point-emission -v
+```
+
+The gate checks nine finite circuit graphs, complete Boolean guard tables for
+these fixtures, input/transcript preservation, and byte equality for unaffected
+controls. Mutation tests reject wrong guards, wrong identity coordinates,
+changed active operands/scalars, and escaped transcript substitutions. These
+are emission checks, not proof execution.
+
+The Rust fixture packages `compact-rust-guarded-point-read-source-fixture` and
+`compact-rust-guarded-point-nested-source-fixture` bind the exact retained IR.
+The proof smoke commands `--guarded-point-read <artifacts>` and
+`--guarded-point-nested <artifacts>` require fresh keys and matching source IR.
+They exercise the original composition and both branch choices, plus all four
+nested guard combinations, through native execution, recording, the official
+preimage checker, proving, verification and ledger application. The smoke
+harness uses its existing unbalanced transaction policy; this is not production
+transaction qualification. No proof keys are committed.

@@ -27,6 +27,8 @@ experimental-recording-plan = ["dep:compact-rust-recording-effect-plan-prototype
 
 [dependencies]
 compact-rust-effect-plan-jubjub-source-fixture = { path = "../../tests-rust-backend/effect-plan-jubjub-source", features = ["ledger-transaction"] }
+compact-rust-guarded-point-read-source-fixture = { path = "../../tests-rust-backend/guarded-point-read-source", features = ["ledger-transaction"] }
+compact-rust-guarded-point-nested-source-fixture = { path = "../../tests-rust-backend/guarded-point-nested-source", features = ["ledger-transaction"] }
 compact-rust-effect-plan-counter-source-fixture = { path = "../../tests-rust-backend/effect-plan-counter-source", features = ["ledger-transaction"] }
 compact-rust-effect-plan-counter-only-source-fixture = { path = "../../tests-rust-backend/effect-plan-counter-only-source", features = ["ledger-transaction"] }
 compact-rust-effect-plan-wide-source-fixture = { path = "../../tests-rust-backend/effect-plan-wide-source", features = ["ledger-transaction"] }

@@ -1,0 +1,470 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "first",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "jubjub_point"
+        }
+      },
+      "source": {
+        "file": "effect_plan_jubjub.compact",
+        "line": 6,
+        "column": 1
+      }
+    },
+    {
+      "id": "second",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "jubjub_point"
+        }
+      },
+      "source": {
+        "file": "effect_plan_jubjub.compact",
+        "line": 7,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "compose",
+      "parameters": [
+        {
+          "name": "point",
+          "ty": {
+            "kind": "jubjub_point"
+          }
+        },
+        {
+          "name": "scalar",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "jubjub_point"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "ec_add",
+          "left": {
+            "kind": "parameter",
+            "name": "value"
+          },
+          "right": {
+            "kind": "ec_mul_generator",
+            "scalar": {
+              "kind": "field_literal",
+              "value": "1"
+            }
+          }
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "reduced",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "jubjub_scalar_from_native",
+                "value": {
+                  "kind": "parameter",
+                  "name": "scalar"
+                }
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "combined",
+                    "ty": {
+                      "kind": "jubjub_point"
+                    },
+                    "value": {
+                      "kind": "ec_add",
+                      "left": {
+                        "kind": "ec_mul_generator",
+                        "scalar": {
+                          "kind": "parameter",
+                          "name": "reduced"
+                        }
+                      },
+                      "right": {
+                        "kind": "parameter",
+                        "name": "point"
+                      }
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "sequence",
+                  "actions": [
+                    {
+                      "kind": "let",
+                      "bindings": [
+                        {
+                          "name": "value",
+                          "ty": {
+                            "kind": "jubjub_point"
+                          },
+                          "value": {
+                            "kind": "ec_mul",
+                            "point": {
+                              "kind": "parameter",
+                              "name": "combined"
+                            },
+                            "scalar": {
+                              "kind": "parameter",
+                              "name": "reduced"
+                            }
+                          }
+                        }
+                      ],
+                      "action": {
+                        "kind": "sequence",
+                        "actions": [
+                          {
+                            "kind": "cell_write",
+                            "field": "first",
+                            "index": 0,
+                            "value": {
+                              "kind": "parameter",
+                              "name": "value"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_jubjub.compact",
+        "line": 14,
+        "column": 1
+      }
+    },
+    {
+      "name": "read_branch",
+      "parameters": [
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "point",
+          "ty": {
+            "kind": "jubjub_point"
+          }
+        },
+        {
+          "name": "scalar",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "jubjub_point"
+      },
+      "return_value": {
+        "kind": "cell_read",
+        "field": "second",
+        "index": 1
+      },
+      "actions": [
+        {
+          "kind": "cell_write",
+          "field": "first",
+          "index": 0,
+          "value": {
+            "kind": "parameter",
+            "name": "point"
+          }
+        },
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "reduced",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "jubjub_scalar_from_native",
+                "value": {
+                  "kind": "parameter",
+                  "name": "scalar"
+                }
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "if",
+                "condition": {
+                  "kind": "parameter",
+                  "name": "selected"
+                },
+                "then": {
+                  "kind": "let",
+                  "bindings": [
+                    {
+                      "name": "tmp_3",
+                      "ty": {
+                        "kind": "jubjub_point"
+                      },
+                      "value": {
+                        "kind": "ec_add",
+                        "left": {
+                          "kind": "cell_read",
+                          "field": "first",
+                          "index": 0
+                        },
+                        "right": {
+                          "kind": "ec_mul_generator",
+                          "scalar": {
+                            "kind": "parameter",
+                            "name": "reduced"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "action": {
+                    "kind": "cell_write",
+                    "field": "second",
+                    "index": 1,
+                    "value": {
+                      "kind": "parameter",
+                      "name": "tmp_3"
+                    }
+                  }
+                },
+                "otherwise": {
+                  "kind": "let",
+                  "bindings": [
+                    {
+                      "name": "tmp_4",
+                      "ty": {
+                        "kind": "jubjub_point"
+                      },
+                      "value": {
+                        "kind": "ec_mul",
+                        "point": {
+                          "kind": "cell_read",
+                          "field": "first",
+                          "index": 0
+                        },
+                        "scalar": {
+                          "kind": "parameter",
+                          "name": "reduced"
+                        }
+                      }
+                    }
+                  ],
+                  "action": {
+                    "kind": "cell_write",
+                    "field": "second",
+                    "index": 1,
+                    "value": {
+                      "kind": "parameter",
+                      "name": "tmp_4"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_jubjub.compact",
+        "line": 23,
+        "column": 1
+      }
+    },
+    {
+      "name": "raw_after_write",
+      "parameters": [
+        {
+          "name": "point",
+          "ty": {
+            "kind": "jubjub_point"
+          }
+        },
+        {
+          "name": "scalar",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "jubjub_point"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "parameter",
+          "name": "value"
+        }
+      },
+      "actions": [
+        {
+          "kind": "cell_write",
+          "field": "first",
+          "index": 0,
+          "value": {
+            "kind": "parameter",
+            "name": "point"
+          }
+        },
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "value",
+              "ty": {
+                "kind": "jubjub_point"
+              },
+              "value": {
+                "kind": "ec_mul",
+                "point": {
+                  "kind": "parameter",
+                  "name": "point"
+                },
+                "scalar": {
+                  "kind": "parameter",
+                  "name": "scalar"
+                }
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "cell_write",
+                "field": "second",
+                "index": 1,
+                "value": {
+                  "kind": "parameter",
+                  "name": "value"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_jubjub.compact",
+        "line": 35,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": {
+    "parameters": [
+    ],
+    "steps": [
+      {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "tmp_1",
+            "ty": {
+              "kind": "jubjub_point"
+            },
+            "value": {
+              "kind": "ec_mul_generator",
+              "scalar": {
+                "kind": "field_literal",
+                "value": "0"
+              }
+            }
+          }
+        ],
+        "step": {
+          "kind": "cell_write",
+          "field": "first",
+          "index": 0,
+          "value": {
+            "kind": "parameter",
+            "name": "tmp_1"
+          }
+        }
+      },
+      {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "tmp_2",
+            "ty": {
+              "kind": "jubjub_point"
+            },
+            "value": {
+              "kind": "ec_mul_generator",
+              "scalar": {
+                "kind": "field_literal",
+                "value": "0"
+              }
+            }
+          }
+        ],
+        "step": {
+          "kind": "cell_write",
+          "field": "second",
+          "index": 1,
+          "value": {
+            "kind": "parameter",
+            "name": "tmp_2"
+          }
+        }
+      }
+    ],
+    "source": {
+      "file": "effect_plan_jubjub.compact",
+      "line": 8,
+      "column": 1
+    }
+  }
+}

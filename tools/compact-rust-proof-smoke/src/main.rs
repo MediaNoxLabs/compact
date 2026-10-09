@@ -67,6 +67,7 @@ mod election_topic;
 mod field_observation;
 mod field_pair_hash;
 mod field_to_bytes32;
+mod guarded_point_read;
 mod guarded_recording;
 mod impure_field_helper;
 mod inline_type_scope;

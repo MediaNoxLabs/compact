@@ -156,6 +156,69 @@ pub(super) fn effect_plan_jubjub(
     }
 }
 
+pub(super) fn guarded_point_read(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    const USAGE: &str = "usage: compact-rust-proof-smoke --guarded-point-read <proof-output>";
+    let root = arguments.next().ok_or(USAGE)?;
+    if arguments.next().is_some() {
+        return Err(USAGE.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("guarded-point-read-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            crate::guarded_point_read::run(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("Jubjub proof thread panicked".into()),
+    }
+}
+
+pub(super) fn guarded_point_nested(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    const USAGE: &str = "usage: compact-rust-proof-smoke --guarded-point-nested <proof-output>";
+    let root = arguments.next().ok_or(USAGE)?;
+    if arguments.next().is_some() {
+        return Err(USAGE.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("guarded-point-nested-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            crate::guarded_point_read::run_nested(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("Jubjub proof thread panicked".into()),
+    }
+}
+
+pub(super) fn guarded_point_vm(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    const USAGE: &str = "usage: compact-rust-proof-smoke --guarded-point-vm <proof-output>";
+    let root = arguments.next().ok_or(USAGE)?;
+    if arguments.next().is_some() {
+        return Err(USAGE.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("guarded-point-vm".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            crate::guarded_point_read::run_vm(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("Jubjub proof thread panicked".into()),
+    }
+}
+
 pub(super) fn effect_plan_wide_source(
     arguments: &mut impl Iterator<Item = OsString>,
 ) -> Result<(), Box<dyn Error>> {

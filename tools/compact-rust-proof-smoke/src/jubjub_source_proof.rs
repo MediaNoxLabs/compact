@@ -1,0 +1,192 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+
+// Shared exact-source Jubjub proof scenarios. Included after selecting a fixture alias.
+fn validate_ir(bytes: &[u8]) -> Result<(), Box<dyn Error>> {
+    let actual: serde_json::Value = serde_json::from_slice(bytes)?;
+    let expected: serde_json::Value = serde_json::from_str(source::RETAINED_IR)?;
+    if actual != expected {
+        return Err(
+            "Jubjub proof artifact IR differs from the exact generated source fixture".into(),
+        );
+    }
+    Ok(())
+}
+
+pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
+    // Input pairing before key reads; this does not authenticate key provenance.
+    validate_ir(&std::fs::read(root.join("contract/compact-rust-ir.json"))?)?;
+    for (index, branch) in [(0, None), (1, Some(false)), (2, Some(true))] {
+        run_case(root, index, branch)?;
+    }
+    Ok(())
+}
+
+fn run_case(root: &Path, index: u64, branch: Option<bool>) -> Result<(), Box<dyn Error>> {
+    let circuit = if branch.is_some() {
+        "read_branch"
+    } else {
+        "compose"
+    };
+    let mut rng = StdRng::seed_from_u64(0x0517_0000 + index);
+    let initial = contract::initial_state(ConstructorContext::new(7_u64))?;
+    let deploy = make_deploy(
+        root,
+        circuit,
+        initial.ledger_state.get_ref().clone(),
+        &mut rng,
+    )?;
+    let observed = ObservedContractState::new(
+        deploy.address(),
+        deploy.initial_state.clone(),
+        Observation {
+            transaction_hash: [0; 32],
+            block_hash: [0; 32],
+            block_height: 0,
+        },
+    );
+    let point = r::ec_mul_generator(Field::from(7_u64))?;
+    let scalar = Field::from(3_u64);
+    let (native, recorded, input, expected, first, second) = if let Some(selected) = branch {
+        let expected = if selected {
+            r::ec_add(point, r::ec_mul_generator(scalar)?)
+        } else {
+            r::ec_mul(point, scalar)?
+        };
+        (
+            contract::read_branch(observed.circuit_context(7_u64), selected, point, scalar)?,
+            contract::recorded::read_branch(
+                observed.circuit_context(7_u64),
+                selected,
+                point,
+                scalar,
+            )?,
+            AlignedValue::concat(&[
+                AlignedValue::from(selected),
+                AlignedValue::from(point),
+                AlignedValue::from(scalar),
+            ]),
+            expected,
+            point,
+            expected,
+        )
+    } else {
+        let stored = r::ec_mul(r::ec_add(r::ec_mul_generator(scalar)?, point), scalar)?;
+        (
+            contract::compose(observed.circuit_context(7_u64), point, scalar)?,
+            contract::recorded::compose(observed.circuit_context(7_u64), point, scalar)?,
+            AlignedValue::concat(&[AlignedValue::from(point), AlignedValue::from(scalar)]),
+            r::ec_add(stored, r::ec_mul_generator(Field::from(1_u64))?),
+            stored,
+            r::JubjubPoint::identity(),
+        )
+    };
+    if native.result != expected
+        || recorded.execution.result != native.result
+        || native.context.query.state != recorded.execution.context.query.state
+        || native.context.query.effects != recorded.execution.context.query.effects
+        || native.gas_cost != recorded.execution.gas_cost
+        || native.context.private_state != 7
+        || recorded.execution.context.private_state != 7
+        || !native.private_transcript_outputs.is_empty()
+        || !recorded.execution.private_transcript_outputs.is_empty()
+    {
+        return Err("Jubjub source native/recorded execution mismatch".into());
+    }
+    let expected_state = native.context.query.state.get_ref().clone();
+    if ledger_slots::first.inspect(&expected_state)? != first
+        || ledger_slots::second.inspect(&expected_state)? != second
+    {
+        return Err("Jubjub source result/storage semantics changed".into());
+    }
+    let manual = check_generated_trace(root, circuit, recorded, input)?;
+    let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
+        root.join(format!("keys/{circuit}.verifier")),
+    )?))?;
+    let contract = contract::Contract::default();
+    let prepared = if let Some(selected) = branch {
+        contract
+            .recording
+            .read_branch_call(&observed, 7_u64, selected, point, scalar)?
+            .prepare(verifier, Fr::from(0_u64))?
+    } else {
+        contract
+            .recording
+            .compose_call(&observed, 7_u64, point, scalar)?
+            .prepare(verifier, Fr::from(0_u64))?
+    };
+    if format!("{manual:?}") != format!("{prepared:?}") {
+        return Err("Jubjub observed call differs from direct recording".into());
+    }
+    check_source_preimage(root, circuit, &prepared, branch)?;
+    check_transaction(root, circuit, deploy, prepared, &mut rng, |state| {
+        if state.data.get_ref() != &expected_state {
+            return Err("Jubjub ledger application changed expected state".into());
+        }
+        Ok(())
+    })?;
+    println!(
+        "Jubjub {circuit} case {index} proved, verified and ledger-applied under shared unbalanced smoke policy"
+    );
+    Ok(())
+}
+
+/// Use the official checker before proving. A changed guard must fail; a VM panic
+/// remains a failed run and is never treated as a successful negative control.
+pub(super) fn check_source_preimage(
+    root: &Path,
+    circuit: &'static str,
+    call: &ContractCallPrototype<DefaultDB>,
+    branch: Option<bool>,
+) -> Result<(), Box<dyn Error>> {
+    let ir: IrSource = tagged_deserialize(&mut BufReader::new(File::open(
+        root.join(format!("zkir/{circuit}.bzkir")),
+    )?))?;
+    let mut fields = Vec::new();
+    call.input.value_only_field_repr(&mut fields);
+    call.output.value_only_field_repr(&mut fields);
+    let commitment = transient_commit(&fields[..], call.communication_commitment_rand);
+    let preimage =
+        match <ProofPreimage as ContractCallExt<DefaultDB>>::construct_proof(call, commitment) {
+            ProofPreimageVersioned::V2(preimage) => preimage,
+            _ => return Err("unexpected Jubjub preimage version".into()),
+        };
+    preimage.check(&ir)?;
+    if let Some(selected) = branch {
+        if preimage.inputs.first() != Some(&Fr::from(u64::from(selected))) {
+            return Err("source branch guard is not first proof input".into());
+        }
+        for changed_guard in [Fr::from(u64::from(!selected)), Fr::from(2_u64)] {
+            let mut changed = preimage.as_ref().clone();
+            changed.inputs[0] = changed_guard;
+            if changed.check(&ir).is_ok() {
+                return Err("official checker accepted a tampered source branch guard".into());
+            }
+        }
+        println!(
+            "{circuit} selected={selected}: original preimage checked; flipped and non-Boolean guards rejected"
+        );
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn rejects_mismatched_source_before_reading_keys() {
+        validate_ir(source::RETAINED_IR.as_bytes()).unwrap();
+        let mut changed: serde_json::Value = serde_json::from_str(source::RETAINED_IR).unwrap();
+        changed["stateful_circuits"][0]["name"] = "different".into();
+        assert!(validate_ir(&serde_json::to_vec(&changed).unwrap()).is_err());
+        assert!(
+            validate_ir(include_bytes!(
+                "../../compact-rust-backend/tests/jubjub-scalar-cell-schema20-ir.json"
+            ))
+            .is_err()
+        );
+        assert!(validate_ir(OTHER_RETAINED_IR.as_bytes()).is_err());
+        assert!(validate_ir(b"{}").is_err());
+    }
+}

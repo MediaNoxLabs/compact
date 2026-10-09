@@ -117,6 +117,9 @@ pub(super) fn try_run(
         ("--effect-plan-counter", _) => Some(recorded::effect_plan_counter(arguments)),
         ("--effect-plan-counter-only", _) => Some(recorded::effect_plan_counter_only(arguments)),
         ("--effect-plan-jubjub", _) => Some(recorded::effect_plan_jubjub(arguments)),
+        ("--guarded-point-read", _) => Some(recorded::guarded_point_read(arguments)),
+        ("--guarded-point-nested", _) => Some(recorded::guarded_point_nested(arguments)),
+        ("--guarded-point-vm", _) => Some(recorded::guarded_point_vm(arguments)),
         ("--effectful-return", _) => Some(recorded::effectful_return(arguments)),
         ("--effect-plan-wide-source", _) => Some(recorded::effect_plan_wide_source(arguments)),
         #[cfg(feature = "experimental-recording-plan")]

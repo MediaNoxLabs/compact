@@ -122,6 +122,8 @@
     "tools/compact-rust-backend/src/recorded/legacy/actions/bindings.rs": "5aa51e218a76d4a7aae1f8d332e913c17bae52760d4197161c0ac012f1aa030e",
     "tools/compact-rust-backend/src/recorded/legacy/actions/collections.rs": "502dd04921b10bfa8ef6bba8ce2c6dbfed5fef7ee715b8e1203f672a925c3ab8",
     "tools/compact-rust-backend/src/recorded/legacy/actions/bindings/closed.rs": "bad1b71b45d3b508fba2bdad0e86a2dfbe28592d9b56e263fa0a49e85e17574a",
+    "tools/compact-rust-backend/src/stateful.rs": "3aad50c6f2aa73f20ff20e534b0b54417b48c4e276a74999ba9d616f5a2260a7",
+    "tools/compact-rust-backend/src/stateful/returns.rs": "148556047644c07ad98e9c6b52aa424c16b3c48d778f597a586c694a70e2339d",
     "tools/compact-rust-backend/src/recorded/typed_plan/control.rs": "757902f701aeb092597b29b3b9b2b0581e3608482ce4ec7ae43716b24039fba6",
     "tools/compact-rust-backend/src/recorded/typed_plan/aggregates.rs": "5a9ab37e97b4cd245e53e27e1d23ba627ae15609477bb5adf62925de828c08b0",
     "tools/compact-rust-backend/src/recorded/typed_plan/arithmetic.rs": "c45ea369d6d9d7791815b542ac3a6ae31f4005aa6a73f2c02617ed77a7760f49",

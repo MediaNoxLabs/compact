@@ -55,7 +55,7 @@
     "examples/rust_backend/witness_effect_order.compact": "d2b4b4b2ad94776aa27a4354e6c1fe9253b342e267fa4eb4bf05a3e9450f9a58",
     "tests-rust-backend/witness-effect-order/lib.rs": "5b1668cad2ff7e06012d81b6f4de7fba3a18b7b67ac15d39f223f4e56f5cf642",
     "runtime-rs/tests/fixtures/witness-effect-order.json": "463a1a2eac9b18cf1a2fe0c8828cc9acd53ed9733054bb89f5fe1d88a68a245f",
-    "tools/compact-rust-backend/src/recorded.rs": "88e7b374c02bdf23e71834ae1f176a724af32fb017379dff6274c54fc5b2f983",
+    "tools/compact-rust-backend/src/recorded.rs": "4af96e9b49e9c375ee015e349cce38e65260315e73e40ece42806f4de6a42752",
     "tools/compact-rust-backend/src/capabilities.rs": "43dee1f3ae38b1dca85e0965c09c2ba2a7d7b0e3dbdb128a18996c0f86b1184c",
     "specification/src/Semantics/Static/Lsrc/Lsrc.lagda.md": "636b1c02f2e291bdf76bc00f43c31fcd7ada458391ed775be5817172f8397de9",
     "specification/src/Syntax/json/Lsrc.json": "1b192f03d15b88cd8d4c8634c87ecb754690bc28f350331fd2b38d539da09668",
@@ -75,7 +75,7 @@
     "tests-rust-backend/boolean-logic/tests/conformance.rs": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
     "tools/compact-rust-backend/check_rejections.py": "b2eccc1e4a5c9d81910ca2f3def28fe5208dad54ee8083306f74658411063185",
     "tools/compact-rust-backend/src/recorded/diagnostics.rs": "b0d226b07256e2e4abdc6202372d2007952cbd79c6fe9667018db7cbd80e5839",
-    "tools/compact-rust-backend/src/recorded/legacy.rs": "7250ea101dd2be04283610b062493aa1eca1000749fd4fd60a04340a27b9b9ce",
+    "tools/compact-rust-backend/src/recorded/legacy.rs": "c420f7e02def4bd2286f13ff7e383b68a969273fa5bd807c782ceb163dc449ce",
     "tools/compact-rust-backend/src/recorded/legacy/guarded_map.rs": "84f8f1d308bdd893b4e12fee9063ed55d87b6f8fa059ba86565d890f026e60cf",
     "tools/compact-rust-backend/src/recorded/legacy/guarded_pure.rs": "777cb193a357ad0b91adb2ff34b5a3c71eff756a11201782c0a9acd97e1fff5b",
     "tools/compact-rust-backend/src/recorded/legacy/opaque_map.rs": "c0a913f3ddc6d829f32e6fffbcf1924ec62ccbd41977014eef82dd3e7c26ea3f",
@@ -109,7 +109,19 @@
     "tools/compact-rust-backend/tests/render/support.rs": "d262860152f9d7836d3164d48151f344c88df46af535ddf7a94f0b9deda9251d",
     "tools/compact-rust-backend/tests/render/value_types.rs": "b6de9b144176659e287cc8c01332dcf6c1d047a9cea833248e6bc6c7dee9ac75",
     "tools/compact-rust-backend/src/recorded/typed_plan.rs": "cd7c29821e7d53a4a0e4a24b08e65e3d1f853423e7cf20b3bbda9150f1fd7afb",
-    "tools/compact-rust-backend/src/recorded/profile_selection.rs": "dd2809d88402d069cef45762fc3da8f3e22be690ef34a7f844c812cbfc64ad6b"
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": "dd2809d88402d069cef45762fc3da8f3e22be690ef34a7f844c812cbfc64ad6b",
+    "tools/compact-rust-backend/src/recorded/legacy/actions.rs": "56efd8dfd63c4782c8de29fe5d3e4d81618dec215ecfd99a37400878596cb22a",
+    "tools/compact-rust-backend/src/recorded/legacy/expressions.rs": "cb5b299be4df0d2055ab98a5b6bced9437fb875270168fd8742d02f4f1a7c9df",
+    "tools/compact-rust-backend/src/recorded/legacy/calls.rs": "72c733a875763f71845fcadd22c033c8975756fc915a82cca348b89013a9f4c3",
+    "tools/compact-rust-backend/src/recorded/legacy/expressions/boolean.rs": "181baf6286d611ede3ca28520626acfe59f819b4d22018c0aa32baf8af164de7",
+    "tools/compact-rust-backend/src/recorded/legacy/expressions/scalar.rs": "1ba60d53b08ec9fcb7598348ecbee14c986861f46d7b4e4007485f63bd516bd7",
+    "tools/compact-rust-backend/src/recorded/legacy/expressions/field.rs": "4c1369c843dff595ecd5a14324c2867037b2643de7f225f3f7eb7163eae2890a",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/assertions.rs": "2111fd862692b4d57075f2fa24a41b93821cde0b3f1d6123bd8ca0c3a0dff9a9",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/merkle.rs": "3cf42d345080854e220522767c2a4ed27fbec30ea985ba2dc0a565f3ad380247",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/control.rs": "d313179d5f5337547a3346c3f451b4181d04402cc77f6e555afb2e7b48083b9e",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/bindings.rs": "5aa51e218a76d4a7aae1f8d332e913c17bae52760d4197161c0ac012f1aa030e",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/collections.rs": "502dd04921b10bfa8ef6bba8ce2c6dbfed5fef7ee715b8e1203f672a925c3ab8",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/bindings/closed.rs": "bad1b71b45d3b508fba2bdad0e86a2dfbe28592d9b56e263fa0a49e85e17574a"
   },
   "grammar_inventory": {
     "format_version": 1,
@@ -6904,8 +6916,8 @@
       "implementation_sources": [
         {
           "path": "tools/compact-rust-backend/src/recorded.rs",
-          "line": 558,
-          "sha256": "88e7b374c02bdf23e71834ae1f176a724af32fb017379dff6274c54fc5b2f983"
+          "line": 551,
+          "sha256": "4af96e9b49e9c375ee015e349cce38e65260315e73e40ece42806f4de6a42752"
         },
         {
           "path": "tools/compact-rust-backend/src/recorded/diagnostics.rs",

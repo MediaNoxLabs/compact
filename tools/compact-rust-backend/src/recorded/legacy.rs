@@ -24,3 +24,8 @@ pub(super) mod guarded_pure;
 pub(super) mod opaque_map;
 pub(super) mod opaque_set;
 pub(super) mod value_sources;
+
+// Mutually recursive lowering domains; profile selection remains with the orchestrator.
+pub(super) mod actions;
+pub(super) mod calls;
+pub(super) mod expressions;

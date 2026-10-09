@@ -95,6 +95,8 @@ mod opaque_string_map;
 mod opaque_string_set;
 mod pair_hash_cell;
 mod persistent_commit;
+mod positional_cells;
+mod positional_counters;
 mod positional_inputs;
 mod positional_lists;
 mod positional_maps;
@@ -140,16 +142,12 @@ use std::io::{self, BufReader};
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use compact_rust_cell_boolean_fixture::ledger_contract as cell_contract;
-use compact_rust_cell_read_fixture::ledger_contract as cell_read_contract;
 use compact_rust_cell_struct_fixture::ledger_contract as composite_cell_contract;
 use compact_rust_cell_struct_fixture::types::Pair;
 use compact_rust_chunked_cell_fixture::ledger_contract as chunked_cell_contract;
 use compact_rust_chunked_list_fixture::ledger_contract as chunked_list_contract;
 use compact_rust_chunked_map_fixture::ledger_contract as chunked_map_contract;
 use compact_rust_chunked_set_observed_fixture::ledger_contract as chunked_set_contract;
-use compact_rust_counter_fixture::ledger_contract as counter_contract;
-use compact_rust_counter_parameter_fixture::ledger_contract as counter_parameter_contract;
 use compact_rust_cross_circuit_oracle_fixture::ledger_contract as cross_circuit_contract;
 use compact_rust_hmt_default_oracle_fixture::ledger_contract as historic_merkle_default_contract;
 use compact_rust_hmt_insert_oracle_fixture::ledger_contract as historic_merkle_contract;
@@ -184,8 +182,8 @@ use midnight_compact_runtime::ledger::{
 };
 use midnight_compact_runtime::recording::RecordedCircuitResult;
 use midnight_compact_runtime::transaction::{
-    CallSpec, Observation, ObservedCallError, ObservedContractState, RecordedCall,
-    decode_verifier_key, prepare_call,
+    CallSpec, Observation, ObservedCallError, ObservedContractState, decode_verifier_key,
+    prepare_call,
 };
 use midnight_compact_runtime::{BoundedUint, FixedBytes, FixedVector, WideUint};
 use midnight_ledger::construct::{ContractCallExt, ContractCallPrototype};
@@ -3320,314 +3318,19 @@ fn run() -> Result<(), Box<dyn Error>> {
     let cell_read_root = Path::new(&cell_read_root);
     let handoff_config = HandoffConfig::from_env()?;
     let mut rng = StdRng::seed_from_u64(0x434f4d50414354);
-    let counter_initial = counter_contract::initial_state(ConstructorContext::new(()))?;
-    let counter_deploy = make_deploy(
+    positional_counters::check_binding_and_handoff(
         counter_root,
-        "increment",
-        counter_initial.ledger_state.get_ref().clone(),
-        &mut rng,
-    )?;
-    let counter_context = counter_initial.into_circuit_context(counter_deploy.address());
-    let counter_recorded = counter_contract::Contract::default()
-        .recording
-        .increment(counter_context)?;
-    let counter_manual = check_generated_trace(counter_root, "increment", counter_recorded, ())?;
-    let counter_observed = ObservedContractState::new(
-        counter_deploy.address(),
-        counter_deploy.initial_state.clone(),
-        Observation {
-            transaction_hash: [0; 32],
-            block_hash: [0; 32],
-            block_height: 0,
-        },
-    );
-    let counter_verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
-        counter_root.join("keys/increment.verifier"),
-    )?))?;
-    let mut state_bytes = Vec::new();
-    tagged_serialize(counter_observed.contract(), &mut state_bytes)?;
-    let decoded = ObservedContractState::decode(
-        counter_observed.address(),
-        &state_bytes,
-        counter_observed.observation(),
-    )?;
-    if decoded.contract() != counter_observed.contract() {
-        return Err("observed state decoder changed ledger state".into());
-    }
-    state_bytes.push(0);
-    if ObservedContractState::decode(
-        counter_observed.address(),
-        &state_bytes,
-        counter_observed.observation(),
-    )
-    .is_ok()
-    {
-        return Err("observed state decoder accepted trailing bytes".into());
-    }
-    let missing_operation = ObservedContractState::new(
-        counter_observed.address(),
-        ContractState::new(
-            counter_deploy.initial_state.data.get_ref().clone(),
-            HashMap::new(),
-            ContractMaintenanceAuthority::default(),
-        ),
-        counter_observed.observation(),
-    );
-    let missing_call = counter_contract::Contract::default()
-        .recording
-        .increment_call(&missing_operation, ())?;
-    if !matches!(
-        missing_call.prepare(counter_verifier.clone(), Fr::from(0u64)),
-        Err(ObservedCallError::MissingOperation(_))
-    ) {
-        return Err("observed call accepted a missing operation".into());
-    }
-    let wrong_verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
-        cell_root.join("keys/set_flag.verifier"),
-    )?))?;
-    let wrong_key_call = counter_contract::Contract::default()
-        .recording
-        .increment_call(&counter_observed, ())?;
-    if !matches!(
-        wrong_key_call.prepare(wrong_verifier, Fr::from(0u64)),
-        Err(ObservedCallError::VerifierMismatch(_))
-    ) {
-        return Err("observed call accepted a different verifier".into());
-    }
-    let mut bad_address = counter_observed.address();
-    bad_address.0.0[0] ^= 1;
-    let wrong_address = ObservedContractState::new(
-        bad_address,
-        counter_deploy.initial_state.clone(),
-        counter_observed.observation(),
-    );
-    let recorded_at_address = counter_contract::Contract::default()
-        .recording
-        .increment(counter_observed.circuit_context(()))?;
-    if !matches!(
-        RecordedCall::new(&wrong_address, recorded_at_address, "increment", ())
-            .prepare(counter_verifier.clone(), Fr::from(0u64)),
-        Err(ObservedCallError::AddressMismatch)
-    ) {
-        return Err("observed call accepted a different address".into());
-    }
-    let recorded_for_stale = counter_contract::Contract::default()
-        .recording
-        .increment(counter_observed.circuit_context(()))?;
-    let stale_state = ContractState::new(
-        recorded_for_stale
-            .execution
-            .context
-            .query
-            .state
-            .get_ref()
-            .clone(),
-        counter_deploy.initial_state.operations.clone(),
-        ContractMaintenanceAuthority::default(),
-    );
-    let stale_observed = ObservedContractState::new(
-        counter_observed.address(),
-        stale_state,
-        counter_observed.observation(),
-    );
-    if !matches!(
-        RecordedCall::new(&stale_observed, recorded_for_stale, "increment", ())
-            .prepare(counter_verifier.clone(), Fr::from(0u64)),
-        Err(ObservedCallError::StateMismatch)
-    ) {
-        return Err("observed call accepted a stale state".into());
-    }
-    let counter_call = counter_contract::Contract::default()
-        .recording
-        .increment_call(&counter_observed, ())?
-        .prepare(counter_verifier, Fr::from(0u64))?;
-    check_observed_call_parity(
-        counter_root,
-        "increment",
-        &counter_deploy,
-        &counter_manual,
-        &counter_call,
-    )?;
-    prove_counter(counter_root, &counter_call)?;
-    let counter_handoff = env::var_os("COMPACT_RUST_WALLET_HANDOFF").map(PathBuf::from);
-    let counter_deploy_handoff = env::var_os("COMPACT_RUST_DEPLOY_HANDOFF").map(PathBuf::from);
-    check_transaction_with_handoff(
-        counter_root,
-        "increment",
-        counter_deploy,
-        counter_call,
-        &mut rng,
-        counter_handoff.as_deref(),
-        counter_deploy_handoff.as_deref(),
+        cell_root,
         &handoff_config,
-        |contract| {
-            let StateValue::Array(fields) = contract.data.get_ref() else {
-                return Err("counter contract state is not an array".into());
-            };
-            if read_counter(fields.get(0).ok_or("counter field missing")?)? != 1 {
-                return Err("proven counter call did not increment ledger state".into());
-            }
-            Ok(())
-        },
+        &mut rng,
     )?;
 
     if let Some(root) = counter_parameter_root.as_ref() {
         let root = Path::new(root);
-        let initial = counter_parameter_contract::initial_state(ConstructorContext::new(()))?;
-        let deploy = make_deploy(
-            root,
-            "increment_by",
-            initial.ledger_state.get_ref().clone(),
-            &mut rng,
-        )?;
-        let amount = BoundedUint::<65535>::new(3)?;
-        let recorded = counter_parameter_contract::Contract::default()
-            .recording
-            .increment_by(initial.into_circuit_context(deploy.address()), amount)?;
-        let manual = check_generated_trace(root, "increment_by", recorded, amount)?;
-        let observed = ObservedContractState::new(
-            deploy.address(),
-            deploy.initial_state.clone(),
-            Observation {
-                transaction_hash: [0; 32],
-                block_hash: [0; 32],
-                block_height: 0,
-            },
-        );
-        let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
-            root.join("keys/increment_by.verifier"),
-        )?))?;
-        let call = counter_parameter_contract::Contract::default()
-            .recording
-            .increment_by_call(&observed, (), amount)?
-            .prepare(verifier, Fr::from(0u64))?;
-        check_observed_call_parity(root, "increment_by", &deploy, &manual, &call)?;
-        check_transaction(root, "increment_by", deploy, call, &mut rng, |contract| {
-            let StateValue::Array(fields) = contract.data.get_ref() else {
-                return Err("counter-parameter state is not an array".into());
-            };
-            if read_counter(fields.get(0).ok_or("counter-parameter field missing")?)? != 3 {
-                return Err("proven typed counter call did not add the parameter".into());
-            }
-            Ok(())
-        })?;
-
-        let initial = counter_parameter_contract::initial_state(ConstructorContext::new(()))?;
-        let seeded = counter_parameter_contract::increment_by(
-            initial.into_circuit_context(Default::default()),
-            BoundedUint::<65535>::new(3)?,
-        )?;
-        let reset_deploy = make_deploy(
-            root,
-            "reset_round",
-            seeded.context.query.state.get_ref().clone(),
-            &mut rng,
-        )?;
-        let reset_context = midnight_compact_runtime::context::CircuitContext::from_contract_state(
-            (),
-            reset_deploy.address(),
-            &reset_deploy.initial_state,
-        );
-        let recorded = counter_parameter_contract::Contract::default()
-            .recording
-            .reset_round(reset_context)?;
-        let manual = check_generated_trace(root, "reset_round", recorded, ())?;
-        let observed = ObservedContractState::new(
-            reset_deploy.address(),
-            reset_deploy.initial_state.clone(),
-            Observation {
-                transaction_hash: [0; 32],
-                block_hash: [0; 32],
-                block_height: 0,
-            },
-        );
-        let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
-            root.join("keys/reset_round.verifier"),
-        )?))?;
-        let call = counter_parameter_contract::Contract::default()
-            .recording
-            .reset_round_call(&observed, ())?
-            .prepare(verifier, Fr::from(0u64))?;
-        check_observed_call_parity(root, "reset_round", &reset_deploy, &manual, &call)?;
-        check_transaction(
-            root,
-            "reset_round",
-            reset_deploy,
-            call,
-            &mut rng,
-            |contract| {
-                let StateValue::Array(fields) = contract.data.get_ref() else {
-                    return Err("reset-round state is not an array".into());
-                };
-                if read_counter(fields.get(0).ok_or("reset-round field missing")?)? != 0 {
-                    return Err("proven typed Counter reset did not clear the seeded value".into());
-                }
-                Ok(())
-            },
-        )?;
+        positional_counters::check_parameterized(root, &mut rng)?;
     }
 
-    let cell_initial = cell_contract::initial_state(ConstructorContext::new(()))?;
-    let cell_deploy = make_deploy(
-        cell_root,
-        "set_flag",
-        cell_initial.ledger_state.get_ref().clone(),
-        &mut rng,
-    )?;
-    let cell_context = cell_initial.into_circuit_context(cell_deploy.address());
-    let cell_recorded = cell_contract::Contract::default()
-        .recording
-        .set_flag(cell_context)?;
-    let cell_call = check_generated_trace(cell_root, "set_flag", cell_recorded, ())?;
-    check_transaction(
-        cell_root,
-        "set_flag",
-        cell_deploy,
-        cell_call,
-        &mut rng,
-        |contract| {
-            let StateValue::Array(fields) = contract.data.get_ref() else {
-                return Err("cell contract state is not an array".into());
-            };
-            if !read_cell::<bool, _>(fields.get(0).ok_or("cell field missing")?)? {
-                return Err("proven Cell call did not set the ledger flag".into());
-            }
-            Ok(())
-        },
-    )?;
-
-    let cell_read_initial = cell_read_contract::initial_state(ConstructorContext::new(()))?;
-    let cell_read_deploy = make_deploy(
-        cell_read_root,
-        "read_flag",
-        cell_read_initial.ledger_state.get_ref().clone(),
-        &mut rng,
-    )?;
-    let cell_read_context = cell_read_initial.into_circuit_context(cell_read_deploy.address());
-    let cell_read_recorded = cell_read_contract::Contract::default()
-        .recording
-        .read_flag(cell_read_context)?;
-    if cell_read_recorded.execution.result {
-        return Err("new Cell contract unexpectedly read true".into());
-    }
-    let cell_read_call =
-        check_generated_trace(cell_read_root, "read_flag", cell_read_recorded, ())?;
-    check_transaction(
-        cell_read_root,
-        "read_flag",
-        cell_read_deploy,
-        cell_read_call,
-        &mut rng,
-        |contract| {
-            let StateValue::Array(fields) = contract.data.get_ref() else {
-                return Err("Cell read contract state is not an array".into());
-            };
-            if read_cell::<bool, _>(fields.get(0).ok_or("cell read field missing")?)? {
-                return Err("proven Cell read unexpectedly changed ledger state".into());
-            }
-            Ok(())
-        },
-    )?;
+    positional_cells::check_write_and_read(cell_root, cell_read_root, &mut rng)?;
 
     if let Some(witness_root) = witness_root {
         let witness_root = Path::new(&witness_root);

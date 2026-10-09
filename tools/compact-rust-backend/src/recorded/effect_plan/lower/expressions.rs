@@ -59,7 +59,8 @@ impl Lowerer<'_> {
             | Expr::Default { .. }
             | Expr::StructLiteral { .. }
             | Expr::StructField { .. }
-            | Expr::Tuple { .. } => self.aggregate(expression, scope, bindings, path)?,
+            | Expr::Tuple { .. }
+            | Expr::Vector { .. } => self.aggregate(expression, scope, bindings, path)?,
             Expr::CreateZswapInput { .. } | Expr::CreateZswapOutput { .. } => {
                 self.zswap(expression, scope, bindings, path)?
             }

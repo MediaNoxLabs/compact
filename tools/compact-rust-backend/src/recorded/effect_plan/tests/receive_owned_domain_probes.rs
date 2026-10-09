@@ -1,18 +1,18 @@
 // This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
-//! Three finite candidate inclusion gaps; every case must pass the old evaluator first.
-use super::*;
-use crate::ir::{Contract, Expr, LocalBinding, StateAction, Type};
+//! Three confirmed old-family value gaps now qualify checked local ownership.
+use crate::ir::{Contract, Expr, LocalBinding, PureCircuit, StateAction, Type};
+use crate::recorded::{effect_plan, typed_plan};
 use quote::quote;
 
 fn source() -> Contract {
     serde_json::from_str(include_str!(
-        "../../../tests/shielded-receive-schema20-ir.json"
+        "../../../../tests/shielded-receive-schema20-ir.json"
     ))
     .unwrap()
 }
-fn qualify(contract: &Contract, expect_checked: bool, label: &str) {
+fn qualify(contract: &Contract, label: &str) {
     let root = contract
         .stateful_circuits
         .iter()
@@ -46,19 +46,7 @@ fn qualify(contract: &Contract, expect_checked: bool, label: &str) {
     assert_eq!(tokens.matches("create_zswap_output").count(), 1, "{label}");
     assert_eq!(tokens.matches("CoinReceive").count(), 1, "{label}");
     let checked = effect_plan::lower_with_calls(root, &ledger, &witnesses, &pure, &circuits);
-    if expect_checked {
-        checked.unwrap_or_else(|error| panic!("unchanged checked control: {error:?}"));
-    } else {
-        let Err(effect_plan::PlanError::Unsupported(gap)) = checked else {
-            panic!("expected a source domain gap, not an invariant failure: {label}")
-        };
-        assert!(
-            gap.path.contains("callee[receiveShielded]"),
-            "{label}: {gap:?}"
-        );
-        assert!(gap.path.contains("bindings[0]"), "{label}: {gap:?}");
-        eprintln!("owned-domain witness {label}: {gap:?}");
-    }
+    checked.unwrap_or_else(|error| panic!("checked inclusion {label}: {error:?}"));
     // The current public pipeline may still use the old family. Native rendering
     // and that legacy recording must succeed, preventing malformed-IR false gaps.
     let public = crate::render_with_capabilities(contract).unwrap();
@@ -90,7 +78,7 @@ fn prepend(contract: &mut Contract, ty: Type, value: Expr) {
 }
 #[test]
 fn unchanged_receive_is_accepted_by_both_engines() {
-    qualify(&source(), true, "unchanged original");
+    qualify(&source(), "unchanged original");
 }
 #[test]
 fn old_receive_accepts_opaque_string_from_a_pure_interface() {
@@ -113,7 +101,7 @@ fn old_receive_accepts_opaque_string_from_a_pure_interface() {
             arguments: vec![],
         },
     );
-    qualify(&contract, false, "OpaqueString pure result to unused local");
+    qualify(&contract, "OpaqueString pure result to unused local");
 }
 #[test]
 fn old_receive_accepts_a_tuple_coerced_to_a_fixed_vector_local() {
@@ -135,11 +123,7 @@ fn old_receive_accepts_a_tuple_coerced_to_a_fixed_vector_local() {
             ty,
         },
     );
-    qualify(
-        &contract,
-        false,
-        "Tuple<Field,Field> to Vector<Field,2> local",
-    );
+    qualify(&contract, "Tuple<Field,Field> to Vector<Field,2> local");
 }
 #[test]
 fn old_receive_accepts_default_struct_with_owned_and_vector_children() {
@@ -167,7 +151,6 @@ fn old_receive_accepts_default_struct_with_owned_and_vector_children() {
     prepend(&mut contract, ty.clone(), Expr::Default { ty });
     qualify(
         &contract,
-        false,
         "Default<Struct<OpaqueString,OpaqueBytes,Vector<Field,2>>>",
     );
 }

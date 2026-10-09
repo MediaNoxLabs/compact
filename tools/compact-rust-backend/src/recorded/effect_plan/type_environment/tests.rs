@@ -215,7 +215,7 @@ fn fixed_byte_leaf_bound_is_per_aggregate_and_checked_before_defaults() {
 }
 
 #[test]
-fn tuples_are_temporaries_and_other_domains_are_not_promoted() {
+fn tuples_and_owned_values_are_local_types_but_ledger_maps_remain_refused() {
     let env = TypeEnvironment::default();
     env.validate(&Type::Tuple {
         elements: vec![
@@ -235,6 +235,10 @@ fn tuples_are_temporaries_and_other_domains_are_not_promoted() {
             element: Box::new(Type::Field),
             length: 1,
         },
+    ] {
+        env.validate(&ty).unwrap();
+    }
+    for ty in [
         Type::LedgerMap {
             key: Box::new(Type::Field),
             value: Box::new(Type::Field),
@@ -417,3 +421,5 @@ fn raw_resource_and_canonical_conflicts_are_source_refusals() {
         );
     }
 }
+
+mod owned;

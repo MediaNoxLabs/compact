@@ -4,6 +4,7 @@
 
 //! Nonrecursive opcode syntax. Large quote temporaries stay off recursive block frames.
 use super::*;
+use crate::ir::Type;
 
 pub(super) fn render(
     binding: &Binding,
@@ -54,6 +55,19 @@ pub(super) fn render(
             let member = ident(field).map_err(|e| invalid(path, e.to_string()))?;
             let source = name(input);
             crate::retained_value(syn::parse_quote!(#source.#member), &binding.value.ty)
+        }
+        Operation::Vector { elements } => {
+            let Type::Vector { element, .. } = &binding.value.ty else {
+                unreachable!("checked vector output");
+            };
+            if elements.is_empty() {
+                let element =
+                    crate::rust_type(element).map_err(|error| invalid(path, error.to_string()))?;
+                syn::parse_quote!(runtime::FixedVector::<#element, 0>::new([]))
+            } else {
+                let elements: Vec<_> = elements.iter().map(value).collect();
+                syn::parse_quote!(runtime::FixedVector::new([#(#elements),*]))
+            }
         }
         Operation::Tuple { elements } => {
             let elements: Vec<_> = elements.iter().map(value).collect();

@@ -218,7 +218,7 @@ fn independent_validator_rejects_forged_wide_bytes_bounds_and_references() {
     }
 }
 #[test]
-fn wide_support_does_not_expand_arithmetic_casts_or_branch_results() {
+fn wide_widening_and_joins_preserve_arithmetic_and_explicit_cast_limits() {
     let literal = || unsigned(TWO128, TWO128);
     expect_unsupported(Expr::FieldCast {
         value: Box::new(literal()),
@@ -233,14 +233,26 @@ fn wide_support_does_not_expand_arithmetic_casts_or_branch_results() {
         max: MAX248.into(),
     }));
     expect_unsupported(as_field(Expr::Coerce {
+        value: Box::new(literal()),
+        ty: validate::uint("65535"),
+    }));
+    // Owned-value composition now admits native widening and local joins.
+    // Neither operation grants wide arithmetic or narrowing casts.
+    let widened = check_expression(as_field(Expr::Coerce {
         value: Box::new(unsigned("1", "65535")),
         ty: validate::uint(TWO128),
-    }));
-    expect_unsupported(as_field(Expr::If {
-        condition: Box::new(Expr::Boolean { value: true }),
-        then: Box::new(literal()),
-        otherwise: Box::new(literal()),
-    }));
+    }))
+    .unwrap();
+    render(&widened).unwrap();
+    for selected in [false, true] {
+        let joined = check_expression(as_field(Expr::If {
+            condition: Box::new(Expr::Boolean { value: selected }),
+            then: Box::new(literal()),
+            otherwise: Box::new(unsigned("0", TWO128)),
+        }))
+        .unwrap();
+        render(&joined).unwrap();
+    }
 }
 #[test]
 fn wide_support_does_not_expand_circuit_cell_or_witness_surfaces() {

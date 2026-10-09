@@ -39,9 +39,6 @@ use super::typed_plan::{self, CompositionRejection, TypedPlan};
 use super::{effect_plan, zswap_plan};
 
 #[cfg(test)]
-#[path = "profile_selection/receive_owned_domain_probes.rs"]
-mod receive_owned_domain_probes;
-#[cfg(test)]
 #[path = "profile_selection/composite_migration_tests.rs"]
 mod composite_migration_tests;
 #[cfg(test)]

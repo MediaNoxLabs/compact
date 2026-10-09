@@ -704,6 +704,7 @@ dependencies = [
 name = "compact-rust-call-arg-declared-type-fixture"
 version = "0.1.0"
 dependencies = [
+ "compact-rust-backend",
  "hex",
  "midnight-compact-runtime",
  "midnight-onchain-state",
@@ -1306,6 +1307,15 @@ dependencies = [
  "midnight-base-crypto",
  "midnight-compact-runtime",
  "midnight-serialize",
+ "serde_json",
+]
+
+[[package]]
+name = "compact-rust-effect-plan-owned-values-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-compact-runtime",
  "serde_json",
 ]
 

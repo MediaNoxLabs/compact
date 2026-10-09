@@ -29,7 +29,7 @@ impl Lowerer<'_> {
                 let Type::Enum { variants, .. } = ty else {
                     return Err(invalid(path, "enum literal requires an enum type"));
                 };
-                if !validate::surface_type(ty) || !variants.contains(variant) {
+                if !validate::value_type(ty) || !variants.contains(variant) {
                     return Err(invalid(path, "unknown or unsupported enum variant"));
                 }
                 Ok((
@@ -41,7 +41,7 @@ impl Lowerer<'_> {
             }
             Expr::Default { ty } => {
                 self.declarations.types().validate_at(ty, path)?;
-                if !matches!(ty, Type::Struct { .. }) || !validate::surface_type(ty) {
+                if !matches!(ty, Type::Struct { .. }) || !validate::value_type(ty) {
                     return Err(invalid(path, "default requires a supported struct type"));
                 }
                 Ok((Operation::Default, ty.clone()))
@@ -69,6 +69,29 @@ impl Lowerer<'_> {
                     },
                     ty,
                 ))
+            }
+            Expr::Vector { element, elements } => {
+                let ty = Type::Vector {
+                    element: Box::new(element.clone()),
+                    length: elements.len(),
+                };
+                self.declarations.types().validate_at(&ty, path)?;
+                if !validate::value_type(&ty) {
+                    return Err(invalid(path, "unsupported vector element type"));
+                }
+                let mut values = Vec::new();
+                for (index, expression) in elements.iter().enumerate() {
+                    let member_path = format!("{path}.elements[{index}]");
+                    let value = self.expression(expression, scope, bindings, &member_path)?;
+                    if value.ty != *element {
+                        return Err(invalid(
+                            &member_path,
+                            "vector element differs from declared type",
+                        ));
+                    }
+                    values.push(value);
+                }
+                Ok((Operation::Vector { elements: values }, ty))
             }
             Expr::Tuple { elements } => {
                 let mut values = Vec::new();
@@ -101,7 +124,7 @@ impl Lowerer<'_> {
         let Type::Struct { fields, .. } = ty else {
             return Err(invalid(path, "constructor requires a struct type"));
         };
-        if !validate::surface_type(ty) || fields.len() != expressions.len() {
+        if !validate::value_type(ty) || fields.len() != expressions.len() {
             return Err(invalid(
                 path,
                 "unsupported struct type or member count mismatch",

@@ -61,6 +61,9 @@ pub(super) enum Operation {
     Tuple {
         elements: Vec<Value>,
     },
+    Vector {
+        elements: Vec<Value>,
+    },
     /// Private intent operations delegate allocation and transcript policy to the frame.
     CreateZswapInput {
         coin: Value,

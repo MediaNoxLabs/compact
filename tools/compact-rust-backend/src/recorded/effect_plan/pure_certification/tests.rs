@@ -357,3 +357,129 @@ fn callee_signature_is_resource_checked_before_native_caller_typing() {
     assert!(error.detail.contains("syntax_depth"), "{error:?}");
     assert!(error.path.contains("callee[leaf]"), "{error:?}");
 }
+
+#[test]
+fn pure_defaults_require_tuple_default_traits_without_restricting_constructed_values() {
+    let tuple = |length| Type::Tuple {
+        elements: vec![Type::Field; length],
+    };
+    for (ty, allowed) in [
+        (tuple(12), true),
+        (tuple(13), false),
+        (
+            Type::Vector {
+                element: Box::new(tuple(13)),
+                length: 0,
+            },
+            false,
+        ),
+        (
+            Type::Vector {
+                element: Box::new(tuple(13)),
+                length: 2,
+            },
+            false,
+        ),
+        (
+            Type::Tuple {
+                elements: vec![tuple(13)],
+            },
+            false,
+        ),
+    ] {
+        let mut helper = source("defaulted", Expr::Default { ty: ty.clone() });
+        helper.result = ty;
+        let result = certify(&[helper], "defaulted");
+        if allowed {
+            result.unwrap();
+        } else {
+            assert!(
+                result
+                    .unwrap_err()
+                    .detail
+                    .contains("pure Default requires tuple arity")
+            );
+        }
+    }
+    let mut constructed = source(
+        "constructed",
+        Expr::Tuple {
+            elements: vec![literal(); 13],
+        },
+    );
+    constructed.result = tuple(13);
+    certify(&[constructed], "constructed").unwrap();
+
+    let hidden = source(
+        "hidden",
+        Expr::Let {
+            bindings: vec![LocalBinding {
+                name: "unused".into(),
+                ty: tuple(13),
+                value: Expr::Default { ty: tuple(13) },
+            }],
+            body: Box::new(literal()),
+        },
+    );
+    let caller = source("caller", call("hidden"));
+    let error = certify(&[caller, hidden], "caller").unwrap_err();
+    assert!(error.detail.contains("pure Default requires tuple arity"));
+}
+
+#[test]
+fn hidden_named_structs_require_representation_derives_even_without_defaults() {
+    for length in [8, 9] {
+        let ty = Type::Struct {
+            name: "Hidden".into(),
+            fields: vec![crate::ir::StructField {
+                name: "items".into(),
+                ty: Type::Tuple {
+                    elements: vec![Type::Field; length],
+                },
+            }],
+        };
+        for value in [
+            Expr::Default { ty: ty.clone() },
+            Expr::StructLiteral {
+                ty: ty.clone(),
+                fields: vec![Expr::Tuple {
+                    elements: vec![literal(); length],
+                }],
+            },
+        ] {
+            let helper = source(
+                "hidden",
+                Expr::Let {
+                    bindings: vec![LocalBinding {
+                        name: "unused".into(),
+                        ty: ty.clone(),
+                        value,
+                    }],
+                    body: Box::new(literal()),
+                },
+            );
+            let caller = source("caller", call("hidden"));
+            let result = certify(&[caller, helper], "caller");
+            if length == 8 {
+                result.unwrap();
+            } else {
+                assert!(
+                    result
+                        .unwrap_err()
+                        .detail
+                        .contains("pure named Struct requires supported representation derives")
+                );
+            }
+        }
+    }
+    let mut plain_tuple = source(
+        "plain",
+        Expr::Tuple {
+            elements: vec![literal(); 9],
+        },
+    );
+    plain_tuple.result = Type::Tuple {
+        elements: vec![Type::Field; 9],
+    };
+    certify(&[plain_tuple], "plain").unwrap();
+}

@@ -19,6 +19,7 @@ fn render_error(error: LimitError) -> crate::RenderError {
 struct Types<'a> {
     scan: Scan<'a>,
     types: Vec<&'a Type>,
+    defaults: Vec<&'a Type>,
 }
 impl<'a> Types<'a> {
     fn new() -> Self {
@@ -36,6 +37,7 @@ impl<'a> Types<'a> {
                 edges: Vec::new(),
             },
             types: Vec::new(),
+            defaults: Vec::new(),
         }
     }
     fn source(&mut self, node: Node<'a>) -> Result<(), LimitError> {
@@ -57,6 +59,9 @@ impl<'a> Types<'a> {
             }
             if let Node::Type(ty) = visit.node {
                 self.types.push(ty);
+            }
+            if let Node::Expr(crate::ir::Expr::Default { ty }) = visit.node {
+                self.defaults.push(ty);
             }
             children(visit, &mut self.scan)?;
         }
@@ -121,4 +126,27 @@ pub(crate) fn recording_source_types<'a>(
 /// Fixed byte leaves per checked aggregate type, not total runtime memory.
 pub(crate) fn recording_byte_payload_limit() -> usize {
     Limits::DEFAULT.literal_bytes
+}
+
+/// Annotations from one reachable pure body, using the exhaustive preflight.
+pub(crate) struct RecordingPureAnnotations<'a> {
+    pub(crate) types: Vec<&'a Type>,
+    pub(crate) defaults: Vec<&'a Type>,
+}
+pub(crate) fn recording_pure_annotations(
+    circuit: &PureCircuit,
+) -> Result<RecordingPureAnnotations<'_>, crate::RenderError> {
+    let mut bounded = Types::new();
+    bounded
+        .source(Node::PureCircuit(circuit))
+        .map_err(render_error)?;
+    Ok(RecordingPureAnnotations {
+        types: bounded.types,
+        defaults: bounded.defaults,
+    })
+}
+
+/// Per-used-type fixed layout expansion; dynamic opaque payloads are not counted.
+pub(crate) fn recording_fixed_layout_limit() -> usize {
+    Limits::DEFAULT.nodes
 }

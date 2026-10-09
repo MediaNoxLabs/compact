@@ -31,8 +31,11 @@ impl Lowerer<'_> {
         for parameter in &signature.parameters {
             self.declarations.types().validate_at(&parameter.ty, path)?;
         }
-        if !surface_type(&signature.result)
-            || signature.parameters.iter().any(|p| !surface_type(&p.ty))
+        if !super::super::validate::pure_interface_type(&signature.result)
+            || signature
+                .parameters
+                .iter()
+                .any(|p| !super::super::validate::pure_interface_type(&p.ty))
         {
             return Err(invalid(path, "unsupported pure call interface"));
         }

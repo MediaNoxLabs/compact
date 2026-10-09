@@ -17,7 +17,7 @@ pub(super) fn validate(
         Operation::EnumVariant { variant } => {
             matches!(ty, Type::Enum { variants, .. } if variants.contains(variant))
         }
-        Operation::Default => matches!(ty, Type::Struct { .. }) && surface_type(ty),
+        Operation::Default => matches!(ty, Type::Struct { .. }) && value_type(ty),
         Operation::StructConstruct { fields: values } => {
             let Type::Struct { fields, .. } = ty else {
                 return Ok(false);
@@ -45,6 +45,21 @@ pub(super) fn validate(
             fields
                 .get(*index)
                 .is_some_and(|member| member.name == *field && member.ty == *ty)
+        }
+        Operation::Vector { elements: values } => {
+            let Type::Vector { element, length } = ty else {
+                return Ok(false);
+            };
+            if *length != values.len() {
+                return Ok(false);
+            }
+            for value in values {
+                use_value(value)?;
+                if value.ty != **element {
+                    return Ok(false);
+                }
+            }
+            true
         }
         Operation::Tuple { elements: values } => {
             let Type::Tuple { elements } = ty else {

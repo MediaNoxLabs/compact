@@ -37,14 +37,14 @@ pub(super) fn validate(
         declarations.types().validate_at(&parameter.ty, path)?;
     }
     if source.result != binding.value.ty
-        || !surface_type(&source.result)
+        || !pure_interface_type(&source.result)
         || source.parameters.len() != arguments.len()
     {
         return Err(invalid(path, "pure call differs from certified signature"));
     }
     for (argument, parameter) in arguments.iter().zip(&source.parameters) {
         used(argument, scope, declarations, path)?;
-        if argument.ty != parameter.ty || !surface_type(&parameter.ty) {
+        if argument.ty != parameter.ty || !pure_interface_type(&parameter.ty) {
             return Err(invalid(
                 path,
                 "pure argument differs from certified signature",

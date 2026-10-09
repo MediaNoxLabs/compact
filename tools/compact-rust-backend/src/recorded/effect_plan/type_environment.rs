@@ -57,14 +57,17 @@ impl TypeEnvironment {
     pub(super) fn validate_at(&self, ty: &Type, path: &str) -> Result<(), RecordingGap> {
         let types = crate::resource_limits::recording_type_nodes(ty)
             .map_err(|error| invalid(path, error.to_string()))?;
-        check_byte_payloads(&types, path)?;
+        check_fixed_layouts(&types, path)?;
         for ty in types {
             match ty {
                 Type::Unit
                 | Type::Boolean
                 | Type::Field
                 | Type::JubjubPoint
-                | Type::Bytes { .. } => {}
+                | Type::Bytes { .. }
+                | Type::OpaqueString
+                | Type::OpaqueBytes
+                | Type::Vector { .. } => {}
                 Type::Unsigned { max } => {
                     crate::unsigned_maximum(max)
                         .map_err(|error| invalid(path, error.to_string()))?;
@@ -86,10 +89,7 @@ impl TypeEnvironment {
                     }
                 }
                 Type::Tuple { .. } => {}
-                Type::Vector { .. }
-                | Type::OpaqueString
-                | Type::OpaqueBytes
-                | Type::LedgerMap { .. } => {
+                Type::LedgerMap { .. } => {
                     return Err(invalid(
                         path,
                         "type is outside checked recording value domain",
@@ -116,31 +116,60 @@ fn unique_names<'a>(names: impl Iterator<Item = &'a str>) -> Result<(), Recordin
     Ok(())
 }
 
-/// Visit lists are parent-before-child. Compute each type's fixed-byte leaf sum
-/// once, in reverse, before any canonical equality. This cap is per aggregate;
-/// it is not a bound on all Field values, repeated calls, proving or runtime RAM.
-fn check_byte_payloads(types: &[&Type], path: &str) -> Result<(), RecordingGap> {
-    let mut payloads = HashMap::<*const Type, usize>::new();
-    let limit = crate::resource_limits::recording_byte_payload_limit();
+/// Visit lists are parent-before-child, including multiple source annotations.
+/// Charge fixed layout rather than syntax: a Vector type has one child annotation
+/// but its defaults, clones and generated array layout contain N children. Opaque
+/// leaves contribute one slot; their dynamic payload length is not bounded here.
+/// These per-type limits do not claim total runtime RAM or repeated-call bounds.
+pub(super) fn check_fixed_layouts(types: &[&Type], path: &str) -> Result<(), RecordingGap> {
+    #[derive(Clone, Copy)]
+    struct Layout {
+        bytes: usize,
+        slots: usize,
+    }
+    let mut layouts = HashMap::<*const Type, Layout>::new();
+    let byte_limit = crate::resource_limits::recording_byte_payload_limit();
+    let slot_limit = crate::resource_limits::recording_fixed_layout_limit();
     for &ty in types.iter().rev() {
-        let get = |child: &Type| payloads.get(&(child as *const Type)).copied().unwrap_or(0);
-        let bytes = match ty {
-            Type::Bytes { length } => *length,
-            Type::Struct { fields, .. } => fields
-                .iter()
-                .fold(0usize, |sum, f| sum.saturating_add(get(&f.ty))),
-            Type::Tuple { elements } => elements
-                .iter()
-                .fold(0usize, |sum, t| sum.saturating_add(get(t))),
-            _ => 0,
+        let get = |child: &Type| layouts[&(child as *const Type)];
+        let sum = |children: &mut dyn Iterator<Item = &Type>| {
+            children.fold(Layout { bytes: 0, slots: 1 }, |total, child| {
+                let child = get(child);
+                Layout {
+                    bytes: total.bytes.saturating_add(child.bytes),
+                    slots: total.slots.saturating_add(child.slots),
+                }
+            })
         };
-        if bytes > limit {
+        let layout = match ty {
+            Type::Bytes { length } => Layout {
+                bytes: *length,
+                slots: 1,
+            },
+            Type::Struct { fields, .. } => sum(&mut fields.iter().map(|f| &f.ty)),
+            Type::Tuple { elements } => sum(&mut elements.iter()),
+            Type::Vector { element, length } => {
+                let child = get(element);
+                Layout {
+                    bytes: child.bytes.saturating_mul(*length),
+                    slots: 1usize.saturating_add(child.slots.saturating_mul(*length)),
+                }
+            }
+            _ => Layout { bytes: 0, slots: 1 },
+        };
+        if layout.bytes > byte_limit {
             return Err(invalid(
                 path,
-                format!("fixed-byte aggregate payload exceeds {limit} bytes"),
+                format!("fixed-byte aggregate payload exceeds {byte_limit} bytes"),
             ));
         }
-        payloads.insert(ty as *const Type, bytes);
+        if layout.slots > slot_limit {
+            return Err(invalid(
+                path,
+                format!("fixed aggregate layout exceeds {slot_limit} slots"),
+            ));
+        }
+        layouts.insert(ty as *const Type, layout);
     }
     Ok(())
 }

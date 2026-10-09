@@ -41,3 +41,39 @@ pub(super) fn check(
     }
     Ok(())
 }
+
+/// The native emitter accepts Default syntax without checking Rust trait bounds.
+/// Guard only this operation: constructed large tuples remain valid local values.
+/// Inputs come from the exhaustive bounded borrowed source visitor above.
+pub(super) fn check_defaults(defaults: &[&Type], path: &str) -> Result<(), super::RecordingGap> {
+    for ty in defaults {
+        let nodes = crate::resource_limits::recording_type_nodes(ty)
+            .map_err(|error| super::invalid(path, error.to_string()))?;
+        if nodes
+            .iter()
+            .any(|ty| matches!(ty, Type::Tuple { elements } if elements.len() > 12))
+        {
+            return Err(super::invalid(
+                path,
+                "pure Default requires tuple arity at most 12, including nested vector elements",
+            ));
+        }
+    }
+    Ok(())
+}
+
+/// All named types in a reached body are emitted with representation derives,
+/// even when the value is constructed, unused, or absent from the signature.
+pub(super) fn check_named_structs(types: &[&Type], path: &str) -> Result<(), super::RecordingGap> {
+    for ty in types {
+        if matches!(ty, Type::Struct { .. })
+            && !super::super::validate::named_struct_derives_supported(ty)
+        {
+            return Err(super::invalid(
+                path,
+                "pure named Struct requires supported representation derives (tuple arity at most 8)",
+            ));
+        }
+    }
+    Ok(())
+}

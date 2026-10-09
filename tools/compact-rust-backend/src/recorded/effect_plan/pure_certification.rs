@@ -142,6 +142,14 @@ impl<'a> Certifier<'a> {
             .budget
             .check(source)
             .map_err(|e| invalid(path, e.to_string()))?;
+        // The native body checker can clone/coerce hidden local aggregate types.
+        // Bound their fixed layout before it runs, including all unused branches
+        // of this reachable body. Unreachable declarations are not charged.
+        let annotations = crate::resource_limits::recording_pure_annotations(source)
+            .map_err(|e| invalid(path, e.to_string()))?;
+        super::type_environment::check_fixed_layouts(&annotations.types, path)?;
+        native::check_named_structs(&annotations.types, path)?;
+        native::check_defaults(&annotations.defaults, path)?;
         let normalized =
             crate::semantic_identifier(name).map_err(|e| invalid(path, e.to_string()))?;
         if self

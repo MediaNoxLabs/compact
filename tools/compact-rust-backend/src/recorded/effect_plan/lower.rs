@@ -8,7 +8,7 @@ use super::{
     declarations::Declarations,
     invalid,
     model::*,
-    validate::{scalar, surface_type, uint},
+    validate::{surface_type, uint},
 };
 use crate::ir::*;
 use std::collections::HashMap;
@@ -168,9 +168,7 @@ impl Lowerer<'_> {
         if value.ty == *ty {
             return Ok(value);
         }
-        let valid = scalar(ty)
-            && ((super::validate::unsigned_bound(&value.ty).is_some() && *ty == Type::Field)
-                || matches!((super::validate::bound(&value.ty), super::validate::bound(ty)), (Some(a),Some(b)) if a <= b));
+        let valid = super::validate::coercible(&value.ty, ty);
         if !valid {
             return Err(invalid(
                 path,
@@ -309,7 +307,7 @@ impl Lowerer<'_> {
             return Err(invalid(path, "branch result types differ"));
         }
         let ty = then_result.ty.clone();
-        if !surface_type(&ty) {
+        if !super::validate::value_type(&ty) {
             return Err(invalid(path, "unsupported branch result type"));
         }
         Ok(self.emit(

@@ -8,6 +8,7 @@ use crate::ir::{LedgerFieldKind, Type};
 use std::collections::{HashMap, HashSet};
 mod aggregates;
 mod calls;
+mod domain;
 mod pure;
 
 struct Validation {
@@ -65,18 +66,29 @@ pub(super) fn equality_type(ty: &Type) -> bool {
     match ty {
         Type::JubjubPoint => false,
         Type::Struct { fields, .. } => {
-            surface_type(ty) && fields.iter().all(|field| equality_type(&field.ty))
+            value_type(ty) && fields.iter().all(|field| equality_type(&field.ty))
         }
+        Type::Vector { element, .. } => value_type(ty) && equality_type(element),
         // Rust's standard tuple PartialEq implementations stop at arity 12.
         // Larger tuple temporaries remain valid; only this == operation refuses.
         Type::Tuple { elements } => elements.len() <= 12 && elements.iter().all(equality_type),
         _ => value_type(ty),
     }
 }
+/// Named structs acquire representation derives even when used only in pure bodies.
+pub(super) fn named_struct_derives_supported(ty: &Type) -> bool {
+    matches!(ty, Type::Struct { .. }) && domain::derives_supported(ty)
+}
 pub(super) fn value_type(ty: &Type) -> bool {
-    surface_type(ty)
-        || unsigned_bound(ty).is_some()
-        || matches!(ty, Type::Tuple { elements } if elements.iter().all(value_type))
+    domain::value_type(ty)
+}
+/// Context-free helpers may exchange local owned values; stateful/ABI boundaries
+/// still use surface_type. Wide and tuple interfaces are intentional here.
+pub(super) fn pure_interface_type(ty: &Type) -> bool {
+    value_type(ty)
+}
+pub(super) fn coercible(source: &Type, target: &Type) -> bool {
+    domain::coercible(source, target)
 }
 pub(super) fn wide_literal_fits(bytes: &[u8; 32], ty: &Type) -> bool {
     let Some(crate::UnsignedMaximum::Wide { high, low }) = unsigned_bound(ty) else {
@@ -213,7 +225,8 @@ fn block(
             | Operation::Default
             | Operation::StructConstruct { .. }
             | Operation::StructProject { .. }
-            | Operation::Tuple { .. } => aggregates::validate(binding, declarations, &scope)?,
+            | Operation::Tuple { .. }
+            | Operation::Vector { .. } => aggregates::validate(binding, declarations, &scope)?,
             Operation::CreateZswapInput { coin } => {
                 use_value(coin)?;
                 coin.ty == crate::coin_shapes::qualified_coin_type() && *ty == Type::Unit
@@ -287,11 +300,7 @@ fn block(
             Operation::Convert { value, kind } => {
                 use_value(value)?;
                 match kind {
-                    Conversion::Coerce => {
-                        value.ty == *ty
-                            || (unsigned_bound(&value.ty).is_some() && *ty == Type::Field)
-                            || matches!((bound(&value.ty), bound(ty)), (Some(a),Some(b)) if a <= b)
-                    }
+                    Conversion::Coerce => coercible(&value.ty, ty),
                     Conversion::UnsignedCast => bound(&value.ty).is_some() && bound(ty).is_some(),
                 }
             }
@@ -365,7 +374,7 @@ fn block(
                 use_value(condition)?;
                 block(then, declarations, &scope, state, path)?;
                 block(otherwise, declarations, &scope, state, path)?;
-                surface_type(ty)
+                value_type(ty)
                     && condition.ty == Type::Boolean
                     && then.result.ty == *ty
                     && otherwise.result.ty == *ty

@@ -21,7 +21,8 @@ mod policy;
 mod pure;
 use crate::ir::Contract;
 pub(crate) use borrowed_types::{
-    recording_byte_payload_limit, recording_source_types, recording_type_nodes,
+    recording_byte_payload_limit, recording_fixed_layout_limit, recording_pure_annotations,
+    recording_source_types, recording_type_nodes,
 };
 use policy::{LimitError, Limits, ResourceKind as Kind, check};
 pub(crate) use pure::PureBodyBudget;

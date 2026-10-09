@@ -190,7 +190,7 @@ class FocusedTargetChecks(unittest.TestCase):
                     output = Path(args[-1]) / "contract"
                     output.mkdir(parents=True)
                     (output / "lib.rs").write_text(
-                        "runtime::add_wide_unsigned runtime::narrow_wide_uint RUST_RUNTIME_ABI == 50")
+                        "runtime::add_wide_unsigned runtime::narrow_wide_uint RUST_RUNTIME_ABI == 51")
                     (output / "rust-capabilities.json").write_text(json.dumps({"circuits": [{
                         "recorded": False, "observed_call": False, "proof_required": False,
                         "recording_status": "not_applicable"}]}))

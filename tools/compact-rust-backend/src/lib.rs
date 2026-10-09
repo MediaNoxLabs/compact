@@ -19,7 +19,7 @@ mod type_declarations;
 mod value_lowering;
 mod witness;
 
-const RUNTIME_ABI_VERSION: u32 = 50;
+const RUNTIME_ABI_VERSION: u32 = 51;
 
 const GENERATED_HEADER: &str = r#"// This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
@@ -3327,7 +3327,7 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
                     &mut 0,
                 )?;
             } else {
-                for step in &constructor.steps {
+                for (preparation_index, step) in constructor.steps.iter().enumerate() {
                     let ConstructorStep::CellWrite {
                         field,
                         index,
@@ -3354,13 +3354,13 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
                         });
                     }
                     let name = syn::Ident::new(
-                        &format!(
-                            "__compact_constructor_value_{}",
-                            constructor_preparations.len()
-                        ),
+                        &format!("__compact_constructor_value_{preparation_index}"),
                         Span::call_site(),
                     );
                     constructor_preparations.push(syn::parse_quote!(let #name = #value;));
+                    constructor_preparations.push(syn::parse_quote!(
+                        runtime::ledger::CellValue::validate_cell_value(&#name)?;
+                    ));
                     constructor_values.insert(field.as_str(), syn::parse_quote!(#name));
                 }
             }
@@ -3389,7 +3389,7 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
                 .map(|value| retained_value(value.clone(), ty))
                 .unwrap_or_else(|| syn::parse_quote!(Default::default()));
             let ty = rust_type(ty)?;
-            Ok(syn::parse_quote!(runtime::ledger::constructor_cell::<#ty, runtime::ledger::DefaultDB>(#value)))
+            Ok(syn::parse_quote!(runtime::ledger::try_constructor_cell::<#ty, runtime::ledger::DefaultDB>(#value)?))
         }
     }).collect::<Result<Vec<syn::Expr>, RenderError>>()?;
 

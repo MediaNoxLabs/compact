@@ -39,7 +39,7 @@ fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
     assert!(source.contains("::midnight_compact_runtime::CompactCellValue"));
     assert!(source.contains("::midnight_compact_runtime::CompactEnum"));
     assert!(source.contains("pub enum Choice"));
-    assert!(source.contains("RUST_RUNTIME_ABI == 50"));
+    assert!(source.contains("RUST_RUNTIME_ABI == 51"));
     assert!(!source.contains("impl FieldRepr for Choice"));
     assert!(!source.contains("impl BinaryHashRepr for Choice"));
     assert!(!source.contains("impl FromFieldRepr for Choice"));

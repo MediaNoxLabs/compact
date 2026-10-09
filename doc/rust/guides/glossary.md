@@ -26,7 +26,7 @@ In this implementation, **runtime ABI** is our project-specific compatibility ma
 At this checkpoint, generated code contains:
 
 ```rust
-const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+const _: () = assert!(runtime::RUST_RUNTIME_ABI == 51);
 ```
 
 The generator expects ABI 50 and the selected runtime must advertise ABI 50. A mismatch fails compilation. For example, when generated code requires a new incompatible representation or runtime interface, changing this marker prevents accidental use with an older runtime. Matching numbers are a compatibility guard; they do not authenticate sources or independently prove correctness.

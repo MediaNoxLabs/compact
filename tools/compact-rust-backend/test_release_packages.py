@@ -71,7 +71,7 @@ class ReleaseInspectionTests(unittest.TestCase):
         return path
 
     def test_current_pair_and_external_target_archive(self):
-        self.assertEqual(release.compatibility_record()["runtime_abi"], 50)
+        self.assertEqual(release.compatibility_record()["runtime_abi"], 51)
         path = self.archive()
         receipt = release.inspect_package("midnight-compact-runtime")
         self.assertEqual(receipt["archive"], str(path))
@@ -99,7 +99,7 @@ class ReleaseInspectionTests(unittest.TestCase):
 
     def test_stale_source_record_refused(self):
         path = self.root / "runtime-rs/compatibility.json"
-        path.write_text(path.read_text().replace('"runtime_abi": 50', '"runtime_abi": 49'))
+        path.write_text(path.read_text().replace('"runtime_abi": 51', '"runtime_abi": 49'))
         with self.assertRaisesRegex(RuntimeError, "differs from compiler"):
             release.compatibility_record()
 

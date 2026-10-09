@@ -314,7 +314,7 @@ pub fn merkle_insert_index_default<T: CellValue + Default, D: DB>(
     merkle_insert_index_hashed(
         context,
         path,
-        AlignedValue::from(leaf_hash_for(T::default())),
+        AlignedValue::from(leaf_hash_for(T::default()).map_err(super::input_rejected)?),
         position,
         MerkleHistory::CurrentOnly,
         gas_limit,
@@ -333,7 +333,7 @@ pub fn merkle_insert_index<T: CellValue, D: DB>(
     merkle_insert_index_hashed(
         context,
         path,
-        AlignedValue::from(leaf_hash_for(item)),
+        AlignedValue::from(leaf_hash_for(item).map_err(super::input_rejected)?),
         position,
         MerkleHistory::CurrentOnly,
         gas_limit,
@@ -370,7 +370,7 @@ pub fn merkle_insert<T: CellValue, D: DB>(
     merkle_insert_hashed(
         context,
         path,
-        AlignedValue::from(leaf_hash_for(item)),
+        AlignedValue::from(leaf_hash_for(item).map_err(super::input_rejected)?),
         MerkleHistory::CurrentOnly,
         gas_limit,
         cost_model,
@@ -405,7 +405,7 @@ pub fn historic_insert_index_default<T: CellValue + Default, D: DB>(
     merkle_insert_index_hashed(
         context,
         path,
-        AlignedValue::from(leaf_hash_for(T::default())),
+        AlignedValue::from(leaf_hash_for(T::default()).map_err(super::input_rejected)?),
         position,
         MerkleHistory::Historic,
         gas_limit,
@@ -413,10 +413,9 @@ pub fn historic_insert_index_default<T: CellValue + Default, D: DB>(
     )
 }
 
-fn leaf_hash_for<T: CellValue>(item: T) -> HashOutput {
-    let aligned = AlignedValue::new(item.into(), T::alignment())
-        .expect("a typed Compact value must fit its alignment");
-    leaf_hash(&ValueReprAlignedValue(aligned))
+fn leaf_hash_for<T: CellValue>(item: T) -> Result<HashOutput, CompactError> {
+    let aligned = super::try_aligned_cell_value(item)?;
+    Ok(leaf_hash(&ValueReprAlignedValue(aligned)))
 }
 
 /// Insert a typed leaf at a given index and record the resulting root.
@@ -431,7 +430,7 @@ pub fn historic_insert_index<T: CellValue, D: DB>(
     merkle_insert_index_hashed(
         context,
         path,
-        AlignedValue::from(leaf_hash_for(item)),
+        AlignedValue::from(leaf_hash_for(item).map_err(super::input_rejected)?),
         position,
         MerkleHistory::Historic,
         gas_limit,
@@ -580,7 +579,7 @@ pub(crate) fn merkle_insert_index_program<T: CellValue, D: DB>(
 ) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
     merkle_insert_index_hashed_program(
         path.into(),
-        AlignedValue::from(leaf_hash_for(item)),
+        AlignedValue::from(leaf_hash_for(item).map_err(super::input_rejected)?),
         position,
         MerkleHistory::CurrentOnly,
     )
@@ -600,14 +599,6 @@ pub(crate) fn merkle_insert_hash_index_program<D: DB>(
     )
 }
 
-/// Build ledger-8's default-leaf indexed insertion program for recording.
-pub(crate) fn merkle_insert_index_default_program<T: CellValue + Default, D: DB>(
-    path: impl Into<LedgerPath>,
-    position: u64,
-) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
-    merkle_insert_index_program(path, T::default(), position)
-}
-
 pub(crate) fn historic_merkle_insert_index_program<T: CellValue, D: DB>(
     path: impl Into<LedgerPath>,
     item: T,
@@ -615,7 +606,7 @@ pub(crate) fn historic_merkle_insert_index_program<T: CellValue, D: DB>(
 ) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
     merkle_insert_index_hashed_program(
         path.into(),
-        AlignedValue::from(leaf_hash_for(item)),
+        AlignedValue::from(leaf_hash_for(item).map_err(super::input_rejected)?),
         position,
         MerkleHistory::Historic,
     )
@@ -635,13 +626,6 @@ pub(crate) fn historic_merkle_insert_hash_index_program<D: DB>(
     )
 }
 
-pub(crate) fn historic_merkle_insert_index_default_program<T: CellValue + Default, D: DB>(
-    path: impl Into<LedgerPath>,
-    position: u64,
-) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
-    historic_merkle_insert_index_program(path, T::default(), position)
-}
-
 /// Insert a typed leaf at the first free index and record the resulting root.
 pub fn historic_insert<T: CellValue, D: DB>(
     context: &QueryContext<D>,
@@ -653,7 +637,7 @@ pub fn historic_insert<T: CellValue, D: DB>(
     merkle_insert_hashed(
         context,
         path,
-        AlignedValue::from(leaf_hash_for(item)),
+        AlignedValue::from(leaf_hash_for(item).map_err(super::input_rejected)?),
         MerkleHistory::Historic,
         gas_limit,
         cost_model,
@@ -775,7 +759,7 @@ pub(crate) fn merkle_insert_program<T: CellValue, D: DB>(
 ) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
     merkle_insert_hashed_program(
         path.into(),
-        AlignedValue::from(leaf_hash_for(item)),
+        AlignedValue::from(leaf_hash_for(item).map_err(super::input_rejected)?),
         MerkleHistory::CurrentOnly,
     )
 }
@@ -812,7 +796,7 @@ pub(crate) fn historic_merkle_insert_program<T: CellValue, D: DB>(
 ) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
     merkle_insert_hashed_program(
         path.into(),
-        AlignedValue::from(leaf_hash_for(item)),
+        AlignedValue::from(leaf_hash_for(item).map_err(super::input_rejected)?),
         MerkleHistory::Historic,
     )
 }
@@ -1078,6 +1062,7 @@ fn check_root_program<T: CellValue, M: ResultMode<D>, D: DB>(
     read_result: M::ReadResult,
 ) -> Result<Vec<Op<M, D>>, CompactError> {
     super::checked_index_path::<D>(path.as_slice()).map_err(super::query_rejected)?;
+    let root = super::try_constructor_cell(root)?;
     let historic = matches!(history, MerkleHistory::Historic);
     let index = if historic { 2_u8 } else { 0_u8 };
     let index_key = vec![Key::Value(AlignedValue::from(index))].into();
@@ -1098,7 +1083,7 @@ fn check_root_program<T: CellValue, M: ResultMode<D>, D: DB>(
         program.extend([
             Op::Push {
                 storage: false,
-                value: constructor_cell(root),
+                value: root,
             },
             Op::Member,
         ]);
@@ -1107,7 +1092,7 @@ fn check_root_program<T: CellValue, M: ResultMode<D>, D: DB>(
             Op::Root,
             Op::Push {
                 storage: false,
-                value: constructor_cell(root),
+                value: root,
             },
             Op::Eq,
         ]);
@@ -1225,7 +1210,8 @@ mod query_program_tests {
             serde_json::from_str(include_str!("../../tests/fixtures/hmt-insert-oracle.json"))
                 .unwrap();
         let path = || LedgerPath::from(&[0_u8][..]);
-        let hash = || AlignedValue::from(leaf_hash_for(BoundedUint::<255>::new(7).unwrap()));
+        let hash =
+            || AlignedValue::from(leaf_hash_for(BoundedUint::<255>::new(7).unwrap()).unwrap());
         let plain_state = StateValue::Array(vec![constructor_merkle_tree::<DefaultDB>(3)].into());
         let plain_root = merkle_tree_view_at_path(&plain_state, &[0])
             .unwrap()
@@ -1282,3 +1268,7 @@ mod query_program_tests {
         );
     }
 }
+
+#[cfg(test)]
+#[path = "merkle_input_tests.rs"]
+mod input_tests;

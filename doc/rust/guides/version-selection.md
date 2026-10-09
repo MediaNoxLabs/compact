@@ -18,7 +18,7 @@ Current policy, 2026-10-07. Version values match the accepted5efa91c2 compatibil
 | Native ledger | 8.0.3 | Pinned ledger graph |
 | Declared native MSRV | Rust1.88 | Qualified only with the documented lock/features/host |
 
-Generated Rust asserts `runtime::RUST_RUNTIME_ABI == 50`. Matching this number helps detect an accidental mismatch; it does not authenticate arbitrary source or establish semantic correctness by itself.
+Generated Rust asserts `runtime::RUST_RUNTIME_ABI == 51`. Matching this number helps detect an accidental mismatch; it does not authenticate arbitrary source or establish semantic correctness by itself.
 
 ## Obtain a matching source distribution
 

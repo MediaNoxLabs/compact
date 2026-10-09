@@ -42,3 +42,29 @@ To refresh retained IR, compile the original source with the pinned ledger-8
 frontend and `--target rust --skip-zk`, then compare the complete
 `contract/compact-rust-ir.json` before replacing
 `tools/compact-rust-backend/tests/effect-plan-owned-cells-schema20-ir.json`.
+
+## Checked opaque inputs (runtime ABI 51)
+
+A second complete source, `examples/rust_backend/opaque_cell_inputs.compact`,
+is built into the `opaque_inputs` integration-test crate. Its constructor and
+three native setters accept raw opaque inputs and nested aggregate children.
+Their recording capabilities remain unavailable; this intentionally preserves
+the existing interface policy.
+
+The added tests require constructors and native setters to reject trailing-zero
+bytes and NUL-tail strings with the fixed `InvalidLedgerCell` error before
+normalizing conversion. Empty and embedded-zero canonical values must roundtrip.
+Separate tests call official native/recorded CellSlot adapters with invalid raw
+payloads, including nested aggregates. A valid but absent nested path distinguishes
+encoding rejection from a later VM-query error. These adapter tests are not
+presented as generated recorded source executions; that source input interface
+is not supported. The previous legacy-infallible-constructor normalization
+characterization remains explicit.
+
+The additional `opaque_constructor_order.compact` source pins assignment order:
+an invalid first string assignment must fail before a later pure assertion is
+evaluated. Its four source-native cases match a fresh pinned TS constructor
+execution. This actual source uses the VM constructor path because the frontend emits a
+Let around the pure call. Separately, the direct-assignment constructor has an
+AST test for alternating RHS binding and immediate validation, preventing
+no-VM batching of validations; temporary numbering stays unchanged.

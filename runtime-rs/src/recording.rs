@@ -225,6 +225,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         path: impl Into<LedgerPath>,
         value: T,
     ) -> Result<Self, CompactError> {
+        value.validate_cell_value()?;
         let path = path.into();
         let program = ledger::cell_write_program(path.as_slice(), value);
         self.apply_checked_verify_program(program)
@@ -308,6 +309,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         path: impl Into<LedgerPath>,
         value: T,
     ) -> Result<Self, CompactError> {
+        value.validate_cell_value()?;
         let path = path.into();
         self.apply_checked_verify_program(ledger::set_insert_program(path.as_slice(), value))
     }
@@ -334,6 +336,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         path: impl Into<LedgerPath>,
         value: T,
     ) -> Result<Self, CompactError> {
+        value.validate_cell_value()?;
         let path = path.into();
         self.apply_checked_verify_program(ledger::set_remove_program(path.as_slice(), value))
     }
@@ -417,6 +420,8 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         key: K,
         value: V,
     ) -> Result<Self, CompactError> {
+        key.validate_cell_value()?;
+        value.validate_cell_value()?;
         let path = path.into();
         self.apply_checked_verify_program(ledger::map_insert_program(path.as_slice(), key, value))
     }
@@ -479,6 +484,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         path: impl Into<LedgerPath>,
         value: T,
     ) -> Result<Self, CompactError> {
+        value.validate_cell_value()?;
         self.apply_checked_verify_program(ledger::list_push_front_program(path, value))
     }
 

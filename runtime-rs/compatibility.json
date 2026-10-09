@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "runtime_abi": 50,
+  "runtime_abi": 51,
   "ir_schema": 20,
   "capability_schema": 3,
   "ledger_version": "ledger-8.0.3",

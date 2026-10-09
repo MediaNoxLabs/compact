@@ -97,6 +97,12 @@ fn checked_index_path<D: DB>(path: &[u8]) -> Result<(), TranscriptRejected<D>> {
     }
 }
 
+/// Preserve rejection in low-level APIs whose public error is the official VM type.
+/// CompactError-returning entry points validate first to retain the typed error.
+pub(crate) fn input_rejected<D: DB>(error: CompactError) -> TranscriptRejected<D> {
+    midnight_onchain_vm::error::OnchainProgramError::InvalidArgs(error.to_string()).into()
+}
+
 fn query_rejected<D: DB>(error: TranscriptRejected<D>) -> CompactError {
     CompactError::LedgerQueryRejected(format!("{error:?}"))
 }
@@ -116,6 +122,16 @@ fn checked_field_path<D: DB>(path: &[u8]) -> Result<(&u8, &[u8]), TranscriptReje
 /// upstream FAB conversions while keeping each type's declared alignment.
 pub trait CellValue: Aligned + Into<Value> + Sized {
     fn decode_cell_value(value: &ValueSlice) -> Result<Self, CompactError>;
+
+    /// Reject raw inputs that would lose information during FAB conversion.
+    /// Scalar implementations may use the default when every value is canonical.
+    /// Manual aggregate implementations must recursively validate their members;
+    /// generated CompactCellValue implementations do this automatically.
+    /// Validation must be deterministic and must not mutate application state;
+    /// adapters may call it more than once before consuming the value.
+    fn validate_cell_value(&self) -> Result<(), CompactError> {
+        Ok(())
+    }
 }
 
 /// Expose the ledger address bytes for Compact's stdlib ContractAddress struct.
@@ -248,6 +264,13 @@ impl<const N: usize> CellValue for FixedBytes<N> {
 }
 
 impl<T: CellValue, const N: usize> CellValue for FixedVector<T, N> {
+    fn validate_cell_value(&self) -> Result<(), CompactError> {
+        for element in &self.0 {
+            element.validate_cell_value()?;
+        }
+        Ok(())
+    }
+
     fn decode_cell_value(value: &ValueSlice) -> Result<Self, CompactError> {
         let atoms_per_element = T::alignment().0.len();
         if value.0.len() != N * atoms_per_element {
@@ -286,6 +309,12 @@ macro_rules! tuple_cell_value {
         where
             $(Value: From<$name>,)+
         {
+            fn validate_cell_value(&self) -> Result<(), CompactError> {
+                let ($($name,)+) = self;
+                $($name.validate_cell_value()?;)+
+                Ok(())
+            }
+
             fn decode_cell_value(value: &ValueSlice) -> Result<Self, CompactError> {
                 let mut offset = 0;
                 $(let $name = {
@@ -344,11 +373,11 @@ mod merkle;
 
 pub(crate) use cell::{
     aligned_cell_value, cell_read_program, cell_write_program, decode_last_read,
-    qualified_coin_cell_write_program_for_context,
+    qualified_coin_cell_write_program_for_context, try_aligned_cell_value,
 };
 pub use cell::{
     constructor_cell, query_cell, query_cell_at_path, read_cell, read_cell_at_path, read_root_cell,
-    write_cell, write_cell_at_path, write_qualified_coin_cell,
+    try_constructor_cell, write_cell, write_cell_at_path, write_qualified_coin_cell,
 };
 pub use collections::{
     ListView, MapView, MeteredListView, MeteredMapView, MeteredSetView, SetView, constructor_list,
@@ -386,10 +415,9 @@ pub use merkle::{
 };
 pub(crate) use merkle::{
     historic_merkle_insert_hash_index_program, historic_merkle_insert_hash_program,
-    historic_merkle_insert_index_default_program, historic_merkle_insert_index_program,
-    historic_merkle_insert_program, historic_reset_history_program,
-    historic_reset_to_default_program, merkle_insert_hash_index_program,
-    merkle_insert_hash_program, merkle_insert_index_default_program, merkle_insert_index_program,
+    historic_merkle_insert_index_program, historic_merkle_insert_program,
+    historic_reset_history_program, historic_reset_to_default_program,
+    merkle_insert_hash_index_program, merkle_insert_hash_program, merkle_insert_index_program,
     merkle_reset_program,
 };
 

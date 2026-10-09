@@ -11,7 +11,25 @@ queries. Generated code checks `RUST_RUNTIME_ABI` at compile time. A generated
 crate bundles matching runtime sources by default or points to one shared
 source root when compiled with `--rust-runtime-root`.
 
-The current runtime ABI is 50. The following paragraphs record earlier ABI additions.
+The current runtime ABI is 51. The following paragraphs record earlier ABI additions.
+ABI 51 adds checked Cell construction and recursively validates opaque ledger inputs
+before native/recorded storage, collection keys and values, and typed Merkle leaf
+hashing. Generated constructors use `try_constructor_cell` and return
+`CompactError::InvalidLedgerCell` for opaque bytes or strings ending in a zero byte.
+Empty values and embedded zeros with a nonzero suffix remain valid; fixed-width
+`FixedBytes` values retain their existing encoding, including trailing zeros.
+
+Use `try_constructor_cell` and `SetView::try_member` / `MapView::try_member` for
+caller-provided data. The infallible `constructor_cell` and held-view `member`
+methods retain legacy upstream normalization for compatibility. Raw `Into<Value>`
+and generic native cryptographic functions retain their existing semantics.
+Manual `CellValue` implementations must implement `validate_cell_value` recursively
+if their fields can lose information during encoding; `CompactCellValue` derives,
+tuples and fixed vectors do this automatically. Validation rejects the current
+operation before its VM query; it does not roll back earlier completed operations.
+Low-level APIs returning the official `TranscriptRejected` preserve that error type;
+high-level context/recording APIs preserve `InvalidLedgerCell` for raw opaque input.
+
 ABI 49 added `RecordingFrame::own_coin_public_key`,
 retaining the native Bytes32 private output without a public query. Observed
 execution identity is explicit and sealed through preparation; it selects a

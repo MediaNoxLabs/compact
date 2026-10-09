@@ -18,7 +18,7 @@
 use super::{
     CellValue, CompactError, LedgerArray, LedgerHashMap, LedgerPath, QueryContext, QueryResults,
     StateValue, TranscriptRejected, aligned_cell_value, constructor_cell, decode_last_read,
-    field_at_path, path_keys, read_cell,
+    field_at_path, path_keys, read_cell, try_aligned_cell_value, try_constructor_cell,
 };
 use crate::BoundedUint;
 use crate::context::WitnessReadMeter;
@@ -94,8 +94,14 @@ pub fn set_view_at_path<'a, T: CellValue, D: DB>(
 }
 
 impl<T: CellValue, D: DB> SetView<'_, T, D> {
+    /// Legacy infallible lookup: upstream FAB conversion may normalize opaque keys.
+    /// Use `try_member` to reject noncanonical input before encoding.
     pub fn member(&self, value: T) -> bool {
         self.map.contains_key(&aligned_cell_value(value))
+    }
+
+    pub fn try_member(&self, value: T) -> Result<bool, CompactError> {
+        Ok(self.map.contains_key(&try_aligned_cell_value(value)?))
     }
 
     pub fn size(&self) -> Result<BoundedUint<{ u64::MAX as u128 }>, CompactError> {
@@ -173,14 +179,20 @@ pub fn map_view_at_path<'a, K: CellValue, V: CellValue, D: DB>(
 }
 
 impl<K: CellValue, V: CellValue, D: DB> MapView<'_, K, V, D> {
+    /// Legacy infallible lookup: upstream FAB conversion may normalize opaque keys.
+    /// Use `try_member` to reject noncanonical input before encoding.
     pub fn member(&self, key: K) -> bool {
         self.map.contains_key(&aligned_cell_value(key))
+    }
+
+    pub fn try_member(&self, key: K) -> Result<bool, CompactError> {
+        Ok(self.map.contains_key(&try_aligned_cell_value(key)?))
     }
 
     pub fn lookup(&self, key: K) -> Result<V, CompactError> {
         let value = self
             .map
-            .get(&aligned_cell_value(key))
+            .get(&try_aligned_cell_value(key)?)
             .ok_or_else(|| CompactError::InvalidLedgerCell("Map key is absent".into()))?;
         read_cell(&value)
     }
@@ -396,8 +408,7 @@ pub(crate) fn list_head_program<T: CellValue + Default, R: ResultMode<D>, D: DB>
     let path = path.into();
     super::checked_index_path::<D>(path.as_slice()).map_err(super::query_rejected)?;
     let alignment = T::alignment();
-    let default = AlignedValue::new(T::default().into(), alignment.clone())
-        .expect("default CellValue must match its alignment");
+    let default = try_aligned_cell_value(T::default())?;
     // Compact's VMmax-sizeof uses the alignment's maximum encoded size,
     // including for a zero value whose actual serialization is shorter.
     let concat_bound = (2 + alignment.max_aligned_size()) as u32;
@@ -480,7 +491,12 @@ pub(crate) fn list_push_front_program<T: CellValue, D: DB>(
         Op::Push {
             storage: true,
             value: StateValue::Array(
-                vec![constructor_cell(value), StateValue::Null, StateValue::Null].into(),
+                vec![
+                    try_constructor_cell(value).map_err(super::input_rejected)?,
+                    StateValue::Null,
+                    StateValue::Null,
+                ]
+                .into(),
             ),
         },
         Op::Swap { n: 0 },
@@ -608,11 +624,11 @@ pub(crate) fn map_insert_program<K: CellValue, V: CellValue, D: DB>(
         },
         Op::Push {
             storage: false,
-            value: constructor_cell(key),
+            value: try_constructor_cell(key).map_err(super::input_rejected)?,
         },
         Op::Push {
             storage: true,
-            value: constructor_cell(value),
+            value: try_constructor_cell(value).map_err(super::input_rejected)?,
         },
         Op::Ins {
             cached: false,
@@ -654,8 +670,7 @@ pub(crate) fn map_lookup_program<K: CellValue, M: ResultMode<D>, D: DB>(
     read_result: M::ReadResult,
 ) -> Result<Vec<Op<M, D>>, CompactError> {
     super::checked_index_path::<D>(path).map_err(super::query_rejected)?;
-    let key =
-        AlignedValue::new(key.into(), K::alignment()).expect("CellValue must match its alignment");
+    let key = try_aligned_cell_value(key)?;
     Ok(vec![
         Op::Dup { n: 0 },
         Op::Idx {
@@ -742,7 +757,7 @@ pub(crate) fn set_insert_program<T: CellValue, D: DB>(
         },
         Op::Push {
             storage: false,
-            value: constructor_cell(value),
+            value: try_constructor_cell(value).map_err(super::input_rejected)?,
         },
         Op::Push {
             storage: true,
@@ -864,7 +879,7 @@ pub(crate) fn set_member_program<T: CellValue, M: ResultMode<D>, D: DB>(
         },
         Op::Push {
             storage: false,
-            value: constructor_cell(value),
+            value: try_constructor_cell(value)?,
         },
         Op::Member,
         Op::Popeq {
@@ -904,7 +919,7 @@ pub(crate) fn set_remove_program<T: CellValue, D: DB>(
         },
         Op::Push {
             storage: false,
-            value: constructor_cell(value),
+            value: try_constructor_cell(value).map_err(super::input_rejected)?,
         },
         Op::Rem { cached: false },
         Op::Ins {
@@ -1067,3 +1082,7 @@ pub fn is_empty_set<D: DB>(
     let decoded = decode_last_read::<bool, D>(&result)?;
     Ok((result, decoded))
 }
+
+#[cfg(test)]
+#[path = "collections_input_tests.rs"]
+mod input_tests;

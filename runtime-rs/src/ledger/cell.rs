@@ -28,12 +28,27 @@ use midnight_onchain_vm::result_mode::{
 };
 use midnight_storage::db::DB;
 
+/// Legacy infallible FAB conversion. Variable opaque values ending in zero are
+/// normalized by the upstream conversion. Use try_constructor_cell for caller
+/// input; this compatibility helper does not validate raw values.
 pub fn constructor_cell<T, D>(value: T) -> StateValue<D>
 where
     T: CellValue,
     D: DB,
 {
     StateValue::from(aligned_cell_value(value))
+}
+
+/// Construct a Cell after validating raw input before official FAB conversion.
+pub fn try_constructor_cell<T: CellValue, D: DB>(value: T) -> Result<StateValue<D>, CompactError> {
+    try_aligned_cell_value(value).map(StateValue::from)
+}
+
+pub(crate) fn try_aligned_cell_value<T: CellValue>(value: T) -> Result<AlignedValue, CompactError> {
+    value.validate_cell_value()?;
+    AlignedValue::new(value.into(), T::alignment()).ok_or_else(|| {
+        CompactError::InvalidLedgerCell("CellValue does not match its declared alignment".into())
+    })
 }
 
 pub(crate) fn aligned_cell_value<T: CellValue>(value: T) -> AlignedValue {
@@ -170,6 +185,7 @@ pub(crate) fn cell_write_program<T: CellValue, D: DB>(
     value: T,
 ) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
     super::checked_index_path::<D>(path)?;
+    let cell = try_constructor_cell(value).map_err(super::input_rejected::<D>)?;
     if path.len() == 1 {
         // Compact emits a root Cell replacement as an insertion keyed by a
         // temporary Cell containing the ledger index. Preserve that program
@@ -181,7 +197,7 @@ pub(crate) fn cell_write_program<T: CellValue, D: DB>(
             },
             Op::Push {
                 storage: true,
-                value: constructor_cell(value),
+                value: cell,
             },
             Op::Ins {
                 cached: false,
@@ -204,7 +220,7 @@ pub(crate) fn cell_write_program<T: CellValue, D: DB>(
             },
             Op::Push {
                 storage: true,
-                value: constructor_cell(value),
+                value: cell,
             },
             Op::Ins {
                 cached: false,
@@ -226,7 +242,7 @@ pub(crate) fn cell_write_program<T: CellValue, D: DB>(
         Op::Pop,
         Op::Push {
             storage: true,
-            value: constructor_cell(value),
+            value: cell,
         },
         Op::Ins { cached: true, n: 1 },
     ])
@@ -396,3 +412,6 @@ mod qualified_coin_tests {
         }
     }
 }
+
+#[cfg(test)]
+mod input_validation;

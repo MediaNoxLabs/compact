@@ -247,6 +247,13 @@ fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
                 }
 
                 impl ::midnight_compact_runtime::ledger::CellValue for #name {
+                    fn validate_cell_value(
+                        &self,
+                    ) -> ::core::result::Result<(), ::midnight_compact_runtime::CompactError> {
+                        #(<#types as ::midnight_compact_runtime::ledger::CellValue>::validate_cell_value(&self.#names)?;)*
+                        ::core::result::Result::Ok(())
+                    }
+
                     fn decode_cell_value(
                         __compact_cell_value: &::midnight_compact_runtime::fab::ValueSlice,
                     ) -> ::core::result::Result<Self, ::midnight_compact_runtime::CompactError> {

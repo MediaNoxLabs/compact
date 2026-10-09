@@ -61,6 +61,46 @@ fn constructor_cell_parameters_are_typed_and_validated() {
         )
     );
 
+    // Constructor input validation is fallible and must propagate the error.
+    use syn::visit_mut::VisitMut;
+    #[derive(Default)]
+    struct CheckedCellCalls(usize);
+    impl VisitMut for CheckedCellCalls {
+        fn visit_expr_macro_mut(&mut self, expression: &mut syn::ExprMacro) {
+            if expression.mac.path.is_ident("vec") {
+                use syn::parse::Parser;
+                let mut elements =
+                    syn::punctuated::Punctuated::<syn::Expr, syn::Token![,]>::parse_terminated
+                        .parse2(expression.mac.tokens.clone())
+                        .expect("constructor state uses a comma-separated vec expression");
+                for element in &mut elements {
+                    self.visit_expr_mut(element);
+                }
+            }
+        }
+        fn visit_expr_try_mut(&mut self, expression: &mut syn::ExprTry) {
+            if let syn::Expr::Call(call) = expression.expr.as_ref()
+                && let syn::Expr::Path(path) = call.func.as_ref()
+                && path
+                    .path
+                    .segments
+                    .last()
+                    .is_some_and(|segment| segment.ident == "try_constructor_cell")
+            {
+                self.0 += 1;
+            }
+            syn::visit_mut::visit_expr_try_mut(self, expression);
+        }
+    }
+    let mut syntax = syn::parse_file(&source).unwrap();
+    let mut checked = CheckedCellCalls::default();
+    checked.visit_file_mut(&mut syntax);
+    assert_eq!(
+        checked.0, 1,
+        "one checked Cell constructor must propagate its Result"
+    );
+    assert!(!source.contains("::constructor_cell::"));
+
     let constructor = contract.constructor.as_mut().unwrap();
     let ConstructorStep::CellWrite { index, .. } = &mut constructor.steps[0] else {
         panic!("expected Cell write")
@@ -485,5 +525,57 @@ fn constructor_map_steps_validate_keys_values_and_use_vm_methods() {
             expected: Type::Field,
             actual: Type::Boolean,
         })
+    );
+}
+
+#[test]
+fn constructor_validates_each_direct_cell_rhs_before_the_next_assignment() {
+    use syn::visit_mut::VisitMut;
+    #[derive(Default)]
+    struct Order(Vec<String>);
+    impl VisitMut for Order {
+        fn visit_local_mut(&mut self, local: &mut syn::Local) {
+            if let syn::Pat::Ident(binding) = &local.pat
+                && binding
+                    .ident
+                    .to_string()
+                    .starts_with("__compact_constructor_value_")
+            {
+                self.0.push(format!("bind:{}", binding.ident));
+            }
+            syn::visit_mut::visit_local_mut(self, local);
+        }
+        fn visit_expr_call_mut(&mut self, call: &mut syn::ExprCall) {
+            if let syn::Expr::Path(path) = call.func.as_ref()
+                && path
+                    .path
+                    .segments
+                    .last()
+                    .is_some_and(|segment| segment.ident == "validate_cell_value")
+                && let Some(syn::Expr::Reference(value)) = call.args.first()
+                && let syn::Expr::Path(value) = value.expr.as_ref()
+                && let Some(name) = value.path.get_ident()
+            {
+                self.0.push(format!("validate:{name}"));
+            }
+            syn::visit_mut::visit_expr_call_mut(self, call);
+        }
+    }
+    let contract =
+        serde_json::from_str(include_str!("../opaque-cell-inputs-schema20-ir.json")).unwrap();
+    let source = render(&contract).unwrap();
+    let mut syntax = syn::parse_file(&source).unwrap();
+    let mut order = Order::default();
+    order.visit_file_mut(&mut syntax);
+    assert_eq!(
+        order.0,
+        [
+            "bind:__compact_constructor_value_0",
+            "validate:__compact_constructor_value_0",
+            "bind:__compact_constructor_value_1",
+            "validate:__compact_constructor_value_1",
+            "bind:__compact_constructor_value_2",
+            "validate:__compact_constructor_value_2",
+        ]
     );
 }

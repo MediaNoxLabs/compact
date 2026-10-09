@@ -35,12 +35,9 @@ use legacy::value_sources::{
 
 mod facade;
 mod guarded_mutations;
-use guarded_mutations::{
-    closed_authorized_enum_advance_steps, closed_authorized_optional_write_steps,
-    closed_organizer_gate_steps, closed_witness_admitted_merkle_insert_steps,
-};
 mod helpers;
 mod profile_attempt;
+mod profile_selection;
 mod pure_calls;
 use helpers::helper_ident;
 pub(crate) use helpers::plan_recorded_helpers;
@@ -4440,202 +4437,19 @@ fn render_recorded_item(
         }
     }
 
-    let mut typed_result = None;
-    // A closed profile may find a precise nested rejection while a later
-    // profile can still admit the same circuit. Retain it only for a coarse
-    // generic return gap after every existing profile has declined.
-    let mut shielded_send_rejection = None;
-    let mut composition_rejection = None;
-    let mut organizer_steps = if let Some(plan) = effectful_plan {
-        typed_result = Some(plan.result);
-        Some(plan.steps)
-    } else {
-        closed_organizer_gate_steps(circuit, ledger_fields, witnesses, pure_circuits, circuits)?
-            .or(closed_authorized_optional_write_steps(
-                circuit,
-                ledger_fields,
-                witnesses,
-                pure_circuits,
-            )?)
-            .or(closed_authorized_enum_advance_steps(
-                circuit,
-                ledger_fields,
-                witnesses,
-                pure_circuits,
-            )?)
-            .or(closed_witness_admitted_merkle_insert_steps(
-                circuit,
-                ledger_fields,
-                witnesses,
-                pure_circuits,
-            )?)
-    };
-    if organizer_steps.is_none()
-        && let Some(plan) =
-            typed_plan::lower(circuit, ledger_fields, witnesses, pure_circuits, circuits)
-                .or_else(|| {
-                    typed_plan::lower_jubjub_values(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                        circuits,
-                    )
-                })
-                .or_else(|| kernel_plan::lower(circuit, witnesses))
-                .or_else(|| {
-                    typed_plan::lower_context_query(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                    )
-                })
-                .or_else(|| {
-                    typed_plan::lower_composite(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                        circuits,
-                    )
-                })
-                .or_else(|| {
-                    typed_plan::lower_shielded_receive(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                        circuits,
-                    )
-                })
-                .or_else(|| {
-                    typed_plan::lower_voting_commit(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                        circuits,
-                    )
-                })
-                .or_else(|| {
-                    typed_plan::lower_funded_mint(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                        circuits,
-                    )
-                })
-                .or_else(|| {
-                    typed_plan::lower_guarded_deposit(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                        circuits,
-                    )
-                })
-                .or_else(|| {
-                    typed_plan::lower_shielded_merge(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                        circuits,
-                    )
-                })
-                .or_else(|| {
-                    typed_plan::lower_immediate_shielded_send(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                        circuits,
-                    )
-                })
-                .or_else(|| {
-                    match typed_plan::lower_shielded_send_checked(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                        circuits,
-                    ) {
-                        ProfileAttempt::Admitted(plan) => Some(plan),
-                        ProfileAttempt::Rejected(gap) => {
-                            shielded_send_rejection = Some(gap);
-                            None
-                        }
-                        ProfileAttempt::NotApplicable => None,
-                    }
-                })
-                .or_else(|| {
-                    typed_plan::lower_reset_payout(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                        circuits,
-                    )
-                })
-                .or_else(|| {
-                    typed_plan::lower_shielded_payout(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                        circuits,
-                    )
-                })
-                .or_else(|| {
-                    typed_plan::lower_terminal_returns(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                        circuits,
-                    )
-                })
-                .or_else(|| {
-                    typed_plan::lower_phase_reset(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                        circuits,
-                    )
-                })
-                .or_else(|| {
-                    typed_plan::lower_unit_actions(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                        circuits,
-                    )
-                })
-                .or_else(|| {
-                    match typed_plan::lower_unit_composition_checked(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                        circuits,
-                    ) {
-                        ProfileAttempt::Admitted(plan) => Some(plan),
-                        ProfileAttempt::Rejected(rejection) => {
-                            composition_rejection = Some(rejection);
-                            None
-                        }
-                        ProfileAttempt::NotApplicable => None,
-                    }
-                })
-                .or_else(|| zswap_plan::lower(circuit, ledger_fields, circuits, witnesses))
-    {
-        organizer_steps = Some(plan.steps);
-        typed_result = Some(plan.result);
-    }
+    let profile_selection::ProfileSelection {
+        organizer_steps,
+        typed_result,
+        shielded_send_rejection,
+        composition_rejection,
+    } = profile_selection::select(
+        circuit,
+        ledger_fields,
+        witnesses,
+        pure_circuits,
+        circuits,
+        effectful_plan,
+    )?;
     let organizer_gate = organizer_steps.is_some();
     let opaque_map_operation = closed_opaque_map_operation(circuit, ledger_fields);
     let opaque_asset_removal = closed_opaque_asset_removal(circuit, ledger_fields);

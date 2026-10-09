@@ -21,6 +21,7 @@ use crate::coerce_expression;
 use crate::coin_shapes::{qualified_coin_type, shielded_coin_type, shielded_recipient_type};
 use crate::ir::{KernelClaimKind, ReturnPlan};
 mod composition;
+pub(super) use composition::CompositionRejection;
 mod field_observations;
 mod funded_mint;
 mod guarded_deposit;

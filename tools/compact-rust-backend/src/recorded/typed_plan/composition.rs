@@ -774,9 +774,12 @@ pub(super) fn lower_checked<'a>(
         ));
     }
     let mut plan = Plan {
-        ledger,
-        witnesses,
-        pure,
+        declarations: Declarations {
+            ledger,
+            witnesses,
+            pure,
+            stateful_circuits: Some(circuits),
+        },
         evidence: EffectEvidence::default(),
         admission: AdmissionPolicy {
             field_cell_slot: None,
@@ -796,7 +799,6 @@ pub(super) fn lower_checked<'a>(
             scalar_body_depth: 0,
             active_calls: HashSet::new(),
         },
-        stateful_circuits: Some(circuits),
     };
     let scope: Scope = circuit
         .parameters

@@ -80,7 +80,7 @@ impl Plan<'_> {
                 )
             }
             Expr::WitnessCall { name, arguments } => {
-                let declaration = *self.witnesses.get(name.as_str())?;
+                let declaration = *self.declarations.witnesses.get(name.as_str())?;
                 if self.admission.composite_domain == CompositeDomain::ResetShieldedPayout {
                     return None;
                 }

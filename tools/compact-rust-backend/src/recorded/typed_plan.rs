@@ -25,6 +25,7 @@ mod arithmetic;
 mod composition;
 mod control;
 mod crypto;
+mod declarations;
 mod effects;
 mod evaluation;
 mod evidence;
@@ -32,6 +33,7 @@ mod leaves;
 mod observations;
 use admission::AdmissionPolicy;
 pub(super) use composition::CompositionRejection;
+use declarations::Declarations;
 use evaluation::EvaluationState;
 use evidence::EffectEvidence;
 mod field_observations;
@@ -155,13 +157,10 @@ impl CompositeDomain {
 }
 
 struct Plan<'a> {
-    ledger: &'a HashMap<&'a str, &'a LedgerField>,
-    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
-    pure: &'a HashMap<&'a str, &'a PureCircuit>,
+    declarations: Declarations<'a>,
     evidence: EffectEvidence,
     admission: AdmissionPolicy<'a>,
     evaluation: EvaluationState,
-    stateful_circuits: Option<&'a HashMap<&'a str, &'a StatefulCircuit>>,
 }
 
 impl Plan<'_> {
@@ -190,7 +189,7 @@ impl Plan<'_> {
     }
 
     fn pure_call(&self, name: &str, visiting: &mut HashSet<String>) -> bool {
-        let Some(callee) = self.pure.get(name) else {
+        let Some(callee) = self.declarations.pure.get(name) else {
             return false;
         };
         if !visiting.insert(name.to_owned()) {
@@ -216,7 +215,7 @@ impl Plan<'_> {
         let supported = parameters.len() == callee.parameters.len()
             && self.pure_value(&callee.body, visiting)
             && matches!(
-                expression_with_calls(&callee.body, &parameters, self.pure),
+                expression_with_calls(&callee.body, &parameters, self.declarations.pure),
                 Ok((_, ty)) if ty == callee.result
             );
         visiting.remove(name);
@@ -306,7 +305,7 @@ impl Plan<'_> {
     }
 
     fn field(&self, field: &str, index: u8) -> Option<&LedgerField> {
-        let declaration = *self.ledger.get(field)?;
+        let declaration = *self.declarations.ledger.get(field)?;
         (declaration.index == index
             && (declaration.physical_path().len() == 1
                 || (self.admission.composition_calls.is_some()
@@ -315,7 +314,7 @@ impl Plan<'_> {
     }
 
     fn qualified_cell_field(&self, field: &str, index: u8) -> Option<&LedgerField> {
-        let declaration = *self.ledger.get(field)?;
+        let declaration = *self.declarations.ledger.get(field)?;
         let path = declaration.physical_path();
         (declaration.index == index
             && path.first() == Some(&index)
@@ -474,9 +473,12 @@ impl Plan<'_> {
                 composition::AuditedCall::LocalUnit(callee) => {
                     let args = self.arguments(arguments, &callee.parameters, scope, steps)?;
                     let method = ident(name).ok()?;
-                    let uses_witness =
-                        circuit_uses_witness(callee, self.stateful_circuits?, &mut HashSet::new())
-                            .ok()?;
+                    let uses_witness = circuit_uses_witness(
+                        callee,
+                        self.declarations.stateful_circuits?,
+                        &mut HashSet::new(),
+                    )
+                    .ok()?;
                     let witness_arg = uses_witness.then(|| syn::parse_quote!(witnesses));
                     let mut call_args = vec![syn::parse_quote!(context)];
                     call_args.extend(witness_arg);
@@ -514,8 +516,9 @@ impl Plan<'_> {
                 }
             };
         }
-        let pure = self.pure.get(name).copied();
+        let pure = self.declarations.pure.get(name).copied();
         let stateful = self
+            .declarations
             .stateful_circuits
             .and_then(|map| map.get(name))
             .copied();
@@ -558,7 +561,7 @@ impl Plan<'_> {
                     && phase_reset::helper_signature(callee)
                 {
                     if !reset_payout::true_arguments(arguments)
-                        || !reset_payout::helper_shape(callee, self.pure)
+                        || !reset_payout::helper_shape(callee, self.declarations.pure)
                     {
                         return None;
                     }
@@ -578,10 +581,15 @@ impl Plan<'_> {
                     && callee.actions.is_empty()
                     && let StateReturn::Expression { value } = &callee.return_value
                 {
-                    let scalar = scalar_counter_hash(callee, self.ledger);
+                    let scalar = scalar_counter_hash(callee, self.declarations.ledger);
                     let context = callee.parameters.is_empty()
                         && callee.result == (Type::Bytes { length: 32 })
-                        && context_query_value(value, self.pure, &mut HashSet::new(), true);
+                        && context_query_value(
+                            value,
+                            self.declarations.pure,
+                            &mut HashSet::new(),
+                            true,
+                        );
                     if scalar || context {
                         let old = self.evaluation.context_query;
                         self.evaluation.context_query = context;
@@ -622,7 +630,10 @@ impl Plan<'_> {
                     if !callee.actions.is_empty()
                         && !(self.admission.composite_domain
                             == CompositeDomain::ActionfulShieldedPayout
-                            && shielded_payout::action_shape(&callee.actions, self.pure) == Some(1))
+                            && shielded_payout::action_shape(
+                                &callee.actions,
+                                self.declarations.pure,
+                            ) == Some(1))
                     {
                         return None;
                     }
@@ -710,8 +721,8 @@ impl Plan<'_> {
                 if !callee.actions.is_empty() {
                     return None;
                 }
-                let scalar =
-                    self.admission.counter_hash_helpers && scalar_counter_hash(callee, self.ledger);
+                let scalar = self.admission.counter_hash_helpers
+                    && scalar_counter_hash(callee, self.declarations.ledger);
                 if !self.admission.composite_domain.values() && !scalar {
                     return None;
                 }
@@ -1548,9 +1559,12 @@ pub(super) fn lower_effectful<'a>(
         return None;
     }
     let mut plan = Plan {
-        ledger,
-        witnesses,
-        pure,
+        declarations: Declarations {
+            ledger,
+            witnesses,
+            pure,
+            stateful_circuits: None,
+        },
         evidence: EffectEvidence::default(),
         admission: AdmissionPolicy {
             field_cell_slot: None,
@@ -1570,7 +1584,6 @@ pub(super) fn lower_effectful<'a>(
             scalar_body_depth: 0,
             active_calls: HashSet::new(),
         },
-        stateful_circuits: None,
     };
     let scope = circuit
         .parameters
@@ -1745,9 +1758,12 @@ pub(super) fn lower_context_query<'a>(
         return None;
     }
     let mut plan = Plan {
-        ledger,
-        witnesses,
-        pure,
+        declarations: Declarations {
+            ledger,
+            witnesses,
+            pure,
+            stateful_circuits: None,
+        },
         evidence: EffectEvidence::default(),
         admission: AdmissionPolicy {
             field_cell_slot: None,
@@ -1767,7 +1783,6 @@ pub(super) fn lower_context_query<'a>(
             scalar_body_depth: 0,
             active_calls: HashSet::new(),
         },
-        stateful_circuits: None,
     };
     let mut steps = Vec::new();
     let result = plan.expression(value, &Scope::new(), &mut steps)?;
@@ -2029,9 +2044,12 @@ pub(super) fn lower_shielded_receive<'a>(
         return None;
     }
     let mut plan = Plan {
-        ledger,
-        witnesses,
-        pure,
+        declarations: Declarations {
+            ledger,
+            witnesses,
+            pure,
+            stateful_circuits: Some(circuits),
+        },
         evidence: EffectEvidence::default(),
         admission: AdmissionPolicy {
             field_cell_slot: None,
@@ -2051,7 +2069,6 @@ pub(super) fn lower_shielded_receive<'a>(
             scalar_body_depth: 0,
             active_calls: HashSet::new(),
         },
-        stateful_circuits: Some(circuits),
     };
     let parameter = &circuit.parameters[0];
     let scope = Scope::from([(
@@ -2345,9 +2362,12 @@ fn shielded_plan<'a>(
     domain: CompositeDomain,
 ) -> Plan<'a> {
     Plan {
-        ledger,
-        witnesses,
-        pure,
+        declarations: Declarations {
+            ledger,
+            witnesses,
+            pure,
+            stateful_circuits: Some(circuits),
+        },
         evidence: EffectEvidence::default(),
         admission: AdmissionPolicy {
             field_cell_slot: None,
@@ -2367,7 +2387,6 @@ fn shielded_plan<'a>(
             scalar_body_depth: 0,
             active_calls: HashSet::new(),
         },
-        stateful_circuits: Some(circuits),
     }
 }
 
@@ -2537,9 +2556,12 @@ pub(super) fn lower_composite<'a>(
         return None;
     };
     let mut plan = Plan {
-        ledger,
-        witnesses,
-        pure,
+        declarations: Declarations {
+            ledger,
+            witnesses,
+            pure,
+            stateful_circuits: Some(circuits),
+        },
         evidence: EffectEvidence::default(),
         admission: AdmissionPolicy {
             field_cell_slot: None,
@@ -2559,7 +2581,6 @@ pub(super) fn lower_composite<'a>(
             scalar_body_depth: 0,
             active_calls: HashSet::new(),
         },
-        stateful_circuits: Some(circuits),
     };
     let scope = circuit
         .parameters
@@ -2667,9 +2688,12 @@ pub(super) fn lower<'a>(
         return None;
     }
     let mut plan = Plan {
-        ledger,
-        witnesses,
-        pure,
+        declarations: Declarations {
+            ledger,
+            witnesses,
+            pure,
+            stateful_circuits: Some(circuits),
+        },
         evidence: EffectEvidence::default(),
         admission: AdmissionPolicy {
             field_cell_slot: field_cell_slot.clone(),
@@ -2689,7 +2713,6 @@ pub(super) fn lower<'a>(
             scalar_body_depth: 0,
             active_calls: HashSet::new(),
         },
-        stateful_circuits: Some(circuits),
     };
     let scope: Scope = circuit
         .parameters
@@ -3200,9 +3223,12 @@ mod tests {
         let witnesses = HashMap::new();
         let pure = HashMap::new();
         let mut plan = Plan {
-            ledger: &ledger,
-            witnesses: &witnesses,
-            pure: &pure,
+            declarations: Declarations {
+                ledger: &ledger,
+                witnesses: &witnesses,
+                pure: &pure,
+                stateful_circuits: None,
+            },
             evidence: EffectEvidence::default(),
             admission: AdmissionPolicy {
                 field_cell_slot: None,
@@ -3222,7 +3248,6 @@ mod tests {
                 scalar_body_depth: 0,
                 active_calls: HashSet::new(),
             },
-            stateful_circuits: None,
         };
         let actual = Type::Unsigned { max: "255".into() };
         let target = Type::Unsigned {
@@ -3277,9 +3302,12 @@ mod tests {
         let witnesses = HashMap::new();
         let pure = HashMap::new();
         let mut plan = Plan {
-            ledger: &ledger,
-            witnesses: &witnesses,
-            pure: &pure,
+            declarations: Declarations {
+                ledger: &ledger,
+                witnesses: &witnesses,
+                pure: &pure,
+                stateful_circuits: None,
+            },
             evidence: EffectEvidence::default(),
             admission: AdmissionPolicy {
                 field_cell_slot: None,
@@ -3299,7 +3327,6 @@ mod tests {
                 scalar_body_depth: 0,
                 active_calls: HashSet::new(),
             },
-            stateful_circuits: None,
         };
         let action = StateAction::CounterIncrement {
             field: "tally_yes".into(),

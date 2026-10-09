@@ -21,7 +21,7 @@ pub(crate) use diagnostics::RecordingOutcome;
 pub use diagnostics::{RecordingGap, RecordingGapCode};
 mod legacy;
 use legacy::actions::append_steps;
-use legacy::expressions::{boolean_expression, field_expression, scalar_expression};
+use legacy::expressions::{boolean_expression, field_expression};
 use legacy::guarded_map::closed_guarded_struct_map_read_steps;
 use legacy::guarded_pure::{
     closed_guarded_struct_pure_steps, closed_guarded_unsigned_product_steps,
@@ -57,9 +57,7 @@ use crate::ir::{
     StateReturn, StatefulCircuit, Type, WitnessDeclaration,
 };
 use crate::stateful::circuit_uses_witness;
-use crate::{
-    RenderError, expression_with_calls, ident, list_head_result_type, retained_value, rust_type,
-};
+use crate::{RenderError, expression_with_calls, ident, retained_value, rust_type};
 
 mod audited_local;
 mod read_only_verification;
@@ -1105,29 +1103,23 @@ fn render_recorded_item(
             index,
             value,
         } if circuit.result == Type::Boolean => {
-            let mut return_steps = Vec::new();
-            let expression = Expr::SetMember {
-                field: field.clone(),
-                index: *index,
-                value: Box::new(value.clone()),
-            };
-            let Some(result) = boolean_expression(
-                &expression,
-                &HashMap::new(),
+            match legacy::returns::collections::set::member(
+                field,
+                *index,
+                value,
+                &circuit.return_value,
                 &parameters,
                 ledger_fields,
                 witnesses,
                 circuits,
-                &mut return_steps,
                 &mut next_temp,
                 &mut visiting,
-            )?
-            else {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                    &circuit.return_value,
-                )));
-            };
-            (return_steps, result)
+            )? {
+                RecordingOutcome::Supported(result) => result,
+                RecordingOutcome::Unsupported(gap) => {
+                    return Ok(RecordingOutcome::Unsupported(gap));
+                }
+            }
         }
         StateReturn::SetSize { field, index }
             if circuit.result
@@ -1135,47 +1127,30 @@ fn render_recorded_item(
                     max: u64::MAX.to_string(),
                 }) =>
         {
-            let declaration = ledger_fields
-                .get(field.as_str())
-                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-            if !matches!(declaration.declaration, LedgerFieldKind::Set { .. })
-                || declaration.index != *index
-            {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                    &circuit.return_value,
-                )));
+            match legacy::returns::collections::set::size(
+                field,
+                *index,
+                &circuit.return_value,
+                ledger_fields,
+            )? {
+                RecordingOutcome::Supported(result) => result,
+                RecordingOutcome::Unsupported(gap) => {
+                    return Ok(RecordingOutcome::Unsupported(gap));
+                }
             }
-            let slot = ident(field)?;
-            (
-                vec![syn::parse_quote!(
-                    let (frame, observed): (_, u64) =
-                        crate::ledger_slots::#slot.record_size(frame)?;
-                )],
-                syn::parse_quote!(
-                    runtime::BoundedUint::<18446744073709551615>::new(observed as u128)
-                        .expect("ledger Set size fits Uint<64>")
-                ),
-            )
         }
         StateReturn::SetIsEmpty { field, index } if circuit.result == Type::Boolean => {
-            let declaration = ledger_fields
-                .get(field.as_str())
-                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-            if !matches!(declaration.declaration, LedgerFieldKind::Set { .. })
-                || declaration.index != *index
-            {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                    &circuit.return_value,
-                )));
+            match legacy::returns::collections::set::is_empty(
+                field,
+                *index,
+                &circuit.return_value,
+                ledger_fields,
+            )? {
+                RecordingOutcome::Supported(result) => result,
+                RecordingOutcome::Unsupported(gap) => {
+                    return Ok(RecordingOutcome::Unsupported(gap));
+                }
             }
-            let slot = ident(field)?;
-            (
-                vec![syn::parse_quote!(
-                    let (frame, observed): (_, bool) =
-                        crate::ledger_slots::#slot.record_is_empty(frame)?;
-                )],
-                syn::parse_quote!(observed),
-            )
         }
         StateReturn::ListLength { field, index }
             if circuit.result
@@ -1183,130 +1158,67 @@ fn render_recorded_item(
                     max: u64::MAX.to_string(),
                 }) =>
         {
-            let declaration = ledger_fields
-                .get(field.as_str())
-                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-            if !matches!(declaration.declaration, LedgerFieldKind::List { .. })
-                || declaration.index != *index
-            {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                    &circuit.return_value,
-                )));
+            match legacy::returns::collections::list::length(
+                field,
+                *index,
+                &circuit.return_value,
+                ledger_fields,
+            )? {
+                RecordingOutcome::Supported(result) => result,
+                RecordingOutcome::Unsupported(gap) => {
+                    return Ok(RecordingOutcome::Unsupported(gap));
+                }
             }
-            let slot = ident(field)?;
-            (
-                vec![syn::parse_quote!(
-                    let (frame, observed): (_, u64) =
-                        crate::ledger_slots::#slot.record_length(frame)?;
-                )],
-                syn::parse_quote!(
-                    runtime::BoundedUint::<18446744073709551615>::new(observed as u128)
-                        .expect("ledger List length fits Uint<64>")
-                ),
-            )
         }
         StateReturn::ListIsEmpty { field, index } if circuit.result == Type::Boolean => {
-            let declaration = ledger_fields
-                .get(field.as_str())
-                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-            if !matches!(declaration.declaration, LedgerFieldKind::List { .. })
-                || declaration.index != *index
-            {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                    &circuit.return_value,
-                )));
+            match legacy::returns::collections::list::is_empty(
+                field,
+                *index,
+                &circuit.return_value,
+                ledger_fields,
+            )? {
+                RecordingOutcome::Supported(result) => result,
+                RecordingOutcome::Unsupported(gap) => {
+                    return Ok(RecordingOutcome::Unsupported(gap));
+                }
             }
-            let slot = ident(field)?;
-            (
-                vec![syn::parse_quote!(
-                    let (frame, observed): (_, bool) =
-                        crate::ledger_slots::#slot.record_is_empty(frame)?;
-                )],
-                syn::parse_quote!(observed),
-            )
         }
         StateReturn::ListHead { field, index } => {
-            let declaration = ledger_fields
-                .get(field.as_str())
-                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-            let LedgerFieldKind::List { ty } = &declaration.declaration else {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                    &circuit.return_value,
-                )));
-            };
-            let expected = list_head_result_type(ty, &circuit.result);
-            if declaration.index != *index || circuit.result != expected {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                    &circuit.return_value,
-                )));
+            match legacy::returns::collections::list::head(
+                field,
+                *index,
+                &circuit.return_value,
+                &circuit.result,
+                &result_ty,
+                ledger_fields,
+            )? {
+                RecordingOutcome::Supported(result) => result,
+                RecordingOutcome::Unsupported(gap) => {
+                    return Ok(RecordingOutcome::Unsupported(gap));
+                }
             }
-            let slot = ident(field)?;
-            (
-                vec![syn::parse_quote!(
-                    let (frame, observed): (_, #result_ty) =
-                        crate::ledger_slots::#slot.record_head::<#result_ty, _, _>(frame)?;
-                )],
-                syn::parse_quote!(observed),
-            )
         }
         StateReturn::MapMember { field, index, key }
         | StateReturn::MapLookup { field, index, key } => {
-            let declaration = ledger_fields
-                .get(field.as_str())
-                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-            let LedgerFieldKind::Map {
-                key: key_ty,
-                value: value_ty,
-            } = &declaration.declaration
-            else {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                    &circuit.return_value,
-                )));
-            };
-            let member = matches!(&circuit.return_value, StateReturn::MapMember { .. });
-            let expected = if member {
-                Type::Boolean
-            } else {
-                value_ty.clone()
-            };
-            if declaration.index != *index
-                || circuit.result != expected
-                || !matches!(expected, Type::Boolean | Type::Field)
-            {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                    &circuit.return_value,
-                )));
-            }
-            let mut return_steps = Vec::new();
-            let key = scalar_expression(
+            match legacy::returns::collections::map::member_or_lookup(
+                field,
+                *index,
                 key,
-                key_ty,
-                &HashMap::new(),
+                &circuit.return_value,
+                &circuit.result,
+                &result_ty,
                 &parameters,
                 ledger_fields,
                 witnesses,
                 circuits,
-                &mut return_steps,
                 &mut next_temp,
                 &mut visiting,
-            )?;
-            let Some(key) = key else {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                    &circuit.return_value,
-                )));
-            };
-            let slot = ident(field)?;
-            let method = if member {
-                "record_member"
-            } else {
-                "record_lookup"
-            };
-            let method = syn::Ident::new(method, Span::call_site());
-            return_steps.push(syn::parse_quote!(
-                let (frame, observed): (_, #result_ty) =
-                    crate::ledger_slots::#slot.#method(frame, #key)?;
-            ));
-            (return_steps, syn::parse_quote!(observed))
+            )? {
+                RecordingOutcome::Supported(result) => result,
+                RecordingOutcome::Unsupported(gap) => {
+                    return Ok(RecordingOutcome::Unsupported(gap));
+                }
+            }
         }
         StateReturn::MapSize { field, index }
             if circuit.result
@@ -1314,47 +1226,30 @@ fn render_recorded_item(
                     max: u64::MAX.to_string(),
                 }) =>
         {
-            let declaration = ledger_fields
-                .get(field.as_str())
-                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-            if !matches!(declaration.declaration, LedgerFieldKind::Map { .. })
-                || declaration.index != *index
-            {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                    &circuit.return_value,
-                )));
+            match legacy::returns::collections::map::size(
+                field,
+                *index,
+                &circuit.return_value,
+                ledger_fields,
+            )? {
+                RecordingOutcome::Supported(result) => result,
+                RecordingOutcome::Unsupported(gap) => {
+                    return Ok(RecordingOutcome::Unsupported(gap));
+                }
             }
-            let slot = ident(field)?;
-            (
-                vec![syn::parse_quote!(
-                    let (frame, observed): (_, u64) =
-                        crate::ledger_slots::#slot.record_size(frame)?;
-                )],
-                syn::parse_quote!(
-                    runtime::BoundedUint::<18446744073709551615>::new(observed as u128)
-                        .expect("ledger Map size fits Uint<64>")
-                ),
-            )
         }
         StateReturn::MapIsEmpty { field, index } if circuit.result == Type::Boolean => {
-            let declaration = ledger_fields
-                .get(field.as_str())
-                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-            if !matches!(declaration.declaration, LedgerFieldKind::Map { .. })
-                || declaration.index != *index
-            {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                    &circuit.return_value,
-                )));
+            match legacy::returns::collections::map::is_empty(
+                field,
+                *index,
+                &circuit.return_value,
+                ledger_fields,
+            )? {
+                RecordingOutcome::Supported(result) => result,
+                RecordingOutcome::Unsupported(gap) => {
+                    return Ok(RecordingOutcome::Unsupported(gap));
+                }
             }
-            let slot = ident(field)?;
-            (
-                vec![syn::parse_quote!(
-                    let (frame, observed): (_, bool) =
-                        crate::ledger_slots::#slot.record_is_empty(frame)?;
-                )],
-                syn::parse_quote!(observed),
-            )
         }
         StateReturn::MerkleCheckRoot { field, index, root }
         | StateReturn::HistoricMerkleCheckRoot { field, index, root }

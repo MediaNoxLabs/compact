@@ -55,7 +55,7 @@
     "examples/rust_backend/witness_effect_order.compact": "d2b4b4b2ad94776aa27a4354e6c1fe9253b342e267fa4eb4bf05a3e9450f9a58",
     "tests-rust-backend/witness-effect-order/lib.rs": "5b1668cad2ff7e06012d81b6f4de7fba3a18b7b67ac15d39f223f4e56f5cf642",
     "runtime-rs/tests/fixtures/witness-effect-order.json": "463a1a2eac9b18cf1a2fe0c8828cc9acd53ed9733054bb89f5fe1d88a68a245f",
-    "tools/compact-rust-backend/src/recorded.rs": "bfdea743ace1e60e8105e8354bcacb80aa69687810bf2ab8c0aef14ddd3f6c0a",
+    "tools/compact-rust-backend/src/recorded.rs": "88e7b374c02bdf23e71834ae1f176a724af32fb017379dff6274c54fc5b2f983",
     "tools/compact-rust-backend/src/capabilities.rs": "43dee1f3ae38b1dca85e0965c09c2ba2a7d7b0e3dbdb128a18996c0f86b1184c",
     "specification/src/Semantics/Static/Lsrc/Lsrc.lagda.md": "636b1c02f2e291bdf76bc00f43c31fcd7ada458391ed775be5817172f8397de9",
     "specification/src/Syntax/json/Lsrc.json": "1b192f03d15b88cd8d4c8634c87ecb754690bc28f350331fd2b38d539da09668",
@@ -6905,7 +6905,7 @@
         {
           "path": "tools/compact-rust-backend/src/recorded.rs",
           "line": 558,
-          "sha256": "bfdea743ace1e60e8105e8354bcacb80aa69687810bf2ab8c0aef14ddd3f6c0a"
+          "sha256": "88e7b374c02bdf23e71834ae1f176a724af32fb017379dff6274c54fc5b2f983"
         },
         {
           "path": "tools/compact-rust-backend/src/recorded/diagnostics.rs",

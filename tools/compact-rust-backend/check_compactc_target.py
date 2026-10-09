@@ -27,6 +27,8 @@ import sys
 import tempfile
 import tomllib
 
+from target_checks import shielded
+
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "examples/rust_backend/counter.compact"
@@ -1460,67 +1462,19 @@ def main() -> None:
             print("typed recorded Kernel effects admitted; unsupported operations refused")
             return
         if args.shielded_receive:
-            output = base / "shielded-receive"
-            run(compiler, "--target", "rust", "--rust-require-recording",
-                *([] if args.proof else ["--skip-zk"]),
-                str(SHIELDED_RECEIVE_SOURCE), str(output))
-            ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 20
-            report = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert {row["name"] for row in report["circuits"]} == {"accept", "accept_renamed"}
-            assert all(row["proof_required"] and row["recorded"] and row["observed_call"]
-                       for row in report["circuits"])
-            rust = (output / "contract/lib.rs").read_text()
-            assert "create_zswap_output" in rust and "CoinReceive" in rust
-            assert "crate::pure_circuits::coinCommitment" in rust
-            if args.proof:
-                run("cargo", "+1.99.0", "run", "--offline", "--quiet", "-p",
-                    "compact-rust-proof-smoke", "--", "--shielded-receive", str(output))
-                # Reuse the same source and keys for explicit wallet funding;
-                # keep this default-strict acceptance in the full proof gate.
-                run("cargo", "+1.99.0", "run", "--offline", "--quiet", "-p",
-                    "compact-rust-proof-smoke", "--", "--wallet-funded-receive", str(output))
-                # Same keys, additional explicit observation-policy strict proof.
-                run("cargo", "+1.99.0", "run", "--offline", "--quiet", "-p",
-                    "compact-rust-proof-smoke", "--", "--observational-receive", str(output))
-            print("unchanged receiveShielded wrappers admitted with ordered output and audited claim")
+            shielded.check_receive(
+                compiler, base, SHIELDED_RECEIVE_SOURCE, proof=args.proof, run=run
+            )
             return
         if args.shielded_merge:
-            output = base / "shielded-merge"
-            source = ROOT / "examples/rust_backend/shielded_merge_oracle.compact"
-            run(compiler, "--target", "rust", "--rust-require-recording",
-                *([] if args.proof else ["--skip-zk"]), str(source), str(output))
-            report = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert {row["name"] for row in report["circuits"]} == {"merge_qualified", "receive_then_merge"}
-            assert all(row["proof_required"] and row["recorded"] and row["observed_call"] for row in report["circuits"])
-            if args.proof:
-                run("cargo", "+1.99.0", "run", "--offline", "--quiet", "-p",
-                    "compact-rust-proof-smoke", "--", "--shielded-merge", str(output))
-            print("unchanged qualified and immediate merge helpers recorded with checked wide arithmetic")
+            shielded.check_merge(
+                compiler, base, ROOT / "examples/rust_backend/shielded_merge_oracle.compact", proof=args.proof, run=run
+            )
             return
         if args.shielded_send:
-            output = base / "shielded-send"
-            run(compiler, "--target", "rust", "--rust-require-recording",
-                *([] if args.proof else ["--skip-zk"]),
-                str(SHIELDED_SEND_SOURCE), str(output))
-            ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 20
-            report = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert {row["name"] for row in report["circuits"]} == {
-                "send_to_self", "send_to_user", "send_to_contract", "send_forward"}
-            assert all(row["proof_required"] and row["recorded"] and row["observed_call"]
-                       for row in report["circuits"])
-            rust = (output / "contract/lib.rs").read_text()
-            for primitive in ("create_zswap_input", "create_zswap_output", "subtract_unsigned",
-                              "degrade_to_transient", "transient_hash", "upgrade_from_transient"):
-                assert primitive in rust
-            if args.proof:
-                run("cargo", "+1.99.0", "run", "--offline", "--quiet", "-p",
-                    "compact-rust-proof-smoke", "--", "--shielded-send", str(output))
-                # Same keys, additional explicit observation-policy strict proof.
-                run("cargo", "+1.99.0", "run", "--offline", "--quiet", "-p",
-                    "compact-rust-proof-smoke", "--", "--observational-send", str(output))
-            print("unchanged qualified sendShielded wrappers admitted with ordered intents and typed result")
+            shielded.check_send(
+                compiler, base, SHIELDED_SEND_SOURCE, proof=args.proof, run=run
+            )
             return
         if args.native_zswap_intents:
             output = base / "native-zswap-intents"

@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "issue": 540,
+  "classification": "ordinary-unit-return-domain-no-retirement",
+  "claim": "Accept ordinary Unit and Expression returns at existing Unit algebra priority; unchanged selector function, calls, routes and retirements. Source inventory is not behavior coverage.",
+  "prior_receive_transition_canonical_sha256": "7650b6f40bd07439284b56c50399017ed2d921c1954683e9b56d110224007835",
+  "prior_source_fingerprints": {
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": "62e29695718fc965dfd184f489311de15eaf067e1ea18d677487869ab691ffeb"
+  },
+  "reviewed_source_fingerprints": {
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": "44cffbfa454deebcddf4f7b548430fc63862f75641eecc9e28ee3e9008a1893d"
+  },
+  "helper": "fn checked_unit_domain(",
+  "prior_helper_sha256": "855c7d271402b25d428739cb352336dc9d0f76fb250889b2f54ec4e193a4fd23",
+  "reviewed_helper_sha256": "d50dc8e9632ea1ebf6ff6ca3ce2128364ade0fabbe7494e1db14552f6737c11f",
+  "prior_selector": {
+    "ordered_calls": [
+      "typed_plan::lower",
+      "typed_plan::lower_voting_commit",
+      "typed_plan::lower_funded_mint",
+      "typed_plan::lower_guarded_deposit",
+      "typed_plan::lower_shielded_merge",
+      "typed_plan::lower_immediate_shielded_send",
+      "typed_plan::lower_shielded_send_checked",
+      "typed_plan::lower_reset_payout",
+      "typed_plan::lower_shielded_payout",
+      "typed_plan::lower_phase_reset",
+      "typed_plan::lower_unit_composition_checked",
+      "zswap_plan::lower"
+    ],
+    "function_sha256": "b1656734c230772a0530da507d371c91ff9cdb1d980585d6a19619cb8831d879"
+  },
+  "reviewed_selector": {
+    "ordered_calls": [
+      "typed_plan::lower",
+      "typed_plan::lower_voting_commit",
+      "typed_plan::lower_funded_mint",
+      "typed_plan::lower_guarded_deposit",
+      "typed_plan::lower_shielded_merge",
+      "typed_plan::lower_immediate_shielded_send",
+      "typed_plan::lower_shielded_send_checked",
+      "typed_plan::lower_reset_payout",
+      "typed_plan::lower_shielded_payout",
+      "typed_plan::lower_phase_reset",
+      "typed_plan::lower_unit_composition_checked",
+      "zswap_plan::lower"
+    ],
+    "function_sha256": "b1656734c230772a0530da507d371c91ff9cdb1d980585d6a19619cb8831d879"
+  },
+  "instrumented_route_ids": [
+    "algebra.composite-values",
+    "algebra.context-query",
+    "algebra.jubjub-values",
+    "algebra.kernel",
+    "algebra.shielded-receive",
+    "algebra.terminal-returns",
+    "algebra.unit-actions",
+    "early.audited-local",
+    "early.read-only-verification",
+    "effectful.checked-migration",
+    "effectful.start-funding",
+    "guard.closed-opaque-asset-removal",
+    "guard.closed-opaque-map-operation",
+    "guard.closed-opaque-set-operation",
+    "guard.guarded-map-read",
+    "guard.guarded-struct-pure",
+    "guard.guarded-unsigned-product",
+    "guard.opaque-map-write",
+    "guard.opaque-set-mutation",
+    "guard.proved-opaque-set-sequence",
+    "guard.root-let-snapshot",
+    "legacy.action-dispatch",
+    "organizer.enum-advance",
+    "organizer.optional-write",
+    "organizer.organizer",
+    "organizer.witness-merkle",
+    "return.dispatch",
+    "selector.funded-mint",
+    "selector.guarded-deposit",
+    "selector.immediate-send",
+    "selector.membership-optional",
+    "selector.phase-reset",
+    "selector.reset-payout",
+    "selector.shielded-merge",
+    "selector.shielded-payout",
+    "selector.shielded-send",
+    "selector.unit-composition",
+    "selector.voting-commit",
+    "selector.zswap"
+  ],
+  "retired_route_ids": [
+    "effectful.effectful",
+    "selector.jubjub-values",
+    "selector.terminal-returns",
+    "selector.unit-actions",
+    "selector.context-query",
+    "selector.kernel",
+    "selector.composite-values",
+    "selector.shielded-receive"
+  ],
+  "new_retired_routes": []
+}

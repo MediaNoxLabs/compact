@@ -112,7 +112,7 @@ fn checked_terminal_domain(
     ))
 }
 
-/// Unit expression interfaces enter at the former unit-action priority. Body
+/// Ordinary Unit interfaces enter at the former unit-action priority. Body
 /// support is compositional: no helper/write counts or flat Cell paths authorize it.
 fn checked_unit_domain(
     circuit: &StatefulCircuit,
@@ -123,7 +123,10 @@ fn checked_unit_domain(
 ) -> Result<Option<TypedPlan>, RenderError> {
     use crate::ir::{StateReturn, Type};
     if circuit.result != Type::Unit
-        || !matches!(circuit.return_value, StateReturn::Expression { .. })
+        || !matches!(
+            circuit.return_value,
+            StateReturn::Unit | StateReturn::Expression { .. }
+        )
         || !circuit
             .parameters
             .iter()

@@ -88,7 +88,12 @@ fn direct_boolean_witness_assertion_records_before_cell_write() {
     let assertion = recorded.find("AssertionFailed(\"write denied\"").unwrap();
     let write = recorded.find(".record_write(frame,").unwrap();
     assert!(witness < assertion && assertion < write);
-    assert!(recorded.contains("let __compact_recorded_arg_0: bool = __compact_param_0;"));
+    let body =
+        super::lifecycle_recording::generated_body(&rendered.source, "recorded", "checked_write");
+    // The root Boolean is captured before the witnessed call; SSA naming is
+    // internal to the recording owner.
+    assert!(body.find("__compact_param_0").unwrap() < body.find("try_witness_metered").unwrap());
+    assert!(body.contains("witnesses . echo"), "{body}");
     assert!(recorded.contains("pub fn checked_write_call<'observed, Private>"));
 }
 

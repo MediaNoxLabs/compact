@@ -23,7 +23,7 @@ use compact_rust_backend::ir::{
 use compact_rust_backend::{RenderError, render_with_capabilities};
 
 #[test]
-fn recorded_distinct_struct_constructor_calls_require_exact_projection_and_closed_body() {
+fn recorded_distinct_struct_constructor_calls_preserve_identity_and_typed_composition() {
     let fixture = || -> Contract {
         let mut contract: Contract = serde_json::from_str(include_str!(
             "../../fixtures/recorded-struct-constructor-cells.json"
@@ -67,13 +67,17 @@ fn recorded_distinct_struct_constructor_calls_require_exact_projection_and_close
         unreachable!()
     };
     *value = Expr::Parameter { name: "x".into() };
-    assert!(
-        !render_with_capabilities(&wrong_write)
-            .unwrap()
-            .capabilities
-            .circuits[0]
-            .recorded
+    // Writing the same-typed root Field directly is valid even though the
+    // legacy constructor recipe required a projection.
+    let direct = render_with_capabilities(&wrong_write).unwrap();
+    assert!(direct.capabilities.circuits[0].recorded);
+    let body = super::lifecycle_recording::generated_body(
+        &direct.source,
+        "recorded",
+        &wrong_write.stateful_circuits[0].name,
     );
+    assert!(body.contains("record_write"));
+    assert!(body.find("pure_circuits :: makeAlpha").unwrap() < body.find("record_write").unwrap());
 
     let mut effectful_helper = fixture();
     let previous = effectful_helper.circuits[0].body.clone();
@@ -84,13 +88,35 @@ fn recorded_distinct_struct_constructor_calls_require_exact_projection_and_close
         }],
         value: Box::new(previous),
     };
-    assert!(
-        !render_with_capabilities(&effectful_helper)
-            .unwrap()
-            .capabilities
-            .circuits[0]
-            .recorded
+    // A pure assertion is a checked native pure operation, not a ledger effect.
+    let asserted = render_with_capabilities(&effectful_helper).unwrap();
+    assert!(asserted.capabilities.circuits[0].recorded);
+    let pure = super::lifecycle_recording::generated_body(
+        &asserted.source,
+        "pure_circuits",
+        &effectful_helper.circuits[0].name,
     );
+    assert!(pure.contains("side condition"));
+    let recorded = super::lifecycle_recording::generated_body(
+        &asserted.source,
+        "recorded",
+        &effectful_helper.stateful_circuits[0].name,
+    );
+    assert!(
+        recorded.find("pure_circuits :: makeAlpha").unwrap()
+            < recorded.find("record_write").unwrap()
+    );
+    let StateAction::Let { action, .. } = &mut wrong_write.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    let StateAction::Let { action, .. } = action.as_mut() else {
+        unreachable!()
+    };
+    let StateAction::CellWrite { value, .. } = action.as_mut() else {
+        unreachable!()
+    };
+    *value = Expr::Boolean { value: true };
+    assert!(render_with_capabilities(&wrong_write).is_err());
 }
 
 #[test]

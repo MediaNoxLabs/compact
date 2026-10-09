@@ -23,6 +23,7 @@ Context-query retirement requires --context-query-transition after #525; shared
 context predicates and VotingCommit evaluation remain active.
 Whole composite retirement requires --composite-transition after #527.
 Whole receive retirement requires --receive-transition after #529.
+Ordinary Unit return expansion requires --unit-domain-extension after #536; it retires no route.
 Kernel retirement requires --kernel-transition after #526; its unchanged planner
 is compiled only for tests and cannot be a production selector dependency.
 Human review must classify new/changed routes before a future baseline update.
@@ -44,6 +45,7 @@ import recording_admission_inventory_context as context
 import recording_admission_inventory_kernel as kernel
 import recording_admission_inventory_composite as composite
 import recording_admission_inventory_receive as receive
+import recording_admission_inventory_unit_domain as unit_domain
 
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE = Path(__file__).with_suffix('.baseline.json')
@@ -233,7 +235,8 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
            context_query_transition: dict | None = None,
            kernel_transition: dict | None = None,
            composite_transition: dict | None = None,
-           receive_transition: dict | None = None) -> dict:
+           receive_transition: dict | None = None,
+           unit_domain_extension: dict | None = None) -> dict:
     errors = validate_baseline(baseline)
     report = {'schema_version': 1, 'baseline_commit': baseline.get('baseline_commit'),
               'claim': 'source route inventory; not language or behavioral coverage',
@@ -326,6 +329,18 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
                          'reviewed_source_fingerprints': {
                              **evolution['reviewed_source_fingerprints'],
                              **reviewed_receive['reviewed_source_fingerprints']}}
+    if unit_domain_extension is not None:
+        domain_errors = unit_domain.validate(root, unit_domain_extension, reviewed_receive)
+        errors.extend(domain_errors)
+        if not domain_errors:
+            evolution = {**evolution, **unit_domain_extension,
+                         'reviewed_source_fingerprints': {
+                             **evolution['reviewed_source_fingerprints'],
+                             **unit_domain_extension['reviewed_source_fingerprints']}}
+            report['reviewed_unit_domain_extension'] = {
+                'issue': 540, 'new_retired_routes': [],
+                'claim': 'ordinary Unit return admission; unchanged selector and route inventory',
+            }
     if instrumentation is not None:
         errors.extend(validate_instrumentation(root, baseline, instrumentation, baseline_bytes, evolution))
         report['reviewed_instrumentation'] = {
@@ -474,8 +489,10 @@ def main(argv=None) -> int:
     parser.add_argument('--kernel-transition', type=Path, help='explicit #527 kernel retirement following #526 evidence')
     parser.add_argument('--composite-transition', type=Path, help='explicit #529 whole composite retirement following #527 evidence')
     parser.add_argument('--receive-transition', type=Path, help='explicit #536 whole receive retirement following #529 evidence')
+    parser.add_argument('--unit-domain-extension', type=Path, help='explicit #540 ordinary Unit return review; no retirement')
     args = parser.parse_args(argv)
     protected = [args.baseline] + ([args.transition] if args.transition else []) + ([args.instrumentation] if args.instrumentation else []) + ([args.jubjub_transition] if args.jubjub_transition else []) + ([args.call_extension] if args.call_extension else []) + ([args.terminal_transition] if args.terminal_transition else []) + ([args.unit_actions_transition] if args.unit_actions_transition else []) + ([args.context_query_transition] if args.context_query_transition else []) + ([args.kernel_transition] if args.kernel_transition else []) + ([args.composite_transition] if args.composite_transition else []) + ([args.receive_transition] if args.receive_transition else [])
+    protected += [args.unit_domain_extension] if args.unit_domain_extension else []
     if args.output and any(args.output.resolve() == path.resolve() for path in protected):
         parser.error('--output cannot overwrite baseline, transition, instrumentation, or call-extension evidence')
     try:
@@ -491,7 +508,8 @@ def main(argv=None) -> int:
         kernel_transition = json.loads(args.kernel_transition.read_text()) if args.kernel_transition else None
         composite_transition = json.loads(args.composite_transition.read_text()) if args.composite_transition else None
         receive_transition = json.loads(args.receive_transition.read_text()) if args.receive_transition else None
-        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition)
+        unit_domain_extension = json.loads(args.unit_domain_extension.read_text()) if args.unit_domain_extension else None
+        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension)
     except (OSError, ValueError, TypeError, KeyError) as error:
         parser.exit(2, f'inventory error: {error}\n')
     rendered = json.dumps(report, indent=2) + '\n'

@@ -20,6 +20,7 @@ mod jubjub;
 mod kernel;
 mod ordinary;
 mod pure;
+mod sets;
 mod zswap;
 use super::pure_certification::{Certificates, Certifier};
 
@@ -400,6 +401,28 @@ impl Lowerer<'_> {
                     bindings,
                     path,
                 )?;
+            }
+            StateAction::SetInsert {
+                field,
+                index,
+                value,
+            }
+            | StateAction::SetRemove {
+                field,
+                index,
+                value,
+            } => {
+                let (slot, value) = self.set_value(field, *index, value, scope, bindings, path)?;
+                let operation = if matches!(action, StateAction::SetInsert { .. }) {
+                    Operation::SetInsert { slot, value }
+                } else {
+                    Operation::SetRemove { slot, value }
+                };
+                self.emit(operation, Type::Unit, bindings, path);
+            }
+            StateAction::SetReset { field, index } => {
+                let (slot, _) = self.set(field, *index, path)?;
+                self.emit(Operation::SetReset { slot }, Type::Unit, bindings, path);
             }
             StateAction::CellWrite {
                 field,

@@ -49,6 +49,36 @@ impl Lowerer<'_> {
                 bindings,
                 &return_path,
             ),
+            StateReturn::SetMember {
+                field,
+                index,
+                value,
+            } => {
+                // Borrow the operand: cloning a recursive return expression is
+                // unnecessary. This is the same operation lowering as Expr::SetMember.
+                self.spend(&return_path)?;
+                let (operation, ty) =
+                    self.set_member(field, *index, value, scope, bindings, &return_path)?;
+                Ok(self.emit(operation, ty, bindings, &return_path))
+            }
+            StateReturn::SetSize { field, index } => self.expression(
+                &Expr::SetSize {
+                    field: field.clone(),
+                    index: *index,
+                },
+                scope,
+                bindings,
+                &return_path,
+            ),
+            StateReturn::SetIsEmpty { field, index } => self.expression(
+                &Expr::SetIsEmpty {
+                    field: field.clone(),
+                    index: *index,
+                },
+                scope,
+                bindings,
+                &return_path,
+            ),
             _ => {
                 let mut gap = RecordingGap::returned(returned);
                 gap.path = return_path;

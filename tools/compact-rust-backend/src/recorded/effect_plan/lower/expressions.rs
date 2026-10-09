@@ -154,6 +154,19 @@ impl Lowerer<'_> {
                     },
                 );
             }
+            Expr::SetMember {
+                field,
+                index,
+                value,
+            } => self.set_member(field, *index, value, scope, bindings, path)?,
+            Expr::SetSize { field, index } => {
+                let (slot, _) = self.set(field, *index, path)?;
+                (Operation::SetSize { slot }, uint("18446744073709551615"))
+            }
+            Expr::SetIsEmpty { field, index } => {
+                let (slot, _) = self.set(field, *index, path)?;
+                (Operation::SetIsEmpty { slot }, Type::Boolean)
+            }
             Expr::CellRead { field, index } => {
                 let (slot, ty) = self.cell(field, *index, path)?;
                 (Operation::CellRead(slot), ty)

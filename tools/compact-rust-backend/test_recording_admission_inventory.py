@@ -39,6 +39,9 @@ COMPOSITE_TRANSITION = inventory.BASELINE.with_name("recording_admission_invento
 RECEIVE_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-536.json")
 
 
+UNIT_DOMAIN_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.unit-domain-540.json")
+
+
 class InventoryTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
@@ -148,7 +151,8 @@ class InventoryTests(unittest.TestCase):
                                   context_query_transition=json.loads(CONTEXT_TRANSITION.read_text()),
                                   kernel_transition=json.loads(KERNEL_TRANSITION.read_text()),
                                   composite_transition=json.loads(COMPOSITE_TRANSITION.read_text()),
-                                  receive_transition=json.loads(RECEIVE_TRANSITION.read_text()))
+                                  receive_transition=json.loads(RECEIVE_TRANSITION.read_text()),
+                                  unit_domain_extension=json.loads(UNIT_DOMAIN_EXTENSION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)
@@ -173,6 +177,7 @@ class RetirementTransitionTests(unittest.TestCase):
         self.kernel_transition = json.loads(KERNEL_TRANSITION.read_text())
         self.composite_transition = json.loads(COMPOSITE_TRANSITION.read_text())
         self.receive_transition = json.loads(RECEIVE_TRANSITION.read_text())
+        self.unit_domain_extension = json.loads(UNIT_DOMAIN_EXTENSION.read_text())
         for relative in {*self.baseline['source_fingerprints'], inventory.ORACLE, jubjub.ORACLE, terminal.ORACLE, unit.ORACLE, context.ORACLE, context.IR, composite.ORACLE, composite.FIELD, receive.ORACLE, *context.SHARED_ANCHORS, *inventory.HOOK_SOURCES}:
             destination = self.root / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
@@ -185,7 +190,8 @@ class RetirementTransitionTests(unittest.TestCase):
                                 jubjub_transition=self.jubjub_transition, call_extension=self.call_extension,
                                 terminal_transition=self.terminal_transition, unit_actions_transition=self.unit_transition,
                                 context_query_transition=self.context_transition, kernel_transition=self.kernel_transition,
-                                composite_transition=self.composite_transition, receive_transition=self.receive_transition)
+                                composite_transition=self.composite_transition, receive_transition=self.receive_transition,
+                                unit_domain_extension=self.unit_domain_extension)
 
     def test_reviewed_retirement_keeps_frozen_denominator(self):
         report = self.report()
@@ -495,7 +501,7 @@ class CallExtensionTests(unittest.TestCase):
                 '--instrumentation', str(inventory.INSTRUMENTATION), '--jubjub-transition', str(JUBJUB_TRANSITION),
                 '--output', str(output)]
         self.assertEqual(inventory.main(argv), 1)
-        self.assertEqual(inventory.main([*argv, '--call-extension', str(manifest), '--terminal-transition', str(TERMINAL_TRANSITION), '--unit-actions-transition', str(UNIT_TRANSITION), '--context-query-transition', str(CONTEXT_TRANSITION), '--kernel-transition', str(KERNEL_TRANSITION), '--composite-transition', str(COMPOSITE_TRANSITION), '--receive-transition', str(RECEIVE_TRANSITION)]), 0)
+        self.assertEqual(inventory.main([*argv, '--call-extension', str(manifest), '--terminal-transition', str(TERMINAL_TRANSITION), '--unit-actions-transition', str(UNIT_TRANSITION), '--context-query-transition', str(CONTEXT_TRANSITION), '--kernel-transition', str(KERNEL_TRANSITION), '--composite-transition', str(COMPOSITE_TRANSITION), '--receive-transition', str(RECEIVE_TRANSITION), '--unit-domain-extension', str(UNIT_DOMAIN_EXTENSION)]), 0)
         self.assertTrue(json.loads(output.read_text())['passed'])
         self.assertEqual(manifest.read_bytes(), before)
 

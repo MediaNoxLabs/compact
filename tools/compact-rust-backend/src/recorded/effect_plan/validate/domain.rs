@@ -76,9 +76,9 @@ pub(super) fn coercible(source: &Type, target: &Type) -> bool {
 }
 
 /// Storage eligibility is independent of public/stateful/witness interfaces.
-/// A top-level Unit Cell stays refused, while Unit members retain the prior
+/// A top-level Unit storage value stays refused, while Unit members retain the prior
 /// surface policy. Canonical definitions and resource bounds are checked first.
-pub(super) fn cell_type(ty: &Type) -> bool {
+pub(super) fn storage_value_type(ty: &Type) -> bool {
     fn member(ty: &Type) -> bool {
         match ty {
             Type::OpaqueString | Type::OpaqueBytes => true,

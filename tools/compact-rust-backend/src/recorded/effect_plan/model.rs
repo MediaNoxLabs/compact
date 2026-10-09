@@ -24,6 +24,11 @@ pub(super) struct CellSlot {
     pub index: u8,
 }
 #[derive(Clone, Copy, Debug)]
+pub(super) struct SetSlot {
+    pub declaration: LedgerId,
+    pub index: u8,
+}
+#[derive(Clone, Copy, Debug)]
 pub(super) struct CounterSlot {
     pub declaration: LedgerId,
     pub index: u8,
@@ -112,6 +117,28 @@ pub(super) enum Operation {
     CellWrite {
         slot: CellSlot,
         value: Value,
+    },
+    /// Ordinary typed membership/insertion; qualified-coin allocation is separate.
+    SetMember {
+        slot: SetSlot,
+        value: Value,
+    },
+    SetInsert {
+        slot: SetSlot,
+        value: Value,
+    },
+    SetRemove {
+        slot: SetSlot,
+        value: Value,
+    },
+    SetReset {
+        slot: SetSlot,
+    },
+    SetSize {
+        slot: SetSlot,
+    },
+    SetIsEmpty {
+        slot: SetSlot,
     },
     CounterRead {
         slot: CounterSlot,

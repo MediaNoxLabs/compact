@@ -190,6 +190,50 @@ pub(super) fn render(
             steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_write(frame,#input)?;));
             syn::parse_quote!(())
         }
+        Operation::SetMember { slot, value: input } => {
+            let slot = slot_name(declarations, slot.declaration, path)?;
+            let input = value(input);
+            steps.push(syn::parse_quote!(let (frame, #output): (_, #ty) = crate::ledger_slots::#slot.record_member(frame, #input)?;));
+            return Ok(());
+        }
+        Operation::SetInsert { slot, value: input }
+        | Operation::SetRemove { slot, value: input } => {
+            let slot = slot_name(declarations, slot.declaration, path)?;
+            let input = value(input);
+            let method = ident(
+                if matches!(binding.operation, Operation::SetInsert { .. }) {
+                    "record_insert"
+                } else {
+                    "record_remove"
+                },
+            )
+            .map_err(|e| invalid(path, e.to_string()))?;
+            steps.push(
+                syn::parse_quote!(let frame = crate::ledger_slots::#slot.#method(frame, #input)?;),
+            );
+            syn::parse_quote!(())
+        }
+        Operation::SetReset { slot } => {
+            let slot = slot_name(declarations, slot.declaration, path)?;
+            steps.push(
+                syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_reset(frame)?;),
+            );
+            syn::parse_quote!(())
+        }
+        Operation::SetIsEmpty { slot } => {
+            let slot = slot_name(declarations, slot.declaration, path)?;
+            steps.push(syn::parse_quote!(let (frame, #output): (_, #ty) = crate::ledger_slots::#slot.record_is_empty(frame)?;));
+            return Ok(());
+        }
+        Operation::SetSize { slot } => {
+            let slot = slot_name(declarations, slot.declaration, path)?;
+            let raw = syn::Ident::new(
+                &format!("__compact_effect_set_size_{}", binding.value.id),
+                Span::call_site(),
+            );
+            steps.push(syn::parse_quote!(let (frame, #raw) = crate::ledger_slots::#slot.record_size(frame)?;));
+            syn::parse_quote!(<#ty>::new(#raw as u128)?)
+        }
         Operation::CounterRead { slot } => {
             let slot = slot_name(declarations, slot.declaration, path)?;
             let raw = syn::Ident::new(

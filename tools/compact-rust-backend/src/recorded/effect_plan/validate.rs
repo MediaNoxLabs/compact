@@ -11,6 +11,7 @@ mod calls;
 mod domain;
 mod persistent;
 mod pure;
+mod sets;
 pub(super) use persistent::hash_input_type;
 
 struct Validation {
@@ -65,7 +66,11 @@ pub(super) fn surface_type(ty: &Type) -> bool {
 }
 /// Declared Cell storage may own opaque values without widening interfaces.
 pub(super) fn cell_type(ty: &Type) -> bool {
-    domain::cell_type(ty)
+    storage_value_type(ty)
+}
+/// Shared ordinary Cell/Set value representation policy, separate from interfaces.
+pub(super) fn storage_value_type(ty: &Type) -> bool {
+    domain::storage_value_type(ty)
 }
 /// Same-type equality composes the runtime wrappers and supported Rust products.
 pub(super) fn equality_type(ty: &Type) -> bool {
@@ -324,6 +329,29 @@ fn block(
                 use_value(value)?;
                 let declared = cell(declarations, *slot, path)?;
                 *declared == value.ty && *declared != Type::Unit && *ty == Type::Unit
+            }
+            Operation::SetMember { slot, value }
+            | Operation::SetInsert { slot, value }
+            | Operation::SetRemove { slot, value } => {
+                use_value(value)?;
+                let declared = sets::element(declarations, *slot, path)?;
+                *declared == value.ty
+                    && *ty
+                        == if matches!(binding.operation, Operation::SetMember { .. }) {
+                            Type::Boolean
+                        } else {
+                            Type::Unit
+                        }
+            }
+            Operation::SetReset { slot }
+            | Operation::SetSize { slot }
+            | Operation::SetIsEmpty { slot } => {
+                sets::element(declarations, *slot, path)?;
+                *ty == match binding.operation {
+                    Operation::SetSize { .. } => uint("18446744073709551615"),
+                    Operation::SetIsEmpty { .. } => Type::Boolean,
+                    _ => Type::Unit,
+                }
             }
             Operation::CounterRead { slot } => {
                 counter(declarations, *slot, path)?;

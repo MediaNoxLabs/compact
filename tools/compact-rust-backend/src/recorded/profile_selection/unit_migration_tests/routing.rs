@@ -108,7 +108,7 @@ fn unsupported_unit_body_continues_independent_suffix_and_invalid_is_fatal() {
 
 #[test]
 fn declared_unit_rollout_is_narrower_than_checked_operation_support() {
-    for mode in 0..3 {
+    for mode in 0..2 {
         let mut contract = subject();
         let root = &mut contract.stateful_circuits[0];
         match mode {
@@ -117,10 +117,6 @@ fn declared_unit_rollout_is_narrower_than_checked_operation_support() {
                 root.return_value = StateReturn::Expression { value: Expr::Unit };
             }
             1 => {
-                root.actions = vec![write("amount", 0, field())];
-                root.return_value = StateReturn::Unit;
-            }
-            2 => {
                 root.return_value = StateReturn::Effectful {
                     body: crate::ir::ReturnPlan::Value { value: Expr::Unit },
                 }
@@ -135,5 +131,84 @@ fn declared_unit_rollout_is_narrower_than_checked_operation_support() {
                 .unwrap()
                 .is_none()
         );
+    }
+}
+
+#[test]
+fn ordinary_unit_return_enters_composition_without_an_operation_shape_gate() {
+    let mut contract = subject();
+    let root = &mut contract.stateful_circuits[0];
+    root.actions = vec![write("amount", 0, parameter("seed"))];
+    root.return_value = StateReturn::Unit;
+    let root = &contract.stateful_circuits[0];
+    let context = Context::new(&contract);
+    assert!(
+        context.old(root).is_none(),
+        "explicit expansion beyond old expression admission"
+    );
+    assert_eq!(
+        tokens(&context.unit(root).unwrap().unwrap()),
+        tokens(&context.algebra(root).unwrap())
+    );
+    let (_, row) = selected_trace(&contract);
+    assert_eq!(row["body_owner"], "algebra.unit-actions");
+    assert!(!attempts(&row).contains(&"selector.unit-composition"));
+    let rendered = crate::render_with_capabilities(&contract).unwrap();
+    let capability = rendered
+        .capabilities
+        .circuits
+        .iter()
+        .find(|c| c.name == root.name)
+        .unwrap();
+    assert!(capability.recorded && capability.observed_call);
+}
+
+#[test]
+fn real_set_lifecycle_has_public_unit_composition_and_existing_direct_queries_stay_available() {
+    let mut contract: Contract = serde_json::from_str(include_str!(
+        "../../../../tests/effect-plan-set-schema20-ir.json"
+    ))
+    .unwrap();
+    let index = contract
+        .stateful_circuits
+        .iter()
+        .position(|c| c.name == "lifecycle")
+        .unwrap();
+    contract.stateful_circuits.swap(0, index);
+    let (_, row) = selected_trace(&contract);
+    assert_eq!(row["body_owner"], "algebra.unit-actions");
+    assert!(!attempts(&row).contains(&"selector.unit-composition"));
+
+    // Member's specialized return is not emitted by this source; exercise it as
+    // an explicitly IR-only public control alongside the real size/empty roots.
+    let mut member = contract.stateful_circuits[0].clone();
+    member.name = "direct_member".into();
+    member.result = Type::Boolean;
+    member.actions.clear();
+    member.return_value = StateReturn::SetMember {
+        field: "scalars".into(),
+        index: 0,
+        value: parameter("seed"),
+    };
+    contract.stateful_circuits.push(member);
+    let rendered = crate::render_with_capabilities(&contract).unwrap();
+    let capabilities: Vec<_> = rendered
+        .capabilities
+        .circuits
+        .iter()
+        .map(|c| {
+            assert!(c.recorded && c.observed_call, "{}: {c:?}", c.name);
+            c.name.as_str()
+        })
+        .collect();
+    assert_eq!(capabilities.len(), 5);
+    for name in [
+        "run",
+        "lifecycle",
+        "scalarSize",
+        "scalarEmpty",
+        "direct_member",
+    ] {
+        assert!(capabilities.contains(&name));
     }
 }

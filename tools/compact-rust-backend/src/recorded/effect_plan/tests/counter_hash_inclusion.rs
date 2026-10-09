@@ -204,7 +204,7 @@ fn finite_counter_hash_grammar_variants_pass_complete_old_plan_before_inclusion(
 }
 
 #[test]
-fn whole_old_voting_plan_still_reports_a_separate_set_membership_gap() {
+fn whole_old_voting_plan_progresses_to_unsigned_subtraction() {
     let contract = source();
     let env = Environment::new(&contract);
     env.old_first("retained whole voting root");
@@ -212,7 +212,7 @@ fn whole_old_voting_plan_still_reports_a_separate_set_membership_gap() {
         panic!("expected an unsupported source operation, not a checked-plan invariant failure")
     };
     eprintln!("old-first voting gap: {gap:?}");
-    assert_eq!(gap.ir_node, "Expr::SetMember");
+    assert_eq!(gap.ir_node, "Expr::UnsignedSubtract");
 }
 
 fn phase_assertion(contract: &mut Contract) -> &mut Expr {
@@ -231,7 +231,7 @@ fn phase_assertion(contract: &mut Contract) -> &mut Expr {
 }
 
 #[test]
-fn old_first_optional_string_cell_observations_progress_to_set_membership() {
+fn old_first_optional_string_cell_observations_progress_to_unsigned_subtraction() {
     // Three finite Boolean contexts preserve one Cell read and the original
     // local_state witness. Each complete old planner acceptance is mandatory.
     for mode in ["presence", "identity", "equal_false"] {
@@ -279,7 +279,7 @@ fn old_first_optional_string_cell_observations_progress_to_set_membership() {
             panic!("expected a remaining unsupported source operation")
         };
         eprintln!("old-first optional-string {mode} next gap: {gap:?}");
-        assert_eq!(gap.ir_node, "Expr::SetMember", "{mode}: {gap:?}");
+        assert_eq!(gap.ir_node, "Expr::UnsignedSubtract", "{mode}: {gap:?}");
     }
 }
 
@@ -354,4 +354,84 @@ fn old_first_opaque_bytes_cell_does_not_admit_an_opaque_witness_interface() {
         "witness result must be supported and arguments must match arity"
     );
     assert!(gap.path.ends_with(".right"), "{gap:?}");
+}
+
+#[test]
+fn whole_old_voting_accepts_wrapper_and_qualified_membership_before_isolated_inclusion() {
+    // IR-only variations of the whole retained voting root. Mandatory ordinary
+    // participant insertion remains Bytes32; only the phase observation varies.
+    for ty in [
+        Type::Struct {
+            name: "ParticipantKey".into(),
+            fields: vec![StructField {
+                name: "digest".into(),
+                ty: Type::Bytes { length: 32 },
+            }],
+        },
+        crate::coin_shapes::qualified_coin_type(),
+    ] {
+        let mut contract = source();
+        let state = contract
+            .ledger_fields
+            .iter_mut()
+            .find(|v| v.id == "state")
+            .unwrap();
+        state.declaration = LedgerFieldKind::Cell { ty: Type::Boolean };
+        let state_index = state.index;
+        contract
+            .witnesses
+            .iter_mut()
+            .find(|v| v.name == "local_state")
+            .unwrap()
+            .result = ty.clone();
+        let index = u8::try_from(contract.ledger_fields.len()).unwrap();
+        contract.ledger_fields.push(LedgerField {
+            id: "observed_members".into(),
+            index,
+            path: vec![index],
+            source: None,
+            declaration: LedgerFieldKind::Set { ty: ty.clone() },
+        });
+        let observation = Expr::SetMember {
+            field: "observed_members".into(),
+            index,
+            value: Box::new(Expr::WitnessCall {
+                name: "local_state".into(),
+                arguments: vec![],
+            }),
+        };
+        *phase_assertion(&mut contract) = Expr::If {
+            condition: Box::new(observation.clone()),
+            then: Box::new(Expr::CellRead {
+                field: "state".into(),
+                index: state_index,
+            }),
+            otherwise: Box::new(Expr::Boolean { value: false }),
+        };
+        let env = Environment::new(&contract);
+        env.old_first(&format!("additional membership {ty:?}"));
+        let isolated = StatefulCircuit {
+            name: "membership_probe".into(),
+            source: None,
+            internal: false,
+            parameters: vec![],
+            result: Type::Boolean,
+            actions: vec![],
+            return_value: StateReturn::Expression { value: observation },
+        };
+        let checked = check_with_calls(
+            &isolated,
+            &env.ledger,
+            &env.witnesses,
+            &env.pure,
+            &env.stateful,
+        )
+        .expect("whole-old-accepted membership must lower independently");
+        render(&checked).unwrap();
+        let PlanError::Unsupported(gap) = env.checked("vote_commit").unwrap_err() else {
+            panic!("remaining whole voting operation must be a source refusal")
+        };
+        eprintln!("old-first membership {ty:?}, next whole-root gap: {gap:?}");
+        assert_eq!(gap.ir_node, "Expr::UnsignedSubtract", "{gap:?}");
+    }
 }

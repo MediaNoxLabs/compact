@@ -15,6 +15,7 @@
 
 //! Typed set mutation, membership queries, and recorded key bindings.
 
+use super::lifecycle_recording::generated_body;
 use super::support::identity;
 use compact_rust_backend::ir::{
     Contract, Expr, LedgerField, LedgerFieldKind, LocalBinding, Parameter, PureCircuit,
@@ -462,8 +463,13 @@ fn recorded_set_assertions_preserve_boolean_queries_and_pure_field_bindings() {
     let rendered = render(&contract).unwrap();
     assert!(rendered.contains("record_is_empty(frame)?"));
     assert!(rendered.contains("record_member(frame,"));
-    assert!(rendered.contains("__compact_recorded_static_"));
-    assert!(rendered.find("record_is_empty(frame)?") < rendered.find("record_member(frame,"));
+    let body = generated_body(&rendered, "recorded", "check_queries");
+    let empty = body.find("record_is_empty").unwrap();
+    let literal = body.find("Field :: from_le_bytes").unwrap();
+    let member = body.find("record_member").unwrap();
+    assert!(empty < literal && literal < member);
+    assert!(body.find("initially empty").unwrap() < literal);
+    assert!(member < body.find("no member").unwrap());
 }
 
 #[test]
@@ -529,15 +535,15 @@ fn enum_set_locals_record_typed_keys_in_source_order() {
     let rendered = render_with_capabilities(&contract).unwrap();
     assert!(rendered.capabilities.circuits[0].recorded);
     assert!(rendered.capabilities.circuits[0].observed_call);
-    let body = rendered.source.split("pub mod recorded").nth(1).unwrap();
-    let bound = body.find("__compact_recorded_enum_").unwrap();
-    let inserted = body.find("record_insert(frame,").unwrap();
-    let observed = body.find("record_member(frame,").unwrap();
-    let removed = body.find("record_remove(frame,").unwrap();
+    let body = generated_body(&rendered.source, "recorded", "test");
+    let bound = body.find("Names :: bill").unwrap();
+    let inserted = body.find("record_insert").unwrap();
+    let observed = body.find("record_member").unwrap();
+    let removed = body.find("record_remove").unwrap();
     assert!(bound < inserted && inserted < observed && observed < removed);
 
-    // Other native enum bindings keep an explicit recording gap until their
-    // source shape has its own replay and proof coverage.
+    // Default<Enum> remains outside checked default construction; the valid
+    // enum-variant operation above does not remove that independent boundary.
     let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
         unreachable!();
     };
@@ -705,10 +711,9 @@ fn set_actions_require_the_declared_element_type() {
     assert!(source.contains("runtime::ledger::SetView<'a, bool, D>"));
     assert!(source.contains("crate::ledger_slots::seen.inspect(self.state)"));
     assert!(source.contains("crate::ledger_slots::seen.insert(context, __compact_param_0)?"));
-    assert!(
-        source.contains(".record_insert(frame, __compact_param_0)?"),
-        "{source}"
-    );
+    let body = generated_body(&source, "recorded", "add");
+    assert!(body.contains("record_insert"), "{body}");
+    assert!(body.find("__compact_param_0").unwrap() < body.find("record_insert").unwrap());
     contract.stateful_circuits[0].parameters[0].ty = Type::Field;
     assert_eq!(
         render(&contract),
@@ -749,8 +754,8 @@ fn set_actions_require_the_declared_element_type() {
     assert!(source.contains("crate::ledger_slots::seen.size(context)?"));
     assert!(source.contains(".record_size(frame)?"), "{source}");
 
-    // The native slot handles this type, but the recorder must not expose a
-    // method until its complete typed expression path is supported.
+    // Plain fixed-byte insertion now uses the same checked ordinary Set
+    // operation as Boolean insertion; declaration equality remains mandatory.
     contract.ledger_fields[0].declaration = LedgerFieldKind::Set {
         ty: Type::Bytes { length: 32 },
     };
@@ -764,5 +769,15 @@ fn set_actions_require_the_declared_element_type() {
             name: "value".into(),
         },
     }];
-    assert!(!render(&contract).unwrap().contains("pub mod recorded"));
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(generated_body(&rendered.source, "recorded", "add").contains("record_insert"));
+    contract.stateful_circuits[0].parameters[0].ty = Type::Bytes { length: 31 };
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Bytes { length: 32 },
+            actual: Type::Bytes { length: 31 },
+        })
+    );
 }

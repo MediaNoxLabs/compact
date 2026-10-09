@@ -1,0 +1,73 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+struct OwnedKey { text: Opaque<"string">; bytes: Opaque<"Uint8Array">; marker: Field; }
+export struct Receipt { scalarBefore: Boolean; scalarAfter: Boolean; ownedBefore: Boolean; ownedAfter: Boolean; nameBefore: Boolean; nameAfter: Boolean; marker: Field; }
+export ledger scalars: Set<Field>;
+export ledger keys: Set<OwnedKey>;
+export ledger names: Set<Opaque<"string">>;
+export ledger storedKey: OwnedKey;
+export ledger outcome: Field;
+export ledger padding0: Field;
+export ledger padding1: Field;
+export ledger padding2: Field;
+export ledger padding3: Field;
+export ledger padding4: Field;
+export ledger padding5: Field;
+export ledger padding6: Field;
+export ledger padding7: Field;
+export ledger padding8: Field;
+export ledger padding9: Field;
+export ledger padding10: Field;
+constructor() {
+  storedKey = default<OwnedKey>;
+  outcome = 0;
+  padding0 = 0;
+  padding1 = 0;
+  padding2 = 0;
+  padding3 = 0;
+  padding4 = 0;
+  padding5 = 0;
+  padding6 = 0;
+  padding7 = 0;
+  padding8 = 0;
+  padding9 = 0;
+  padding10 = 0;
+}
+pure circuit defaultKey(): OwnedKey { return default<OwnedKey>; }
+pure circuit copyKey(value: OwnedKey): OwnedKey { return value; }
+export circuit run(seed: Field, selected: Boolean): Receipt {
+  const scalarBefore = scalars.member(disclose(seed));
+  scalars.insert(disclose(seed));
+  const scalarAfter = scalars.member(disclose(seed));
+  const key = disclose(selected) ? storedKey : defaultKey();
+  const ownedBefore = keys.member(key);
+  const nameBefore = names.member(key.text);
+  if (disclose(selected)) {
+    keys.insert(copyKey(key));
+    keys.insert(key);
+  }
+  names.insert(key.text);
+  const ownedAfter = keys.member(key);
+  const nameAfter = names.member(key.text);
+  outcome = disclose(seed);
+  return Receipt { scalarBefore: scalarBefore, scalarAfter: scalarAfter,
+    ownedBefore: ownedBefore, ownedAfter: ownedAfter, nameBefore: nameBefore,
+    nameAfter: nameAfter, marker: outcome };
+}
+export circuit lifecycle(seed: Field): [] {
+  scalars.resetToDefault();
+  assert(scalars.isEmpty(), "reset must be empty");
+  scalars.insert(disclose(seed));
+  scalars.insert(disclose(seed));
+  assert(scalars.size() == 1, "duplicate changes size");
+  scalars.remove(disclose(seed));
+  scalars.remove(disclose(seed));
+  assert(scalars.isEmpty(), "removal must be empty");
+  scalars.insert(disclose(seed));
+  scalars.resetToDefault();
+  assert(scalars.size() == 0, "final reset changes size");
+}
+export circuit scalarSize(): Uint<64> { return scalars.size(); }
+export circuit scalarEmpty(): Boolean { return scalars.isEmpty(); }

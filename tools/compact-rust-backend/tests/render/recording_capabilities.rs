@@ -22,7 +22,7 @@ use compact_rust_backend::ir::{
 use compact_rust_backend::{RenderError, render_with_capabilities, render_with_proof_capabilities};
 
 #[test]
-fn unsupported_pure_call_and_supported_field_arithmetic_have_exact_capabilities() {
+fn certified_pure_call_and_field_arithmetic_have_exact_capabilities() {
     let mut contract = Contract {
         schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
@@ -86,26 +86,22 @@ fn unsupported_pure_call_and_supported_field_arithmetic_have_exact_capabilities(
         }],
     };
     let rendered = render_with_capabilities(&contract).unwrap();
-    assert!(!rendered.source.contains("pub mod recorded"));
-    assert!(!rendered.source.contains("pub fn write_call"));
+    assert!(rendered.source.contains("pub mod recorded"));
+    assert!(rendered.source.contains("pub fn write_call"));
+    let body = super::lifecycle_recording::generated_body(&rendered.source, "recorded", "write");
+    assert!(body.find("pure_circuits :: square").unwrap() < body.find("record_write").unwrap());
     let report = serde_json::to_value(&rendered.capabilities).unwrap();
     assert_eq!(report["schema_version"], 2);
     assert_eq!(report["circuits"][0]["name"], "write");
     assert_eq!(report["circuits"][0]["source"]["file"], "pure-call.compact");
     assert_eq!(report["circuits"][0]["source"]["line"], 4);
-    assert_eq!(report["circuits"][0]["recorded"], false);
-    assert_eq!(report["circuits"][0]["observed_call"], false);
-    assert_eq!(
-        report["circuits"][0]["recording_unavailable"]["code"],
-        "unsupported_expression"
-    );
-    assert_eq!(
-        report["circuits"][0]["recording_unavailable"]["path"],
-        "actions[0].value"
-    );
-    assert_eq!(
-        report["circuits"][0]["observed_call_unavailable"]["code"],
-        "recording_unavailable"
+    assert_eq!(report["circuits"][0]["recorded"], true);
+    assert_eq!(report["circuits"][0]["observed_call"], true);
+    assert!(report["circuits"][0].get("recording_unavailable").is_none());
+    assert!(
+        report["circuits"][0]
+            .get("observed_call_unavailable")
+            .is_none()
     );
     let published = render_with_proof_capabilities(
         &contract,
@@ -121,12 +117,24 @@ fn unsupported_pure_call_and_supported_field_arithmetic_have_exact_capabilities(
     assert_eq!(published_report["circuits"][0]["proof_required"], true);
     assert_eq!(
         published_report["circuits"][0]["recording_status"],
-        "unavailable"
+        "available"
     );
     assert!(matches!(
         render_with_proof_capabilities(&contract, &serde_json::json!({"circuits": []})),
         Err(RenderError::ProofApplicability(_))
     ));
+
+    // Certification does not turn a malformed pure call into a capability.
+    let mut wrong_arity = contract.clone();
+    let StateAction::CellWrite {
+        value: Expr::Call { arguments, .. },
+        ..
+    } = &mut wrong_arity.stateful_circuits[0].actions[0]
+    else {
+        unreachable!()
+    };
+    arguments.clear();
+    assert!(render_with_capabilities(&wrong_arity).is_err());
 
     let StateAction::CellWrite { value, .. } = &mut contract.stateful_circuits[0].actions[0] else {
         unreachable!()

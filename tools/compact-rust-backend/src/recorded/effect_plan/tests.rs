@@ -440,3 +440,6 @@ mod counter_hash_inclusion;
 
 #[path = "tests/owned_cells.rs"]
 mod owned_cells;
+
+#[path = "tests/set_operations.rs"]
+mod set_operations;

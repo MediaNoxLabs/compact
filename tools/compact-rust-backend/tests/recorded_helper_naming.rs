@@ -131,7 +131,17 @@ fn compact_dollar_normalization_retains_existing_helper_spelling() {
 #[test]
 fn helper_collision_uses_stable_fallback_for_normal_and_raw_spelling() {
     for helper_name in ["inner", "r#type"] {
-        let source = render(&contract(helper_name, true, true)).unwrap();
+        let mut fixture = contract(helper_name, true, true);
+        // The scalar Unit algebra inlines this helper. Keep this naming test on
+        // the existing shared-helper route using an unused Uint8 public input,
+        // outside that rollout's Field/Boolean parameter domain.
+        for caller in fixture.stateful_circuits.iter_mut().filter(|c| !c.internal) {
+            caller.parameters.push(Parameter {
+                name: "unused".into(),
+                ty: Type::Unsigned { max: "255".into() },
+            });
+        }
+        let source = render(&fixture).unwrap();
         syn::parse_file(&source).unwrap();
         let suffix = helper_name
             .bytes()

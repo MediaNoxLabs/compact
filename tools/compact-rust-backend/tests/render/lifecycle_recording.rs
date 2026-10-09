@@ -19,7 +19,7 @@ use compact_rust_backend::ir::{Contract, Expr, SCHEMA_VERSION, StateAction, Stat
 use compact_rust_backend::{render, render_with_capabilities};
 
 // Limit semantic order checks to the chosen generated API, excluding its native twin.
-fn generated_body(source: &str, module_name: &str, function_name: &str) -> String {
+pub(super) fn generated_body(source: &str, module_name: &str, function_name: &str) -> String {
     use quote::ToTokens;
     fn find(items: &[syn::Item], module_name: &str, function_name: &str) -> Option<String> {
         for item in items {
@@ -50,7 +50,7 @@ fn generated_body(source: &str, module_name: &str, function_name: &str) -> Strin
 }
 
 #[test]
-fn welcome_organizer_recording_requires_the_closed_witness_hash_guard() {
+fn welcome_organizer_composes_typed_helpers_and_preserves_authorization_order() {
     let mut contract: Contract =
         serde_json::from_str(include_str!("../welcome-organizer-schema13-ir.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
@@ -92,13 +92,22 @@ fn welcome_organizer_recording_requires_the_closed_witness_hash_guard() {
                 false,
                 Some("actions[0]".to_owned())
             ),
-            (
-                "add_organizer".to_owned(),
-                false,
-                Some("actions[0]".to_owned())
-            ),
+            ("add_organizer".to_owned(), true, None),
             ("check_in".to_owned(), true, None),
         ]
+    );
+
+    // The identity helper is a valid typed pure function. Admission does not
+    // enforce the former hash recipe; the source authorization still executes.
+    let rendered = render_with_capabilities(&contract).unwrap();
+    let body = generated_body(&rendered.source, "recorded", "add_organizer");
+    let witness = body.find("try_witness_metered").unwrap();
+    let derive = body.find("pure_circuits :: public_key").unwrap();
+    let member = body.find("record_member").unwrap();
+    let authorization = body.find("Not an organizer").unwrap();
+    let insert = body.find("record_insert").unwrap();
+    assert!(
+        witness < derive && derive < member && member < authorization && authorization < insert
     );
 
     let hash = contract
@@ -141,14 +150,27 @@ fn welcome_organizer_recording_requires_the_closed_witness_hash_guard() {
                 false,
                 Some("actions[0]".to_owned())
             ),
-            (
-                "add_organizer".to_owned(),
-                false,
-                Some("actions[0]".to_owned())
-            ),
+            ("add_organizer".to_owned(), true, None),
             ("check_in".to_owned(), true, None),
         ]
     );
+    let rendered = render_with_capabilities(&contract).unwrap();
+    let body = generated_body(&rendered.source, "recorded", "add_organizer");
+    assert!(body.find("No secret key found").unwrap() < body.find("extra assertion").unwrap());
+    assert!(body.find("extra assertion").unwrap() < body.find("record_member").unwrap());
+    assert!(body.find("Not an organizer").unwrap() < body.find("record_insert").unwrap());
+
+    // Composition does not relax declaration identity or native error checks.
+    let organizer = contract
+        .stateful_circuits
+        .iter_mut()
+        .find(|c| c.name == "add_organizer")
+        .unwrap();
+    let StateAction::SetInsert { index, .. } = &mut organizer.actions[1] else {
+        unreachable!()
+    };
+    *index = 99;
+    assert!(render_with_capabilities(&contract).is_err());
 }
 
 #[test]

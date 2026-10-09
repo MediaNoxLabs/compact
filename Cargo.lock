@@ -551,6 +551,7 @@ dependencies = [
 name = "compact-rust-adt-set-enum-fixture"
 version = "0.1.0"
 dependencies = [
+ "compact-rust-backend",
  "hex",
  "midnight-compact-runtime",
  "midnight-onchain-state",
@@ -1373,6 +1374,15 @@ dependencies = [
  "compact-rust-backend",
  "midnight-compact-runtime",
  "midnight-compact-testkit",
+ "serde_json",
+]
+
+[[package]]
+name = "compact-rust-effect-plan-set-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-compact-runtime",
  "serde_json",
 ]
 

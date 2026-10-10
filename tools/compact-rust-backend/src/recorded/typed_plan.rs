@@ -2165,6 +2165,7 @@ pub(super) fn lower_immediate_shielded_send<'a>(
 }
 
 /// Guarded receive, optional historical merge and typed Cell update policy.
+#[cfg(test)]
 pub(super) fn lower_guarded_deposit<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,

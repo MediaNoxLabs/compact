@@ -18,11 +18,13 @@ class MergeTransitionTests(unittest.TestCase):
     def setUp(self):
         prior_tests.ObservationTestExtensionTests.setUp(self)
         self.merge_transition = json.loads(previous.MERGE_TRANSITION.read_text())
+        predecessor = previous.guarded_checkpoint_sources(inventory.ROOT)
         for owner in [*merge.REVIEWED_OWNERS, *self.merge_transition['test_sources_sha256'],
                       *self.merge_transition['shared_sources_sha256']]:
             path = self.root / owner
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes((inventory.ROOT / owner).read_bytes())
+            path.write_bytes(predecessor[owner].encode() if owner in predecessor
+                             else (inventory.ROOT / owner).read_bytes())
 
     def report(self):
         return inventory.verify(
@@ -148,7 +150,7 @@ class MergeTransitionTests(unittest.TestCase):
         errors = receive.check_sources(self.root, {**sources, merge.MERGE: old[merge.MERGE] + '\n'},
                                        self.receive_transition)
         self.assertIn('receive retirement: retained shared caller changed: ' + merge.MERGE, errors)
-        at_550 = {**sources, **previous.zswap_checkpoint_sources(self.root)}
+        at_550 = {**sources, **previous.zswap_checkpoint_sources(inventory.ROOT)}
         at_550[immediate.ATTEMPT] = (self.root / immediate.ATTEMPT).read_text()
         self.assertEqual(immediate.check_sources(self.root, at_550, self.immediate_transition,
                                                  old[merge.MERGE]), [])

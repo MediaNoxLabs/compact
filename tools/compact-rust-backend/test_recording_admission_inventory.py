@@ -28,6 +28,7 @@ import recording_admission_inventory_membership as membership
 import recording_admission_inventory_send as send
 import recording_admission_inventory_observation_test as observation_test
 import recording_admission_inventory_merge as merge
+import recording_admission_inventory_guarded as guarded
 
 JUBJUB_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-517.json")
 CALL_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.calls-519.json")
@@ -73,8 +74,18 @@ def observation_checkpoint_source(root):
 MERGE_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-565.json")
 
 
+GUARDED_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-566.json")
+
+
+def guarded_checkpoint_sources(root):
+    return guarded.predecessor_sources(root, json.loads(GUARDED_TRANSITION.read_text()))
+
+
 def merge_checkpoint_sources(root):
-    return merge.predecessor_sources(root, json.loads(MERGE_TRANSITION.read_text()))
+    prior = guarded_checkpoint_sources(root)
+    sources = {owner: (root / owner).read_text() for owner in merge.REVIEWED_OWNERS}
+    return {**prior, **merge.predecessor_source_snapshot(
+        {**sources, **prior}, json.loads(MERGE_TRANSITION.read_text()))}
 
 
 def send_checkpoint_sources(root):
@@ -222,7 +233,8 @@ class InventoryTests(unittest.TestCase):
                                   membership_transition=json.loads(MEMBERSHIP_TRANSITION.read_text()),
                                   send_transition=json.loads(SEND_TRANSITION.read_text()),
                                   observation_test_extension=json.loads(OBSERVATION_TEST_EXTENSION.read_text()),
-                                  merge_transition=json.loads(MERGE_TRANSITION.read_text()))
+                                  merge_transition=json.loads(MERGE_TRANSITION.read_text()),
+                                  guarded_deposit_transition=json.loads(GUARDED_TRANSITION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)
@@ -248,7 +260,7 @@ class RetirementTransitionTests(unittest.TestCase):
         self.composite_transition = json.loads(COMPOSITE_TRANSITION.read_text())
         self.receive_transition = json.loads(RECEIVE_TRANSITION.read_text())
         self.unit_domain_extension = json.loads(UNIT_DOMAIN_EXTENSION.read_text())
-        for relative in {*self.baseline['source_fingerprints'], inventory.ORACLE, jubjub.ORACLE, terminal.ORACLE, unit.ORACLE, context.ORACLE, context.IR, composite.ORACLE, composite.FIELD, receive.ORACLE, *context.SHARED_ANCHORS, *inventory.HOOK_SOURCES, *immediate.REVIEWED_OWNERS, *membership.REVIEWED_OWNERS, *merge.REVIEWED_OWNERS}:
+        for relative in {*self.baseline['source_fingerprints'], inventory.ORACLE, jubjub.ORACLE, terminal.ORACLE, unit.ORACLE, context.ORACLE, context.IR, composite.ORACLE, composite.FIELD, receive.ORACLE, *context.SHARED_ANCHORS, *inventory.HOOK_SOURCES, *immediate.REVIEWED_OWNERS, *membership.REVIEWED_OWNERS, *merge.REVIEWED_OWNERS, *guarded.REVIEWED_OWNERS}:
             destination = self.root / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_bytes((inventory.ROOT / relative).read_bytes())

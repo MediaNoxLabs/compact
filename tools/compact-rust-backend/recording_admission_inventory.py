@@ -60,6 +60,7 @@ import recording_admission_inventory_membership as membership
 import recording_admission_inventory_send as send
 import recording_admission_inventory_observation_test as observation_test
 import recording_admission_inventory_merge as merge
+import recording_admission_inventory_guarded as guarded
 
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE = Path(__file__).with_suffix('.baseline.json')
@@ -260,7 +261,8 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
            membership_transition: dict | None = None,
            send_transition: dict | None = None,
            observation_test_extension: dict | None = None,
-           merge_transition: dict | None = None) -> dict:
+           merge_transition: dict | None = None,
+           guarded_deposit_transition: dict | None = None) -> dict:
     errors = validate_baseline(baseline)
     report = {'schema_version': 1, 'baseline_commit': baseline.get('baseline_commit'),
               'claim': 'source route inventory; not language or behavioral coverage',
@@ -353,6 +355,18 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
                          'reviewed_source_fingerprints': {
                              **evolution['reviewed_source_fingerprints'],
                              **reviewed_receive['reviewed_source_fingerprints']}}
+    proposed_guarded = None
+    guarded_snapshot = None
+    if guarded_deposit_transition is not None:
+        guarded_errors = guarded.validate(baseline, guarded_deposit_transition, baseline_bytes, merge_transition)
+        if not guarded_errors:
+            try:
+                guarded_snapshot = guarded.predecessor_sources(root, guarded_deposit_transition)
+            except (OSError, UnicodeError, ValueError) as error:
+                guarded_errors.append('guarded deposit retirement: predecessor reconstruction failed: ' + str(error))
+        errors.extend(guarded_errors)
+        if not guarded_errors:
+            proposed_guarded = guarded_deposit_transition
     proposed_merge = None
     merge_snapshot = None
     if merge_transition is not None:
@@ -360,7 +374,12 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
                                       send_transition, observation_test_extension)
         if not merge_errors:
             try:
-                merge_snapshot = merge.predecessor_sources(root, merge_transition)
+                if guarded_snapshot is not None:
+                    merge_sources = {owner: (root / owner).read_text() for owner in merge.REVIEWED_OWNERS}
+                    merge_snapshot = merge.predecessor_source_snapshot(
+                        {**merge_sources, **guarded_snapshot}, merge_transition)
+                else:
+                    merge_snapshot = merge.predecessor_sources(root, merge_transition)
             except (OSError, UnicodeError, ValueError) as error:
                 merge_errors.append('merge retirement: predecessor reconstruction failed: ' + str(error))
         errors.extend(merge_errors)
@@ -548,6 +567,16 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
                          'reviewed_source_fingerprints': {
                              **evolution['reviewed_source_fingerprints'],
                              **reviewed_merge['reviewed_source_fingerprints']}}
+    reviewed_guarded = None
+    if proposed_guarded is not None:
+        if reviewed_merge is None:
+            errors.append('guarded deposit retirement: complete merge565 authority required')
+        else:
+            reviewed_guarded = proposed_guarded
+            evolution = {**evolution, **reviewed_guarded,
+                         'reviewed_source_fingerprints': {
+                             **evolution['reviewed_source_fingerprints'],
+                             **reviewed_guarded['reviewed_source_fingerprints']}}
     if instrumentation is not None:
         errors.extend(validate_instrumentation(root, baseline, instrumentation, baseline_bytes, evolution, prior_probe))
         report['reviewed_instrumentation'] = {
@@ -574,7 +603,7 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
         failures = []
         for anchor in row['anchors']:
             actual = sources.get(anchor['source'], '').count(anchor['text'])
-            retired = (transition is not None and row['id'] == RETIRED_EFFECTFUL) or (reviewed_jubjub is not None and row['id'] == jubjub.ROUTE) or (reviewed_terminal is not None and row['id'] == terminal.ROUTE) or (reviewed_unit is not None and row['id'] == unit.ROUTE) or (reviewed_context is not None and row['id'] == context.ROUTE) or (reviewed_kernel is not None and row['id'] == kernel.ROUTE) or (reviewed_composite is not None and row['id'] == composite.ROUTE) or (reviewed_receive is not None and row['id'] == receive.ROUTE) or (reviewed_voting is not None and row['id'] == voting.ROUTE) or (reviewed_phase_reset is not None and row['id'] == phase_reset.ROUTE) or (reviewed_immediate is not None and row['id'] == immediate.ROUTE) or (reviewed_zswap is not None and row['id'] == zswap.ROUTE) or (reviewed_membership is not None and row['id'] == membership.ROUTE) or (reviewed_send is not None and row['id'] == send.ROUTE) or (reviewed_merge is not None and row['id'] == merge.ROUTE)
+            retired = (transition is not None and row['id'] == RETIRED_EFFECTFUL) or (reviewed_jubjub is not None and row['id'] == jubjub.ROUTE) or (reviewed_terminal is not None and row['id'] == terminal.ROUTE) or (reviewed_unit is not None and row['id'] == unit.ROUTE) or (reviewed_context is not None and row['id'] == context.ROUTE) or (reviewed_kernel is not None and row['id'] == kernel.ROUTE) or (reviewed_composite is not None and row['id'] == composite.ROUTE) or (reviewed_receive is not None and row['id'] == receive.ROUTE) or (reviewed_voting is not None and row['id'] == voting.ROUTE) or (reviewed_phase_reset is not None and row['id'] == phase_reset.ROUTE) or (reviewed_immediate is not None and row['id'] == immediate.ROUTE) or (reviewed_zswap is not None and row['id'] == zswap.ROUTE) or (reviewed_membership is not None and row['id'] == membership.ROUTE) or (reviewed_send is not None and row['id'] == send.ROUTE) or (reviewed_merge is not None and row['id'] == merge.ROUTE) or (reviewed_guarded is not None and row['id'] == guarded.ROUTE)
             expected = 0 if retired else anchor['baseline_occurrences']
             if actual != expected:
                 failures.append({'source': anchor['source'], 'anchor': anchor['text'],
@@ -660,6 +689,8 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
     if reviewed_receive is not None:
         receive_sources = ({**sources, merge.MERGE: merge_snapshot[merge.MERGE]}
                            if reviewed_merge is not None else sources)
+        if reviewed_guarded is not None:
+            receive_sources = {**receive_sources, guarded.GUARDED: guarded_snapshot[guarded.GUARDED]}
         if immediate_snapshot is not None:
             receive_sources = {**receive_sources, immediate.IMMEDIATE: immediate_snapshot[immediate.IMMEDIATE]}
         retirement_errors = receive.check_sources(root, receive_sources, reviewed_receive)
@@ -702,7 +733,8 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
                              if zswap_snapshot is not None else sources)
         retirement_errors = immediate.check_sources(
             root, immediate_sources, reviewed_immediate,
-            merge_snapshot[merge.MERGE] if reviewed_merge is not None else None)
+            merge_snapshot[merge.MERGE] if reviewed_merge is not None else None,
+            guarded_snapshot[guarded.GUARDED] if reviewed_guarded is not None else None)
         errors.extend(retirement_errors)
         report['retired_routes'].append({
             'id': immediate.ROUTE,
@@ -751,7 +783,9 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
             sources[merge.VOTING_TEST] = (root / merge.VOTING_TEST).read_text()
         except (OSError, UnicodeError) as error:
             errors.append('merge retirement: unreadable adapted voting test: ' + str(error))
-        retirement_errors = merge.check_sources(root, sources, reviewed_merge)
+        retirement_errors = merge.check_sources(
+            root, {**sources, **(guarded_snapshot or {})}, reviewed_merge,
+            guarded_snapshot[guarded.VOTING_TEST] if reviewed_guarded is not None else None)
         errors.extend(retirement_errors)
         report['retired_routes'].append({
             'id': merge.ROUTE,
@@ -759,6 +793,20 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
             'passed': not retirement_errors and not next(
                 row['failures'] for row in report['route_checks'] if row['id'] == merge.ROUTE),
             'evidence': reviewed_merge,
+        })
+    if reviewed_guarded is not None:
+        try:
+            sources[guarded.VOTING_TEST] = (root / guarded.VOTING_TEST).read_text()
+        except (OSError, UnicodeError) as error:
+            errors.append('guarded deposit retirement: unreadable adapted voting test: ' + str(error))
+        retirement_errors = guarded.check_sources(root, sources, reviewed_guarded)
+        errors.extend(retirement_errors)
+        report['retired_routes'].append({
+            'id': guarded.ROUTE,
+            'status': 'retired-from-production-test-oracle-retained',
+            'passed': not retirement_errors and not next(
+                row['failures'] for row in report['route_checks'] if row['id'] == guarded.ROUTE),
+            'evidence': reviewed_guarded,
         })
     if SELECTOR in sources:
         try:
@@ -798,6 +846,7 @@ def main(argv=None) -> int:
     parser.add_argument('--send-transition', type=Path, help='explicit #561 retirement into existing composite domain after #560')
     parser.add_argument('--observation-test-extension', type=Path, help='explicit #564 test-only expectation adaptation; no retirement')
     parser.add_argument('--merge-transition', type=Path, help='explicit #565 merge subsumption after #561 and #564')
+    parser.add_argument('--guarded-deposit-transition', type=Path, help='explicit #566 guarded-deposit checked admission after #565')
     args = parser.parse_args(argv)
     protected = [args.baseline] + ([args.transition] if args.transition else []) + ([args.instrumentation] if args.instrumentation else []) + ([args.jubjub_transition] if args.jubjub_transition else []) + ([args.call_extension] if args.call_extension else []) + ([args.terminal_transition] if args.terminal_transition else []) + ([args.unit_actions_transition] if args.unit_actions_transition else []) + ([args.context_query_transition] if args.context_query_transition else []) + ([args.kernel_transition] if args.kernel_transition else []) + ([args.composite_transition] if args.composite_transition else []) + ([args.receive_transition] if args.receive_transition else [])
     protected += [args.unit_domain_extension] if args.unit_domain_extension else []
@@ -809,6 +858,7 @@ def main(argv=None) -> int:
     protected += [args.send_transition] if args.send_transition else []
     protected += [args.observation_test_extension] if args.observation_test_extension else []
     protected += [args.merge_transition] if args.merge_transition else []
+    protected += [args.guarded_deposit_transition] if args.guarded_deposit_transition else []
     if args.output and any(args.output.resolve() == path.resolve() for path in protected):
         parser.error('--output cannot overwrite baseline, transition, instrumentation, or call-extension evidence')
     try:
@@ -833,7 +883,8 @@ def main(argv=None) -> int:
         send_transition = json.loads(args.send_transition.read_text()) if args.send_transition else None
         observation_test_extension = json.loads(args.observation_test_extension.read_text()) if args.observation_test_extension else None
         merge_transition = json.loads(args.merge_transition.read_text()) if args.merge_transition else None
-        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension, voting_transition, phase_reset_transition, immediate_send_transition, zswap_transition, membership_transition, send_transition, observation_test_extension, merge_transition)
+        guarded_deposit_transition = json.loads(args.guarded_deposit_transition.read_text()) if args.guarded_deposit_transition else None
+        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension, voting_transition, phase_reset_transition, immediate_send_transition, zswap_transition, membership_transition, send_transition, observation_test_extension, merge_transition, guarded_deposit_transition)
     except (OSError, ValueError, TypeError, KeyError) as error:
         parser.exit(2, f'inventory error: {error}\n')
     rendered = json.dumps(report, indent=2) + '\n'

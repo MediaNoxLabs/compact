@@ -71,7 +71,7 @@ fn unsupported_body_preserves_later_independent_attempt_order() {
         [
             "algebra.voting-commit",
             "selector.funded-mint",
-            "selector.guarded-deposit",
+            "algebra.guarded-deposit",
             "selector.reset-payout"
         ]
     );

@@ -76,7 +76,8 @@ def validate(baseline, transition, baseline_bytes, send, observation):
     return errors
 
 
-def check_sources(root, sources, transition):
+def check_sources(root, sources, transition, prior_voting_test=None):
+    """A later authenticated test adaptation still satisfies the original exact pin."""
     errors = []
     for owner, source in sources.items():
         if re.search(r'\btyped_plan\s*::\s*lower_shielded_merge\s*\(', source):
@@ -96,7 +97,9 @@ def check_sources(root, sources, transition):
             if digest((root / path).read_bytes()) != expected:
                 errors.append('merge retirement: shared admission dependency changed: ' + path)
         for path, expected in transition['test_sources_sha256'].items():
-            if digest((root / path).read_bytes()) != expected:
+            data = (prior_voting_test.encode() if prior_voting_test is not None and path == VOTING_TEST
+                    else (root / path).read_bytes())
+            if digest(data) != expected:
                 errors.append('merge retirement: reviewed routing test changed: ' + path)
     except (OSError, UnicodeError, ValueError, KeyError) as error:
         errors.append('merge retirement: source preservation failed: ' + str(error))

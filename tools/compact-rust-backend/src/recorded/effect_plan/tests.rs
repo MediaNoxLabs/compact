@@ -500,3 +500,6 @@ mod internal_interfaces;
 
 #[path = "tests/whole_merge_inclusion.rs"]
 mod whole_merge_inclusion;
+
+#[path = "tests/guarded_deposit_inclusion.rs"]
+mod guarded_deposit_inclusion;

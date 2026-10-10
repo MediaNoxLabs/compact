@@ -161,8 +161,8 @@ def validate(baseline, transition, baseline_bytes, phase, voting, unit):
     return errors
 
 
-def check_sources(root, sources, transition, prior_merge=None):
-    """A later authenticated retirement may supply the exact former merge owner."""
+def check_sources(root, sources, transition, prior_merge=None, prior_guarded=None):
+    """Later authenticated retirements may supply exact former shared-caller owners."""
     errors = []
     test_users = {TYPED, IMMEDIATE, 'tools/compact-rust-backend/src/recorded/typed_plan/voting_commit.rs'}
     for owner, source in sources.items():
@@ -202,6 +202,8 @@ def check_sources(root, sources, transition, prior_merge=None):
         for owner, expected in SHARED_CALLERS.items():
             data = (prior_merge.encode() if prior_merge is not None and owner ==
                     'tools/compact-rust-backend/src/recorded/typed_plan/shielded_merge.rs'
+                    else prior_guarded.encode() if prior_guarded is not None and owner ==
+                    'tools/compact-rust-backend/src/recorded/typed_plan/guarded_deposit.rs'
                     else (root / owner).read_bytes())
             if digest(data) != expected:
                 errors.append('immediate retirement: shared caller changed: ' + owner)

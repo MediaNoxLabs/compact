@@ -17,7 +17,9 @@
 //! lexical scope, exact types, query order and branch-local frame ownership.
 use super::immediate_send::{parameter, uncoerced};
 use super::*;
-use crate::coin_shapes::{qualified_coin_type, shielded_coin_type};
+use crate::coin_shapes::qualified_coin_type;
+#[cfg(test)]
+use crate::coin_shapes::shielded_coin_type;
 
 pub(super) fn read_type(ty: &Type) -> bool {
     matches!(
@@ -300,6 +302,7 @@ pub(super) fn prefix(
         && (audit.receives, audit.merges, audit.writes) == (1, 1, 2)
 }
 
+#[cfg(test)]
 pub(super) fn lower<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,

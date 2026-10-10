@@ -78,6 +78,10 @@ mod send_migration_tests;
 #[path = "profile_selection/merge_migration_tests.rs"]
 mod merge_migration_tests;
 
+#[cfg(test)]
+#[path = "profile_selection/guarded_deposit_migration_tests.rs"]
+mod guarded_deposit_migration_tests;
+
 /// An admitted step sequence and the evidence retained from declined profiles.
 /// Legacy organizers have no typed result; absence of steps permits legacy
 /// action lowering. The caller owns whether a retained gap can refine a failure.
@@ -338,6 +342,33 @@ fn checked_voting_domain(
     ))
 }
 
+/// Guarded deposit interfaces enter at their existing selector priority.
+/// The beneficiary is any declared one-field Bytes<32> product. Typed effects,
+/// rather than a receive/merge prefix or static evidence counts, admit the body.
+fn checked_guarded_deposit_domain(
+    circuit: &StatefulCircuit,
+    ledger: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+) -> Result<Option<TypedPlan>, RenderError> {
+    use crate::ir::{StateReturn, Type};
+    if circuit.result != Type::Unit
+        || circuit.return_value != StateReturn::Unit
+        || !matches!(circuit.parameters.as_slice(), [topic, beneficiary, seed]
+            if topic.ty == Type::OpaqueString
+                && matches!(&beneficiary.ty, Type::Struct { fields, .. }
+                    if matches!(fields.as_slice(), [member]
+                        if member.ty == (Type::Bytes { length: 32 })))
+                && seed.ty == crate::coin_shapes::shielded_coin_type())
+    {
+        return Ok(None);
+    }
+    resolve_checked_plan(effect_plan::lower_with_calls(
+        circuit, ledger, witnesses, pure, circuits,
+    ))
+}
+
 fn resolve_checked_plan(
     result: Result<TypedPlan, effect_plan::PlanError>,
 ) -> Result<Option<TypedPlan>, RenderError> {
@@ -506,31 +537,32 @@ pub(super) fn select(
                 checked_voting_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?
             ),
         };
-        let before_terminal = through_voting
-            .or_else(|| {
-                record_option!(
-                    "selector.funded-mint",
-                    typed_plan::lower_funded_mint(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                        circuits,
-                    )
+        let through_funded = through_voting.or_else(|| {
+            record_option!(
+                "selector.funded-mint",
+                typed_plan::lower_funded_mint(
+                    circuit,
+                    ledger_fields,
+                    witnesses,
+                    pure_circuits,
+                    circuits,
                 )
-            })
-            .or_else(|| {
-                record_option!(
-                    "selector.guarded-deposit",
-                    typed_plan::lower_guarded_deposit(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                        circuits,
-                    )
-                )
-            })
+            )
+        });
+        let through_deposit = match through_funded {
+            Some(plan) => Some(plan),
+            None => record_option!(
+                "algebra.guarded-deposit",
+                checked_guarded_deposit_domain(
+                    circuit,
+                    ledger_fields,
+                    witnesses,
+                    pure_circuits,
+                    circuits,
+                )?
+            ),
+        };
+        let before_terminal = through_deposit
             .or_else(|| {
                 record_option!(
                     "selector.reset-payout",

@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "issue": 568,
+  "classification": "routing-test-adaptation-no-retirement",
+  "reviewed_checkpoint": "db27d0253b01b497a8c6fb2ebbc9b56ee630bab7",
+  "owner": "tools/compact-rust-backend/src/recorded/profile_selection/zswap_migration_tests.rs",
+  "prior_source_sha256": "cd955224fe2028ab88489c849c7fe013123751ddcb7326ad8a048f9caf737a7c",
+  "reviewed_source_sha256": "fd21c83fd817a62736bc9013897ddccc2533b7c49476005769d48f998ad0890c",
+  "prior_manifests": {
+    "zswap": "d0bd62c6624e4c21c2e0926ec010ceb6c343e56291b087605d98e95da1d5a573",
+    "membership": "59909b13f5a5c48f7288a38c186debdef278d032344298530a69c526f58dc3a1",
+    "send": "660f74f8da0b8b2a35e9feba30966d2047e1094d045c00629aa049ffb09e02a6",
+    "guarded": "c3f02a85cae2dac6c680f2dc18897cc456b5712dc3b4a7335610b5fcb131a57d"
+  },
+  "test_adaptations": [
+    {
+      "current": "#[test]\nfn unsupported_body_refuses_at_last_priority_without_old_fallback() {\n    let mut c = source();\n    let r = c\n        .stateful_circuits\n        .iter_mut()\n        .find(|r| r.name == \"flow\")\n        .unwrap();\n    r.actions = vec![StateAction::Expression {\n        value: Expr::NotEqual {\n            left: Box::new(Expr::Boolean { value: true }),\n            right: Box::new(Expr::Boolean { value: false }),\n        },\n    }];\n    let maps = Context::new(&c);\n    assert!(maps.domain(root(&c, \"flow\")).unwrap().is_none());\n    let (selected, row) = maps.selected(root(&c, \"flow\"));\n    assert!(selected.typed_result.is_none());\n    let attempted = attempts(&row);\n    assert_eq!(\n        &attempted[attempted.len() - 2..],\n        &[\"selector.unit-composition\", \"algebra.zswap\"]\n    );\n    assert!(!attempted.contains(&\"selector.zswap\"));\n    crate::render_with_capabilities(&c).unwrap();\n}\n",
+      "previous": "#[test]\nfn unsupported_body_refuses_at_last_priority_without_old_fallback() {\n    let mut c = source();\n    let r = c\n        .stateful_circuits\n        .iter_mut()\n        .find(|r| r.name == \"flow\")\n        .unwrap();\n    r.actions = vec![StateAction::Expression {\n        value: Expr::NativeWitnessCall {\n            builtin: NativeWitnessBuiltin::OwnPublicKey,\n        },\n    }];\n    let maps = Context::new(&c);\n    assert!(maps.domain(root(&c, \"flow\")).unwrap().is_none());\n    let (selected, row) = maps.selected(root(&c, \"flow\"));\n    assert!(selected.typed_result.is_none());\n    let attempted = attempts(&row);\n    assert_eq!(\n        &attempted[attempted.len() - 2..],\n        &[\"selector.unit-composition\", \"algebra.zswap\"]\n    );\n    assert!(!attempted.contains(&\"selector.zswap\"));\n    crate::render_with_capabilities(&c).unwrap();\n}\n"
+    },
+    {
+      "current": "use crate::ir::{Contract, Expr, Parameter, ReturnPlan, StateAction, StateReturn, Type};",
+      "previous": "use crate::ir::{\n    Contract, Expr, NativeWitnessBuiltin, Parameter, ReturnPlan, StateAction, StateReturn, Type,\n};"
+    }
+  ],
+  "new_retired_routes": [],
+  "claim": "Authenticate a test-only negative operand replacement after OwnPublicKey became supported, plus unused import removal. Preserve exact historical #561/#560/#553 routing authority; no production selector or retirement change."
+}

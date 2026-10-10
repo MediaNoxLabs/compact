@@ -61,6 +61,7 @@ import recording_admission_inventory_send as send
 import recording_admission_inventory_observation_test as observation_test
 import recording_admission_inventory_merge as merge
 import recording_admission_inventory_guarded as guarded
+import recording_admission_inventory_routing_test as routing_test
 
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE = Path(__file__).with_suffix('.baseline.json')
@@ -262,7 +263,8 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
            send_transition: dict | None = None,
            observation_test_extension: dict | None = None,
            merge_transition: dict | None = None,
-           guarded_deposit_transition: dict | None = None) -> dict:
+           guarded_deposit_transition: dict | None = None,
+           routing_test_extension: dict | None = None) -> dict:
     errors = validate_baseline(baseline)
     report = {'schema_version': 1, 'baseline_commit': baseline.get('baseline_commit'),
               'claim': 'source route inventory; not language or behavioral coverage',
@@ -355,6 +357,18 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
                          'reviewed_source_fingerprints': {
                              **evolution['reviewed_source_fingerprints'],
                              **reviewed_receive['reviewed_source_fingerprints']}}
+    prior_routing_test = None
+    if routing_test_extension is not None:
+        try:
+            # This exact single-owner snapshot supports ancestor reconstruction.
+            # Final acceptance below still requires the complete reviewed chain.
+            prior_routing_test = routing_test.validate(
+                root, routing_test_extension, zswap_transition, membership_transition,
+                send_transition, guarded_deposit_transition)
+        except (OSError, UnicodeError, ValueError, KeyError) as error:
+            errors.append(str(error))
+    routing_snapshot = ({routing_test.OWNER: prior_routing_test}
+                        if prior_routing_test is not None else {})
     proposed_guarded = None
     guarded_snapshot = None
     if guarded_deposit_transition is not None:
@@ -394,9 +408,11 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
                 if merge_snapshot is not None:
                     send_sources = {owner: (root / owner).read_text() for owner in send.REVIEWED_OWNERS}
                     send_snapshot = send.predecessor_source_snapshot(
-                        {**send_sources, **merge_snapshot}, send_transition)
+                        {**send_sources, **merge_snapshot, **routing_snapshot}, send_transition)
                 else:
-                    send_snapshot = send.predecessor_sources(root, send_transition)
+                    send_sources = {owner: (root / owner).read_text() for owner in send.REVIEWED_OWNERS}
+                    send_snapshot = send.predecessor_source_snapshot(
+                        {**send_sources, **routing_snapshot}, send_transition)
             except (OSError, UnicodeError, ValueError) as error:
                 send_errors.append('send retirement: predecessor reconstruction failed: ' + str(error))
         errors.extend(send_errors)
@@ -577,6 +593,16 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
                          'reviewed_source_fingerprints': {
                              **evolution['reviewed_source_fingerprints'],
                              **reviewed_guarded['reviewed_source_fingerprints']}}
+    if routing_test_extension is not None:
+        if prior_routing_test is None or reviewed_guarded is None:
+            errors.append('routing test: complete guarded566 authority and authenticated current test required')
+        else:
+            report['reviewed_routing_test_extension'] = {
+                'issue': 568, 'owner': routing_test.OWNER, 'new_retired_routes': [],
+                'claim': 'one authenticated test operand/import update; unchanged selectors and routes'}
+            evolution = {**evolution, 'reviewed_source_fingerprints': {
+                **evolution['reviewed_source_fingerprints'],
+                routing_test.OWNER: routing_test.CURRENT_SHA}}
     if instrumentation is not None:
         errors.extend(validate_instrumentation(root, baseline, instrumentation, baseline_bytes, evolution, prior_probe))
         report['reviewed_instrumentation'] = {
@@ -759,7 +785,7 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
             sources[membership.ZSWAP_TEST] = (root / membership.ZSWAP_TEST).read_text()
         except (OSError, UnicodeError) as error:
             errors.append('membership retirement: unreadable adapted routing tests: ' + str(error))
-        retirement_errors = membership.check_sources(root, {**sources, **(send_snapshot or {})}, reviewed_membership)
+        retirement_errors = membership.check_sources(root, {**sources, **(send_snapshot or {}), **routing_snapshot}, reviewed_membership)
         errors.extend(retirement_errors)
         report['retired_routes'].append({
             'id': membership.ROUTE,
@@ -769,7 +795,7 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
             'evidence': reviewed_membership,
         })
     if reviewed_send is not None:
-        retirement_errors = send.check_sources(root, {**sources, **(merge_snapshot or {})}, reviewed_send)
+        retirement_errors = send.check_sources(root, {**sources, **(merge_snapshot or {}), **routing_snapshot}, reviewed_send)
         errors.extend(retirement_errors)
         report['retired_routes'].append({
             'id': send.ROUTE,
@@ -847,6 +873,7 @@ def main(argv=None) -> int:
     parser.add_argument('--observation-test-extension', type=Path, help='explicit #564 test-only expectation adaptation; no retirement')
     parser.add_argument('--merge-transition', type=Path, help='explicit #565 merge subsumption after #561 and #564')
     parser.add_argument('--guarded-deposit-transition', type=Path, help='explicit #566 guarded-deposit checked admission after #565')
+    parser.add_argument('--routing-test-extension', type=Path, help='explicit #568 test-only negative operand adaptation; no retirement')
     args = parser.parse_args(argv)
     protected = [args.baseline] + ([args.transition] if args.transition else []) + ([args.instrumentation] if args.instrumentation else []) + ([args.jubjub_transition] if args.jubjub_transition else []) + ([args.call_extension] if args.call_extension else []) + ([args.terminal_transition] if args.terminal_transition else []) + ([args.unit_actions_transition] if args.unit_actions_transition else []) + ([args.context_query_transition] if args.context_query_transition else []) + ([args.kernel_transition] if args.kernel_transition else []) + ([args.composite_transition] if args.composite_transition else []) + ([args.receive_transition] if args.receive_transition else [])
     protected += [args.unit_domain_extension] if args.unit_domain_extension else []
@@ -859,6 +886,7 @@ def main(argv=None) -> int:
     protected += [args.observation_test_extension] if args.observation_test_extension else []
     protected += [args.merge_transition] if args.merge_transition else []
     protected += [args.guarded_deposit_transition] if args.guarded_deposit_transition else []
+    protected += [args.routing_test_extension] if args.routing_test_extension else []
     if args.output and any(args.output.resolve() == path.resolve() for path in protected):
         parser.error('--output cannot overwrite baseline, transition, instrumentation, or call-extension evidence')
     try:
@@ -884,7 +912,8 @@ def main(argv=None) -> int:
         observation_test_extension = json.loads(args.observation_test_extension.read_text()) if args.observation_test_extension else None
         merge_transition = json.loads(args.merge_transition.read_text()) if args.merge_transition else None
         guarded_deposit_transition = json.loads(args.guarded_deposit_transition.read_text()) if args.guarded_deposit_transition else None
-        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension, voting_transition, phase_reset_transition, immediate_send_transition, zswap_transition, membership_transition, send_transition, observation_test_extension, merge_transition, guarded_deposit_transition)
+        routing_test_extension = json.loads(args.routing_test_extension.read_text()) if args.routing_test_extension else None
+        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension, voting_transition, phase_reset_transition, immediate_send_transition, zswap_transition, membership_transition, send_transition, observation_test_extension, merge_transition, guarded_deposit_transition, routing_test_extension)
     except (OSError, ValueError, TypeError, KeyError) as error:
         parser.exit(2, f'inventory error: {error}\n')
     rendered = json.dumps(report, indent=2) + '\n'

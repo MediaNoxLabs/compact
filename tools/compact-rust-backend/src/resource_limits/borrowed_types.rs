@@ -20,6 +20,7 @@ struct Types<'a> {
     scan: Scan<'a>,
     types: Vec<&'a Type>,
     defaults: Vec<&'a Type>,
+    native_witnesses: Vec<crate::ir::NativeWitnessBuiltin>,
 }
 impl<'a> Types<'a> {
     fn new() -> Self {
@@ -38,6 +39,7 @@ impl<'a> Types<'a> {
             },
             types: Vec::new(),
             defaults: Vec::new(),
+            native_witnesses: Vec::new(),
         }
     }
     fn source(&mut self, node: Node<'a>) -> Result<(), LimitError> {
@@ -63,6 +65,11 @@ impl<'a> Types<'a> {
             if let Node::Expr(crate::ir::Expr::Default { ty }) = visit.node {
                 self.defaults.push(ty);
             }
+            if let Node::NativeWitnessBuiltin(builtin) = visit.node
+                && !self.native_witnesses.contains(builtin)
+            {
+                self.native_witnesses.push(*builtin);
+            }
             children(visit, &mut self.scan)?;
         }
         check_frames(&self.scan.metrics, self.scan.limits)
@@ -75,13 +82,19 @@ pub(crate) fn recording_type_nodes(ty: &Type) -> Result<Vec<&Type>, crate::Rende
     Ok(bounded.types)
 }
 
+/// Explicit borrowed annotations and implicit types of encountered builtins.
+pub(crate) struct RecordingSourceTypes<'a> {
+    pub(crate) types: Vec<&'a Type>,
+    pub(crate) native_witnesses: Vec<crate::ir::NativeWitnessBuiltin>,
+}
+
 pub(crate) fn recording_source_types<'a>(
     root: &'a StatefulCircuit,
     ledger: &HashMap<&str, &'a LedgerField>,
     witnesses: &HashMap<&str, &'a WitnessDeclaration>,
     pure: &HashMap<&str, &'a PureCircuit>,
     stateful: &HashMap<&str, &'a StatefulCircuit>,
-) -> Result<Vec<&'a Type>, crate::RenderError> {
+) -> Result<RecordingSourceTypes<'a>, crate::RenderError> {
     let declarations = pure
         .len()
         .saturating_add(stateful.len())
@@ -120,7 +133,10 @@ pub(crate) fn recording_source_types<'a>(
                 .map_err(render_error)?;
         }
     }
-    Ok(bounded.types)
+    Ok(RecordingSourceTypes {
+        types: bounded.types,
+        native_witnesses: bounded.native_witnesses,
+    })
 }
 
 /// Fixed byte leaves per checked aggregate type, not total runtime memory.

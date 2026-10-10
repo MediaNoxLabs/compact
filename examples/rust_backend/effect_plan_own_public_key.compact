@@ -1,0 +1,22 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger calls: Counter;
+export struct Result {
+  first: ZswapCoinPublicKey;
+  second: ZswapCoinPublicKey;
+  before: Field;
+  middle: Field;
+  after: Field;
+}
+witness mark(step: Uint<8>): Field;
+export circuit run(selected: Boolean): Result {
+  calls.increment(1);
+  const before = mark(1);
+  const first = selected ? ownPublicKey() : default<ZswapCoinPublicKey>;
+  const middle = mark(2);
+  const second = selected ? ownPublicKey() : default<ZswapCoinPublicKey>;
+  const after = mark(3);
+  return disclose(Result { first: first, second: second, before: before, middle: middle, after: after });
+}

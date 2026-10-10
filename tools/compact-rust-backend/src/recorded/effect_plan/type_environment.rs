@@ -32,11 +32,22 @@ impl TypeEnvironment {
         // unrelated/unsupported declarations cannot refuse a scalar root. Each
         // actively lowered type is checked before model validation and rendering.
         let mut environment = Self::default();
-        for ty in types {
+        for ty in types.types {
             if matches!(ty, Type::Struct { .. } | Type::Enum { .. }) {
                 crate::collect_named_types(ty, &mut environment.structs, &mut environment.enums)
                     .map_err(|error| invalid("types", error.to_string()))?;
             }
+        }
+        // Builtin carriers come from the closed IR definition, not a caller's
+        // inferred annotation. The bounded visitor records only encountered
+        // builtins; merging preserves ordinary named-definition conflicts.
+        for builtin in types.native_witnesses {
+            crate::collect_named_types(
+                &builtin.result_type(),
+                &mut environment.structs,
+                &mut environment.enums,
+            )
+            .map_err(|error| invalid("types", error.to_string()))?;
         }
         // The native collector rejects duplicate raw names, but currently does
         // not reject member/variant names which normalize to the same Rust name.

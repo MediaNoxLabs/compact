@@ -68,6 +68,13 @@ impl Lowerer<'_> {
             Expr::KernelClaim { .. } | Expr::KernelMintShielded { .. } => {
                 self.kernel(expression, scope, bindings, path)?
             }
+            Expr::NativeWitnessCall {
+                builtin: NativeWitnessBuiltin::OwnPublicKey,
+            } => {
+                let ty = NativeWitnessBuiltin::OwnPublicKey.result_type();
+                self.declarations.types().validate_at(&ty, path)?;
+                (Operation::OwnPublicKey, ty)
+            }
             Expr::KernelSelf { ty } => {
                 self.declarations.types().validate_at(ty, path)?;
                 if *ty != crate::ir::contract_address_type() {

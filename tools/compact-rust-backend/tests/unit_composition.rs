@@ -81,10 +81,38 @@ fn checked_hidden_effects_compose_but_unselected_unsupported_effects_are_refused
                 .contains("kernel_self()")
         );
 
-        // The native public-key witness has a private output and remains outside
-        // the checked action domain. Auditing must inspect this unselected arm.
+        // The configured-key observation is now a checked private effect.
+        // Its unselected arm must remain present and lazy in generated code.
         circuit(&mut v, "guard")["actions"][index]["otherwise"] = json!({
             "kind":"native_witness_call", "builtin":"own_public_key"
+        });
+        let contract: Contract = serde_json::from_value(v.clone()).unwrap();
+        let output = render_with_capabilities(&contract).unwrap();
+        let capability = output
+            .capabilities
+            .circuits
+            .iter()
+            .find(|c| c.name == "close")
+            .unwrap();
+        assert!(
+            capability.recorded && capability.observed_call,
+            "chunked={chunked}"
+        );
+        assert!(
+            output
+                .source
+                .split("pub mod recorded")
+                .nth(1)
+                .unwrap()
+                .contains("own_coin_public_key()?")
+        );
+
+        // A still-unsupported expression cannot hide in the same lazy arm.
+        circuit(&mut v, "guard")["actions"][index]["otherwise"] = json!({
+            "kind":"expression", "value": {
+                "kind":"not_equal", "left":{"kind":"boolean","value":true},
+                "right":{"kind":"boolean","value":false}
+            }
         });
         let contract: Contract = serde_json::from_value(v).unwrap();
         let output = render_with_capabilities(&contract).unwrap();

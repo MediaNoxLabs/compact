@@ -378,6 +378,13 @@ impl Lowerer<'_> {
                     },
                 )?;
             }
+            StateAction::NativeWitnessCall {
+                builtin: NativeWitnessBuiltin::OwnPublicKey,
+            } => {
+                let ty = NativeWitnessBuiltin::OwnPublicKey.result_type();
+                self.declarations.types().validate_at(&ty, path)?;
+                self.emit(Operation::OwnPublicKey, ty, bindings, path);
+            }
             StateAction::Expression { value } => {
                 self.expression(value, scope, bindings, &format!("{path}.value"))?;
             }

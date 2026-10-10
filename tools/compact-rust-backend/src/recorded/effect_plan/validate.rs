@@ -300,6 +300,9 @@ fn block(
                     && recipient.ty == crate::coin_shapes::shielded_recipient_type()
                     && *ty == Type::Unit
             }
+            Operation::OwnPublicKey => {
+                *ty == crate::ir::NativeWitnessBuiltin::OwnPublicKey.result_type()
+            }
             Operation::KernelSelf => *ty == crate::ir::contract_address_type(),
             Operation::KernelClaim { value, .. } => {
                 use_value(value)?;

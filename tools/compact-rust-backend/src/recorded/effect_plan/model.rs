@@ -110,6 +110,8 @@ pub(super) enum Operation {
         coin: Value,
         recipient: Value,
     },
+    /// Configured execution wallet key; contributes one ordered private output.
+    OwnPublicKey,
     /// Ordered official VM observation of the current contract address.
     KernelSelf,
     KernelClaim {

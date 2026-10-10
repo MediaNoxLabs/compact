@@ -103,19 +103,121 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    /// Circuits with a replayable ordered ledger program.
+    pub mod recorded {
+        use midnight_compact_runtime as runtime;
+        pub fn key<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, crate::types::ZswapCoinPublicKey>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_effect_own_key_0) = frame.own_coin_public_key()?;
+            let __compact_effect_0: crate::types::ZswapCoinPublicKey =
+                crate::types::ZswapCoinPublicKey {
+                    bytes: runtime::FixedBytes::new(__compact_effect_own_key_0),
+                };
+            Ok(frame.finish((__compact_effect_0).clone()))
+        }
+        pub fn key_bytes<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, runtime::FixedBytes<32>>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_effect_own_key_0) = frame.own_coin_public_key()?;
+            let __compact_effect_0: crate::types::ZswapCoinPublicKey =
+                crate::types::ZswapCoinPublicKey {
+                    bytes: runtime::FixedBytes::new(__compact_effect_own_key_0),
+                };
+            let __compact_effect_1: runtime::FixedBytes<32> = __compact_effect_0.bytes;
+            Ok(frame.finish(__compact_effect_1))
+        }
+        /// Typed handle for circuits with a complete recorded trace.
+        pub struct Contract;
+        impl Contract {
+            pub fn key<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<
+                    Private,
+                    crate::types::ZswapCoinPublicKey,
+                >,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::key(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn key_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<
+                    'observed,
+                    Private,
+                    crate::types::ZswapCoinPublicKey,
+                >,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.key(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "key", input,
+                ))
+            }
+            pub fn key_bytes<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::FixedBytes<32>>,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::key_bytes(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn key_bytes_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, runtime::FixedBytes<32>>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.key_bytes(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "key_bytes",
+                    input,
+                ))
+            }
+        }
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]
         witnesses: W,
+        pub recording: recorded::Contract,
     }
     impl<W> From<W> for Contract<W> {
         fn from(witnesses: W) -> Self {
-            Self { witnesses }
+            Self {
+                witnesses,
+                recording: recorded::Contract,
+            }
         }
     }
     impl Default for Contract<()> {
         fn default() -> Self {
-            Self { witnesses: () }
+            Self {
+                witnesses: (),
+                recording: recorded::Contract,
+            }
         }
     }
     impl<W> Contract<W> {
@@ -136,6 +238,10 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             crate::ledger_contract::key_bytes(context)
+        }
+        /// Access replayable circuit calls for this contract.
+        pub fn recording(&self) -> &recorded::Contract {
+            &self.recording
         }
     }
 }

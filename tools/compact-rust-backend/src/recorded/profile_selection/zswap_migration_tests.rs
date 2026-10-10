@@ -3,9 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //! The carrier domain is an interface boundary, not a whole-body recognizer.
 use super::*;
-use crate::ir::{
-    Contract, Expr, NativeWitnessBuiltin, Parameter, ReturnPlan, StateAction, StateReturn, Type,
-};
+use crate::ir::{Contract, Expr, Parameter, ReturnPlan, StateAction, StateReturn, Type};
 use crate::recorded::admission_probe::trace;
 
 fn source() -> Contract {
@@ -211,8 +209,9 @@ fn unsupported_body_refuses_at_last_priority_without_old_fallback() {
         .find(|r| r.name == "flow")
         .unwrap();
     r.actions = vec![StateAction::Expression {
-        value: Expr::NativeWitnessCall {
-            builtin: NativeWitnessBuiltin::OwnPublicKey,
+        value: Expr::NotEqual {
+            left: Box::new(Expr::Boolean { value: true }),
+            right: Box::new(Expr::Boolean { value: false }),
         },
     }];
     let maps = Context::new(&c);

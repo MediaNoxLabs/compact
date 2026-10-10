@@ -29,6 +29,7 @@ import recording_admission_inventory_send as send
 import recording_admission_inventory_observation_test as observation_test
 import recording_admission_inventory_merge as merge
 import recording_admission_inventory_guarded as guarded
+import recording_admission_inventory_routing_test as routing_test
 
 JUBJUB_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-517.json")
 CALL_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.calls-519.json")
@@ -77,8 +78,20 @@ MERGE_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.t
 GUARDED_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-566.json")
 
 
+ROUTING_TEST_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.routing-test-568.json")
+
+
+def routing_checkpoint_source(root):
+    source = (root / routing_test.OWNER).read_text()
+    # Historical fixtures may already contain the exact restored checkpoint.
+    if inventory.digest(source.encode()) == routing_test.PRIOR_SHA:
+        return source
+    return routing_test.predecessor_source(source, json.loads(ROUTING_TEST_EXTENSION.read_text()))
+
+
 def guarded_checkpoint_sources(root):
-    return guarded.predecessor_sources(root, json.loads(GUARDED_TRANSITION.read_text()))
+    return {routing_test.OWNER: routing_checkpoint_source(root),
+            **guarded.predecessor_sources(root, json.loads(GUARDED_TRANSITION.read_text()))}
 
 
 def merge_checkpoint_sources(root):
@@ -234,7 +247,8 @@ class InventoryTests(unittest.TestCase):
                                   send_transition=json.loads(SEND_TRANSITION.read_text()),
                                   observation_test_extension=json.loads(OBSERVATION_TEST_EXTENSION.read_text()),
                                   merge_transition=json.loads(MERGE_TRANSITION.read_text()),
-                                  guarded_deposit_transition=json.loads(GUARDED_TRANSITION.read_text()))
+                                  guarded_deposit_transition=json.loads(GUARDED_TRANSITION.read_text()),
+                                  routing_test_extension=json.loads(ROUTING_TEST_EXTENSION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)

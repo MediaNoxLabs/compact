@@ -150,11 +150,38 @@ fn unselected_checked_effect_is_supported_but_unsupported_effect_keeps_legacy_pr
         let recording = result.source.split("pub mod recorded").nth(1).unwrap();
         assert!(recording.contains("kernel_self()"));
 
-        // A native public-key witness emits a private output and cannot be
-        // classified as a discardable local computation. Neither this old
-        // composition domain nor the checked algebra supports that action.
+        // The old shape audit still refuses a native-key observation, but
+        // checked composition now supports it as an ordered private effect.
         circuit(&mut v, "guard")["actions"][index]["otherwise"] = json!({
             "kind":"native_witness_call", "builtin":"own_public_key"
+        });
+        let still_rejected = rejected(v.clone(), "close");
+        assert_eq!(still_rejected.gap.path, r.gap.path);
+        let c: Contract = serde_json::from_value(v.clone()).unwrap();
+        let result = render_with_capabilities(&c).unwrap();
+        let capability = result
+            .capabilities
+            .circuits
+            .iter()
+            .find(|x| x.name == "close")
+            .unwrap();
+        assert!(capability.recorded && capability.observed_call);
+        assert!(
+            result
+                .source
+                .split("pub mod recorded")
+                .nth(1)
+                .unwrap()
+                .contains("own_coin_public_key()?")
+        );
+
+        // The old auditor supports pure inequality, so its operands must
+        // retain private observations to exercise a genuine shared refusal.
+        let observed_key = json!({"kind":"native_witness_call", "builtin":"own_public_key"});
+        circuit(&mut v, "guard")["actions"][index]["otherwise"] = json!({
+            "kind":"expression", "value": {
+                "kind":"not_equal", "left":observed_key.clone(), "right":observed_key
+            }
         });
         let still_rejected = rejected(v.clone(), "close");
         assert_eq!(still_rejected.gap.path, r.gap.path);

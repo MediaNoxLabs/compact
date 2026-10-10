@@ -117,6 +117,14 @@ pub(super) fn render(
                 )?;));
             syn::parse_quote!(())
         }
+        Operation::OwnPublicKey => {
+            let observed = syn::Ident::new(
+                &format!("__compact_effect_own_key_{}", binding.value.id),
+                Span::call_site(),
+            );
+            steps.push(syn::parse_quote!(let (frame, #observed) = frame.own_coin_public_key()?;));
+            syn::parse_quote!(#ty { bytes: runtime::FixedBytes::new(#observed) })
+        }
         Operation::KernelSelf => {
             let observed = syn::Ident::new(
                 &format!("__compact_effect_address_{}", binding.value.id),

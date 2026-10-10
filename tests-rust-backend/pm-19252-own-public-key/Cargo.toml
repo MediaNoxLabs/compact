@@ -22,6 +22,9 @@ license = "Apache-2.0"
 [lib]
 path = "lib.rs"
 
+[features]
+ledger-transaction = ["midnight-compact-runtime/ledger-transaction"]
+
 [dependencies]
 midnight-compact-runtime = { path = "../../runtime-rs" }
 

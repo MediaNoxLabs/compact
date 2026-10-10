@@ -1371,6 +1371,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-effect-plan-own-public-key-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-storage",
+ "rand 0.8.6",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-effect-plan-owned-calls-source-fixture"
 version = "0.1.0"
 dependencies = [

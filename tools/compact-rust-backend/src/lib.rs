@@ -789,8 +789,10 @@ fn collect_action_types(
         | StateAction::HistoricMerkleInsertIndexDefault { position, .. } => {
             collect_expression_types(position, structs, enums)?;
         }
-        StateAction::NativeWitnessCall { .. }
-        | StateAction::CounterIncrement { .. }
+        StateAction::NativeWitnessCall { builtin } => {
+            collect_named_types(&builtin.result_type(), structs, enums)?;
+        }
+        StateAction::CounterIncrement { .. }
         | StateAction::CounterDecrement { .. }
         | StateAction::CounterReset { .. }
         | StateAction::SetReset { .. }

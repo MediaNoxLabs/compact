@@ -24,6 +24,7 @@ class GuardedDepositTransitionTests(unittest.TestCase):
             path = self.root / owner
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes((inventory.ROOT / owner).read_bytes())
+        (self.root / previous.routing_test.OWNER).write_text(previous.routing_checkpoint_source(inventory.ROOT))
 
     def report(self):
         return inventory.verify(

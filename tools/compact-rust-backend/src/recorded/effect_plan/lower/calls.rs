@@ -4,6 +4,7 @@
 
 //! Stateful calls evaluate arguments once, then enter an isolated formal scope.
 use super::super::declarations::CallKind;
+use super::super::validate::stateful_call_type;
 use super::*;
 
 #[derive(Clone, Copy)]
@@ -65,7 +66,9 @@ impl Lowerer<'_> {
                 "call argument count differs from declared parameters",
             ));
         }
-        if !surface_type(&callee.result) || callee.parameters.iter().any(|p| !surface_type(&p.ty)) {
+        if !stateful_call_type(&callee.result)
+            || callee.parameters.iter().any(|p| !stateful_call_type(&p.ty))
+        {
             return Err(invalid(path, "unsupported stateful call signature"));
         }
         if self.call_stack.iter().any(|active| active == name) {

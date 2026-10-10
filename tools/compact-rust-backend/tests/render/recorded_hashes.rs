@@ -146,7 +146,7 @@ fn recorded_pair_hash_bindings_require_closed_typed_field_literals() {
 }
 
 #[test]
-fn typed_field_helper_hash_then_cell_read_preserves_order_and_rejects_effects() {
+fn typed_field_helper_hash_composes_effects_in_order_and_certified_body_variants() {
     let pair = Type::Vector {
         length: 2,
         element: Box::new(Type::Field),
@@ -269,22 +269,58 @@ fn typed_field_helper_hash_then_cell_read_preserves_order_and_rejects_effects() 
             index: 0,
             value: Expr::FieldLiteral { value: "2".into() },
         });
-    assert!(
-        !render_with_capabilities(&contract)
-            .unwrap()
-            .capabilities
-            .circuits[0]
-            .recorded
-    );
+    // A write is a supported effect, even though the earlier whole-helper
+    // recipe admitted only a read-only body. It precedes the pure call and read.
+    let composed = render_with_capabilities(&contract).unwrap();
+    assert!(composed.capabilities.circuits[0].recorded);
+    let recording = composed.source.split("pub mod recorded").nth(1).unwrap();
+    let source_write = recording.find("record_write(frame").unwrap();
+    let pure = recording.find("crate::pure_circuits::hashPair(").unwrap();
+    let read = recording.find("record_read(frame)").unwrap();
+    let target_write = recording.rfind("record_write(frame").unwrap();
+    assert!(source_write < pure && pure < read && read < target_write);
+
     contract.stateful_circuits[0].actions.clear();
     contract.circuits[0].body = Expr::FieldLiteral { value: "9".into() };
+    // Certification permits a constant pure result; spelling a hash is not
+    // required for the typed helper call and subsequent Cell read to compose.
     assert!(
-        !render_with_capabilities(&contract)
+        render_with_capabilities(&contract)
             .unwrap()
             .capabilities
             .circuits[0]
             .recorded
     );
+
+    let rejects = |contract: &Contract| match render_with_capabilities(contract) {
+        Err(_) => true,
+        Ok(rendered) => !rendered.capabilities.circuits[0].recorded,
+    };
+    let mut wrong_argument = contract.clone();
+    wrong_argument.stateful_circuits[0].parameters[0].ty = Type::Boolean;
+    assert!(rejects(&wrong_argument));
+    let mut recursive = contract.clone();
+    recursive.stateful_circuits[0]
+        .actions
+        .push(StateAction::CircuitCall {
+            name: "helper".into(),
+            arguments: vec![Expr::Parameter {
+                name: "pair".into(),
+            }],
+        });
+    assert!(rejects(&recursive));
+    let mut wrong_slot = contract.clone();
+    let StateReturn::Expression {
+        value: Expr::Add { right, .. },
+    } = &mut wrong_slot.stateful_circuits[0].return_value
+    else {
+        unreachable!()
+    };
+    let Expr::CellRead { index, .. } = right.as_mut() else {
+        unreachable!()
+    };
+    *index = 99;
+    assert!(rejects(&wrong_slot));
 }
 
 #[test]

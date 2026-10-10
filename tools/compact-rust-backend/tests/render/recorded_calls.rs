@@ -507,7 +507,7 @@ fn pure_field_calls_preserve_unit_and_record_ordinary_hashed_returns() {
 }
 
 #[test]
-fn typed_pair_hash_call_records_shared_unit_helper_and_conditional_caller() {
+fn typed_pair_hash_call_composes_certified_bodies_and_rejects_invalid_calls() {
     let vector = Type::Vector {
         element: Box::new(Type::Field),
         length: 2,
@@ -635,11 +635,41 @@ fn typed_pair_hash_call_records_shared_unit_helper_and_conditional_caller() {
     contract.circuits[0].body = Expr::TransientHash {
         value: Box::new(Expr::FieldLiteral { value: "7".into() }),
     };
-    let rejected = render_with_capabilities(&contract).unwrap();
-    assert!(rejected.capabilities.circuits.iter().all(|c| !c.recorded));
-    assert!(rejected.capabilities.circuits.iter().all(|c| {
-        c.recording_unavailable
-            .as_ref()
-            .is_some_and(|gap| gap.ir_node == "Expr::Call")
-    }));
+    // The former recipe required hashing the vector formal. A certified pure
+    // helper may instead hash a Field literal while the local vector call stays typed.
+    let composed = render_with_capabilities(&contract).unwrap();
+    assert!(
+        composed
+            .capabilities
+            .circuits
+            .iter()
+            .all(|c| c.recorded && c.observed_call)
+    );
+
+    // An invalid source may be rejected globally or lose recorded admission;
+    // neither outcome may expose an executable recorded entry.
+    let rejects = |contract: &Contract| match render_with_capabilities(contract) {
+        Err(_) => true,
+        Ok(rendered) => rendered.capabilities.circuits.iter().all(|c| !c.recorded),
+    };
+    let mut wrong_argument = contract.clone();
+    wrong_argument.stateful_circuits[0].parameters[0].ty = Type::Boolean;
+    assert!(rejects(&wrong_argument));
+    let mut recursive = contract.clone();
+    recursive.stateful_circuits[0]
+        .actions
+        .push(StateAction::CircuitCall {
+            name: "storeVector".into(),
+            arguments: vec![Expr::Parameter { name: "v".into() }],
+        });
+    assert!(rejects(&recursive));
+    let mut wrong_slot = contract.clone();
+    let StateAction::Let { action, .. } = &mut wrong_slot.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    let StateAction::CellWrite { index, .. } = action.as_mut() else {
+        unreachable!()
+    };
+    *index = 99;
+    assert!(rejects(&wrong_slot));
 }

@@ -77,6 +77,10 @@ fn helper_included(contract: &Contract, name: &str, label: &str) {
         .checked(name)
         .unwrap_or_else(|e| panic!("{label}: old-accepted helper refused: {e:?}"));
     render(&checked).unwrap_or_else(|e| panic!("{label}: checked render failed: {e:?}"));
+    let whole = env
+        .checked("vote_commit")
+        .unwrap_or_else(|e| panic!("{label}: complete old-accepted voting root refused: {e:?}"));
+    render(&whole).unwrap_or_else(|e| panic!("{label}: whole-root render failed: {e:?}"));
 }
 
 fn bytes(value: u8) -> Expr {
@@ -433,3 +437,6 @@ fn whole_old_voting_wrapper_and_qualified_membership_compose() {
 
 #[path = "voting_witness_inclusion.rs"]
 mod voting_witness_inclusion;
+
+#[path = "voting_helper_inclusion.rs"]
+mod voting_helper_inclusion;

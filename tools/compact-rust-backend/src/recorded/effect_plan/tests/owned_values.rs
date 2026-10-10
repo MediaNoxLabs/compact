@@ -267,7 +267,7 @@ fn opaque_default_stays_in_certified_pure_body_or_named_struct() {
     ));
 }
 #[test]
-fn owned_storage_and_witness_result_domains_preserve_public_and_stateful_boundaries() {
+fn owned_storage_witness_and_local_call_domains_preserve_public_boundaries() {
     for ty in [
         Type::OpaqueString,
         Type::OpaqueBytes,
@@ -343,12 +343,20 @@ fn owned_storage_and_witness_result_domains_preserve_public_and_stateful_boundar
         if ty == Type::OpaqueBytes || matches!(ty, Type::Vector { .. }) || ty == empty::empty_type()
         {
             // Result-only witness qualification includes fixed products and empty
-            // named products. It does not change public or stateful interfaces.
+            // named products. It does not change public interfaces or witness parameters.
             render(&observed.unwrap()).unwrap();
         } else {
             // Text and products containing dynamic opaque members stay refused.
             assert!(matches!(observed, Err(PlanError::Unsupported(_))));
         }
+        // Default expressions are only supported for named structures. Use
+        // already qualified local expressions for opaque and vector values.
+        let value = match &ty {
+            Type::OpaqueString => project(Expr::Default { ty: carrier() }, "text", 0),
+            Type::OpaqueBytes => project(Expr::Default { ty: carrier() }, "bytes", 1),
+            Type::Vector { .. } => construct_vector(vec![field(1), field(2)], Type::Field),
+            _ => Expr::Default { ty: ty.clone() },
+        };
         let helper = StatefulCircuit {
             source: None,
             name: "helper".into(),
@@ -356,21 +364,20 @@ fn owned_storage_and_witness_result_domains_preserve_public_and_stateful_boundar
             parameters: vec![],
             actions: vec![],
             result: ty.clone(),
-            return_value: StateReturn::Expression {
-                value: Expr::Default { ty: ty.clone() },
-            },
+            return_value: StateReturn::Expression { value },
         };
         let expr = local("held", ty, call("helper", vec![]), boolean());
-        assert!(matches!(
-            check_with_calls(
+        render(
+            &check_with_calls(
                 &root(expr),
                 &HashMap::new(),
                 &HashMap::new(),
                 &HashMap::new(),
-                &HashMap::from([("helper", &helper)])
-            ),
-            Err(PlanError::Unsupported(_))
-        ));
+                &HashMap::from([("helper", &helper)]),
+            )
+            .unwrap(),
+        )
+        .unwrap();
     }
 }
 #[test]
@@ -459,7 +466,7 @@ fn complete_retained_owned_value_source_uses_checked_operations() {
     }
 }
 #[test]
-fn owned_cell_writes_do_not_expand_witness_stateful_or_vector_storage_interfaces() {
+fn local_owned_calls_preserve_witness_parameter_and_vector_storage_boundaries() {
     let cases = vec![
         (
             Type::OpaqueString,
@@ -482,7 +489,7 @@ fn owned_cell_writes_do_not_expand_witness_stateful_or_vector_storage_interfaces
         ),
     ];
     for (ty, value) in cases {
-        // The actual expression itself is accepted; failures must come from the interface.
+        // Local values and calls are accepted independently of witness/storage policy.
         check_root(
             &root(local("held", ty.clone(), value.clone(), boolean())),
             &[],
@@ -526,16 +533,17 @@ fn owned_cell_writes_do_not_expand_witness_stateful_or_vector_storage_interfaces
             name: "consume".into(),
             arguments: vec![value.clone()],
         }];
-        assert!(matches!(
-            check_with_calls(
+        render(
+            &check_with_calls(
                 &caller,
                 &HashMap::new(),
                 &HashMap::new(),
                 &HashMap::new(),
-                &HashMap::from([("consume", &helper)])
-            ),
-            Err(PlanError::Unsupported(_))
-        ));
+                &HashMap::from([("consume", &helper)]),
+            )
+            .unwrap(),
+        )
+        .unwrap();
         let cell = LedgerField {
             source: None,
             id: "owned".into(),

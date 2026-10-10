@@ -48,7 +48,7 @@ pub(super) fn validate(
         declarations.types().validate_at(&formal.ty, path)?;
         declarations.types().validate_at(&parameter.ty, path)?;
     }
-    if signature.result != *result || body.result.ty != *result || !surface_type(result) {
+    if signature.result != *result || body.result.ty != *result || !stateful_call_type(result) {
         return Err(invalid(path, "call differs from declared signature"));
     }
     state.charge(parameters.len(), path)?;
@@ -58,7 +58,7 @@ pub(super) fn validate(
         signature.parameters.iter().zip(arguments).zip(parameters)
     {
         used(argument, caller, declarations, path)?;
-        if !surface_type(&formal.ty)
+        if !stateful_call_type(&formal.ty)
             || formal.ty != argument.ty
             || formal.ty != parameter.ty
             || !names.insert(&formal.name)

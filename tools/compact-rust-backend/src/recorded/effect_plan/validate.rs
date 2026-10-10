@@ -100,7 +100,13 @@ pub(super) fn named_struct_derives_supported(ty: &Type) -> bool {
 pub(super) fn value_type(ty: &Type) -> bool {
     domain::value_type(ty)
 }
-/// Context-free helpers may exchange local owned values; stateful/ABI boundaries
+/// Local stateful helpers exchange checked owned values without exporting an ABI.
+/// Callers validate canonical definitions and resource budgets before this policy.
+/// Root, witness and storage interfaces retain their own separate domains.
+pub(super) fn stateful_call_type(ty: &Type) -> bool {
+    value_type(ty)
+}
+/// Context-free helpers may exchange local owned values; public ABI boundaries
 /// still use surface_type. Wide and tuple interfaces are intentional here.
 pub(super) fn pure_interface_type(ty: &Type) -> bool {
     value_type(ty)

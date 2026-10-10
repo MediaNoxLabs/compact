@@ -455,3 +455,6 @@ mod merkle;
 
 #[path = "tests/witness_results.rs"]
 mod witness_results;
+
+#[path = "tests/owned_calls.rs"]
+mod owned_calls;

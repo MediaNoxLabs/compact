@@ -81,7 +81,7 @@ fn forged_owned_cell_plans_require_declaration_payload_and_live_operand_identity
 }
 
 #[test]
-fn owned_cell_and_witness_result_domains_keep_root_and_stateful_interfaces_separate() {
+fn owned_cell_and_local_call_domains_keep_root_and_witness_interfaces_separate() {
     for ty in [Type::OpaqueString, Type::OpaqueBytes, owned()] {
         assert!(validate::cell_type(&ty));
         assert!(!validate::surface_type(&ty));
@@ -135,10 +135,9 @@ fn owned_cell_and_witness_result_domains_keep_root_and_stateful_interfaces_separ
             name: "helper".into(),
             arguments: vec![],
         }];
-        assert!(matches!(
-            maps_check(&source),
-            Err(PlanError::Unsupported(_))
-        ));
+        // An internal call uses the owned local-value domain; the same
+        // declaration still cannot become a public parameter or result.
+        render(&maps_check(&source).unwrap()).unwrap();
     }
 }
 

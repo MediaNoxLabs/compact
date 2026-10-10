@@ -117,6 +117,7 @@ pub(super) fn try_run(
         ("--effect-plan-unsigned-arithmetic", _) => {
             Some(recorded::effect_plan_unsigned_arithmetic(arguments))
         }
+        ("--effect-plan-merkle", _) => Some(recorded::effect_plan_merkle(arguments)),
         ("--effect-plan-transient-crypto", _) => {
             Some(recorded::effect_plan_transient_crypto(arguments))
         }

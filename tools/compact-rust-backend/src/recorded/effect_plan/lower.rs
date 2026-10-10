@@ -18,6 +18,7 @@ mod counters;
 mod expressions;
 mod jubjub;
 mod kernel;
+mod merkle;
 mod ordinary;
 mod pure;
 mod sets;
@@ -444,6 +445,21 @@ impl Lowerer<'_> {
             | StateAction::CounterDecrement { .. }
             | StateAction::CounterReset { .. } => {
                 self.counter_action(action, scope, bindings, path)?;
+            }
+            StateAction::MerkleInsert { .. }
+            | StateAction::MerkleInsertIndex { .. }
+            | StateAction::MerkleInsertIndexDefault { .. }
+            | StateAction::MerkleInsertHash { .. }
+            | StateAction::MerkleInsertHashIndex { .. }
+            | StateAction::MerkleResetToDefault { .. }
+            | StateAction::HistoricMerkleInsert { .. }
+            | StateAction::HistoricMerkleInsertIndex { .. }
+            | StateAction::HistoricMerkleInsertIndexDefault { .. }
+            | StateAction::HistoricMerkleInsertHash { .. }
+            | StateAction::HistoricMerkleInsertHashIndex { .. }
+            | StateAction::HistoricMerkleResetToDefault { .. }
+            | StateAction::HistoricMerkleResetHistory { .. } => {
+                self.merkle_action(action, scope, bindings, path)?;
             }
             _ => return Err(RecordingGap::action(action, path.into())),
         }

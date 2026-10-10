@@ -1,0 +1,67 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "t",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "historic_merkle_tree",
+        "depth": 3,
+        "ty": {
+          "kind": "unsigned",
+          "max": "255"
+        }
+      },
+      "source": {
+        "file": "hmt_default_oracle.compact",
+        "line": 39,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "add_default",
+      "parameters": [
+        {
+          "name": "idx",
+          "ty": {
+            "kind": "unsigned",
+            "max": "18446744073709551615"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "historic_merkle_insert_index_default",
+          "field": "t",
+          "index": 0,
+          "position": {
+            "kind": "parameter",
+            "name": "idx"
+          }
+        }
+      ],
+      "source": {
+        "file": "hmt_default_oracle.compact",
+        "line": 41,
+        "column": 1
+      }
+    }
+  ]
+}

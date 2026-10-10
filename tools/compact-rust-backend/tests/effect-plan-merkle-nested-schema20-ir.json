@@ -1,0 +1,351 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "plain",
+      "index": 0,
+      "path": [
+        0,
+        0
+      ],
+      "declaration": {
+        "kind": "merkle_tree",
+        "depth": 3,
+        "ty": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "effect_plan_merkle_nested.compact",
+        "line": 5,
+        "column": 1
+      }
+    },
+    {
+      "id": "filler_0",
+      "index": 0,
+      "path": [
+        0,
+        1
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_merkle_nested.compact",
+        "line": 6,
+        "column": 1
+      }
+    },
+    {
+      "id": "filler_1",
+      "index": 0,
+      "path": [
+        0,
+        2
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_merkle_nested.compact",
+        "line": 7,
+        "column": 1
+      }
+    },
+    {
+      "id": "filler_2",
+      "index": 1,
+      "path": [
+        1,
+        0
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_merkle_nested.compact",
+        "line": 8,
+        "column": 1
+      }
+    },
+    {
+      "id": "filler_3",
+      "index": 1,
+      "path": [
+        1,
+        1
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_merkle_nested.compact",
+        "line": 9,
+        "column": 1
+      }
+    },
+    {
+      "id": "filler_4",
+      "index": 1,
+      "path": [
+        1,
+        2
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_merkle_nested.compact",
+        "line": 10,
+        "column": 1
+      }
+    },
+    {
+      "id": "filler_5",
+      "index": 1,
+      "path": [
+        1,
+        3
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_merkle_nested.compact",
+        "line": 11,
+        "column": 1
+      }
+    },
+    {
+      "id": "filler_6",
+      "index": 1,
+      "path": [
+        1,
+        4
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_merkle_nested.compact",
+        "line": 12,
+        "column": 1
+      }
+    },
+    {
+      "id": "filler_7",
+      "index": 1,
+      "path": [
+        1,
+        5
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_merkle_nested.compact",
+        "line": 13,
+        "column": 1
+      }
+    },
+    {
+      "id": "filler_8",
+      "index": 1,
+      "path": [
+        1,
+        6
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_merkle_nested.compact",
+        "line": 14,
+        "column": 1
+      }
+    },
+    {
+      "id": "filler_9",
+      "index": 1,
+      "path": [
+        1,
+        7
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_merkle_nested.compact",
+        "line": 15,
+        "column": 1
+      }
+    },
+    {
+      "id": "filler_10",
+      "index": 1,
+      "path": [
+        1,
+        8
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_merkle_nested.compact",
+        "line": 16,
+        "column": 1
+      }
+    },
+    {
+      "id": "filler_11",
+      "index": 1,
+      "path": [
+        1,
+        9
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_merkle_nested.compact",
+        "line": 17,
+        "column": 1
+      }
+    },
+    {
+      "id": "filler_12",
+      "index": 1,
+      "path": [
+        1,
+        10
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_merkle_nested.compact",
+        "line": 18,
+        "column": 1
+      }
+    },
+    {
+      "id": "filler_13",
+      "index": 1,
+      "path": [
+        1,
+        11
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_merkle_nested.compact",
+        "line": 19,
+        "column": 1
+      }
+    },
+    {
+      "id": "filler_14",
+      "index": 1,
+      "path": [
+        1,
+        12
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_merkle_nested.compact",
+        "line": 20,
+        "column": 1
+      }
+    },
+    {
+      "id": "filler_15",
+      "index": 1,
+      "path": [
+        1,
+        13
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_merkle_nested.compact",
+        "line": 21,
+        "column": 1
+      }
+    },
+    {
+      "id": "historic",
+      "index": 1,
+      "path": [
+        1,
+        14
+      ],
+      "declaration": {
+        "kind": "historic_merkle_tree",
+        "depth": 3,
+        "ty": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "effect_plan_merkle_nested.compact",
+        "line": 22,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "run",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "merkle_insert",
+          "field": "plain",
+          "index": 0,
+          "value": {
+            "kind": "parameter",
+            "name": "value"
+          }
+        },
+        {
+          "kind": "historic_merkle_insert",
+          "field": "historic",
+          "index": 1,
+          "value": {
+            "kind": "parameter",
+            "name": "value"
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_merkle_nested.compact",
+        "line": 23,
+        "column": 1
+      }
+    }
+  ]
+}

@@ -723,3 +723,15 @@ pub(super) fn effect_plan_transient_crypto(
     }
     crate::effect_plan_transient_crypto::run(Path::new(&root))
 }
+
+pub(super) fn effect_plan_merkle(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let root = arguments
+        .next()
+        .ok_or("usage: compact-rust-proof-smoke --effect-plan-merkle <proof-output>")?;
+    if arguments.next().is_some() {
+        return Err("usage: compact-rust-proof-smoke --effect-plan-merkle <proof-output>".into());
+    }
+    crate::effect_plan_merkle::run(Path::new(&root))
+}

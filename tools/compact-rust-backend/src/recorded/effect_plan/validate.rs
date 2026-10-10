@@ -9,6 +9,8 @@ use std::collections::{HashMap, HashSet};
 mod aggregates;
 mod calls;
 mod domain;
+mod merkle;
+pub(super) use merkle::root_type;
 mod persistent;
 mod pure;
 mod sets;
@@ -342,6 +344,9 @@ fn block(
                     Conversion::Coerce => coercible(&value.ty, ty),
                     Conversion::UnsignedCast => bound(&value.ty).is_some() && bound(ty).is_some(),
                 }
+            }
+            Operation::Merkle { slot, operation } => {
+                merkle::validate(*slot, operation, ty, declarations, &scope, path)?
             }
             Operation::CellRead(slot) => {
                 cell(declarations, *slot, path)? == ty && *ty != Type::Unit

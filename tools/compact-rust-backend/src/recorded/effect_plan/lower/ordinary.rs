@@ -79,6 +79,34 @@ impl Lowerer<'_> {
                 bindings,
                 &return_path,
             ),
+            StateReturn::MerkleCheckRoot { field, index, root }
+            | StateReturn::HistoricMerkleCheckRoot { field, index, root } => {
+                self.spend(&return_path)?;
+                let (operation, ty) = self.merkle_query(
+                    field,
+                    *index,
+                    matches!(returned, StateReturn::HistoricMerkleCheckRoot { .. }),
+                    Some(root),
+                    scope,
+                    bindings,
+                    &return_path,
+                )?;
+                Ok(self.emit(operation, ty, bindings, &return_path))
+            }
+            StateReturn::MerkleIsFull { field, index }
+            | StateReturn::HistoricMerkleIsFull { field, index } => {
+                self.spend(&return_path)?;
+                let (operation, ty) = self.merkle_query(
+                    field,
+                    *index,
+                    matches!(returned, StateReturn::HistoricMerkleIsFull { .. }),
+                    None,
+                    scope,
+                    bindings,
+                    &return_path,
+                )?;
+                Ok(self.emit(operation, ty, bindings, &return_path))
+            }
             _ => {
                 let mut gap = RecordingGap::returned(returned);
                 gap.path = return_path;

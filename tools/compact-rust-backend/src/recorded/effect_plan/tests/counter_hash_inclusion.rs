@@ -4,7 +4,7 @@
 
 //! Finite IR-only inclusion probes. Every positive first passes the complete
 //! old VotingCommit planner, including its closure typing and effect counts.
-//! Isolated helper support does not establish whole voting-family admission.
+//! These finite whole-root positives do not establish complete voting-family inclusion.
 use super::*;
 use serde_json::Value as Json;
 
@@ -204,15 +204,14 @@ fn finite_counter_hash_grammar_variants_pass_complete_old_plan_before_inclusion(
 }
 
 #[test]
-fn whole_old_voting_plan_progresses_to_merkle_insertion() {
+fn whole_old_voting_plan_composes_after_merkle_operations() {
     let contract = source();
     let env = Environment::new(&contract);
     env.old_first("retained whole voting root");
-    let PlanError::Unsupported(gap) = env.checked("vote_commit").unwrap_err() else {
-        panic!("expected an unsupported source operation, not a checked-plan invariant failure")
-    };
-    eprintln!("old-first voting gap: {gap:?}");
-    assert_eq!(gap.ir_node, "StateAction::MerkleInsert");
+    let checked = env
+        .checked("vote_commit")
+        .expect("retained old-accepted voting root composes");
+    render(&checked).expect("complete checked voting root renders");
 }
 
 fn phase_assertion(contract: &mut Contract) -> &mut Expr {
@@ -231,7 +230,7 @@ fn phase_assertion(contract: &mut Contract) -> &mut Expr {
 }
 
 #[test]
-fn old_first_optional_string_cell_observations_progress_to_merkle_insertion() {
+fn whole_old_voting_optional_string_cell_observations_compose() {
     // Three finite Boolean contexts preserve one Cell read and the original
     // local_state witness. Each complete old planner acceptance is mandatory.
     for mode in ["presence", "identity", "equal_false"] {
@@ -275,11 +274,12 @@ fn old_first_optional_string_cell_observations_progress_to_merkle_insertion() {
         **condition = observation;
         let env = Environment::new(&contract);
         env.old_first(mode);
-        let PlanError::Unsupported(gap) = env.checked("vote_commit").unwrap_err() else {
-            panic!("expected a remaining unsupported source operation")
-        };
-        eprintln!("old-first optional-string {mode} next gap: {gap:?}");
-        assert_eq!(gap.ir_node, "StateAction::MerkleInsert", "{mode}: {gap:?}");
+        let checked = env.checked("vote_commit").unwrap_or_else(|gap| {
+            panic!("{mode}: whole old-accepted voting root refused: {gap:?}")
+        });
+        render(&checked).unwrap_or_else(|gap| {
+            panic!("{mode}: complete checked voting root failed rendering: {gap:?}")
+        });
     }
 }
 
@@ -357,7 +357,7 @@ fn old_first_opaque_bytes_cell_does_not_admit_an_opaque_witness_interface() {
 }
 
 #[test]
-fn whole_old_voting_accepts_wrapper_and_qualified_membership_before_isolated_inclusion() {
+fn whole_old_voting_wrapper_and_qualified_membership_compose() {
     // IR-only variations of the whole retained voting root. Mandatory ordinary
     // participant insertion remains Bytes32; only the phase observation varies.
     for ty in [
@@ -428,10 +428,11 @@ fn whole_old_voting_accepts_wrapper_and_qualified_membership_before_isolated_inc
         )
         .expect("whole-old-accepted membership must lower independently");
         render(&checked).unwrap();
-        let PlanError::Unsupported(gap) = env.checked("vote_commit").unwrap_err() else {
-            panic!("remaining whole voting operation must be a source refusal")
-        };
-        eprintln!("old-first membership {ty:?}, next whole-root gap: {gap:?}");
-        assert_eq!(gap.ir_node, "StateAction::MerkleInsert", "{gap:?}");
+        let checked = env.checked("vote_commit").unwrap_or_else(|gap| {
+            panic!("{ty:?}: whole old-accepted voting root refused: {gap:?}")
+        });
+        render(&checked).unwrap_or_else(|gap| {
+            panic!("{ty:?}: complete checked voting root failed rendering: {gap:?}")
+        });
     }
 }

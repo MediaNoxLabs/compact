@@ -210,6 +210,9 @@ pub(super) fn render(
             ),
         }
         .map_err(|e| invalid(path, e.to_string()))?,
+        Operation::Merkle { slot, operation } => {
+            return merkle::render(binding, *slot, operation, declarations, steps);
+        }
         Operation::CellRead(slot) => {
             let slot = slot_name(declarations, slot.declaration, path)?;
             steps.push(syn::parse_quote!(let (frame,#output): (_,#ty) = crate::ledger_slots::#slot.record_read(frame)?;));

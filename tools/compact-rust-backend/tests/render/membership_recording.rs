@@ -137,7 +137,7 @@ fn composite_witness_and_pure_struct_hash_recording_remains_typed_and_closed() {
     let mut renamed: Contract = serde_json::from_str(&renamed).unwrap();
     renamed.schema_version = SCHEMA_VERSION;
     assert!(available(&renamed, "create_item"));
-    // A valid native branch is deliberately outside the closed hash expression subset.
+    // A certified pure branch now composes with the typed Merkle insertion.
     let mut branch = contract.clone();
     let helper = branch
         .circuits
@@ -149,7 +149,7 @@ fn composite_witness_and_pure_struct_hash_recording_remains_typed_and_closed() {
         then: Box::new(helper.body.clone()),
         otherwise: Box::new(helper.body.clone()),
     };
-    assert!(!available(&branch, "zerocash_mint"));
+    assert!(available(&branch, "zerocash_mint"));
     let mut wrong_witness = contract.clone();
     wrong_witness
         .witnesses

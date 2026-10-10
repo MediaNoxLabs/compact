@@ -449,3 +449,6 @@ mod unsigned_arithmetic;
 
 #[path = "tests/transient_crypto.rs"]
 mod transient_crypto;
+
+#[path = "tests/merkle.rs"]
+mod merkle;

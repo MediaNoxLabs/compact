@@ -83,6 +83,16 @@ impl Lowerer<'_> {
             | Expr::TransientCommit { .. } => {
                 self.transient_crypto(expression, scope, bindings, path)?
             }
+            Expr::MerkleCheckRoot { field, index, root }
+            | Expr::HistoricMerkleCheckRoot { field, index, root } => self.merkle_query(
+                field,
+                *index,
+                matches!(expression, Expr::HistoricMerkleCheckRoot { .. }),
+                Some(root),
+                scope,
+                bindings,
+                path,
+            )?,
             Expr::FieldToBytes32 { value } => {
                 let value = self.expression(value, scope, bindings, &format!("{path}.value"))?;
                 if value.ty != Type::Field {

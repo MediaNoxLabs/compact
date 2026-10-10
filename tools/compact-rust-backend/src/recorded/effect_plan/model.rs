@@ -33,6 +33,35 @@ pub(super) struct CounterSlot {
     pub declaration: LedgerId,
     pub index: u8,
 }
+/// Tree identity is checked against the immutable declaration registry.
+#[derive(Clone, Copy, Debug)]
+pub(super) struct MerkleSlot {
+    pub declaration: LedgerId,
+    pub index: u8,
+    pub depth: u8,
+    pub historic: bool,
+}
+/// Small tree vocabulary; an optional position distinguishes append from indexed insert.
+#[derive(Clone, Debug)]
+pub(super) enum MerkleOperation {
+    Insert {
+        value: Value,
+        position: Option<Value>,
+    },
+    InsertDefault {
+        position: Value,
+    },
+    InsertHash {
+        hash: Value,
+        position: Option<Value>,
+    },
+    ResetDefault,
+    ResetHistory,
+    CheckRoot {
+        root: Value,
+    },
+    IsFull,
+}
 #[derive(Clone, Debug)]
 pub(super) enum Literal {
     Unit,
@@ -123,6 +152,10 @@ pub(super) enum Operation {
     Convert {
         value: Value,
         kind: Conversion,
+    },
+    Merkle {
+        slot: MerkleSlot,
+        operation: MerkleOperation,
     },
     CellRead(CellSlot),
     CellWrite {

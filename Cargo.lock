@@ -1321,6 +1321,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-effect-plan-merkle-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-compact-runtime",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-effect-plan-owned-cells-source-fixture"
 version = "0.1.0"
 dependencies = [
@@ -1625,6 +1634,7 @@ dependencies = [
 name = "compact-rust-hmt-default-oracle-fixture"
 version = "0.1.0"
 dependencies = [
+ "compact-rust-backend",
  "hex",
  "midnight-compact-runtime",
  "midnight-onchain-state",
@@ -1637,6 +1647,7 @@ dependencies = [
 name = "compact-rust-hmt-insert-oracle-fixture"
 version = "0.1.0"
 dependencies = [
+ "compact-rust-backend",
  "hex",
  "midnight-compact-runtime",
  "midnight-onchain-state",
@@ -1939,6 +1950,7 @@ dependencies = [
 name = "compact-rust-merkle-tree-oracle-fixture"
 version = "0.1.0"
 dependencies = [
+ "compact-rust-backend",
  "hex",
  "midnight-compact-runtime",
  "midnight-onchain-state",
@@ -2238,6 +2250,7 @@ dependencies = [
  "compact-rust-effect-plan-counter-only-source-fixture",
  "compact-rust-effect-plan-counter-source-fixture",
  "compact-rust-effect-plan-jubjub-source-fixture",
+ "compact-rust-effect-plan-merkle-source-fixture",
  "compact-rust-effect-plan-pure-calls-source-fixture",
  "compact-rust-effect-plan-rich-values-source-fixture",
  "compact-rust-effect-plan-stateful-calls-source-fixture",
@@ -3179,6 +3192,7 @@ dependencies = [
 name = "compact-rust-zerocash-oracle-fixture"
 version = "0.1.0"
 dependencies = [
+ "compact-rust-backend",
  "hex",
  "midnight-compact-runtime",
  "midnight-onchain-state",

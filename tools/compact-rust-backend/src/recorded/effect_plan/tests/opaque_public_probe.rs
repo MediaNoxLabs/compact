@@ -52,10 +52,7 @@ fn root_outcome(c: &Contract, name: &str, expected_gap: Option<&str>, label: &st
         })
         .collect::<Vec<_>>();
     assert_eq!(rows.len(), 1, "{label}");
-    assert_eq!(
-        rows[0]["body_owner"], "selector.membership-optional",
-        "{label}"
-    );
+    assert_eq!(rows[0]["body_owner"], "algebra.membership", "{label}");
     let capability = output
         .capabilities
         .circuits
@@ -83,7 +80,7 @@ fn root_outcome(c: &Contract, name: &str, expected_gap: Option<&str>, label: &st
 }
 
 #[test]
-fn whole_old_opaque_roots_show_candidate_progress_without_retiring_the_owner() {
+fn whole_old_opaque_roots_now_use_checked_composition() {
     let bboard: Contract =
         serde_json::from_str(include_str!("../../../../tests/bboard-schema20-ir.json")).unwrap();
     root_outcome(&bboard, "post", None, "bboard-post");

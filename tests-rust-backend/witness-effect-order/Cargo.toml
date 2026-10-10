@@ -22,6 +22,9 @@ license = "Apache-2.0"
 [lib]
 path = "lib.rs"
 
+[features]
+ledger-transaction = ["midnight-compact-runtime/ledger-transaction"]
+
 [dependencies]
 midnight-compact-runtime = { path = "../../runtime-rs" }
 
@@ -31,3 +34,8 @@ hex = "0.4"
 midnight-onchain-state = "=3.0.0"
 midnight-serialize = "=1.0.0"
 midnight-storage = "=2.0.1"
+
+# This fixture intentionally returns the same value from both branches to prove
+# that the witness condition still executes, including its failure and gas cost.
+[lints.clippy]
+if_same_then_else = "allow"

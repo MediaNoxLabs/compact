@@ -257,8 +257,13 @@ pub mod ledger_contract {
             frame: runtime::recording::RecordingFrame<Private>,
         ) -> Result<(runtime::recording::RecordingFrame<Private>, ()), runtime::CompactError>
         {
-            let frame = crate::ledger_slots::count.record_increment(frame, 1u16)?;
-            Ok((frame, ()))
+            let __compact_effect_0: runtime::BoundedUint<65535> =
+                <runtime::BoundedUint<65535>>::new(1u128)?;
+            let frame = crate::ledger_slots::count
+                .record_increment(frame, (__compact_effect_0).value() as u16)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok((frame, __compact_effect_2))
         }
         pub fn insert_control<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -266,9 +271,25 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
             let frame =
-                crate::ledger_slots::aliases.record_insert(frame, (__compact_param_0).clone())?;
-            Ok(frame.finish(()))
+                crate::ledger_slots::aliases.record_insert(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
+        }
+        pub fn remove_control<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::OpaqueString,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
+            let frame =
+                crate::ledger_slots::aliases.record_remove(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn member_control<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -366,12 +387,41 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
+                runtime::ledger::CellValue::validate_cell_value(&v)?;
                 let input = runtime::fab::AlignedValue::from((v).clone());
                 let recorded = self.insert_control(observed.circuit_context(private_state), v)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
                     "insert_control",
+                    input,
+                ))
+            }
+            pub fn remove_control<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                v: runtime::OpaqueString,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::remove_control(context, v)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn remove_control_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                v: runtime::OpaqueString,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                runtime::ledger::CellValue::validate_cell_value(&v)?;
+                let input = runtime::fab::AlignedValue::from((v).clone());
+                let recorded = self.remove_control(observed.circuit_context(private_state), v)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "remove_control",
                     input,
                 ))
             }
@@ -395,6 +445,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, bool>,
                 runtime::CompactError,
             > {
+                runtime::ledger::CellValue::validate_cell_value(&v)?;
                 let input = runtime::fab::AlignedValue::from((v).clone());
                 let recorded = self.member_control(observed.circuit_context(private_state), v)?;
                 Ok(runtime::transaction::RecordedCall::new(
@@ -424,6 +475,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
+                runtime::ledger::CellValue::validate_cell_value(&v)?;
                 let input = runtime::fab::AlignedValue::from(((v).clone(), m));
                 let recorded = self.mutate(observed.circuit_context(private_state), v, m)?;
                 Ok(runtime::transaction::RecordedCall::new(

@@ -82,10 +82,10 @@ pub mod ledger_contract {
     pub fn initial_state<Private>(
         __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
-        let state = runtime::ledger::contract_state(vec![runtime::ledger::constructor_cell::<
+        let state = runtime::ledger::contract_state(vec![runtime::ledger::try_constructor_cell::<
             crate::types::Choice,
             runtime::ledger::DefaultDB,
-        >(Default::default())]);
+        >(Default::default())?]);
         Ok(runtime::context::ConstructorResult::new(
             __compact_context,
             state,
@@ -150,17 +150,22 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame = crate::ledger_slots::choice.record_write(frame, __compact_param_0)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: crate::types::Choice = __compact_param_0;
+            let frame = crate::ledger_slots::choice.record_write(frame, __compact_effect_0)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn selectNo<Private>(
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame =
-                crate::ledger_slots::choice.record_write(frame, crate::types::Choice::no)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: crate::types::Choice = crate::types::Choice::no;
+            let frame = crate::ledger_slots::choice.record_write(frame, __compact_effect_0)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn current<Private>(
             context: runtime::context::CircuitContext<Private>,

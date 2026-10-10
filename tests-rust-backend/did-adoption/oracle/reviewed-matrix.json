@@ -3448,11 +3448,11 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/lifecycle.json",
-      "sha256": "4fceca6be347ba70a0ce77150605062ad0fc9db5dcb41e665ae9ce2708182121"
+      "sha256": "3cf958bed0c1f53ab0ad50f8c9bde3f1143850fdc17e009bdf49cfa643230098"
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/pure.json",
-      "sha256": "2e844065d420145de43a0d5e56d51efd5bf48903b5019f97146532bd5d93285d"
+      "sha256": "cb8beb829c0740ac0ce909de5727b9cacf113234880076769cc125fc22ba2592"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/codec.rs",
@@ -3480,7 +3480,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/point-lifecycle.json",
-      "sha256": "454658d839fca3a8a63c07e9cb519ee731709e50a6c55fe28b696265e6f44fd0"
+      "sha256": "10c6d2bc6b5fa1430c8a64ac08bcb0dabec9d9b6ac2b7979c273ad4d6a41bfcf"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/point_calls.rs",
@@ -3496,7 +3496,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/alias-lifecycle.json",
-      "sha256": "204f093f7fdd9e32ae4113085e1ce6c038fb1c34afd8c42f86f99aac995fe10a"
+      "sha256": "9b7ad60da960be4ddf7b85210c6413753317004144c0885e6afd11a1b585a8a3"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/alias_calls.rs",
@@ -3512,7 +3512,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/service-lifecycle.json",
-      "sha256": "9977afc53914a4c7600fb18f81e6c147b82100a082ea1d1a8a1dd04003f85bea"
+      "sha256": "6ea72a90d1325c11963a14da91c6d525870c1534e7a4faf2134215f9619c0d7d"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/service_calls.rs",
@@ -3528,7 +3528,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/schnorr-method-lifecycle.json",
-      "sha256": "9cd073ec1ac158a6bf09cbc449b6b86175a35688f2068f9a1be18b6e746a6628"
+      "sha256": "8e11457769e0ab7157329b1e1d0c5cb601b964d0d7b16727ee1f6b178f0a4a55"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/schnorr_method_calls.rs",
@@ -3544,7 +3544,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/jwk-method-lifecycle.json",
-      "sha256": "4c8693684a1f4f126d356c9a9a38949ab598f5a41529bf7e2c5e6e4f94044909"
+      "sha256": "d44a847911c1e2cf31928c3f56392a1c8a1250b057b11ba2514d57f338557b24"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/jwk_method_calls.rs",

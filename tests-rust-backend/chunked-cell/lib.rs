@@ -199,76 +199,76 @@ pub mod ledger_contract {
         __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let state = runtime::ledger::contract_state(vec![
-            runtime::ledger::constructor_cell::<
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<runtime::Field, runtime::ledger::DefaultDB>(
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<runtime::Field, runtime::ledger::DefaultDB>(
                 Default::default(),
-            ),
-            runtime::ledger::constructor_cell::<bool, runtime::ledger::DefaultDB>(
+            )?,
+            runtime::ledger::try_constructor_cell::<bool, runtime::ledger::DefaultDB>(
                 Default::default(),
-            ),
+            )?,
         ]);
         {
             let mut context = runtime::context::ConstructorResult::new(__compact_context, state)
@@ -495,8 +495,11 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame = crate::ledger_slots::active.record_write(frame, __compact_param_0)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: bool = __compact_param_0;
+            let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_0)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn get_active<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -512,15 +515,18 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_recorded_value_0): (_, bool) =
+            let __compact_effect_0: bool = __compact_param_0;
+            let (frame, __compact_effect_1): (_, bool) =
                 crate::ledger_slots::active.record_read(frame)?;
-            let __compact_recorded_compare_1 = __compact_recorded_value_0 == __compact_param_0;
-            if !(__compact_recorded_compare_1) {
+            let __compact_effect_2: bool = __compact_effect_1 == __compact_effect_0;
+            if !__compact_effect_2 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "active mismatch".to_owned(),
                 ));
             }
-            Ok(frame.finish(()))
+            let __compact_effect_3: () = ();
+            let __compact_effect_4: () = ();
+            Ok(frame.finish(__compact_effect_4))
         }
         pub fn set_amount<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -528,8 +534,11 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame = crate::ledger_slots::amount.record_write(frame, __compact_param_0)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: runtime::Field = __compact_param_0;
+            let frame = crate::ledger_slots::amount.record_write(frame, __compact_effect_0)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn get_amount<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -548,13 +557,14 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_recorded_value_0): (_, runtime::Field) =
+            let __compact_effect_0: runtime::Field = __compact_param_0;
+            let (frame, __compact_effect_1): (_, runtime::Field) =
                 crate::ledger_slots::amount.record_read(frame)?;
-            let __compact_recorded_sum_1: runtime::Field =
-                __compact_recorded_value_0 + __compact_param_0;
-            let frame =
-                crate::ledger_slots::amount.record_write(frame, __compact_recorded_sum_1)?;
-            Ok(frame.finish(()))
+            let __compact_effect_2: runtime::Field = __compact_effect_1 + __compact_effect_0;
+            let frame = crate::ledger_slots::amount.record_write(frame, __compact_effect_2)?;
+            let __compact_effect_3: () = ();
+            let __compact_effect_4: () = ();
+            Ok(frame.finish(__compact_effect_4))
         }
         pub fn active_equals<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -562,10 +572,11 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_recorded_value_0): (_, bool) =
+            let __compact_effect_0: bool = __compact_param_0;
+            let (frame, __compact_effect_1): (_, bool) =
                 crate::ledger_slots::active.record_read(frame)?;
-            let __compact_recorded_compare_1 = __compact_recorded_value_0 == __compact_param_0;
-            Ok(frame.finish(__compact_recorded_compare_1))
+            let __compact_effect_2: bool = __compact_effect_1 == __compact_effect_0;
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn plus_amount<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -575,11 +586,11 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_recorded_value_0): (_, runtime::Field) =
+            let __compact_effect_0: runtime::Field = __compact_param_0;
+            let (frame, __compact_effect_1): (_, runtime::Field) =
                 crate::ledger_slots::amount.record_read(frame)?;
-            let __compact_recorded_sum_1: runtime::Field =
-                __compact_recorded_value_0 + __compact_param_0;
-            Ok(frame.finish(__compact_recorded_sum_1))
+            let __compact_effect_2: runtime::Field = __compact_effect_1 + __compact_effect_0;
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn subtract_amount<Private>(
             context: runtime::context::CircuitContext<Private>,

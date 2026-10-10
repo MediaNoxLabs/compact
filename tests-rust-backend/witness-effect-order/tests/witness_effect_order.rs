@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Native effect ordering. The captured query programs belong to TypeScript;
-//! these exports intentionally have no recorded/proof-ready Rust API.
+//! Native effect ordering and current recorded Set membership qualification.
+//! The independent captured query programs belong to TypeScript.
 
 use compact_rust_witness_effect_order_fixture::ledger_contract as contract;
 use midnight_compact_runtime as runtime;
@@ -31,18 +31,19 @@ use std::cell::Cell;
 
 const REFUSAL: &str = "intentional witness refusal";
 
+#[derive(Clone)]
 struct CountingWitness {
     choice: Value,
-    gate_calls: Cell<usize>,
-    key_calls: Cell<usize>,
+    gate_calls: std::rc::Rc<Cell<usize>>,
+    key_calls: std::rc::Rc<Cell<usize>>,
 }
 
 impl CountingWitness {
     fn new(choice: &Value) -> Self {
         Self {
             choice: choice.clone(),
-            gate_calls: Cell::new(0),
-            key_calls: Cell::new(0),
+            gate_calls: std::rc::Rc::new(Cell::new(0)),
+            key_calls: std::rc::Rc::new(Cell::new(0)),
         }
     }
 
@@ -305,5 +306,99 @@ fn witness_refusal_precedes_query_gas_failure_and_success_reaches_the_query() {
     assert_eq!(rows.len(), 6);
     for row in rows {
         check_case(&row);
+    }
+}
+
+#[cfg(feature = "ledger-transaction")]
+#[test]
+fn new_set_recording_preserves_callback_before_query_and_ts_results() {
+    use runtime::transaction::{Observation, ObservedContractState};
+    for row in oracle_rows()
+        .into_iter()
+        .filter(|r| r["name"] == "set_member")
+    {
+        let initial = contract::initial_state(ConstructorContext::new(7_u64))
+            .unwrap()
+            .into_circuit_context(Default::default());
+        let state = ObservedContractState::new(
+            Default::default(),
+            ContractState::new(
+                initial.query.state.get_ref().clone(),
+                Default::default(),
+                Default::default(),
+            ),
+            Observation {
+                transaction_hash: [0; 32],
+                block_hash: [0; 32],
+                block_height: 0,
+            },
+        );
+        let context = || {
+            let mut c = state.circuit_context(7);
+            if row["zeroGas"] == true {
+                c.gas_limit = Some(Default::default());
+            }
+            c
+        };
+        let (a, b, w) = (
+            CountingWitness::new(&row["choice"]),
+            CountingWitness::new(&row["choice"]),
+            CountingWitness::new(&row["choice"]),
+        );
+        let native = contract::set_member(context(), &a);
+        let recorded = contract::recorded::set_member(context(), &b);
+        if row.get("error").is_some() {
+            assert_eq!(
+                native.as_ref().err().unwrap(),
+                recorded.as_ref().err().unwrap()
+            );
+            // Existing TS oracle validation distinguishes callback refusal from a
+            // VM gas refusal after the one callback.
+            check_result(native, &row, AlignedValue::from(false));
+            if row["zeroGas"] == false {
+                let generated = contract::Contract::from(w.clone());
+                let call = generated.recording().set_member_call(&state, 7);
+                assert_eq!(
+                    call.err().unwrap(),
+                    CompactError::AssertionFailed(REFUSAL.into())
+                );
+                assert_eq!(w.key_calls.get(), 1);
+            }
+        } else {
+            let native = native.unwrap();
+            let recorded = recorded.unwrap();
+            let generated = contract::Contract::from(w.clone());
+            let call = generated.recording().set_member_call(&state, 7).unwrap();
+            for actual in [&recorded.execution, &call.recorded().execution] {
+                assert_eq!(actual.result, native.result);
+                assert_eq!(actual.context.query.state, native.context.query.state);
+                assert_eq!(actual.context.query.effects, native.context.query.effects);
+                assert_eq!(actual.context.private_state, 8);
+                assert_eq!(actual.gas_cost, native.gas_cost);
+                assert_eq!(
+                    actual.private_transcript_outputs,
+                    native.private_transcript_outputs
+                );
+            }
+            assert!(!recorded.public.verify_ops().is_empty());
+            let replay = recorded
+                .public
+                .initial()
+                .query(
+                    recorded.public.verify_ops(),
+                    None,
+                    &recorded.execution.context.cost_model,
+                )
+                .unwrap();
+            assert_eq!(replay.context.state, native.context.query.state);
+            assert_eq!(replay.context.effects, native.context.query.effects);
+            assert_eq!(w.key_calls.get(), 1);
+            assert_eq!(w.gate_calls.get(), 0);
+            check_result(Ok(native), &row, AlignedValue::from(row["choice"] == 7));
+        }
+        for witness in [&a, &b] {
+            assert_eq!(witness.key_calls.get(), 1);
+            assert_eq!(witness.gate_calls.get(), 0);
+        }
     }
 }

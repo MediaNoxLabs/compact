@@ -221,10 +221,9 @@ fn recording_gaps_follow_the_first_definite_ir_failure() {
         value: Expr::Boolean { value: true },
     };
     let report = render_with_capabilities(&contract).unwrap().capabilities;
-    let gap = report.circuits[0].recording_unavailable.as_ref().unwrap();
-    assert_eq!(gap.code.as_str(), "unsupported_return");
-    assert_eq!(gap.ir_node, "StateReturn::Expression");
-    assert_eq!(gap.path, "return_value");
+    // The membership interface now admits a parameterless Boolean result.
+    assert!(report.circuits[0].recorded && report.circuits[0].observed_call);
+    assert!(report.circuits[0].recording_unavailable.is_none());
 }
 
 #[test]

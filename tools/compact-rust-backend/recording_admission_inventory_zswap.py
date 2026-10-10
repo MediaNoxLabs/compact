@@ -133,7 +133,7 @@ def check_sources(root, sources, transition):
     # Existing tests reside outside the frozen production-owner inventory. The
     # only permitted reference in these production owners is the guarded module.
     for owner, source in sources.items():
-        if owner == ORACLE:
+        if owner in (ORACLE, TEST_SOURCE):
             continue
         if owner == RECORDED:
             source = source.replace(GUARDED_MODULE, '', 1)
@@ -146,7 +146,11 @@ def check_sources(root, sources, transition):
             errors.append('Zswap retirement: whole oracle module must be uniquely cfg(test)')
         if digest((root / ORACLE).read_bytes()) != ORACLE_SHA:
             errors.append('Zswap retirement: whole oracle differs from frozen original source')
-        if digest((root / TEST_SOURCE).read_bytes()) != TEST_SHA:
+        # A later authenticated transition may supply this exact historical
+        # test text. The original source identity is never relaxed.
+        test_source = sources.get(TEST_SOURCE)
+        test_bytes = test_source.encode() if test_source is not None else (root / TEST_SOURCE).read_bytes()
+        if digest(test_bytes) != TEST_SHA:
             errors.append('Zswap retirement: reviewed routing test module changed')
         if digest(function(sources.get(SELECTOR, ''), HELPER).encode()) != HELPER_SHA:
             errors.append('Zswap retirement: declared interface helper changed')

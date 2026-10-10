@@ -643,7 +643,7 @@ fn stateful_assertions_require_boolean_and_record_typed_read_only_results() {
 }
 
 #[test]
-fn assertion_recording_rejects_nonunit_steps_wrong_slots_and_extra_effects() {
+fn assertion_recording_composes_typed_effects_and_rejects_invalid_steps_and_slots() {
     let source: serde_json::Value =
         serde_json::from_str(include_str!("../stateful-assert-schema20-ir.json")).unwrap();
     let parse = |value| serde_json::from_value::<Contract>(value).unwrap();
@@ -662,13 +662,11 @@ fn assertion_recording_rejects_nonunit_steps_wrong_slots_and_extra_effects() {
             field: "low".into(),
             index: 1,
         });
-    assert!(
-        !render_with_capabilities(&extra)
-            .unwrap()
-            .capabilities
-            .circuits[0]
-            .recorded
-    );
+    // A correctly typed reset composes with assertions; it no longer needs
+    // to match the old assertion-only circuit shape.
+    let report = render_with_capabilities(&extra).unwrap();
+    assert!(report.capabilities.circuits[0].recorded);
+    assert!(report.capabilities.circuits[0].observed_call);
     let mut mismatch = source.clone();
     mismatch["ledger_fields"][0]["declaration"]["ty"] = serde_json::json!({"kind":"field"});
     assert!(render(&parse(mismatch)).is_err());

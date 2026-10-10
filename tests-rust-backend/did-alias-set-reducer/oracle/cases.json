@@ -12,7 +12,7 @@
     },
     {
       "path": "tests-rust-backend/did-alias-set-reducer/lib.rs",
-      "sha256": "4a4d87ce689ff5b4ee68d2a76c537ad2efc08830d4a4fefa573f0e20c53d4815"
+      "sha256": "d90efa39629745abaf5c9a5a140d7d7353af16b5b0019dbb5cedad04068562a5"
     },
     {
       "path": "tests-rust-backend/did-alias-set-reducer/tests/behavior.rs",

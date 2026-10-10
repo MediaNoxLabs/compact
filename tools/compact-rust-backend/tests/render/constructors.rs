@@ -534,6 +534,16 @@ fn constructor_validates_each_direct_cell_rhs_before_the_next_assignment() {
     #[derive(Default)]
     struct Order(Vec<String>);
     impl VisitMut for Order {
+        fn visit_item_impl_mut(&mut self, _: &mut syn::ItemImpl) {
+            // Consumer wrapper methods are not the constructor under test.
+        }
+        fn visit_item_fn_mut(&mut self, item: &mut syn::ItemFn) {
+            // Recording may validate the same cell type elsewhere in the module.
+            // This contract concerns ordering within the constructor only.
+            if item.sig.ident == "initial_state" {
+                syn::visit_mut::visit_item_fn_mut(self, item);
+            }
+        }
         fn visit_local_mut(&mut self, local: &mut syn::Local) {
             if let syn::Pat::Ident(binding) = &local.pat
                 && binding

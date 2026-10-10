@@ -1133,36 +1133,38 @@ pub mod ledger_contract {
         witnesses: &W,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let state = runtime::ledger::contract_state(vec![
-            runtime::ledger::constructor_cell::<
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<4294967295>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<runtime::JubjubPoint, runtime::ledger::DefaultDB>(
-                Default::default(),
-            ),
-            runtime::ledger::constructor_cell::<runtime::JubjubPoint, runtime::ledger::DefaultDB>(
-                Default::default(),
-            ),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
+                runtime::JubjubPoint,
+                runtime::ledger::DefaultDB,
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
+                runtime::JubjubPoint,
+                runtime::ledger::DefaultDB,
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 crate::types::ContractAddress,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
+            >(Default::default())?,
             runtime::ledger::constructor_set(),
             runtime::ledger::constructor_counter(),
-            runtime::ledger::constructor_cell::<
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<bool, runtime::ledger::DefaultDB>(
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<bool, runtime::ledger::DefaultDB>(
                 Default::default(),
-            ),
-            runtime::ledger::constructor_cell::<bool, runtime::ledger::DefaultDB>(
+            )?,
+            runtime::ledger::try_constructor_cell::<bool, runtime::ledger::DefaultDB>(
                 Default::default(),
-            ),
+            )?,
             runtime::ledger::constructor_counter(),
             runtime::ledger::constructor_map(),
             runtime::ledger::constructor_map(),
@@ -3312,16 +3314,117 @@ pub mod ledger_contract {
             witnesses: &W,
         ) -> Result<(runtime::recording::RecordingFrame<Private>, ()), runtime::CompactError>
         {
-            let frame = crate::ledger_slots::operationCount.record_increment(frame, 1u16)?;
-            let frame = crate::ledger_slots::version.record_increment(frame, 1u16)?;
-            let (frame, __compact_witness_0) = frame.try_witness_metered(|context, meter| {
-                witnesses.currentTimestamp(context.witness_context_with(super::LedgerView {
-                    state: context.query.state.get_ref(),
-                    meter,
-                }))
-            })?;
-            let frame = crate::ledger_slots::updated.record_write(frame, __compact_witness_0)?;
-            Ok((frame, ()))
+            let __compact_effect_0: runtime::BoundedUint<65535> =
+                <runtime::BoundedUint<65535>>::new(1u128)?;
+            let frame = crate::ledger_slots::operationCount
+                .record_increment(frame, (__compact_effect_0).value() as u16)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: runtime::BoundedUint<65535> =
+                <runtime::BoundedUint<65535>>::new(1u128)?;
+            let frame = crate::ledger_slots::version
+                .record_increment(frame, (__compact_effect_2).value() as u16)?;
+            let __compact_effect_3: () = ();
+            let (frame, __compact_effect_4): (_, runtime::BoundedUint<18446744073709551615>) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.currentTimestamp(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            let frame = crate::ledger_slots::updated.record_write(frame, __compact_effect_4)?;
+            let __compact_effect_5: () = ();
+            let __compact_effect_6: () = ();
+            Ok((frame, __compact_effect_6))
+        }
+        fn __compact_recorded_body_assertVerificationMethodIsNotReferenced<Private>(
+            frame: runtime::recording::RecordingFrame<Private>,
+            __compact_param_0: runtime::OpaqueString,
+        ) -> Result<(runtime::recording::RecordingFrame<Private>, ()), runtime::CompactError>
+        {
+            let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
+            let (frame, __compact_effect_1): (_, bool) =
+                crate::ledger_slots::authenticationRelation
+                    .record_member(frame, (__compact_effect_0).clone())?;
+            let (frame, __compact_effect_4): (_, bool) = if __compact_effect_1 {
+                let __compact_effect_2: bool = false;
+                (frame, __compact_effect_2)
+            } else {
+                let __compact_effect_3: bool = true;
+                (frame, __compact_effect_3)
+            };
+            if !__compact_effect_4 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Verification method still referenced in authenticationRelation".to_owned(),
+                ));
+            }
+            let __compact_effect_5: () = ();
+            let (frame, __compact_effect_6): (_, bool) =
+                crate::ledger_slots::assertionMethodRelation
+                    .record_member(frame, (__compact_effect_0).clone())?;
+            let (frame, __compact_effect_9): (_, bool) = if __compact_effect_6 {
+                let __compact_effect_7: bool = false;
+                (frame, __compact_effect_7)
+            } else {
+                let __compact_effect_8: bool = true;
+                (frame, __compact_effect_8)
+            };
+            if !__compact_effect_9 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Verification method still referenced in assertionMethodRelation".to_owned(),
+                ));
+            }
+            let __compact_effect_10: () = ();
+            let (frame, __compact_effect_11): (_, bool) = crate::ledger_slots::keyAgreementRelation
+                .record_member(frame, (__compact_effect_0).clone())?;
+            let (frame, __compact_effect_14): (_, bool) = if __compact_effect_11 {
+                let __compact_effect_12: bool = false;
+                (frame, __compact_effect_12)
+            } else {
+                let __compact_effect_13: bool = true;
+                (frame, __compact_effect_13)
+            };
+            if !__compact_effect_14 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Verification method still referenced in keyAgreementRelation".to_owned(),
+                ));
+            }
+            let __compact_effect_15: () = ();
+            let (frame, __compact_effect_16): (_, bool) =
+                crate::ledger_slots::capabilityInvocationRelation
+                    .record_member(frame, (__compact_effect_0).clone())?;
+            let (frame, __compact_effect_19): (_, bool) = if __compact_effect_16 {
+                let __compact_effect_17: bool = false;
+                (frame, __compact_effect_17)
+            } else {
+                let __compact_effect_18: bool = true;
+                (frame, __compact_effect_18)
+            };
+            if !__compact_effect_19 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Verification method still referenced in capabilityInvocationRelation"
+                        .to_owned(),
+                ));
+            }
+            let __compact_effect_20: () = ();
+            let (frame, __compact_effect_21): (_, bool) =
+                crate::ledger_slots::capabilityDelegationRelation
+                    .record_member(frame, (__compact_effect_0).clone())?;
+            let (frame, __compact_effect_24): (_, bool) = if __compact_effect_21 {
+                let __compact_effect_22: bool = false;
+                (frame, __compact_effect_22)
+            } else {
+                let __compact_effect_23: bool = true;
+                (frame, __compact_effect_23)
+            };
+            if !__compact_effect_24 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Verification method still referenced in capabilityDelegationRelation"
+                        .to_owned(),
+                ));
+            }
+            let __compact_effect_25: () = ();
+            let __compact_effect_26: () = ();
+            Ok((frame, __compact_effect_26))
         }
         fn __compact_recorded_body_assertVerificationMethodRelationCompatible<Private>(
             frame: runtime::recording::RecordingFrame<Private>,
@@ -5498,6 +5601,7 @@ pub mod ledger_contract {
             where
                 W: super::TryWitnesses<Private>,
             {
+                runtime::ledger::CellValue::validate_cell_value(&value)?;
                 let input = runtime::fab::AlignedValue::concat(&[
                     runtime::fab::AlignedValue::from((value).clone()),
                     runtime::fab::AlignedValue::from(mutation),
@@ -5554,6 +5658,13 @@ pub mod ledger_contract {
             where
                 W: super::TryWitnesses<Private>,
             {
+                runtime::ledger::CellValue::validate_cell_value(&(verificationMethod).id)?;
+                runtime::ledger::CellValue::validate_cell_value(
+                    &((verificationMethod).publicKeyJwk).x,
+                )?;
+                runtime::ledger::CellValue::validate_cell_value(
+                    &((verificationMethod).publicKeyJwk).y,
+                )?;
                 let input = runtime::fab::AlignedValue::concat(&[
                     runtime::fab::AlignedValue::from((verificationMethod).clone()),
                     runtime::fab::AlignedValue::from(mutation),
@@ -5607,6 +5718,7 @@ pub mod ledger_contract {
             where
                 W: super::TryWitnesses<Private>,
             {
+                runtime::ledger::CellValue::validate_cell_value(&methodId)?;
                 let input = runtime::fab::AlignedValue::concat(&[
                     runtime::fab::AlignedValue::from((methodId).clone()),
                     runtime::fab::AlignedValue::from((controllerSignature).clone()),
@@ -5661,6 +5773,7 @@ pub mod ledger_contract {
             where
                 W: super::TryWitnesses<Private>,
             {
+                runtime::ledger::CellValue::validate_cell_value(&(verificationMethod).id)?;
                 let input = runtime::fab::AlignedValue::concat(&[
                     runtime::fab::AlignedValue::from((verificationMethod).clone()),
                     runtime::fab::AlignedValue::from(mutation),
@@ -5714,6 +5827,7 @@ pub mod ledger_contract {
             where
                 W: super::TryWitnesses<Private>,
             {
+                runtime::ledger::CellValue::validate_cell_value(&methodId)?;
                 let input = runtime::fab::AlignedValue::concat(&[
                     runtime::fab::AlignedValue::from((methodId).clone()),
                     runtime::fab::AlignedValue::from((controllerSignature).clone()),
@@ -5765,6 +5879,7 @@ pub mod ledger_contract {
             where
                 W: super::TryWitnesses<Private>,
             {
+                runtime::ledger::CellValue::validate_cell_value(&methodId)?;
                 let input = runtime::fab::AlignedValue::concat(&[
                     runtime::fab::AlignedValue::from((methodId).clone()),
                     runtime::fab::AlignedValue::from((digest).clone()),
@@ -5826,6 +5941,7 @@ pub mod ledger_contract {
             where
                 W: super::TryWitnesses<Private>,
             {
+                runtime::ledger::CellValue::validate_cell_value(&methodId)?;
                 let input = runtime::fab::AlignedValue::concat(&[
                     runtime::fab::AlignedValue::from(relation),
                     runtime::fab::AlignedValue::from((methodId).clone()),
@@ -5884,6 +6000,9 @@ pub mod ledger_contract {
             where
                 W: super::TryWitnesses<Private>,
             {
+                runtime::ledger::CellValue::validate_cell_value(&(service).id)?;
+                runtime::ledger::CellValue::validate_cell_value(&(service).typ)?;
+                runtime::ledger::CellValue::validate_cell_value(&(service).serviceEndpoint)?;
                 let input = runtime::fab::AlignedValue::concat(&[
                     runtime::fab::AlignedValue::from((service).clone()),
                     runtime::fab::AlignedValue::from(mutation),
@@ -5937,6 +6056,7 @@ pub mod ledger_contract {
             where
                 W: super::TryWitnesses<Private>,
             {
+                runtime::ledger::CellValue::validate_cell_value(&serviceId)?;
                 let input = runtime::fab::AlignedValue::concat(&[
                     runtime::fab::AlignedValue::from((serviceId).clone()),
                     runtime::fab::AlignedValue::from((controllerSignature).clone()),

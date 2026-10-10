@@ -31,8 +31,8 @@ fn included(c: &Contract, name: &str, label: &str) {
         .collect::<Vec<_>>();
     assert_eq!(rows.len(), 1);
     assert_eq!(
-        rows[0]["body_owner"], "selector.membership-optional",
-        "{label}: candidate success does not retire the old owner"
+        rows[0]["body_owner"], "algebra.membership",
+        "{label}: whole old control now routes through independently checked composition"
     );
     let capability = output
         .capabilities
@@ -56,7 +56,7 @@ fn included(c: &Contract, name: &str, label: &str) {
         std::fs::write(directory.join("lib.rs"), output.source).unwrap();
         std::fs::write(directory.join("case.json"), serde_json::to_vec_pretty(&serde_json::json!({
             "label": label, "root": name, "whole_old_accepted": true, "checked_candidate": true,
-            "actual_owner": "selector.membership-optional", "claim": "finite qualified Set subdomain only; no retirement or proof claim"
+            "actual_owner": "algebra.membership", "claim": "finite qualified Set subdomain only; no retirement or proof claim"
         })).unwrap()).unwrap();
     }
 }
@@ -110,7 +110,7 @@ fn finite_old_qualified_set_operand_and_action_compositions_remain_included() {
     }
 }
 #[test]
-fn full_frontend_nested_sources_use_actual_algebra_without_selector_edits() {
+fn full_frontend_nested_sources_use_first_eligible_algebra() {
     for (text, names) in [
         (
             include_str!("../../../../../tests/qualified-coin-set-chunked-schema20-ir.json"),
@@ -143,7 +143,12 @@ fn full_frontend_nested_sources_use_actual_algebra_without_selector_edits() {
                 })
                 .collect::<Vec<_>>();
             assert_eq!(rows.len(), 1);
-            assert_eq!(rows[0]["body_owner"], "algebra.zswap", "{name}");
+            let expected = if *name == "insert_selected" {
+                "algebra.zswap"
+            } else {
+                "algebra.membership"
+            };
+            assert_eq!(rows[0]["body_owner"], expected, "{name}");
         }
     }
 }

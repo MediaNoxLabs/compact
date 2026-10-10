@@ -17,9 +17,9 @@
 //! Actual value types and branch-local frames preserve scope and effect order.
 
 use super::*;
+use crate::coin_shapes::shielded_coin_type;
 #[cfg(test)]
-use crate::coin_shapes::qualified_coin_type;
-use crate::coin_shapes::{shielded_coin_type, shielded_recipient_type};
+use crate::coin_shapes::{qualified_coin_type, shielded_recipient_type};
 use crate::ir::{KernelClaimKind, ReturnPlan, contract_address_type};
 mod actions;
 mod admission;
@@ -83,6 +83,7 @@ type Scope = HashMap<String, TypedValue>;
 // intents without composite-value helper routing; phase_reset is independent.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum CompositeDomain {
+    #[cfg_attr(not(test), allow(dead_code))]
     None,
     // Constructed only by the frozen composite oracle; shared policy matches stay intact.
     #[cfg_attr(not(test), allow(dead_code))]
@@ -1184,6 +1185,7 @@ pub(super) struct TypedPlan {
 
 // Read-only assertion bodies have their own admission boundary. General calls,
 // writes, cryptographic effects and non-Boolean witness results remain outside it.
+#[cfg(test)]
 fn assertion_value(
     value: &Expr,
     witnesses: &HashMap<&str, &WitnessDeclaration>,
@@ -1239,6 +1241,7 @@ fn assertion_value(
         _ => false,
     }
 }
+#[cfg(test)]
 fn assertion_type(ty: &Type) -> bool {
     matches!(ty, Type::Unit | Type::Boolean)
         || matches!(ty, Type::Unsigned { max } if max == "255" || max == "18446744073709551615")
@@ -1879,6 +1882,7 @@ pub(super) fn lower_composite<'a>(
     composite_reference::lower(circuit, ledger, witnesses, pure, circuits)
 }
 
+#[cfg(test)]
 pub(super) fn lower<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,

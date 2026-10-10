@@ -121,14 +121,14 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let state = runtime::ledger::contract_state(vec![
             runtime::ledger::constructor_counter(),
-            runtime::ledger::constructor_cell::<
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
+            >(Default::default())?,
         ]);
         {
             let mut context = runtime::context::ConstructorResult::new(__compact_context, state)
@@ -254,19 +254,28 @@ pub mod ledger_contract {
             __compact_param_0: runtime::BoundedUint<18446744073709551615>,
         ) -> Result<(runtime::recording::RecordingFrame<Private>, ()), runtime::CompactError>
         {
-            let frame = crate::ledger_slots::last.record_write(frame, __compact_param_0)?;
-            let frame = crate::ledger_slots::count.record_increment(frame, 1u16)?;
-            let (frame, __compact_witness_0) = frame.try_witness_metered(|context, meter| {
-                witnesses.observe(
-                    context.witness_context_with(super::LedgerView {
-                        state: context.query.state.get_ref(),
-                        meter,
-                    }),
-                    __compact_param_0,
-                )
-            })?;
-            let frame = crate::ledger_slots::receipt.record_write(frame, __compact_witness_0)?;
-            Ok((frame, ()))
+            let __compact_effect_0: runtime::BoundedUint<18446744073709551615> = __compact_param_0;
+            let frame = crate::ledger_slots::last.record_write(frame, __compact_effect_0)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: runtime::BoundedUint<65535> =
+                <runtime::BoundedUint<65535>>::new(1u128)?;
+            let frame = crate::ledger_slots::count
+                .record_increment(frame, (__compact_effect_2).value() as u16)?;
+            let __compact_effect_3: () = ();
+            let (frame, __compact_effect_4): (_, runtime::BoundedUint<18446744073709551615>) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.observe(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_effect_0,
+                    )
+                })?;
+            let frame = crate::ledger_slots::receipt.record_write(frame, __compact_effect_4)?;
+            let __compact_effect_5: () = ();
+            let __compact_effect_6: () = ();
+            Ok((frame, __compact_effect_6))
         }
         pub fn twice<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -276,77 +285,85 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_plan_0: runtime::BoundedUint<18446744073709551615> = __compact_param_0;
-            let __compact_plan_1: runtime::BoundedUint<18446744073709551615> =
-                crate::pure_circuits::echo(__compact_plan_0)?;
-            let __compact_plan_2: runtime::BoundedUint<18446744073709551615> = __compact_plan_1;
-            let (frame, __compact_plan_3): (_, runtime::BoundedUint<18446744073709551615>) = frame
-                .try_witness_metered(|context, meter| {
+            let __compact_effect_0: runtime::BoundedUint<18446744073709551615> = __compact_param_0;
+            let __compact_effect_1: runtime::BoundedUint<18446744073709551615> = __compact_param_1;
+            let __compact_effect_2: runtime::BoundedUint<18446744073709551615> =
+                crate::pure_circuits::echo(__compact_effect_0)?;
+            let (frame, __compact_effect_3): (_, runtime::BoundedUint<18446744073709551615>) =
+                frame.try_witness_metered(|context, meter| {
                     witnesses.argument(
                         context.witness_context_with(super::LedgerView {
                             state: context.query.state.get_ref(),
                             meter,
                         }),
-                        __compact_plan_2,
+                        __compact_effect_2,
                     )
                 })?;
-            let __compact_plan_4: runtime::BoundedUint<18446744073709551615> = __compact_plan_3;
-            let frame = crate::ledger_slots::last.record_write(frame, __compact_plan_4)?;
-            let __compact_plan_5: runtime::BoundedUint<65535> =
-                runtime::BoundedUint::<65535>::new(1u128)
-                    .expect("Compact Uint literal fits its maximum");
-            let __compact_plan_6: runtime::BoundedUint<65535> = __compact_plan_5;
-            let frame = crate::ledger_slots::count
-                .record_increment(frame, (__compact_plan_6).value() as u16)?;
-            let __compact_plan_7: runtime::BoundedUint<18446744073709551615> = __compact_plan_4;
-            let (frame, __compact_plan_8): (_, runtime::BoundedUint<18446744073709551615>) = frame
-                .try_witness_metered(|context, meter| {
-                    witnesses.observe(
-                        context.witness_context_with(super::LedgerView {
-                            state: context.query.state.get_ref(),
-                            meter,
-                        }),
-                        __compact_plan_7,
-                    )
-                })?;
-            let __compact_plan_9: runtime::BoundedUint<18446744073709551615> = __compact_plan_8;
-            let frame = crate::ledger_slots::receipt.record_write(frame, __compact_plan_9)?;
-            let __compact_plan_10: runtime::BoundedUint<18446744073709551615> = __compact_param_1;
-            let __compact_plan_11: runtime::BoundedUint<18446744073709551615> =
-                crate::pure_circuits::echo(__compact_plan_10)?;
-            let __compact_plan_12: runtime::BoundedUint<18446744073709551615> = __compact_plan_11;
-            let (frame, __compact_plan_13): (_, runtime::BoundedUint<18446744073709551615>) = frame
-                .try_witness_metered(|context, meter| {
+            let (frame, __compact_effect_11): (_, ()) = {
+                let __compact_effect_4: runtime::BoundedUint<18446744073709551615> =
+                    __compact_effect_3;
+                let frame = crate::ledger_slots::last.record_write(frame, __compact_effect_4)?;
+                let __compact_effect_5: () = ();
+                let __compact_effect_6: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
+                let frame = crate::ledger_slots::count
+                    .record_increment(frame, (__compact_effect_6).value() as u16)?;
+                let __compact_effect_7: () = ();
+                let (frame, __compact_effect_8): (_, runtime::BoundedUint<18446744073709551615>) =
+                    frame.try_witness_metered(|context, meter| {
+                        witnesses.observe(
+                            context.witness_context_with(super::LedgerView {
+                                state: context.query.state.get_ref(),
+                                meter,
+                            }),
+                            __compact_effect_4,
+                        )
+                    })?;
+                let frame = crate::ledger_slots::receipt.record_write(frame, __compact_effect_8)?;
+                let __compact_effect_9: () = ();
+                let __compact_effect_10: () = ();
+                (frame, __compact_effect_10)
+            };
+            let __compact_effect_12: runtime::BoundedUint<18446744073709551615> =
+                crate::pure_circuits::echo(__compact_effect_1)?;
+            let (frame, __compact_effect_13): (_, runtime::BoundedUint<18446744073709551615>) =
+                frame.try_witness_metered(|context, meter| {
                     witnesses.argument(
                         context.witness_context_with(super::LedgerView {
                             state: context.query.state.get_ref(),
                             meter,
                         }),
-                        __compact_plan_12,
+                        __compact_effect_12,
                     )
                 })?;
-            let __compact_plan_14: runtime::BoundedUint<18446744073709551615> = __compact_plan_13;
-            let frame = crate::ledger_slots::last.record_write(frame, __compact_plan_14)?;
-            let __compact_plan_15: runtime::BoundedUint<65535> =
-                runtime::BoundedUint::<65535>::new(1u128)
-                    .expect("Compact Uint literal fits its maximum");
-            let __compact_plan_16: runtime::BoundedUint<65535> = __compact_plan_15;
-            let frame = crate::ledger_slots::count
-                .record_increment(frame, (__compact_plan_16).value() as u16)?;
-            let __compact_plan_17: runtime::BoundedUint<18446744073709551615> = __compact_plan_14;
-            let (frame, __compact_plan_18): (_, runtime::BoundedUint<18446744073709551615>) = frame
-                .try_witness_metered(|context, meter| {
-                    witnesses.observe(
-                        context.witness_context_with(super::LedgerView {
-                            state: context.query.state.get_ref(),
-                            meter,
-                        }),
-                        __compact_plan_17,
-                    )
-                })?;
-            let __compact_plan_19: runtime::BoundedUint<18446744073709551615> = __compact_plan_18;
-            let frame = crate::ledger_slots::receipt.record_write(frame, __compact_plan_19)?;
-            Ok(frame.finish(()))
+            let (frame, __compact_effect_21): (_, ()) = {
+                let __compact_effect_14: runtime::BoundedUint<18446744073709551615> =
+                    __compact_effect_13;
+                let frame = crate::ledger_slots::last.record_write(frame, __compact_effect_14)?;
+                let __compact_effect_15: () = ();
+                let __compact_effect_16: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
+                let frame = crate::ledger_slots::count
+                    .record_increment(frame, (__compact_effect_16).value() as u16)?;
+                let __compact_effect_17: () = ();
+                let (frame, __compact_effect_18): (_, runtime::BoundedUint<18446744073709551615>) =
+                    frame.try_witness_metered(|context, meter| {
+                        witnesses.observe(
+                            context.witness_context_with(super::LedgerView {
+                                state: context.query.state.get_ref(),
+                                meter,
+                            }),
+                            __compact_effect_14,
+                        )
+                    })?;
+                let frame =
+                    crate::ledger_slots::receipt.record_write(frame, __compact_effect_18)?;
+                let __compact_effect_19: () = ();
+                let __compact_effect_20: () = ();
+                (frame, __compact_effect_20)
+            };
+            let __compact_effect_22: () = ();
+            Ok(frame.finish(__compact_effect_22))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

@@ -135,8 +135,33 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame = crate::ledger_slots::round.record_increment(frame, 1u16)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: runtime::BoundedUint<65535> =
+                <runtime::BoundedUint<65535>>::new(1u128)?;
+            let frame = crate::ledger_slots::round
+                .record_increment(frame, (__compact_effect_0).value() as u16)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
+        }
+        pub fn private_round<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<
+                Private,
+                runtime::BoundedUint<18446744073709551615>,
+            >,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_effect_0): (_, runtime::BoundedUint<18446744073709551615>) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.read_round(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            Ok(frame.finish(__compact_effect_0))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
@@ -163,6 +188,77 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "increment_round",
+                    input,
+                ))
+            }
+        }
+        /// A recording handle with access to the contract's witnesses.
+        pub struct BorrowedContract<'a, W> {
+            pub(super) witnesses: &'a W,
+        }
+        impl<W> BorrowedContract<'_, W> {
+            pub fn increment_round<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                increment_round(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn increment_round_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.increment_round(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "increment_round",
+                    input,
+                ))
+            }
+            pub fn private_round<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<
+                    Private,
+                    runtime::BoundedUint<18446744073709551615>,
+                >,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                private_round(context, self.witnesses)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn private_round_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<
+                    'observed,
+                    Private,
+                    runtime::BoundedUint<18446744073709551615>,
+                >,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.private_round(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "private_round",
                     input,
                 ))
             }
@@ -209,9 +305,11 @@ pub mod ledger_contract {
         {
             crate::ledger_contract::private_round(context, &self.witnesses)
         }
-        /// Access replayable circuit calls for this contract.
-        pub fn recording(&self) -> &recorded::Contract {
-            &self.recording
+        /// Borrow the contract's witnesses for a replayable circuit call.
+        pub fn recording(&self) -> recorded::BorrowedContract<'_, W> {
+            recorded::BorrowedContract {
+                witnesses: &self.witnesses,
+            }
         }
     }
 }

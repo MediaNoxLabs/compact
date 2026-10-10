@@ -121,3 +121,75 @@ fn recorded_insert_and_membership_match_native_with_local_replay() {
     assert_eq!(view.aliases().unwrap().size().unwrap().value(), 2);
     assert_eq!(view.count().unwrap().value(), 0);
 }
+
+#[cfg(feature = "ledger-transaction")]
+#[test]
+fn recorded_remove_preserves_unrelated_alias_counter_and_observed_result() {
+    use r::transaction::{Observation, ObservedContractState};
+    for text in ["", "référence-東京", "missing"] {
+        let initial = c::initial_state(ConstructorContext::new(73_u64))
+            .unwrap()
+            .into_circuit_context(Default::default());
+        let context = c::insert_control(initial, value("keep")).unwrap().context;
+        let context = if text == "missing" {
+            context
+        } else {
+            c::insert_control(context, value(text)).unwrap().context
+        };
+        let state = ObservedContractState::new(
+            Default::default(),
+            r::ledger::ContractState::new(
+                context.query.state.get_ref().clone(),
+                Default::default(),
+                Default::default(),
+            ),
+            Observation {
+                transaction_hash: [0; 32],
+                block_hash: [0; 32],
+                block_height: 0,
+            },
+        );
+        let native = c::remove_control(state.circuit_context(73), value(text));
+        let recorded = c::recorded::remove_control(state.circuit_context(73), value(text));
+        let call = c::recorded::Contract.remove_control_call(&state, 73, value(text));
+        match native {
+            Err(error) => {
+                assert_eq!(recorded.err().unwrap(), error);
+                assert_eq!(call.err().unwrap(), error);
+            }
+            Ok(native) => {
+                let recorded = recorded.unwrap();
+                let call = call.unwrap();
+                for actual in [&recorded.execution, &call.recorded().execution] {
+                    // Both outputs are Unit; state and transcripts carry this effect.
+                    assert_eq!(actual.context.query.state, native.context.query.state);
+                    assert_eq!(actual.context.query.effects, native.context.query.effects);
+                    assert_eq!(actual.context.private_state, 73);
+                    assert_eq!(actual.gas_cost, native.gas_cost);
+                    assert_eq!(
+                        actual.private_transcript_outputs,
+                        native.private_transcript_outputs
+                    );
+                    assert!(actual.private_transcript_outputs.is_empty());
+                    let view = c::PublicStateView::from(&actual.context);
+                    assert!(view.aliases().unwrap().member(value("keep")));
+                    assert!(!view.aliases().unwrap().member(value(text)));
+                    assert_eq!(view.aliases().unwrap().size().unwrap().value(), 1);
+                    assert_eq!(view.count().unwrap().value(), 0);
+                }
+                assert!(!recorded.public.verify_ops().is_empty());
+                let replay = recorded
+                    .public
+                    .initial()
+                    .query(
+                        recorded.public.verify_ops(),
+                        None,
+                        &recorded.execution.context.cost_model,
+                    )
+                    .unwrap();
+                assert_eq!(replay.context.state, native.context.query.state);
+                assert_eq!(replay.context.effects, native.context.query.effects);
+            }
+        }
+    }
+}

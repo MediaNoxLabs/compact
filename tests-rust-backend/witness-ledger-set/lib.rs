@@ -132,8 +132,26 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame = crate::ledger_slots::seen.record_insert(frame, true)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: bool = true;
+            let frame = crate::ledger_slots::seen.record_insert(frame, __compact_effect_0)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
+        }
+        pub fn private_contains<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_effect_0): (_, bool) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.contains_true(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            Ok(frame.finish(__compact_effect_0))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
@@ -158,6 +176,67 @@ pub mod ledger_contract {
                 let recorded = self.add_true(observed.circuit_context(private_state))?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "add_true", input,
+                ))
+            }
+        }
+        /// A recording handle with access to the contract's witnesses.
+        pub struct BorrowedContract<'a, W> {
+            pub(super) witnesses: &'a W,
+        }
+        impl<W> BorrowedContract<'_, W> {
+            pub fn add_true<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                add_true(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn add_true_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.add_true(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "add_true", input,
+                ))
+            }
+            pub fn private_contains<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, bool>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                private_contains(context, self.witnesses)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn private_contains_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, bool>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.private_contains(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "private_contains",
+                    input,
                 ))
             }
         }
@@ -200,9 +279,11 @@ pub mod ledger_contract {
         {
             crate::ledger_contract::private_contains(context, &self.witnesses)
         }
-        /// Access replayable circuit calls for this contract.
-        pub fn recording(&self) -> &recorded::Contract {
-            &self.recording
+        /// Borrow the contract's witnesses for a replayable circuit call.
+        pub fn recording(&self) -> recorded::BorrowedContract<'_, W> {
+            recorded::BorrowedContract {
+                witnesses: &self.witnesses,
+            }
         }
     }
 }

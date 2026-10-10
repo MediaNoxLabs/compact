@@ -73,10 +73,10 @@ pub mod ledger_contract {
     pub fn initial_state<Private>(
         __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
-        let state = runtime::ledger::contract_state(vec![runtime::ledger::constructor_cell::<
+        let state = runtime::ledger::contract_state(vec![runtime::ledger::try_constructor_cell::<
             bool,
             runtime::ledger::DefaultDB,
-        >(Default::default())]);
+        >(Default::default())?]);
         Ok(runtime::context::ConstructorResult::new(
             __compact_context,
             state,
@@ -121,8 +121,26 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame = crate::ledger_slots::flag.record_write(frame, true)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: bool = true;
+            let frame = crate::ledger_slots::flag.record_write(frame, __compact_effect_0)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
+        }
+        pub fn private_check<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_effect_0): (_, bool) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.read_flag(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            Ok(frame.finish(__compact_effect_0))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
@@ -147,6 +165,67 @@ pub mod ledger_contract {
                 let recorded = self.set_flag(observed.circuit_context(private_state))?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "set_flag", input,
+                ))
+            }
+        }
+        /// A recording handle with access to the contract's witnesses.
+        pub struct BorrowedContract<'a, W> {
+            pub(super) witnesses: &'a W,
+        }
+        impl<W> BorrowedContract<'_, W> {
+            pub fn set_flag<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                set_flag(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn set_flag_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.set_flag(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "set_flag", input,
+                ))
+            }
+            pub fn private_check<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, bool>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                private_check(context, self.witnesses)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn private_check_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, bool>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.private_check(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "private_check",
+                    input,
                 ))
             }
         }
@@ -189,9 +268,11 @@ pub mod ledger_contract {
         {
             crate::ledger_contract::private_check(context, &self.witnesses)
         }
-        /// Access replayable circuit calls for this contract.
-        pub fn recording(&self) -> &recorded::Contract {
-            &self.recording
+        /// Borrow the contract's witnesses for a replayable circuit call.
+        pub fn recording(&self) -> recorded::BorrowedContract<'_, W> {
+            recorded::BorrowedContract {
+                witnesses: &self.witnesses,
+            }
         }
     }
 }

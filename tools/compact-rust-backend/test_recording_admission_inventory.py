@@ -24,6 +24,7 @@ import recording_admission_inventory_voting as voting
 import recording_admission_inventory_phase_reset as phase_reset
 import recording_admission_inventory_immediate as immediate
 import recording_admission_inventory_zswap as zswap
+import recording_admission_inventory_membership as membership
 
 JUBJUB_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-517.json")
 CALL_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.calls-519.json")
@@ -52,14 +53,24 @@ IMMEDIATE_TRANSITION = inventory.BASELINE.with_name("recording_admission_invento
 ZSWAP_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-553.json")
 
 
+MEMBERSHIP_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-560.json")
+
+
+def membership_checkpoint_sources(root):
+    return membership.predecessor_sources(root, json.loads(MEMBERSHIP_TRANSITION.read_text()))
+
+
 def zswap_checkpoint_sources(root):
-    return zswap.predecessor_sources(root, json.loads(ZSWAP_TRANSITION.read_text()))
+    prior = membership_checkpoint_sources(root)
+    sources = {owner: (root / owner).read_text() for owner in zswap.REVIEWED_OWNERS}
+    return {**prior, **zswap.predecessor_source_snapshot(
+        {**sources, **prior}, json.loads(ZSWAP_TRANSITION.read_text()))}
 
 
 def immediate_checkpoint_sources(root):
     prior = zswap_checkpoint_sources(root)
     sources = {owner: (root / owner).read_text() for owner in immediate.REVIEWED_OWNERS}
-    sources[inventory.SELECTOR] = prior[inventory.SELECTOR]
+    sources.update(prior)
     return {**prior, **immediate.predecessor_source_snapshot(sources, json.loads(IMMEDIATE_TRANSITION.read_text()))}
 
 
@@ -177,7 +188,8 @@ class InventoryTests(unittest.TestCase):
                                   voting_transition=json.loads(VOTING_TRANSITION.read_text()),
                                   phase_reset_transition=json.loads(PHASE_TRANSITION.read_text()),
                                   immediate_send_transition=json.loads(IMMEDIATE_TRANSITION.read_text()),
-                                  zswap_transition=json.loads(ZSWAP_TRANSITION.read_text()))
+                                  zswap_transition=json.loads(ZSWAP_TRANSITION.read_text()),
+                                  membership_transition=json.loads(MEMBERSHIP_TRANSITION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)
@@ -203,7 +215,7 @@ class RetirementTransitionTests(unittest.TestCase):
         self.composite_transition = json.loads(COMPOSITE_TRANSITION.read_text())
         self.receive_transition = json.loads(RECEIVE_TRANSITION.read_text())
         self.unit_domain_extension = json.loads(UNIT_DOMAIN_EXTENSION.read_text())
-        for relative in {*self.baseline['source_fingerprints'], inventory.ORACLE, jubjub.ORACLE, terminal.ORACLE, unit.ORACLE, context.ORACLE, context.IR, composite.ORACLE, composite.FIELD, receive.ORACLE, *context.SHARED_ANCHORS, *inventory.HOOK_SOURCES, *immediate.REVIEWED_OWNERS}:
+        for relative in {*self.baseline['source_fingerprints'], inventory.ORACLE, jubjub.ORACLE, terminal.ORACLE, unit.ORACLE, context.ORACLE, context.IR, composite.ORACLE, composite.FIELD, receive.ORACLE, *context.SHARED_ANCHORS, *inventory.HOOK_SOURCES, *immediate.REVIEWED_OWNERS, *membership.REVIEWED_OWNERS}:
             destination = self.root / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_bytes((inventory.ROOT / relative).read_bytes())

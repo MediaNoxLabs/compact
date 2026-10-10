@@ -484,3 +484,6 @@ mod public_products;
 
 #[path = "tests/tuple_projection.rs"]
 mod tuple_projection;
+
+#[path = "tests/membership_inclusion.rs"]
+mod membership_inclusion;

@@ -24,7 +24,7 @@ use compact_rust_backend::ir::{
 use compact_rust_backend::{RenderError, render, render_with_capabilities};
 
 #[test]
-fn opaque_string_set_recording_requires_closed_typed_operations() {
+fn opaque_string_set_recording_composes_typed_operations_and_rejects_unsupported_defaults() {
     let mut contract: Contract =
         serde_json::from_str(include_str!("../opaque-string-set-schema13-ir.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
@@ -46,8 +46,12 @@ fn opaque_string_set_recording_requires_closed_typed_operations() {
     contract.stateful_circuits[0].actions.push(extra_action);
     assert_eq!(
         statuses(&contract),
-        vec![("addName".into(), false), ("hasName".into(), true)]
+        vec![("addName".into(), true), ("hasName".into(), true)]
     );
+
+    let rendered = render_with_capabilities(&contract).unwrap();
+    let repeated = generated_body(&rendered.source, "recorded", "addName");
+    assert_eq!(repeated.matches("record_insert").count(), 2);
 
     contract.stateful_circuits[0].actions.truncate(1);
     let StateReturn::SetMember { value, .. } = &mut contract.stateful_circuits[1].return_value
@@ -64,7 +68,7 @@ fn opaque_string_set_recording_requires_closed_typed_operations() {
 }
 
 #[test]
-fn opaque_set_check_in_records_only_typed_parameter_and_unit_witness() {
+fn opaque_set_check_in_composes_typed_effects_and_preserves_witness_order() {
     let opaque = Type::OpaqueString;
     let parameter = Parameter {
         name: "participant".into(),
@@ -139,19 +143,19 @@ fn opaque_set_check_in_records_only_typed_parameter_and_unit_witness() {
     assert!(rendered.source.contains("record_member"));
     assert!(rendered.source.contains("record_insert"));
     assert!(rendered.source.contains("try_witness_metered"));
+    let body = generated_body(&rendered.source, "recorded", "check_in");
+    assert!(body.find("record_member").unwrap() < body.find("not eligible").unwrap());
+    assert!(body.find("not eligible").unwrap() < body.find("record_insert").unwrap());
+    assert!(body.find("record_insert").unwrap() < body.find("try_witness_metered").unwrap());
 
     let mut incomplete = contract.clone();
     incomplete.stateful_circuits[0].actions.truncate(2);
-    let rejected = render_with_capabilities(&incomplete).unwrap();
-    assert!(!rejected.capabilities.circuits[0].recorded);
-    assert_eq!(
-        rejected.capabilities.circuits[0]
-            .recording_unavailable
-            .as_ref()
-            .unwrap()
-            .path,
-        "actions[0]"
-    );
+    // A Unit witness is optional: the two remaining typed effects are complete.
+    let without_witness = render_with_capabilities(&incomplete).unwrap();
+    assert!(without_witness.capabilities.circuits[0].recorded);
+    let body = generated_body(&without_witness.source, "recorded", "check_in");
+    assert!(body.find("record_member").unwrap() < body.find("record_insert").unwrap());
+    assert!(!body.contains("try_witness_metered"));
 
     let StateAction::Expression {
         value: Expr::WitnessCall { arguments, .. },
@@ -178,16 +182,12 @@ fn opaque_set_check_in_records_only_typed_parameter_and_unit_witness() {
             name: "participant".into(),
         },
     };
-    let rejected = render_with_capabilities(&contract).unwrap();
-    assert!(!rejected.capabilities.circuits[0].recorded);
-    assert_eq!(
-        rejected.capabilities.circuits[0]
-            .recording_unavailable
-            .as_ref()
-            .unwrap()
-            .path,
-        "actions[2]"
-    );
+    let removal = render_with_capabilities(&contract).unwrap();
+    assert!(removal.capabilities.circuits[0].recorded);
+    let body = generated_body(&removal.source, "recorded", "check_in");
+    assert!(body.find("record_member").unwrap() < body.find("record_insert").unwrap());
+    assert!(body.find("record_insert").unwrap() < body.find("record_remove").unwrap());
+    assert!(!body.contains("try_witness_metered"));
 
     contract.stateful_circuits[0].parameters[0].ty = Type::OpaqueBytes;
     contract.ledger_fields[0].declaration = LedgerFieldKind::Set {

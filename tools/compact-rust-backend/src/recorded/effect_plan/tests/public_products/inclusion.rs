@@ -1,7 +1,7 @@
 // This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
-//! Finite complete historic-spend controls; admission remains owned by membership.
+//! Finite complete historic-spend controls; whole old admission is retained as a test oracle.
 use super::*;
 use serde_json::{Value as Json, json};
 
@@ -66,7 +66,7 @@ fn old_first(c: &Contract, label: &str) {
         })
         .collect::<Vec<_>>();
     assert_eq!(rows.len(), 1);
-    assert_eq!(rows[0]["body_owner"], "selector.membership-optional");
+    assert_eq!(rows[0]["body_owner"], "algebra.membership");
     if let Some(destination) = std::env::var_os("COMPACT_PUBLIC_PRODUCT_PROBE_OUTPUT") {
         let base = std::path::PathBuf::from(destination);
         std::fs::create_dir_all(&base).unwrap();

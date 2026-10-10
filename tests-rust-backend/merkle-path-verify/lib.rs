@@ -302,17 +302,18 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, path) = frame.try_witness_metered(|context, meter| {
-                witnesses.leaf_path(context.witness_context_with(super::LedgerView {
-                    state: context.query.state.get_ref(),
-                    meter,
-                }))
-            })?;
-            let root: crate::types::MerkleTreeDigest =
-                crate::pure_circuits::merkleTreePathRoot(path)?;
-            let (frame, observed): (_, bool) =
-                crate::ledger_slots::t.record_check_root(frame, root)?;
-            Ok(frame.finish(observed))
+            let (frame, __compact_effect_0): (_, crate::types::MerkleTreePath) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.leaf_path(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            let __compact_effect_1: crate::types::MerkleTreeDigest =
+                crate::pure_circuits::merkleTreePathRoot((__compact_effect_0).clone())?;
+            let (frame, __compact_effect_2): (_, bool) =
+                crate::ledger_slots::t.record_check_root(frame, (__compact_effect_1).clone())?;
+            Ok(frame.finish(__compact_effect_2))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

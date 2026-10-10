@@ -66,6 +66,10 @@ mod voting_migration_tests;
 #[path = "profile_selection/zswap_migration_tests.rs"]
 mod zswap_migration_tests;
 
+#[cfg(test)]
+#[path = "profile_selection/membership_migration_tests.rs"]
+mod membership_migration_tests;
+
 /// An admitted step sequence and the evidence retained from declined profiles.
 /// Legacy organizers have no typed result; absence of steps permits legacy
 /// action lowering. The caller owns whether a retained gap can refine a failure.
@@ -74,6 +78,45 @@ pub(super) struct ProfileSelection {
     pub(super) typed_result: Option<syn::Expr>,
     pub(super) shielded_send_rejection: Option<RecordingGap>,
     pub(super) composition_rejection: Option<CompositionRejection>,
+}
+
+/// Membership interfaces enter at the old first typed priority, including helpers.
+/// Independent effect composition replaces whole-body and operation-count admission.
+fn checked_membership_domain(
+    circuit: &StatefulCircuit,
+    ledger: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+) -> Result<Option<TypedPlan>, RenderError> {
+    use crate::ir::{StateReturn, Type};
+    let uint64 = Type::Unsigned {
+        max: u64::MAX.to_string(),
+    };
+    let parameters = circuit.parameters.as_slice();
+    let counter_parameters = parameters
+        .iter()
+        .all(|p| p.ty == Type::Boolean || p.ty == uint64);
+    let eligible = match &circuit.result {
+        Type::Unit => {
+            counter_parameters
+                || matches!(parameters, [p] if matches!(p.ty, Type::Enum { .. } | Type::OpaqueString))
+                || matches!(parameters, [a, b] if matches!(a.ty, Type::Struct { .. }) && matches!(b.ty, Type::Struct { .. }))
+        }
+        Type::Boolean => counter_parameters,
+        Type::OpaqueString => parameters.is_empty(),
+        Type::Field => matches!(parameters, [p] if p.ty == Type::Field),
+        result if result == &uint64 => parameters.iter().all(|p| p.ty == Type::Boolean),
+        _ => false,
+    };
+    let supported_return = matches!(circuit.return_value, StateReturn::Expression { .. })
+        || (circuit.result == Type::Unit && circuit.return_value == StateReturn::Unit);
+    if !eligible || !supported_return {
+        return Ok(None);
+    }
+    resolve_checked_plan(effect_plan::lower_with_calls(
+        circuit, ledger, witnesses, pure, circuits,
+    ))
 }
 
 /// Roll out the declared point result domain at its existing selector priority.
@@ -362,8 +405,8 @@ pub(super) fn select(
     };
     let typed_prefix = if organizer_steps.is_none() {
         match record_option!(
-            "selector.membership-optional",
-            typed_plan::lower(circuit, ledger_fields, witnesses, pure_circuits, circuits)
+            "algebra.membership",
+            checked_membership_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?
         ) {
             Some(plan) => Some(plan),
             None => record_option!(

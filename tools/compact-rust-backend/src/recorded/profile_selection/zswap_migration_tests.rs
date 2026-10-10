@@ -71,10 +71,13 @@ fn attempts(row: &serde_json::Value) -> Vec<&str> {
 }
 
 #[test]
-fn intent_only_expansion_has_actual_public_zswap_owner() {
+fn intent_only_expansion_uses_first_eligible_algebra_owner() {
     let c = source();
     let maps = Context::new(&c);
-    for name in ["produce", "consume"] {
+    for (name, owner) in [
+        ("produce", "algebra.membership"),
+        ("consume", "algebra.zswap"),
+    ] {
         let r = root(&c, name);
         assert!(
             crate::recorded::zswap_plan::lower(r, &maps.ledger, &maps.circuits, &maps.witnesses)
@@ -82,12 +85,15 @@ fn intent_only_expansion_has_actual_public_zswap_owner() {
         );
         assert!(maps.domain(r).unwrap().is_some());
         let (_, selector_row) = maps.selected(r);
-        assert_eq!(selector_row["body_owner"], "algebra.zswap");
-        assert_eq!(attempts(&selector_row).last(), Some(&"algebra.zswap"));
+        assert_eq!(selector_row["body_owner"], owner);
+        assert_eq!(attempts(&selector_row).last(), Some(&owner));
     }
     let (output, rows) = trace::capture_json(|| crate::render_with_capabilities(&c));
     let output = output.unwrap();
-    for name in ["produce", "consume"] {
+    for (name, owner) in [
+        ("produce", "algebra.membership"),
+        ("consume", "algebra.zswap"),
+    ] {
         let capability = output
             .capabilities
             .circuits
@@ -104,17 +110,11 @@ fn intent_only_expansion_has_actual_public_zswap_owner() {
             })
             .collect::<Vec<_>>();
         assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0]["body_owner"], "algebra.zswap");
+        assert_eq!(rows[0]["body_owner"], owner);
         // Full emission also evaluates capability guards after the selector.
         // Actual body ownership and once-only selection remain authoritative;
-        // the isolated selector trace above checks its last-priority position.
-        assert_eq!(
-            attempts(rows[0])
-                .iter()
-                .filter(|&&r| r == "algebra.zswap")
-                .count(),
-            1
-        );
+        // the isolated selector trace above checks the first eligible domain at its maintained priority.
+        assert_eq!(attempts(rows[0]).iter().filter(|&&r| r == owner).count(), 1);
         assert!(!attempts(rows[0]).contains(&"selector.zswap"));
     }
     // Admission/emission alone does not qualify a nonempty proof transcript.
@@ -192,7 +192,7 @@ fn earlier_winners_never_attempt_the_final_zswap_domain() {
         (
             include_str!("../../../tests/native-zswap-intents-schema20-ir.json"),
             "witness_order",
-            "algebra.kernel",
+            "algebra.membership",
         ),
     ] {
         let c: Contract = serde_json::from_str(text).unwrap();

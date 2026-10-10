@@ -15,6 +15,7 @@
 
 //! Witness-admitted membership, reveal, historic spend, and signature profiles.
 
+use super::lifecycle_recording::generated_body;
 use compact_rust_backend::ir::{
     Contract, CounterAmount, Expr, LedgerField, LedgerFieldKind, SCHEMA_VERSION, StateAction, Type,
 };
@@ -263,8 +264,17 @@ fn typed_membership_composes_certified_pure_guards_within_its_interface_domain()
         }],
         value: Box::new(helper.body.clone()),
     };
-    // The enum-parameter commit root is outside the ordinary Unit rollout.
-    assert!(!available(&effectful, "vote$commit"));
+    // The explicit membership interface admits this enum root; a typed pure
+    // assertion composes without matching the former commitment recipe.
+    assert!(available(&effectful, "vote$commit"));
+    let rendered = render_with_capabilities(&effectful).unwrap();
+    let helper = generated_body(&rendered.source, "pure_circuits", "ballot_repr");
+    assert!(helper.contains("AssertionFailed") && helper.contains("extra guard"));
+    let commit = generated_body(&rendered.source, "recorded", "vote_commit");
+    assert!(
+        commit.find("pure_circuits :: ballot_repr").unwrap()
+            < commit.find("record_insert").unwrap()
+    );
     // The zero-argument reveal root can compose a certified pure assertion.
     // Whole-callee typing and cycle checks still apply to the entire helper body.
     assert!(available(&effectful, "vote$reveal"));
@@ -440,7 +450,15 @@ fn typed_historic_spend_audits_path_helpers_and_slot_provenance() {
         }],
         value: Box::new(helper.body.clone()),
     };
-    assert!(!available(&effectful, "spend"));
+    assert!(available(&effectful, "spend"));
+    let rendered = render_with_capabilities(&effectful).unwrap();
+    let helper = generated_body(&rendered.source, "pure_circuits", "merkleTreePathEntryRoot");
+    assert!(helper.contains("AssertionFailed") && helper.contains("extra guard"));
+    let spend = generated_body(&rendered.source, "recorded", "spend");
+    assert!(
+        spend.find("pure_circuits :: merkleTreePathRoot").unwrap()
+            < spend.find("record_check_root").unwrap()
+    );
     let mut wrong_slot = contract;
     wrong_slot
         .ledger_fields
@@ -470,8 +488,16 @@ fn typed_historic_spend_audits_path_helpers_and_slot_provenance() {
         }
     }
     replace(&mut json);
-    let unsupported: Contract = serde_json::from_value(json).unwrap();
-    assert!(!available(&unsupported, "spend"));
+    // Removal is a typed Set effect. The compiler must preserve this changed
+    // program, without claiming it still implements the original spend policy.
+    let removal: Contract = serde_json::from_value(json).unwrap();
+    assert!(available(&removal, "spend"));
+    let rendered = render_with_capabilities(&removal).unwrap();
+    let spend = generated_body(&rendered.source, "recorded", "spend");
+    assert!(spend.contains("ledger_slots :: nullifiers . record_remove"));
+    assert!(!spend.contains("ledger_slots :: nullifiers . record_insert"));
+    // The independent Merkle insertion remains part of this changed program.
+    assert!(spend.contains("ledger_slots :: commitments . record_insert"));
 }
 
 #[test]

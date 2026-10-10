@@ -63,11 +63,13 @@ fn edit_kind(v: &mut Value, kind: &str, edit: &mut impl FnMut(&mut Value)) {
     }
 }
 #[test]
-fn string_set_and_unit_guard_composition_preserve_old_controls() {
+fn string_set_and_unit_guard_composition_includes_removal() {
     for name in ["insert_control", "member_control", "mutate"] {
         assert!(recorded(fixture("set"), name), "{name}");
     }
-    assert!(!recorded(fixture("set"), "remove_control")); // No new global standalone profile.
+    // Membership interface admission now composes removal as a typed effect.
+    // The alias-set fixture checks native, recorded and observed state behavior.
+    assert!(recorded(fixture("set"), "remove_control"));
     assert!(recorded(fixture("guard"), "run"));
     assert!(recorded(fixture("digest"), "run"));
 }

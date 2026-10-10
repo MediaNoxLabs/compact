@@ -425,29 +425,30 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_key_0 = (__compact_param_0).clone();
-            let (frame, __compact_recorded_member_1): (_, bool) =
-                crate::ledger_slots::eligible_participants
-                    .record_member(frame, __compact_recorded_key_0)?;
-            if !(__compact_recorded_member_1) {
+            let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
+            let (frame, __compact_effect_1): (_, bool) = crate::ledger_slots::eligible_participants
+                .record_member(frame, (__compact_effect_0).clone())?;
+            if !__compact_effect_1 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Not eligible participant".to_owned(),
                 ));
             }
+            let __compact_effect_2: () = ();
             let frame = crate::ledger_slots::checked_in_participants
-                .record_insert(frame, (__compact_param_0).clone())?;
-            let __compact_recorded_witness_arg_2: runtime::OpaqueString =
-                (__compact_param_0).clone();
-            let (frame, _) = frame.try_witness_metered(|context, meter| {
-                witnesses.set_local_id(
-                    context.witness_context_with(super::LedgerView {
-                        state: context.query.state.get_ref(),
-                        meter,
-                    }),
-                    __compact_recorded_witness_arg_2,
-                )
-            })?;
-            Ok(frame.finish(()))
+                .record_insert(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_3: () = ();
+            let (frame, __compact_effect_4): (_, ()) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.set_local_id(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        (__compact_effect_0).clone(),
+                    )
+                })?;
+            let __compact_effect_5: () = ();
+            Ok(frame.finish(__compact_effect_5))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
@@ -480,6 +481,7 @@ pub mod ledger_contract {
             where
                 W: super::TryWitnesses<Private>,
             {
+                runtime::ledger::CellValue::validate_cell_value(&participant)?;
                 let input = runtime::fab::AlignedValue::from((participant).clone());
                 let recorded =
                     self.add_participant(observed.circuit_context(private_state), participant)?;
@@ -546,6 +548,7 @@ pub mod ledger_contract {
             where
                 W: super::TryWitnesses<Private>,
             {
+                runtime::ledger::CellValue::validate_cell_value(&participant)?;
                 let input = runtime::fab::AlignedValue::from((participant).clone());
                 let recorded =
                     self.check_in(observed.circuit_context(private_state), participant)?;

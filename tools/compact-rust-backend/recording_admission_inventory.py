@@ -28,6 +28,7 @@ Voting retirement requires --voting-transition after #540 and authenticates its 
 Phase-reset retirement requires --phase-reset-transition after #547; the kernel owner already exists.
 Immediate-send retirement requires --immediate-send-transition after #549, reusing the composite owner.
 Zswap retirement requires --zswap-transition after #550 and preserves the final selector priority.
+Membership retirement requires --membership-transition after #553; the shared typed renderer stays live.
 Kernel retirement requires --kernel-transition after #526; its unchanged planner
 is compiled only for tests and cannot be a production selector dependency.
 Human review must classify new/changed routes before a future baseline update.
@@ -54,6 +55,7 @@ import recording_admission_inventory_voting as voting
 import recording_admission_inventory_phase_reset as phase_reset
 import recording_admission_inventory_immediate as immediate
 import recording_admission_inventory_zswap as zswap
+import recording_admission_inventory_membership as membership
 
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE = Path(__file__).with_suffix('.baseline.json')
@@ -248,7 +250,8 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
            voting_transition: dict | None = None,
            phase_reset_transition: dict | None = None,
            immediate_send_transition: dict | None = None,
-           zswap_transition: dict | None = None) -> dict:
+           zswap_transition: dict | None = None,
+           membership_transition: dict | None = None) -> dict:
     errors = validate_baseline(baseline)
     report = {'schema_version': 1, 'baseline_commit': baseline.get('baseline_commit'),
               'claim': 'source route inventory; not language or behavioral coverage',
@@ -341,6 +344,19 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
                          'reviewed_source_fingerprints': {
                              **evolution['reviewed_source_fingerprints'],
                              **reviewed_receive['reviewed_source_fingerprints']}}
+    reviewed_membership = None
+    membership_snapshot = None
+    if membership_transition is not None:
+        membership_errors = membership.validate(baseline, membership_transition, baseline_bytes,
+                                                 zswap_transition)
+        if not membership_errors:
+            try:
+                membership_snapshot = membership.predecessor_sources(root, membership_transition)
+            except (OSError, UnicodeError, ValueError) as error:
+                membership_errors.append('membership retirement: predecessor reconstruction failed: ' + str(error))
+        errors.extend(membership_errors)
+        if not membership_errors:
+            reviewed_membership = membership_transition
     reviewed_zswap = None
     zswap_snapshot = None
     if zswap_transition is not None:
@@ -349,7 +365,12 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
                                      voting_transition, unit_domain_extension)
         if not zswap_errors:
             try:
-                zswap_snapshot = zswap.predecessor_sources(root, zswap_transition)
+                if membership_snapshot is not None:
+                    zswap_sources = {owner: (root / owner).read_text() for owner in zswap.REVIEWED_OWNERS}
+                    zswap_snapshot = zswap.predecessor_source_snapshot(
+                        {**zswap_sources, **membership_snapshot}, zswap_transition)
+                else:
+                    zswap_snapshot = zswap.predecessor_sources(root, zswap_transition)
             except (OSError, UnicodeError, ValueError) as error:
                 zswap_errors.append('Zswap retirement: predecessor reconstruction failed: ' + str(error))
         errors.extend(zswap_errors)
@@ -364,6 +385,8 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
             try:
                 if zswap_snapshot is not None:
                     immediate_sources = {owner: (root / owner).read_text() for owner in immediate.REVIEWED_OWNERS}
+                    if membership_snapshot is not None:
+                        immediate_sources.update(membership_snapshot)
                     immediate_sources[SELECTOR] = zswap_snapshot[SELECTOR]
                     immediate_snapshot = immediate.predecessor_source_snapshot(immediate_sources, immediate_send_transition)
                 else:
@@ -428,6 +451,8 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
         reviewed_immediate = None
     if reviewed_immediate is None:
         reviewed_zswap = None
+    if reviewed_zswap is None:
+        reviewed_membership = None
     if reviewed_voting is not None:
         evolution = {**evolution, **reviewed_voting,
                      'reviewed_source_fingerprints': {
@@ -448,6 +473,11 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
                      'reviewed_source_fingerprints': {
                          **evolution['reviewed_source_fingerprints'],
                          **reviewed_zswap['reviewed_source_fingerprints']}}
+    if reviewed_membership is not None:
+        evolution = {**evolution, **reviewed_membership,
+                     'reviewed_source_fingerprints': {
+                         **evolution['reviewed_source_fingerprints'],
+                         **reviewed_membership['reviewed_source_fingerprints']}}
     if instrumentation is not None:
         errors.extend(validate_instrumentation(root, baseline, instrumentation, baseline_bytes, evolution))
         report['reviewed_instrumentation'] = {
@@ -474,7 +504,7 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
         failures = []
         for anchor in row['anchors']:
             actual = sources.get(anchor['source'], '').count(anchor['text'])
-            retired = (transition is not None and row['id'] == RETIRED_EFFECTFUL) or (reviewed_jubjub is not None and row['id'] == jubjub.ROUTE) or (reviewed_terminal is not None and row['id'] == terminal.ROUTE) or (reviewed_unit is not None and row['id'] == unit.ROUTE) or (reviewed_context is not None and row['id'] == context.ROUTE) or (reviewed_kernel is not None and row['id'] == kernel.ROUTE) or (reviewed_composite is not None and row['id'] == composite.ROUTE) or (reviewed_receive is not None and row['id'] == receive.ROUTE) or (reviewed_voting is not None and row['id'] == voting.ROUTE) or (reviewed_phase_reset is not None and row['id'] == phase_reset.ROUTE) or (reviewed_immediate is not None and row['id'] == immediate.ROUTE) or (reviewed_zswap is not None and row['id'] == zswap.ROUTE)
+            retired = (transition is not None and row['id'] == RETIRED_EFFECTFUL) or (reviewed_jubjub is not None and row['id'] == jubjub.ROUTE) or (reviewed_terminal is not None and row['id'] == terminal.ROUTE) or (reviewed_unit is not None and row['id'] == unit.ROUTE) or (reviewed_context is not None and row['id'] == context.ROUTE) or (reviewed_kernel is not None and row['id'] == kernel.ROUTE) or (reviewed_composite is not None and row['id'] == composite.ROUTE) or (reviewed_receive is not None and row['id'] == receive.ROUTE) or (reviewed_voting is not None and row['id'] == voting.ROUTE) or (reviewed_phase_reset is not None and row['id'] == phase_reset.ROUTE) or (reviewed_immediate is not None and row['id'] == immediate.ROUTE) or (reviewed_zswap is not None and row['id'] == zswap.ROUTE) or (reviewed_membership is not None and row['id'] == membership.ROUTE)
             expected = 0 if retired else anchor['baseline_occurrences']
             if actual != expected:
                 failures.append({'source': anchor['source'], 'anchor': anchor['text'],
@@ -597,7 +627,7 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
             sources[immediate.ATTEMPT] = (root / immediate.ATTEMPT).read_text()
         except (OSError, UnicodeError) as error:
             errors.append('immediate retirement: unreadable attempt owner: ' + str(error))
-        immediate_sources = ({**sources, SELECTOR: zswap_snapshot[SELECTOR]}
+        immediate_sources = ({**sources, **(membership_snapshot or {}), SELECTOR: zswap_snapshot[SELECTOR]}
                              if zswap_snapshot is not None else sources)
         retirement_errors = immediate.check_sources(root, immediate_sources, reviewed_immediate)
         errors.extend(retirement_errors)
@@ -609,7 +639,7 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
             'evidence': reviewed_immediate,
         })
     if reviewed_zswap is not None:
-        retirement_errors = zswap.check_sources(root, sources, reviewed_zswap)
+        retirement_errors = zswap.check_sources(root, {**sources, **(membership_snapshot or {})}, reviewed_zswap)
         errors.extend(retirement_errors)
         report['retired_routes'].append({
             'id': zswap.ROUTE,
@@ -617,6 +647,21 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
             'passed': not retirement_errors and not next(
                 row['failures'] for row in report['route_checks'] if row['id'] == zswap.ROUTE),
             'evidence': reviewed_zswap,
+        })
+    if reviewed_membership is not None:
+        # The earlier routing test module is itself an authenticated adapted owner.
+        try:
+            sources[membership.ZSWAP_TEST] = (root / membership.ZSWAP_TEST).read_text()
+        except (OSError, UnicodeError) as error:
+            errors.append('membership retirement: unreadable adapted routing tests: ' + str(error))
+        retirement_errors = membership.check_sources(root, sources, reviewed_membership)
+        errors.extend(retirement_errors)
+        report['retired_routes'].append({
+            'id': membership.ROUTE,
+            'status': 'retired-from-production-test-oracle-retained',
+            'passed': not retirement_errors and not next(
+                row['failures'] for row in report['route_checks'] if row['id'] == membership.ROUTE),
+            'evidence': reviewed_membership,
         })
     if SELECTOR in sources:
         try:
@@ -652,6 +697,7 @@ def main(argv=None) -> int:
     parser.add_argument('--phase-reset-transition', type=Path, help='explicit #549 retirement into existing kernel domain after #547')
     parser.add_argument('--immediate-send-transition', type=Path, help='explicit #550 retirement into existing composite domain after #549')
     parser.add_argument('--zswap-transition', type=Path, help='explicit #553 final-priority Zswap retirement after #550')
+    parser.add_argument('--membership-transition', type=Path, help='explicit #560 first-priority membership retirement after #553')
     args = parser.parse_args(argv)
     protected = [args.baseline] + ([args.transition] if args.transition else []) + ([args.instrumentation] if args.instrumentation else []) + ([args.jubjub_transition] if args.jubjub_transition else []) + ([args.call_extension] if args.call_extension else []) + ([args.terminal_transition] if args.terminal_transition else []) + ([args.unit_actions_transition] if args.unit_actions_transition else []) + ([args.context_query_transition] if args.context_query_transition else []) + ([args.kernel_transition] if args.kernel_transition else []) + ([args.composite_transition] if args.composite_transition else []) + ([args.receive_transition] if args.receive_transition else [])
     protected += [args.unit_domain_extension] if args.unit_domain_extension else []
@@ -659,6 +705,7 @@ def main(argv=None) -> int:
     protected += [args.phase_reset_transition] if args.phase_reset_transition else []
     protected += [args.immediate_send_transition] if args.immediate_send_transition else []
     protected += [args.zswap_transition] if args.zswap_transition else []
+    protected += [args.membership_transition] if args.membership_transition else []
     if args.output and any(args.output.resolve() == path.resolve() for path in protected):
         parser.error('--output cannot overwrite baseline, transition, instrumentation, or call-extension evidence')
     try:
@@ -679,7 +726,8 @@ def main(argv=None) -> int:
         phase_reset_transition = json.loads(args.phase_reset_transition.read_text()) if args.phase_reset_transition else None
         immediate_send_transition = json.loads(args.immediate_send_transition.read_text()) if args.immediate_send_transition else None
         zswap_transition = json.loads(args.zswap_transition.read_text()) if args.zswap_transition else None
-        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension, voting_transition, phase_reset_transition, immediate_send_transition, zswap_transition)
+        membership_transition = json.loads(args.membership_transition.read_text()) if args.membership_transition else None
+        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension, voting_transition, phase_reset_transition, immediate_send_transition, zswap_transition, membership_transition)
     except (OSError, ValueError, TypeError, KeyError) as error:
         parser.exit(2, f'inventory error: {error}\n')
     rendered = json.dumps(report, indent=2) + '\n'

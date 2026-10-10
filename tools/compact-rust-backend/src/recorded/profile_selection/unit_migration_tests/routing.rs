@@ -55,14 +55,14 @@ fn actual_unit_owner_runs_once_without_old_shape_or_later_profiles() {
 }
 
 #[test]
-fn earlier_terminal_owner_keeps_its_priority() {
+fn earlier_field_interface_owner_keeps_its_priority() {
     let mut contract = subject();
     contract.stateful_circuits[0].result = Type::Field;
     contract.stateful_circuits[0].return_value = StateReturn::Expression {
         value: parameter("seed"),
     };
     let (_, row) = selected_trace(&contract);
-    assert_eq!(row["body_owner"], "algebra.terminal-returns");
+    assert_eq!(row["body_owner"], "algebra.membership");
     assert!(!attempts(&row).contains(&"algebra.unit-actions"));
 }
 

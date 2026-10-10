@@ -410,10 +410,10 @@ fn fresh_frontend_nested_path_and_public_body_owners_are_current_algebra() {
     }
     let (output, rows) = trace::capture_json(|| crate::render_with_capabilities(&c));
     let output = output.unwrap();
-    // The existing zero-parameter Unit interface reaches kernel admission first;
-    // that route composes checked effects without requiring a kernel-shaped body.
+    // The zero-parameter Unit interface reaches membership composition first;
+    // that route composes checked effects without requiring a membership-shaped body.
     for (name, owner) in [
-        ("write_once", "algebra.kernel"),
+        ("write_once", "algebra.membership"),
         ("write_read", "algebra.composite-values"),
     ] {
         let capability = output

@@ -87,11 +87,7 @@ fn welcome_organizer_composes_typed_helpers_and_preserves_authorization_order() 
     assert_eq!(
         statuses(&contract),
         vec![
-            (
-                "add_participant".to_owned(),
-                false,
-                Some("actions[0]".to_owned())
-            ),
+            ("add_participant".to_owned(), true, None),
             ("add_organizer".to_owned(), true, None),
             ("check_in".to_owned(), true, None),
         ]
@@ -100,15 +96,17 @@ fn welcome_organizer_composes_typed_helpers_and_preserves_authorization_order() 
     // The identity helper is a valid typed pure function. Admission does not
     // enforce the former hash recipe; the source authorization still executes.
     let rendered = render_with_capabilities(&contract).unwrap();
-    let body = generated_body(&rendered.source, "recorded", "add_organizer");
-    let witness = body.find("try_witness_metered").unwrap();
-    let derive = body.find("pure_circuits :: public_key").unwrap();
-    let member = body.find("record_member").unwrap();
-    let authorization = body.find("Not an organizer").unwrap();
-    let insert = body.find("record_insert").unwrap();
-    assert!(
-        witness < derive && derive < member && member < authorization && authorization < insert
-    );
+    for name in ["add_participant", "add_organizer"] {
+        let body = generated_body(&rendered.source, "recorded", name);
+        let witness = body.find("try_witness_metered").unwrap();
+        let derive = body.find("pure_circuits :: public_key").unwrap();
+        let member = body.find("record_member").unwrap();
+        let authorization = body.find("Not an organizer").unwrap();
+        let insert = body.find("record_insert").unwrap();
+        assert!(
+            witness < derive && derive < member && member < authorization && authorization < insert
+        );
+    }
 
     let hash = contract
         .circuits
@@ -145,20 +143,18 @@ fn welcome_organizer_composes_typed_helpers_and_preserves_authorization_order() 
     assert_eq!(
         statuses(&contract),
         vec![
-            (
-                "add_participant".to_owned(),
-                false,
-                Some("actions[0]".to_owned())
-            ),
+            ("add_participant".to_owned(), true, None),
             ("add_organizer".to_owned(), true, None),
             ("check_in".to_owned(), true, None),
         ]
     );
     let rendered = render_with_capabilities(&contract).unwrap();
-    let body = generated_body(&rendered.source, "recorded", "add_organizer");
-    assert!(body.find("No secret key found").unwrap() < body.find("extra assertion").unwrap());
-    assert!(body.find("extra assertion").unwrap() < body.find("record_member").unwrap());
-    assert!(body.find("Not an organizer").unwrap() < body.find("record_insert").unwrap());
+    for name in ["add_participant", "add_organizer"] {
+        let body = generated_body(&rendered.source, "recorded", name);
+        assert!(body.find("No secret key found").unwrap() < body.find("extra assertion").unwrap());
+        assert!(body.find("extra assertion").unwrap() < body.find("record_member").unwrap());
+        assert!(body.find("Not an organizer").unwrap() < body.find("record_insert").unwrap());
+    }
 
     // Composition does not relax declaration identity or native error checks.
     let organizer = contract
@@ -174,7 +170,7 @@ fn welcome_organizer_composes_typed_helpers_and_preserves_authorization_order() 
 }
 
 #[test]
-fn authorized_optional_cell_write_is_structural_and_fails_closed() {
+fn authorized_optional_cell_write_composes_typed_hashes_and_preserves_source_order() {
     let source = include_str!("../election-schema13-ir.json");
     let mut contract: Contract = serde_json::from_str(source).unwrap();
     contract.schema_version = SCHEMA_VERSION;
@@ -213,8 +209,8 @@ fn authorized_optional_cell_write_is_structural_and_fails_closed() {
             .unwrap()
             .recorded
     );
-    let mut wrong_hash = contract.clone();
-    let hash = wrong_hash
+    let mut alternate_hash = contract.clone();
+    let hash = alternate_hash
         .circuits
         .iter_mut()
         .find(|circuit| circuit.name == "public_key")
@@ -226,7 +222,18 @@ fn authorized_optional_cell_write_is_structural_and_fails_closed() {
         unreachable!()
     };
     elements[1] = Expr::BytesLiteral { bytes: vec![0; 32] };
-    assert!(!available(&wrong_hash));
+    // An alternative well-typed hash preimage changes authorization semantics,
+    // not whether the compiler can record the source program.
+    assert!(available(&alternate_hash));
+    let rendered = render_with_capabilities(&alternate_hash).unwrap();
+    let topic = generated_body(&rendered.source, "recorded", "set_topic");
+    assert!(
+        topic.find("pure_circuits :: public_key").unwrap()
+            < topic.find("authority . record_read").unwrap()
+    );
+    assert!(
+        topic.find("without authorization").unwrap() < topic.find("topic . record_write").unwrap()
+    );
     let actions = |contract: &mut Contract| {
         let circuit = contract
             .stateful_circuits
@@ -246,7 +253,18 @@ fn authorized_optional_cell_write_is_structural_and_fails_closed() {
     };
     let mut reordered = contract.clone();
     actions(&mut reordered);
-    assert!(!available(&reordered));
+    assert!(available(&reordered));
+    let rendered = render_with_capabilities(&reordered).unwrap();
+    let topic = generated_body(&rendered.source, "recorded", "set_topic");
+    assert!(
+        topic.find("state . record_read").unwrap() < topic.find("authority . record_read").unwrap()
+    );
+    assert!(
+        topic.find("after setup phase").unwrap() < topic.find("without authorization").unwrap()
+    );
+    assert!(
+        topic.find("without authorization").unwrap() < topic.find("topic . record_write").unwrap()
+    );
     let mut wrong_index = contract;
     let field = wrong_index
         .ledger_fields
@@ -414,7 +432,16 @@ fn typed_cell_lifecycle_retains_only_final_root_scope_and_audits_helpers() {
         }],
         value: Box::new(helper.body.clone()),
     };
-    assert_eq!(available(&effectful), [false, false]);
+    assert_eq!(available(&effectful), [true, true]);
+    let rendered = render_with_capabilities(&effectful).unwrap();
+    let helper = generated_body(&rendered.source, "pure_circuits", "public_key");
+    assert!(helper.contains("AssertionFailed") && helper.contains("extra effect"));
+    for name in ["post", "take_down"] {
+        assert!(
+            generated_body(&rendered.source, "recorded", name)
+                .contains("pure_circuits :: public_key")
+        );
+    }
     let mut nested = contract.clone();
     let action = nested.stateful_circuits[1].actions.pop().unwrap();
     nested.stateful_circuits[1]

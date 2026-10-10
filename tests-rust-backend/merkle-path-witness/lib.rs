@@ -371,6 +371,36 @@ pub mod ledger_contract {
                 })?;
             Ok(frame.finish((__compact_effect_0).clone()))
         }
+        pub fn check_witness_merkle<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_effect_0): (_, bool) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.merkle_checks(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            Ok(frame.finish(__compact_effect_0))
+        }
+        pub fn check_witness_history<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_effect_0): (_, bool) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.historic_checks(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            Ok(frame.finish(__compact_effect_0))
+        }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
         impl Contract {
@@ -544,6 +574,74 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "get_historic_path",
+                    input,
+                ))
+            }
+            pub fn check_witness_merkle<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, bool>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                check_witness_merkle(context, self.witnesses)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn check_witness_merkle_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, bool>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded =
+                    self.check_witness_merkle(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "check_witness_merkle",
+                    input,
+                ))
+            }
+            pub fn check_witness_history<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, bool>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                check_witness_history(context, self.witnesses)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn check_witness_history_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, bool>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded =
+                    self.check_witness_history(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "check_witness_history",
                     input,
                 ))
             }

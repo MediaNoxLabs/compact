@@ -117,9 +117,12 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
             let frame =
-                crate::ledger_slots::names.record_insert(frame, (__compact_param_0).clone())?;
-            Ok(frame.finish(()))
+                crate::ledger_slots::names.record_insert(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn hasName<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -153,6 +156,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
+                runtime::ledger::CellValue::validate_cell_value(&name)?;
                 let input = runtime::fab::AlignedValue::from((name).clone());
                 let recorded = self.addName(observed.circuit_context(private_state), name)?;
                 Ok(runtime::transaction::RecordedCall::new(
@@ -179,6 +183,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, bool>,
                 runtime::CompactError,
             > {
+                runtime::ledger::CellValue::validate_cell_value(&name)?;
                 let input = runtime::fab::AlignedValue::from((name).clone());
                 let recorded = self.hasName(observed.circuit_context(private_state), name)?;
                 Ok(runtime::transaction::RecordedCall::new(

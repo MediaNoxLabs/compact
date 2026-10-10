@@ -555,6 +555,81 @@ pub mod ledger_contract {
                 crate::ledger_slots::choices.record_head::<crate::types::Maybe, _, _>(frame)?;
             Ok(frame.finish(observed))
         }
+        pub fn read_flags<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_effect_0): (_, bool) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.inspect_flags(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            Ok(frame.finish(__compact_effect_0))
+        }
+        pub fn read_counts<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_effect_0): (_, bool) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.inspect_counts(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            Ok(frame.finish(__compact_effect_0))
+        }
+        pub fn read_tags<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_effect_0): (_, bool) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.inspect_tags(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            Ok(frame.finish(__compact_effect_0))
+        }
+        pub fn read_choices<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_effect_0): (_, bool) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.inspect_choices(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            Ok(frame.finish(__compact_effect_0))
+        }
+        pub fn read_packets<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_effect_0): (_, bool) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.inspect_packets(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            Ok(frame.finish(__compact_effect_0))
+        }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
         impl Contract {
@@ -745,6 +820,363 @@ pub mod ledger_contract {
                 ))
             }
         }
+        /// A recording handle with access to the contract's witnesses.
+        pub struct BorrowedContract<'a, W> {
+            pub(super) witnesses: &'a W,
+        }
+        impl<W> BorrowedContract<'_, W> {
+            pub fn push_flag<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                value: bool,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                push_flag(context, value)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn push_flag_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                value: bool,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(value);
+                let recorded = self.push_flag(observed.circuit_context(private_state), value)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "push_flag",
+                    input,
+                ))
+            }
+            pub fn push_count<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                value: runtime::BoundedUint<65535>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                push_count(context, value)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn push_count_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                value: runtime::BoundedUint<65535>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(value);
+                let recorded = self.push_count(observed.circuit_context(private_state), value)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "push_count",
+                    input,
+                ))
+            }
+            pub fn push_tag<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                value: runtime::FixedBytes<3>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                push_tag(context, value)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn push_tag_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                value: runtime::FixedBytes<3>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(value);
+                let recorded = self.push_tag(observed.circuit_context(private_state), value)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "push_tag", input,
+                ))
+            }
+            pub fn push_choice<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                value: crate::types::Choice,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                push_choice(context, value)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn push_choice_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                value: crate::types::Choice,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(value);
+                let recorded = self.push_choice(observed.circuit_context(private_state), value)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "push_choice",
+                    input,
+                ))
+            }
+            pub fn push_packet<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                value: crate::types::Packet,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                push_packet(context, value)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn push_packet_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                value: crate::types::Packet,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from((value).clone());
+                let recorded = self.push_packet(observed.circuit_context(private_state), value)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "push_packet",
+                    input,
+                ))
+            }
+            pub fn first_packet<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, crate::types::MaybeCompact1>,
+                runtime::CompactError,
+            > {
+                first_packet(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn first_packet_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, crate::types::MaybeCompact1>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.first_packet(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "first_packet",
+                    input,
+                ))
+            }
+            pub fn first_choice<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, crate::types::Maybe>,
+                runtime::CompactError,
+            > {
+                first_choice(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn first_choice_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, crate::types::Maybe>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.first_choice(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "first_choice",
+                    input,
+                ))
+            }
+            pub fn read_flags<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, bool>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                read_flags(context, self.witnesses)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn read_flags_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, bool>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.read_flags(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "read_flags",
+                    input,
+                ))
+            }
+            pub fn read_counts<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, bool>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                read_counts(context, self.witnesses)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn read_counts_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, bool>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.read_counts(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "read_counts",
+                    input,
+                ))
+            }
+            pub fn read_tags<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, bool>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                read_tags(context, self.witnesses)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn read_tags_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, bool>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.read_tags(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "read_tags",
+                    input,
+                ))
+            }
+            pub fn read_choices<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, bool>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                read_choices(context, self.witnesses)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn read_choices_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, bool>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.read_choices(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "read_choices",
+                    input,
+                ))
+            }
+            pub fn read_packets<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, bool>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                read_packets(context, self.witnesses)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn read_packets_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, bool>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.read_packets(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "read_packets",
+                    input,
+                ))
+            }
+        }
     }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
@@ -867,9 +1299,11 @@ pub mod ledger_contract {
         {
             crate::ledger_contract::read_packets(context, &self.witnesses)
         }
-        /// Access replayable circuit calls for this contract.
-        pub fn recording(&self) -> &recorded::Contract {
-            &self.recording
+        /// Borrow the contract's witnesses for a replayable circuit call.
+        pub fn recording(&self) -> recorded::BorrowedContract<'_, W> {
+            recorded::BorrowedContract {
+                witnesses: &self.witnesses,
+            }
         }
     }
 }

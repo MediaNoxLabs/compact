@@ -44,6 +44,12 @@ fn compact_coin(coin: runtime::ledger::CoinInfo) -> types::ShieldedCoinInfo {
     }
 }
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
+    // Bind the entire source fixture before any key reads or deployment setup.
+    // This checks input pairing; it does not authenticate key provenance.
+    counter_scenario::validate_ir(
+        &std::fs::read(root.join("contract/compact-rust-ir.json"))?,
+        compact_rust_test_center_micro_dao_fixture::RETAINED_IR,
+    )?;
     for (ballot, round) in [(true, 0), (false, u64::MAX)] {
         run_case(root, ballot, round)?;
     }

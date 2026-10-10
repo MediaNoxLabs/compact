@@ -37,7 +37,7 @@ fn actual_receive_owner_is_once_and_stops_later_profiles() {
         1
     );
     assert!(!a.contains(&"selector.shielded-receive"));
-    assert!(!a.contains(&"selector.voting-commit"));
+    assert!(!a.contains(&"algebra.voting-commit"));
 }
 #[test]
 fn earlier_organizer_and_composite_owner_prevent_receive_attempts() {
@@ -83,7 +83,7 @@ fn unsupported_body_continues_independent_suffix_and_invariant_stays_fatal() {
             .position(|&s| s == "algebra.shielded-receive")
             .unwrap()
             < a.iter()
-                .position(|&s| s == "selector.voting-commit")
+                .position(|&s| s == "algebra.voting-commit")
                 .unwrap()
     );
     assert!(!a.contains(&"selector.shielded-receive"));

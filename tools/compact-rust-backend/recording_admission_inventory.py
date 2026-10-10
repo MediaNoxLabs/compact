@@ -24,6 +24,7 @@ context predicates and VotingCommit evaluation remain active.
 Whole composite retirement requires --composite-transition after #527.
 Whole receive retirement requires --receive-transition after #529.
 Ordinary Unit return expansion requires --unit-domain-extension after #536; it retires no route.
+Voting retirement requires --voting-transition after #540 and authenticates its exact predecessor.
 Kernel retirement requires --kernel-transition after #526; its unchanged planner
 is compiled only for tests and cannot be a production selector dependency.
 Human review must classify new/changed routes before a future baseline update.
@@ -46,6 +47,7 @@ import recording_admission_inventory_kernel as kernel
 import recording_admission_inventory_composite as composite
 import recording_admission_inventory_receive as receive
 import recording_admission_inventory_unit_domain as unit_domain
+import recording_admission_inventory_voting as voting
 
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE = Path(__file__).with_suffix('.baseline.json')
@@ -236,7 +238,8 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
            kernel_transition: dict | None = None,
            composite_transition: dict | None = None,
            receive_transition: dict | None = None,
-           unit_domain_extension: dict | None = None) -> dict:
+           unit_domain_extension: dict | None = None,
+           voting_transition: dict | None = None) -> dict:
     errors = validate_baseline(baseline)
     report = {'schema_version': 1, 'baseline_commit': baseline.get('baseline_commit'),
               'claim': 'source route inventory; not language or behavioral coverage',
@@ -329,8 +332,24 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
                          'reviewed_source_fingerprints': {
                              **evolution['reviewed_source_fingerprints'],
                              **reviewed_receive['reviewed_source_fingerprints']}}
+    reviewed_voting = None
+    voting_snapshot = None
+    if voting_transition is not None:
+        voting_errors = voting.validate(baseline, voting_transition, baseline_bytes,
+                                        reviewed_receive, unit_domain_extension)
+        if not voting_errors:
+            try:
+                voting_snapshot = voting.predecessor_selector(
+                    (root / SELECTOR).read_text(), voting_transition)
+            except (OSError, UnicodeError, ValueError) as error:
+                voting_errors.append('voting retirement: predecessor reconstruction failed: ' + str(error))
+        errors.extend(voting_errors)
+        if not voting_errors:
+            reviewed_voting = voting_transition
     if unit_domain_extension is not None:
-        domain_errors = unit_domain.validate(root, unit_domain_extension, reviewed_receive)
+        domain_errors = (unit_domain.validate_source(voting_snapshot, unit_domain_extension, reviewed_receive)
+                         if voting_snapshot is not None else
+                         unit_domain.validate(root, unit_domain_extension, reviewed_receive))
         errors.extend(domain_errors)
         if not domain_errors:
             evolution = {**evolution, **unit_domain_extension,
@@ -341,6 +360,11 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
                 'issue': 540, 'new_retired_routes': [],
                 'claim': 'ordinary Unit return admission; unchanged selector and route inventory',
             }
+    if reviewed_voting is not None:
+        evolution = {**evolution, **reviewed_voting,
+                     'reviewed_source_fingerprints': {
+                         **evolution['reviewed_source_fingerprints'],
+                         **reviewed_voting['reviewed_source_fingerprints']}}
     if instrumentation is not None:
         errors.extend(validate_instrumentation(root, baseline, instrumentation, baseline_bytes, evolution))
         report['reviewed_instrumentation'] = {
@@ -367,7 +391,7 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
         failures = []
         for anchor in row['anchors']:
             actual = sources.get(anchor['source'], '').count(anchor['text'])
-            retired = (transition is not None and row['id'] == RETIRED_EFFECTFUL) or (reviewed_jubjub is not None and row['id'] == jubjub.ROUTE) or (reviewed_terminal is not None and row['id'] == terminal.ROUTE) or (reviewed_unit is not None and row['id'] == unit.ROUTE) or (reviewed_context is not None and row['id'] == context.ROUTE) or (reviewed_kernel is not None and row['id'] == kernel.ROUTE) or (reviewed_composite is not None and row['id'] == composite.ROUTE) or (reviewed_receive is not None and row['id'] == receive.ROUTE)
+            retired = (transition is not None and row['id'] == RETIRED_EFFECTFUL) or (reviewed_jubjub is not None and row['id'] == jubjub.ROUTE) or (reviewed_terminal is not None and row['id'] == terminal.ROUTE) or (reviewed_unit is not None and row['id'] == unit.ROUTE) or (reviewed_context is not None and row['id'] == context.ROUTE) or (reviewed_kernel is not None and row['id'] == kernel.ROUTE) or (reviewed_composite is not None and row['id'] == composite.ROUTE) or (reviewed_receive is not None and row['id'] == receive.ROUTE) or (reviewed_voting is not None and row['id'] == voting.ROUTE)
             expected = 0 if retired else anchor['baseline_occurrences']
             if actual != expected:
                 failures.append({'source': anchor['source'], 'anchor': anchor['text'],
@@ -460,6 +484,16 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
                 row['failures'] for row in report['route_checks'] if row['id'] == receive.ROUTE),
             'evidence': reviewed_receive,
         })
+    if reviewed_voting is not None:
+        retirement_errors = voting.check_sources(root, sources, reviewed_voting)
+        errors.extend(retirement_errors)
+        report['retired_routes'].append({
+            'id': voting.ROUTE,
+            'status': 'retired-from-production-test-oracle-retained',
+            'passed': not retirement_errors and not next(
+                row['failures'] for row in report['route_checks'] if row['id'] == voting.ROUTE),
+            'evidence': reviewed_voting,
+        })
     if SELECTOR in sources:
         try:
             actual = selector_signature(sources[SELECTOR])
@@ -490,9 +524,11 @@ def main(argv=None) -> int:
     parser.add_argument('--composite-transition', type=Path, help='explicit #529 whole composite retirement following #527 evidence')
     parser.add_argument('--receive-transition', type=Path, help='explicit #536 whole receive retirement following #529 evidence')
     parser.add_argument('--unit-domain-extension', type=Path, help='explicit #540 ordinary Unit return review; no retirement')
+    parser.add_argument('--voting-transition', type=Path, help='explicit #547 voting retirement following #540 evidence')
     args = parser.parse_args(argv)
     protected = [args.baseline] + ([args.transition] if args.transition else []) + ([args.instrumentation] if args.instrumentation else []) + ([args.jubjub_transition] if args.jubjub_transition else []) + ([args.call_extension] if args.call_extension else []) + ([args.terminal_transition] if args.terminal_transition else []) + ([args.unit_actions_transition] if args.unit_actions_transition else []) + ([args.context_query_transition] if args.context_query_transition else []) + ([args.kernel_transition] if args.kernel_transition else []) + ([args.composite_transition] if args.composite_transition else []) + ([args.receive_transition] if args.receive_transition else [])
     protected += [args.unit_domain_extension] if args.unit_domain_extension else []
+    protected += [args.voting_transition] if args.voting_transition else []
     if args.output and any(args.output.resolve() == path.resolve() for path in protected):
         parser.error('--output cannot overwrite baseline, transition, instrumentation, or call-extension evidence')
     try:
@@ -509,7 +545,8 @@ def main(argv=None) -> int:
         composite_transition = json.loads(args.composite_transition.read_text()) if args.composite_transition else None
         receive_transition = json.loads(args.receive_transition.read_text()) if args.receive_transition else None
         unit_domain_extension = json.loads(args.unit_domain_extension.read_text()) if args.unit_domain_extension else None
-        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension)
+        voting_transition = json.loads(args.voting_transition.read_text()) if args.voting_transition else None
+        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension, voting_transition)
     except (OSError, ValueError, TypeError, KeyError) as error:
         parser.exit(2, f'inventory error: {error}\n')
     rendered = json.dumps(report, indent=2) + '\n'

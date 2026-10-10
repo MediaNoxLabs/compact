@@ -20,6 +20,7 @@ import recording_admission_inventory_context as context
 import recording_admission_inventory_kernel as kernel
 import recording_admission_inventory_composite as composite
 import recording_admission_inventory_receive as receive
+import recording_admission_inventory_voting as voting
 
 JUBJUB_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-517.json")
 CALL_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.calls-519.json")
@@ -40,6 +41,7 @@ RECEIVE_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory
 
 
 UNIT_DOMAIN_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.unit-domain-540.json")
+VOTING_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-547.json")
 
 
 class InventoryTests(unittest.TestCase):
@@ -152,7 +154,8 @@ class InventoryTests(unittest.TestCase):
                                   kernel_transition=json.loads(KERNEL_TRANSITION.read_text()),
                                   composite_transition=json.loads(COMPOSITE_TRANSITION.read_text()),
                                   receive_transition=json.loads(RECEIVE_TRANSITION.read_text()),
-                                  unit_domain_extension=json.loads(UNIT_DOMAIN_EXTENSION.read_text()))
+                                  unit_domain_extension=json.loads(UNIT_DOMAIN_EXTENSION.read_text()),
+                                  voting_transition=json.loads(VOTING_TRANSITION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)
@@ -182,6 +185,14 @@ class RetirementTransitionTests(unittest.TestCase):
             destination = self.root / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_bytes((inventory.ROOT / relative).read_bytes())
+        # Keep every historical mutation suite on its original 8-family/12-call
+        # checkpoint. Reconstruction authenticates both complete source owners;
+        # neither Git availability nor refreshed hashes can rewrite the fixture.
+        voting_review = json.loads(VOTING_TRANSITION.read_text())
+        selector = self.root / voting.SELECTOR
+        selector.write_text(voting.predecessor_selector(selector.read_text(), voting_review))
+        typed = self.root / voting.TYPED
+        typed.write_text(voting.predecessor_typed(typed.read_text()))
 
     def report(self):
         return inventory.verify(self.root, self.baseline, transition=self.transition,

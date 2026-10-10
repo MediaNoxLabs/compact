@@ -59,6 +59,9 @@ mod terminal_migration_tests;
 #[cfg(test)]
 #[path = "profile_selection/unit_migration_tests.rs"]
 mod unit_migration_tests;
+#[cfg(test)]
+#[path = "profile_selection/voting_migration_tests.rs"]
+mod voting_migration_tests;
 
 /// An admitted step sequence and the evidence retained from declined profiles.
 /// Legacy organizers have no typed result; absence of steps permits legacy
@@ -232,6 +235,29 @@ fn checked_receive_domain(
     ))
 }
 
+/// Voting interfaces enter at the old voting priority, including internal helpers.
+/// Typed composition decides body support without operation or witness-count gates.
+fn checked_voting_domain(
+    circuit: &StatefulCircuit,
+    ledger: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+) -> Result<Option<TypedPlan>, RenderError> {
+    use crate::ir::{StateReturn, Type};
+    if circuit.result != Type::Unit
+        || circuit.return_value != StateReturn::Unit
+        || !matches!(circuit.parameters.as_slice(), [ballot, coin]
+            if ballot.ty == Type::Boolean
+                && coin.ty == crate::coin_shapes::shielded_coin_type())
+    {
+        return Ok(None);
+    }
+    resolve_checked_plan(effect_plan::lower_with_calls(
+        circuit, ledger, witnesses, pure, circuits,
+    ))
+}
+
 fn resolve_checked_plan(
     result: Result<TypedPlan, effect_plan::PlanError>,
 ) -> Result<Option<TypedPlan>, RenderError> {
@@ -345,19 +371,14 @@ pub(super) fn select(
                 checked_receive_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?
             ),
         };
-        let before_terminal = through_receive
-            .or_else(|| {
-                record_option!(
-                    "selector.voting-commit",
-                    typed_plan::lower_voting_commit(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                        circuits,
-                    )
-                )
-            })
+        let through_voting = match through_receive {
+            Some(plan) => Some(plan),
+            None => record_option!(
+                "algebra.voting-commit",
+                checked_voting_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?
+            ),
+        };
+        let before_terminal = through_voting
             .or_else(|| {
                 record_option!(
                     "selector.funded-mint",

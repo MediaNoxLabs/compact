@@ -440,3 +440,6 @@ mod voting_witness_inclusion;
 
 #[path = "voting_helper_inclusion.rs"]
 mod voting_helper_inclusion;
+
+#[path = "voting_structure_inclusion.rs"]
+mod voting_structure_inclusion;

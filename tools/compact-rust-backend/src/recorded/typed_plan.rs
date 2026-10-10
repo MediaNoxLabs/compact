@@ -68,6 +68,7 @@ mod terminal_returns_reference;
 mod unit_actions;
 #[cfg(test)]
 mod unit_actions_reference;
+#[cfg(test)]
 mod voting_commit;
 
 #[derive(Clone)]
@@ -2181,6 +2182,7 @@ pub(super) fn lower_reset_payout<'a>(
     reset_payout::lower(circuit, ledger, witnesses, pure, circuits)
 }
 
+#[cfg(test)]
 pub(super) fn lower_voting_commit<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,

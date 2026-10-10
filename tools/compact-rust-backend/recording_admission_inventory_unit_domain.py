@@ -21,6 +21,15 @@ NEW_COMMENT = '/// Ordinary Unit interfaces enter at the former unit-action prio
 
 
 def validate(root, extension, receive):
+    try:
+        source = (root / SELECTOR).read_text()
+    except (OSError, UnicodeError) as error:
+        return ['Unit domain: unreadable helper: ' + str(error)]
+    return validate_source(source, extension, receive)
+
+
+def validate_source(source, extension, receive):
+    """Validate an exact source snapshot; later transitions must authenticate it."""
     errors = []
     if (extension.get('schema_version') != 1 or extension.get('issue') != 540
             or extension.get('classification') != 'ordinary-unit-return-domain-no-retirement'):
@@ -45,7 +54,6 @@ def validate(root, extension, receive):
             or not re.fullmatch('[0-9a-f]{64}', owners[SELECTOR])):
         errors.append('Unit domain: exactly one valid reviewed owner required')
     try:
-        source = (root / SELECTOR).read_text()
         if digest(source.encode()) != owners.get(SELECTOR):
             errors.append('Unit domain: reviewed observation owner changed')
         body = function(source, MARKER)

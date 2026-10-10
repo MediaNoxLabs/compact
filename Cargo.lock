@@ -1292,6 +1292,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-effect-plan-internal-interfaces-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-storage",
+ "rand 0.8.6",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-effect-plan-jubjub-nested-layout-fixture"
 version = "0.1.0"
 dependencies = [

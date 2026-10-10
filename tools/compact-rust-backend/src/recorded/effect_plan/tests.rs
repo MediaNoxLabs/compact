@@ -492,3 +492,6 @@ mod membership_inclusion;
 
 #[path = "tests/shielded_send_probe.rs"]
 mod shielded_send_probe;
+
+#[path = "tests/internal_interfaces.rs"]
+mod internal_interfaces;

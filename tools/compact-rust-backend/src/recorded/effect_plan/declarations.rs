@@ -14,7 +14,7 @@ pub(super) struct Declarations {
     ledger: Vec<LedgerField>,
     witnesses: Vec<WitnessDeclaration>,
     calls: Vec<CallSignature>,
-    root: Option<CallSignature>,
+    root: Option<RootDeclaration>,
     pure: Certificates,
     types: super::type_environment::TypeEnvironment,
 }
@@ -23,6 +23,15 @@ pub(super) struct Declarations {
 pub(super) enum CallKind {
     Pure,
     Stateful,
+}
+
+/// Root visibility is source authority, never a permission on a candidate plan.
+#[derive(Debug)]
+pub(super) struct RootDeclaration {
+    pub name: String,
+    pub parameters: Vec<Parameter>,
+    pub result: Type,
+    pub internal: bool,
 }
 
 /// Source signatures, independent of lowered argument/formal/body annotations.
@@ -100,15 +109,15 @@ impl Declarations {
             .then_some(certified)
     }
     pub(super) fn with_root(mut self, circuit: &StatefulCircuit) -> Self {
-        self.root = Some(CallSignature {
+        self.root = Some(RootDeclaration {
             name: circuit.name.clone(),
             parameters: circuit.parameters.clone(),
             result: circuit.result.clone(),
-            kind: CallKind::Stateful,
+            internal: circuit.internal,
         });
         self
     }
-    pub(super) fn root(&self) -> Option<&CallSignature> {
+    pub(super) fn root(&self) -> Option<&RootDeclaration> {
         self.root.as_ref()
     }
     pub(super) fn with_calls(

@@ -73,6 +73,15 @@ pub(super) fn surface_type(ty: &Type) -> bool {
 pub(super) fn public_interface_type(ty: &Type) -> bool {
     domain::public_interface_type(ty)
 }
+/// Internal roots exchange local Rust values; exported roots require public FAB.
+/// Validation obtains this boundary only from the independent source declaration.
+pub(super) fn root_interface_type(ty: &Type, internal: bool) -> bool {
+    if internal {
+        stateful_call_type(ty)
+    } else {
+        public_interface_type(ty)
+    }
+}
 /// Declared Cell storage may own opaque values without widening interfaces.
 pub(super) fn cell_type(ty: &Type) -> bool {
     storage_value_type(ty)
@@ -144,7 +153,8 @@ pub(super) fn validate(plan: &Plan, declarations: &Declarations) -> Result<(), R
     for value in &plan.parameters {
         declarations.types().validate_at(&value.ty, "parameters")?;
     }
-    if !public_interface_type(&plan.result_type) {
+    let internal = declarations.root().is_some_and(|root| root.internal);
+    if !root_interface_type(&plan.result_type, internal) {
         return Err(invalid("return_value", "unsupported circuit result type"));
     }
     let mut scope = HashMap::new();
@@ -184,7 +194,7 @@ pub(super) fn validate(plan: &Plan, declarations: &Declarations) -> Result<(), R
     }
     state.charge(plan.parameters.len(), "parameters")?;
     for value in &plan.parameters {
-        if !public_interface_type(&value.ty) || !state.allocated.insert(value.id) {
+        if !root_interface_type(&value.ty, internal) || !state.allocated.insert(value.id) {
             return Err(invalid(
                 "parameters",
                 "unsupported or duplicate plan parameter",

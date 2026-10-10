@@ -8,7 +8,7 @@ use super::{
     declarations::Declarations,
     invalid,
     model::*,
-    validate::{cell_type, public_interface_type, uint},
+    validate::{cell_type, root_interface_type, uint},
 };
 use crate::ir::*;
 use std::collections::HashMap;
@@ -57,7 +57,7 @@ pub(super) fn lower_with_pure_calls<'a>(
     declarations
         .types()
         .validate_at(&circuit.result, "return_value")?;
-    if !public_interface_type(&circuit.result) {
+    if !root_interface_type(&circuit.result, circuit.internal) {
         return Err(invalid("return_value", "unsupported circuit result type"));
     }
     let (max_call_depth, max_expanded_steps) = crate::resource_limits::recording_call_limits();
@@ -78,7 +78,7 @@ pub(super) fn lower_with_pure_calls<'a>(
         declarations
             .types()
             .validate_at(&p.ty, &format!("parameters[{i}]"))?;
-        if !public_interface_type(&p.ty) {
+        if !root_interface_type(&p.ty, circuit.internal) {
             return Err(invalid(
                 &format!("parameters[{i}]"),
                 "unsupported parameter type",

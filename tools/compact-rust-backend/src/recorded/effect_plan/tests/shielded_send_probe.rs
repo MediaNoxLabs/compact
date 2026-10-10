@@ -1,7 +1,7 @@
 // This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
-//! Whole-old-send controls: canonical wide casts compose; tuple12 remains a probe.
+//! Whole-old-send controls: canonical wide casts and internal tuple12 interfaces compose.
 //! Native compilation and runtime/proof qualification remain separate.
 use super::*;
 use crate::recorded::{admission_probe::trace, profile_attempt::ProfileAttempt};
@@ -145,7 +145,7 @@ fn whole_old_send_with_unused_wide_cast_composes_and_renders() {
     probe(&contract, "send_to_self", "unused-wide-cast", true);
 }
 #[test]
-fn whole_old_internal_send_with_tuple12_reports_checked_outcome() {
+fn whole_old_internal_send_with_tuple12_requires_checked_support() {
     let mut contract = source();
     let root = root_mut(&mut contract, "send_to_self");
     let mut caller = root.clone();
@@ -176,5 +176,5 @@ fn whole_old_internal_send_with_tuple12_reports_checked_outcome() {
         },
     };
     contract.stateful_circuits.push(caller);
-    probe(&contract, "send_to_self", "internal-tuple12", false);
+    probe(&contract, "send_to_self", "internal-tuple12", true);
 }

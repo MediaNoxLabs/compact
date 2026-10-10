@@ -30,6 +30,8 @@ mod rich_validation;
 mod rich_values;
 #[path = "tests/tuple_equality.rs"]
 mod tuple_equality;
+#[path = "tests/wide_casts.rs"]
+mod wide_casts;
 #[path = "tests/wide_values.rs"]
 mod wide_values;
 #[path = "tests/zswap_inclusion.rs"]

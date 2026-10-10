@@ -26,6 +26,7 @@ default = []
 experimental-recording-plan = ["dep:compact-rust-recording-effect-plan-prototype-fixture"]
 
 [dependencies]
+compact-rust-effect-plan-wide-casts-source-fixture = { path = "../../tests-rust-backend/effect-plan-wide-casts-source", features = ["ledger-transaction"] }
 compact-rust-effect-plan-public-products-source-fixture = { path = "../../tests-rust-backend/effect-plan-public-products-source", features = ["ledger-transaction"] }
 compact-rust-effect-plan-witness-inputs-source-fixture = { path = "../../tests-rust-backend/effect-plan-witness-inputs-source", features = ["ledger-transaction"] }
 compact-rust-effect-plan-opaque-public-source-fixture = { path = "../../tests-rust-backend/effect-plan-opaque-public-source", features = ["ledger-transaction"] }

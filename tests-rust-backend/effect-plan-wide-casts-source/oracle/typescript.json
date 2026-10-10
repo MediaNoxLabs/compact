@@ -1,0 +1,3435 @@
+{
+  "status": "passed",
+  "scope": "Same-source official TypeScript runtime and preimage serialization; no proof generation/verification/application.",
+  "utc": "2026-10-10T09:23:18.808Z",
+  "versions": {
+    "node": "v24.14.0",
+    "compactRuntime": "0.16.101",
+    "onchainRuntime": "3.0.0"
+  },
+  "files": [
+    {
+      "path": "/Users/ysh/.codex/worktrees/recording-effect-prototype/compact/examples/rust_backend/effect_plan_wide_casts.compact",
+      "bytes": 1343,
+      "sha256": "05c35ba88f824d12969f5974bc6addca4991291053e168b6b9c833112e7387cb"
+    },
+    {
+      "path": "/tmp/rust040-wide-casts/probe-official-ts.mjs",
+      "bytes": 6619,
+      "sha256": "0a6a3663874711232c95a67a1648c486e4ddccb866b1fe7de594203b05770a30"
+    },
+    {
+      "path": "/tmp/rust040-wide-casts/ts-source/contract/index.js",
+      "bytes": 31839,
+      "sha256": "de40d31669d1d46dc5552c3ac53f6d529c3e5658de256dfcd61aad0d7bcc4617"
+    },
+    {
+      "path": "/tmp/rust040-wide-casts/ts-source/contract/index.d.ts",
+      "bytes": 3371,
+      "sha256": "a95dad857dc3e84488a986afc1a507d936a4b86020dcd62b45f63058687b74d1"
+    },
+    {
+      "path": "/tmp/rust040-scope-identity/source/obj/compiler/compactc",
+      "bytes": 8957752,
+      "sha256": "1294418df12639a7ade4e60800ee98d0ffbefde192aadf7169ec4e2f4eb06634"
+    },
+    {
+      "path": "/tmp/compact-adr234/registry/receive/contract/node_modules/@midnight-ntwrk/compact-runtime/package.json",
+      "bytes": 1800,
+      "sha256": "38f113eeb408c9b7d51fc67c5688f3b9fcceff4bba0047b79413bbe0ad1d45b0"
+    },
+    {
+      "path": "/tmp/compact-adr234/registry/receive/contract/node_modules/@midnight-ntwrk/compact-runtime/dist/compact-types.js",
+      "bytes": 11762,
+      "sha256": "5cdccdb9fde9fdb297459588f33ce093ad557584b35b480819e0d930ce1bd73b"
+    },
+    {
+      "path": "/tmp/compact-adr234/registry/receive/contract/node_modules/@midnight-ntwrk/compact-runtime/dist/proof-data.js",
+      "bytes": 715,
+      "sha256": "0ebb8586d5144654b35b30d191dffd2308dc31d4ddd6d05277ef3d06015d2d29"
+    },
+    {
+      "path": "/tmp/compact-adr234/registry/receive/contract/node_modules/@midnight-ntwrk/compact-runtime/node_modules/@midnight-ntwrk/onchain-runtime-v3/package.json",
+      "bytes": 986,
+      "sha256": "bea88fd56d85fdc8178945a784993980981fd7987e39018f9c0b3b25b3134f54"
+    },
+    {
+      "path": "/tmp/compact-adr234/registry/receive/contract/node_modules/@midnight-ntwrk/compact-runtime/node_modules/@midnight-ntwrk/onchain-runtime-v3/midnight_onchain_runtime_wasm_bg.wasm",
+      "bytes": 1398935,
+      "sha256": "edeea319fe8b1dca486a3aeaa051e64d4b7fb96d83b5d2bb15e68fc1ce23369e"
+    }
+  ],
+  "caseCount": 30,
+  "rows": [
+    {
+      "circuit": "widen8",
+      "args": [
+        "0"
+      ],
+      "witnessValue": "0",
+      "status": "success",
+      "result": {
+        "value": "0"
+      },
+      "events": [],
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 17
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "serializedBytes": 81
+    },
+    {
+      "circuit": "narrow8",
+      "args": [
+        "0"
+      ],
+      "witnessValue": "0",
+      "status": "success",
+      "result": {
+        "value": "0"
+      },
+      "events": [],
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 17
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "serializedBytes": 82
+    },
+    {
+      "circuit": "widen8",
+      "args": [
+        "1"
+      ],
+      "witnessValue": "0",
+      "status": "success",
+      "result": {
+        "value": "1"
+      },
+      "events": [],
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 17
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "serializedBytes": 81
+    },
+    {
+      "circuit": "narrow8",
+      "args": [
+        "1"
+      ],
+      "witnessValue": "0",
+      "status": "success",
+      "result": {
+        "value": "1"
+      },
+      "events": [],
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 17
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "serializedBytes": 82
+    },
+    {
+      "circuit": "widen8",
+      "args": [
+        "255"
+      ],
+      "witnessValue": "0",
+      "status": "success",
+      "result": {
+        "value": "255"
+      },
+      "events": [],
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              255
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              255
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 17
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "serializedBytes": 82
+    },
+    {
+      "circuit": "narrow8",
+      "args": [
+        "255"
+      ],
+      "witnessValue": "0",
+      "status": "success",
+      "result": {
+        "value": "255"
+      },
+      "events": [],
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              255
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 17
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              255
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "serializedBytes": 83
+    },
+    {
+      "circuit": "widen129",
+      "args": [
+        "0"
+      ],
+      "witnessValue": "0",
+      "status": "success",
+      "result": {
+        "value": "0"
+      },
+      "events": [],
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 17
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 31
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "serializedBytes": 83
+    },
+    {
+      "circuit": "narrow129",
+      "args": [
+        "0"
+      ],
+      "witnessValue": "0",
+      "status": "success",
+      "result": {
+        "value": "0"
+      },
+      "events": [],
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 31
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 17
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "serializedBytes": 84
+    },
+    {
+      "circuit": "widen129",
+      "args": [
+        "340282366920938463463374607431768211455"
+      ],
+      "witnessValue": "0",
+      "status": "success",
+      "result": {
+        "value": "340282366920938463463374607431768211455"
+      },
+      "events": [],
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 17
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 31
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "serializedBytes": 99
+    },
+    {
+      "circuit": "narrow129",
+      "args": [
+        "340282366920938463463374607431768211455"
+      ],
+      "witnessValue": "0",
+      "status": "success",
+      "result": {
+        "value": "340282366920938463463374607431768211455"
+      },
+      "events": [],
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 31
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 17
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "serializedBytes": 100
+    },
+    {
+      "circuit": "widen129",
+      "args": [
+        "340282366920938463463374607431768211456"
+      ],
+      "witnessValue": "0",
+      "status": "success",
+      "result": {
+        "value": "340282366920938463463374607431768211456"
+      },
+      "events": [],
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 17
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 31
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "serializedBytes": 100
+    },
+    {
+      "circuit": "narrow129",
+      "args": [
+        "340282366920938463463374607431768211456"
+      ],
+      "witnessValue": "0",
+      "status": "success",
+      "result": {
+        "value": "340282366920938463463374607431768211456"
+      },
+      "events": [],
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 31
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 17
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "serializedBytes": 101
+    },
+    {
+      "circuit": "widen129",
+      "args": [
+        "680564733841876926926749214863536422911"
+      ],
+      "witnessValue": "0",
+      "status": "success",
+      "result": {
+        "value": "680564733841876926926749214863536422911"
+      },
+      "events": [],
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 17
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 31
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "serializedBytes": 100
+    },
+    {
+      "circuit": "narrow129",
+      "args": [
+        "680564733841876926926749214863536422911"
+      ],
+      "witnessValue": "0",
+      "status": "success",
+      "result": {
+        "value": "680564733841876926926749214863536422911"
+      },
+      "events": [],
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 31
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 17
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "serializedBytes": 101
+    },
+    {
+      "circuit": "max248",
+      "args": [],
+      "witnessValue": "0",
+      "status": "success",
+      "result": {
+        "value": "452312848583266388373324160190187140051835877600158453279131187530910662655"
+      },
+      "events": [],
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [],
+          "alignment": []
+        },
+        "output": {
+          "value": [
+            [
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 31
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "serializedBytes": 80
+    },
+    {
+      "circuit": "narrow8",
+      "args": [
+        "256"
+      ],
+      "witnessValue": "0",
+      "status": "refused",
+      "error": "CompactError: effect_plan_wide_casts.compact line 22 char 25: cast from Field or Uint value to smaller Uint value failed: 256 is greater than 255",
+      "events": [],
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      }
+    },
+    {
+      "circuit": "narrow8",
+      "args": [
+        "340282366920938463463374607431768211456"
+      ],
+      "witnessValue": "0",
+      "status": "refused",
+      "error": "CompactError: effect_plan_wide_casts.compact line 22 char 25: cast from Field or Uint value to smaller Uint value failed: 340282366920938463463374607431768211456 is greater than 255",
+      "events": [],
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      }
+    },
+    {
+      "circuit": "narrow8",
+      "args": [
+        "680564733841876926926749214863536422911"
+      ],
+      "witnessValue": "0",
+      "status": "refused",
+      "error": "CompactError: effect_plan_wide_casts.compact line 22 char 25: cast from Field or Uint value to smaller Uint value failed: 680564733841876926926749214863536422911 is greater than 255",
+      "events": [],
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      }
+    },
+    {
+      "circuit": "narrow129",
+      "args": [
+        "680564733841876926926749214863536422912"
+      ],
+      "witnessValue": "0",
+      "status": "refused",
+      "error": "CompactError: effect_plan_wide_casts.compact line 26 char 24: cast from Field or Uint value to smaller Uint value failed: 680564733841876926926749214863536422912 is greater than 680564733841876926926749214863536422911",
+      "events": [],
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      }
+    },
+    {
+      "circuit": "narrow129",
+      "args": [
+        "452312848583266388373324160190187140051835877600158453279131187530910662655"
+      ],
+      "witnessValue": "0",
+      "status": "refused",
+      "error": "CompactError: effect_plan_wide_casts.compact line 26 char 24: cast from Field or Uint value to smaller Uint value failed: 452312848583266388373324160190187140051835877600158453279131187530910662655 is greater than 680564733841876926926749214863536422911",
+      "events": [],
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      }
+    },
+    {
+      "circuit": "witnessed",
+      "args": [
+        false
+      ],
+      "witnessValue": "0",
+      "status": "success",
+      "result": {
+        "value": "7",
+        "marker": "9"
+      },
+      "events": [
+        [
+          "marker",
+          5,
+          "1"
+        ]
+      ],
+      "privateState": 6,
+      "proofData": {
+        "input": {
+          "value": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              7
+            ],
+            [
+              9
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": [
+          {
+            "value": [
+              [
+                9
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "popeq"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "340000000",
+        "computeTime": "2573396769",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "serializedBytes": 85
+    },
+    {
+      "circuit": "witnessed",
+      "args": [
+        true
+      ],
+      "witnessValue": "0",
+      "status": "success",
+      "result": {
+        "value": "0",
+        "marker": "9"
+      },
+      "events": [
+        [
+          "nextWide",
+          5,
+          "1"
+        ],
+        [
+          "marker",
+          6,
+          "1"
+        ]
+      ],
+      "privateState": 7,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [],
+            [
+              9
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": [
+          {
+            "value": [
+              []
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "bytes",
+                  "length": 31
+                }
+              }
+            ]
+          },
+          {
+            "value": [
+              [
+                9
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "popeq"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "popeq"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "510000000",
+        "computeTime": "3823311622",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "serializedBytes": 86
+    },
+    {
+      "circuit": "witnessed",
+      "args": [
+        false
+      ],
+      "witnessValue": "255",
+      "status": "success",
+      "result": {
+        "value": "7",
+        "marker": "9"
+      },
+      "events": [
+        [
+          "marker",
+          5,
+          "1"
+        ]
+      ],
+      "privateState": 6,
+      "proofData": {
+        "input": {
+          "value": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              7
+            ],
+            [
+              9
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": [
+          {
+            "value": [
+              [
+                9
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "popeq"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "340000000",
+        "computeTime": "2573396769",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "serializedBytes": 85
+    },
+    {
+      "circuit": "witnessed",
+      "args": [
+        true
+      ],
+      "witnessValue": "255",
+      "status": "success",
+      "result": {
+        "value": "255",
+        "marker": "9"
+      },
+      "events": [
+        [
+          "nextWide",
+          5,
+          "1"
+        ],
+        [
+          "marker",
+          6,
+          "1"
+        ]
+      ],
+      "privateState": 7,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              255
+            ],
+            [
+              9
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": [
+          {
+            "value": [
+              [
+                255
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "bytes",
+                  "length": 31
+                }
+              }
+            ]
+          },
+          {
+            "value": [
+              [
+                9
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "popeq"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "popeq"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "510000000",
+        "computeTime": "3823311622",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "serializedBytes": 87
+    },
+    {
+      "circuit": "witnessed",
+      "args": [
+        false
+      ],
+      "witnessValue": "256",
+      "status": "success",
+      "result": {
+        "value": "7",
+        "marker": "9"
+      },
+      "events": [
+        [
+          "marker",
+          5,
+          "1"
+        ]
+      ],
+      "privateState": 6,
+      "proofData": {
+        "input": {
+          "value": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              7
+            ],
+            [
+              9
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": [
+          {
+            "value": [
+              [
+                9
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "popeq"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "340000000",
+        "computeTime": "2573396769",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "serializedBytes": 85
+    },
+    {
+      "circuit": "witnessed",
+      "args": [
+        true
+      ],
+      "witnessValue": "256",
+      "status": "refused",
+      "error": "CompactError: effect_plan_wide_casts.compact line 35 char 17: cast from Field or Uint value to smaller Uint value failed: 256 is greater than 255",
+      "events": [
+        [
+          "nextWide",
+          5,
+          "1"
+        ]
+      ],
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "popeq"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "340000000",
+        "computeTime": "2573396769",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      }
+    },
+    {
+      "circuit": "witnessed",
+      "args": [
+        false
+      ],
+      "witnessValue": "340282366920938463463374607431768211456",
+      "status": "success",
+      "result": {
+        "value": "7",
+        "marker": "9"
+      },
+      "events": [
+        [
+          "marker",
+          5,
+          "1"
+        ]
+      ],
+      "privateState": 6,
+      "proofData": {
+        "input": {
+          "value": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              7
+            ],
+            [
+              9
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": [
+          {
+            "value": [
+              [
+                9
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "popeq"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "340000000",
+        "computeTime": "2573396769",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "serializedBytes": 85
+    },
+    {
+      "circuit": "witnessed",
+      "args": [
+        true
+      ],
+      "witnessValue": "340282366920938463463374607431768211456",
+      "status": "refused",
+      "error": "CompactError: effect_plan_wide_casts.compact line 35 char 17: cast from Field or Uint value to smaller Uint value failed: 340282366920938463463374607431768211456 is greater than 255",
+      "events": [
+        [
+          "nextWide",
+          5,
+          "1"
+        ]
+      ],
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "popeq"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "340000000",
+        "computeTime": "2573396769",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      }
+    },
+    {
+      "circuit": "witnessed",
+      "args": [
+        false
+      ],
+      "witnessValue": "452312848583266388373324160190187140051835877600158453279131187530910662655",
+      "status": "success",
+      "result": {
+        "value": "7",
+        "marker": "9"
+      },
+      "events": [
+        [
+          "marker",
+          5,
+          "1"
+        ]
+      ],
+      "privateState": 6,
+      "proofData": {
+        "input": {
+          "value": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              7
+            ],
+            [
+              9
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": [
+          {
+            "value": [
+              [
+                9
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "popeq"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "340000000",
+        "computeTime": "2573396769",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "serializedBytes": 85
+    },
+    {
+      "circuit": "witnessed",
+      "args": [
+        true
+      ],
+      "witnessValue": "452312848583266388373324160190187140051835877600158453279131187530910662655",
+      "status": "refused",
+      "error": "CompactError: effect_plan_wide_casts.compact line 35 char 17: cast from Field or Uint value to smaller Uint value failed: 452312848583266388373324160190187140051835877600158453279131187530910662655 is greater than 255",
+      "events": [
+        [
+          "nextWide",
+          5,
+          "1"
+        ]
+      ],
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1323481916",
+            "bytesWritten": "36",
+            "bytesDeleted": "36"
+          },
+          "opTags": [
+            "idx",
+            "addi",
+            "ins"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "popeq"
+          ]
+        }
+      ],
+      "queryCostSum": {
+        "readTime": "340000000",
+        "computeTime": "2573396769",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      }
+    }
+  ]
+}

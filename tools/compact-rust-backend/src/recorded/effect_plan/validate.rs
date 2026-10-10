@@ -37,7 +37,8 @@ impl Validation {
 pub(super) fn uint(max: &str) -> Type {
     Type::Unsigned { max: max.into() }
 }
-/// Value-only unsigned bounds. ABI surfaces and arithmetic still use `bound`.
+/// Canonical unsigned bounds for values and explicit casts. Scalar arithmetic
+/// retains the separate u128-only `bound` policy.
 pub(super) fn unsigned_bound(ty: &Type) -> Option<crate::UnsignedMaximum> {
     let Type::Unsigned { max } = ty else {
         return None;
@@ -362,7 +363,9 @@ fn block(
                 use_value(value)?;
                 match kind {
                     Conversion::Coerce => coercible(&value.ty, ty),
-                    Conversion::UnsignedCast => bound(&value.ty).is_some() && bound(ty).is_some(),
+                    Conversion::UnsignedCast => {
+                        unsigned_bound(&value.ty).is_some() && unsigned_bound(ty).is_some()
+                    }
                 }
             }
             Operation::Merkle { slot, operation } => {

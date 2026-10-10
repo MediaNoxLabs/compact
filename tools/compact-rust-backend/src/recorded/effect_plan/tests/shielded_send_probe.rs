@@ -1,7 +1,7 @@
 // This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
-//! Exploratory whole-old-send controls. No gap is assumed by these tests.
+//! Whole-old-send controls: canonical wide casts compose; tuple12 remains a probe.
 //! Native compilation and runtime/proof qualification remain separate.
 use super::*;
 use crate::recorded::{admission_probe::trace, profile_attempt::ProfileAttempt};
@@ -101,7 +101,7 @@ fn probe(contract: &Contract, name: &str, label: &str, require_checked: bool) {
     if require_checked {
         assert_eq!(
             checked["status"], "supported",
-            "{label}: baseline must compose"
+            "{label}: reviewed old-first control must compose"
         );
     }
 }
@@ -119,7 +119,7 @@ fn complete_old_send_baselines_compose_and_render() {
     }
 }
 #[test]
-fn whole_old_send_with_unused_wide_cast_reports_checked_outcome() {
+fn whole_old_send_with_unused_wide_cast_composes_and_renders() {
     let mut contract = source();
     let root = root_mut(&mut contract, "send_to_self");
     let StateReturn::Expression { value } = &mut root.return_value else {
@@ -142,7 +142,7 @@ fn whole_old_send_with_unused_wide_cast_reports_checked_outcome() {
         }],
         body: Box::new(original),
     };
-    probe(&contract, "send_to_self", "unused-wide-cast", false);
+    probe(&contract, "send_to_self", "unused-wide-cast", true);
 }
 #[test]
 fn whole_old_internal_send_with_tuple12_reports_checked_outcome() {

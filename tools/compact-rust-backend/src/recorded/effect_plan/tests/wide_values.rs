@@ -218,15 +218,19 @@ fn independent_validator_rejects_forged_wide_bytes_bounds_and_references() {
     }
 }
 #[test]
-fn wide_widening_and_joins_preserve_arithmetic_and_explicit_cast_limits() {
+fn wide_widening_and_joins_preserve_arithmetic_and_implicit_narrowing_limits() {
     let literal = || unsigned(TWO128, TWO128);
     expect_unsupported(Expr::FieldCast {
         value: Box::new(literal()),
     });
-    expect_unsupported(as_field(Expr::UnsignedCast {
+    // An explicit narrowing cast is now recorded and keeps the runtime range
+    // check; this out-of-range value fails when executed, not while lowering.
+    let cast = check_expression(as_field(Expr::UnsignedCast {
         value: Box::new(literal()),
         max: "65535".into(),
-    }));
+    }))
+    .unwrap();
+    render(&cast).unwrap();
     expect_unsupported(as_field(Expr::UnsignedAdd {
         left: Box::new(literal()),
         right: Box::new(literal()),
@@ -237,7 +241,7 @@ fn wide_widening_and_joins_preserve_arithmetic_and_explicit_cast_limits() {
         ty: validate::uint("65535"),
     }));
     // Owned-value composition now admits native widening and local joins.
-    // Neither operation grants wide arithmetic or narrowing casts.
+    // Neither operation grants wide arithmetic or implicit narrowing.
     let widened = check_expression(as_field(Expr::Coerce {
         value: Box::new(unsigned("1", "65535")),
         ty: validate::uint(TWO128),

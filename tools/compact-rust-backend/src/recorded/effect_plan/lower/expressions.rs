@@ -263,7 +263,9 @@ impl Lowerer<'_> {
             }
             Expr::UnsignedCast { value, max } => {
                 let value = self.expression(value, scope, bindings, &format!("{path}.value"))?;
-                if validate::bound(&value.ty).is_none() || validate::bound(&uint(max)).is_none() {
+                if validate::unsigned_bound(&value.ty).is_none()
+                    || validate::unsigned_bound(&uint(max)).is_none()
+                {
                     return Err(invalid(path, "unsupported unsigned cast"));
                 }
                 (

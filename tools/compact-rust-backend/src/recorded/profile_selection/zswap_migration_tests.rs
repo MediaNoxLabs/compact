@@ -209,12 +209,25 @@ fn unsupported_body_refuses_at_last_priority_without_old_fallback() {
         .find(|r| r.name == "flow")
         .unwrap();
     r.actions = vec![StateAction::Expression {
-        value: Expr::NotEqual {
-            left: Box::new(Expr::Boolean { value: true }),
-            right: Box::new(Expr::Boolean { value: false }),
+        // Native-valid hashing remains outside the direct checked expression algebra.
+        value: Expr::Equal {
+            left: Box::new(Expr::Keccak256 {
+                value: Box::new(Expr::BytesLiteral { bytes: vec![7; 32] }),
+            }),
+            right: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
         },
     }];
     let maps = Context::new(&c);
+    assert!(
+        crate::recorded::zswap_plan::lower(
+            root(&c, "flow"),
+            &maps.ledger,
+            &maps.circuits,
+            &maps.witnesses
+        )
+        .is_none(),
+        "whole frozen Zswap oracle also refuses this expression"
+    );
     assert!(maps.domain(root(&c, "flow")).unwrap().is_none());
     let (selected, row) = maps.selected(root(&c, "flow"));
     assert!(selected.typed_result.is_none());
@@ -225,4 +238,60 @@ fn unsupported_body_refuses_at_last_priority_without_old_fallback() {
     );
     assert!(!attempted.contains(&"selector.zswap"));
     crate::render_with_capabilities(&c).unwrap();
+}
+
+#[test]
+fn former_boolean_inequality_refusal_now_uses_checked_last_domain() {
+    let mut c = source();
+    c.stateful_circuits
+        .iter_mut()
+        .find(|r| r.name == "flow")
+        .unwrap()
+        .actions = vec![StateAction::Expression {
+        value: Expr::NotEqual {
+            left: Box::new(Expr::Boolean { value: true }),
+            right: Box::new(Expr::Boolean { value: false }),
+        },
+    }];
+    let maps = Context::new(&c);
+    assert!(
+        crate::recorded::zswap_plan::lower(
+            root(&c, "flow"),
+            &maps.ledger,
+            &maps.circuits,
+            &maps.witnesses
+        )
+        .is_none()
+    );
+    assert!(maps.domain(root(&c, "flow")).unwrap().is_some());
+    let (selected, row) = maps.selected(root(&c, "flow"));
+    assert!(selected.typed_result.is_some());
+    assert_eq!(row["body_owner"], "algebra.zswap");
+    let (output, rows) = trace::capture_json(|| crate::render_with_capabilities(&c));
+    let output = output.unwrap();
+    let capability = output
+        .capabilities
+        .circuits
+        .iter()
+        .find(|r| r.name == "flow")
+        .unwrap();
+    assert!(capability.recorded && capability.observed_call);
+    let rows = rows
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|r| {
+            r["circuit"] == "flow" && r["phase"] == "public_emission" && r["helper"] == false
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(rows.len(), 1);
+    assert_eq!(rows[0]["body_owner"], "algebra.zswap");
+    assert_eq!(
+        attempts(rows[0])
+            .iter()
+            .filter(|&&r| r == "algebra.zswap")
+            .count(),
+        1
+    );
+    assert!(!attempts(rows[0]).contains(&"selector.zswap"));
 }

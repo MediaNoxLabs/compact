@@ -30,6 +30,7 @@ import recording_admission_inventory_observation_test as observation_test
 import recording_admission_inventory_merge as merge
 import recording_admission_inventory_guarded as guarded
 import recording_admission_inventory_routing_test as routing_test
+import recording_admission_inventory_inequality_test as inequality_test
 import recording_admission_inventory_reset_payout as reset_payout
 import recording_admission_inventory_shielded_payout as shielded_payout
 
@@ -83,8 +84,18 @@ GUARDED_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory
 ROUTING_TEST_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.routing-test-568.json")
 
 
+INEQUALITY_TEST_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.inequality-test-571.json")
+
+
+def inequality_checkpoint_source(root):
+    source = (root / inequality_test.OWNER).read_text()
+    if inventory.digest(source.encode()) in {inequality_test.PRIOR_SHA, routing_test.PRIOR_SHA}:
+        return source
+    return inequality_test.predecessor_source(source, json.loads(INEQUALITY_TEST_EXTENSION.read_text()))
+
+
 def routing_checkpoint_source(root):
-    source = (root / routing_test.OWNER).read_text()
+    source = inequality_checkpoint_source(root)
     # Historical fixtures may already contain the exact restored checkpoint.
     if inventory.digest(source.encode()) == routing_test.PRIOR_SHA:
         return source
@@ -272,7 +283,8 @@ class InventoryTests(unittest.TestCase):
                                   guarded_deposit_transition=json.loads(GUARDED_TRANSITION.read_text()),
                                   routing_test_extension=json.loads(ROUTING_TEST_EXTENSION.read_text()),
                                   reset_payout_transition=json.loads(RESET_PAYOUT_TRANSITION.read_text()),
-                                  shielded_payout_transition=json.loads(SHIELDED_PAYOUT_TRANSITION.read_text()))
+                                  shielded_payout_transition=json.loads(SHIELDED_PAYOUT_TRANSITION.read_text()),
+                                  inequality_test_extension=json.loads(INEQUALITY_TEST_EXTENSION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)

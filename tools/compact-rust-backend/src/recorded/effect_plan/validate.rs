@@ -365,7 +365,7 @@ fn block(
                 use_value(b)?;
                 bound(&a.ty).is_some() && bound(&b.ty).is_some() && bound(ty).is_some()
             }
-            Operation::Equal(a, b) => {
+            Operation::Equal(a, b) | Operation::NotEqual(a, b) => {
                 use_value(a)?;
                 use_value(b)?;
                 equality_type(&a.ty) && a.ty == b.ty && *ty == Type::Boolean

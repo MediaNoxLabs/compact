@@ -227,6 +227,7 @@ impl Lowerer<'_> {
             | Expr::EcAdd { .. } => self.jubjub(expression, scope, bindings, path)?,
             Expr::Add { left, right }
             | Expr::Equal { left, right }
+            | Expr::NotEqual { left, right }
             | Expr::UnsignedAdd { left, right, .. }
             | Expr::UnsignedSubtract { left, right, .. }
             | Expr::UnsignedMultiply { left, right, .. } => {
@@ -236,8 +237,15 @@ impl Lowerer<'_> {
                     Expr::Add { .. } if a.ty == Type::Field && b.ty == Type::Field => {
                         (Operation::Add(a, b), Type::Field)
                     }
-                    Expr::Equal { .. } if validate::equality_type(&a.ty) && a.ty == b.ty => {
-                        (Operation::Equal(a, b), Type::Boolean)
+                    Expr::Equal { .. } | Expr::NotEqual { .. }
+                        if validate::equality_type(&a.ty) && a.ty == b.ty =>
+                    {
+                        let operation = if matches!(expression, Expr::NotEqual { .. }) {
+                            Operation::NotEqual(a, b)
+                        } else {
+                            Operation::Equal(a, b)
+                        };
+                        (operation, Type::Boolean)
                     }
                     Expr::UnsignedAdd { max, .. }
                         if validate::unsigned_add_type(&a.ty, &b.ty, &uint(max)) =>

@@ -62,6 +62,7 @@ import recording_admission_inventory_observation_test as observation_test
 import recording_admission_inventory_merge as merge
 import recording_admission_inventory_guarded as guarded
 import recording_admission_inventory_routing_test as routing_test
+import recording_admission_inventory_inequality_test as inequality_test
 import recording_admission_inventory_reset_payout as reset_payout
 import recording_admission_inventory_shielded_payout as shielded_payout
 
@@ -268,7 +269,8 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
            guarded_deposit_transition: dict | None = None,
            routing_test_extension: dict | None = None,
            reset_payout_transition: dict | None = None,
-           shielded_payout_transition: dict | None = None) -> dict:
+           shielded_payout_transition: dict | None = None,
+           inequality_test_extension: dict | None = None) -> dict:
     errors = validate_baseline(baseline)
     report = {'schema_version': 1, 'baseline_commit': baseline.get('baseline_commit'),
               'claim': 'source route inventory; not language or behavioral coverage',
@@ -361,6 +363,13 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
                          'reviewed_source_fingerprints': {
                              **evolution['reviewed_source_fingerprints'],
                              **reviewed_receive['reviewed_source_fingerprints']}}
+    routing568_source = None
+    if inequality_test_extension is not None:
+        try:
+            routing568_source = inequality_test.validate(
+                root, inequality_test_extension, routing_test_extension, shielded_payout_transition)
+        except (OSError, UnicodeError, ValueError, KeyError) as error:
+            errors.append(str(error))
     prior_routing_test = None
     if routing_test_extension is not None:
         try:
@@ -368,7 +377,7 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
             # Final acceptance below still requires the complete reviewed chain.
             prior_routing_test = routing_test.validate(
                 root, routing_test_extension, zswap_transition, membership_transition,
-                send_transition, guarded_deposit_transition)
+                send_transition, guarded_deposit_transition, routing568_source)
         except (OSError, UnicodeError, ValueError, KeyError) as error:
             errors.append(str(error))
     routing_snapshot = ({routing_test.OWNER: prior_routing_test}
@@ -664,6 +673,16 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
                          'reviewed_source_fingerprints': {
                              **evolution['reviewed_source_fingerprints'],
                              **reviewed_shielded_payout['reviewed_source_fingerprints']}}
+    if inequality_test_extension is not None:
+        if routing568_source is None or reviewed_shielded_payout is None:
+            errors.append('inequality test: complete shielded payout570 authority and authenticated current test required')
+        else:
+            report['reviewed_inequality_test_extension'] = {
+                'issue': 571, 'owner': inequality_test.OWNER, 'new_retired_routes': [],
+                'claim': 'one authenticated routing-test correction; unchanged selectors and routes'}
+            evolution = {**evolution, 'reviewed_source_fingerprints': {
+                **evolution['reviewed_source_fingerprints'],
+                inequality_test.OWNER: inequality_test.CURRENT_SHA}}
     if instrumentation is not None:
         errors.extend(validate_instrumentation(root, baseline, instrumentation, baseline_bytes, evolution, prior_probe))
         report['reviewed_instrumentation'] = {
@@ -981,6 +1000,7 @@ def main(argv=None) -> int:
     parser.add_argument('--routing-test-extension', type=Path, help='explicit #568 test-only negative operand adaptation; no retirement')
     parser.add_argument('--reset-payout-transition', type=Path, help='explicit #569 reset payout subsumption after #566 and #568')
     parser.add_argument('--shielded-payout-transition', type=Path, help='explicit #570 shielded payout subsumption after #569')
+    parser.add_argument('--inequality-test-extension', type=Path, help='explicit #571 test-only inequality negative correction; no retirement')
     args = parser.parse_args(argv)
     protected = [args.baseline] + ([args.transition] if args.transition else []) + ([args.instrumentation] if args.instrumentation else []) + ([args.jubjub_transition] if args.jubjub_transition else []) + ([args.call_extension] if args.call_extension else []) + ([args.terminal_transition] if args.terminal_transition else []) + ([args.unit_actions_transition] if args.unit_actions_transition else []) + ([args.context_query_transition] if args.context_query_transition else []) + ([args.kernel_transition] if args.kernel_transition else []) + ([args.composite_transition] if args.composite_transition else []) + ([args.receive_transition] if args.receive_transition else [])
     protected += [args.unit_domain_extension] if args.unit_domain_extension else []
@@ -996,6 +1016,7 @@ def main(argv=None) -> int:
     protected += [args.routing_test_extension] if args.routing_test_extension else []
     protected += [args.reset_payout_transition] if args.reset_payout_transition else []
     protected += [args.shielded_payout_transition] if args.shielded_payout_transition else []
+    protected += [args.inequality_test_extension] if args.inequality_test_extension else []
     if args.output and any(args.output.resolve() == path.resolve() for path in protected):
         parser.error('--output cannot overwrite baseline, transition, instrumentation, or call-extension evidence')
     try:
@@ -1024,7 +1045,8 @@ def main(argv=None) -> int:
         routing_test_extension = json.loads(args.routing_test_extension.read_text()) if args.routing_test_extension else None
         reset_payout_transition = json.loads(args.reset_payout_transition.read_text()) if args.reset_payout_transition else None
         shielded_payout_transition = json.loads(args.shielded_payout_transition.read_text()) if args.shielded_payout_transition else None
-        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension, voting_transition, phase_reset_transition, immediate_send_transition, zswap_transition, membership_transition, send_transition, observation_test_extension, merge_transition, guarded_deposit_transition, routing_test_extension, reset_payout_transition, shielded_payout_transition)
+        inequality_test_extension = json.loads(args.inequality_test_extension.read_text()) if args.inequality_test_extension else None
+        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension, voting_transition, phase_reset_transition, immediate_send_transition, zswap_transition, membership_transition, send_transition, observation_test_extension, merge_transition, guarded_deposit_transition, routing_test_extension, reset_payout_transition, shielded_payout_transition, inequality_test_extension)
     except (OSError, ValueError, TypeError, KeyError) as error:
         parser.exit(2, f'inventory error: {error}\n')
     rendered = json.dumps(report, indent=2) + '\n'

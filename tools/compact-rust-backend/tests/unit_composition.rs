@@ -107,11 +107,33 @@ fn checked_hidden_effects_compose_but_unselected_unsupported_effects_are_refused
                 .contains("own_coin_public_key()?")
         );
 
-        // A still-unsupported expression cannot hide in the same lazy arm.
+        // Generic Boolean inequality is now checked even in the lazy arm.
         circuit(&mut v, "guard")["actions"][index]["otherwise"] = json!({
             "kind":"expression", "value": {
                 "kind":"not_equal", "left":{"kind":"boolean","value":true},
                 "right":{"kind":"boolean","value":false}
+            }
+        });
+        let contract: Contract = serde_json::from_value(v.clone()).unwrap();
+        let output = render_with_capabilities(&contract).unwrap();
+        let capability = output
+            .capabilities
+            .circuits
+            .iter()
+            .find(|c| c.name == "close")
+            .unwrap();
+        assert!(
+            capability.recorded && capability.observed_call,
+            "chunked={chunked}"
+        );
+
+        // A native-valid direct hash outside the checked algebra cannot hide
+        // in the same unselected arm. The unit-level audit tests its old refusal.
+        circuit(&mut v, "guard")["actions"][index]["otherwise"] = json!({
+            "kind":"expression", "value": {
+                "kind":"equal", "left": {
+                    "kind":"keccak256", "value":{"kind":"bytes_literal","bytes":vec![7u8; 32]}
+                }, "right":{"kind":"bytes_literal","bytes":vec![0u8; 32]}
             }
         });
         let contract: Contract = serde_json::from_value(v).unwrap();

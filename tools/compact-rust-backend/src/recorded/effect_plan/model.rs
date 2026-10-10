@@ -145,6 +145,7 @@ pub(super) enum Operation {
     UnsignedSubtract(Value, Value),
     UnsignedMultiply(Value, Value),
     Equal(Value, Value),
+    NotEqual(Value, Value),
     JubjubScalarFromNative(Value),
     EcMulGenerator(Value),
     EcMul {

@@ -164,9 +164,13 @@ pub(super) fn render(
             crate::jubjub_value::Operation::Add(operand(left), operand(right)),
             path,
         )?,
-        Operation::Equal(a, b) => {
+        Operation::Equal(a, b) | Operation::NotEqual(a, b) => {
             let (a, b) = (value(a), value(b));
-            syn::parse_quote!(#a == #b)
+            if matches!(binding.operation, Operation::NotEqual(..)) {
+                syn::parse_quote!(#a != #b)
+            } else {
+                syn::parse_quote!(#a == #b)
+            }
         }
         Operation::DegradeToTransient(input) => {
             let input = value(input);

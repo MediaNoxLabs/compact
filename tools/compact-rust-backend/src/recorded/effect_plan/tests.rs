@@ -10,8 +10,12 @@ mod context_queries;
 mod counter;
 #[path = "tests/declarations.rs"]
 mod declaration_tests;
+#[path = "tests/funded_mint_probe.rs"]
+mod funded_mint_probe;
 #[path = "tests/immediate_send_inclusion.rs"]
 mod immediate_send_inclusion;
+#[path = "tests/inequality.rs"]
+mod inequality;
 #[path = "tests/jubjub.rs"]
 mod jubjub;
 #[path = "tests/kernel.rs"]

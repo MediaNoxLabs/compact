@@ -284,7 +284,7 @@ fn recorded_product_guard_requires_closed_pure_body_and_counter_one() {
 }
 
 #[test]
-fn boolean_pair_hash_cell_assertion_records_read_before_counter_write() {
+fn boolean_pair_and_scalar_hash_assertions_record_read_before_counter_write() {
     let vector = Type::Vector {
         element: Box::new(Type::Field),
         length: 2,
@@ -364,14 +364,34 @@ fn boolean_pair_hash_cell_assertion_records_read_before_counter_write() {
             },
         ],
     };
-    let rendered = render_with_capabilities(&contract).unwrap();
-    assert!(rendered.capabilities.circuits[0].recorded);
-    assert!(rendered.capabilities.circuits[0].observed_call);
-    let source = rendered.source.split("pub mod recorded").nth(1).unwrap();
-    let hash = source.find("runtime::transient_hash(").unwrap();
-    let read = source.find("record_read(frame)").unwrap();
-    let write = source.find("record_increment(frame").unwrap();
-    assert!(hash < read && read < write);
+    fn assert_ordered_recording(contract: &Contract, label: &str) {
+        let rendered = render_with_capabilities(contract).unwrap();
+        let capability = rendered
+            .capabilities
+            .circuits
+            .iter()
+            .find(|circuit| circuit.name == "check")
+            .unwrap();
+        assert!(capability.recorded && capability.observed_call, "{label}");
+        let source = rendered.source.split("pub mod recorded").nth(1).unwrap();
+        let hash = source.find("runtime::transient_hash(").unwrap();
+        let read = source.find("record_read(frame)").unwrap();
+        let write = source.find("record_increment(frame").unwrap();
+        assert!(hash < read && read < write, "{label}");
+        if let Some(base) = std::env::var_os("COMPACT_HASH_GUARD_PROBE_OUTPUT") {
+            let base = std::path::PathBuf::from(base);
+            std::fs::create_dir_all(&base).unwrap();
+            let directory = base.join(label);
+            std::fs::create_dir(&directory).expect("hash guard exports require a fresh directory");
+            std::fs::write(
+                directory.join("compact-rust-ir.json"),
+                serde_json::to_vec_pretty(contract).unwrap(),
+            )
+            .unwrap();
+            std::fs::write(directory.join("lib.rs"), rendered.source).unwrap();
+        }
+    }
+    assert_ordered_recording(&contract, "boolean-pair-hash");
 
     let StateReturn::Expression { value } = &mut contract.stateful_circuits[0].return_value else {
         unreachable!();
@@ -382,16 +402,10 @@ fn boolean_pair_hash_cell_assertion_records_read_before_counter_write() {
     **left = Expr::TransientHash {
         value: Box::new(Expr::FieldLiteral { value: "7".into() }),
     };
-    let rejected = render_with_capabilities(&contract).unwrap();
-    assert!(!rejected.capabilities.circuits[0].recorded);
-    assert_eq!(
-        rejected.capabilities.circuits[0]
-            .recording_unavailable
-            .as_ref()
-            .unwrap()
-            .ir_node,
-        "StateAction::Assert"
-    );
+    // Scalar Field hashing is already in the generic transient-hash domain.
+    // Typed NotEqual now composes it with the same ledger read and assertion;
+    // the earlier Boolean-pair recognizer's argument shape is not an ABI limit.
+    assert_ordered_recording(&contract, "scalar-field-hash");
 }
 
 #[test]

@@ -175,12 +175,38 @@ fn unselected_checked_effect_is_supported_but_unsupported_effect_keeps_legacy_pr
                 .contains("own_coin_public_key()?")
         );
 
-        // The old auditor supports pure inequality, so its operands must
-        // retain private observations to exercise a genuine shared refusal.
+        // Keep the former refusal as an explicit checked-composition gain:
+        // the old auditor still rejects private-key operands inside inequality.
         let observed_key = json!({"kind":"native_witness_call", "builtin":"own_public_key"});
         circuit(&mut v, "guard")["actions"][index]["otherwise"] = json!({
             "kind":"expression", "value": {
                 "kind":"not_equal", "left":observed_key.clone(), "right":observed_key
+            }
+        });
+        let still_rejected = rejected(v.clone(), "close");
+        assert_eq!(still_rejected.gap.path, r.gap.path);
+        let c: Contract = serde_json::from_value(v.clone()).unwrap();
+        let result = render_with_capabilities(&c).unwrap();
+        let capability = result
+            .capabilities
+            .circuits
+            .iter()
+            .find(|x| x.name == "close")
+            .unwrap();
+        assert!(capability.recorded && capability.observed_call);
+        assert!(capability.recording_unavailable.is_none());
+
+        // A literal-only hash would make the helper locally auditable. Retain
+        // the private key observation so the whole legacy composition root
+        // refuses this arm, independently of the direct checked Keccak gap.
+        circuit(&mut v, "guard")["actions"][index]["otherwise"] = json!({
+            "kind":"expression", "value": {
+                "kind":"equal", "left": {
+                    "kind":"keccak256", "value":{
+                        "kind":"struct_field", "value":observed_key.clone(),
+                        "field":"bytes", "index":0
+                    }
+                }, "right":{"kind":"bytes_literal","bytes":vec![0u8; 32]}
             }
         });
         let still_rejected = rejected(v.clone(), "close");
@@ -428,4 +454,36 @@ fn direct_root_call_argument_keeps_effects_and_unsupported_nested_audit_reason()
     let gap = capability.recording_unavailable.as_ref().unwrap();
     assert_eq!(gap.path, still_rejected.gap.path);
     assert_eq!(gap.ir_node, "Expr::TransientHash");
+}
+
+#[test]
+fn flat_and_chunked_direct_hash_lazy_arms_have_complete_old_refusals() {
+    for name in ["flat", "chunked"] {
+        let mut v = fixture(name);
+        let actions = circuit(&mut v, "guard")["actions"].as_array_mut().unwrap();
+        let index = actions.len();
+        actions.push(json!({
+            "kind":"if", "condition":{"kind":"boolean","value":true},
+            "then":{"kind":"sequence","actions":[]},
+            "otherwise":{"kind":"expression", "value":{
+                "kind":"equal",
+                "left":{"kind":"keccak256", "value":{"kind":"bytes_literal", "bytes":vec![7u8;32]}},
+                "right":{"kind":"bytes_literal", "bytes":vec![0u8;32]}
+            }}
+        }));
+        let refusal = rejected(v.clone(), "close");
+        assert_eq!(
+            refusal.gap.path,
+            format!("actions[0].callee[\"guard\"].actions[{index}].otherwise")
+        );
+        let c: Contract = serde_json::from_value(v).unwrap();
+        let output = render_with_capabilities(&c).unwrap();
+        let capability = output
+            .capabilities
+            .circuits
+            .iter()
+            .find(|c| c.name == "close")
+            .unwrap();
+        assert!(!capability.recorded && !capability.observed_call);
+    }
 }

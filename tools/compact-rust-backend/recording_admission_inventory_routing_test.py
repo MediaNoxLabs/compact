@@ -27,11 +27,11 @@ def predecessor_source(source, extension):
     return previous
 
 
-def validate(root, extension, zswap, membership, send, guarded):
+def validate(root, extension, zswap, membership, send, guarded, source=None):
     for key, predecessor in [('zswap', zswap), ('membership', membership), ('send', send), ('guarded', guarded)]:
         if predecessor is None or canonical(predecessor) != PRIOR_MANIFESTS[key]:
             raise ValueError('routing test: frozen predecessor changed or unavailable: ' + key)
     if (membership['reviewed_source_fingerprints'][OWNER] != PRIOR_SHA
             or send['reviewed_source_fingerprints'][OWNER] != PRIOR_SHA):
         raise ValueError('routing test: prior owner is not bound to historical transitions')
-    return predecessor_source((root / OWNER).read_text(), extension)
+    return predecessor_source((root / OWNER).read_text() if source is None else source, extension)

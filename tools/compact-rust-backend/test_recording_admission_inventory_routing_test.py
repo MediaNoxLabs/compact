@@ -21,7 +21,7 @@ class RoutingTestExtensionTests(unittest.TestCase):
         prior_tests.GuardedDepositTransitionTests.setUp(self)
         self.routing_extension = json.loads(previous.ROUTING_TEST_EXTENSION.read_text())
         self.test_owner = self.root / routing.OWNER
-        self.test_owner.write_bytes((inventory.ROOT / routing.OWNER).read_bytes())
+        self.test_owner.write_text(previous.inequality_checkpoint_source(inventory.ROOT))
 
     def report(self):
         return inventory.verify(

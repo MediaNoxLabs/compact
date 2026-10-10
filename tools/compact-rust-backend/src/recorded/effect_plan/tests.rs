@@ -446,3 +446,6 @@ mod set_operations;
 
 #[path = "tests/unsigned_arithmetic.rs"]
 mod unsigned_arithmetic;
+
+#[path = "tests/transient_crypto.rs"]
+mod transient_crypto;

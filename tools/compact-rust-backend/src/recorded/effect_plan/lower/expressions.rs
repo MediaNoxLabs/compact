@@ -77,6 +77,12 @@ impl Lowerer<'_> {
                 }
                 (Operation::KernelSelf, ty.clone())
             }
+            Expr::DegradeToTransient { .. }
+            | Expr::UpgradeFromTransient { .. }
+            | Expr::TransientHash { .. }
+            | Expr::TransientCommit { .. } => {
+                self.transient_crypto(expression, scope, bindings, path)?
+            }
             Expr::FieldToBytes32 { value } => {
                 let value = self.expression(value, scope, bindings, &format!("{path}.value"))?;
                 if value.ty != Type::Field {

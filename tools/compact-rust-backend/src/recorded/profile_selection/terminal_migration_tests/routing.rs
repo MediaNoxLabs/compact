@@ -70,7 +70,9 @@ fn unsupported_in_domain_body_keeps_independent_later_attempts() {
     contract.stateful_circuits[0].actions.clear();
     contract.stateful_circuits[0].return_value = StateReturn::Expression {
         value: Expr::TransientHash {
-            value: Box::new(parameter("seed")),
+            value: Box::new(Expr::Default {
+                ty: Type::OpaqueString,
+            }),
         },
     };
     let context = Context::new(&contract);

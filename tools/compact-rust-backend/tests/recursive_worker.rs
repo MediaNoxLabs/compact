@@ -221,9 +221,8 @@ fn check_native_nested(family: &str) {
             .iter()
             .find(|c| c.name == "nested")
             .expect("native entry capability");
-        // Ordinary Field arithmetic now composes through checked recording.
-        // Direct hash/mixed expressions remain outside its current operations.
-        let expected_recording = family == "add";
+        // Arithmetic and fixed-FAB transient hashes compose, including nested mixtures.
+        let expected_recording = true;
         assert_eq!(
             entry.recorded, expected_recording,
             "family={family}, depth={depth}"

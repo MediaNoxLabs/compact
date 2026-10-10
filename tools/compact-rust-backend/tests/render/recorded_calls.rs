@@ -476,10 +476,23 @@ fn pure_field_calls_preserve_unit_and_record_ordinary_hashed_returns() {
             .contains("crate::pure_circuits::literalField()?")
     );
 
-    // Rich helper internals are certified, while this direct operation remains
-    // outside the current checked recording vocabulary.
+    // Both certified helpers and direct fixed-FAB hashes are available.
     contract.stateful_circuits[0].return_value = StateReturn::Expression {
         value: contract.circuits[1].body.clone(),
+    };
+    assert!(
+        render_with_capabilities(&contract)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
+    );
+    contract.stateful_circuits[0].return_value = StateReturn::Expression {
+        value: Expr::TransientHash {
+            value: Box::new(Expr::Default {
+                ty: Type::OpaqueString,
+            }),
+        },
     };
     let rejected = render_with_capabilities(&contract).unwrap();
     assert!(!rejected.capabilities.circuits[0].recorded);

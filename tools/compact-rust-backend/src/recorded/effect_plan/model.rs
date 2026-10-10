@@ -96,6 +96,14 @@ pub(super) enum Operation {
     FieldToBytes32(Value),
     /// Persistent FAB hashing of independently checked fixed-byte products.
     PersistentHash(Value),
+    /// Official ledger8 digest/field conversions and transient FAB operations.
+    DegradeToTransient(Value),
+    UpgradeFromTransient(Value),
+    TransientHash(Value),
+    TransientCommit {
+        value: Value,
+        opening: Value,
+    },
     Add(Value, Value),
     /// Checked small unsigned arithmetic; operand and result bounds are independent.
     UnsignedAdd(Value, Value),

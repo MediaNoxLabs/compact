@@ -204,7 +204,7 @@ fn finite_counter_hash_grammar_variants_pass_complete_old_plan_before_inclusion(
 }
 
 #[test]
-fn whole_old_voting_plan_progresses_to_transient_upgrade() {
+fn whole_old_voting_plan_progresses_to_merkle_insertion() {
     let contract = source();
     let env = Environment::new(&contract);
     env.old_first("retained whole voting root");
@@ -212,7 +212,7 @@ fn whole_old_voting_plan_progresses_to_transient_upgrade() {
         panic!("expected an unsupported source operation, not a checked-plan invariant failure")
     };
     eprintln!("old-first voting gap: {gap:?}");
-    assert_eq!(gap.ir_node, "Expr::UpgradeFromTransient");
+    assert_eq!(gap.ir_node, "StateAction::MerkleInsert");
 }
 
 fn phase_assertion(contract: &mut Contract) -> &mut Expr {
@@ -231,7 +231,7 @@ fn phase_assertion(contract: &mut Contract) -> &mut Expr {
 }
 
 #[test]
-fn old_first_optional_string_cell_observations_progress_to_transient_upgrade() {
+fn old_first_optional_string_cell_observations_progress_to_merkle_insertion() {
     // Three finite Boolean contexts preserve one Cell read and the original
     // local_state witness. Each complete old planner acceptance is mandatory.
     for mode in ["presence", "identity", "equal_false"] {
@@ -279,7 +279,7 @@ fn old_first_optional_string_cell_observations_progress_to_transient_upgrade() {
             panic!("expected a remaining unsupported source operation")
         };
         eprintln!("old-first optional-string {mode} next gap: {gap:?}");
-        assert_eq!(gap.ir_node, "Expr::UpgradeFromTransient", "{mode}: {gap:?}");
+        assert_eq!(gap.ir_node, "StateAction::MerkleInsert", "{mode}: {gap:?}");
     }
 }
 
@@ -432,6 +432,6 @@ fn whole_old_voting_accepts_wrapper_and_qualified_membership_before_isolated_inc
             panic!("remaining whole voting operation must be a source refusal")
         };
         eprintln!("old-first membership {ty:?}, next whole-root gap: {gap:?}");
-        assert_eq!(gap.ir_node, "Expr::UpgradeFromTransient", "{gap:?}");
+        assert_eq!(gap.ir_node, "StateAction::MerkleInsert", "{gap:?}");
     }
 }

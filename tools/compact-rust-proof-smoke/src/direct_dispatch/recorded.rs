@@ -709,3 +709,17 @@ pub(super) fn effect_plan_unsigned_arithmetic(
     }
     crate::effect_plan_unsigned_arithmetic::run(Path::new(&root))
 }
+
+pub(super) fn effect_plan_transient_crypto(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let root = arguments
+        .next()
+        .ok_or("usage: compact-rust-proof-smoke --effect-plan-transient-crypto <proof-output>")?;
+    if arguments.next().is_some() {
+        return Err(
+            "usage: compact-rust-proof-smoke --effect-plan-transient-crypto <proof-output>".into(),
+        );
+    }
+    crate::effect_plan_transient_crypto::run(Path::new(&root))
+}

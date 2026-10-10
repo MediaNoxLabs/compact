@@ -386,7 +386,7 @@ fn direct_root_call_argument_keeps_effects_and_unsupported_nested_audit_reason()
     let binding = &mut circuit(&mut v, "close")["actions"][0]["arguments"][0]["bindings"][0];
     binding["ty"] = json!({"kind":"field"});
     binding["value"] =
-        json!({"kind":"transient_hash", "value":{"kind":"field_literal","value":"3"}});
+        json!({"kind":"transient_hash", "value":{"kind":"default","ty":{"kind":"opaque_string"}}});
     let still_rejected = rejected(v.clone(), "close");
     assert_eq!(still_rejected.gap.path, r.gap.path);
     let c: Contract = serde_json::from_value(v).unwrap();

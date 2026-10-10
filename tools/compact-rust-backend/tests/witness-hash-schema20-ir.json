@@ -1,0 +1,357 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+  ],
+  "witnesses": [
+    {
+      "name": "echo",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "source": {
+        "file": "witness_hash.compact",
+        "line": 18,
+        "column": 1
+      }
+    },
+    {
+      "name": "echo_bytes",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result": {
+        "kind": "bytes",
+        "length": 32
+      },
+      "source": {
+        "file": "witness_hash.compact",
+        "line": 19,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "hash_echo",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "transient_hash",
+          "value": {
+            "kind": "witness_call",
+            "name": "echo",
+            "arguments": [
+              {
+                "kind": "coerce",
+                "value": {
+                  "kind": "parameter",
+                  "name": "value"
+                },
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "witness_hash.compact",
+        "line": 21,
+        "column": 1
+      }
+    },
+    {
+      "name": "commit_echo",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "transient_commit",
+          "value": {
+            "kind": "witness_call",
+            "name": "echo",
+            "arguments": [
+              {
+                "kind": "coerce",
+                "value": {
+                  "kind": "parameter",
+                  "name": "value"
+                },
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          },
+          "opening": {
+            "kind": "witness_call",
+            "name": "echo",
+            "arguments": [
+              {
+                "kind": "coerce",
+                "value": {
+                  "kind": "parameter",
+                  "name": "value"
+                },
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "witness_hash.compact",
+        "line": 25,
+        "column": 1
+      }
+    },
+    {
+      "name": "persistent_hash_echo",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "bytes",
+        "length": 32
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "persistent_hash",
+          "value": {
+            "kind": "witness_call",
+            "name": "echo",
+            "arguments": [
+              {
+                "kind": "coerce",
+                "value": {
+                  "kind": "parameter",
+                  "name": "value"
+                },
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "witness_hash.compact",
+        "line": 29,
+        "column": 1
+      }
+    },
+    {
+      "name": "degrade_hash_echo",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "degrade_to_transient",
+          "value": {
+            "kind": "persistent_hash",
+            "value": {
+              "kind": "witness_call",
+              "name": "echo",
+              "arguments": [
+                {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "value"
+                  },
+                  "ty": {
+                    "kind": "field"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "witness_hash.compact",
+        "line": 33,
+        "column": 1
+      }
+    },
+    {
+      "name": "upgrade_echo",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "bytes",
+        "length": 32
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "upgrade_from_transient",
+          "value": {
+            "kind": "witness_call",
+            "name": "echo",
+            "arguments": [
+              {
+                "kind": "coerce",
+                "value": {
+                  "kind": "parameter",
+                  "name": "value"
+                },
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "witness_hash.compact",
+        "line": 37,
+        "column": 1
+      }
+    },
+    {
+      "name": "persistent_commit_echo",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "field"
+          }
+        },
+        {
+          "name": "opening",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result": {
+        "kind": "bytes",
+        "length": 32
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "persistent_commit",
+          "value": {
+            "kind": "witness_call",
+            "name": "echo",
+            "arguments": [
+              {
+                "kind": "coerce",
+                "value": {
+                  "kind": "parameter",
+                  "name": "value"
+                },
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          },
+          "opening": {
+            "kind": "witness_call",
+            "name": "echo_bytes",
+            "arguments": [
+              {
+                "kind": "coerce",
+                "value": {
+                  "kind": "parameter",
+                  "name": "opening"
+                },
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              }
+            ]
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "witness_hash.compact",
+        "line": 41,
+        "column": 1
+      }
+    }
+  ]
+}

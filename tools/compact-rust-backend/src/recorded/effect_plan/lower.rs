@@ -21,6 +21,7 @@ mod kernel;
 mod ordinary;
 mod pure;
 mod sets;
+mod transient;
 mod zswap;
 use super::pure_certification::{Certificates, Certifier};
 

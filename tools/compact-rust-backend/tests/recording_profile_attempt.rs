@@ -46,15 +46,6 @@ fn send_gap(value: Value) -> compact_rust_backend::RecordingGap {
     send.recording_unavailable.clone().unwrap()
 }
 
-fn set_slot(value: &mut Value) {
-    value["ledger_fields"] = json!([{
-        "id": "coins",
-        "index": 0,
-        "path": [0],
-        "declaration": {"kind": "set", "ty": value["stateful_circuits"][0]["parameters"][0]["ty"]}
-    }]);
-}
-
 #[test]
 fn admitted_send_profiles_keep_native_and_recorded_surface() {
     let source = rendered(source());
@@ -68,38 +59,36 @@ fn admitted_send_profiles_keep_native_and_recorded_surface() {
 fn action_gap_keeps_precedence_over_return_profile_diagnostic() {
     let mut value = source();
     value["stateful_circuits"][1]["actions"] = json!([{
-        "kind": "expression", "value": {"kind": "boolean", "value": true}
+        "kind": "expression", "value": {"kind":"transient_hash", "value":{"kind":"default", "ty":{"kind":"opaque_string"}}}
     }]);
     let original = value["stateful_circuits"][1]["return_value"]["value"].take();
     value["stateful_circuits"][1]["return_value"]["value"] = json!({
         "kind": "let", "bindings": [{
-            "name": "hidden", "ty": {"kind": "unsigned", "max": "18446744073709551615"},
-            "value": {"kind": "set_size", "field": "coins", "index": 0}
+            "name": "hidden", "ty": {"kind": "field"},
+            "value": {"kind": "transient_hash", "value": {"kind":"default", "ty":{"kind":"opaque_string"}}}
         }], "body": original
     });
-    set_slot(&mut value);
     let gap = send_gap(value);
     assert_eq!(gap.code, RecordingGapCode::UnsupportedAction);
     assert_eq!(gap.path, "actions[0]");
 }
 
 #[test]
-fn rejected_unused_set_size_reports_its_exact_binding() {
+fn rejected_unused_dynamic_hash_reports_its_exact_binding() {
     let mut value = source();
     let original = value["stateful_circuits"][1]["return_value"]["value"].take();
     value["stateful_circuits"][1]["return_value"]["value"] = json!({
         "kind": "let",
         "bindings": [{
-            "name": "hidden", "ty": {"kind": "unsigned", "max": "18446744073709551615"},
-            "value": {"kind": "set_size", "field": "coins", "index": 0}
+            "name": "hidden", "ty": {"kind": "field"},
+            "value": {"kind": "transient_hash", "value": {"kind":"default", "ty":{"kind":"opaque_string"}}}
         }],
         "body": original
     });
-    set_slot(&mut value);
     let gap = send_gap(value);
     assert_eq!(gap.code, RecordingGapCode::UnsupportedExpression);
-    assert_eq!(gap.ir_node, "Expr::SetSize");
-    assert_eq!(gap.path, "return_value.value.bindings[0].value");
+    assert_eq!(gap.ir_node, "Expr::Default");
+    assert_eq!(gap.path, "return_value.value.bindings[0].value.value");
 }
 
 #[test]
@@ -111,31 +100,31 @@ fn rejected_unselected_branch_and_nested_argument_keep_source_paths() {
         "kind": "if", "condition": {"kind": "boolean", "value": true},
         "then": original,
         "otherwise": {"kind": "let", "bindings": [{
-            "name": "hidden", "ty": {"kind": "unsigned", "max": "18446744073709551615"},
-            "value": {"kind": "set_size", "field": "coins", "index": 0}
+            "name": "hidden", "ty": {"kind": "field"},
+            "value": {"kind": "transient_hash", "value": {"kind":"default", "ty":{"kind":"opaque_string"}}}
         }], "body": {"kind": "default", "ty": result_ty}}
     });
-    set_slot(&mut branch);
     let gap = send_gap(branch);
     assert_eq!(gap.code, RecordingGapCode::UnsupportedExpression);
-    assert_eq!(gap.path, "return_value.value.otherwise.bindings[0].value");
+    assert_eq!(
+        gap.path,
+        "return_value.value.otherwise.bindings[0].value.value"
+    );
 
     let mut argument = source();
     let first = argument["stateful_circuits"][1]["return_value"]["value"]["arguments"][0].take();
     argument["stateful_circuits"][1]["return_value"]["value"]["arguments"][0] = json!({
         "kind": "let", "bindings": [{
-            "name": "hidden", "ty": {"kind": "boolean"},
-            "value": {"kind": "set_member", "field": "coins", "index": 0,
-                "value": {"kind": "parameter", "name": "input"}}
+            "name": "hidden", "ty": {"kind": "field"},
+            "value": {"kind":"transient_hash", "value":{"kind":"default", "ty":{"kind":"opaque_string"}}}
         }], "body": first
     });
-    set_slot(&mut argument);
     let gap = send_gap(argument);
     assert_eq!(gap.code, RecordingGapCode::UnsupportedExpression);
-    assert_eq!(gap.ir_node, "Expr::SetMember");
+    assert_eq!(gap.ir_node, "Expr::Default");
     assert_eq!(
         gap.path,
-        "return_value.value.arguments[0].bindings[0].value"
+        "return_value.value.arguments[0].bindings[0].value.value"
     );
 }
 

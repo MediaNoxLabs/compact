@@ -12,7 +12,9 @@ mod domain;
 mod persistent;
 mod pure;
 mod sets;
+mod transient;
 pub(super) use persistent::hash_input_type;
+pub(super) use transient::fixed_fab_type;
 
 struct Validation {
     allocated: HashSet<usize>,
@@ -273,6 +275,23 @@ fn block(
             Operation::FieldToBytes32(value) => {
                 use_value(value)?;
                 value.ty == Type::Field && *ty == (Type::Bytes { length: 32 })
+            }
+            Operation::DegradeToTransient(value) => {
+                use_value(value)?;
+                value.ty == (Type::Bytes { length: 32 }) && *ty == Type::Field
+            }
+            Operation::UpgradeFromTransient(value) => {
+                use_value(value)?;
+                value.ty == Type::Field && *ty == (Type::Bytes { length: 32 })
+            }
+            Operation::TransientHash(value) => {
+                use_value(value)?;
+                fixed_fab_type(&value.ty) && *ty == Type::Field
+            }
+            Operation::TransientCommit { value, opening } => {
+                use_value(value)?;
+                use_value(opening)?;
+                fixed_fab_type(&value.ty) && opening.ty == Type::Field && *ty == Type::Field
             }
             Operation::PersistentHash(value) => {
                 use_value(value)?;

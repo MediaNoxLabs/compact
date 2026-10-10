@@ -552,7 +552,7 @@ fn conditional_assertion_keeps_typed_equality_and_branch_local_observations() {
     selected.visit_file_mut(&mut syntax);
     assert_eq!(selected.0, 1);
 
-    // A direct transient hash is still outside the checked recording vocabulary.
+    // Dynamic opaque hashing remains outside the qualified fixed-FAB domain.
     let StateAction::Assert {
         condition: Expr::If { then, .. },
         ..
@@ -562,7 +562,9 @@ fn conditional_assertion_keeps_typed_equality_and_branch_local_observations() {
     };
     **then = Expr::Equal {
         left: Box::new(Expr::TransientHash {
-            value: Box::new(Expr::FieldLiteral { value: "1".into() }),
+            value: Box::new(Expr::Default {
+                ty: Type::OpaqueString,
+            }),
         }),
         right: Box::new(Expr::FieldLiteral { value: "1".into() }),
     };

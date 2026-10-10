@@ -141,7 +141,8 @@ fn recorded_pair_hash_bindings_require_closed_typed_field_literals() {
         }),
     };
     let rendered = render_with_capabilities(&contract).unwrap();
-    assert!(rendered.capabilities.circuits.iter().all(|c| !c.recorded));
+    assert!(!rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[1].recorded);
 }
 
 #[test]
@@ -400,13 +401,23 @@ fn certified_pure_hash_bridge_records_body_variants_but_direct_hashes_remain_bou
         body.find("pure_circuits::bridge()?").unwrap() < body.find("record_write(frame").unwrap()
     );
 
-    // Direct recorded hash lowering still has its own bounded domain. Pure
-    // certification must not accidentally authorize an unrelated IR operation.
+    // Direct scalar hashes now compose too; dynamic opaque hashes remain outside
+    // the qualified fixed-FAB domain.
     let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
         unreachable!()
     };
     bindings[0].value = Expr::TransientHash {
         value: Box::new(Expr::FieldLiteral { value: "3".into() }),
+    };
+    let accepted = render_with_capabilities(&contract).unwrap();
+    assert!(accepted.capabilities.circuits[0].recorded);
+    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    bindings[0].value = Expr::TransientHash {
+        value: Box::new(Expr::Default {
+            ty: Type::OpaqueString,
+        }),
     };
     let rejected = render_with_capabilities(&contract).unwrap();
     assert!(!rejected.capabilities.circuits[0].recorded);

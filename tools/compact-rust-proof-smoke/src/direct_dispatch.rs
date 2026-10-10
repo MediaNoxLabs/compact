@@ -117,6 +117,9 @@ pub(super) fn try_run(
         ("--effect-plan-unsigned-arithmetic", _) => {
             Some(recorded::effect_plan_unsigned_arithmetic(arguments))
         }
+        ("--effect-plan-transient-crypto", _) => {
+            Some(recorded::effect_plan_transient_crypto(arguments))
+        }
         ("--effect-plan-counter", _) => Some(recorded::effect_plan_counter(arguments)),
         ("--effect-plan-counter-only", _) => Some(recorded::effect_plan_counter_only(arguments)),
         ("--effect-plan-jubjub", _) => Some(recorded::effect_plan_jubjub(arguments)),

@@ -152,6 +152,25 @@ pub(super) fn render(
             let (a, b) = (value(a), value(b));
             syn::parse_quote!(#a == #b)
         }
+        Operation::DegradeToTransient(input) => {
+            let input = value(input);
+            syn::parse_quote!(runtime::degrade_to_transient(#input))
+        }
+        Operation::UpgradeFromTransient(input) => {
+            let input = value(input);
+            syn::parse_quote!(runtime::upgrade_from_transient(#input))
+        }
+        Operation::TransientHash(input) => {
+            let input = value(input);
+            syn::parse_quote!(runtime::transient_hash(#input))
+        }
+        Operation::TransientCommit {
+            value: input,
+            opening,
+        } => {
+            let (input, opening) = (value(input), value(opening));
+            syn::parse_quote!(runtime::transient_commit(#input, #opening))
+        }
         Operation::UnsignedAdd(a, b)
         | Operation::UnsignedSubtract(a, b)
         | Operation::UnsignedMultiply(a, b) => {

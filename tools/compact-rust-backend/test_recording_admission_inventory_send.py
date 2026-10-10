@@ -19,11 +19,12 @@ class SendTransitionTests(unittest.TestCase):
     def setUp(self):
         prior_tests.MembershipTransitionTests.setUp(self)
         self.send_transition = json.loads(previous.SEND_TRANSITION.read_text())
+        predecessor = previous.merge_checkpoint_sources(inventory.ROOT)
         for owner in [*send.REVIEWED_OWNERS, *self.send_transition['test_sources_sha256'],
                       *self.send_transition['shared_sources_sha256']]:
             path = self.root / owner
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes((inventory.ROOT / owner).read_bytes())
+            path.write_bytes(predecessor[owner].encode() if owner in predecessor else (inventory.ROOT / owner).read_bytes())
 
     def report(self):
         return inventory.verify(

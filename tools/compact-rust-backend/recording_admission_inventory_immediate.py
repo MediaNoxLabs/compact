@@ -161,7 +161,8 @@ def validate(baseline, transition, baseline_bytes, phase, voting, unit):
     return errors
 
 
-def check_sources(root, sources, transition):
+def check_sources(root, sources, transition, prior_merge=None):
+    """A later authenticated retirement may supply the exact former merge owner."""
     errors = []
     test_users = {TYPED, IMMEDIATE, 'tools/compact-rust-backend/src/recorded/typed_plan/voting_commit.rs'}
     for owner, source in sources.items():
@@ -199,7 +200,10 @@ def check_sources(root, sources, transition):
             if digest(function(module, marker).encode()) != expected:
                 errors.append('immediate retirement: shared helper changed: ' + marker)
         for owner, expected in SHARED_CALLERS.items():
-            if digest((root / owner).read_bytes()) != expected:
+            data = (prior_merge.encode() if prior_merge is not None and owner ==
+                    'tools/compact-rust-backend/src/recorded/typed_plan/shielded_merge.rs'
+                    else (root / owner).read_bytes())
+            if digest(data) != expected:
                 errors.append('immediate retirement: shared caller changed: ' + owner)
         if digest(function(sources.get(SELECTOR, ''), COMPOSITE).encode()) != COMPOSITE_SHA:
             errors.append('immediate retirement: existing composite domain changed')

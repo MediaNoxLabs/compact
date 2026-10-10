@@ -497,3 +497,6 @@ mod shielded_send_probe;
 
 #[path = "tests/internal_interfaces.rs"]
 mod internal_interfaces;
+
+#[path = "tests/whole_merge_inclusion.rs"]
+mod whole_merge_inclusion;

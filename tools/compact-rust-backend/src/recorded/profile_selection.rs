@@ -74,6 +74,10 @@ mod membership_migration_tests;
 #[path = "profile_selection/send_migration_tests.rs"]
 mod send_migration_tests;
 
+#[cfg(test)]
+#[path = "profile_selection/merge_migration_tests.rs"]
+mod merge_migration_tests;
+
 /// An admitted step sequence and the evidence retained from declined profiles.
 /// Legacy organizers have no typed result; absence of steps permits legacy
 /// action lowering. The caller owns whether a retained gap can refine a failure.
@@ -519,18 +523,6 @@ pub(super) fn select(
                 record_option!(
                     "selector.guarded-deposit",
                     typed_plan::lower_guarded_deposit(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                        circuits,
-                    )
-                )
-            })
-            .or_else(|| {
-                record_option!(
-                    "selector.shielded-merge",
-                    typed_plan::lower_shielded_merge(
                         circuit,
                         ledger_fields,
                         witnesses,

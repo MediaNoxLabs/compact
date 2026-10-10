@@ -1823,6 +1823,7 @@ pub(super) fn lower_shielded_send_checked<'a>(
     }
 }
 
+#[cfg(test)]
 pub(super) fn lower_shielded_merge<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,

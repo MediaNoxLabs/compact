@@ -21,6 +21,12 @@ use super::*;
 use compact_rust_adt_set_qualified_coin_info_fixture::ledger_contract as contract;
 
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
+    // Pair the complete compiler input before key loading or deployment.
+    // This checks input identity, not authenticated proving-key provenance.
+    counter_scenario::validate_ir(
+        &std::fs::read(root.join("contract/compact-rust-ir.json"))?,
+        compact_rust_adt_set_qualified_coin_info_fixture::RETAINED_IR,
+    )?;
     let name = "test_QualifiedShieldedCoinInfo";
     let mut rng = StdRng::seed_from_u64(0x0170_5153);
     let initial = contract::initial_state(ConstructorContext::new(()))?;

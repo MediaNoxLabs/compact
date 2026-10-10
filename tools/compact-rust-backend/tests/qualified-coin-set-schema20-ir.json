@@ -1,0 +1,231 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "coins",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "set",
+        "ty": {
+          "kind": "struct",
+          "name": "QualifiedShieldedCoinInfo",
+          "fields": [
+            {
+              "name": "nonce",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              }
+            },
+            {
+              "name": "color",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              }
+            },
+            {
+              "name": "value",
+              "ty": {
+                "kind": "unsigned",
+                "max": "340282366920938463463374607431768211455"
+              }
+            },
+            {
+              "name": "mt_index",
+              "ty": {
+                "kind": "unsigned",
+                "max": "18446744073709551615"
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "qualified_coin_set_oracle.compact",
+        "line": 18,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "insert_coin",
+      "parameters": [
+        {
+          "name": "coin",
+          "ty": {
+            "kind": "struct",
+            "name": "ShieldedCoinInfo",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "color",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "340282366920938463463374607431768211455"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "recipient",
+          "ty": {
+            "kind": "struct",
+            "name": "Either",
+            "fields": [
+              {
+                "name": "is_left",
+                "ty": {
+                  "kind": "boolean"
+                }
+              },
+              {
+                "name": "left",
+                "ty": {
+                  "kind": "struct",
+                  "name": "ZswapCoinPublicKey",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "right",
+                "ty": {
+                  "kind": "struct",
+                  "name": "ContractAddress",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "set_insert_coin",
+          "field": "coins",
+          "index": 0,
+          "coin": {
+            "kind": "parameter",
+            "name": "coin"
+          },
+          "recipient": {
+            "kind": "parameter",
+            "name": "recipient"
+          }
+        }
+      ],
+      "source": {
+        "file": "qualified_coin_set_oracle.compact",
+        "line": 20,
+        "column": 1
+      }
+    },
+    {
+      "name": "contains",
+      "parameters": [
+        {
+          "name": "coin",
+          "ty": {
+            "kind": "struct",
+            "name": "QualifiedShieldedCoinInfo",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "color",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "340282366920938463463374607431768211455"
+                }
+              },
+              {
+                "name": "mt_index",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "18446744073709551615"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "return_value": {
+        "kind": "set_member",
+        "field": "coins",
+        "index": 0,
+        "value": {
+          "kind": "parameter",
+          "name": "coin"
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "qualified_coin_set_oracle.compact",
+        "line": 27,
+        "column": 1
+      }
+    }
+  ]
+}

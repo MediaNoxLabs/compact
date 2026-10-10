@@ -445,6 +445,9 @@ impl Lowerer<'_> {
             StateAction::CellWriteCoin { .. } => {
                 self.cell_write_coin(action, scope, bindings, path)?;
             }
+            StateAction::SetInsertCoin { .. } => {
+                self.set_insert_coin(action, scope, bindings, path)?;
+            }
             StateAction::CounterIncrement { .. }
             | StateAction::CounterDecrement { .. }
             | StateAction::CounterReset { .. } => {

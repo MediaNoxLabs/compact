@@ -65,6 +65,9 @@ pub(super) fn try_run(
         ("--wallet-funded-receive", _) => Some(shielded::wallet_funded_receive(arguments)),
         ("--kernel-shielded-effects", _) => Some(shielded::kernel_shielded_effects(arguments)),
         ("--qualified-coin-set", _) => Some(shielded::qualified_coin_set(arguments)),
+        ("--qualified-coin-set-chunked", _) => {
+            Some(shielded::qualified_coin_set_chunked(arguments))
+        }
         ("--qualified-coin-cell", _) => Some(shielded::qualified_coin_cell(arguments)),
         ("--adt-set-qualified-coin-info", _) => {
             Some(shielded::adt_set_qualified_coin_info(arguments))

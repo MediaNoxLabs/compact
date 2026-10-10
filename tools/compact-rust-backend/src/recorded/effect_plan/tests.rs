@@ -465,5 +465,7 @@ mod witness_results;
 #[path = "tests/owned_calls.rs"]
 mod owned_calls;
 
+#[path = "tests/qualified_coin_set.rs"]
+mod qualified_coin_set;
 #[path = "tests/qualified_coin_write.rs"]
 mod qualified_coin_write;

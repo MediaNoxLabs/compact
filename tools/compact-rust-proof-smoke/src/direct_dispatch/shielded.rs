@@ -140,6 +140,20 @@ pub(super) fn qualified_coin_set(
     qualified_coin_set::run(Path::new(&root))
 }
 
+pub(super) fn qualified_coin_set_chunked(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let root = arguments
+        .next()
+        .ok_or("usage: compact-rust-proof-smoke --qualified-coin-set-chunked <proof-output>")?;
+    if arguments.next().is_some() {
+        return Err(
+            "usage: compact-rust-proof-smoke --qualified-coin-set-chunked <proof-output>".into(),
+        );
+    }
+    crate::qualified_coin_set_chunked::run(Path::new(&root))
+}
+
 pub(super) fn qualified_coin_cell(
     arguments: &mut impl Iterator<Item = OsString>,
 ) -> Result<(), Box<dyn Error>> {

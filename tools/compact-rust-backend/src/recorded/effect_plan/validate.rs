@@ -378,6 +378,19 @@ fn block(
                     && recipient.ty == crate::coin_shapes::shielded_recipient_type()
                     && *ty == Type::Unit
             }
+            Operation::SetInsertCoin {
+                slot,
+                coin,
+                recipient,
+            } => {
+                use_value(coin)?;
+                use_value(recipient)?;
+                *sets::element(declarations, *slot, path)?
+                    == crate::coin_shapes::qualified_coin_type()
+                    && coin.ty == crate::coin_shapes::shielded_coin_type()
+                    && recipient.ty == crate::coin_shapes::shielded_recipient_type()
+                    && *ty == Type::Unit
+            }
             Operation::SetMember { slot, value }
             | Operation::SetInsert { slot, value }
             | Operation::SetRemove { slot, value } => {

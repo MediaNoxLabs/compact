@@ -128,6 +128,7 @@ mod pure_field_arguments;
 mod qualified_coin_cell;
 mod qualified_coin_funding;
 mod qualified_coin_set;
+mod qualified_coin_set_chunked;
 mod root_let_action_return;
 mod schnorr_attestation;
 mod shielded_merge;

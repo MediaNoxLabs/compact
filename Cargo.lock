@@ -565,6 +565,7 @@ dependencies = [
 name = "compact-rust-adt-set-qualified-coin-info-fixture"
 version = "0.1.0"
 dependencies = [
+ "compact-rust-backend",
  "hex",
  "midnight-compact-runtime",
  "midnight-onchain-state",
@@ -1370,6 +1371,16 @@ dependencies = [
 
 [[package]]
 name = "compact-rust-effect-plan-qualified-coin-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-compact-runtime",
+ "midnight-serialize",
+ "serde_json",
+]
+
+[[package]]
+name = "compact-rust-effect-plan-qualified-set-source-fixture"
 version = "0.1.0"
 dependencies = [
  "compact-rust-backend",
@@ -2322,6 +2333,7 @@ dependencies = [
  "compact-rust-pm-19252-unused-read-seven-fixture",
  "compact-rust-pure-call-action-fixture",
  "compact-rust-qualified-coin-cell-oracle-fixture",
+ "compact-rust-qualified-coin-set-chunked-oracle-fixture",
  "compact-rust-qualified-coin-set-oracle-fixture",
  "compact-rust-recorded-enum-cell-fixture",
  "compact-rust-recording-effect-plan-prototype-fixture",
@@ -2422,9 +2434,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-qualified-coin-set-chunked-oracle-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-compact-runtime",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-qualified-coin-set-oracle-fixture"
 version = "0.1.0"
 dependencies = [
+ "compact-rust-backend",
  "hex",
  "midnight-base-crypto",
  "midnight-coin-structure",

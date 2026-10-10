@@ -177,6 +177,12 @@ pub(super) enum Operation {
         slot: SetSlot,
         value: Value,
     },
+    /// Insert a coin qualified by the recipient-bound allocation in the ledger context.
+    SetInsertCoin {
+        slot: SetSlot,
+        coin: Value,
+        recipient: Value,
+    },
     SetRemove {
         slot: SetSlot,
         value: Value,

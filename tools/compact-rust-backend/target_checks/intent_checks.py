@@ -254,9 +254,9 @@ def check_adt_set_qualified(
     assert [(row["name"], row["recorded"], row["observed_call"])
             for row in oracle_capabilities["circuits"]] == [
         ("insert_coin", True, True), ("contains", True, True)]
-    # Keep the frontend-reachable nested native path in the maintained
-    # gate. Runtime qualified_set_paths tests execute its VM helper;
-    # this source still has a deliberate generated recording gap.
+    # Keep frontend-reachable nested insertion in the maintained gate.
+    # Its canonical carrier interface composes through the recording algebra;
+    # runtime execution and source-bound proof are qualified separately.
     chunked = base / "qualified-coin-set-chunked"
     run(compiler, "--target", "rust", "--skip-zk",
         str(root / "runtime-rs/tests/fixtures/qualified-coin-set-chunked.compact"),
@@ -269,9 +269,9 @@ def check_adt_set_qualified(
     chunked_caps = json.loads((chunked / "contract/rust-capabilities.json").read_text())
     assert [(row["name"], row["recorded"], row["observed_call"])
             for row in chunked_caps["circuits"]] == [
-        ("insert_coin", False, False), ("contains", True, True)]
-    gap = chunked_caps["circuits"][0]["recording_unavailable"]
-    assert (gap["code"], gap["ir_node"]) == ("unsupported_action", "StateAction::SetInsertCoin")
+        ("insert_coin", True, True), ("contains", True, True)]
+    assert all(row.get("recording_unavailable") is None for row in chunked_caps["circuits"])
+    assert "ledger_slots::pot.record_insert_coin(" in "".join(generated.split())
     if proof_requested:
         adt_proof = base / "adt-qualified-proof"
         run(compiler, "--target", "rust", "--rust-require-recording",
@@ -283,5 +283,11 @@ def check_adt_set_qualified(
             "--adt-set-qualified-coin-info", str(adt_proof))
         run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
             "--qualified-coin-set", str(oracle_proof))
+        chunked_proof = base / "qualified-chunked-proof"
+        run(compiler, "--target", "rust", "--rust-require-recording",
+            str(root / "runtime-rs/tests/fixtures/qualified-coin-set-chunked.compact"),
+            str(chunked_proof))
+        run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+            "--qualified-coin-set-chunked", str(chunked_proof))
     print("complete ADT qualified Set source and qualified coin oracle recorded; "
-          "chunked native path and explicit recording gap checked")
+          "chunked native and recorded path admission checked")

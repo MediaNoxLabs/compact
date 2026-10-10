@@ -1528,6 +1528,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-effect-plan-wide-add-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-storage",
+ "rand 0.8.6",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-effect-plan-wide-casts-source-fixture"
 version = "0.1.0"
 dependencies = [
@@ -2390,6 +2402,7 @@ dependencies = [
  "compact-rust-effect-plan-stateful-calls-source-fixture",
  "compact-rust-effect-plan-transient-crypto-source-fixture",
  "compact-rust-effect-plan-unsigned-arithmetic-source-fixture",
+ "compact-rust-effect-plan-wide-add-source-fixture",
  "compact-rust-effect-plan-wide-casts-source-fixture",
  "compact-rust-effect-plan-wide-source-fixture",
  "compact-rust-effect-plan-witness-inputs-source-fixture",

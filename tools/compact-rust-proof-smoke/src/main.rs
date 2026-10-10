@@ -89,6 +89,7 @@ mod micro_dao_advance;
 mod opaque_public;
 mod owned_witness_inputs;
 mod public_products;
+mod wide_add;
 mod wide_casts;
 use micro_dao_cash_out_support::advance as micro_dao_advance_support;
 mod did_deactivate;

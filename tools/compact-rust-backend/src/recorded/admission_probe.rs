@@ -160,13 +160,39 @@ fn ordinary_root_candidates_do_not_enter_effectful_algebra_routing() {
 }
 
 #[test]
-fn separate_legacy_family_is_reported_without_disguising_candidate_refusal() {
+fn retained_start_funding_admission_now_reports_checked_composition() {
     let contract: Contract =
         serde_json::from_str(include_str!("../../tests/coracle-start-schema20-ir.json")).unwrap();
+    let ledger = contract
+        .ledger_fields
+        .iter()
+        .map(|f| (f.id.as_str(), f))
+        .collect();
+    let witnesses = contract
+        .witnesses
+        .iter()
+        .map(|w| (w.name.as_str(), w))
+        .collect();
+    let pure = contract
+        .circuits
+        .iter()
+        .map(|c| (c.name.as_str(), c))
+        .collect();
+    let circuits: HashMap<_, _> = contract
+        .stateful_circuits
+        .iter()
+        .map(|c| (c.name.as_str(), c))
+        .collect();
+    assert!(
+        typed_plan::lower_start_funding(circuits["start"], &ledger, &witnesses, &pure, &circuits)
+            .is_some(),
+        "mandatory complete legacy start-funding control"
+    );
     let rows = inspect(&contract);
     let row = rows.iter().find(|row| row.circuit == "start").unwrap();
-    assert!(matches!(row.candidate, Candidate::Unsupported { .. }));
-    assert_eq!(row.effectful_route, Some(Route::LegacyStartFunding));
+    assert!(matches!(row.candidate, Candidate::Supported));
+    assert_eq!(row.effectful_route, Some(Route::Algebra));
+    assert_eq!(row.effectful_route_error, None);
 }
 
 fn recording_invariant(error: &RenderError) -> bool {

@@ -204,7 +204,7 @@ fn operands_are_ordered_once_and_no_static_range_rule_replaces_runtime_failure()
 }
 
 #[test]
-fn all_wide_operand_and_result_positions_stay_outside_checked_arithmetic() {
+fn arithmetic_keeps_native_wide_operand_and_result_boundaries() {
     for op in OPS {
         for (left, right, result) in [
             (WIDE, "255", "255"),
@@ -212,10 +212,15 @@ fn all_wide_operand_and_result_positions_stay_outside_checked_arithmetic() {
             ("255", "255", WIDE),
         ] {
             let outcome = checked(op.expression(zero(left), zero(right), result));
-            assert!(
-                matches!(outcome, Err(PlanError::Unsupported(_))),
-                "{op:?}: {left}/{right}/{result}"
-            );
+            if matches!(op, Arithmetic::Add) && result == WIDE {
+                let plan = outcome.expect("native wide-result addition");
+                render(&plan).unwrap();
+            } else {
+                assert!(
+                    matches!(outcome, Err(PlanError::Unsupported(_))),
+                    "{op:?}: {left}/{right}/{result}"
+                );
+            }
         }
         for bad in [
             Expr::Boolean { value: true },

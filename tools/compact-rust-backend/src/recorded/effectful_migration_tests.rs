@@ -173,7 +173,7 @@ fn real_source_wide_equality_uses_algebra_with_legacy_admission() {
 }
 
 #[test]
-fn start_funding_still_uses_its_separate_legacy_profile() {
+fn start_funding_with_complete_callee_environment_uses_checked_algebra() {
     let contract: Contract =
         serde_json::from_str(include_str!("../../tests/coracle-start-schema20-ir.json")).unwrap();
     let context = Context::new(&contract);
@@ -194,10 +194,41 @@ fn start_funding_still_uses_its_separate_legacy_profile() {
         &context.circuits,
     )
     .expect("retained start-funding admission");
+    // The no-callee helper above deliberately remains unsupported. Actual
+    // production lowering supplies the complete stateful and pure environment.
+    let algebra = effect_plan::lower_with_calls(
+        circuit,
+        &context.ledger,
+        &context.witnesses,
+        &context.pure,
+        &context.circuits,
+    )
+    .expect("wide addition closes the retained start composition gap");
+    assert_ne!(tokens(&algebra), tokens(&start));
     assert_eq!(
         tokens(&supported(context.selected(circuit))),
-        tokens(&start)
+        tokens(&algebra)
     );
+    let (output, rows) =
+        admission_probe::trace::capture_json(|| crate::render_with_capabilities(&contract));
+    let output = output.unwrap();
+    let capability = output
+        .capabilities
+        .circuits
+        .iter()
+        .find(|c| c.name == "start")
+        .unwrap();
+    assert!(capability.recorded && capability.observed_call);
+    let owners: Vec<_> = rows
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|row| {
+            row["circuit"] == "start" && row["phase"] == "public_emission" && row["helper"] == false
+        })
+        .collect();
+    assert_eq!(owners.len(), 1);
+    assert_eq!(owners[0]["body_owner"], "effectful.checked-migration");
 }
 
 #[test]

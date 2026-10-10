@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
 
-//! Wide values are local scalar computations, not new ABI or arithmetic support.
+//! Wide value laws remain separate from operation-specific arithmetic policies.
 use super::*;
 
 const TWO128: &str = "340282366920938463463374607431768211456";
@@ -231,17 +231,19 @@ fn wide_widening_and_joins_preserve_arithmetic_and_implicit_narrowing_limits() {
     }))
     .unwrap();
     render(&cast).unwrap();
-    expect_unsupported(as_field(Expr::UnsignedAdd {
+    let sum = check_expression(as_field(Expr::UnsignedAdd {
         left: Box::new(literal()),
         right: Box::new(literal()),
         max: MAX248.into(),
-    }));
+    }))
+    .unwrap();
+    render(&sum).unwrap();
     expect_unsupported(as_field(Expr::Coerce {
         value: Box::new(literal()),
         ty: validate::uint("65535"),
     }));
     // Owned-value composition now admits native widening and local joins.
-    // Neither operation grants wide arithmetic or implicit narrowing.
+    // Neither operation grants implicit narrowing; addition has its own carrier law.
     let widened = check_expression(as_field(Expr::Coerce {
         value: Box::new(unsigned("1", "65535")),
         ty: validate::uint(TWO128),

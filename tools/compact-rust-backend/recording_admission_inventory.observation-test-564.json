@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "issue": 564,
+  "classification": "observation-test-adaptation-no-retirement",
+  "reviewed_checkpoint": "2b9f3536a5c1c814ff970aaf40d009ed905cbb9f",
+  "owner": "tools/compact-rust-backend/src/recorded/admission_probe.rs",
+  "prior_source_sha256": "07e6e6e996fd954b49b62c8939cc13a91ef3ddb34160c3c07ca8e5b2551c304a",
+  "reviewed_source_sha256": "be56f6b9c8a718224d8ba6e4251088d33f0341cc30e3e73b1a55f7be0acd69ce",
+  "prior_manifests": {
+    "instrumentation": "dc5dca0cb5499556e2b00f7b18a649fba58ff294d40f8dd593f7d6486b3ff428",
+    "calls": "4e814060724e33880180cb7df89401a7aa5e73c73b698debf514efde2ea54948",
+    "send": "660f74f8da0b8b2a35e9feba30966d2047e1094d045c00629aa049ffb09e02a6"
+  },
+  "test_adaptation": {
+    "current": "#[test]\nfn retained_start_funding_admission_now_reports_checked_composition() {\n    let contract: Contract =\n        serde_json::from_str(include_str!(\"../../tests/coracle-start-schema20-ir.json\")).unwrap();\n    let ledger = contract\n        .ledger_fields\n        .iter()\n        .map(|f| (f.id.as_str(), f))\n        .collect();\n    let witnesses = contract\n        .witnesses\n        .iter()\n        .map(|w| (w.name.as_str(), w))\n        .collect();\n    let pure = contract\n        .circuits\n        .iter()\n        .map(|c| (c.name.as_str(), c))\n        .collect();\n    let circuits: HashMap<_, _> = contract\n        .stateful_circuits\n        .iter()\n        .map(|c| (c.name.as_str(), c))\n        .collect();\n    assert!(\n        typed_plan::lower_start_funding(circuits[\"start\"], &ledger, &witnesses, &pure, &circuits)\n            .is_some(),\n        \"mandatory complete legacy start-funding control\"\n    );\n    let rows = inspect(&contract);\n    let row = rows.iter().find(|row| row.circuit == \"start\").unwrap();\n    assert!(matches!(row.candidate, Candidate::Supported));\n    assert_eq!(row.effectful_route, Some(Route::Algebra));\n    assert_eq!(row.effectful_route_error, None);\n}\n",
+    "previous": "#[test]\nfn separate_legacy_family_is_reported_without_disguising_candidate_refusal() {\n    let contract: Contract =\n        serde_json::from_str(include_str!(\"../../tests/coracle-start-schema20-ir.json\")).unwrap();\n    let rows = inspect(&contract);\n    let row = rows.iter().find(|row| row.circuit == \"start\").unwrap();\n    assert!(matches!(row.candidate, Candidate::Unsupported { .. }));\n    assert_eq!(row.effectful_route, Some(Route::LegacyStartFunding));\n}\n"
+  },
+  "new_retired_routes": [],
+  "claim": "Only the exact test expectation changes after checked wide addition. Whole predecessor probe bytes are reconstructed for immutable instrumentation checks; production observation code, selector routes and retirement claims are unchanged."
+}

@@ -46,6 +46,11 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 fn run_case(root: &Path, immediate: bool) -> Result<(), Box<dyn Error>> {
+    // Pair complete source before deployment, keys or funding; key provenance is separate.
+    counter_scenario::validate_ir(
+        &std::fs::read(root.join("contract/compact-rust-ir.json"))?,
+        compact_rust_shielded_merge_oracle_fixture::RETAINED_IR,
+    )?;
     let name = if immediate {
         "receive_then_merge"
     } else {
@@ -323,4 +328,52 @@ fn run_case(root: &Path, immediate: bool) -> Result<(), Box<dyn Error>> {
         "{name}: seeded frontier 2, genuine inputs, merged self 42, separate Dust, default-strict proof/application and nullifier replay rejection passed"
     );
     Ok(())
+}
+
+#[cfg(test)]
+mod source_binding_tests {
+    use super::*;
+
+    #[test]
+    fn full_source_pairing_accepts_exact_ir() {
+        let retained = compact_rust_shielded_merge_oracle_fixture::RETAINED_IR;
+        counter_scenario::validate_ir(retained.as_bytes(), retained).unwrap();
+    }
+
+    #[test]
+    fn both_merge_cases_reject_missing_and_changed_ir_before_setup() {
+        let root = std::env::temp_dir().join(format!(
+            "compact-merge-source-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        assert!(!root.exists());
+        for immediate in [false, true] {
+            let error = run_case(&root, immediate).unwrap_err();
+            assert_eq!(
+                error.downcast_ref::<io::Error>().unwrap().kind(),
+                io::ErrorKind::NotFound
+            );
+            assert!(!root.exists());
+        }
+        std::fs::create_dir_all(root.join("contract")).unwrap();
+        let retained = compact_rust_shielded_merge_oracle_fixture::RETAINED_IR;
+        let mut changed: serde_json::Value = serde_json::from_str(retained).unwrap();
+        changed["stateful_circuits"][0]["name"] = serde_json::json!("wrong-source");
+        let bytes = serde_json::to_vec(&changed).unwrap();
+        let path = root.join("contract/compact-rust-ir.json");
+        std::fs::write(&path, &bytes).unwrap();
+        for immediate in [false, true] {
+            assert_eq!(
+                run_case(&root, immediate).unwrap_err().to_string(),
+                "Proof artifact IR differs from the generated source fixture"
+            );
+            assert!(!root.join("keys").exists());
+            assert_eq!(std::fs::read(&path).unwrap(), bytes);
+        }
+        std::fs::remove_dir_all(root).unwrap();
+    }
 }

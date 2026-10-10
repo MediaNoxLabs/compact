@@ -233,14 +233,16 @@ impl Lowerer<'_> {
                         (Operation::Equal(a, b), Type::Boolean)
                     }
                     Expr::UnsignedAdd { max, .. }
-                    | Expr::UnsignedSubtract { max, .. }
-                    | Expr::UnsignedMultiply { max, .. }
+                        if validate::unsigned_add_type(&a.ty, &b.ty, &uint(max)) =>
+                    {
+                        (Operation::UnsignedAdd(a, b), uint(max))
+                    }
+                    Expr::UnsignedSubtract { max, .. } | Expr::UnsignedMultiply { max, .. }
                         if validate::bound(&a.ty).is_some()
                             && validate::bound(&b.ty).is_some()
                             && validate::bound(&uint(max)).is_some() =>
                     {
                         let operation = match expression {
-                            Expr::UnsignedAdd { .. } => Operation::UnsignedAdd(a, b),
                             Expr::UnsignedSubtract { .. } => Operation::UnsignedSubtract(a, b),
                             Expr::UnsignedMultiply { .. } => Operation::UnsignedMultiply(a, b),
                             _ => unreachable!("unsigned arithmetic arm"),

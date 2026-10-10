@@ -26,6 +26,7 @@ import recording_admission_inventory_immediate as immediate
 import recording_admission_inventory_zswap as zswap
 import recording_admission_inventory_membership as membership
 import recording_admission_inventory_send as send
+import recording_admission_inventory_observation_test as observation_test
 
 JUBJUB_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-517.json")
 CALL_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.calls-519.json")
@@ -58,6 +59,14 @@ MEMBERSHIP_TRANSITION = inventory.BASELINE.with_name("recording_admission_invent
 
 
 SEND_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-561.json")
+
+
+OBSERVATION_TEST_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.observation-test-564.json")
+
+
+def observation_checkpoint_source(root):
+    return observation_test.predecessor_source(
+        (root / observation_test.OWNER).read_text(), json.loads(OBSERVATION_TEST_EXTENSION.read_text()))
 
 
 def send_checkpoint_sources(root):
@@ -200,7 +209,8 @@ class InventoryTests(unittest.TestCase):
                                   immediate_send_transition=json.loads(IMMEDIATE_TRANSITION.read_text()),
                                   zswap_transition=json.loads(ZSWAP_TRANSITION.read_text()),
                                   membership_transition=json.loads(MEMBERSHIP_TRANSITION.read_text()),
-                                  send_transition=json.loads(SEND_TRANSITION.read_text()))
+                                  send_transition=json.loads(SEND_TRANSITION.read_text()),
+                                  observation_test_extension=json.loads(OBSERVATION_TEST_EXTENSION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)
@@ -230,6 +240,7 @@ class RetirementTransitionTests(unittest.TestCase):
             destination = self.root / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_bytes((inventory.ROOT / relative).read_bytes())
+        (self.root / observation_test.OWNER).write_text(observation_checkpoint_source(inventory.ROOT))
         # Keep every historical mutation suite on its original 8-family/12-call
         # checkpoint. Reconstruction authenticates both complete source owners;
         # neither Git availability nor refreshed hashes can rewrite the fixture.

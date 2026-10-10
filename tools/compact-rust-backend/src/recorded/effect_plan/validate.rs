@@ -37,8 +37,8 @@ impl Validation {
 pub(super) fn uint(max: &str) -> Type {
     Type::Unsigned { max: max.into() }
 }
-/// Canonical unsigned bounds for values and explicit casts. Scalar arithmetic
-/// retains the separate u128-only `bound` policy.
+/// Canonical unsigned bounds for values, explicit casts and wide-result addition.
+/// Subtraction and multiplication retain the u128-only `bound` policy.
 pub(super) fn unsigned_bound(ty: &Type) -> Option<crate::UnsignedMaximum> {
     let Type::Unsigned { max } = ty else {
         return None;
@@ -50,6 +50,23 @@ pub(super) fn bound(ty: &Type) -> Option<u128> {
         crate::UnsignedMaximum::Small(n) => Some(n),
         _ => None,
     }
+}
+/// Matches native addition: all-small carriers, or a canonical wide result.
+/// A wide operand with a small result still needs an explicit narrowing cast.
+pub(super) fn unsigned_add_type(left: &Type, right: &Type, result: &Type) -> bool {
+    matches!(
+        (
+            unsigned_bound(left),
+            unsigned_bound(right),
+            unsigned_bound(result)
+        ),
+        (Some(_), Some(_), Some(crate::UnsignedMaximum::Wide { .. }))
+            | (
+                Some(crate::UnsignedMaximum::Small(_)),
+                Some(crate::UnsignedMaximum::Small(_)),
+                Some(crate::UnsignedMaximum::Small(_)),
+            )
+    )
 }
 pub(super) fn scalar(ty: &Type) -> bool {
     matches!(ty, Type::Unit | Type::Boolean | Type::Field) || bound(ty).is_some()
@@ -335,9 +352,12 @@ fn block(
                 use_value(b)?;
                 a.ty == Type::Field && b.ty == Type::Field && *ty == Type::Field
             }
-            Operation::UnsignedAdd(a, b)
-            | Operation::UnsignedSubtract(a, b)
-            | Operation::UnsignedMultiply(a, b) => {
+            Operation::UnsignedAdd(a, b) => {
+                use_value(a)?;
+                use_value(b)?;
+                unsigned_add_type(&a.ty, &b.ty, ty)
+            }
+            Operation::UnsignedSubtract(a, b) | Operation::UnsignedMultiply(a, b) => {
                 use_value(a)?;
                 use_value(b)?;
                 bound(&a.ty).is_some() && bound(&b.ty).is_some() && bound(ty).is_some()

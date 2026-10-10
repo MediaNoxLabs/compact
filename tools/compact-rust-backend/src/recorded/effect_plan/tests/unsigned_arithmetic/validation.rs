@@ -54,8 +54,13 @@ fn validator_checks_result_domain_and_each_operand_identity_before_arithmetic() 
         let position = arithmetic_position(&original);
         for ty in [Type::Field, Type::Boolean, unsigned(WIDE), unsigned("-1")] {
             let mut plan = original.clone();
+            let valid_wide_add = matches!(op, Arithmetic::Add) && ty == unsigned(WIDE);
             plan.body.bindings[position].value.ty = ty;
-            assert!(independent(plan).is_err(), "{op:?}: bad result");
+            if valid_wide_add {
+                render(&independent(plan).unwrap()).unwrap();
+            } else {
+                assert!(independent(plan).is_err(), "{op:?}: bad result");
+            }
         }
         for side in [0, 1] {
             for mutation in ["missing", "annotation", "forward"] {

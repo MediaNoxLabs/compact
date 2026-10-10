@@ -58,6 +58,7 @@ import recording_admission_inventory_immediate as immediate
 import recording_admission_inventory_zswap as zswap
 import recording_admission_inventory_membership as membership
 import recording_admission_inventory_send as send
+import recording_admission_inventory_observation_test as observation_test
 
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE = Path(__file__).with_suffix('.baseline.json')
@@ -195,7 +196,8 @@ def validate_transition(baseline: dict, transition: dict, baseline_bytes: bytes 
 
 
 def validate_instrumentation(root: Path, baseline: dict, manifest: dict,
-                             baseline_bytes: bytes | None, evolution: dict | None = None) -> list[str]:
+                             baseline_bytes: bytes | None, evolution: dict | None = None,
+                             prior_probe: str | None = None) -> list[str]:
     """Permit only the reviewed test observation edit, not arbitrary gate drift."""
     errors = []
     if manifest.get('schema_version') != 1 or manifest.get('issue') != 515:
@@ -222,7 +224,8 @@ def validate_instrumentation(root: Path, baseline: dict, manifest: dict,
     return_pattern = r'row\.return_dispatch\s*=\s*Some\("([^"]+)"\)'
     for relative, expected in fingerprints.items():
         try:
-            data = (root / relative).read_bytes()
+            data = (prior_probe.encode() if relative == observation_test.OWNER and prior_probe is not None
+                    else (root / relative).read_bytes())
             actual = digest(data)
             hook_ids.update(re.findall(hook_pattern, data.decode()))
             hook_ids.update(re.findall(return_pattern, data.decode()))
@@ -254,7 +257,8 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
            immediate_send_transition: dict | None = None,
            zswap_transition: dict | None = None,
            membership_transition: dict | None = None,
-           send_transition: dict | None = None) -> dict:
+           send_transition: dict | None = None,
+           observation_test_extension: dict | None = None) -> dict:
     errors = validate_baseline(baseline)
     report = {'schema_version': 1, 'baseline_commit': baseline.get('baseline_commit'),
               'claim': 'source route inventory; not language or behavioral coverage',
@@ -502,8 +506,20 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
                      'reviewed_source_fingerprints': {
                          **evolution['reviewed_source_fingerprints'],
                          **reviewed_send['reviewed_source_fingerprints']}}
+    prior_probe = None
+    if observation_test_extension is not None:
+        try:
+            if reviewed_send is None:
+                raise ValueError('observation test: complete reviewed send561 chain is required')
+            prior_probe = observation_test.validate(root, observation_test_extension,
+                                                    instrumentation, call_extension, send_transition)
+            report['reviewed_observation_test_extension'] = {
+                'issue': 564, 'owner': observation_test.OWNER, 'new_retired_routes': [],
+                'claim': 'one authenticated test expectation update; unchanged instrumentation and routes'}
+        except (OSError, UnicodeError, ValueError, KeyError) as error:
+            errors.append(str(error))
     if instrumentation is not None:
-        errors.extend(validate_instrumentation(root, baseline, instrumentation, baseline_bytes, evolution))
+        errors.extend(validate_instrumentation(root, baseline, instrumentation, baseline_bytes, evolution, prior_probe))
         report['reviewed_instrumentation'] = {
             'issue': instrumentation.get('issue'),
             'instrumented_route_ids': (evolution or instrumentation).get('instrumented_route_ids', []),
@@ -733,6 +749,7 @@ def main(argv=None) -> int:
     parser.add_argument('--zswap-transition', type=Path, help='explicit #553 final-priority Zswap retirement after #550')
     parser.add_argument('--membership-transition', type=Path, help='explicit #560 first-priority membership retirement after #553')
     parser.add_argument('--send-transition', type=Path, help='explicit #561 retirement into existing composite domain after #560')
+    parser.add_argument('--observation-test-extension', type=Path, help='explicit #564 test-only expectation adaptation; no retirement')
     args = parser.parse_args(argv)
     protected = [args.baseline] + ([args.transition] if args.transition else []) + ([args.instrumentation] if args.instrumentation else []) + ([args.jubjub_transition] if args.jubjub_transition else []) + ([args.call_extension] if args.call_extension else []) + ([args.terminal_transition] if args.terminal_transition else []) + ([args.unit_actions_transition] if args.unit_actions_transition else []) + ([args.context_query_transition] if args.context_query_transition else []) + ([args.kernel_transition] if args.kernel_transition else []) + ([args.composite_transition] if args.composite_transition else []) + ([args.receive_transition] if args.receive_transition else [])
     protected += [args.unit_domain_extension] if args.unit_domain_extension else []
@@ -742,6 +759,7 @@ def main(argv=None) -> int:
     protected += [args.zswap_transition] if args.zswap_transition else []
     protected += [args.membership_transition] if args.membership_transition else []
     protected += [args.send_transition] if args.send_transition else []
+    protected += [args.observation_test_extension] if args.observation_test_extension else []
     if args.output and any(args.output.resolve() == path.resolve() for path in protected):
         parser.error('--output cannot overwrite baseline, transition, instrumentation, or call-extension evidence')
     try:
@@ -764,7 +782,8 @@ def main(argv=None) -> int:
         zswap_transition = json.loads(args.zswap_transition.read_text()) if args.zswap_transition else None
         membership_transition = json.loads(args.membership_transition.read_text()) if args.membership_transition else None
         send_transition = json.loads(args.send_transition.read_text()) if args.send_transition else None
-        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension, voting_transition, phase_reset_transition, immediate_send_transition, zswap_transition, membership_transition, send_transition)
+        observation_test_extension = json.loads(args.observation_test_extension.read_text()) if args.observation_test_extension else None
+        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension, voting_transition, phase_reset_transition, immediate_send_transition, zswap_transition, membership_transition, send_transition, observation_test_extension)
     except (OSError, ValueError, TypeError, KeyError) as error:
         parser.exit(2, f'inventory error: {error}\n')
     rendered = json.dumps(report, indent=2) + '\n'

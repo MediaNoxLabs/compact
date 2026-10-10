@@ -452,3 +452,6 @@ mod transient_crypto;
 
 #[path = "tests/merkle.rs"]
 mod merkle;
+
+#[path = "tests/witness_results.rs"]
+mod witness_results;

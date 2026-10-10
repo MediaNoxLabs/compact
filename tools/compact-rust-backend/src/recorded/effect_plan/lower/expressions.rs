@@ -308,7 +308,7 @@ impl Lowerer<'_> {
                 for parameter in &declaration.parameters {
                     self.declarations.types().validate_at(&parameter.ty, path)?;
                 }
-                if !validate::surface_type(&declaration.result)
+                if !validate::witness_result_type(&declaration.result)
                     || arguments.len() != declaration.parameters.len()
                 {
                     return Err(invalid(

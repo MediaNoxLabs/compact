@@ -267,7 +267,7 @@ fn opaque_default_stays_in_certified_pure_body_or_named_struct() {
     ));
 }
 #[test]
-fn owned_cells_are_independent_of_refused_external_witness_and_stateful_interfaces() {
+fn owned_storage_and_witness_result_domains_preserve_public_and_stateful_boundaries() {
     for ty in [
         Type::OpaqueString,
         Type::OpaqueBytes,
@@ -335,14 +335,20 @@ fn owned_cells_are_independent_of_refused_external_witness_and_stateful_interfac
             },
             boolean(),
         );
-        assert!(matches!(
-            check(
-                &root(expr),
-                &HashMap::new(),
-                &HashMap::from([("owned", &witness)])
-            ),
-            Err(PlanError::Unsupported(_))
-        ));
+        let observed = check(
+            &root(expr),
+            &HashMap::new(),
+            &HashMap::from([("owned", &witness)]),
+        );
+        if ty == Type::OpaqueBytes || matches!(ty, Type::Vector { .. }) || ty == empty::empty_type()
+        {
+            // Result-only witness qualification includes fixed products and empty
+            // named products. It does not change public or stateful interfaces.
+            render(&observed.unwrap()).unwrap();
+        } else {
+            // Text and products containing dynamic opaque members stay refused.
+            assert!(matches!(observed, Err(PlanError::Unsupported(_))));
+        }
         let helper = StatefulCircuit {
             source: None,
             name: "helper".into(),

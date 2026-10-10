@@ -178,7 +178,7 @@ fn set_domain_refusals_are_independent_of_operand_and_interface_admission() {
             name: "external".into(),
             source: None,
             parameters: vec![],
-            result: ty,
+            result: ty.clone(),
         });
         c.stateful_circuits[0].actions = vec![StateAction::Expression {
             value: member(Expr::WitnessCall {
@@ -186,6 +186,12 @@ fn set_domain_refusals_are_independent_of_operand_and_interface_admission() {
                 arguments: vec![],
             }),
         }];
-        assert!(matches!(checked(&c), Err(PlanError::Unsupported(_))));
+        if ty == Type::OpaqueBytes {
+            // Qualified owned witness results can feed an already admitted Set.
+            render(&checked(&c).unwrap()).unwrap();
+        } else {
+            // OpaqueString and products with opaque members remain refused results.
+            assert!(matches!(checked(&c), Err(PlanError::Unsupported(_))));
+        }
     }
 }

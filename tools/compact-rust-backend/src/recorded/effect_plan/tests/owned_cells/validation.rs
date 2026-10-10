@@ -81,7 +81,7 @@ fn forged_owned_cell_plans_require_declaration_payload_and_live_operand_identity
 }
 
 #[test]
-fn owned_cell_support_does_not_widen_root_witness_or_stateful_interfaces() {
+fn owned_cell_and_witness_result_domains_keep_root_and_stateful_interfaces_separate() {
     for ty in [Type::OpaqueString, Type::OpaqueBytes, owned()] {
         assert!(validate::cell_type(&ty));
         assert!(!validate::surface_type(&ty));
@@ -115,10 +115,16 @@ fn owned_cell_support_does_not_widen_root_witness_or_stateful_interfaces() {
                 arguments: vec![],
             },
         }];
-        assert!(matches!(
-            maps_check(&source),
-            Err(PlanError::Unsupported(_))
-        ));
+        if ty == Type::OpaqueBytes {
+            // Top-level owned bytes are now qualified as witness results only.
+            render(&maps_check(&source).unwrap()).unwrap();
+        } else {
+            // OpaqueString and products with opaque members remain refused.
+            assert!(matches!(
+                maps_check(&source),
+                Err(PlanError::Unsupported(_))
+            ));
+        }
         let mut helper = contract(ty.clone()).stateful_circuits.remove(0);
         helper.name = "helper".into();
         helper.internal = true;

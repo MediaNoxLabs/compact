@@ -255,7 +255,7 @@ fn wide_widening_and_joins_preserve_arithmetic_and_explicit_cast_limits() {
     }
 }
 #[test]
-fn wide_support_does_not_expand_circuit_cell_or_witness_surfaces() {
+fn wide_witness_results_do_not_expand_circuit_cell_or_witness_parameter_surfaces() {
     let mut candidate = circuit(as_field(unsigned(TWO128, TWO128)));
     candidate.parameters.push(Parameter {
         name: "wide".into(),
@@ -340,12 +340,13 @@ fn wide_support_does_not_expand_circuit_cell_or_witness_surfaces() {
         name: "mark".into(),
         arguments: vec![],
     }));
-    assert!(matches!(
-        check(
-            &candidate,
-            &HashMap::new(),
-            &HashMap::from([("mark", &witness)])
-        ),
-        Err(PlanError::Unsupported(_))
-    ));
+    // Wide results now enter the qualified witness-result domain. The earlier
+    // assertions preserve wide circuit, storage and witness-parameter refusals.
+    let checked = check(
+        &candidate,
+        &HashMap::new(),
+        &HashMap::from([("mark", &witness)]),
+    )
+    .unwrap();
+    render(&checked).unwrap();
 }

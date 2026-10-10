@@ -76,6 +76,10 @@ pub(super) fn cell_type(ty: &Type) -> bool {
 pub(super) fn storage_value_type(ty: &Type) -> bool {
     domain::storage_value_type(ty)
 }
+/// Witness outputs have an encoding domain independent of public interfaces.
+pub(super) fn witness_result_type(ty: &Type) -> bool {
+    domain::witness_result_type(ty)
+}
 /// Same-type equality composes the runtime wrappers and supported Rust products.
 pub(super) fn equality_type(ty: &Type) -> bool {
     match ty {
@@ -412,7 +416,7 @@ fn block(
                 for value in arguments {
                     use_value(value)?;
                 }
-                surface_type(&witness.result)
+                witness_result_type(&witness.result)
                     && witness.result == *ty
                     && witness.parameters.len() == arguments.len()
                     && witness

@@ -284,7 +284,7 @@ fn whole_old_voting_optional_string_cell_observations_compose() {
 }
 
 #[test]
-fn old_first_opaque_bytes_cell_does_not_admit_an_opaque_witness_interface() {
+fn whole_old_voting_opaque_bytes_witness_result_composes() {
     let mut contract = source();
     let topic = contract
         .ledger_fields
@@ -344,16 +344,10 @@ fn old_first_opaque_bytes_cell_does_not_admit_an_opaque_witness_interface() {
     )
     .expect("old-accepted OpaqueBytes Cell read must be a checked local value");
     render(&checked).unwrap();
-    let PlanError::Unsupported(gap) = env.checked("vote_commit").unwrap_err() else {
-        panic!("opaque witness interface must retain its independent refusal")
-    };
-    eprintln!("old-first opaque bytes next gap: {gap:?}");
-    assert_eq!(gap.ir_node, "RecordedPlan");
-    assert_eq!(
-        gap.detail,
-        "witness result must be supported and arguments must match arity"
-    );
-    assert!(gap.path.ends_with(".right"), "{gap:?}");
+    let checked = env
+        .checked("vote_commit")
+        .expect("whole old-accepted voting root with OpaqueBytes witness composes");
+    render(&checked).expect("checked owned-witness voting root renders");
 }
 
 #[test]
@@ -436,3 +430,6 @@ fn whole_old_voting_wrapper_and_qualified_membership_compose() {
         });
     }
 }
+
+#[path = "voting_witness_inclusion.rs"]
+mod voting_witness_inclusion;

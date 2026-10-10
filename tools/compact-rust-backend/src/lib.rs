@@ -9,6 +9,7 @@ mod resource_limits;
 pub use capabilities::{
     RUST_CAPABILITY_SCHEMA_VERSION, RecordingStatus, RustCapabilityReport, RustCircuitCapability,
 };
+mod implicit_types;
 mod jubjub_value;
 mod naming;
 mod native_frame;
@@ -3017,6 +3018,11 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
             Ok(())
         })?;
     }
+    let has_merkle_witness_view = implicit_types::collect_witness_view_types(
+        contract,
+        &mut struct_definitions,
+        &mut enum_definitions,
+    )?;
     for field in &contract.ledger_fields {
         match &field.declaration {
             LedgerFieldKind::Cell { ty }
@@ -3639,6 +3645,7 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
         &enum_definitions,
         &contract.type_aliases,
         slots_module.is_some(),
+        has_merkle_witness_view,
     )?;
     let public_state_view = (!public_state_getters.is_empty()).then(|| {
         quote! {

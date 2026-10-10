@@ -55,13 +55,18 @@ pub(crate) fn render(
     enum_definitions: &BTreeMap<String, Vec<String>>,
     aliases: &[TypeAlias],
     has_ledger_slots_module: bool,
+    has_merkle_witness_view: bool,
 ) -> Result<TypeDeclarations, RenderError> {
     let mut struct_items = Vec::<syn::Item>::new();
     let has_merkle_path = struct_definitions
         .keys()
         .any(|name| is_compact_struct_instantiation(name, "MerkleTreePath"));
     for (name, fields) in struct_definitions {
-        let conversion = if has_merkle_path {
+        let conversion = if has_merkle_witness_view
+            && crate::implicit_types::is_witness_merkle_digest(name, fields)
+        {
+            Some("CompactMerkleTreeDigest")
+        } else if has_merkle_path {
             if is_compact_struct_instantiation(name, "MerkleTreeDigest") {
                 Some("CompactMerkleTreeDigest")
             } else if is_compact_struct_instantiation(name, "MerkleTreePathEntry") {

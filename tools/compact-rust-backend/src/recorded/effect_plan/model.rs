@@ -162,6 +162,12 @@ pub(super) enum Operation {
         slot: CellSlot,
         value: Value,
     },
+    /// Store a coin using the recipient-bound index allocated by the ledger context.
+    CellWriteCoin {
+        slot: CellSlot,
+        coin: Value,
+        recipient: Value,
+    },
     /// Ordinary typed membership/insertion; qualified-coin allocation is separate.
     SetMember {
         slot: SetSlot,

@@ -1368,6 +1368,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-effect-plan-qualified-coin-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-compact-runtime",
+ "midnight-serialize",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-effect-plan-receive-composition-source-fixture"
 version = "0.1.0"
 dependencies = [
@@ -2397,6 +2407,7 @@ dependencies = [
 name = "compact-rust-qualified-coin-cell-oracle-fixture"
 version = "0.1.0"
 dependencies = [
+ "compact-rust-backend",
  "hex",
  "midnight-base-crypto",
  "midnight-coin-structure",

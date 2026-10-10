@@ -224,6 +224,15 @@ pub(super) fn render(
             steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_write(frame,#input)?;));
             syn::parse_quote!(())
         }
+        Operation::CellWriteCoin {
+            slot,
+            coin,
+            recipient,
+        } => {
+            let slot = slot_name(declarations, slot.declaration, path)?;
+            steps.push(qualified_coins::write(&slot, coin, recipient));
+            syn::parse_quote!(())
+        }
         Operation::SetMember { slot, value: input } => {
             let slot = slot_name(declarations, slot.declaration, path)?;
             let input = value(input);

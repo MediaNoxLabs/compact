@@ -1,0 +1,43 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+
+// Sixteen fields exercise the frontend's two-component physical ledger paths.
+export ledger padding00: Field;
+export ledger padding01: Field;
+export ledger padding02: Field;
+export ledger padding03: Field;
+export ledger padding04: Field;
+export ledger padding05: Field;
+export ledger padding06: Field;
+export ledger padding07: Field;
+export ledger padding08: Field;
+export ledger padding09: Field;
+export ledger padding10: Field;
+export ledger padding11: Field;
+export ledger padding12: Field;
+export ledger padding13: Field;
+export ledger padding14: Field;
+export ledger pot: QualifiedShieldedCoinInfo;
+
+witness nextCoin(): ShieldedCoinInfo;
+witness nextRecipient(): Either<ZswapCoinPublicKey, ContractAddress>;
+
+export circuit write_once(): [] {
+  pot.writeCoin(disclose(nextCoin()), disclose(nextRecipient()));
+}
+
+export circuit write_read(
+  coin: ShieldedCoinInfo,
+  recipient: Either<ZswapCoinPublicKey, ContractAddress>
+): QualifiedShieldedCoinInfo {
+  pot.writeCoin(disclose(coin), disclose(recipient));
+  const stored = pot;
+  return QualifiedShieldedCoinInfo {
+    nonce: stored.nonce,
+    color: stored.color,
+    value: stored.value,
+    mt_index: stored.mt_index
+  };
+}

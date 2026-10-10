@@ -9,6 +9,7 @@ use crate::{ident, rust_type};
 use proc_macro2::Span;
 mod leaf;
 mod merkle;
+mod qualified_coins;
 mod zswap;
 
 fn name(value: &Value) -> syn::Ident {

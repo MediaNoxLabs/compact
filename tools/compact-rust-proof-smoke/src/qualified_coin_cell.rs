@@ -37,6 +37,12 @@ impl Resolver for OfferResolver {
 }
 
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
+    // Pair the complete compiler input before key loading or deployment.
+    // This checks input identity, not authenticated proving-key provenance.
+    counter_scenario::validate_ir(
+        &std::fs::read(root.join("contract/compact-rust-ir.json"))?,
+        compact_rust_qualified_coin_cell_oracle_fixture::RETAINED_IR,
+    )?;
     let name = "write_coin";
     let mut rng = StdRng::seed_from_u64(0x0176_434f_494e);
     let initial = contract::initial_state(ConstructorContext::new(()))?;

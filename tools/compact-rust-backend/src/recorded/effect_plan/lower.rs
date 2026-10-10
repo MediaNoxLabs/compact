@@ -21,6 +21,7 @@ mod kernel;
 mod merkle;
 mod ordinary;
 mod pure;
+mod qualified_coins;
 mod sets;
 mod transient;
 mod zswap;
@@ -440,6 +441,9 @@ impl Lowerer<'_> {
                     bindings,
                     path,
                 );
+            }
+            StateAction::CellWriteCoin { .. } => {
+                self.cell_write_coin(action, scope, bindings, path)?;
             }
             StateAction::CounterIncrement { .. }
             | StateAction::CounterDecrement { .. }

@@ -469,3 +469,6 @@ mod owned_calls;
 mod qualified_coin_set;
 #[path = "tests/qualified_coin_write.rs"]
 mod qualified_coin_write;
+
+#[path = "tests/opaque_public_probe.rs"]
+mod opaque_public_probe;

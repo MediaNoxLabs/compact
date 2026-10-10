@@ -15,10 +15,12 @@
 //! Checked-price funding followed by a shielded mint. Admission composes the
 //! received-coin provenance audit; evaluation and scopes remain in shared Plan.
 use super::*;
+#[cfg(test)]
 use crate::coin_shapes::shielded_coin_type;
 
 pub(super) const PRODUCT: &str = "340282366920938463426481119284349108225";
 
+#[cfg(test)]
 pub(super) fn lower<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,

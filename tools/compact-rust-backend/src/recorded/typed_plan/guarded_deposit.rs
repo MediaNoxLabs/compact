@@ -15,7 +15,9 @@
 //! Guarded receive followed by an optional historical merge and typed Cell
 //! updates. This module audits admission and provenance; Plan owns evaluation,
 //! lexical scope, exact types, query order and branch-local frame ownership.
-use super::immediate_send::{parameter, uncoerced};
+use super::immediate_send::parameter;
+#[cfg(test)]
+use super::immediate_send::uncoerced;
 use super::*;
 use crate::coin_shapes::qualified_coin_type;
 #[cfg(test)]
@@ -66,6 +68,7 @@ pub(super) fn forwards_received_coin(action: &StateAction, formal: &str) -> bool
 }
 
 // Flow summarizes each executable path, independently of static node totals.
+#[cfg(test)]
 #[derive(Clone, Copy, Default)]
 struct Flow {
     received: bool,
@@ -73,6 +76,7 @@ struct Flow {
     stores: usize,
 }
 
+#[cfg(test)]
 struct Audit<'a> {
     seed: &'a str,
     price_amount: Option<&'a str>,
@@ -84,6 +88,7 @@ struct Audit<'a> {
     writes: usize,
     coin_slot: Option<(String, u8)>,
 }
+#[cfg(test)]
 impl Audit<'_> {
     fn slot(&mut self, field: &str, index: u8) -> bool {
         let slot = (field.to_owned(), index);
@@ -273,6 +278,7 @@ impl Audit<'_> {
 // Shared admission of a received coin followed by exactly one qualified store
 // per execution path. Price arithmetic is opted into by the funded-mint profile;
 // the original guarded deposit retains its previous expression domain.
+#[cfg(test)]
 pub(super) fn prefix(
     circuit: &StatefulCircuit,
     seed: &str,

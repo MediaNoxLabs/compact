@@ -90,6 +90,10 @@ mod reset_payout_migration_tests;
 #[path = "profile_selection/shielded_payout_migration_tests.rs"]
 mod shielded_payout_migration_tests;
 
+#[cfg(test)]
+#[path = "profile_selection/funded_mint_migration_tests.rs"]
+mod funded_mint_migration_tests;
+
 /// An admitted step sequence and the evidence retained from declined profiles.
 /// Legacy organizers have no typed result; absence of steps permits legacy
 /// action lowering. The caller owns whether a retained gap can refine a failure.
@@ -545,19 +549,7 @@ pub(super) fn select(
                 checked_voting_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?
             ),
         };
-        let through_funded = through_voting.or_else(|| {
-            record_option!(
-                "selector.funded-mint",
-                typed_plan::lower_funded_mint(
-                    circuit,
-                    ledger_fields,
-                    witnesses,
-                    pure_circuits,
-                    circuits,
-                )
-            )
-        });
-        let through_deposit = match through_funded {
+        let through_deposit = match through_voting {
             Some(plan) => Some(plan),
             None => record_option!(
                 "algebra.guarded-deposit",

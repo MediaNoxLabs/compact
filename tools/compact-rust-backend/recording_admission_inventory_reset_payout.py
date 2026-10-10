@@ -80,7 +80,7 @@ def validate(baseline, transition, baseline_bytes, guarded, routing_test):
 
 
 def check_sources(root, sources, transition, prior_payout=None, prior_voting_test=None,
-                  prior_guarded_test=None, prior_reset_test=None):
+                  prior_guarded_test=None, prior_reset_test=None, prior_guarded_source=None):
     errors = []
     for owner, source in sources.items():
         if owner == 'tools/compact-rust-backend/src/recorded/profile_selection/reset_payout_migration_tests.rs':
@@ -108,6 +108,8 @@ def check_sources(root, sources, transition, prior_payout=None, prior_voting_tes
         for path, expected in transition['shared_sources_sha256'].items():
             data = (prior_payout.encode() if prior_payout is not None and path ==
                     'tools/compact-rust-backend/src/recorded/typed_plan/shielded_payout.rs'
+                    else prior_guarded_source.encode() if prior_guarded_source is not None and path ==
+                    'tools/compact-rust-backend/src/recorded/typed_plan/guarded_deposit.rs'
                     else (root / path).read_bytes())
             if digest(data) != expected:
                 errors.append('reset payout retirement: shared admission dependency changed: ' + path)

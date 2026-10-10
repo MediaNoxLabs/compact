@@ -21,11 +21,13 @@ class ShieldedPayoutTransitionTests(unittest.TestCase):
     def setUp(self):
         prior_tests.ResetPayoutTransitionTests.setUp(self)
         self.payout_transition = json.loads(previous.SHIELDED_PAYOUT_TRANSITION.read_text())
+        predecessor = previous.funded_mint_checkpoint_sources(inventory.ROOT)
         for owner in [*payout.REVIEWED_OWNERS, *self.payout_transition['shared_sources_sha256'],
                       *self.payout_transition['test_sources_sha256']]:
             path = self.root / owner
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes((inventory.ROOT / owner).read_bytes())
+            path.write_bytes(predecessor[owner].encode() if owner in predecessor
+                             else (inventory.ROOT / owner).read_bytes())
 
     def report(self):
         return inventory.verify(

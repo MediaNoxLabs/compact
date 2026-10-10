@@ -21,7 +21,8 @@ fn deposit_owner_keeps_priority_and_stops_later_families() {
         .iter()
         .position(|&s| s == "algebra.guarded-deposit")
         .unwrap();
-    assert_eq!(a[at - 1], "selector.funded-mint");
+    assert_eq!(a[at - 1], "algebra.voting-commit");
+    assert!(!a.contains(&"selector.funded-mint"));
 }
 
 #[test]

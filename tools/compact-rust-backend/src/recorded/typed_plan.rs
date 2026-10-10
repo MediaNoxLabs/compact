@@ -2180,6 +2180,7 @@ pub(super) fn lower_guarded_deposit<'a>(
     guarded_deposit::lower(circuit, ledger, witnesses, pure, circuits)
 }
 
+#[cfg(test)]
 pub(super) fn lower_funded_mint<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,

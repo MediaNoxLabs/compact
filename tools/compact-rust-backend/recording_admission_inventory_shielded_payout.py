@@ -79,7 +79,8 @@ def validate(baseline, transition, baseline_bytes, reset):
     return errors
 
 
-def check_sources(root, sources, transition):
+def check_sources(root, sources, transition, prior_guarded_source=None,
+                  prior_voting_test=None, prior_guarded_test=None):
     errors = []
     for owner, source in sources.items():
         if re.search(r'\btyped_plan\s*::\s*lower_shielded_payout\s*\(', source):
@@ -108,10 +109,16 @@ def check_sources(root, sources, transition):
         if digest(function(sources[SELECTOR], 'fn checked_composite_attempt(').encode()) != transition['existing_composite_attempt_sha256']:
             errors.append('shielded payout retirement: checked interface changed')
         for path, expected in transition['shared_sources_sha256'].items():
-            if digest((root / path).read_bytes()) != expected:
+            data = (prior_guarded_source.encode() if prior_guarded_source is not None and path ==
+                    'tools/compact-rust-backend/src/recorded/typed_plan/guarded_deposit.rs'
+                    else (root / path).read_bytes())
+            if digest(data) != expected:
                 errors.append('shielded payout retirement: shared admission dependency changed: ' + path)
+        prior_tests = {VOTING_TEST: prior_voting_test, GUARDED_TEST: prior_guarded_test}
         for path, expected in transition['test_sources_sha256'].items():
-            if digest((root / path).read_bytes()) != expected:
+            previous = prior_tests.get(path)
+            data = previous.encode() if previous is not None else (root / path).read_bytes()
+            if digest(data) != expected:
                 errors.append('shielded payout retirement: reviewed routing test changed: ' + path)
     except (OSError, UnicodeError, ValueError, KeyError) as error:
         errors.append('shielded payout retirement: source preservation failed: ' + str(error))

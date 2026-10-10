@@ -115,6 +115,7 @@ pub(super) fn try_run(
         ("--micro-dao-token", _) => Some(contracts::micro_dao_token(arguments)),
         ("--composite-zswap", _) => Some(shielded::composite_zswap(arguments)),
         ("--field-observation", _) => Some(expressions::field_observation(arguments)),
+        ("--opaque-public", _) => Some(expressions::opaque_public(arguments)),
         ("--stateful-struct", _) => Some(recorded::stateful_struct(arguments)),
         ("--stateful-assert", _) => Some(recorded::stateful_assert(arguments)),
         ("--effect-plan-unsigned-arithmetic", _) => {
@@ -234,6 +235,11 @@ mod tests {
                 "--mixed-width-recording",
                 1,
                 "usage: compact-rust-proof-smoke --mixed-width-recording <proof-output>",
+            ),
+            (
+                "--opaque-public",
+                1,
+                "usage: compact-rust-proof-smoke --opaque-public <proof-output>",
             ),
             (
                 "--wide-unsigned-field-cast",

@@ -86,6 +86,7 @@ mod merkle_reset;
 mod merkle_root;
 mod merkle_verify;
 mod micro_dao_advance;
+mod opaque_public;
 use micro_dao_cash_out_support::advance as micro_dao_advance_support;
 mod did_deactivate;
 #[path = "../../../tests-rust-backend/did-adoption/support/witness.rs"]

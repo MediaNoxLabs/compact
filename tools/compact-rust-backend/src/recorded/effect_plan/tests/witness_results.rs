@@ -145,7 +145,7 @@ fn existing_and_legacy_witness_results_have_a_distinct_bounded_domain() {
 }
 
 #[test]
-fn owned_results_do_not_widen_witness_parameters_or_circuit_interfaces() {
+fn opaque_public_bytes_do_not_widen_witness_parameters_or_fixed_product_roots() {
     let mut declaration = witness(Type::OpaqueBytes);
     declaration.parameters[0].ty = Type::OpaqueBytes;
     assert!(matches!(
@@ -165,19 +165,27 @@ fn owned_results_do_not_widen_witness_parameters_or_circuit_interfaces() {
             name: "external".into(),
             ty: ty.clone(),
         });
-        assert!(matches!(
-            checked(&root, &witness(Type::OpaqueBytes)),
-            Err(PlanError::Unsupported(_))
-        ));
+        if ty == Type::OpaqueBytes {
+            render(&checked(&root, &witness(Type::OpaqueBytes)).unwrap()).unwrap();
+        } else {
+            assert!(matches!(
+                checked(&root, &witness(Type::OpaqueBytes)),
+                Err(PlanError::Unsupported(_))
+            ));
+        }
         let mut root = circuit();
-        root.result = ty;
+        root.result = ty.clone();
         root.return_value = StateReturn::Expression {
             value: call(field_value()),
         };
-        assert!(matches!(
-            checked(&root, &witness(Type::OpaqueBytes)),
-            Err(PlanError::Unsupported(_))
-        ));
+        if ty == Type::OpaqueBytes {
+            render(&checked(&root, &witness(Type::OpaqueBytes)).unwrap()).unwrap();
+        } else {
+            assert!(matches!(
+                checked(&root, &witness(Type::OpaqueBytes)),
+                Err(PlanError::Unsupported(_))
+            ));
+        }
     }
 }
 

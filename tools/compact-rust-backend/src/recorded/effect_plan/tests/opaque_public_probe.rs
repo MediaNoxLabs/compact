@@ -1,7 +1,7 @@
 // This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
-//! Baseline evidence only: candidate refusals are not actual-owner failures.
+//! Whole-old retained roots distinguish candidate progress from actual ownership.
 use super::*;
 use crate::recorded::admission_probe::trace;
 
@@ -12,7 +12,7 @@ fn zerocash() -> Contract {
     .unwrap()
 }
 
-fn root_gap(c: &Contract, name: &str, path: &str, detail: &str, label: &str) {
+fn root_outcome(c: &Contract, name: &str, expected_gap: Option<&str>, label: &str) {
     let ledger = c.ledger_fields.iter().map(|f| (f.id.as_str(), f)).collect();
     let witnesses = c.witnesses.iter().map(|w| (w.name.as_str(), w)).collect();
     let pure = c.circuits.iter().map(|r| (r.name.as_str(), r)).collect();
@@ -26,12 +26,21 @@ fn root_gap(c: &Contract, name: &str, path: &str, detail: &str, label: &str) {
         crate::recorded::typed_plan::lower(root, &ledger, &witnesses, &pure, &circuits).is_some(),
         "{label}: complete old membership oracle must accept first"
     );
-    let error = match check_with_calls(root, &ledger, &witnesses, &pure, &circuits) {
-        Err(PlanError::Unsupported(gap)) => gap,
-        other => panic!("{label}: expected source refusal, got {other:?}"),
+    let candidate = match check_with_calls(root, &ledger, &witnesses, &pure, &circuits) {
+        Ok(plan) => {
+            assert!(
+                expected_gap.is_none(),
+                "{label}: expected refusal {expected_gap:?}"
+            );
+            render(&plan).unwrap();
+            serde_json::json!({"accepted": true})
+        }
+        Err(PlanError::Unsupported(gap)) => {
+            assert_eq!(Some(gap.detail.as_str()), expected_gap, "{label}: {gap:?}");
+            serde_json::json!({"accepted": false, "path": gap.path, "detail": gap.detail})
+        }
+        Err(PlanError::Invalid(gap)) => panic!("{label}: invariant error {gap:?}"),
     };
-    assert_eq!(error.path, path, "{label}");
-    assert_eq!(error.detail, detail, "{label}");
     let (output, rows) = trace::capture_json(|| crate::render_with_capabilities(c));
     let output = output.unwrap_or_else(|e| panic!("{label}: complete native render {e:?}"));
     let rows = rows
@@ -67,35 +76,22 @@ fn root_gap(c: &Contract, name: &str, path: &str, detail: &str, label: &str) {
         std::fs::write(dir.join("lib.rs"), output.source).unwrap();
         std::fs::write(dir.join("case.json"), serde_json::to_vec_pretty(&serde_json::json!({
             "root": name, "whole_old_accepted": true, "actual_owner": rows[0]["body_owner"],
-            "candidate_refusal": {"path": error.path, "detail": error.detail},
-            "claim": "baseline first refusal; no hypothetical root-only or whole-family inclusion claim"
+            "candidate": candidate,
+            "claim": "finite retained root progress; no whole-family inclusion or retirement claim"
         })).unwrap()).unwrap();
     }
 }
 
 #[test]
-fn whole_old_opaque_roots_have_precise_candidate_boundary_refusals() {
+fn whole_old_opaque_roots_show_candidate_progress_without_retiring_the_owner() {
     let bboard: Contract =
         serde_json::from_str(include_str!("../../../../tests/bboard-schema20-ir.json")).unwrap();
-    root_gap(
-        &bboard,
-        "post",
-        "parameters[0]",
-        "unsupported parameter type",
-        "bboard-post",
-    );
-    root_gap(
-        &bboard,
-        "take_down",
-        "return_value",
-        "unsupported circuit result type",
-        "bboard-take-down",
-    );
-    root_gap(
+    root_outcome(&bboard, "post", None, "bboard-post");
+    root_outcome(&bboard, "take_down", None, "bboard-take-down");
+    root_outcome(
         &zerocash(),
         "spend",
-        "parameters[0]",
-        "unsupported parameter type",
+        Some("unsupported witness parameter type"),
         "zerocash-spend",
     );
 }

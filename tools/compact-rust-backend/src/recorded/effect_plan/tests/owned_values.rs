@@ -267,7 +267,7 @@ fn opaque_default_stays_in_certified_pure_body_or_named_struct() {
     ));
 }
 #[test]
-fn owned_storage_witness_and_local_call_domains_preserve_public_boundaries() {
+fn owned_domains_keep_opaque_public_roots_distinct_from_products_and_witnesses() {
     for ty in [
         Type::OpaqueString,
         Type::OpaqueBytes,
@@ -282,10 +282,22 @@ fn owned_storage_witness_and_local_call_domains_preserve_public_boundaries() {
             name: "owned".into(),
             ty: ty.clone(),
         });
-        assert!(matches!(
-            check_root(&parameter_root, &[]),
-            Err(PlanError::Unsupported(_))
-        ));
+        if matches!(ty, Type::OpaqueString | Type::OpaqueBytes) {
+            render(&check_root(&parameter_root, &[]).unwrap()).unwrap();
+            let mut valid_result = parameter_root.clone();
+            valid_result.result = ty.clone();
+            valid_result.return_value = StateReturn::Expression {
+                value: param("owned"),
+            };
+            render(&check_root(&valid_result, &[]).unwrap()).unwrap();
+        } else {
+            assert!(matches!(
+                check_root(&parameter_root, &[]),
+                Err(PlanError::Unsupported(_))
+            ));
+        }
+        // A Boolean body still cannot satisfy an opaque or product result.
+        // Preserve this malformed-result control independently of root eligibility.
         let mut result_root = root(boolean());
         result_root.result = ty.clone();
         assert!(matches!(
@@ -343,7 +355,7 @@ fn owned_storage_witness_and_local_call_domains_preserve_public_boundaries() {
         if ty == Type::OpaqueBytes || matches!(ty, Type::Vector { .. }) || ty == empty::empty_type()
         {
             // Result-only witness qualification includes fixed products and empty
-            // named products. It does not change public interfaces or witness parameters.
+            // named products. Public eligibility and witness parameters stay independent.
             render(&observed.unwrap()).unwrap();
         } else {
             // Text and products containing dynamic opaque members stay refused.

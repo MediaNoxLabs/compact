@@ -81,7 +81,7 @@ fn forged_owned_cell_plans_require_declaration_payload_and_live_operand_identity
 }
 
 #[test]
-fn owned_cell_and_local_call_domains_keep_root_and_witness_interfaces_separate() {
+fn owned_cells_and_public_opaque_interfaces_keep_witness_results_separate() {
     for ty in [Type::OpaqueString, Type::OpaqueBytes, owned()] {
         assert!(validate::cell_type(&ty));
         assert!(!validate::surface_type(&ty));
@@ -90,17 +90,11 @@ fn owned_cell_and_local_call_domains_keep_root_and_witness_interfaces_separate()
             name: "arg".into(),
             ty: ty.clone(),
         }];
-        assert!(matches!(
-            maps_check(&source),
-            Err(PlanError::Unsupported(_))
-        ));
+        render(&maps_check(&source).unwrap()).unwrap();
         source.stateful_circuits[0].parameters.clear();
         source.stateful_circuits[0].result = ty.clone();
         source.stateful_circuits[0].return_value = StateReturn::Expression { value: read() };
-        assert!(matches!(
-            maps_check(&source),
-            Err(PlanError::Unsupported(_))
-        ));
+        render(&maps_check(&source).unwrap()).unwrap();
 
         let mut source = contract(ty.clone());
         source.witnesses.push(WitnessDeclaration {
@@ -116,7 +110,7 @@ fn owned_cell_and_local_call_domains_keep_root_and_witness_interfaces_separate()
             },
         }];
         if ty == Type::OpaqueBytes {
-            // Top-level owned bytes are now qualified as witness results only.
+            // Top-level owned bytes also have separately qualified witness results.
             render(&maps_check(&source).unwrap()).unwrap();
         } else {
             // OpaqueString and products with opaque members remain refused.
@@ -135,8 +129,8 @@ fn owned_cell_and_local_call_domains_keep_root_and_witness_interfaces_separate()
             name: "helper".into(),
             arguments: vec![],
         }];
-        // An internal call uses the owned local-value domain; the same
-        // declaration still cannot become a public parameter or result.
+        // Internal calls use their owned domain independently of the public
+        // opaque policy and the narrower witness-result policy above.
         render(&maps_check(&source).unwrap()).unwrap();
     }
 }

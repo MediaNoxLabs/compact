@@ -472,3 +472,6 @@ mod qualified_coin_write;
 
 #[path = "tests/opaque_public_probe.rs"]
 mod opaque_public_probe;
+
+#[path = "tests/public_interfaces.rs"]
+mod public_interfaces;

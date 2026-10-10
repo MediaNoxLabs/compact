@@ -4,6 +4,18 @@
 //! Local ownership and conversion policy; exported/storage surfaces stay separate.
 use super::{Type, surface_type, unsigned_bound};
 
+/// Root ABI eligibility is separate from witness, storage and local ownership.
+/// Callers must first validate canonical types and existing static budgets.
+pub(super) fn public_interface_type(ty: &Type) -> bool {
+    match ty {
+        Type::OpaqueString | Type::OpaqueBytes => true,
+        Type::Struct { fields, .. } => {
+            !fields.is_empty() && fields.iter().all(|field| public_interface_type(&field.ty))
+        }
+        _ => surface_type(ty),
+    }
+}
+
 pub(super) fn value_type(ty: &Type) -> bool {
     match ty {
         Type::OpaqueString | Type::OpaqueBytes => true,

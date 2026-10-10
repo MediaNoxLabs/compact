@@ -138,7 +138,7 @@ fn set_values_cannot_escape_a_sibling_block() {
 }
 
 #[test]
-fn set_domain_refusals_are_independent_of_operand_and_interface_admission() {
+fn set_domain_refusals_and_witness_policy_are_independent_of_opaque_public_roots() {
     // Size has no operand: these fail on the declared Set domain itself.
     for ty in [
         Type::Unit,
@@ -172,7 +172,7 @@ fn set_domain_refusals_are_independent_of_operand_and_interface_admission() {
             name: "external".into(),
             ty: ty.clone(),
         });
-        assert!(matches!(checked(&c), Err(PlanError::Unsupported(_))));
+        render(&checked(&c).unwrap()).unwrap();
         c.stateful_circuits[0].parameters.clear();
         c.witnesses.push(WitnessDeclaration {
             name: "external".into(),

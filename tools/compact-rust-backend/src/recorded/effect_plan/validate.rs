@@ -68,6 +68,10 @@ pub(super) fn surface_type(ty: &Type) -> bool {
             _ => false,
         }
 }
+/// Public root signatures may own opaque values; other policies stay separate.
+pub(super) fn public_interface_type(ty: &Type) -> bool {
+    domain::public_interface_type(ty)
+}
 /// Declared Cell storage may own opaque values without widening interfaces.
 pub(super) fn cell_type(ty: &Type) -> bool {
     storage_value_type(ty)
@@ -107,7 +111,7 @@ pub(super) fn stateful_call_type(ty: &Type) -> bool {
     value_type(ty)
 }
 /// Context-free helpers may exchange local owned values; public ABI boundaries
-/// still use surface_type. Wide and tuple interfaces are intentional here.
+/// use public_interface_type. Wide and tuple helpers are intentional here.
 pub(super) fn pure_interface_type(ty: &Type) -> bool {
     value_type(ty)
 }
@@ -134,7 +138,7 @@ pub(super) fn validate(plan: &Plan, declarations: &Declarations) -> Result<(), R
     for value in &plan.parameters {
         declarations.types().validate_at(&value.ty, "parameters")?;
     }
-    if !surface_type(&plan.result_type) {
+    if !public_interface_type(&plan.result_type) {
         return Err(invalid("return_value", "unsupported circuit result type"));
     }
     let mut scope = HashMap::new();
@@ -174,7 +178,7 @@ pub(super) fn validate(plan: &Plan, declarations: &Declarations) -> Result<(), R
     }
     state.charge(plan.parameters.len(), "parameters")?;
     for value in &plan.parameters {
-        if !surface_type(&value.ty) || !state.allocated.insert(value.id) {
+        if !public_interface_type(&value.ty) || !state.allocated.insert(value.id) {
             return Err(invalid(
                 "parameters",
                 "unsupported or duplicate plan parameter",

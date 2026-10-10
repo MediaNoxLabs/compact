@@ -26,6 +26,7 @@ default = []
 experimental-recording-plan = ["dep:compact-rust-recording-effect-plan-prototype-fixture"]
 
 [dependencies]
+compact-rust-effect-plan-opaque-public-source-fixture = { path = "../../tests-rust-backend/effect-plan-opaque-public-source", features = ["ledger-transaction"] }
 compact-rust-effect-plan-merkle-source-fixture = { path = "../../tests-rust-backend/effect-plan-merkle-source", features = ["ledger-transaction"] }
 compact-rust-effect-plan-transient-crypto-source-fixture = { path = "../../tests-rust-backend/effect-plan-transient-crypto-source", features = ["ledger-transaction"] }
 compact-rust-effect-plan-unsigned-arithmetic-source-fixture = { path = "../../tests-rust-backend/effect-plan-unsigned-arithmetic-source", features = ["ledger-transaction"] }

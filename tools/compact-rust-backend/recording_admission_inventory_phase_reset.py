@@ -45,10 +45,16 @@ RETIRED = [*PRIOR_RETIRED, ROUTE]
 
 def predecessor_sources(root, transition):
     """Authenticate all current owners before undoing the exact reviewed delta."""
+    sources = {owner: (root / owner).read_text() for owner in REVIEWED_OWNERS}
+    return predecessor_source_snapshot(sources, transition)
+
+
+def predecessor_source_snapshot(sources, transition):
+    """Validate exact supplied owner bytes, including authenticated later history."""
     parts = transition.get('predecessor_reconstruction', {})
     if canonical(parts) != RECONSTRUCTION_SHA:
         raise ValueError('unreviewed phase reconstruction fragments')
-    sources = {owner: (root / owner).read_text() for owner in REVIEWED_OWNERS}
+    sources = {owner: sources.get(owner, '') for owner in REVIEWED_OWNERS}
     for owner, expected in REVIEWED_OWNERS.items():
         if digest(sources[owner].encode()) != expected:
             raise ValueError('current phase owner differs from reviewed source: ' + owner)
@@ -135,7 +141,7 @@ def check_sources(root, sources, transition):
                 or re.search(r'\buse\b[^;]*\bphase_reset\b[^;]*\b(?:lower|Audit|U64)\b', source)):
             errors.append('phase retirement: production owner reintroduced old authority: ' + owner)
     try:
-        predecessor_sources(root, transition)
+        predecessor_source_snapshot(sources, transition)
         typed = sources.get(TYPED, '')
         if (len(re.findall(r'\bmod\s+phase_reset\s*;', typed)) != 1
                 or re.search(r'#\[cfg\(test\)\]\s*mod\s+phase_reset\s*;', typed)):

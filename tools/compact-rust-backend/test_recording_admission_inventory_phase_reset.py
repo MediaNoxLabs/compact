@@ -20,6 +20,8 @@ class PhaseResetTransitionTests(unittest.TestCase):
             destination = self.root / owner
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_bytes((inventory.ROOT / owner).read_bytes())
+        for owner, source in previous.immediate_checkpoint_sources(inventory.ROOT).items():
+            (self.root / owner).write_text(source)
         self.voting_transition = json.loads(previous.VOTING_TRANSITION.read_text())
         self.phase_transition = json.loads(previous.PHASE_TRANSITION.read_text())
 

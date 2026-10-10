@@ -92,6 +92,7 @@ enum CompositeDomain {
     #[cfg_attr(not(test), allow(dead_code))]
     ShieldedReceive,
     ShieldedSend,
+    #[cfg_attr(not(test), allow(dead_code))]
     ImmediateShieldedSend,
     ShieldedPayout,
     ActionfulShieldedPayout,
@@ -1462,6 +1463,7 @@ fn shielded_send_result(ty: &Type) -> bool {
 // Inspect every expression, including unused locals, arguments and unselected
 // branches. The Plan verifies the exact types and evaluates the ordered body;
 // this audit closes admission over its deliberately smaller effect domain.
+#[cfg(test)]
 fn shielded_send_value(
     value: &Expr,
     pure: &HashMap<&str, &PureCircuit>,
@@ -1723,6 +1725,7 @@ fn shielded_plan<'a>(
     }
 }
 
+#[cfg(test)]
 pub(super) fn lower_shielded_send<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -2141,6 +2144,7 @@ mod shielded_receive_tests;
 #[cfg(test)]
 mod shielded_send_tests;
 
+#[cfg(test)]
 pub(super) fn lower_immediate_shielded_send<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,

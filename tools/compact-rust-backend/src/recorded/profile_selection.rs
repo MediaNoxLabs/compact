@@ -416,18 +416,6 @@ pub(super) fn select(
                 )
             })
             .or_else(|| {
-                record_option!(
-                    "selector.immediate-send",
-                    typed_plan::lower_immediate_shielded_send(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                        circuits,
-                    )
-                )
-            })
-            .or_else(|| {
                 match typed_plan::lower_shielded_send_checked(
                     circuit,
                     ledger_fields,

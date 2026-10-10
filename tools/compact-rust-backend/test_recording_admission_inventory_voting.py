@@ -20,7 +20,9 @@ class VotingTransitionTests(unittest.TestCase):
         # Keep this suite on its exact reviewed #547 checkpoint, independently
         # of later retirements; original assertions still own their old failures.
         phase_review = json.loads(previous.PHASE_TRANSITION.read_text())
-        for owner, source in phase_reset.predecessor_sources(inventory.ROOT, phase_review).items():
+        phase_sources = {owner: (inventory.ROOT / owner).read_text() for owner in phase_reset.REVIEWED_OWNERS}
+        phase_sources.update(previous.immediate_checkpoint_sources(inventory.ROOT))
+        for owner, source in phase_reset.predecessor_source_snapshot(phase_sources, phase_review).items():
             (self.root / owner).write_text(source)
         self.voting_transition = json.loads(previous.VOTING_TRANSITION.read_text())
 

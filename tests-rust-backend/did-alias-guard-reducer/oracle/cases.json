@@ -12,7 +12,7 @@
     },
     {
       "path": "tests-rust-backend/did-alias-guard-reducer/lib.rs",
-      "sha256": "408962386df18ddaf0cfeb20c2710480176a1c97c920828a2a571084ff38193e"
+      "sha256": "ae29fea9b2a36fd701affac2fd2fbb836aa4bb3dc9a27d107d53ca723f3c7486"
     },
     {
       "path": "tests-rust-backend/did-alias-guard-reducer/tests/behavior.rs",

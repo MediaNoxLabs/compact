@@ -30,6 +30,8 @@ mod own_public_key;
 mod phase_reset_inclusion;
 #[path = "tests/pure_inclusion.rs"]
 mod pure_inclusion;
+#[path = "tests/pure_unit_statements.rs"]
+mod pure_unit_statements;
 #[path = "tests/pure_validation.rs"]
 mod pure_validation;
 #[path = "tests/reset_payout_inclusion.rs"]

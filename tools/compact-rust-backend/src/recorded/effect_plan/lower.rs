@@ -388,6 +388,9 @@ impl Lowerer<'_> {
             StateAction::Expression { value } => {
                 self.expression(value, scope, bindings, &format!("{path}.value"))?;
             }
+            StateAction::PureCall { .. } => {
+                self.pure_statement(action, scope, bindings, path)?;
+            }
             StateAction::CircuitCall { name, arguments } => {
                 // Statement calls resolve only stateful declarations, just as native
                 // lowering does. The shared call checker owns arguments and body;

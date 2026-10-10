@@ -6,6 +6,33 @@
 use super::*;
 
 impl Lowerer<'_> {
+    /// A direct pure Unit statement uses the existing certified invocation.
+    /// Stateful statement calls keep their separate declaration-kind boundary.
+    pub(super) fn pure_statement(
+        &mut self,
+        action: &StateAction,
+        scope: &Scope,
+        bindings: &mut Vec<Binding>,
+        path: &str,
+    ) -> Result<(), RecordingGap> {
+        let StateAction::PureCall { name, arguments } = action else {
+            return Err(RecordingGap::action(action, path.into()));
+        };
+        let Some((declaration, signature)) = self.declarations.resolve_call(name) else {
+            return Err(RecordingGap::action(action, path.into()));
+        };
+        if signature.kind != super::super::declarations::CallKind::Pure
+            || signature.result != Type::Unit
+        {
+            return Err(invalid(
+                path,
+                "pure Unit statement requires a pure Unit declaration",
+            ));
+        }
+        self.pure_call(declaration, name, arguments, scope, bindings, path)?;
+        Ok(())
+    }
+
     pub(super) fn pure_call(
         &mut self,
         declaration: CallId,

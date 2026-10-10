@@ -21,7 +21,7 @@
 
 use proc_macro2::Span;
 
-use crate::ir::StatefulCircuit;
+use crate::ir::{StatefulCircuit, Type};
 use crate::{RenderError, ident, public_parameter_idents, retained_value, rust_type};
 
 /// A recording handle that borrows the user-supplied witness implementation.
@@ -106,6 +106,58 @@ pub(crate) fn render_recorded_contract_method(
     })
 }
 
+// Public preflight bounds/canonicalizes these types. Walk borrowed opaque
+// leaves so validation never adds CellValue bounds to aggregate public types
+// (official FAB supports more tuple arities than the ledger CellValue trait).
+fn opaque_checks(value: syn::Expr, ty: &Type) -> Result<Vec<syn::Stmt>, RenderError> {
+    opaque_checks_at(value, ty, false)
+}
+
+fn opaque_checks_at(
+    value: syn::Expr,
+    ty: &Type,
+    borrowed: bool,
+) -> Result<Vec<syn::Stmt>, RenderError> {
+    let mut checks = Vec::new();
+    match ty {
+        Type::OpaqueString | Type::OpaqueBytes => {
+            let reference = if borrowed {
+                value
+            } else {
+                syn::parse_quote!(&#value)
+            };
+            checks.push(syn::parse_quote! {
+                runtime::ledger::CellValue::validate_cell_value(#reference)?;
+            });
+        }
+        Type::Struct { fields, .. } => {
+            for field in fields {
+                let name = ident(&field.name)?;
+                checks.extend(opaque_checks(syn::parse_quote!((#value).#name), &field.ty)?);
+            }
+        }
+        Type::Tuple { elements } => {
+            for (index, element) in elements.iter().enumerate() {
+                let index = syn::Index::from(index);
+                checks.extend(opaque_checks(syn::parse_quote!((#value).#index), element)?);
+            }
+        }
+        Type::Vector { element, .. } => {
+            let body =
+                opaque_checks_at(syn::parse_quote!(__compact_opaque_element), element, true)?;
+            if !body.is_empty() {
+                checks.push(syn::parse_quote! {
+                    for __compact_opaque_element in &(#value).0 {
+                        #(#body)*
+                    }
+                });
+            }
+        }
+        _ => {}
+    }
+    Ok(checks)
+}
+
 /// A generated call handle carries the circuit's declared input and entry
 /// point into ledger preparation, so consumers cannot repeat them incorrectly.
 pub(crate) fn render_observed_call_method(
@@ -118,6 +170,7 @@ pub(crate) fn render_observed_call_method(
     let mut args = Vec::<syn::FnArg>::new();
     let mut call_args = Vec::<syn::Ident>::new();
     let mut input_args = Vec::<syn::Expr>::new();
+    let mut input_checks = Vec::<syn::Stmt>::new();
     for (parameter, arg) in circuit
         .parameters
         .iter()
@@ -125,6 +178,7 @@ pub(crate) fn render_observed_call_method(
     {
         let ty = rust_type(&parameter.ty)?;
         args.push(syn::parse_quote!(#arg: #ty));
+        input_checks.extend(opaque_checks(syn::parse_quote!(#arg), &parameter.ty)?);
         input_args.push(retained_value(syn::parse_quote!(#arg), &parameter.ty));
         call_args.push(arg);
     }
@@ -139,6 +193,10 @@ pub(crate) fn render_observed_call_method(
         ])),
     };
     let result = rust_type(&circuit.result)?;
+    let output_checks = opaque_checks(
+        syn::parse_quote!(recorded.execution.result),
+        &circuit.result,
+    )?;
     let method = if uses_witness {
         syn::parse_quote! {
             #[cfg(feature = "ledger-transaction")]
@@ -149,8 +207,12 @@ pub(crate) fn render_observed_call_method(
                 #(#args),*
             ) -> Result<runtime::transaction::RecordedCall<'observed, Private, #result>, runtime::CompactError>
             where W: super::TryWitnesses<Private> {
+                // Reject lossy public encodings before executing any callbacks.
+                #(#input_checks)*
                 let input = #input;
                 let recorded = self.#name(observed.circuit_context(private_state), #(#call_args),*)?;
+                // The result exists only after execution; reject before preparation.
+                #(#output_checks)*
                 Ok(runtime::transaction::RecordedCall::new(observed, recorded, #entry_point, input))
             }
         }
@@ -163,11 +225,19 @@ pub(crate) fn render_observed_call_method(
                 private_state: Private,
                 #(#args),*
             ) -> Result<runtime::transaction::RecordedCall<'observed, Private, #result>, runtime::CompactError> {
+                // Reject lossy public encodings before executing any callbacks.
+                #(#input_checks)*
                 let input = #input;
                 let recorded = self.#name(observed.circuit_context(private_state), #(#call_args),*)?;
+                // The result exists only after execution; reject before preparation.
+                #(#output_checks)*
                 Ok(runtime::transaction::RecordedCall::new(observed, recorded, #entry_point, input))
             }
         }
     };
     Ok(method)
 }
+
+#[cfg(test)]
+#[path = "facade/tests.rs"]
+mod tests;

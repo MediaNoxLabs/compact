@@ -2149,6 +2149,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-opaque-observed-boundary-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-base-crypto",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-storage",
+ "rand 0.8.6",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-opaque-string-map-query-oracle-fixture"
 version = "0.1.0"
 dependencies = [

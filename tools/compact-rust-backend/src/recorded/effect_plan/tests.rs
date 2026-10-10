@@ -487,3 +487,6 @@ mod tuple_projection;
 
 #[path = "tests/membership_inclusion.rs"]
 mod membership_inclusion;
+
+#[path = "tests/shielded_send_probe.rs"]
+mod shielded_send_probe;

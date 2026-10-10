@@ -718,6 +718,7 @@ dependencies = [
 name = "compact-rust-canonical-output-order-oracle-fixture"
 version = "0.1.0"
 dependencies = [
+ "compact-rust-backend",
  "hex",
  "midnight-base-crypto",
  "midnight-coin-structure",
@@ -2048,6 +2049,7 @@ dependencies = [
  "midnight-onchain-state",
  "midnight-serialize",
  "midnight-storage",
+ "rand 0.8.6",
  "serde",
  "serde_json",
 ]
@@ -3234,6 +3236,7 @@ dependencies = [
 name = "compact-rust-zswap-transfer-oracle-fixture"
 version = "0.1.0"
 dependencies = [
+ "compact-rust-backend",
  "hex",
  "midnight-base-crypto",
  "midnight-coin-structure",

@@ -32,6 +32,8 @@ mod rich_values;
 mod tuple_equality;
 #[path = "tests/wide_values.rs"]
 mod wide_values;
+#[path = "tests/zswap_inclusion.rs"]
+mod zswap_inclusion;
 use declaration_tests::check_plan;
 
 use super::model::*;

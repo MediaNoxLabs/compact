@@ -1,16 +1,7 @@
-# Native Zswap intent oracle
+# Native Zswap intent recording fixture
 
-Builds the complete retained source IR with the current backend. Capability
-assertions preserve `flow` and `read_coin`, add `witness_order`, and retain the
-`produce` / `consume` recording refusals.
+The current backend renders the complete retained schema20 source. The original nine TypeScript runtime rows now compare native and recorded execution, including three produce rows and one consume row newly admitted by the recording algebra's Unit carrier interface.
 
-The existing TypeScript oracle rows check native intent order, private outputs,
-state, gas and allocation indexes. Recorded `flow` and `witness_order` are also
-compared to that native result and the retained TypeScript public operations.
-The two `witness_order` rows cover selected=true/false with a user recipient;
-the wider nine-row oracle also covers contract recipients. The new
-`witness_order` availability is runtime evidence; it is not proof qualification.
+`produce` and `consume` can record intents and have typed observed-call APIs. The compiler still marks them `proof_required=false`; their empty public transcripts still refuse transaction preparation with `PrepareCallError::EmptyTranscript`. The additional allfeatures-only test checks that boundary using a deterministic verifier carrier, without key generation or proof work.
 
-```sh
-cargo test -p compact-rust-native-zswap-intents-oracle-fixture --all-features
-```
+The original selected `flow` emits two identical outputs. Keep its provisional intent behavior and exact duplicate/unbound/empty-transcript refusals; these are runtime boundary controls, not a positive flow proof. The strict transfer adapter invokes these controls using this compiled fixture. Full flow source/current generated Rust pairing is recorded separately, with no comparison to the unrelated transfer proof IR and no flow proof keys.

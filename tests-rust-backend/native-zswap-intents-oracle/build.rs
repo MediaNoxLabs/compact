@@ -9,12 +9,10 @@ fn main() {
     let rendered = compact_rust_backend::render_with_capabilities(&contract).unwrap();
     let mut names = std::collections::BTreeSet::new();
     for circuit in &rendered.capabilities.circuits {
-        let expected = matches!(
-            circuit.name.as_str(),
-            "flow" | "witness_order" | "read_coin"
-        );
-        assert_eq!(circuit.recorded, expected, "{} recorded", circuit.name);
-        assert_eq!(circuit.observed_call, expected, "{} observed", circuit.name);
+        // Intent-only produce/consume now record through typed composition.
+        // Recording capability does not make an empty public trace preparable.
+        assert!(circuit.recorded, "{} recorded", circuit.name);
+        assert!(circuit.observed_call, "{} observed", circuit.name);
         names.insert(circuit.name.as_str());
     }
     assert_eq!(

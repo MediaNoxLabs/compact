@@ -128,10 +128,14 @@ fn native_intents_match_independent_typescript_order_state_gas_and_private_outpu
             _ => unreachable!(),
         }
         .unwrap();
-        if matches!(name, "flow" | "witness_order") {
+        {
             let mut recorded_context = initial();
             recorded_context.set_zswap_output_start(start).unwrap();
             let recorded = match name {
+                "produce" => {
+                    ledger_contract::recorded::produce(recorded_context, coin(), recipient(left))
+                }
+                "consume" => ledger_contract::recorded::consume(recorded_context, qualified()),
                 "flow" => ledger_contract::recorded::flow(
                     recorded_context,
                     qualified(),
@@ -246,5 +250,50 @@ fn native_intents_match_independent_typescript_order_state_gas_and_private_outpu
                 row["qualifiedIndex"]
             );
         }
+    }
+}
+
+#[cfg(feature = "ledger-transaction")]
+#[test]
+fn intent_only_recording_expansion_still_refuses_empty_public_preparation() {
+    use rand::{Rng, SeedableRng, rngs::StdRng};
+    use runtime::transaction::{CallSpec, PrepareCallError, prepare_call};
+    for produce in [false, true] {
+        let mut context = initial();
+        context.set_zswap_output_start(7).unwrap();
+        let (name, recorded, input) = if produce {
+            (
+                "produce",
+                ledger_contract::recorded::produce(context, coin(), recipient(true)).unwrap(),
+                runtime::fab::AlignedValue::from((coin(), recipient(true))),
+            )
+        } else {
+            (
+                "consume",
+                ledger_contract::recorded::consume(context, qualified()).unwrap(),
+                runtime::fab::AlignedValue::from(qualified()),
+            )
+        };
+        assert!(recorded.public.verify_ops().is_empty());
+        assert_eq!(recorded.execution.private_transcript_outputs.len(), 1);
+        assert_eq!(
+            recorded.execution.context.circuit_zswap().outputs().len(),
+            usize::from(produce)
+        );
+        assert_eq!(
+            recorded.execution.context.circuit_zswap().inputs().len(),
+            usize::from(!produce)
+        );
+        // Preparation needs only a deterministic verifier carrier; no keys/proofs.
+        let spec = CallSpec::new(
+            name,
+            StdRng::seed_from_u64(552).r#gen(),
+            input,
+            runtime::Field::from(0),
+        );
+        assert!(matches!(
+            prepare_call(recorded, spec),
+            Err(PrepareCallError::EmptyTranscript)
+        ));
     }
 }

@@ -1,0 +1,318 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "pot",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "struct",
+          "name": "QualifiedShieldedCoinInfo",
+          "fields": [
+            {
+              "name": "nonce",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              }
+            },
+            {
+              "name": "color",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              }
+            },
+            {
+              "name": "value",
+              "ty": {
+                "kind": "unsigned",
+                "max": "340282366920938463463374607431768211455"
+              }
+            },
+            {
+              "name": "mt_index",
+              "ty": {
+                "kind": "unsigned",
+                "max": "18446744073709551615"
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "zswap_transfer_oracle.compact",
+        "line": 17,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "transfer",
+      "parameters": [
+        {
+          "name": "input",
+          "ty": {
+            "kind": "struct",
+            "name": "QualifiedShieldedCoinInfo",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "color",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "340282366920938463463374607431768211455"
+                }
+              },
+              {
+                "name": "mt_index",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "18446744073709551615"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "coin",
+          "ty": {
+            "kind": "struct",
+            "name": "ShieldedCoinInfo",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "color",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "340282366920938463463374607431768211455"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "recipient",
+          "ty": {
+            "kind": "struct",
+            "name": "Either",
+            "fields": [
+              {
+                "name": "is_left",
+                "ty": {
+                  "kind": "boolean"
+                }
+              },
+              {
+                "name": "left",
+                "ty": {
+                  "kind": "struct",
+                  "name": "ZswapCoinPublicKey",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "right",
+                "ty": {
+                  "kind": "struct",
+                  "name": "ContractAddress",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "nullifier",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "commitment",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "expression",
+          "value": {
+            "kind": "create_zswap_input",
+            "coin": {
+              "kind": "parameter",
+              "name": "input"
+            }
+          }
+        },
+        {
+          "kind": "expression",
+          "value": {
+            "kind": "kernel_claim",
+            "claim": "nullifier",
+            "value": {
+              "kind": "parameter",
+              "name": "nullifier"
+            }
+          }
+        },
+        {
+          "kind": "expression",
+          "value": {
+            "kind": "create_zswap_output",
+            "coin": {
+              "kind": "parameter",
+              "name": "coin"
+            },
+            "recipient": {
+              "kind": "parameter",
+              "name": "recipient"
+            }
+          }
+        },
+        {
+          "kind": "expression",
+          "value": {
+            "kind": "kernel_claim",
+            "claim": "coin_spend",
+            "value": {
+              "kind": "parameter",
+              "name": "commitment"
+            }
+          }
+        },
+        {
+          "kind": "cell_write_coin",
+          "field": "pot",
+          "index": 0,
+          "coin": {
+            "kind": "parameter",
+            "name": "coin"
+          },
+          "recipient": {
+            "kind": "parameter",
+            "name": "recipient"
+          }
+        }
+      ],
+      "source": {
+        "file": "zswap_transfer_oracle.compact",
+        "line": 20,
+        "column": 1
+      }
+    },
+    {
+      "name": "read_coin",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "QualifiedShieldedCoinInfo",
+        "fields": [
+          {
+            "name": "nonce",
+            "ty": {
+              "kind": "bytes",
+              "length": 32
+            }
+          },
+          {
+            "name": "color",
+            "ty": {
+              "kind": "bytes",
+              "length": 32
+            }
+          },
+          {
+            "name": "value",
+            "ty": {
+              "kind": "unsigned",
+              "max": "340282366920938463463374607431768211455"
+            }
+          },
+          {
+            "name": "mt_index",
+            "ty": {
+              "kind": "unsigned",
+              "max": "18446744073709551615"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "cell_read",
+        "field": "pot",
+        "index": 0
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "zswap_transfer_oracle.compact",
+        "line": 29,
+        "column": 1
+      }
+    }
+  ]
+}

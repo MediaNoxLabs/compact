@@ -32,6 +32,7 @@ ledger-transaction = ["midnight-compact-runtime/ledger-transaction"]
 midnight-compact-runtime = { path = "../../runtime-rs" }
 
 [dev-dependencies]
+rand = "=0.8.6"
 hex = "0.4"
 serde = "1"
 serde_json = "1"

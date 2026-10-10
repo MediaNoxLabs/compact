@@ -70,10 +70,16 @@ def guarded(marker):
 
 def predecessor_sources(root, transition):
     """Recover exact #549 owners, never a caller-supplied or rehashed history."""
+    sources = {owner: (root / owner).read_text() for owner in REVIEWED_OWNERS}
+    return predecessor_source_snapshot(sources, transition)
+
+
+def predecessor_source_snapshot(sources, transition):
+    """Validate exactly the #550 owners, including an authenticated later overlay."""
+    sources = {owner: sources.get(owner, '') for owner in REVIEWED_OWNERS}
     parts = transition.get('predecessor_reconstruction', {})
     if canonical(parts) != RECONSTRUCTION_SHA:
         raise ValueError('unreviewed immediate reconstruction fragments')
-    sources = {owner: (root / owner).read_text() for owner in REVIEWED_OWNERS}
     for owner, expected in REVIEWED_OWNERS.items():
         if digest(sources[owner].encode()) != expected:
             raise ValueError('current immediate owner differs from reviewed source: ' + owner)
@@ -170,7 +176,7 @@ def check_sources(root, sources, transition):
     if PAYOUT_TEST_OWNER not in sources:
         errors.append('immediate retirement: frozen payout test-owner source missing')
     try:
-        predecessor_sources(root, transition)
+        predecessor_source_snapshot(sources, transition)
         typed = sources.get(TYPED, '')
         if (len(re.findall(r'\bmod\s+immediate_send\s*;', typed)) != 1
                 or re.search(r'#\[cfg\(test\)\]\s*mod\s+immediate_send\s*;', typed)):

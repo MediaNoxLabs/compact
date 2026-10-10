@@ -23,6 +23,7 @@ import recording_admission_inventory_receive as receive
 import recording_admission_inventory_voting as voting
 import recording_admission_inventory_phase_reset as phase_reset
 import recording_admission_inventory_immediate as immediate
+import recording_admission_inventory_zswap as zswap
 
 JUBJUB_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-517.json")
 CALL_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.calls-519.json")
@@ -48,8 +49,18 @@ PHASE_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.t
 IMMEDIATE_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-550.json")
 
 
+ZSWAP_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-553.json")
+
+
+def zswap_checkpoint_sources(root):
+    return zswap.predecessor_sources(root, json.loads(ZSWAP_TRANSITION.read_text()))
+
+
 def immediate_checkpoint_sources(root):
-    return immediate.predecessor_sources(root, json.loads(IMMEDIATE_TRANSITION.read_text()))
+    prior = zswap_checkpoint_sources(root)
+    sources = {owner: (root / owner).read_text() for owner in immediate.REVIEWED_OWNERS}
+    sources[inventory.SELECTOR] = prior[inventory.SELECTOR]
+    return {**prior, **immediate.predecessor_source_snapshot(sources, json.loads(IMMEDIATE_TRANSITION.read_text()))}
 
 
 class InventoryTests(unittest.TestCase):
@@ -165,7 +176,8 @@ class InventoryTests(unittest.TestCase):
                                   unit_domain_extension=json.loads(UNIT_DOMAIN_EXTENSION.read_text()),
                                   voting_transition=json.loads(VOTING_TRANSITION.read_text()),
                                   phase_reset_transition=json.loads(PHASE_TRANSITION.read_text()),
-                                  immediate_send_transition=json.loads(IMMEDIATE_TRANSITION.read_text()))
+                                  immediate_send_transition=json.loads(IMMEDIATE_TRANSITION.read_text()),
+                                  zswap_transition=json.loads(ZSWAP_TRANSITION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)
@@ -271,7 +283,7 @@ class RetirementTransitionTests(unittest.TestCase):
         path = self.root / inventory.RECORDED
         path.write_text(path.read_text().replace('closed_opaque_asset_removal', 'removed_asset_gate'))
         self.assertFalse(self.report()['passed'])
-        path.write_bytes((inventory.ROOT / inventory.RECORDED).read_bytes())
+        path.write_text(zswap_checkpoint_sources(inventory.ROOT)[inventory.RECORDED])
         selector = self.root / inventory.SELECTOR
         selector.write_text(selector.read_text() + '\nfn new_unreviewed_gate() {}\n')
         self.assertFalse(self.report()['passed'])

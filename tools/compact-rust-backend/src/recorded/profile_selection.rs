@@ -30,13 +30,13 @@ use crate::RenderError;
 use crate::ir::{LedgerField, PureCircuit, StatefulCircuit, WitnessDeclaration};
 
 use super::RecordingGap;
+use super::effect_plan;
 use super::guarded_mutations::{
     closed_authorized_enum_advance_steps, closed_authorized_optional_write_steps,
     closed_organizer_gate_steps, closed_witness_admitted_merkle_insert_steps,
 };
 use super::profile_attempt::ProfileAttempt;
 use super::typed_plan::{self, CompositionRejection, TypedPlan};
-use super::{effect_plan, zswap_plan};
 
 #[cfg(test)]
 #[path = "profile_selection/composite_migration_tests.rs"]
@@ -62,6 +62,9 @@ mod unit_migration_tests;
 #[cfg(test)]
 #[path = "profile_selection/voting_migration_tests.rs"]
 mod voting_migration_tests;
+#[cfg(test)]
+#[path = "profile_selection/zswap_migration_tests.rs"]
+mod zswap_migration_tests;
 
 /// An admitted step sequence and the evidence retained from declined profiles.
 /// Legacy organizers have no typed result; absence of steps permits legacy
@@ -269,6 +272,41 @@ fn resolve_checked_plan(
             detail: gap.detail,
         }),
     }
+}
+
+/// External Unit carrier interfaces enter at the former Zswap priority.
+/// Typed effects decide body support; intent/query counts do not grant admission.
+fn checked_zswap_domain(
+    circuit: &StatefulCircuit,
+    ledger: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+) -> Result<Option<TypedPlan>, RenderError> {
+    use crate::coin_shapes::{qualified_coin_type, shielded_coin_type, shielded_recipient_type};
+    use crate::ir::{StateReturn, Type};
+    if circuit.internal
+        || circuit.result != Type::Unit
+        || !matches!(
+            circuit.return_value,
+            StateReturn::Unit | StateReturn::Expression { .. }
+        )
+        || !circuit.parameters.iter().all(|parameter| {
+            parameter.ty == shielded_coin_type()
+                || parameter.ty == qualified_coin_type()
+                || parameter.ty == shielded_recipient_type()
+                || matches!(parameter.ty, Type::Boolean | Type::Bytes { length: 32 })
+                || parameter.ty
+                    == (Type::Unsigned {
+                        max: u64::MAX.to_string(),
+                    })
+        })
+    {
+        return Ok(None);
+    }
+    resolve_checked_plan(effect_plan::lower_with_calls(
+        circuit, ledger, witnesses, pure, circuits,
+    ))
 }
 
 pub(super) fn select(
@@ -480,34 +518,35 @@ pub(super) fn select(
                 checked_unit_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?
             ),
         };
-        if let Some(plan) = through_unit
-            .or_else(|| {
-                match typed_plan::lower_unit_composition_checked(
-                    circuit,
-                    ledger_fields,
-                    witnesses,
-                    pure_circuits,
-                    circuits,
-                ) {
-                    ProfileAttempt::Admitted(plan) => {
-                        record_option!("selector.unit-composition", Some(plan))
-                    }
-                    ProfileAttempt::Rejected(rejection) => {
-                        composition_rejection = Some(rejection);
-                        record_option!("selector.unit-composition", None)
-                    }
-                    ProfileAttempt::NotApplicable => {
-                        record_option!("selector.unit-composition", None)
-                    }
+        let through_composition = through_unit.or_else(|| {
+            match typed_plan::lower_unit_composition_checked(
+                circuit,
+                ledger_fields,
+                witnesses,
+                pure_circuits,
+                circuits,
+            ) {
+                ProfileAttempt::Admitted(plan) => {
+                    record_option!("selector.unit-composition", Some(plan))
                 }
-            })
-            .or_else(|| {
-                record_option!(
-                    "selector.zswap",
-                    zswap_plan::lower(circuit, ledger_fields, circuits, witnesses)
-                )
-            })
-        {
+                ProfileAttempt::Rejected(rejection) => {
+                    composition_rejection = Some(rejection);
+                    record_option!("selector.unit-composition", None)
+                }
+                ProfileAttempt::NotApplicable => {
+                    record_option!("selector.unit-composition", None)
+                }
+            }
+        });
+        // A checked invariant failure must escape before any emission fallback.
+        let through_zswap = match through_composition {
+            Some(plan) => Some(plan),
+            None => record_option!(
+                "algebra.zswap",
+                checked_zswap_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?
+            ),
+        };
+        if let Some(plan) = through_zswap {
             organizer_steps = Some(plan.steps);
             typed_result = Some(plan.result);
         }

@@ -23,6 +23,12 @@ use runtime::transaction::{
 };
 
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
+    // Pair the complete circuit input before key loading or deployment.
+    // Input identity alone does not authenticate proving-key provenance.
+    counter_scenario::validate_ir(
+        &std::fs::read(root.join("contract/compact-rust-ir.json"))?,
+        compact_rust_zswap_transfer_oracle_fixture::RETAINED_IR,
+    )?;
     const NAME: &str = "transfer";
     let mut rng = StdRng::seed_from_u64(0x0188_5452);
     let initial = contract::initial_state(ConstructorContext::new(()))?;

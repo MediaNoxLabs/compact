@@ -23,6 +23,9 @@ class ImmediateTransitionTests(unittest.TestCase):
             path = self.root / owner
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes((inventory.ROOT / owner).read_bytes())
+        # Preserve the #550 checkpoint and every original mutation expectation.
+        for owner, source in previous.zswap_checkpoint_sources(inventory.ROOT).items():
+            (self.root / owner).write_text(source)
         self.voting_transition = json.loads(previous.VOTING_TRANSITION.read_text())
         self.phase_transition = json.loads(previous.PHASE_TRANSITION.read_text())
         self.immediate_transition = json.loads(previous.IMMEDIATE_TRANSITION.read_text())

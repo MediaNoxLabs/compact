@@ -92,7 +92,7 @@ fn unsupported_in_domain_body_keeps_independent_later_attempts() {
     assert!(position("algebra.terminal-returns") < position("algebra.unit-actions"));
     assert!(!attempted.contains(&"selector.phase-reset"));
     assert!(position("algebra.unit-actions") < position("selector.unit-composition"));
-    assert!(position("selector.unit-composition") < position("selector.zswap"));
+    assert!(position("selector.unit-composition") < position("algebra.zswap"));
     assert!(!attempted.contains(&"selector.terminal-returns"));
 }
 

@@ -88,7 +88,7 @@ fn unsupported_unit_body_continues_independent_suffix_and_invalid_is_fatal() {
     let attempted = attempts(&row);
     let at = |name| attempted.iter().position(|r| *r == name).unwrap();
     assert!(at("algebra.unit-actions") < at("selector.unit-composition"));
-    assert!(at("selector.unit-composition") < at("selector.zswap"));
+    assert!(at("selector.unit-composition") < at("algebra.zswap"));
     assert!(!attempted.contains(&"selector.unit-actions"));
     let gap = crate::recorded::RecordingGap {
         code: crate::recorded::RecordingGapCode::UnsupportedExpression,

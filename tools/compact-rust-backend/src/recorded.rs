@@ -68,6 +68,7 @@ mod intent_effect;
 #[cfg(test)]
 mod kernel_plan;
 mod typed_plan;
+#[cfg(test)]
 mod zswap_plan;
 
 pub(crate) use facade::{

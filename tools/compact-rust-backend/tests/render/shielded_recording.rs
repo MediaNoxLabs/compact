@@ -22,6 +22,24 @@ use compact_rust_backend::ir::{
 };
 use compact_rust_backend::{RenderError, render, render_with_capabilities};
 
+// Optional raw-output gate for compositional expansions, separate from frozen
+// whole-oracle inclusion and funded proof qualification. Requires a fresh root.
+fn export_zswap_expansion(name: &str, contract: &Contract, generated: &str) {
+    let Some(root) = std::env::var_os("COMPACT_ZSWAP_EXPANSION_OUTPUT") else {
+        return;
+    };
+    let root = std::path::PathBuf::from(root);
+    std::fs::create_dir_all(&root).unwrap();
+    let directory = root.join(name);
+    std::fs::create_dir(&directory).expect("Zswap expansion export requires a fresh destination");
+    std::fs::write(directory.join("lib.rs"), generated).unwrap();
+    std::fs::write(
+        directory.join("compact-rust-ir.json"),
+        serde_json::to_vec_pretty(contract).unwrap(),
+    )
+    .unwrap();
+}
+
 #[test]
 fn qualified_set_coin_insert_requires_exact_typed_slot_and_operands() {
     let bytes = Type::Bytes { length: 32 };
@@ -257,15 +275,15 @@ fn native_zswap_intents_validate_types_and_record_bounded_unit_helpers() {
             .iter()
             .find(|c| c.name == name)
             .unwrap();
-        let recorded = matches!(name, "flow" | "witness_order" | "read_coin");
-        assert_eq!(circuit.recorded, recorded, "{name}");
-        assert_eq!(circuit.observed_call, recorded, "{name}");
+        assert!(circuit.recorded, "{name}");
+        assert!(circuit.observed_call, "{name}");
     }
     assert!(rendered.source.contains(".create_zswap_output("));
     assert!(rendered.source.contains(".create_zswap_input("));
     assert!(!rendered.source.contains(".call_local("));
-    // Removing the only public query leaves input/output intents, including
-    // the inlined pair helper, but cannot make a proof API by itself.
+    // Removing the only public query retains checked intent recording, including
+    // the inlined pair helper. An empty public transcript is still rejected by
+    // transaction preparation; compiler capability is not proof qualification.
     let mut intent_only = contract.clone();
     let flow = intent_only
         .stateful_circuits
@@ -279,14 +297,15 @@ fn native_zswap_intents_validate_types_and_record_bounded_unit_helpers() {
         panic!("expected sequence")
     };
     actions.retain(|action| !matches!(action, StateAction::CellWriteCoin { .. }));
-    let native_only = render_with_capabilities(&intent_only).unwrap();
-    let flow = native_only
+    let intent_recorded = render_with_capabilities(&intent_only).unwrap();
+    let flow = intent_recorded
         .capabilities
         .circuits
         .iter()
         .find(|c| c.name == "flow")
         .unwrap();
-    assert!(!flow.recorded && !flow.observed_call);
+    assert!(flow.recorded && flow.observed_call);
+    export_zswap_expansion("intent-only-flow", &intent_only, &intent_recorded.source);
     for mode in 0..3 {
         let mut wrong = contract.clone();
         let name = if mode == 0 { "consume" } else { "produce" };
@@ -563,7 +582,7 @@ fn stateful_structs_validate_member_types_and_record_zswap_unit_members() {
 }
 
 #[test]
-fn zswap_recording_does_not_adopt_query_helpers_or_escaped_bindings() {
+fn zswap_recording_composes_query_helpers_but_rejects_escaped_bindings() {
     let mut contract: Contract =
         serde_json::from_str(include_str!("../native-zswap-intents-schema18-ir.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
@@ -590,8 +609,9 @@ fn zswap_recording_does_not_adopt_query_helpers_or_escaped_bindings() {
         .iter()
         .find(|c| c.name == "flow")
         .unwrap();
-    assert!(!flow.recorded && !flow.observed_call);
+    assert!(flow.recorded && flow.observed_call);
     assert!(!rendered.source.contains(".call_local("));
+    export_zswap_expansion("query-helper", &contract, &rendered.source);
     let pair = contract
         .stateful_circuits
         .iter_mut()

@@ -319,7 +319,7 @@ impl Lowerer<'_> {
                 if declaration
                     .parameters
                     .iter()
-                    .any(|p| !validate::surface_type(&p.ty))
+                    .any(|p| !validate::witness_parameter_type(&p.ty))
                 {
                     return Err(invalid(path, "unsupported witness parameter type"));
                 }

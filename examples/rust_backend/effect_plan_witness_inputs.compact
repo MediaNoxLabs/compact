@@ -1,0 +1,43 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger calls: Counter;
+export struct Payload { text: Opaque<"string">; bytes: Opaque<"Uint8Array">; }
+export struct Product {
+  payload: Payload;
+  pair: [Opaque<"Uint8Array">, Opaque<"string">];
+  items: Vector<2, Opaque<"Uint8Array">>;
+}
+export struct Accepted { value: Boolean; }
+witness consume(
+  bytes: Opaque<"Uint8Array">,
+  text: Opaque<"string">,
+  pair: [Opaque<"Uint8Array">, Opaque<"string">],
+  items: Vector<2, Opaque<"Uint8Array">>,
+  product: Product
+): Boolean;
+
+circuit touchBytes(value: Opaque<"Uint8Array">): Opaque<"Uint8Array"> {
+  calls.increment(2);
+  return value;
+}
+circuit touchText(value: Opaque<"string">): Opaque<"string"> {
+  calls.increment(3);
+  return value;
+}
+export circuit run(
+  text: Opaque<"string">,
+  bytes: Opaque<"Uint8Array">,
+  selected: Boolean
+): Accepted {
+  calls.increment(1);
+  const pair: [Opaque<"Uint8Array">, Opaque<"string">] = [bytes, text];
+  const items: Vector<2, Opaque<"Uint8Array">> = [bytes, bytes];
+  const product = Product { payload: Payload { text: text, bytes: bytes }, pair: pair, items: items };
+  assert(consume(touchBytes(bytes), touchText(text), pair, items, product), "first callback refused");
+  if (disclose(selected)) {
+    assert(consume(bytes, text, pair, items, product), "second callback refused");
+  }
+  return Accepted { value: true };
+}

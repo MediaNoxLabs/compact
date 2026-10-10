@@ -80,6 +80,11 @@ pub(super) fn cell_type(ty: &Type) -> bool {
 pub(super) fn storage_value_type(ty: &Type) -> bool {
     domain::storage_value_type(ty)
 }
+/// Witness inputs are typed callback values, not private FAB output encodings.
+/// Keep this policy named separately from roots, results and ledger storage.
+pub(super) fn witness_parameter_type(ty: &Type) -> bool {
+    value_type(ty)
+}
 /// Witness outputs have an encoding domain independent of public interfaces.
 pub(super) fn witness_result_type(ty: &Type) -> bool {
     domain::witness_result_type(ty)
@@ -458,7 +463,7 @@ fn block(
                         .parameters
                         .iter()
                         .zip(arguments)
-                        .all(|(p, a)| surface_type(&p.ty) && p.ty == a.ty)
+                        .all(|(p, a)| witness_parameter_type(&p.ty) && p.ty == a.ty)
             }
             Operation::Call { .. } => {
                 calls::validate(binding, declarations, &scope, state)?;

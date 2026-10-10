@@ -255,7 +255,7 @@ fn wide_widening_and_joins_preserve_arithmetic_and_explicit_cast_limits() {
     }
 }
 #[test]
-fn wide_witness_results_do_not_expand_circuit_cell_or_witness_parameter_surfaces() {
+fn wide_witness_values_preserve_circuit_and_cell_boundaries() {
     let mut candidate = circuit(as_field(unsigned(TWO128, TWO128)));
     candidate.parameters.push(Parameter {
         name: "wide".into(),
@@ -326,22 +326,23 @@ fn wide_witness_results_do_not_expand_circuit_cell_or_witness_parameter_surfaces
         name: "mark".into(),
         arguments: vec![unsigned(TWO128, TWO128)],
     });
-    assert!(matches!(
-        check(
-            &candidate,
-            &HashMap::new(),
-            &HashMap::from([("mark", &witness)])
-        ),
-        Err(PlanError::Unsupported(_))
-    ));
+    // Callback arguments are typed values; wide inputs need no public ABI or
+    // storage eligibility. The circuit and cell refusals above remain intact.
+    let checked = check(
+        &candidate,
+        &HashMap::new(),
+        &HashMap::from([("mark", &witness)]),
+    )
+    .unwrap();
+    render(&checked).unwrap();
     witness.parameters.clear();
     witness.result = validate::uint(TWO128);
     candidate = circuit(as_field(Expr::WitnessCall {
         name: "mark".into(),
         arguments: vec![],
     }));
-    // Wide results now enter the qualified witness-result domain. The earlier
-    // assertions preserve wide circuit, storage and witness-parameter refusals.
+    // Wide results independently enter the qualified witness-result domain.
+    // Neither callback policy admits wide public circuits or ledger cells.
     let checked = check(
         &candidate,
         &HashMap::new(),

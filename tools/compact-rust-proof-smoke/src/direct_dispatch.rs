@@ -116,6 +116,7 @@ pub(super) fn try_run(
         ("--composite-zswap", _) => Some(shielded::composite_zswap(arguments)),
         ("--field-observation", _) => Some(expressions::field_observation(arguments)),
         ("--opaque-public", _) => Some(expressions::opaque_public(arguments)),
+        ("--owned-witness-inputs", _) => Some(expressions::owned_witness_inputs(arguments)),
         ("--stateful-struct", _) => Some(recorded::stateful_struct(arguments)),
         ("--stateful-assert", _) => Some(recorded::stateful_assert(arguments)),
         ("--effect-plan-unsigned-arithmetic", _) => {
@@ -240,6 +241,11 @@ mod tests {
                 "--opaque-public",
                 1,
                 "usage: compact-rust-proof-smoke --opaque-public <proof-output>",
+            ),
+            (
+                "--owned-witness-inputs",
+                1,
+                "usage: compact-rust-proof-smoke --owned-witness-inputs <proof-output>",
             ),
             (
                 "--wide-unsigned-field-cast",

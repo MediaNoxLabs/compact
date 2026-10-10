@@ -478,7 +478,7 @@ fn complete_retained_owned_value_source_uses_checked_operations() {
     }
 }
 #[test]
-fn local_owned_calls_preserve_witness_parameter_and_vector_storage_boundaries() {
+fn local_and_witness_owned_inputs_preserve_vector_storage_boundaries() {
     let cases = vec![
         (
             Type::OpaqueString,
@@ -520,14 +520,15 @@ fn local_owned_calls_preserve_witness_parameter_and_vector_storage_boundaries() 
             name: "consume".into(),
             arguments: vec![value.clone()],
         };
-        assert!(matches!(
-            check(
+        render(
+            &check(
                 &root(expression),
                 &HashMap::new(),
-                &HashMap::from([("consume", &witness)])
-            ),
-            Err(PlanError::Unsupported(_))
-        ));
+                &HashMap::from([("consume", &witness)]),
+            )
+            .unwrap(),
+        )
+        .unwrap();
         let helper = StatefulCircuit {
             source: None,
             name: "consume".into(),

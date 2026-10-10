@@ -145,9 +145,10 @@ fn existing_and_legacy_witness_results_have_a_distinct_bounded_domain() {
 }
 
 #[test]
-fn opaque_public_bytes_do_not_widen_witness_parameters_or_fixed_product_roots() {
+fn owned_witness_arguments_still_match_exact_types_and_public_product_limits() {
     let mut declaration = witness(Type::OpaqueBytes);
     declaration.parameters[0].ty = Type::OpaqueBytes;
+    // The call still supplies Field: owned argument eligibility cannot coerce it to Bytes.
     assert!(matches!(
         checked(&circuit(), &declaration),
         Err(PlanError::Unsupported(_))

@@ -475,3 +475,6 @@ mod opaque_public_probe;
 
 #[path = "tests/public_interfaces.rs"]
 mod public_interfaces;
+
+#[path = "tests/witness_inputs.rs"]
+mod witness_inputs;

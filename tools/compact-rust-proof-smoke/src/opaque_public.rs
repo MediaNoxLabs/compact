@@ -183,7 +183,7 @@ fn compare_preparation<Output: Into<AlignedValue> + PartialEq, Input: Into<Align
     Ok((prepared, state))
 }
 
-fn apply_funded(
+pub(super) fn apply_funded(
     root: &Path,
     name: &'static str,
     prepared: ContractCallPrototype<DefaultDB>,

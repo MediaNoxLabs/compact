@@ -1507,6 +1507,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-effect-plan-witness-inputs-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-base-crypto",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-storage",
+ "rand 0.8.6",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-effectful-return-oracle-fixture"
 version = "0.1.0"
 dependencies = [
@@ -2325,6 +2338,7 @@ dependencies = [
  "compact-rust-effect-plan-transient-crypto-source-fixture",
  "compact-rust-effect-plan-unsigned-arithmetic-source-fixture",
  "compact-rust-effect-plan-wide-source-fixture",
+ "compact-rust-effect-plan-witness-inputs-source-fixture",
  "compact-rust-effectful-return-oracle-fixture",
  "compact-rust-election-oracle-fixture",
  "compact-rust-field-cast-uint128-fixture",

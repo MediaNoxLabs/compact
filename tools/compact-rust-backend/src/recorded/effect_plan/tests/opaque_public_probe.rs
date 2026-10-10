@@ -88,16 +88,11 @@ fn whole_old_opaque_roots_show_candidate_progress_without_retiring_the_owner() {
         serde_json::from_str(include_str!("../../../../tests/bboard-schema20-ir.json")).unwrap();
     root_outcome(&bboard, "post", None, "bboard-post");
     root_outcome(&bboard, "take_down", None, "bboard-take-down");
-    root_outcome(
-        &zerocash(),
-        "spend",
-        Some("unsupported witness parameter type"),
-        "zerocash-spend",
-    );
+    root_outcome(&zerocash(), "spend", None, "zerocash-spend");
 }
 
 #[test]
-fn exact_zerocash_encrypt_declaration_has_an_independent_witness_parameter_gap() {
+fn exact_zerocash_encrypt_declaration_uses_owned_callback_input_policy() {
     let c = zerocash();
     let encrypt = c
         .witnesses
@@ -110,35 +105,7 @@ fn exact_zerocash_encrypt_declaration_has_an_independent_witness_parameter_gap()
     assert!(validate::witness_result_type(&encrypt.result));
     assert!(!validate::surface_type(&encrypt.parameters[0].ty));
     assert!(validate::surface_type(&encrypt.parameters[1].ty));
-    // Isolate the unchanged source declaration under an ordinary Unit interface.
-    // No mutated public root or hypothetical production eligibility is involved.
-    let root = StatefulCircuit {
-        source: None,
-        name: "isolated_encrypt_policy".into(),
-        internal: false,
-        parameters: vec![],
-        result: Type::Unit,
-        return_value: StateReturn::Unit,
-        actions: vec![StateAction::Expression {
-            value: Expr::WitnessCall {
-                name: encrypt.name.clone(),
-                arguments: encrypt
-                    .parameters
-                    .iter()
-                    .map(|p| Expr::Default { ty: p.ty.clone() })
-                    .collect(),
-            },
-        }],
-    };
-    let gap = match check(
-        &root,
-        &HashMap::new(),
-        &HashMap::from([(encrypt.name.as_str(), encrypt)]),
-    ) {
-        Err(PlanError::Unsupported(gap)) => gap,
-        other => panic!("expected isolated witness policy refusal, got {other:?}"),
-    };
-    assert_eq!(gap.detail, "unsupported witness parameter type");
-    // This establishes a separate live policy refusal. It does not assert that
-    // all preceding/following nodes of the complete spend body already compose.
+    assert!(validate::witness_parameter_type(&encrypt.parameters[0].ty));
+    // Direct opaque Default remains outside the expression domain. Complete
+    // retained spend above supplies its real public_key projection instead.
 }

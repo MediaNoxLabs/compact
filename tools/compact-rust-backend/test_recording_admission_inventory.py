@@ -31,6 +31,7 @@ import recording_admission_inventory_merge as merge
 import recording_admission_inventory_guarded as guarded
 import recording_admission_inventory_routing_test as routing_test
 import recording_admission_inventory_reset_payout as reset_payout
+import recording_admission_inventory_shielded_payout as shielded_payout
 
 JUBJUB_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-517.json")
 CALL_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.calls-519.json")
@@ -93,8 +94,18 @@ def routing_checkpoint_source(root):
 RESET_PAYOUT_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-569.json")
 
 
+SHIELDED_PAYOUT_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-570.json")
+
+
+def shielded_payout_checkpoint_sources(root):
+    return shielded_payout.predecessor_sources(root, json.loads(SHIELDED_PAYOUT_TRANSITION.read_text()))
+
+
 def reset_payout_checkpoint_sources(root):
-    return reset_payout.predecessor_sources(root, json.loads(RESET_PAYOUT_TRANSITION.read_text()))
+    prior = shielded_payout_checkpoint_sources(root)
+    sources = {owner: (root / owner).read_text() for owner in reset_payout.REVIEWED_OWNERS}
+    return {**prior, **reset_payout.predecessor_source_snapshot(
+        {**sources, **prior}, json.loads(RESET_PAYOUT_TRANSITION.read_text()))}
 
 
 def guarded_checkpoint_sources(root):
@@ -260,7 +271,8 @@ class InventoryTests(unittest.TestCase):
                                   merge_transition=json.loads(MERGE_TRANSITION.read_text()),
                                   guarded_deposit_transition=json.loads(GUARDED_TRANSITION.read_text()),
                                   routing_test_extension=json.loads(ROUTING_TEST_EXTENSION.read_text()),
-                                  reset_payout_transition=json.loads(RESET_PAYOUT_TRANSITION.read_text()))
+                                  reset_payout_transition=json.loads(RESET_PAYOUT_TRANSITION.read_text()),
+                                  shielded_payout_transition=json.loads(SHIELDED_PAYOUT_TRANSITION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)
@@ -286,7 +298,7 @@ class RetirementTransitionTests(unittest.TestCase):
         self.composite_transition = json.loads(COMPOSITE_TRANSITION.read_text())
         self.receive_transition = json.loads(RECEIVE_TRANSITION.read_text())
         self.unit_domain_extension = json.loads(UNIT_DOMAIN_EXTENSION.read_text())
-        for relative in {*self.baseline['source_fingerprints'], inventory.ORACLE, jubjub.ORACLE, terminal.ORACLE, unit.ORACLE, context.ORACLE, context.IR, composite.ORACLE, composite.FIELD, receive.ORACLE, *context.SHARED_ANCHORS, *inventory.HOOK_SOURCES, *immediate.REVIEWED_OWNERS, *membership.REVIEWED_OWNERS, *merge.REVIEWED_OWNERS, *guarded.REVIEWED_OWNERS, *reset_payout.REVIEWED_OWNERS}:
+        for relative in {*self.baseline['source_fingerprints'], inventory.ORACLE, jubjub.ORACLE, terminal.ORACLE, unit.ORACLE, context.ORACLE, context.IR, composite.ORACLE, composite.FIELD, receive.ORACLE, *context.SHARED_ANCHORS, *inventory.HOOK_SOURCES, *immediate.REVIEWED_OWNERS, *membership.REVIEWED_OWNERS, *merge.REVIEWED_OWNERS, *guarded.REVIEWED_OWNERS, *reset_payout.REVIEWED_OWNERS, *shielded_payout.REVIEWED_OWNERS}:
             destination = self.root / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_bytes((inventory.ROOT / relative).read_bytes())

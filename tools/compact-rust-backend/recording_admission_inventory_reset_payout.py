@@ -79,9 +79,14 @@ def validate(baseline, transition, baseline_bytes, guarded, routing_test):
     return errors
 
 
-def check_sources(root, sources, transition):
+def check_sources(root, sources, transition, prior_payout=None, prior_voting_test=None,
+                  prior_guarded_test=None, prior_reset_test=None):
     errors = []
     for owner, source in sources.items():
+        if owner == 'tools/compact-rust-backend/src/recorded/profile_selection/reset_payout_migration_tests.rs':
+            if digest(source.encode()) != transition['test_sources_sha256'].get(owner):
+                errors.append('reset payout retirement: frozen routing test owner changed')
+            continue
         if re.search(r'\btyped_plan\s*::\s*lower_reset_payout\s*\(', source):
             errors.append('reset payout retirement: old root call escaped authority: ' + owner)
         if re.search(r'\buse\s+[^;]*typed_plan\s*::\s*(?:\{[^}]*\b)?lower_reset_payout\b', source):
@@ -101,10 +106,17 @@ def check_sources(root, sources, transition):
         if digest(function(sources[SELECTOR], 'fn checked_composite_attempt(').encode()) != transition['existing_composite_attempt_sha256']:
             errors.append('reset payout retirement: checked interface changed')
         for path, expected in transition['shared_sources_sha256'].items():
-            if digest((root / path).read_bytes()) != expected:
+            data = (prior_payout.encode() if prior_payout is not None and path ==
+                    'tools/compact-rust-backend/src/recorded/typed_plan/shielded_payout.rs'
+                    else (root / path).read_bytes())
+            if digest(data) != expected:
                 errors.append('reset payout retirement: shared admission dependency changed: ' + path)
+        prior_tests = {VOTING_TEST: prior_voting_test, GUARDED_TEST: prior_guarded_test,
+                       'tools/compact-rust-backend/src/recorded/profile_selection/reset_payout_migration_tests.rs': prior_reset_test}
         for path, expected in transition['test_sources_sha256'].items():
-            if digest((root / path).read_bytes()) != expected:
+            previous = prior_tests.get(path)
+            data = previous.encode() if previous is not None else (root / path).read_bytes()
+            if digest(data) != expected:
                 errors.append('reset payout retirement: reviewed routing test changed: ' + path)
     except (OSError, UnicodeError, ValueError, KeyError) as error:
         errors.append('reset payout retirement: source preservation failed: ' + str(error))

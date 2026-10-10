@@ -21,11 +21,13 @@ class ResetPayoutTransitionTests(unittest.TestCase):
     def setUp(self):
         prior_tests.RoutingTestExtensionTests.setUp(self)
         self.reset_transition = json.loads(previous.RESET_PAYOUT_TRANSITION.read_text())
+        predecessor = previous.shielded_payout_checkpoint_sources(inventory.ROOT)
         for owner in [*reset.REVIEWED_OWNERS, *self.reset_transition['shared_sources_sha256'],
                       *self.reset_transition['test_sources_sha256']]:
             path = self.root / owner
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes((inventory.ROOT / owner).read_bytes())
+            path.write_bytes(predecessor[owner].encode() if owner in predecessor
+                             else (inventory.ROOT / owner).read_bytes())
 
     def report(self):
         return inventory.verify(

@@ -32,6 +32,8 @@ mod reset_payout_inclusion;
 mod rich_validation;
 #[path = "tests/rich_values.rs"]
 mod rich_values;
+#[path = "tests/shielded_payout_inclusion.rs"]
+mod shielded_payout_inclusion;
 #[path = "tests/tuple_equality.rs"]
 mod tuple_equality;
 #[path = "tests/wide_add.rs"]

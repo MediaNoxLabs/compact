@@ -97,7 +97,9 @@ enum CompositeDomain {
     ShieldedSend,
     #[cfg_attr(not(test), allow(dead_code))]
     ImmediateShieldedSend,
+    #[cfg_attr(not(test), allow(dead_code))]
     ShieldedPayout,
+    #[cfg_attr(not(test), allow(dead_code))]
     ActionfulShieldedPayout,
     #[cfg_attr(not(test), allow(dead_code))]
     ResetShieldedPayout,
@@ -1845,6 +1847,7 @@ pub(super) fn lower_start_funding<'a>(
     start_funding::lower(circuit, ledger, witnesses, pure, circuits)
 }
 
+#[cfg(test)]
 pub(super) fn lower_shielded_payout<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,

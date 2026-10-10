@@ -165,8 +165,8 @@ fn unsupported_action_keeps_fallback_order_and_first_action_diagnostic() {
         &a[at..at + 3],
         [
             "algebra.guarded-deposit",
-            "selector.shielded-payout",
-            "algebra.terminal-returns"
+            "algebra.terminal-returns",
+            "algebra.unit-actions"
         ]
     );
     assert!(!a.contains(&"selector.reset-payout"));

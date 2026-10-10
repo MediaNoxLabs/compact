@@ -92,7 +92,7 @@ fn operation(plan: &mut Plan) -> &mut Binding {
 }
 
 #[test]
-fn owned_callback_inputs_include_standalone_tuple9_without_changing_other_domains() {
+fn owned_callback_inputs_include_tuple9_with_separate_result_and_storage_limits() {
     let vector = Type::Vector {
         element: Box::new(Type::OpaqueString),
         length: 2,
@@ -132,7 +132,7 @@ fn owned_callback_inputs_include_standalone_tuple9_without_changing_other_domain
         validate::check(plan.plan().clone(), authority(&root, &witness)).unwrap();
         render(&plan).unwrap();
     }
-    assert!(!validate::public_interface_type(&tuple(9).0));
+    assert!(validate::public_interface_type(&tuple(9).0));
     assert!(!validate::witness_result_type(&tuple(9).0));
     assert!(!validate::storage_value_type(&tuple(9).0));
     assert!(!validate::witness_result_type(&Type::OpaqueString));

@@ -92,6 +92,10 @@ pub(super) enum Operation {
         field: String,
         index: usize,
     },
+    TupleProject {
+        value: Value,
+        index: usize,
+    },
     Tuple {
         elements: Vec<Value>,
     },

@@ -255,16 +255,13 @@ fn wide_widening_and_joins_preserve_arithmetic_and_explicit_cast_limits() {
     }
 }
 #[test]
-fn wide_witness_values_preserve_circuit_and_cell_boundaries() {
+fn wide_public_and_witness_values_preserve_cell_boundaries() {
     let mut candidate = circuit(as_field(unsigned(TWO128, TWO128)));
     candidate.parameters.push(Parameter {
         name: "wide".into(),
         ty: validate::uint(TWO128),
     });
-    assert!(matches!(
-        check(&candidate, &HashMap::new(), &HashMap::new()),
-        Err(PlanError::Unsupported(_))
-    ));
+    render(&check(&candidate, &HashMap::new(), &HashMap::new()).unwrap()).unwrap();
     candidate.parameters.clear();
     candidate.result = validate::uint(TWO128);
     candidate.return_value = StateReturn::Effectful {
@@ -272,10 +269,7 @@ fn wide_witness_values_preserve_circuit_and_cell_boundaries() {
             value: unsigned(TWO128, TWO128),
         },
     };
-    assert!(matches!(
-        check(&candidate, &HashMap::new(), &HashMap::new()),
-        Err(PlanError::Unsupported(_))
-    ));
+    render(&check(&candidate, &HashMap::new(), &HashMap::new()).unwrap()).unwrap();
 
     let slot = LedgerField {
         id: "wide".into(),
@@ -326,8 +320,8 @@ fn wide_witness_values_preserve_circuit_and_cell_boundaries() {
         name: "mark".into(),
         arguments: vec![unsigned(TWO128, TWO128)],
     });
-    // Callback arguments are typed values; wide inputs need no public ABI or
-    // storage eligibility. The circuit and cell refusals above remain intact.
+    // Callback arguments have a separate typed-value policy; the cell refusals
+    // above remain intact when public wide values become encodable.
     let checked = check(
         &candidate,
         &HashMap::new(),
@@ -342,7 +336,7 @@ fn wide_witness_values_preserve_circuit_and_cell_boundaries() {
         arguments: vec![],
     }));
     // Wide results independently enter the qualified witness-result domain.
-    // Neither callback policy admits wide public circuits or ledger cells.
+    // Neither public nor callback eligibility admits wide ledger cells.
     let checked = check(
         &candidate,
         &HashMap::new(),

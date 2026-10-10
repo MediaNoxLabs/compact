@@ -258,6 +258,7 @@ fn block(
             | Operation::Default
             | Operation::StructConstruct { .. }
             | Operation::StructProject { .. }
+            | Operation::TupleProject { .. }
             | Operation::Tuple { .. }
             | Operation::Vector { .. } => aggregates::validate(binding, declarations, &scope)?,
             Operation::CreateZswapInput { coin } => {

@@ -117,6 +117,7 @@ pub(super) fn try_run(
         ("--field-observation", _) => Some(expressions::field_observation(arguments)),
         ("--opaque-public", _) => Some(expressions::opaque_public(arguments)),
         ("--owned-witness-inputs", _) => Some(expressions::owned_witness_inputs(arguments)),
+        ("--public-products", _) => Some(expressions::public_products(arguments)),
         ("--stateful-struct", _) => Some(recorded::stateful_struct(arguments)),
         ("--stateful-assert", _) => Some(recorded::stateful_assert(arguments)),
         ("--effect-plan-unsigned-arithmetic", _) => {
@@ -246,6 +247,11 @@ mod tests {
                 "--owned-witness-inputs",
                 1,
                 "usage: compact-rust-proof-smoke --owned-witness-inputs <proof-output>",
+            ),
+            (
+                "--public-products",
+                1,
+                "usage: compact-rust-proof-smoke --public-products <proof-output>",
             ),
             (
                 "--wide-unsigned-field-cast",

@@ -46,6 +46,13 @@ pub(super) fn validate(
                 .get(*index)
                 .is_some_and(|member| member.name == *field && member.ty == *ty)
         }
+        Operation::TupleProject { value, index } => {
+            use_value(value)?;
+            let Type::Tuple { elements } = &value.ty else {
+                return Ok(false);
+            };
+            elements.get(*index).is_some_and(|element| element == ty)
+        }
         Operation::Vector { elements: values } => {
             let Type::Vector { element, length } = ty else {
                 return Ok(false);

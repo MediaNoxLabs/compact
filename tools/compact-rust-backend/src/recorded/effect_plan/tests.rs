@@ -478,3 +478,9 @@ mod public_interfaces;
 
 #[path = "tests/witness_inputs.rs"]
 mod witness_inputs;
+
+#[path = "tests/public_products.rs"]
+mod public_products;
+
+#[path = "tests/tuple_projection.rs"]
+mod tuple_projection;

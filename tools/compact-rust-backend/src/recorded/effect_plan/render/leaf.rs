@@ -56,6 +56,14 @@ pub(super) fn render(
             let source = name(input);
             crate::retained_value(syn::parse_quote!(#source.#member), &binding.value.ty)
         }
+        Operation::TupleProject {
+            value: input,
+            index,
+        } => {
+            let source = name(input);
+            let member = syn::Index::from(*index);
+            crate::retained_value(syn::parse_quote!(#source.#member), &binding.value.ty)
+        }
         Operation::Vector { elements } => {
             let Type::Vector { element, .. } = &binding.value.ty else {
                 unreachable!("checked vector output");

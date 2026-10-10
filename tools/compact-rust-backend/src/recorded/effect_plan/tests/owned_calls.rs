@@ -144,28 +144,20 @@ fn repeated_owned_helper_arguments_are_sequential_and_keep_isolated_formals() {
 }
 
 #[test]
-fn owned_helpers_keep_richer_roots_separate_from_public_opaque_interfaces() {
+fn owned_helpers_compose_with_encodable_public_interfaces() {
     for ty in owned_types() {
         let mut input = source(ty.clone());
         input[0].parameters.push(Parameter {
             name: "external".into(),
             ty: ty.clone(),
         });
-        if matches!(ty, Type::OpaqueString | Type::OpaqueBytes) {
-            render(&checked(&input).unwrap()).unwrap();
-        } else {
-            assert!(matches!(checked(&input), Err(PlanError::Unsupported(_))));
-        }
+        render(&checked(&input).unwrap()).unwrap();
         let mut output = source(ty.clone());
         output[0].result = ty.clone();
         output[0].return_value = StateReturn::Expression {
             value: call(initial(ty.clone())),
         };
-        if matches!(ty, Type::OpaqueString | Type::OpaqueBytes) {
-            render(&checked(&output).unwrap()).unwrap();
-        } else {
-            assert!(matches!(checked(&output), Err(PlanError::Unsupported(_))));
-        }
+        render(&checked(&output).unwrap()).unwrap();
     }
 }
 

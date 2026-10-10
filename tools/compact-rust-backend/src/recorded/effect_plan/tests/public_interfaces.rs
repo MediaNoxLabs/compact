@@ -100,28 +100,28 @@ fn public_opaque_types_are_separate_from_witness_and_local_domains() {
 }
 
 #[test]
-fn public_policy_keeps_other_owned_and_invalid_type_boundaries() {
+fn public_policy_keeps_unencodable_and_invalid_type_boundaries() {
     for ty in [
         Type::Tuple {
-            elements: vec![Type::OpaqueBytes],
+            elements: vec![Type::OpaqueBytes; 12],
         },
         Type::Vector {
-            element: Box::new(Type::OpaqueBytes),
-            length: 2,
+            element: Box::new(Type::Tuple {
+                elements: vec![Type::Field; 12],
+            }),
+            length: 0,
         },
-        validate::uint("340282366920938463463374607431768211456"),
-        Type::Struct {
-            name: "Empty".into(),
-            fields: vec![],
-        },
+        validate::uint(
+            "452312848583266388373324160190187140051835877600158453279131187530910662656",
+        ),
         Type::LedgerMap {
             key: Box::new(Type::Field),
             value: Box::new(Type::OpaqueBytes),
         },
         structure(
-            "NestedTuple",
+            "NamedTupleTooWide",
             Type::Tuple {
-                elements: vec![Type::OpaqueBytes],
+                elements: vec![Type::OpaqueBytes; 9],
             },
         ),
     ] {

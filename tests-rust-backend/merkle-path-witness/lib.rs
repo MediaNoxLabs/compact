@@ -328,6 +328,23 @@ pub mod ledger_contract {
             let frame = crate::ledger_slots::t.record_insert(frame, __compact_param_0)?;
             Ok(frame.finish(()))
         }
+        pub fn get_path<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, crate::types::MerkleTreePath>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_effect_0): (_, crate::types::MerkleTreePath) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.leaf_path(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            Ok(frame.finish((__compact_effect_0).clone()))
+        }
         pub fn append_h<Private>(
             context: runtime::context::CircuitContext<Private>,
             __compact_param_0: runtime::BoundedUint<255>,
@@ -336,6 +353,23 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let frame = crate::ledger_slots::h.record_insert(frame, __compact_param_0)?;
             Ok(frame.finish(()))
+        }
+        pub fn get_historic_path<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, crate::types::MerkleTreePath>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_effect_0): (_, crate::types::MerkleTreePath) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.historic_path(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            Ok(frame.finish((__compact_effect_0).clone()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
@@ -386,6 +420,131 @@ pub mod ledger_contract {
                 let recorded = self.append_h(observed.circuit_context(private_state), value)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "append_h", input,
+                ))
+            }
+        }
+        /// A recording handle with access to the contract's witnesses.
+        pub struct BorrowedContract<'a, W> {
+            pub(super) witnesses: &'a W,
+        }
+        impl<W> BorrowedContract<'_, W> {
+            pub fn append<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                value: runtime::BoundedUint<255>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                append(context, value)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn append_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                value: runtime::BoundedUint<255>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(value);
+                let recorded = self.append(observed.circuit_context(private_state), value)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "append", input,
+                ))
+            }
+            pub fn get_path<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, crate::types::MerkleTreePath>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                get_path(context, self.witnesses)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn get_path_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<
+                    'observed,
+                    Private,
+                    crate::types::MerkleTreePath,
+                >,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.get_path(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "get_path", input,
+                ))
+            }
+            pub fn append_h<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                value: runtime::BoundedUint<255>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                append_h(context, value)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn append_h_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                value: runtime::BoundedUint<255>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(value);
+                let recorded = self.append_h(observed.circuit_context(private_state), value)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "append_h", input,
+                ))
+            }
+            pub fn get_historic_path<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, crate::types::MerkleTreePath>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                get_historic_path(context, self.witnesses)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn get_historic_path_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<
+                    'observed,
+                    Private,
+                    crate::types::MerkleTreePath,
+                >,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.get_historic_path(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "get_historic_path",
+                    input,
                 ))
             }
         }
@@ -469,9 +628,11 @@ pub mod ledger_contract {
         {
             crate::ledger_contract::check_witness_history(context, &self.witnesses)
         }
-        /// Access replayable circuit calls for this contract.
-        pub fn recording(&self) -> &recorded::Contract {
-            &self.recording
+        /// Borrow the contract's witnesses for a replayable circuit call.
+        pub fn recording(&self) -> recorded::BorrowedContract<'_, W> {
+            recorded::BorrowedContract {
+                witnesses: &self.witnesses,
+            }
         }
     }
 }

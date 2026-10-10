@@ -1372,6 +1372,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-effect-plan-public-products-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-base-crypto",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-storage",
+ "rand 0.8.6",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-effect-plan-pure-calls-source-fixture"
 version = "0.1.0"
 dependencies = [
@@ -2332,6 +2345,7 @@ dependencies = [
  "compact-rust-effect-plan-jubjub-source-fixture",
  "compact-rust-effect-plan-merkle-source-fixture",
  "compact-rust-effect-plan-opaque-public-source-fixture",
+ "compact-rust-effect-plan-public-products-source-fixture",
  "compact-rust-effect-plan-pure-calls-source-fixture",
  "compact-rust-effect-plan-rich-values-source-fixture",
  "compact-rust-effect-plan-stateful-calls-source-fixture",

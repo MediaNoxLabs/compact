@@ -70,6 +70,23 @@ impl Lowerer<'_> {
                     ty,
                 ))
             }
+            Expr::TupleIndex { value, index } => {
+                let value = self.expression(value, scope, bindings, &format!("{path}.value"))?;
+                let Type::Tuple { elements } = &value.ty else {
+                    return Err(invalid(path, "tuple projection requires a tuple value"));
+                };
+                let ty = elements
+                    .get(*index)
+                    .ok_or_else(|| invalid(path, "tuple projection index is outside its arity"))?
+                    .clone();
+                Ok((
+                    Operation::TupleProject {
+                        value,
+                        index: *index,
+                    },
+                    ty,
+                ))
+            }
             Expr::Vector { element, elements } => {
                 let ty = Type::Vector {
                     element: Box::new(element.clone()),

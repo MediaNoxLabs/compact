@@ -267,7 +267,7 @@ fn opaque_default_stays_in_certified_pure_body_or_named_struct() {
     ));
 }
 #[test]
-fn owned_domains_keep_opaque_public_roots_distinct_from_products_and_witnesses() {
+fn owned_public_roots_keep_storage_and_witness_result_boundaries() {
     for ty in [
         Type::OpaqueString,
         Type::OpaqueBytes,
@@ -282,20 +282,13 @@ fn owned_domains_keep_opaque_public_roots_distinct_from_products_and_witnesses()
             name: "owned".into(),
             ty: ty.clone(),
         });
-        if matches!(ty, Type::OpaqueString | Type::OpaqueBytes) {
-            render(&check_root(&parameter_root, &[]).unwrap()).unwrap();
-            let mut valid_result = parameter_root.clone();
-            valid_result.result = ty.clone();
-            valid_result.return_value = StateReturn::Expression {
-                value: param("owned"),
-            };
-            render(&check_root(&valid_result, &[]).unwrap()).unwrap();
-        } else {
-            assert!(matches!(
-                check_root(&parameter_root, &[]),
-                Err(PlanError::Unsupported(_))
-            ));
-        }
+        render(&check_root(&parameter_root, &[]).unwrap()).unwrap();
+        let mut valid_result = parameter_root.clone();
+        valid_result.result = ty.clone();
+        valid_result.return_value = StateReturn::Expression {
+            value: param("owned"),
+        };
+        render(&check_root(&valid_result, &[]).unwrap()).unwrap();
         // A Boolean body still cannot satisfy an opaque or product result.
         // Preserve this malformed-result control independently of root eligibility.
         let mut result_root = root(boolean());

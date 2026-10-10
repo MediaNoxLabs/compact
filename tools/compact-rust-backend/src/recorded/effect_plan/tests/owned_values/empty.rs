@@ -1,7 +1,7 @@
 // This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
-//! Empty named products are canonical local values, not new recorded interfaces.
+//! Empty named products retain canonical identity and source result authority.
 use super::super::super::type_environment::TypeEnvironment;
 use super::*;
 
@@ -61,7 +61,9 @@ fn environment() -> declarations::Declarations {
         &HashMap::new(),
     )
     .unwrap();
-    declarations::Declarations::default().with_type_environment(types)
+    declarations::Declarations::default()
+        .with_type_environment(types)
+        .with_root(&source)
 }
 fn value(id: usize, ty: Type) -> Value {
     Value { id, ty }

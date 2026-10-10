@@ -9,10 +9,15 @@ use super::{Type, surface_type, unsigned_bound};
 pub(super) fn public_interface_type(ty: &Type) -> bool {
     match ty {
         Type::OpaqueString | Type::OpaqueBytes => true,
-        Type::Struct { fields, .. } => {
-            !fields.is_empty() && fields.iter().all(|field| public_interface_type(&field.ty))
+        // Official FAB tuple encoding supports arities zero through eleven.
+        Type::Tuple { elements } => {
+            elements.len() <= 11 && elements.iter().all(public_interface_type)
         }
-        _ => surface_type(ty),
+        Type::Vector { element, .. } => public_interface_type(element),
+        Type::Struct { fields, .. } => fields
+            .iter()
+            .all(|field| public_interface_type(&field.ty) && derives_supported(&field.ty)),
+        _ => surface_type(ty) || unsigned_bound(ty).is_some(),
     }
 }
 

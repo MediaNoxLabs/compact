@@ -10,15 +10,18 @@ import unittest
 
 import recording_admission_inventory as inventory
 import recording_admission_inventory_voting as voting
+import recording_admission_inventory_phase_reset as phase_reset
 import test_recording_admission_inventory as previous
 
 
 class VotingTransitionTests(unittest.TestCase):
     def setUp(self):
         previous.RetirementTransitionTests.setUp(self)
-        # Unlike earlier mutation suites, this suite tests live cutover sources.
-        for owner in (voting.SELECTOR, voting.TYPED):
-            (self.root / owner).write_bytes((inventory.ROOT / owner).read_bytes())
+        # Keep this suite on its exact reviewed #547 checkpoint, independently
+        # of later retirements; original assertions still own their old failures.
+        phase_review = json.loads(previous.PHASE_TRANSITION.read_text())
+        for owner, source in phase_reset.predecessor_sources(inventory.ROOT, phase_review).items():
+            (self.root / owner).write_text(source)
         self.voting_transition = json.loads(previous.VOTING_TRANSITION.read_text())
 
     def report(self):

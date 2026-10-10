@@ -89,8 +89,8 @@ fn unsupported_in_domain_body_keeps_independent_later_attempts() {
     let (_, row) = selected_trace(&contract);
     let attempted = attempts(&row);
     let position = |name| attempted.iter().position(|id| *id == name).unwrap();
-    assert!(position("algebra.terminal-returns") < position("selector.phase-reset"));
-    assert!(position("selector.phase-reset") < position("algebra.unit-actions"));
+    assert!(position("algebra.terminal-returns") < position("algebra.unit-actions"));
+    assert!(!attempted.contains(&"selector.phase-reset"));
     assert!(position("algebra.unit-actions") < position("selector.unit-composition"));
     assert!(position("selector.unit-composition") < position("selector.zswap"));
     assert!(!attempted.contains(&"selector.terminal-returns"));

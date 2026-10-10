@@ -20,6 +20,12 @@ use compact_rust_test_center_micro_dao_fixture::{
 };
 
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
+    // Pair the entire current source fixture before key reads or deployment.
+    // This is input pairing, not authenticated proving-key provenance.
+    counter_scenario::validate_ir(
+        &std::fs::read(root.join("contract/compact-rust-ir.json"))?,
+        compact_rust_test_center_micro_dao_fixture::RETAINED_IR,
+    )?;
     for (i, phase) in [
         types::LedgerState::commit,
         types::LedgerState::reveal,

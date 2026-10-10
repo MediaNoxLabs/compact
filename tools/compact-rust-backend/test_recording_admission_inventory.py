@@ -21,6 +21,7 @@ import recording_admission_inventory_kernel as kernel
 import recording_admission_inventory_composite as composite
 import recording_admission_inventory_receive as receive
 import recording_admission_inventory_voting as voting
+import recording_admission_inventory_phase_reset as phase_reset
 
 JUBJUB_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-517.json")
 CALL_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.calls-519.json")
@@ -42,6 +43,7 @@ RECEIVE_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory
 
 UNIT_DOMAIN_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.unit-domain-540.json")
 VOTING_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-547.json")
+PHASE_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-549.json")
 
 
 class InventoryTests(unittest.TestCase):
@@ -155,7 +157,8 @@ class InventoryTests(unittest.TestCase):
                                   composite_transition=json.loads(COMPOSITE_TRANSITION.read_text()),
                                   receive_transition=json.loads(RECEIVE_TRANSITION.read_text()),
                                   unit_domain_extension=json.loads(UNIT_DOMAIN_EXTENSION.read_text()),
-                                  voting_transition=json.loads(VOTING_TRANSITION.read_text()))
+                                  voting_transition=json.loads(VOTING_TRANSITION.read_text()),
+                                  phase_reset_transition=json.loads(PHASE_TRANSITION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)
@@ -188,6 +191,9 @@ class RetirementTransitionTests(unittest.TestCase):
         # Keep every historical mutation suite on its original 8-family/12-call
         # checkpoint. Reconstruction authenticates both complete source owners;
         # neither Git availability nor refreshed hashes can rewrite the fixture.
+        phase_review = json.loads(PHASE_TRANSITION.read_text())
+        for owner, source in phase_reset.predecessor_sources(self.root, phase_review).items():
+            (self.root / owner).write_text(source)
         voting_review = json.loads(VOTING_TRANSITION.read_text())
         selector = self.root / voting.SELECTOR
         selector.write_text(voting.predecessor_selector(selector.read_text(), voting_review))

@@ -484,20 +484,8 @@ pub(super) fn select(
                 )?
             ),
         };
-        let through_phase_reset = through_terminal.or_else(|| {
-            record_option!(
-                "selector.phase-reset",
-                typed_plan::lower_phase_reset(
-                    circuit,
-                    ledger_fields,
-                    witnesses,
-                    pure_circuits,
-                    circuits,
-                )
-            )
-        });
         // An invalid checked plan is fatal before later legacy alternatives.
-        let through_unit = match through_phase_reset {
+        let through_unit = match through_terminal {
             Some(plan) => Some(plan),
             None => record_option!(
                 "algebra.unit-actions",

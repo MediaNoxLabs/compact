@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "issue": 549,
+  "classification": "phase-reset-subsumed-by-existing-kernel-domain",
+  "reviewed_checkpoint": "3e61c009494064ad4de115d958865037603bb066",
+  "retired_route": "selector.phase-reset",
+  "replacement_route": "algebra.kernel",
+  "claim": "Tenth production admission retirement, subsumed by existing earlier kernel domain. The mixed phase module retains its live shared helpers and test-only original family. Source inventory is not semantic coverage.",
+  "baseline_file_sha256": "ef69a6ea6faa03d3bc5fd13a8176a4b1dcd5c1caf7ea602eed4b5aa5aac56e9e",
+  "prior_voting_canonical_sha256": "c8161e8f208d788420b2a0b5269d8693fe177c1e8dc1cad357a0ac4a70f54657",
+  "prior_unit_domain_canonical_sha256": "4c0fbb77d697e658b6e25fec96edd0409988b37349de24b4fc70a988f3294d40",
+  "prior_source_fingerprints": {
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": "187dc9797b9ea9cdefe9e88e6022ca8b70197e1b0c258983a1057f2b6ce0ab6d",
+    "tools/compact-rust-backend/src/recorded/typed_plan.rs": "82ca3e48db05d654e93783ca2231a7269cc7040d6db0c0faad5aae89d1844521",
+    "tools/compact-rust-backend/src/recorded/typed_plan/phase_reset.rs": "782df26e0640a4dbc58924385dafd5d85188d276990bf717f2aa952956768d8c"
+  },
+  "reviewed_source_fingerprints": {
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": "443f667344342f9361709be3b2e65c96f347c7241287b13e1c2d9727afdd8e4e",
+    "tools/compact-rust-backend/src/recorded/typed_plan.rs": "c5ce835cbd7e9a966b668653c4f66d3fc6f033a06f25d2c085172fa3cc7a95c8",
+    "tools/compact-rust-backend/src/recorded/typed_plan/phase_reset.rs": "e90a06b5b772e4f494e54ab2b06a9518ceae10c2ffd35c87e725e92462192227"
+  },
+  "oracle_source": "tools/compact-rust-backend/src/recorded/typed_plan/phase_reset.rs",
+  "original_oracle_sha256": "782df26e0640a4dbc58924385dafd5d85188d276990bf717f2aa952956768d8c",
+  "guarded_declarations": {
+    "tools/compact-rust-backend/src/recorded/typed_plan.rs": [
+      "pub(super) fn lower_phase_reset<'a>("
+    ],
+    "tools/compact-rust-backend/src/recorded/typed_plan/phase_reset.rs": [
+      "const U64:",
+      "struct Audit<'a>",
+      "impl Audit<'_>",
+      "pub(super) fn lower<'a>("
+    ]
+  },
+  "wrapper_sha256": "99aedfa027b5202a4773f6e0bb37e4803f0596234c9a5e133cf3f6333ed5cfb2",
+  "shared_functions_sha256": {
+    "pub(super) fn helper_signature(": "19b6dc1f57cc14d9e26f902d96e8d13eef42ce80e0336b6c671bc36d98fdc510",
+    "pub(super) fn false_arguments(": "8e12ac395619a0d7282040cd91b161ee5bfacb41be8f91810914d44fcdffcbde",
+    "pub(super) fn cell_type(": "d19b1c22fc32fd2425cbb8e1d0fb479fd6a10c914cb8d20ca749a51f21229f4c"
+  },
+  "shared_callers_sha256": {
+    "tools/compact-rust-backend/src/recorded/typed_plan/admission.rs": "656254b82f89f77bff1bca3c78b4b3a2bca22680d27550b0e6e1529cf3dc1675",
+    "tools/compact-rust-backend/src/recorded/typed_plan/arithmetic.rs": "e4e1a6f98263a2b5f663c601e28f18c4616e9116503259de23f381af9034be37",
+    "tools/compact-rust-backend/src/recorded/typed_plan/observations.rs": "7f77c8e3e0b0babd846e339cac7067150ca4ac920ea6fc1dbb50d187a4285243",
+    "tools/compact-rust-backend/src/recorded/typed_plan/actions/cells.rs": "2973b528939db63de51529a2c40af89ce1e7013f87afc3a22042316f8b203d66",
+    "tools/compact-rust-backend/src/recorded/typed_plan/reset_payout.rs": "9f3d798a39e08f91aa5d33b2aff2771ab4be93848f6fd5a7f04bbd20fb11efc5"
+  },
+  "existing_kernel_domain_sha256": "9b4062ac7cdb299b7334dc431b2c180eff5bcd59f3ebf9c935f006ac3ddb9b92",
+  "prior_selector": {
+    "ordered_calls": [
+      "typed_plan::lower",
+      "typed_plan::lower_funded_mint",
+      "typed_plan::lower_guarded_deposit",
+      "typed_plan::lower_shielded_merge",
+      "typed_plan::lower_immediate_shielded_send",
+      "typed_plan::lower_shielded_send_checked",
+      "typed_plan::lower_reset_payout",
+      "typed_plan::lower_shielded_payout",
+      "typed_plan::lower_phase_reset",
+      "typed_plan::lower_unit_composition_checked",
+      "zswap_plan::lower"
+    ],
+    "function_sha256": "08119c170c54b409f675dd1ee08de15a7948f30b4d9b9c7e4a2a215437380df9"
+  },
+  "reviewed_selector": {
+    "ordered_calls": [
+      "typed_plan::lower",
+      "typed_plan::lower_funded_mint",
+      "typed_plan::lower_guarded_deposit",
+      "typed_plan::lower_shielded_merge",
+      "typed_plan::lower_immediate_shielded_send",
+      "typed_plan::lower_shielded_send_checked",
+      "typed_plan::lower_reset_payout",
+      "typed_plan::lower_shielded_payout",
+      "typed_plan::lower_unit_composition_checked",
+      "zswap_plan::lower"
+    ],
+    "function_sha256": "15ec397e346c39e45f3ec870bd829d44085d375e9c2b7d6641e5ed73a5f169bf"
+  },
+  "instrumented_route_ids": [
+    "algebra.composite-values",
+    "algebra.context-query",
+    "algebra.jubjub-values",
+    "algebra.kernel",
+    "algebra.shielded-receive",
+    "algebra.terminal-returns",
+    "algebra.unit-actions",
+    "algebra.voting-commit",
+    "early.audited-local",
+    "early.read-only-verification",
+    "effectful.checked-migration",
+    "effectful.start-funding",
+    "guard.closed-opaque-asset-removal",
+    "guard.closed-opaque-map-operation",
+    "guard.closed-opaque-set-operation",
+    "guard.guarded-map-read",
+    "guard.guarded-struct-pure",
+    "guard.guarded-unsigned-product",
+    "guard.opaque-map-write",
+    "guard.opaque-set-mutation",
+    "guard.proved-opaque-set-sequence",
+    "guard.root-let-snapshot",
+    "legacy.action-dispatch",
+    "organizer.enum-advance",
+    "organizer.optional-write",
+    "organizer.organizer",
+    "organizer.witness-merkle",
+    "return.dispatch",
+    "selector.funded-mint",
+    "selector.guarded-deposit",
+    "selector.immediate-send",
+    "selector.membership-optional",
+    "selector.reset-payout",
+    "selector.shielded-merge",
+    "selector.shielded-payout",
+    "selector.shielded-send",
+    "selector.unit-composition",
+    "selector.zswap"
+  ],
+  "retired_route_ids": [
+    "effectful.effectful",
+    "selector.jubjub-values",
+    "selector.terminal-returns",
+    "selector.unit-actions",
+    "selector.context-query",
+    "selector.kernel",
+    "selector.composite-values",
+    "selector.shielded-receive",
+    "selector.voting-commit",
+    "selector.phase-reset"
+  ],
+  "new_retired_routes": [
+    "selector.phase-reset"
+  ],
+  "predecessor_reconstruction": {
+    "new_test_module": "",
+    "prior_selector_suffix": "pub(super) fn select(\n    circuit: &StatefulCircuit,\n    ledger_fields: &HashMap<&str, &LedgerField>,\n    witnesses: &HashMap<&str, &WitnessDeclaration>,\n    pure_circuits: &HashMap<&str, &PureCircuit>,\n    circuits: &HashMap<&str, &StatefulCircuit>,\n    effectful_plan: Option<TypedPlan>,\n) -> Result<ProfileSelection, RenderError> {\n    let mut typed_result = None;\n    // A closed profile may find a precise nested rejection while a later\n    // profile can still admit the same circuit. Retain it only for a coarse\n    // generic return gap after every existing profile has declined.\n    let mut shielded_send_rejection = None;\n    let mut composition_rejection = None;\n    let mut organizer_steps = if let Some(plan) = effectful_plan {\n        typed_result = Some(plan.result);\n        Some(plan.steps)\n    } else {\n        record_option!(\n            \"organizer.organizer\",\n            closed_organizer_gate_steps(\n                circuit,\n                ledger_fields,\n                witnesses,\n                pure_circuits,\n                circuits\n            )?\n        )\n        .or(record_option!(\n            \"organizer.optional-write\",\n            closed_authorized_optional_write_steps(\n                circuit,\n                ledger_fields,\n                witnesses,\n                pure_circuits,\n            )?\n        ))\n        .or(record_option!(\n            \"organizer.enum-advance\",\n            closed_authorized_enum_advance_steps(circuit, ledger_fields, witnesses, pure_circuits,)?\n        ))\n        .or(record_option!(\n            \"organizer.witness-merkle\",\n            closed_witness_admitted_merkle_insert_steps(\n                circuit,\n                ledger_fields,\n                witnesses,\n                pure_circuits,\n            )?\n        ))\n    };\n    let typed_prefix = if organizer_steps.is_none() {\n        match record_option!(\n            \"selector.membership-optional\",\n            typed_plan::lower(circuit, ledger_fields, witnesses, pure_circuits, circuits)\n        ) {\n            Some(plan) => Some(plan),\n            None => record_option!(\n                \"algebra.jubjub-values\",\n                checked_jubjub_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?\n            ),\n        }\n    } else {\n        None\n    };\n    if organizer_steps.is_none() {\n        let before_context = match typed_prefix {\n            Some(plan) => Some(plan),\n            None => record_option!(\n                \"algebra.kernel\",\n                checked_kernel_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?\n            ),\n        };\n        let through_context = match before_context {\n            Some(plan) => Some(plan),\n            None => record_option!(\n                \"algebra.context-query\",\n                checked_context_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?\n            ),\n        };\n        let through_composite = match through_context {\n            Some(plan) => Some(plan),\n            None => record_option!(\n                \"algebra.composite-values\",\n                checked_composite_domain(\n                    circuit,\n                    ledger_fields,\n                    witnesses,\n                    pure_circuits,\n                    circuits\n                )?\n            ),\n        };\n        let through_receive = match through_composite {\n            Some(plan) => Some(plan),\n            None => record_option!(\n                \"algebra.shielded-receive\",\n                checked_receive_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?\n            ),\n        };\n        let through_voting = match through_receive {\n            Some(plan) => Some(plan),\n            None => record_option!(\n                \"algebra.voting-commit\",\n                checked_voting_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?\n            ),\n        };\n        let before_terminal = through_voting\n            .or_else(|| {\n                record_option!(\n                    \"selector.funded-mint\",\n                    typed_plan::lower_funded_mint(\n                        circuit,\n                        ledger_fields,\n                        witnesses,\n                        pure_circuits,\n                        circuits,\n                    )\n                )\n            })\n            .or_else(|| {\n                record_option!(\n                    \"selector.guarded-deposit\",\n                    typed_plan::lower_guarded_deposit(\n                        circuit,\n                        ledger_fields,\n                        witnesses,\n                        pure_circuits,\n                        circuits,\n                    )\n                )\n            })\n            .or_else(|| {\n                record_option!(\n                    \"selector.shielded-merge\",\n                    typed_plan::lower_shielded_merge(\n                        circuit,\n                        ledger_fields,\n                        witnesses,\n                        pure_circuits,\n                        circuits,\n                    )\n                )\n            })\n            .or_else(|| {\n                record_option!(\n                    \"selector.immediate-send\",\n                    typed_plan::lower_immediate_shielded_send(\n                        circuit,\n                        ledger_fields,\n                        witnesses,\n                        pure_circuits,\n                        circuits,\n                    )\n                )\n            })\n            .or_else(|| {\n                match typed_plan::lower_shielded_send_checked(\n                    circuit,\n                    ledger_fields,\n                    witnesses,\n                    pure_circuits,\n                    circuits,\n                ) {\n                    ProfileAttempt::Admitted(plan) => {\n                        record_option!(\"selector.shielded-send\", Some(plan))\n                    }\n                    ProfileAttempt::Rejected(gap) => {\n                        shielded_send_rejection = Some(gap);\n                        record_option!(\"selector.shielded-send\", None)\n                    }\n                    ProfileAttempt::NotApplicable => record_option!(\"selector.shielded-send\", None),\n                }\n            })\n            .or_else(|| {\n                record_option!(\n                    \"selector.reset-payout\",\n                    typed_plan::lower_reset_payout(\n                        circuit,\n                        ledger_fields,\n                        witnesses,\n                        pure_circuits,\n                        circuits,\n                    )\n                )\n            })\n            .or_else(|| {\n                record_option!(\n                    \"selector.shielded-payout\",\n                    typed_plan::lower_shielded_payout(\n                        circuit,\n                        ledger_fields,\n                        witnesses,\n                        pure_circuits,\n                        circuits,\n                    )\n                )\n            });\n        // Preserve the lazy selector boundary. Invariant errors abort here,\n        // before any independent later family can hide a checked-plan defect.\n        let through_terminal = match before_terminal {\n            Some(plan) => Some(plan),\n            None => record_option!(\n                \"algebra.terminal-returns\",\n                checked_terminal_domain(\n                    circuit,\n                    ledger_fields,\n                    witnesses,\n                    pure_circuits,\n                    circuits\n                )?\n            ),\n        };\n        let through_phase_reset = through_terminal.or_else(|| {\n            record_option!(\n                \"selector.phase-reset\",\n                typed_plan::lower_phase_reset(\n                    circuit,\n                    ledger_fields,\n                    witnesses,\n                    pure_circuits,\n                    circuits,\n                )\n            )\n        });\n        // An invalid checked plan is fatal before later legacy alternatives.\n        let through_unit = match through_phase_reset {\n            Some(plan) => Some(plan),\n            None => record_option!(\n                \"algebra.unit-actions\",\n                checked_unit_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?\n            ),\n        };\n        if let Some(plan) = through_unit\n            .or_else(|| {\n                match typed_plan::lower_unit_composition_checked(\n                    circuit,\n                    ledger_fields,\n                    witnesses,\n                    pure_circuits,\n                    circuits,\n                ) {\n                    ProfileAttempt::Admitted(plan) => {\n                        record_option!(\"selector.unit-composition\", Some(plan))\n                    }\n                    ProfileAttempt::Rejected(rejection) => {\n                        composition_rejection = Some(rejection);\n                        record_option!(\"selector.unit-composition\", None)\n                    }\n                    ProfileAttempt::NotApplicable => {\n                        record_option!(\"selector.unit-composition\", None)\n                    }\n                }\n            })\n            .or_else(|| {\n                record_option!(\n                    \"selector.zswap\",\n                    zswap_plan::lower(circuit, ledger_fields, circuits, witnesses)\n                )\n            })\n        {\n            organizer_steps = Some(plan.steps);\n            typed_result = Some(plan.result);\n        }\n    }\n    Ok(ProfileSelection {\n        organizer_steps,\n        typed_result,\n        shielded_send_rejection,\n        composition_rejection,\n    })\n}\n"
+  }
+}

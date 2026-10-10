@@ -1843,6 +1843,7 @@ pub(super) fn lower_shielded_payout<'a>(
     shielded_payout::lower(circuit, ledger, witnesses, pure, circuits)
 }
 
+#[cfg(test)]
 pub(super) fn lower_phase_reset<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,

@@ -16,6 +16,8 @@ mod jubjub;
 mod kernel;
 #[path = "tests/ordinary.rs"]
 mod ordinary;
+#[path = "tests/phase_reset_inclusion.rs"]
+mod phase_reset_inclusion;
 #[path = "tests/pure_inclusion.rs"]
 mod pure_inclusion;
 #[path = "tests/pure_validation.rs"]

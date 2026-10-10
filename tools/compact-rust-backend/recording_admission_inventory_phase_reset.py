@@ -132,7 +132,7 @@ def validate(baseline, transition, baseline_bytes, voting, unit):
     return errors
 
 
-def check_sources(root, sources, transition):
+def check_sources(root, sources, transition, prior_reset=None):
     errors = []
     # Shared phase_reset imports remain legitimate; only family authority is banned.
     for owner, source in sources.items():
@@ -158,7 +158,10 @@ def check_sources(root, sources, transition):
             if digest(function(phase, marker).encode()) != expected:
                 errors.append('phase retirement: shared helper changed: ' + marker)
         for owner, expected in SHARED_CALLERS.items():
-            if digest((root / owner).read_bytes()) != expected:
+            data = (prior_reset.encode() if prior_reset is not None and owner ==
+                    'tools/compact-rust-backend/src/recorded/typed_plan/reset_payout.rs'
+                    else (root / owner).read_bytes())
+            if digest(data) != expected:
                 errors.append('phase retirement: shared caller changed: ' + owner)
         if digest(function(sources.get(SELECTOR, ''), KERNEL).encode()) != KERNEL_SHA:
             errors.append('phase retirement: existing kernel domain changed')

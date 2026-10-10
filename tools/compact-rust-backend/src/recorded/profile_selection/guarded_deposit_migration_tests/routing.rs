@@ -70,8 +70,8 @@ fn unsupported_body_falls_through_without_hiding_first_action_diagnostic() {
         &a[at..at + 3],
         [
             "algebra.guarded-deposit",
-            "selector.reset-payout",
-            "selector.shielded-payout"
+            "selector.shielded-payout",
+            "algebra.terminal-returns"
         ]
     );
     assert!(!a.contains(&"selector.guarded-deposit"));

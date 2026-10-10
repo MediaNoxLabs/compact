@@ -99,6 +99,7 @@ enum CompositeDomain {
     ImmediateShieldedSend,
     ShieldedPayout,
     ActionfulShieldedPayout,
+    #[cfg_attr(not(test), allow(dead_code))]
     ResetShieldedPayout,
     ShieldedMerge(shielded_merge::Inputs),
     GuardedShieldedDeposit,
@@ -2187,6 +2188,7 @@ pub(super) fn lower_funded_mint<'a>(
 }
 
 /// Historical payout followed by a closed literal-true reset helper.
+#[cfg(test)]
 pub(super) fn lower_reset_payout<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,

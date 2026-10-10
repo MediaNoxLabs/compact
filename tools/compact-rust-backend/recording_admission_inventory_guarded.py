@@ -75,7 +75,7 @@ def validate(baseline, transition, baseline_bytes, merge):
     return errors
 
 
-def check_sources(root, sources, transition):
+def check_sources(root, sources, transition, prior_voting_test=None, prior_routing_test=None):
     errors = []
     for owner, source in sources.items():
         if re.search(r'\btyped_plan\s*::\s*lower_guarded_deposit\s*\(', source):
@@ -97,7 +97,11 @@ def check_sources(root, sources, transition):
             if digest((root / path).read_bytes()) != expected:
                 errors.append('guarded deposit retirement: shared admission dependency changed: ' + path)
         for path, expected in transition['test_sources_sha256'].items():
-            if digest((root / path).read_bytes()) != expected:
+            data = (prior_voting_test.encode() if prior_voting_test is not None and path == VOTING_TEST
+                    else prior_routing_test.encode() if prior_routing_test is not None and path ==
+                    'tools/compact-rust-backend/src/recorded/profile_selection/guarded_deposit_migration_tests/routing.rs'
+                    else (root / path).read_bytes())
+            if digest(data) != expected:
                 errors.append('guarded deposit retirement: reviewed routing test changed: ' + path)
     except (OSError, UnicodeError, ValueError, KeyError) as error:
         errors.append('guarded deposit retirement: source preservation failed: ' + str(error))

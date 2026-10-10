@@ -72,7 +72,7 @@ fn unsupported_body_preserves_later_independent_attempt_order() {
             "algebra.voting-commit",
             "selector.funded-mint",
             "algebra.guarded-deposit",
-            "selector.reset-payout"
+            "selector.shielded-payout"
         ]
     );
     assert!(!a.contains(&"selector.voting-commit"));

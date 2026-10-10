@@ -82,6 +82,10 @@ mod merge_migration_tests;
 #[path = "profile_selection/guarded_deposit_migration_tests.rs"]
 mod guarded_deposit_migration_tests;
 
+#[cfg(test)]
+#[path = "profile_selection/reset_payout_migration_tests.rs"]
+mod reset_payout_migration_tests;
+
 /// An admitted step sequence and the evidence retained from declined profiles.
 /// Legacy organizers have no typed result; absence of steps permits legacy
 /// action lowering. The caller owns whether a retained gap can refine a failure.
@@ -562,31 +566,18 @@ pub(super) fn select(
                 )?
             ),
         };
-        let before_terminal = through_deposit
-            .or_else(|| {
-                record_option!(
-                    "selector.reset-payout",
-                    typed_plan::lower_reset_payout(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                        circuits,
-                    )
+        let before_terminal = through_deposit.or_else(|| {
+            record_option!(
+                "selector.shielded-payout",
+                typed_plan::lower_shielded_payout(
+                    circuit,
+                    ledger_fields,
+                    witnesses,
+                    pure_circuits,
+                    circuits,
                 )
-            })
-            .or_else(|| {
-                record_option!(
-                    "selector.shielded-payout",
-                    typed_plan::lower_shielded_payout(
-                        circuit,
-                        ledger_fields,
-                        witnesses,
-                        pure_circuits,
-                        circuits,
-                    )
-                )
-            });
+            )
+        });
         // Preserve the lazy selector boundary. Invariant errors abort here,
         // before any independent later family can hide a checked-plan defect.
         let through_terminal = match before_terminal {

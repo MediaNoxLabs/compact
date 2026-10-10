@@ -26,6 +26,8 @@ mod phase_reset_inclusion;
 mod pure_inclusion;
 #[path = "tests/pure_validation.rs"]
 mod pure_validation;
+#[path = "tests/reset_payout_inclusion.rs"]
+mod reset_payout_inclusion;
 #[path = "tests/rich_validation.rs"]
 mod rich_validation;
 #[path = "tests/rich_values.rs"]

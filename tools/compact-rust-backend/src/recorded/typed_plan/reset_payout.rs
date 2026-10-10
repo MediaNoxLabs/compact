@@ -16,7 +16,9 @@
 //! Admission is separate from advance's false reset and readonly payout. The
 //! shared Plan owns all evaluation, scopes, checked effects and helper calls.
 use super::*;
-use crate::coin_shapes::{qualified_coin_type, shielded_coin_type};
+use crate::coin_shapes::qualified_coin_type;
+#[cfg(test)]
+use crate::coin_shapes::shielded_coin_type;
 
 fn optional_key(ty: &Type) -> bool {
     matches!(ty, Type::Struct { fields, .. }
@@ -104,6 +106,7 @@ pub(super) fn helper_shape(circuit: &StatefulCircuit, pure: &HashMap<&str, &Pure
             .iter()
             .all(|action| reset_action(action, pure))
 }
+#[cfg(test)]
 pub(super) fn lower<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,

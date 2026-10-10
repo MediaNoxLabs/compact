@@ -62,6 +62,7 @@ import recording_admission_inventory_observation_test as observation_test
 import recording_admission_inventory_merge as merge
 import recording_admission_inventory_guarded as guarded
 import recording_admission_inventory_routing_test as routing_test
+import recording_admission_inventory_reset_payout as reset_payout
 
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE = Path(__file__).with_suffix('.baseline.json')
@@ -264,7 +265,8 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
            observation_test_extension: dict | None = None,
            merge_transition: dict | None = None,
            guarded_deposit_transition: dict | None = None,
-           routing_test_extension: dict | None = None) -> dict:
+           routing_test_extension: dict | None = None,
+           reset_payout_transition: dict | None = None) -> dict:
     errors = validate_baseline(baseline)
     report = {'schema_version': 1, 'baseline_commit': baseline.get('baseline_commit'),
               'claim': 'source route inventory; not language or behavioral coverage',
@@ -369,13 +371,32 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
             errors.append(str(error))
     routing_snapshot = ({routing_test.OWNER: prior_routing_test}
                         if prior_routing_test is not None else {})
+    proposed_reset_payout = None
+    reset_payout_snapshot = None
+    if reset_payout_transition is not None:
+        reset_errors = reset_payout.validate(
+            baseline, reset_payout_transition, baseline_bytes,
+            guarded_deposit_transition, routing_test_extension)
+        if not reset_errors:
+            try:
+                reset_payout_snapshot = reset_payout.predecessor_sources(root, reset_payout_transition)
+            except (OSError, UnicodeError, ValueError, KeyError) as error:
+                reset_errors.append('reset payout retirement: predecessor reconstruction failed: ' + str(error))
+        errors.extend(reset_errors)
+        if not reset_errors:
+            proposed_reset_payout = reset_payout_transition
     proposed_guarded = None
     guarded_snapshot = None
     if guarded_deposit_transition is not None:
         guarded_errors = guarded.validate(baseline, guarded_deposit_transition, baseline_bytes, merge_transition)
         if not guarded_errors:
             try:
-                guarded_snapshot = guarded.predecessor_sources(root, guarded_deposit_transition)
+                if reset_payout_snapshot is not None:
+                    guarded_sources = {owner: (root / owner).read_text() for owner in guarded.REVIEWED_OWNERS}
+                    guarded_snapshot = guarded.predecessor_source_snapshot(
+                        {**guarded_sources, **reset_payout_snapshot}, guarded_deposit_transition)
+                else:
+                    guarded_snapshot = guarded.predecessor_sources(root, guarded_deposit_transition)
             except (OSError, UnicodeError, ValueError) as error:
                 guarded_errors.append('guarded deposit retirement: predecessor reconstruction failed: ' + str(error))
         errors.extend(guarded_errors)
@@ -603,6 +624,16 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
             evolution = {**evolution, 'reviewed_source_fingerprints': {
                 **evolution['reviewed_source_fingerprints'],
                 routing_test.OWNER: routing_test.CURRENT_SHA}}
+    reviewed_reset_payout = None
+    if proposed_reset_payout is not None:
+        if reviewed_guarded is None or 'reviewed_routing_test_extension' not in report:
+            errors.append('reset payout retirement: complete guarded566 and routing568 authority required')
+        else:
+            reviewed_reset_payout = proposed_reset_payout
+            evolution = {**evolution, **reviewed_reset_payout,
+                         'reviewed_source_fingerprints': {
+                             **evolution['reviewed_source_fingerprints'],
+                             **reviewed_reset_payout['reviewed_source_fingerprints']}}
     if instrumentation is not None:
         errors.extend(validate_instrumentation(root, baseline, instrumentation, baseline_bytes, evolution, prior_probe))
         report['reviewed_instrumentation'] = {
@@ -629,7 +660,7 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
         failures = []
         for anchor in row['anchors']:
             actual = sources.get(anchor['source'], '').count(anchor['text'])
-            retired = (transition is not None and row['id'] == RETIRED_EFFECTFUL) or (reviewed_jubjub is not None and row['id'] == jubjub.ROUTE) or (reviewed_terminal is not None and row['id'] == terminal.ROUTE) or (reviewed_unit is not None and row['id'] == unit.ROUTE) or (reviewed_context is not None and row['id'] == context.ROUTE) or (reviewed_kernel is not None and row['id'] == kernel.ROUTE) or (reviewed_composite is not None and row['id'] == composite.ROUTE) or (reviewed_receive is not None and row['id'] == receive.ROUTE) or (reviewed_voting is not None and row['id'] == voting.ROUTE) or (reviewed_phase_reset is not None and row['id'] == phase_reset.ROUTE) or (reviewed_immediate is not None and row['id'] == immediate.ROUTE) or (reviewed_zswap is not None and row['id'] == zswap.ROUTE) or (reviewed_membership is not None and row['id'] == membership.ROUTE) or (reviewed_send is not None and row['id'] == send.ROUTE) or (reviewed_merge is not None and row['id'] == merge.ROUTE) or (reviewed_guarded is not None and row['id'] == guarded.ROUTE)
+            retired = (transition is not None and row['id'] == RETIRED_EFFECTFUL) or (reviewed_jubjub is not None and row['id'] == jubjub.ROUTE) or (reviewed_terminal is not None and row['id'] == terminal.ROUTE) or (reviewed_unit is not None and row['id'] == unit.ROUTE) or (reviewed_context is not None and row['id'] == context.ROUTE) or (reviewed_kernel is not None and row['id'] == kernel.ROUTE) or (reviewed_composite is not None and row['id'] == composite.ROUTE) or (reviewed_receive is not None and row['id'] == receive.ROUTE) or (reviewed_voting is not None and row['id'] == voting.ROUTE) or (reviewed_phase_reset is not None and row['id'] == phase_reset.ROUTE) or (reviewed_immediate is not None and row['id'] == immediate.ROUTE) or (reviewed_zswap is not None and row['id'] == zswap.ROUTE) or (reviewed_membership is not None and row['id'] == membership.ROUTE) or (reviewed_send is not None and row['id'] == send.ROUTE) or (reviewed_merge is not None and row['id'] == merge.ROUTE) or (reviewed_guarded is not None and row['id'] == guarded.ROUTE) or (reviewed_reset_payout is not None and row['id'] == reset_payout.ROUTE)
             expected = 0 if retired else anchor['baseline_occurrences']
             if actual != expected:
                 failures.append({'source': anchor['source'], 'anchor': anchor['text'],
@@ -739,7 +770,9 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
             'evidence': reviewed_voting,
         })
     if reviewed_phase_reset is not None:
-        retirement_errors = phase_reset.check_sources(root, {**sources, **(immediate_snapshot or {})}, reviewed_phase_reset)
+        retirement_errors = phase_reset.check_sources(
+            root, {**sources, **(immediate_snapshot or {})}, reviewed_phase_reset,
+            reset_payout_snapshot[reset_payout.RESET] if reviewed_reset_payout is not None else None)
         errors.extend(retirement_errors)
         report['retired_routes'].append({
             'id': phase_reset.ROUTE,
@@ -760,7 +793,8 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
         retirement_errors = immediate.check_sources(
             root, immediate_sources, reviewed_immediate,
             merge_snapshot[merge.MERGE] if reviewed_merge is not None else None,
-            guarded_snapshot[guarded.GUARDED] if reviewed_guarded is not None else None)
+            guarded_snapshot[guarded.GUARDED] if reviewed_guarded is not None else None,
+            reset_payout_snapshot[reset_payout.RESET] if reviewed_reset_payout is not None else None)
         errors.extend(retirement_errors)
         report['retired_routes'].append({
             'id': immediate.ROUTE,
@@ -825,7 +859,10 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
             sources[guarded.VOTING_TEST] = (root / guarded.VOTING_TEST).read_text()
         except (OSError, UnicodeError) as error:
             errors.append('guarded deposit retirement: unreadable adapted voting test: ' + str(error))
-        retirement_errors = guarded.check_sources(root, sources, reviewed_guarded)
+        retirement_errors = guarded.check_sources(
+            root, {**sources, **(reset_payout_snapshot or {})}, reviewed_guarded,
+            reset_payout_snapshot[reset_payout.VOTING_TEST] if reviewed_reset_payout is not None else None,
+            reset_payout_snapshot[reset_payout.GUARDED_TEST] if reviewed_reset_payout is not None else None)
         errors.extend(retirement_errors)
         report['retired_routes'].append({
             'id': guarded.ROUTE,
@@ -833,6 +870,21 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
             'passed': not retirement_errors and not next(
                 row['failures'] for row in report['route_checks'] if row['id'] == guarded.ROUTE),
             'evidence': reviewed_guarded,
+        })
+    if reviewed_reset_payout is not None:
+        for owner in reset_payout.REVIEWED_OWNERS:
+            try:
+                sources[owner] = (root / owner).read_text()
+            except (OSError, UnicodeError) as error:
+                errors.append('reset payout retirement: unreadable current owner: ' + str(error))
+        retirement_errors = reset_payout.check_sources(root, sources, reviewed_reset_payout)
+        errors.extend(retirement_errors)
+        report['retired_routes'].append({
+            'id': reset_payout.ROUTE,
+            'status': 'retired-from-production-test-oracle-retained',
+            'passed': not retirement_errors and not next(
+                row['failures'] for row in report['route_checks'] if row['id'] == reset_payout.ROUTE),
+            'evidence': reviewed_reset_payout,
         })
     if SELECTOR in sources:
         try:
@@ -874,6 +926,7 @@ def main(argv=None) -> int:
     parser.add_argument('--merge-transition', type=Path, help='explicit #565 merge subsumption after #561 and #564')
     parser.add_argument('--guarded-deposit-transition', type=Path, help='explicit #566 guarded-deposit checked admission after #565')
     parser.add_argument('--routing-test-extension', type=Path, help='explicit #568 test-only negative operand adaptation; no retirement')
+    parser.add_argument('--reset-payout-transition', type=Path, help='explicit #569 reset payout subsumption after #566 and #568')
     args = parser.parse_args(argv)
     protected = [args.baseline] + ([args.transition] if args.transition else []) + ([args.instrumentation] if args.instrumentation else []) + ([args.jubjub_transition] if args.jubjub_transition else []) + ([args.call_extension] if args.call_extension else []) + ([args.terminal_transition] if args.terminal_transition else []) + ([args.unit_actions_transition] if args.unit_actions_transition else []) + ([args.context_query_transition] if args.context_query_transition else []) + ([args.kernel_transition] if args.kernel_transition else []) + ([args.composite_transition] if args.composite_transition else []) + ([args.receive_transition] if args.receive_transition else [])
     protected += [args.unit_domain_extension] if args.unit_domain_extension else []
@@ -887,6 +940,7 @@ def main(argv=None) -> int:
     protected += [args.merge_transition] if args.merge_transition else []
     protected += [args.guarded_deposit_transition] if args.guarded_deposit_transition else []
     protected += [args.routing_test_extension] if args.routing_test_extension else []
+    protected += [args.reset_payout_transition] if args.reset_payout_transition else []
     if args.output and any(args.output.resolve() == path.resolve() for path in protected):
         parser.error('--output cannot overwrite baseline, transition, instrumentation, or call-extension evidence')
     try:
@@ -913,7 +967,8 @@ def main(argv=None) -> int:
         merge_transition = json.loads(args.merge_transition.read_text()) if args.merge_transition else None
         guarded_deposit_transition = json.loads(args.guarded_deposit_transition.read_text()) if args.guarded_deposit_transition else None
         routing_test_extension = json.loads(args.routing_test_extension.read_text()) if args.routing_test_extension else None
-        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension, voting_transition, phase_reset_transition, immediate_send_transition, zswap_transition, membership_transition, send_transition, observation_test_extension, merge_transition, guarded_deposit_transition, routing_test_extension)
+        reset_payout_transition = json.loads(args.reset_payout_transition.read_text()) if args.reset_payout_transition else None
+        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension, voting_transition, phase_reset_transition, immediate_send_transition, zswap_transition, membership_transition, send_transition, observation_test_extension, merge_transition, guarded_deposit_transition, routing_test_extension, reset_payout_transition)
     except (OSError, ValueError, TypeError, KeyError) as error:
         parser.exit(2, f'inventory error: {error}\n')
     rendered = json.dumps(report, indent=2) + '\n'

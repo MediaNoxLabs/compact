@@ -25,6 +25,7 @@ import recording_admission_inventory_phase_reset as phase_reset
 import recording_admission_inventory_immediate as immediate
 import recording_admission_inventory_zswap as zswap
 import recording_admission_inventory_membership as membership
+import recording_admission_inventory_send as send
 
 JUBJUB_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-517.json")
 CALL_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.calls-519.json")
@@ -56,8 +57,17 @@ ZSWAP_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.t
 MEMBERSHIP_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-560.json")
 
 
+SEND_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-561.json")
+
+
+def send_checkpoint_sources(root):
+    return send.predecessor_sources(root, json.loads(SEND_TRANSITION.read_text()))
+
+
 def membership_checkpoint_sources(root):
-    return membership.predecessor_sources(root, json.loads(MEMBERSHIP_TRANSITION.read_text()))
+    prior = send_checkpoint_sources(root)
+    return {**prior, **membership.predecessor_source_snapshot(
+        prior, json.loads(MEMBERSHIP_TRANSITION.read_text()))}
 
 
 def zswap_checkpoint_sources(root):
@@ -189,7 +199,8 @@ class InventoryTests(unittest.TestCase):
                                   phase_reset_transition=json.loads(PHASE_TRANSITION.read_text()),
                                   immediate_send_transition=json.loads(IMMEDIATE_TRANSITION.read_text()),
                                   zswap_transition=json.loads(ZSWAP_TRANSITION.read_text()),
-                                  membership_transition=json.loads(MEMBERSHIP_TRANSITION.read_text()))
+                                  membership_transition=json.loads(MEMBERSHIP_TRANSITION.read_text()),
+                                  send_transition=json.loads(SEND_TRANSITION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)

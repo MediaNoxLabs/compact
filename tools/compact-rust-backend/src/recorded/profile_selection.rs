@@ -70,6 +70,10 @@ mod zswap_migration_tests;
 #[path = "profile_selection/membership_migration_tests.rs"]
 mod membership_migration_tests;
 
+#[cfg(test)]
+#[path = "profile_selection/send_migration_tests.rs"]
+mod send_migration_tests;
+
 /// An admitted step sequence and the evidence retained from declined profiles.
 /// Legacy organizers have no typed result; absence of steps permits legacy
 /// action lowering. The caller owns whether a retained gap can refine a failure.
@@ -241,6 +245,39 @@ fn checked_kernel_domain(
 
 /// Struct expression interfaces compose at the old composite selector priority.
 /// Internal helpers retain eligibility; body effects, not evidence counts, decide.
+fn checked_composite_attempt(
+    circuit: &StatefulCircuit,
+    ledger: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+) -> Result<ProfileAttempt<TypedPlan>, RenderError> {
+    use crate::ir::{StateReturn, Type};
+    if !matches!(circuit.result, Type::Struct { .. })
+        || !matches!(circuit.return_value, StateReturn::Expression { .. })
+    {
+        return Ok(ProfileAttempt::NotApplicable);
+    }
+    resolve_checked_attempt(effect_plan::lower_with_calls(
+        circuit, ledger, witnesses, pure, circuits,
+    ))
+}
+
+/// Retain unsupported diagnostics without treating them as global admission errors.
+fn resolve_checked_attempt(
+    result: Result<TypedPlan, effect_plan::PlanError>,
+) -> Result<ProfileAttempt<TypedPlan>, RenderError> {
+    match result {
+        Ok(plan) => Ok(ProfileAttempt::Admitted(plan)),
+        Err(effect_plan::PlanError::Unsupported(gap)) => Ok(ProfileAttempt::Rejected(gap)),
+        Err(effect_plan::PlanError::Invalid(gap)) => Err(RenderError::RecordingPlanInvariant {
+            path: gap.path,
+            detail: gap.detail,
+        }),
+    }
+}
+
+#[cfg(test)]
 fn checked_composite_domain(
     circuit: &StatefulCircuit,
     ledger: &HashMap<&str, &LedgerField>,
@@ -248,15 +285,8 @@ fn checked_composite_domain(
     pure: &HashMap<&str, &PureCircuit>,
     circuits: &HashMap<&str, &StatefulCircuit>,
 ) -> Result<Option<TypedPlan>, RenderError> {
-    use crate::ir::{StateReturn, Type};
-    if !matches!(circuit.result, Type::Struct { .. })
-        || !matches!(circuit.return_value, StateReturn::Expression { .. })
-    {
-        return Ok(None);
-    }
-    resolve_checked_plan(effect_plan::lower_with_calls(
-        circuit, ledger, witnesses, pure, circuits,
-    ))
+    checked_composite_attempt(circuit, ledger, witnesses, pure, circuits)
+        .map(ProfileAttempt::into_option)
 }
 
 /// Receive interfaces enter at the old receive priority, including internal helpers.
@@ -361,7 +391,7 @@ pub(super) fn select(
     effectful_plan: Option<TypedPlan>,
 ) -> Result<ProfileSelection, RenderError> {
     let mut typed_result = None;
-    // A closed profile may find a precise nested rejection while a later
+    // Checked composition may find a precise nested rejection while a later
     // profile can still admit the same circuit. Retain it only for a coarse
     // generic return gap after every existing profile has declined.
     let mut shielded_send_rejection = None;
@@ -434,16 +464,29 @@ pub(super) fn select(
         };
         let through_composite = match through_context {
             Some(plan) => Some(plan),
-            None => record_option!(
-                "algebra.composite-values",
-                checked_composite_domain(
+            None => {
+                let attempt = checked_composite_attempt(
                     circuit,
                     ledger_fields,
                     witnesses,
                     pure_circuits,
-                    circuits
-                )?
-            ),
+                    circuits,
+                )?;
+                let plan = match attempt {
+                    ProfileAttempt::Admitted(plan) => Some(plan),
+                    ProfileAttempt::Rejected(gap) => {
+                        // The old send domain is a subset of this Struct/Expression
+                        // interface. Preserve its useful failure through later
+                        // alternatives without rerunning any legacy body recognizer.
+                        if typed_plan::shielded_send_result(&circuit.result) {
+                            shielded_send_rejection = Some(gap);
+                        }
+                        None
+                    }
+                    ProfileAttempt::NotApplicable => None,
+                };
+                record_option!("algebra.composite-values", plan)
+            }
         };
         let through_receive = match through_composite {
             Some(plan) => Some(plan),
@@ -495,24 +538,6 @@ pub(super) fn select(
                         circuits,
                     )
                 )
-            })
-            .or_else(|| {
-                match typed_plan::lower_shielded_send_checked(
-                    circuit,
-                    ledger_fields,
-                    witnesses,
-                    pure_circuits,
-                    circuits,
-                ) {
-                    ProfileAttempt::Admitted(plan) => {
-                        record_option!("selector.shielded-send", Some(plan))
-                    }
-                    ProfileAttempt::Rejected(gap) => {
-                        shielded_send_rejection = Some(gap);
-                        record_option!("selector.shielded-send", None)
-                    }
-                    ProfileAttempt::NotApplicable => record_option!("selector.shielded-send", None),
-                }
             })
             .or_else(|| {
                 record_option!(

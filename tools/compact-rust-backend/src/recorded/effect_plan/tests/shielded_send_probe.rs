@@ -7,6 +7,62 @@ use super::*;
 use crate::recorded::{admission_probe::trace, profile_attempt::ProfileAttempt};
 use serde_json::json;
 
+#[path = "shielded_send_probe/interfaces.rs"]
+mod interfaces;
+#[path = "shielded_send_probe/pure.rs"]
+mod pure;
+#[path = "shielded_send_probe/rejections.rs"]
+mod rejections;
+#[path = "shielded_send_probe/structure.rs"]
+mod structure;
+
+fn expression(root: &mut StatefulCircuit) -> &mut Expr {
+    let StateReturn::Expression { value } = &mut root.return_value else {
+        panic!("expression root")
+    };
+    value
+}
+fn reference(name: &str) -> Expr {
+    Expr::Parameter { name: name.into() }
+}
+fn field_literal(value: usize) -> Expr {
+    Expr::FieldLiteral {
+        value: value.to_string(),
+    }
+}
+fn parameter(name: &str, ty: Type) -> Parameter {
+    Parameter {
+        name: name.into(),
+        ty,
+    }
+}
+fn local(name: &str, ty: Type, value: Expr) -> LocalBinding {
+    LocalBinding {
+        name: name.into(),
+        ty,
+        value,
+    }
+}
+fn call(name: &str, arguments: Vec<Expr>) -> Expr {
+    Expr::Call {
+        name: name.into(),
+        arguments,
+    }
+}
+fn vector(element: Type, length: usize) -> Type {
+    Type::Vector {
+        element: Box::new(element),
+        length,
+    }
+}
+fn prepend(contract: &mut Contract, bindings: Vec<LocalBinding>) {
+    let body = expression(root_mut(contract, "send_to_self"));
+    *body = Expr::Let {
+        bindings,
+        body: Box::new(body.clone()),
+    };
+}
+
 fn source() -> Contract {
     serde_json::from_str(include_str!(
         "../../../../tests/shielded-send-schema20-ir.json"

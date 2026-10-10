@@ -1357,6 +1357,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-effect-plan-optional-send-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-coin-structure",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-storage",
+ "midnight-transient-crypto",
+ "rand 0.8.6",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-effect-plan-owned-calls-source-fixture"
 version = "0.1.0"
 dependencies = [

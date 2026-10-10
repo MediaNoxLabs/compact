@@ -87,7 +87,11 @@ fn rejected_unused_dynamic_hash_reports_its_exact_binding() {
     });
     let gap = send_gap(value);
     assert_eq!(gap.code, RecordingGapCode::UnsupportedExpression);
-    assert_eq!(gap.ir_node, "Expr::Default");
+    assert_eq!(gap.ir_node, "RecordedPlan");
+    assert!(
+        gap.detail
+            .contains("default requires a supported struct type")
+    );
     assert_eq!(gap.path, "return_value.value.bindings[0].value.value");
 }
 
@@ -121,7 +125,11 @@ fn rejected_unselected_branch_and_nested_argument_keep_source_paths() {
     });
     let gap = send_gap(argument);
     assert_eq!(gap.code, RecordingGapCode::UnsupportedExpression);
-    assert_eq!(gap.ir_node, "Expr::Default");
+    assert_eq!(gap.ir_node, "RecordedPlan");
+    assert!(
+        gap.detail
+            .contains("default requires a supported struct type")
+    );
     assert_eq!(
         gap.path,
         "return_value.value.arguments[0].bindings[0].value.value"

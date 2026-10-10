@@ -1,0 +1,15 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+
+export circuit optional_send(
+  selected: Boolean,
+  input: QualifiedShieldedCoinInfo,
+  recipient: Either<ZswapCoinPublicKey, ContractAddress>,
+  value: Uint<128>
+): ShieldedSendResult {
+  return disclose(selected)
+    ? sendShielded(disclose(input), disclose(recipient), disclose(value))
+    : default<ShieldedSendResult>;
+}

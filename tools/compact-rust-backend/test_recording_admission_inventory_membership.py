@@ -19,10 +19,11 @@ class MembershipTransitionTests(unittest.TestCase):
     def setUp(self):
         prior_tests.ZswapTransitionTests.setUp(self)
         self.membership_transition = json.loads(previous.MEMBERSHIP_TRANSITION.read_text())
+        predecessor = previous.send_checkpoint_sources(inventory.ROOT)
         for owner in [*membership.REVIEWED_OWNERS, *self.membership_transition['test_sources_sha256'], *self.membership_transition['shared_sources_sha256']]:
             path = self.root / owner
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes((inventory.ROOT / owner).read_bytes())
+            path.write_bytes(predecessor[owner].encode() if owner in predecessor else (inventory.ROOT / owner).read_bytes())
 
     def report(self):
         return inventory.verify(

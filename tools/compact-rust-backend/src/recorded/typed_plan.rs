@@ -92,6 +92,8 @@ enum CompositeDomain {
     Intents,
     #[cfg_attr(not(test), allow(dead_code))]
     ShieldedReceive,
+    // Constructed only by the frozen send oracle; shared policy matches remain.
+    #[cfg_attr(not(test), allow(dead_code))]
     ShieldedSend,
     #[cfg_attr(not(test), allow(dead_code))]
     ImmediateShieldedSend,
@@ -1447,7 +1449,7 @@ pub(super) fn lower_terminal_returns<'a>(
 
 // A send result is a typed pair of the sent coin and optional change. The
 // admission predicate describes the public type, not a helper/source name.
-fn shielded_send_result(ty: &Type) -> bool {
+pub(super) fn shielded_send_result(ty: &Type) -> bool {
     let Type::Struct { fields, .. } = ty else {
         return false;
     };
@@ -1476,6 +1478,7 @@ fn shielded_send_value(
     shielded_send_value_checked(value, pure, circuits, visiting).is_ok()
 }
 
+#[cfg(test)]
 fn shielded_send_value_checked(
     value: &Expr,
     pure: &HashMap<&str, &PureCircuit>,
@@ -1739,6 +1742,7 @@ pub(super) fn lower_shielded_send<'a>(
     lower_shielded_send_checked(circuit, ledger, witnesses, pure, circuits).into_option()
 }
 
+#[cfg(test)]
 pub(super) fn lower_shielded_send_checked<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,

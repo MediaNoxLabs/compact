@@ -875,10 +875,10 @@ fn render_recorded_item(
             }
         }
     }
-    // The checked send profile has inspected the entire value tree. With no
+    // Checked composition has inspected the entire value tree. With no
     // accepted typed or legacy profile (and no actions), the generic return
     // arms cannot record a ShieldedSendResult. Keep the first concrete nested
-    // failure instead of collapsing it to UnsupportedReturn for an outer If
+    // composition failure instead of collapsing it to UnsupportedReturn for an outer If
     // or Call. Action diagnostics above still take precedence.
     if !organizer_gate
         && !guarded_map_read_gate

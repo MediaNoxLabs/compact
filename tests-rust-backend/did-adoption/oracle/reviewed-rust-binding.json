@@ -1,6 +1,6 @@
 {
   "format": "compact-reviewed-rust-binding/v1",
-  "scope": "Unit effect-algebra production routing. Original TypeScript capture bytes remain unchanged; current Rust generation and provenance assertions are reviewed separately. No fresh TS execution or added proof claim.",
+  "scope": "Early read-only shape route retired to independently checked composition (#615/ADR0466). Original TS captures and original test files unchanged. Current exact generated Rust and new standalone observed/manual/private/witness qualification reviewed separately; no fresh TS execution claim.",
   "captures": [
     {
       "file": "lifecycle.json",
@@ -35,7 +35,7 @@
     {
       "path": "tests-rust-backend/did-adoption/lib.rs",
       "captured_sha256": "c3ae6d09f37cf421a2fd2bbe7209894b395edd4a03052e5cd912573f115a5d8e",
-      "current_sha256": "7a80927d42da86847beebb0d5bdc7cda983f7197f337bc48d6a5716ff105e442"
+      "current_sha256": "7798cbd9f377a51f0581104229a571e335d6bfc5dece1a7c2f6eb4a7e20d9967"
     }
   ],
   "reviewed_artifacts": [
@@ -46,6 +46,26 @@
     {
       "path": "tests-rust-backend/did-adoption/tests/provenance.rs",
       "sha256": "9f58adc080ead6dd610f6aa052c179589b0e1c6f56c382e5bf05a5471acbd9a6"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/tests/digest_qualification.rs",
+      "sha256": "105aa3fad73a04b2f0b74c7d5fb5ddfd5120d4f3f879649d881e48c56f3b1616"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/tests/digest_qualification/manual.rs",
+      "sha256": "6d1ee41ae2d88ed2e1ebac3e9b762f31b5ff19832ef942972c0b8832162f0538"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/tests/digest_qualification/mod.rs",
+      "sha256": "834bc1fff915fdfd06b7a424f82d14bc02039886e38936cc61539aae385f2ee9"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/tests/digest_qualification/provider.rs",
+      "sha256": "4c8755f1ceecd6f0cfafa60e05d3efd22a4048583bf060c5daa4b0c04ab8d207"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/tests/digest_qualification/scenarios.rs",
+      "sha256": "aaba85afb9c989a3a30f214163f37806390644c6b52539bab978a07cc89f891d"
     }
   ]
 }

@@ -252,29 +252,68 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, open): (_, bool) = crate::ledger_slots::active.record_read(frame)?;
-            if !open {
+            let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
+            let __compact_effect_1: runtime::JubjubPoint = __compact_param_1;
+            let (frame, __compact_effect_2): (_, bool) =
+                crate::ledger_slots::active.record_read(frame)?;
+            if !__compact_effect_2 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "inactive".to_owned(),
                 ));
             }
-            let __compact_recorded_map_key: runtime::OpaqueString = (__compact_param_0).clone();
-            let (frame, present): (_, bool) = crate::ledger_slots::methods
-                .record_member(frame, __compact_recorded_map_key.clone())?;
-            if !present {
+            let __compact_effect_3: () = ();
+            let (frame, __compact_effect_4): (_, bool) =
+                crate::ledger_slots::methods.record_member(frame, (__compact_effect_0).clone())?;
+            if !__compact_effect_4 {
                 return Err(runtime::CompactError::AssertionFailed("missing".to_owned()));
             }
-            let (frame, __compact_recorded_map_value): (_, crate::types::Method) =
-                crate::ledger_slots::methods.record_lookup(frame, __compact_recorded_map_key)?;
-            let (frame, ()): (_, ()) = frame.call_local(|context| {
-                super::verifyLocal(
-                    context,
-                    witnesses,
-                    __compact_param_1,
-                    __compact_recorded_map_value.verificationPoint,
-                )
-            })?;
-            Ok(frame.finish(()))
+            let __compact_effect_5: () = ();
+            let (frame, __compact_effect_6): (_, crate::types::Method) =
+                crate::ledger_slots::methods.record_lookup(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_7: runtime::JubjubPoint = __compact_effect_6.verificationPoint;
+            let (frame, __compact_effect_21): (_, ()) = {
+                let __compact_effect_8: runtime::JubjubPoint = __compact_effect_1;
+                let __compact_effect_9: runtime::JubjubPoint = __compact_effect_7;
+                let (frame, __compact_effect_10): (_, bool) =
+                    frame.try_witness_metered(|context, meter| {
+                        witnesses.admitted(context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }))
+                    })?;
+                if !__compact_effect_10 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "witness denied".to_owned(),
+                    ));
+                }
+                let __compact_effect_11: () = ();
+                let __compact_effect_12: runtime::Field =
+                    runtime::jubjub_point_x(__compact_effect_8);
+                let __compact_effect_13: runtime::Field =
+                    runtime::jubjub_point_x(__compact_effect_9);
+                let __compact_effect_14: bool = __compact_effect_12 == __compact_effect_13;
+                if !__compact_effect_14 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "wrong point".to_owned(),
+                    ));
+                }
+                let __compact_effect_15: () = ();
+                let __compact_effect_16: runtime::Field =
+                    runtime::jubjub_point_y(__compact_effect_8);
+                let __compact_effect_17: runtime::Field =
+                    runtime::jubjub_point_y(__compact_effect_9);
+                let __compact_effect_18: bool = __compact_effect_16 == __compact_effect_17;
+                if !__compact_effect_18 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "wrong point".to_owned(),
+                    ));
+                }
+                let __compact_effect_19: () = ();
+                let __compact_effect_20: () = ();
+                (frame, __compact_effect_20)
+            };
+            let __compact_effect_22: () = ();
+            Ok(frame.finish(__compact_effect_22))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

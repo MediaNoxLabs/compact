@@ -184,8 +184,24 @@ VECTOR_MAP_EXTENSION = inventory.BASELINE.with_name("recording_admission_invento
 AUDITED_LOCAL_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.audited-local-614.json")
 
 
+READ_ONLY_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.read-only-615.json")
+
+
+def checkpoint_614(root):
+    """Authenticate final early route retirement before historical fixtures."""
+    transition = json.loads(READ_ONLY_TRANSITION.read_text())
+    try:
+        source = (root / inventory.read_only.OWNER).read_bytes()
+    except FileNotFoundError:
+        return root
+    if inventory.digest(source) == transition['owners'][inventory.read_only.OWNER]['current_sha256']:
+        return inventory.read_only.checkpoint(root, transition)
+    return root
+
+
 def checkpoint_613(root):
     """Authenticate early audited-local retirement before historical fixtures."""
+    root = checkpoint_614(root)
     transition = json.loads(AUDITED_LOCAL_TRANSITION.read_text())
     try:
         source = (root / inventory.audited_local.OWNER).read_bytes()
@@ -847,7 +863,8 @@ class InventoryTests(unittest.TestCase):
                                   map_effects_extension=json.loads(MAP_EFFECTS_EXTENSION.read_text()),
                                   persistent_commit_extension=json.loads(PERSISTENT_COMMIT_EXTENSION.read_text()),
                                   vector_map_extension=json.loads(VECTOR_MAP_EXTENSION.read_text()),
-                                  audited_local_transition=json.loads(AUDITED_LOCAL_TRANSITION.read_text()))
+                                  audited_local_transition=json.loads(AUDITED_LOCAL_TRANSITION.read_text()),
+                                  read_only_transition=json.loads(READ_ONLY_TRANSITION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)

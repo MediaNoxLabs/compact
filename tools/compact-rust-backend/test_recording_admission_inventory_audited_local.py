@@ -19,7 +19,7 @@ class AuditedLocalTransitionTests(unittest.TestCase):
         for owner in [*self.audited_local_transition['owners'], *self.audited_local_transition['new_and_shared_sources']]:
             path = self.root / owner
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes((inventory.ROOT / owner).read_bytes())
+            path.write_bytes((previous.checkpoint_614(inventory.ROOT) / owner).read_bytes())
 
     def report(self):
         return funded_tests.FundedMintTransitionTests.report(

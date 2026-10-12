@@ -178,13 +178,13 @@ fn old_audit_refusals_are_separate_from_checked_expansion_and_real_fold_gaps() {
 }
 
 #[test]
-fn unchanged_read_only_sibling_internal_policy_and_optional_tail_boundaries() {
+fn checked_read_only_sibling_internal_policy_and_optional_tail_boundaries() {
     let sibling: Contract =
         serde_json::from_str(include_str!("../../../tests/did-digest-schema20-ir.json")).unwrap();
     current(
         &sibling,
         "verifySchnorrJubjubDigestSignature",
-        "early.read-only-verification",
+        "algebra.unit-composition",
     );
     let mut internal = fixture();
     target_mut(&mut internal, VERIFY).internal = true;

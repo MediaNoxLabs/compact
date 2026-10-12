@@ -91,13 +91,20 @@ use crate::ir::{
     CounterAmount, Expr, LedgerField, LedgerFieldKind, LocalBinding, PureCircuit, StateAction,
     StateReturn, StatefulCircuit, Type, WitnessDeclaration,
 };
+#[cfg(test)]
+use crate::retained_value;
 use crate::stateful::circuit_uses_witness;
-use crate::{RenderError, expression_with_calls, ident, retained_value, rust_type};
+use crate::{RenderError, expression_with_calls, ident, rust_type};
 
+#[cfg(test)]
 mod audited_local;
 #[cfg(test)]
 #[path = "recorded/audited_local_migration_tests.rs"]
 mod audited_local_migration_tests;
+#[cfg(test)]
+#[path = "recorded/read_only_migration_tests.rs"]
+mod read_only_migration_tests;
+#[cfg(test)]
 mod read_only_verification;
 
 // Direct call refusals and exact failed binding ordinals are distinct provenance.
@@ -686,14 +693,6 @@ fn render_recorded_item(
     };
     if circuit.internal && !helper {
         return Ok(RecordingOutcome::Unsupported(RecordingGap::no_effect()));
-    }
-    if !helper
-        && let Some(item) =
-            read_only_verification::render(circuit, ledger_fields, witnesses, circuits)?
-    {
-        #[cfg(test)]
-        admission_probe::trace::handled("early.read-only-verification");
-        return Ok(item);
     }
 
     let name = ident(&circuit.name)?;

@@ -46,6 +46,8 @@ mod legacy;
 use legacy::actions::append_steps;
 use legacy::expressions::{boolean_expression, field_expression};
 
+#[cfg(test)]
+mod asset_removal_migration_tests;
 mod facade;
 #[cfg(test)]
 mod guarded_map_migration_tests;
@@ -431,6 +433,7 @@ fn closed_opaque_map_operation(
 /// The asset removal path keeps a disclosed OpaqueString key scoped across
 /// ordered guards and mutations. Only this exact shape has an oracle and a
 /// ledger proof; unrelated OpaqueString Lets remain unavailable.
+#[cfg(test)]
 fn closed_opaque_asset_removal(
     circuit: &StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,
@@ -727,10 +730,6 @@ fn render_recorded_item(
     )?;
     let organizer_gate = organizer_steps.is_some();
     let opaque_map_operation = closed_opaque_map_operation(circuit, ledger_fields);
-    let opaque_asset_removal = record_guard!(
-        "guard.closed-opaque-asset-removal",
-        closed_opaque_asset_removal(circuit, ledger_fields)
-    );
     #[cfg(test)]
     admission_probe::trace::guard(
         "guard.closed-opaque-map-operation",
@@ -1404,7 +1403,6 @@ fn render_recorded_item(
             closed_opaque_set_operation(circuit, ledger_fields)
         )
         && opaque_map_operation.is_none()
-        && !opaque_asset_removal
         && !organizer_gate
     {
         return Ok(RecordingOutcome::Unsupported(

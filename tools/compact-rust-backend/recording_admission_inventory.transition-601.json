@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "issue": 601,
+  "baseline_commit": "05ecd9c0e89246e3085d9c3394df282144b5fdf1",
+  "claim": "Retire closed opaque asset removal final permit after complete legacy/helper qualification. Preserve its test oracle and key-only native Map representation/resource authority.",
+  "previous_selector": {
+    "ordered_calls": [],
+    "function_sha256": "39edd1256e89f088a942088f357a48bd920afd3a413d932a8296c36fb8894085"
+  },
+  "current_selector": {
+    "ordered_calls": [],
+    "function_sha256": "39edd1256e89f088a942088f357a48bd920afd3a413d932a8296c36fb8894085"
+  },
+  "owners": {
+    "tools/compact-rust-backend/src/recorded.rs": {
+      "previous_sha256": "27935b71e82285633b02996e2b33d7a45cf69f9bb8f49ecaf0ff589eabd04a9f",
+      "current_sha256": "8c442d8a2089d8627a25a0f766e91f713ee97b630a50350b4325dbbcc0a4b7ee",
+      "predecessor_reconstruction": [
+        {
+          "current": "use legacy::actions::append_steps;\nuse legacy::expressions::{boolean_expression, field_expression};\n\n#[cfg(test)]\nmod asset_removal_migration_tests;\nmod facade;\n#[cfg(test)]\nmod guarded_map_migration_tests;\n",
+          "previous": "use legacy::actions::append_steps;\nuse legacy::expressions::{boolean_expression, field_expression};\n\nmod facade;\n#[cfg(test)]\nmod guarded_map_migration_tests;\n"
+        },
+        {
+          "current": "/// The asset removal path keeps a disclosed OpaqueString key scoped across\n/// ordered guards and mutations. Only this exact shape has an oracle and a\n/// ledger proof; unrelated OpaqueString Lets remain unavailable.\n#[cfg(test)]\nfn closed_opaque_asset_removal(\n    circuit: &StatefulCircuit,\n    ledger_fields: &HashMap<&str, &LedgerField>,\n",
+          "previous": "/// The asset removal path keeps a disclosed OpaqueString key scoped across\n/// ordered guards and mutations. Only this exact shape has an oracle and a\n/// ledger proof; unrelated OpaqueString Lets remain unavailable.\nfn closed_opaque_asset_removal(\n    circuit: &StatefulCircuit,\n    ledger_fields: &HashMap<&str, &LedgerField>,\n"
+        },
+        {
+          "current": "    )?;\n    let organizer_gate = organizer_steps.is_some();\n    let opaque_map_operation = closed_opaque_map_operation(circuit, ledger_fields);\n    #[cfg(test)]\n    admission_probe::trace::guard(\n        \"guard.closed-opaque-map-operation\",\n",
+          "previous": "    )?;\n    let organizer_gate = organizer_steps.is_some();\n    let opaque_map_operation = closed_opaque_map_operation(circuit, ledger_fields);\n    let opaque_asset_removal = record_guard!(\n        \"guard.closed-opaque-asset-removal\",\n        closed_opaque_asset_removal(circuit, ledger_fields)\n    );\n    #[cfg(test)]\n    admission_probe::trace::guard(\n        \"guard.closed-opaque-map-operation\",\n"
+        },
+        {
+          "current": "            closed_opaque_set_operation(circuit, ledger_fields)\n        )\n        && opaque_map_operation.is_none()\n        && !organizer_gate\n    {\n        return Ok(RecordingOutcome::Unsupported(\n",
+          "previous": "            closed_opaque_set_operation(circuit, ledger_fields)\n        )\n        && opaque_map_operation.is_none()\n        && !opaque_asset_removal\n        && !organizer_gate\n    {\n        return Ok(RecordingOutcome::Unsupported(\n"
+        }
+      ]
+    }
+  },
+  "new_and_shared_sources": {
+    "tools/compact-rust-backend/src/recorded/asset_removal_migration_tests.rs": "ae2db0588c99591be350af41c6bc33e5498654e07a7ff4c1a71d2eb1e2468a83",
+    "tools/compact-rust-backend/src/recorded/asset_removal_migration_tests/boundaries.rs": "2d25ec40400d50f4ccecf998e7536ec252ad64fcce00a45c4d1b4b3374ac8381",
+    "tools/compact-rust-backend/src/recorded/asset_removal_migration_tests/inclusion.rs": "6bfd75758ba579eec70c1c69b3508605ae9059f18c60b2146a1ed28513e9affa",
+    "tools/compact-rust-backend/src/recorded/legacy/actions.rs": "39c576e3e93cc9d098808d9e7303f8e8c64df1d98c1834cbb71e5e70baf93f14",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/collections.rs": "502dd04921b10bfa8ef6bba8ce2c6dbfed5fef7ee715b8e1203f672a925c3ab8",
+    "tools/compact-rust-backend/src/recorded/helpers.rs": "39ab813c3e0c88bdc7955cd3d16f07feee8abc65c711173e24a79ceb7d5517a6",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/maps.rs": "107e2d37884c3c9417e31ebd0f2237d5c927c94394e22f449261d95ae0556c01",
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_domain.rs": "c00c5f9602d0ef1b5ffa1981be2707996e817be43c7896f4361b710cfa61fde5",
+    "tools/compact-rust-backend/src/resource_limits/policy.rs": "8d1e091410d3f802b1f54654314146ba1615f6c45222645b586099528ed5294f",
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/maps.rs": "98c476dbbd666aecd6caf0b681a6dc86518efbd9c5ceab0874cb1defe5159355",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate.rs": "7729b2cc66fa3597d8573dfeac783af60cedf5b46b8e1ee3e75cbc1300f48a1c",
+    "runtime-rs/src/slots/map.rs": "a90f19b5603acaacc13b46b93e4b86ef37a39f1292fd00f7e516f9406d58520b",
+    "tools/compact-rust-backend/tests/asset-registry-schema20-ir.json": "2e2352059270aebef05a3d9d78371b3cf839770793eae5cc70ad3091a12868be"
+  },
+  "anchor_adaptations": [
+    {
+      "route": "final.shielded-gap-precedence",
+      "previous": {
+        "source": "tools/compact-rust-backend/src/recorded.rs",
+        "text": "if !organizer_gate\n        && !guarded_map_read_gate",
+        "baseline_occurrences": 3
+      },
+      "current": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "if !organizer_gate {",
+          "occurrences": 2
+        },
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "if !organizer_gate\n        && circuit.actions.is_empty()",
+          "occurrences": 1
+        }
+      ],
+      "reason": "Remove only retired guarded Struct flag from existing assembly and diagnostic precedence; exact signed whole-owner reconstruction authenticates all surrounding code."
+    }
+  ]
+}

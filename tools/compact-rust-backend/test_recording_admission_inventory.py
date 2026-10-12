@@ -151,8 +151,24 @@ REACHABLE_HELPERS_EXTENSION = inventory.BASELINE.with_name("recording_admission_
 KEY_ONLY_MAP_REMOVAL_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.key-only-map-removal-602.json")
 
 
+ASSET_REMOVAL_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-601.json")
+
+
+def checkpoint_602(root):
+    """Authenticate exact retirement source before #602 historical fixture setup."""
+    transition = json.loads(ASSET_REMOVAL_TRANSITION.read_text())
+    try:
+        source = (root / inventory.asset_removal.RECORDED).read_bytes()
+    except FileNotFoundError:
+        return root
+    if inventory.digest(source) == transition['owners'][inventory.asset_removal.RECORDED]['current_sha256']:
+        return inventory.asset_removal.checkpoint(root, transition)
+    return root
+
+
 def checkpoint_599(root):
     """Authenticate Map removal domain before historical fixture setup."""
+    root = checkpoint_602(root)
     extension = json.loads(KEY_ONLY_MAP_REMOVAL_EXTENSION.read_text())
     try:
         source = (root / inventory.key_only_map_removal.OWNER).read_bytes()
@@ -660,7 +676,8 @@ class InventoryTests(unittest.TestCase):
                                   empty_recording_extension=json.loads(EMPTY_RECORDING_EXTENSION.read_text()),
                                   guarded_pure_transition=json.loads(GUARDED_PURE_TRANSITION.read_text()),
                                   reachable_helpers_extension=json.loads(REACHABLE_HELPERS_EXTENSION.read_text()),
-                                  key_only_map_removal_extension=json.loads(KEY_ONLY_MAP_REMOVAL_EXTENSION.read_text()))
+                                  key_only_map_removal_extension=json.loads(KEY_ONLY_MAP_REMOVAL_EXTENSION.read_text()),
+                                  asset_removal_transition=json.loads(ASSET_REMOVAL_TRANSITION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)

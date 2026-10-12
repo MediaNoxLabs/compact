@@ -45,13 +45,14 @@ pub use diagnostics::{
 mod legacy;
 use legacy::actions::append_steps;
 use legacy::expressions::{boolean_expression, field_expression};
-use legacy::guarded_pure::closed_guarded_struct_pure_steps;
 
 mod facade;
 #[cfg(test)]
 mod guarded_map_migration_tests;
 #[cfg(test)]
 mod guarded_mutations;
+#[cfg(test)]
+mod guarded_pure_migration_tests;
 mod helpers;
 mod item;
 #[cfg(test)]
@@ -735,18 +736,13 @@ fn render_recorded_item(
         "guard.closed-opaque-map-operation",
         opaque_map_operation.is_some(),
     );
-    let guarded_pure_steps = record_option!(
-        "guard.guarded-struct-pure",
-        closed_guarded_struct_pure_steps(circuit, &parameters, pure_circuits, circuits)?
-    );
-    let guarded_pure_call = guarded_pure_steps.is_some();
-    let mut steps = organizer_steps.or(guarded_pure_steps).unwrap_or_default();
+    let mut steps = organizer_steps.unwrap_or_default();
     let mut next_temp = 0;
     let mut visiting = HashSet::from([circuit.name.clone()]);
     // A root Let encloses both its ordered actions and its final return.
     // Capture this exact Field Cell read once, before the nested actions,
     // so the returned value cannot accidentally observe the post-write state.
-    let root_field_return = if !organizer_gate && !guarded_pure_call {
+    let root_field_return = if !organizer_gate {
         match (circuit.actions.as_slice(), &circuit.return_value) {
             (
                 [StateAction::Let { bindings, action }],
@@ -818,9 +814,6 @@ fn render_recorded_item(
                 admission_probe::trace::action("legacy.action-dispatch");
             }
             for (index, action) in circuit.actions.iter().enumerate() {
-                if guarded_pure_call && index == 0 {
-                    continue;
-                }
                 let mut legacy_precision = LegacyActionPrecision::Concrete;
                 if let RecordingOutcome::Unsupported(gap) = append_steps(
                     action,
@@ -852,7 +845,6 @@ fn render_recorded_item(
     // composition failure instead of collapsing it to UnsupportedReturn for an outer If
     // or Call. Action diagnostics above still take precedence.
     if !organizer_gate
-        && !guarded_pure_call
         && circuit.actions.is_empty()
         && steps.is_empty()
         && let Some(gap) = shielded_send_rejection.as_ref()

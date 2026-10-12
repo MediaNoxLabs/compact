@@ -142,8 +142,24 @@ RESOURCE_DIAGNOSTICS_EXTENSION = inventory.BASELINE.with_name("recording_admissi
 EMPTY_RECORDING_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.empty-recording-598.json")
 
 
+GUARDED_PURE_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-600.json")
+
+
+def checkpoint_598(root):
+    """Authenticate guarded-pure retirement before historical fixture setup."""
+    transition = json.loads(GUARDED_PURE_TRANSITION.read_text())
+    try:
+        source = (root / inventory.guarded_pure.RECORDED).read_bytes()
+    except FileNotFoundError:
+        return root
+    if inventory.digest(source) == transition['owners'][inventory.guarded_pure.RECORDED]['current_sha256']:
+        return inventory.guarded_pure.checkpoint(root, transition)
+    return root
+
+
 def checkpoint_597(root):
     """Authenticate execution expansion before historical fixture setup."""
+    root = checkpoint_598(root)
     extension = json.loads(EMPTY_RECORDING_EXTENSION.read_text())
     try:
         source = (root / inventory.empty_recording.OWNER).read_bytes()
@@ -609,7 +625,8 @@ class InventoryTests(unittest.TestCase):
                                   guarded_map_transition=json.loads(GUARDED_MAP_TRANSITION.read_text()),
                                   opaque_map_transition=json.loads(OPAQUE_MAP_TRANSITION.read_text()),
                                   resource_diagnostics_extension=json.loads(RESOURCE_DIAGNOSTICS_EXTENSION.read_text()),
-                                  empty_recording_extension=json.loads(EMPTY_RECORDING_EXTENSION.read_text()))
+                                  empty_recording_extension=json.loads(EMPTY_RECORDING_EXTENSION.read_text()),
+                                  guarded_pure_transition=json.loads(GUARDED_PURE_TRANSITION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)

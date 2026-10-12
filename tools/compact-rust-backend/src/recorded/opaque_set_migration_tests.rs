@@ -171,7 +171,7 @@ fn assert_current(c: &Contract) {
         "Map-write admission is retired independently of this old oracle"
     );
     assert!(
-        attempts
+        !attempts
             .iter()
             .any(|a| a["route"] == "guard.guarded-struct-pure")
     );

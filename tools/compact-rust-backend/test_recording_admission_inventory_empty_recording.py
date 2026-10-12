@@ -20,7 +20,7 @@ class EmptyRecordingExtensionTests(unittest.TestCase):
         for owner in [*self.empty_recording_extension['owners'], *self.empty_recording_extension['new_and_shared_sources']]:
             path = self.root / owner
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes((inventory.ROOT / owner).read_bytes())
+            path.write_bytes((previous.checkpoint_598(inventory.ROOT) / owner).read_bytes())
 
     def report(self):
         return funded_tests.FundedMintTransitionTests.report(

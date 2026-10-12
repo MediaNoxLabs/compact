@@ -188,7 +188,7 @@ fn assert_current(c: &Contract, name: &str) -> String {
             .any(|a| a["route"] == "guard.opaque-map-write")
     );
     assert!(
-        attempts
+        !attempts
             .iter()
             .any(|a| a["route"] == "guard.guarded-struct-pure")
     );

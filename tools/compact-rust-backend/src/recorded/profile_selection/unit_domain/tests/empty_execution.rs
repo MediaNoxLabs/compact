@@ -71,12 +71,12 @@ fn complete_old_empty_guard_consumer_moves_to_checked_execution() {
         .unwrap();
     assert_eq!(row["body_owner"], "algebra.unit-composition");
     assert!(
-        row["attempts"]
+        !row["attempts"]
             .as_array()
             .unwrap()
             .iter()
             .any(|a| a["route"] == "guard.guarded-struct-pure"),
-        "guard retirement is a separate slice"
+        "the old guard remains a test oracle, absent from production routing"
     );
     let ProfileAttempt::Admitted(plan) = attempt_contract(&c).unwrap() else {
         unreachable!()

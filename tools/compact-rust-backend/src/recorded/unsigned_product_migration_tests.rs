@@ -118,10 +118,10 @@ fn assert_current(c: &Contract) {
                 .any(|a| a["route"] == "guard.guarded-unsigned-product")
         );
         assert!(
-            attempts
+            !attempts
                 .iter()
                 .any(|a| a["route"] == "guard.guarded-struct-pure"),
-            "sibling is still evaluated"
+            "the final guarded pure sibling is retired"
         );
     }
 }

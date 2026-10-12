@@ -109,8 +109,24 @@ UNIT_COMPOSITION_TRANSITION = inventory.BASELINE.with_name("recording_admission_
 OPTIONAL_WRITE_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-587.json")
 
 
+ENUM_ADVANCE_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-588.json")
+
+
+def checkpoint_587(root):
+    """Historical fixtures use the authenticated signed optional-write checkpoint."""
+    transition = json.loads(ENUM_ADVANCE_TRANSITION.read_text())
+    try:
+        source = (root / inventory.SELECTOR).read_bytes()
+    except FileNotFoundError:
+        return root
+    if inventory.digest(source) == transition['owners'][inventory.SELECTOR]['current_sha256']:
+        return inventory.enum_advance.checkpoint(root, transition)
+    return root
+
+
 def checkpoint_580(root):
     """Historical fixtures use the authenticated signed Unit checkpoint."""
+    root = checkpoint_587(root)
     transition = json.loads(OPTIONAL_WRITE_TRANSITION.read_text())
     try:
         source = (root / inventory.SELECTOR).read_bytes()
@@ -422,7 +438,8 @@ class InventoryTests(unittest.TestCase):
                                   negation_test_extension=json.loads(NEGATION_TEST_EXTENSION.read_text()),
                                   value_test_extension=json.loads(VALUE_TEST_EXTENSION.read_text()),
                                   unit_composition_transition=json.loads(UNIT_COMPOSITION_TRANSITION.read_text()),
-                                  optional_write_transition=json.loads(OPTIONAL_WRITE_TRANSITION.read_text()))
+                                  optional_write_transition=json.loads(OPTIONAL_WRITE_TRANSITION.read_text()),
+                                  enum_advance_transition=json.loads(ENUM_ADVANCE_TRANSITION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)

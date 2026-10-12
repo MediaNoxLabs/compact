@@ -596,6 +596,7 @@ pub(super) fn closed_authorized_optional_write_steps(
 
 /// Closed optional-presence gate followed by a pure enum decision tree. Calling
 /// the existing pure emitter keeps enum variant semantics in one implementation.
+#[cfg(test)]
 pub(super) fn closed_authorized_enum_advance_steps(
     circuit: &StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,

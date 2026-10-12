@@ -165,6 +165,10 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
 
 /// Exercise every source successor branch, including the stable final state.
 pub(super) fn advance(root: &Path) -> Result<(), Box<dyn Error>> {
+    counter_scenario::validate_ir(
+        &std::fs::read(root.join("contract/compact-rust-ir.json"))?,
+        RETAINED_IR,
+    )?;
     use compact_rust_election_oracle_fixture::types::PublicState;
     for (step, expected_phase) in [
         PublicState::commit,
@@ -225,21 +229,34 @@ pub(super) fn advance(root: &Path) -> Result<(), Box<dyn Error>> {
         let prepared = generated
             .recording()
             .advance_call(&observed, private)?
-            .prepare(verifier, Fr::from(0_u64))?;
+            .prepare(verifier.clone(), Fr::from(0_u64))?;
         if format!("{manual:?}") != format!("{prepared:?}") {
             return Err("typed advance call differs from manual recording".into());
         }
-        check_transaction(root, "advance", deploy, prepared, &mut rng, |applied| {
-            if applied.data.get_ref() != &expected_state {
-                return Err("applied phase state differs from native".into());
-            }
-            let view = contract::PublicStateView::from(applied);
-            if view.state()? != expected_phase || !view.topic()?.is_some {
-                return Err("applied phase or optional topic changed".into());
-            }
-            Ok(())
-        })?;
-        println!("election advance transition {step} proved and applied through ledger-8");
+        if prepared.input != AlignedValue::from(()) || prepared.output != AlignedValue::from(()) {
+            return Err("advance original Unit input/output differs".into());
+        }
+        let view = contract::PublicStateView::from(&native.context);
+        let topic = view.topic()?;
+        if view.state()? != expected_phase
+            || !topic.is_some
+            || topic.value != runtime::OpaqueString::from("議題 🗳️")
+        {
+            return Err("expected phase or optional topic changed".into());
+        }
+        kernel_shielded_effects::prove_and_verify_call(root, "advance", &prepared, &verifier)?;
+        opaque_public::apply_funded(
+            root,
+            "advance",
+            prepared,
+            deploy,
+            &expected_state,
+            rng,
+            588 + step as u64,
+        )?;
+        println!(
+            "election advance transition {step}: proof verified, changed binding rejected, default-strict funded ledger8 application passed; constructor and seeded prior state supplied, deployment not proved"
+        );
     }
     Ok(())
 }
@@ -427,6 +444,14 @@ mod source_tests {
         assert!(!root.exists());
         assert_eq!(
             run(&root)
+                .unwrap_err()
+                .downcast_ref::<io::Error>()
+                .unwrap()
+                .kind(),
+            io::ErrorKind::NotFound
+        );
+        assert_eq!(
+            advance(&root)
                 .unwrap_err()
                 .downcast_ref::<io::Error>()
                 .unwrap()

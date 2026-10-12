@@ -32,8 +32,7 @@ use crate::ir::{LedgerField, PureCircuit, StatefulCircuit, WitnessDeclaration};
 use super::RecordingGap;
 use super::effect_plan;
 use super::guarded_mutations::{
-    closed_authorized_enum_advance_steps, closed_organizer_gate_steps,
-    closed_witness_admitted_merkle_insert_steps,
+    closed_organizer_gate_steps, closed_witness_admitted_merkle_insert_steps,
 };
 use super::profile_attempt::ProfileAttempt;
 use super::typed_plan;
@@ -41,6 +40,10 @@ use super::typed_plan::TypedPlan;
 
 #[path = "profile_selection/unit_domain.rs"]
 mod unit_domain;
+
+#[cfg(test)]
+#[path = "profile_selection/enum_migration_tests.rs"]
+mod enum_migration_tests;
 
 #[cfg(test)]
 #[path = "profile_selection/optional_write_migration_tests.rs"]
@@ -468,10 +471,6 @@ pub(super) fn select(
                 circuits
             )?
         )
-        .or(record_option!(
-            "organizer.enum-advance",
-            closed_authorized_enum_advance_steps(circuit, ledger_fields, witnesses, pure_circuits,)?
-        ))
         .or(record_option!(
             "organizer.witness-merkle",
             closed_witness_admitted_merkle_insert_steps(

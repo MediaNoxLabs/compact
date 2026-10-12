@@ -129,6 +129,7 @@ pub(super) fn try_run(
         ("--composite-zswap", _) => Some(shielded::composite_zswap(arguments)),
         ("--field-observation", _) => Some(expressions::field_observation(arguments)),
         ("--opaque-public", _) => Some(expressions::opaque_public(arguments)),
+        ("--opaque-cell-input", _) => Some(expressions::opaque_cell_input(arguments)),
         ("--owned-witness-inputs", _) => Some(expressions::owned_witness_inputs(arguments)),
         ("--public-products", _) => Some(expressions::public_products(arguments)),
         ("--wide-add", _) => Some(expressions::wide_add(arguments)),

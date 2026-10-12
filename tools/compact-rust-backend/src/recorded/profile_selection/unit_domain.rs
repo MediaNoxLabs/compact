@@ -1,28 +1,9 @@
 // This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
-//! The legacy Unit interface, with body admission owned by checked effects.
+//! Unit composition uses checked declaration and public-interface authority.
 use super::*;
 use crate::ir::{StateReturn, Type};
-
-// Preserve the old public signature independently of the wider local/FAB domains.
-fn parameter_type(ty: &Type) -> bool {
-    match ty {
-        Type::Boolean
-        | Type::Field
-        | Type::JubjubPoint
-        | Type::Bytes { .. }
-        | Type::OpaqueString
-        | Type::Enum { .. } => true,
-        Type::Unsigned { max } => max.parse::<u64>().is_ok(),
-        Type::Struct { fields, .. } => fields.iter().all(|f| parameter_type(&f.ty)),
-        Type::Vector { element, .. } => parameter_type(element),
-        Type::Tuple { elements } => {
-            !elements.is_empty() && elements.len() <= 8 && elements.iter().all(parameter_type)
-        }
-        _ => false,
-    }
-}
 
 pub(super) fn attempt(
     circuit: &StatefulCircuit,
@@ -31,10 +12,7 @@ pub(super) fn attempt(
     pure: &HashMap<&str, &PureCircuit>,
     circuits: &HashMap<&str, &StatefulCircuit>,
 ) -> Result<ProfileAttempt<TypedPlan, effect_plan::LoweringRejection>, RenderError> {
-    if circuit.result != Type::Unit
-        || circuit.return_value != StateReturn::Unit
-        || !circuit.parameters.iter().all(|p| parameter_type(&p.ty))
-    {
+    if circuit.result != Type::Unit || circuit.return_value != StateReturn::Unit {
         return Ok(ProfileAttempt::NotApplicable);
     }
     let checked = match effect_plan::check_with_calls_diagnostic(

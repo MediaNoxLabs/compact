@@ -249,7 +249,7 @@ fn earlier_organizer_and_effectful_admission_remain_authoritative() {
         (
             include_str!("../../../tests/welcome-organizer-schema13-ir.json"),
             None,
-            "organizer.organizer",
+            "algebra.membership",
         ),
         (
             include_str!("../../../tests/effectful-return-schema20-ir.json"),
@@ -269,7 +269,17 @@ fn earlier_organizer_and_effectful_admission_remain_authoritative() {
         });
         let row = emitted(&c, name);
         assert_eq!(row["body_owner"], owner);
-        assert!(!attempts(&row).contains(&"algebra.membership"));
+        // The organizer was retired in #590. Its current checked membership
+        // owner runs once; the earlier effectful route still bypasses it.
+        let expected_membership_attempts = usize::from(owner == "algebra.membership");
+        assert_eq!(
+            attempts(&row)
+                .iter()
+                .filter(|&&route| route == "algebra.membership")
+                .count(),
+            expected_membership_attempts
+        );
+        assert!(!attempts(&row).contains(&"organizer.organizer"));
     }
 }
 #[test]

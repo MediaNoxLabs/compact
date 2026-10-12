@@ -37,11 +37,8 @@ fn main() {
         .circuits
         .iter()
         .map(|circuit| {
-            // Measured signed #582 production ownership: only setText reaches
-            // algebra.membership; candidate support is not public admission.
-            let admitted = circuit.name == "setText";
-            assert_eq!(circuit.recorded, admitted, "{circuit:?}");
-            assert_eq!(circuit.observed_call, admitted, "{circuit:?}");
+            // The checked root interface now owns both direct and nested bytes.
+            assert!(circuit.recorded && circuit.observed_call, "{circuit:?}");
             circuit.name.as_str()
         })
         .collect::<std::collections::BTreeSet<_>>();

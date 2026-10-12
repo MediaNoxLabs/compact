@@ -508,3 +508,24 @@ pub(super) fn wide_add(
         Err(_) => Err("wide addition proof thread panicked".into()),
     }
 }
+
+pub(super) fn opaque_cell_input(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let usage = "usage: compact-rust-proof-smoke --opaque-cell-input <proof-output>";
+    let root = arguments.next().ok_or(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("opaque-cell-input-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            super::super::opaque_cell_input::run(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("opaque-cell-input proof thread panicked".into()),
+    }
+}

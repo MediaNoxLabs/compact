@@ -23,7 +23,7 @@ fn earlier_organizer_composite_and_receive_owners_prevent_voting_attempts() {
         (
             include_str!("../../../../tests/welcome-organizer-schema13-ir.json"),
             None,
-            "organizer.organizer",
+            "algebra.membership",
         ),
         (
             include_str!("../../../../tests/field-observation-schema20-ir.json"),

@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "issue": 593,
+  "baseline_commit": "c266b1471d03b70fa9bd3e6332361e9b138f30d0",
+  "claim": "Unit parameter applicability delegates to checked public-interface authority; explicit interface expansion, no new retired route, no complete language coverage claim.",
+  "selector": {
+    "ordered_calls": [],
+    "function_sha256": "39edd1256e89f088a942088f357a48bd920afd3a413d932a8296c36fb8894085"
+  },
+  "owners": {
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_domain.rs": {
+      "previous_sha256": "cb304734df414c8ba0367338dc5b7ec7ad72448f2ddfef2a5f7697de2b70dcce",
+      "current_sha256": "aa9bd5e3e9d324334f4e9994d5d87e4c8216eb885daa36be351f561cbde478b5",
+      "predecessor_reconstruction": [
+        {
+          "current": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n//! Unit composition uses checked declaration and public-interface authority.\nuse super::*;\nuse crate::ir::{StateReturn, Type};\n\npub(super) fn attempt(\n    circuit: &StatefulCircuit,\n",
+          "previous": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n//! The legacy Unit interface, with body admission owned by checked effects.\nuse super::*;\nuse crate::ir::{StateReturn, Type};\n\n// Preserve the old public signature independently of the wider local/FAB domains.\nfn parameter_type(ty: &Type) -> bool {\n    match ty {\n        Type::Boolean\n        | Type::Field\n        | Type::JubjubPoint\n        | Type::Bytes { .. }\n        | Type::OpaqueString\n        | Type::Enum { .. } => true,\n        Type::Unsigned { max } => max.parse::<u64>().is_ok(),\n        Type::Struct { fields, .. } => fields.iter().all(|f| parameter_type(&f.ty)),\n        Type::Vector { element, .. } => parameter_type(element),\n        Type::Tuple { elements } => {\n            !elements.is_empty() && elements.len() <= 8 && elements.iter().all(parameter_type)\n        }\n        _ => false,\n    }\n}\n\npub(super) fn attempt(\n    circuit: &StatefulCircuit,\n"
+        },
+        {
+          "current": "    pure: &HashMap<&str, &PureCircuit>,\n    circuits: &HashMap<&str, &StatefulCircuit>,\n) -> Result<ProfileAttempt<TypedPlan, effect_plan::LoweringRejection>, RenderError> {\n    if circuit.result != Type::Unit || circuit.return_value != StateReturn::Unit {\n        return Ok(ProfileAttempt::NotApplicable);\n    }\n    let checked = match effect_plan::check_with_calls_diagnostic(\n",
+          "previous": "    pure: &HashMap<&str, &PureCircuit>,\n    circuits: &HashMap<&str, &StatefulCircuit>,\n) -> Result<ProfileAttempt<TypedPlan, effect_plan::LoweringRejection>, RenderError> {\n    if circuit.result != Type::Unit\n        || circuit.return_value != StateReturn::Unit\n        || !circuit.parameters.iter().all(|p| parameter_type(&p.ty))\n    {\n        return Ok(ProfileAttempt::NotApplicable);\n    }\n    let checked = match effect_plan::check_with_calls_diagnostic(\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_domain/tests.rs": {
+      "previous_sha256": "bf4e4668546083d474b1f9461f5343cd80889b91d311de55c6ed508474db165d",
+      "current_sha256": "29745c19a3d231d144fa514282ce9ab99a3534b79502629ff56033da1e6603be",
+      "predecessor_reconstruction": [
+        {
+          "current": "}\n\n#[test]\nfn legacy_signature_is_a_subset_of_the_checked_public_interface() {\n    for (ty, accepted) in [\n        (Type::OpaqueString, true),\n        (Type::OpaqueBytes, false),\n",
+          "previous": "}\n\n#[test]\nfn exact_legacy_signature_domain_stays_separate_from_local_capabilities() {\n    for (ty, accepted) in [\n        (Type::OpaqueString, true),\n        (Type::OpaqueBytes, false),\n"
+        },
+        {
+          "current": "            false,\n        ),\n    ] {\n        // Preserve the immutable old rule as historical evidence, while the\n        // production adapter delegates eligibility to checked declarations.\n        assert_eq!(typed_plan::unit_composition_parameter_type(&ty), accepted);\n        let mut c = subject();\n        c.stateful_circuits[0].parameters[0].ty = ty;\n        let result = attempt_contract(&c).unwrap();\n        assert!(matches!(result, ProfileAttempt::Admitted(_)));\n    }\n    let mut c = subject();\n    c.stateful_circuits[0].return_value = StateReturn::Expression { value: Expr::Unit };\n",
+          "previous": "            false,\n        ),\n    ] {\n        assert_eq!(\n            parameter_type(&ty),\n            typed_plan::unit_composition_parameter_type(&ty)\n        );\n        assert_eq!(parameter_type(&ty), accepted);\n        let mut c = subject();\n        c.stateful_circuits[0].parameters[0].ty = ty;\n        let result = attempt_contract(&c).unwrap();\n        if accepted {\n            assert!(matches!(result, ProfileAttempt::Admitted(_)));\n        } else {\n            assert!(matches!(result, ProfileAttempt::NotApplicable));\n        }\n    }\n    let mut c = subject();\n    c.stateful_circuits[0].return_value = StateReturn::Expression { value: Expr::Unit };\n"
+        },
+        {
+          "current": "            .any(|a| a[\"route\"] == \"algebra.unit-composition\")\n    );\n}\n\n#[path = \"tests/interfaces.rs\"]\nmod interfaces;\n",
+          "previous": "            .any(|a| a[\"route\"] == \"algebra.unit-composition\")\n    );\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/zswap_inclusion.rs": {
+      "previous_sha256": "b26efcf08f38feae86e1daa991abf4193961c6ba12a210fb4dd902e9e03956a1",
+      "current_sha256": "e4f7bf4298a13b6b7bce43c22adc8e068505d2d778dd9e6e3892fa89d3cedde3",
+      "predecessor_reconstruction": [
+        {
+          "current": "#[path = \"zswap_inclusion/variants.rs\"]\nmod variants;\n\n// Public Unit signatures now use the shared checked interface, including the\n// Uint128 member of qualified coins. Expression effect returns still use Zswap.\nfn expected_owner(root: &StatefulCircuit) -> &'static str {\n    if root.return_value == StateReturn::Unit {\n        \"algebra.unit-composition\"\n    } else {\n        \"algebra.zswap\"\n    }\n}\n\nfn source() -> Contract {\n    serde_json::from_str(include_str!(\n",
+          "previous": "#[path = \"zswap_inclusion/variants.rs\"]\nmod variants;\n\nconst EXPECTED_OWNER: &str = \"algebra.zswap\";\n\nfn source() -> Contract {\n    serde_json::from_str(include_str!(\n"
+        },
+        {
+          "current": "        .filter(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .collect();\n    assert_eq!(rows.len(), 1, \"{label}\");\n    let owner = expected_owner(r);\n    if owner == \"algebra.unit-composition\" {\n        assert!(\n            has_public_program(&plan),\n            \"Unit requires public program evidence\"\n        );\n    }\n    assert_eq!(rows[0][\"body_owner\"], owner, \"{label}\");\n    let attempts: Vec<_> = rows[0][\"attempts\"]\n        .as_array()\n        .unwrap()\n        .iter()\n        .map(|a| a[\"route\"].as_str().unwrap())\n        .collect();\n    assert_eq!(attempts.iter().filter(|&&r| r == owner).count(), 1);\n    if owner == \"algebra.unit-composition\" {\n        assert!(\n            !attempts.contains(&\"algebra.zswap\"),\n            \"earlier Unit admission stops the later adapter\"\n        );\n    }\n\n    capture(c, name, label, &output.source, owner);\n}\n// Optional exact-output evidence for a separate native crate compilation gate.\n// Each process requires a fresh destination; each positive owns one directory.\nfn capture(c: &Contract, name: &str, label: &str, generated: &str, owner: &str) {\n    let Some(root) = std::env::var_os(\"COMPACT_ZSWAP_PROBE_OUTPUT\") else {\n        return;\n    };\n",
+          "previous": "        .filter(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .collect();\n    assert_eq!(rows.len(), 1, \"{label}\");\n    assert_eq!(rows[0][\"body_owner\"], EXPECTED_OWNER, \"{label}\");\n    let attempts: Vec<_> = rows[0][\"attempts\"]\n        .as_array()\n        .unwrap()\n        .iter()\n        .map(|a| a[\"route\"].as_str().unwrap())\n        .collect();\n    assert_eq!(attempts.iter().filter(|&&r| r == EXPECTED_OWNER).count(), 1);\n\n    capture(c, name, label, &output.source);\n}\n// Optional exact-output evidence for a separate native crate compilation gate.\n// Each process requires a fresh destination; each positive owns one directory.\nfn capture(c: &Contract, name: &str, label: &str, generated: &str) {\n    let Some(root) = std::env::var_os(\"COMPACT_ZSWAP_PROBE_OUTPUT\") else {\n        return;\n    };\n"
+        },
+        {
+          "current": "        serde_json::to_vec_pretty(&json!({\n            \"index\": index, \"label\": label, \"root\": name,\n            \"old_whole_zswap_accepted\": true, \"checked_plan_succeeded\": true,\n            \"native_render_succeeded\": true, \"body_owner\": owner,\n            \"qualification\": \"IR/render evidence only; compilation and proof are separate\"\n        }))\n        .unwrap(),\n",
+          "previous": "        serde_json::to_vec_pretty(&json!({\n            \"index\": index, \"label\": label, \"root\": name,\n            \"old_whole_zswap_accepted\": true, \"checked_plan_succeeded\": true,\n            \"native_render_succeeded\": true, \"body_owner\": EXPECTED_OWNER,\n            \"qualification\": \"IR/render evidence only; compilation and proof are separate\"\n        }))\n        .unwrap(),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/qualified_coin_set/inclusion.rs": {
+      "previous_sha256": "cc03a423bf4fc968d188d4eb2ec56e18babf9cf376baed5ef86181aee631184a",
+      "current_sha256": "bd391802b31ffab7994848c2dda520c9a6e1c51f001c38ab9336be09c2163a0d",
+      "predecessor_reconstruction": [
+        {
+          "current": "                })\n                .collect::<Vec<_>>();\n            assert_eq!(rows.len(), 1);\n            // The qualified coin contains Uint128; its public Unit interface\n            // now reaches the earlier checked Unit adapter.\n            let expected = if *name == \"insert_selected\" {\n                \"algebra.unit-composition\"\n            } else {\n                \"algebra.membership\"\n            };\n",
+          "previous": "                })\n                .collect::<Vec<_>>();\n            assert_eq!(rows.len(), 1);\n            let expected = if *name == \"insert_selected\" {\n                \"algebra.zswap\"\n            } else {\n                \"algebra.membership\"\n            };\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/membership_migration_tests.rs": {
+      "previous_sha256": "3e00686d9813b7b37a0ba9b8306af5bfc8267417e47aafd6d2c66bdc426fd696",
+      "current_sha256": "71f9b7d085d214a042a0efeb2db8dceb6ce1d05861edec3a63aa0035821d8478",
+      "predecessor_reconstruction": [
+        {
+          "current": "        (\n            include_str!(\"../../../tests/welcome-organizer-schema13-ir.json\"),\n            None,\n            \"algebra.membership\",\n        ),\n        (\n            include_str!(\"../../../tests/effectful-return-schema20-ir.json\"),\n",
+          "previous": "        (\n            include_str!(\"../../../tests/welcome-organizer-schema13-ir.json\"),\n            None,\n            \"organizer.organizer\",\n        ),\n        (\n            include_str!(\"../../../tests/effectful-return-schema20-ir.json\"),\n"
+        },
+        {
+          "current": "        });\n        let row = emitted(&c, name);\n        assert_eq!(row[\"body_owner\"], owner);\n        // The organizer was retired in #590. Its current checked membership\n        // owner runs once; the earlier effectful route still bypasses it.\n        let expected_membership_attempts = usize::from(owner == \"algebra.membership\");\n        assert_eq!(\n            attempts(&row)\n                .iter()\n                .filter(|&&route| route == \"algebra.membership\")\n                .count(),\n            expected_membership_attempts\n        );\n        assert!(!attempts(&row).contains(&\"organizer.organizer\"));\n    }\n}\n#[test]\n",
+          "previous": "        });\n        let row = emitted(&c, name);\n        assert_eq!(row[\"body_owner\"], owner);\n        assert!(!attempts(&row).contains(&\"algebra.membership\"));\n    }\n}\n#[test]\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/receive_migration_tests/routing.rs": {
+      "previous_sha256": "72c168c181efc0718ea2aa4ac800b82791f1faadd960ea207d4e7556032bc919",
+      "current_sha256": "6591cde2310fbdbef0d18710b7f2b9c09e076e955f01885a22c999b9ce6b198e",
+      "predecessor_reconstruction": [
+        {
+          "current": "        .find(|r| !r.internal)\n        .unwrap();\n    let row = selected_trace(&organizer, root);\n    assert_eq!(row[\"body_owner\"], \"algebra.membership\");\n    assert!(!attempts(&row).contains(&\"algebra.shielded-receive\"));\n    let composite: Contract = serde_json::from_str(include_str!(\n        \"../../../../tests/field-observation-schema20-ir.json\"\n",
+          "previous": "        .find(|r| !r.internal)\n        .unwrap();\n    let row = selected_trace(&organizer, root);\n    assert_eq!(row[\"body_owner\"], \"organizer.organizer\");\n    assert!(!attempts(&row).contains(&\"algebra.shielded-receive\"));\n    let composite: Contract = serde_json::from_str(include_str!(\n        \"../../../../tests/field-observation-schema20-ir.json\"\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/voting_migration_tests/routing.rs": {
+      "previous_sha256": "4f1b302d924a89486bb020612857106a03b519ef10bf992de803223336092b33",
+      "current_sha256": "b54583c0dc42fc6e2cabbe58414733038a914af659c533d09a4addb5db6fd285",
+      "predecessor_reconstruction": [
+        {
+          "current": "        (\n            include_str!(\"../../../../tests/welcome-organizer-schema13-ir.json\"),\n            None,\n            \"algebra.membership\",\n        ),\n        (\n            include_str!(\"../../../../tests/field-observation-schema20-ir.json\"),\n",
+          "previous": "        (\n            include_str!(\"../../../../tests/welcome-organizer-schema13-ir.json\"),\n            None,\n            \"organizer.organizer\",\n        ),\n        (\n            include_str!(\"../../../../tests/field-observation-schema20-ir.json\"),\n"
+        }
+      ]
+    }
+  },
+  "new_and_shared_sources": {
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_domain/tests/interfaces.rs": "caf092f861c38b07959f86c81ec3fa732d2970bc3210a6b291478e1917e0e992",
+    "tools/compact-rust-backend/src/recorded.rs": "76f32da6fbbe7fbc9d436b8a843e45033274f506e22d0e008e290d5a0ffd43df",
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": "5d09e79880ebf286a94cea6437e1e13c378710d5c25797f9894149a05dcdb260",
+    "tools/compact-rust-backend/src/recorded/effect_plan.rs": "d2eb974a80f1ccb472f157934306fa9fef16fba7354277ac4130ff1258a350ba",
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower.rs": "dafa745ed6fcb2ad9ab6d0555d0c2a6e26c57283b87d81fcff1717e24c330b06",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate.rs": "2f45ebf3c3da06b5cf492e4d3416fda9ee4e3ca01afd8e014c3c8f5b871b6a93",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/domain.rs": "e7aa6a80f5e17b1728d7e694b8032d95b6b5d4fa079416a9ab8807180b90e41f",
+    "tools/compact-rust-backend/src/recorded/effect_plan/type_environment.rs": "cfb8e3e4df0bbbae7ee37cbbd7ee58a4409a157b68d0c3d4c40d9d42412a57f9",
+    "tools/compact-rust-backend/src/recorded/effect_plan/rejection.rs": "677eaa227c2cabca4fa043e33c1b0562716b5354ac0a2a4a35c5a794c1d6d724",
+    "tools/compact-rust-backend/src/recorded/typed_plan/composition.rs": "6ba7e4bd2462be2b33437f8cf7bf5bd3ee3bebb897ce1ed7d12b55d9d83e0c42"
+  },
+  "preserved_adapter_obligations": [
+    "circuit.result != Type::Unit || circuit.return_value != StateReturn::Unit",
+    "effect_plan::check_with_calls_diagnostic(",
+    "if !effect_plan::has_public_program(&checked)",
+    "effect_plan::DiagnosticPlanError::Unsupported(rejection)",
+    "effect_plan::DiagnosticPlanError::Invalid(gap) => {",
+    "Err(RenderError::RecordingPlanInvariant {"
+  ]
+}

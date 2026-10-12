@@ -170,7 +170,7 @@ fn complete_old_unit_root_moves_once_at_the_same_priority() {
 }
 
 #[test]
-fn exact_legacy_signature_domain_stays_separate_from_local_capabilities() {
+fn legacy_signature_is_a_subset_of_the_checked_public_interface() {
     for (ty, accepted) in [
         (Type::OpaqueString, true),
         (Type::OpaqueBytes, false),
@@ -215,19 +215,13 @@ fn exact_legacy_signature_domain_stays_separate_from_local_capabilities() {
             false,
         ),
     ] {
-        assert_eq!(
-            parameter_type(&ty),
-            typed_plan::unit_composition_parameter_type(&ty)
-        );
-        assert_eq!(parameter_type(&ty), accepted);
+        // Preserve the immutable old rule as historical evidence, while the
+        // production adapter delegates eligibility to checked declarations.
+        assert_eq!(typed_plan::unit_composition_parameter_type(&ty), accepted);
         let mut c = subject();
         c.stateful_circuits[0].parameters[0].ty = ty;
         let result = attempt_contract(&c).unwrap();
-        if accepted {
-            assert!(matches!(result, ProfileAttempt::Admitted(_)));
-        } else {
-            assert!(matches!(result, ProfileAttempt::NotApplicable));
-        }
+        assert!(matches!(result, ProfileAttempt::Admitted(_)));
     }
     let mut c = subject();
     c.stateful_circuits[0].return_value = StateReturn::Expression { value: Expr::Unit };
@@ -418,3 +412,6 @@ fn argument_observations_and_earlier_owner_priority_are_preserved() {
             .any(|a| a["route"] == "algebra.unit-composition")
     );
 }
+
+#[path = "tests/interfaces.rs"]
+mod interfaces;

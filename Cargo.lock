@@ -2467,6 +2467,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-opaque-cell-inputs-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-base-crypto",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-storage",
+ "rand 0.8.6",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-opaque-observed-boundary-source-fixture"
 version = "0.1.0"
 dependencies = [
@@ -2669,6 +2682,7 @@ dependencies = [
  "compact-rust-nested-stateful-ternary-fixture",
  "compact-rust-nested-witness-call-oracle-fixture",
  "compact-rust-observed-composite-keys-fixture",
+ "compact-rust-opaque-cell-inputs-source-fixture",
  "compact-rust-opaque-string-map-query-oracle-fixture",
  "compact-rust-opaque-string-set-oracle-fixture",
  "compact-rust-pm-19252-unused-read-eight-a-fixture",

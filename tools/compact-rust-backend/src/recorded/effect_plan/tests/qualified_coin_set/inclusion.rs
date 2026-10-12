@@ -143,8 +143,10 @@ fn full_frontend_nested_sources_use_first_eligible_algebra() {
                 })
                 .collect::<Vec<_>>();
             assert_eq!(rows.len(), 1);
+            // The qualified coin contains Uint128; its public Unit interface
+            // now reaches the earlier checked Unit adapter.
             let expected = if *name == "insert_selected" {
-                "algebra.zswap"
+                "algebra.unit-composition"
             } else {
                 "algebra.membership"
             };

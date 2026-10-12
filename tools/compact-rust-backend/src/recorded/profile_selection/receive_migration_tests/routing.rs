@@ -52,7 +52,7 @@ fn earlier_organizer_and_composite_owner_prevent_receive_attempts() {
         .find(|r| !r.internal)
         .unwrap();
     let row = selected_trace(&organizer, root);
-    assert_eq!(row["body_owner"], "organizer.organizer");
+    assert_eq!(row["body_owner"], "algebra.membership");
     assert!(!attempts(&row).contains(&"algebra.shielded-receive"));
     let composite: Contract = serde_json::from_str(include_str!(
         "../../../../tests/field-observation-schema20-ir.json"

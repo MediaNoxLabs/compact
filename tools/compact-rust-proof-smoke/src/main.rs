@@ -91,6 +91,7 @@ mod merkle_reset;
 mod merkle_root;
 mod merkle_verify;
 mod micro_dao_advance;
+mod opaque_cell_input;
 mod opaque_public;
 mod owned_witness_inputs;
 mod public_products;

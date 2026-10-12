@@ -12,7 +12,15 @@ mod boundaries;
 #[path = "zswap_inclusion/variants.rs"]
 mod variants;
 
-const EXPECTED_OWNER: &str = "algebra.zswap";
+// Public Unit signatures now use the shared checked interface, including the
+// Uint128 member of qualified coins. Expression effect returns still use Zswap.
+fn expected_owner(root: &StatefulCircuit) -> &'static str {
+    if root.return_value == StateReturn::Unit {
+        "algebra.unit-composition"
+    } else {
+        "algebra.zswap"
+    }
+}
 
 fn source() -> Contract {
     serde_json::from_str(include_str!(
@@ -86,20 +94,33 @@ fn included(c: &Contract, name: &str, label: &str) {
         .filter(|r| r["circuit"] == name && r["phase"] == "public_emission" && r["helper"] == false)
         .collect();
     assert_eq!(rows.len(), 1, "{label}");
-    assert_eq!(rows[0]["body_owner"], EXPECTED_OWNER, "{label}");
+    let owner = expected_owner(r);
+    if owner == "algebra.unit-composition" {
+        assert!(
+            has_public_program(&plan),
+            "Unit requires public program evidence"
+        );
+    }
+    assert_eq!(rows[0]["body_owner"], owner, "{label}");
     let attempts: Vec<_> = rows[0]["attempts"]
         .as_array()
         .unwrap()
         .iter()
         .map(|a| a["route"].as_str().unwrap())
         .collect();
-    assert_eq!(attempts.iter().filter(|&&r| r == EXPECTED_OWNER).count(), 1);
+    assert_eq!(attempts.iter().filter(|&&r| r == owner).count(), 1);
+    if owner == "algebra.unit-composition" {
+        assert!(
+            !attempts.contains(&"algebra.zswap"),
+            "earlier Unit admission stops the later adapter"
+        );
+    }
 
-    capture(c, name, label, &output.source);
+    capture(c, name, label, &output.source, owner);
 }
 // Optional exact-output evidence for a separate native crate compilation gate.
 // Each process requires a fresh destination; each positive owns one directory.
-fn capture(c: &Contract, name: &str, label: &str, generated: &str) {
+fn capture(c: &Contract, name: &str, label: &str, generated: &str, owner: &str) {
     let Some(root) = std::env::var_os("COMPACT_ZSWAP_PROBE_OUTPUT") else {
         return;
     };
@@ -120,7 +141,7 @@ fn capture(c: &Contract, name: &str, label: &str, generated: &str) {
         serde_json::to_vec_pretty(&json!({
             "index": index, "label": label, "root": name,
             "old_whole_zswap_accepted": true, "checked_plan_succeeded": true,
-            "native_render_succeeded": true, "body_owner": EXPECTED_OWNER,
+            "native_render_succeeded": true, "body_owner": owner,
             "qualification": "IR/render evidence only; compilation and proof are separate"
         }))
         .unwrap(),

@@ -19,6 +19,7 @@
 //! Keep profile ordering and rejection refinement in the parent orchestrator.
 //! Only explicit arguments cross this boundary; no helper captures outer state.
 
+#[cfg(test)]
 pub(super) mod guarded_map;
 pub(super) mod guarded_pure;
 pub(super) mod opaque_map;

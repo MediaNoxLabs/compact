@@ -263,11 +263,11 @@ fn assert_whole_old_and_checked(c: &Contract, root_name: &str) {
         .unwrap();
     assert_eq!(row["body_owner"], "algebra.unit-composition");
     assert!(
-        row["attempts"]
+        !row["attempts"]
             .as_array()
             .unwrap()
             .iter()
-            .any(|a| a["route"] == "guard.guarded-map-read" && a["produced_candidate"] == true),
-        "old guard remains in production during prerequisite"
+            .any(|a| a["route"] == "guard.guarded-map-read"),
+        "retirement removes the production attempt; the complete old oracle above remains"
     );
 }

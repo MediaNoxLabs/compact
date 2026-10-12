@@ -158,11 +158,13 @@ fn assert_current(c: &Contract) {
             .iter()
             .any(|a| a["route"] == "guard.opaque-set-mutation")
     );
-    for sibling in [
-        "guard.guarded-map-read",
-        "guard.opaque-map-write",
-        "guard.guarded-struct-pure",
-    ] {
+    assert!(
+        !attempts
+            .iter()
+            .any(|a| a["route"] == "guard.guarded-map-read"),
+        "Map-read admission is retired independently of this old Set oracle"
+    );
+    for sibling in ["guard.opaque-map-write", "guard.guarded-struct-pure"] {
         assert!(attempts.iter().any(|a| a["route"] == sibling));
     }
 }

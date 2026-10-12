@@ -130,8 +130,24 @@ UNIT_INTERFACE_EXTENSION = inventory.BASELINE.with_name("recording_admission_inv
 MAP_VALUE_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.map-values-595.json")
 
 
+GUARDED_MAP_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-594.json")
+
+
+def checkpoint_595(root):
+    """Authenticate final Map-value checkpoint before historical fixture projection."""
+    transition = json.loads(GUARDED_MAP_TRANSITION.read_text())
+    try:
+        source = (root / inventory.RECORDED).read_bytes()
+    except FileNotFoundError:
+        return root
+    if inventory.digest(source) == transition['owners'][inventory.RECORDED]['current_sha256']:
+        return inventory.guarded_map.checkpoint(root, transition)
+    return root
+
+
 def checkpoint_593(root):
     """Historical fixtures retain the authenticated signed Unit-interface checkpoint."""
+    root = checkpoint_595(root)
     extension = json.loads(MAP_VALUE_EXTENSION.read_text())
     try:
         source = (root / inventory.map_values.OWNER).read_bytes()
@@ -541,7 +557,8 @@ class InventoryTests(unittest.TestCase):
                                   unsigned_product_transition=json.loads(UNSIGNED_PRODUCT_TRANSITION.read_text()),
                                   opaque_set_transition=json.loads(OPAQUE_SET_TRANSITION.read_text()),
                                   unit_interface_extension=json.loads(UNIT_INTERFACE_EXTENSION.read_text()),
-                                  map_value_extension=json.loads(MAP_VALUE_EXTENSION.read_text()))
+                                  map_value_extension=json.loads(MAP_VALUE_EXTENSION.read_text()),
+                                  guarded_map_transition=json.loads(GUARDED_MAP_TRANSITION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)

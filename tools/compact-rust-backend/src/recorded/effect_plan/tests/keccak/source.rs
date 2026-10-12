@@ -57,7 +57,7 @@ fn genuine_local_keccak_old_positive_now_lowers_without_native_helper_escape() {
         })
         .collect();
     assert_eq!(rows.len(), 1);
-    assert_eq!(rows[0]["body_owner"], "algebra.kernel");
+    assert_eq!(rows[0]["body_owner"], "algebra.ordinary");
     assert_eq!(rows[0]["outcome"]["status"], "supported");
     if let Some(output) = std::env::var_os("COMPACT_KECCAK_SOURCE_OUTPUT") {
         let output = std::path::PathBuf::from(output);

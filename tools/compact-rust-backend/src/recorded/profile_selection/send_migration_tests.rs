@@ -98,7 +98,7 @@ fn complete_old_roots_keep_generic_public_and_helper_owners_without_send_attempt
         .iter()
         .filter(|r| r["internal"] == false)
     {
-        assert_eq!(row["body_owner"], "algebra.composite-values");
+        assert_eq!(row["body_owner"], "algebra.ordinary");
     }
     let root = maps.circuits["sendShielded"];
     let (item, rows) = trace::capture_json(|| {
@@ -114,7 +114,7 @@ fn complete_old_roots_keep_generic_public_and_helper_owners_without_send_attempt
     });
     assert!(item.unwrap().is_supported());
     no_old_attempt(&rows);
-    assert_eq!(rows[0]["body_owner"], "algebra.composite-values");
+    assert_eq!(rows[0]["body_owner"], "algebra.ordinary");
 }
 #[test]
 fn checked_composition_does_not_require_old_send_effect_counts_or_empty_actions() {

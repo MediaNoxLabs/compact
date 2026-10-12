@@ -19,7 +19,7 @@ class ReadOnlyTransitionTests(unittest.TestCase):
         for owner in [*self.read_only_transition['owners'], *self.read_only_transition['new_and_shared_sources']]:
             path = self.root / owner
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes((inventory.ROOT / owner).read_bytes())
+            path.write_bytes((previous.checkpoint_615(inventory.ROOT) / owner).read_bytes())
 
     def report(self):
         return funded_tests.FundedMintTransitionTests.report(

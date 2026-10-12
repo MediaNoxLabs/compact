@@ -47,6 +47,11 @@ impl From<RecordingGap> for LoweringRejection {
 }
 
 impl LoweringRejection {
+    /// Consume the public gap for a refusal-only diagnostic projection.
+    pub(in crate::recorded) fn into_gap(self) -> RecordingGap {
+        self.gap
+    }
+
     /// Existing callers intentionally discard provenance without running lowering again.
     pub(super) fn into_parts(
         self,

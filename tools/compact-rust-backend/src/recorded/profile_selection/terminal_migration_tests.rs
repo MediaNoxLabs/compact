@@ -131,8 +131,9 @@ impl<'a> Context<'a> {
             &self.circuits,
         )
     }
-    fn selected(&self, circuit: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {
-        select(
+    // Historical staged-priority oracle; production emission is checked separately.
+    fn legacy_selected(&self, circuit: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {
+        legacy_select(
             circuit,
             &self.ledger,
             &self.witnesses,
@@ -252,7 +253,7 @@ fn removed_single_slot_and_effect_counts_are_separate_from_old_inclusion() {
         );
         let algebra = context.algebra(circuit).unwrap();
         assert_eq!(
-            selected_tokens(context.selected(circuit).unwrap()),
+            selected_tokens(context.legacy_selected(circuit).unwrap()),
             Some(tokens(&algebra))
         );
         let rendered = crate::render_with_capabilities(&contract).unwrap();

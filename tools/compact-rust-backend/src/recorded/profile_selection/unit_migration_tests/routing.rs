@@ -1,15 +1,17 @@
 // This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
+// Direct legacy_selected traces below preserve the staged predecessor priority laws.
+// Current public/helper emission assertions, where present, use algebra.ordinary.
 use super::*;
 use crate::recorded::admission_probe::trace;
 
-fn selected_trace(contract: &Contract) -> (ProfileSelection, serde_json::Value) {
+fn legacy_selected_trace(contract: &Contract) -> (ProfileSelection, serde_json::Value) {
     let root = &contract.stateful_circuits[0];
     let context = Context::new(contract);
     let (selected, rows) = trace::capture_json(|| {
         let scope = trace::Scope::begin(root, false);
-        let selected = context.selected(root).unwrap();
+        let selected = context.legacy_selected(root).unwrap();
         scope.finish(&Ok::<_, RenderError>(
             crate::recorded::RecordingOutcome::Supported(()),
         ));
@@ -35,7 +37,7 @@ fn actual_unit_owner_runs_once_without_old_shape_or_later_profiles() {
     let old = context.old(root).unwrap();
     let algebra = context.algebra(root).unwrap();
     assert_ne!(tokens(&old), tokens(&algebra));
-    let (selected, row) = selected_trace(&contract);
+    let (selected, row) = legacy_selected_trace(&contract);
     let (steps, result) = (
         selected.organizer_steps.unwrap(),
         selected.typed_result.unwrap(),
@@ -61,7 +63,7 @@ fn earlier_field_interface_owner_keeps_its_priority() {
     contract.stateful_circuits[0].return_value = StateReturn::Expression {
         value: parameter("seed"),
     };
-    let (_, row) = selected_trace(&contract);
+    let (_, row) = legacy_selected_trace(&contract);
     assert_eq!(row["body_owner"], "algebra.membership");
     assert!(!attempts(&row).contains(&"algebra.unit-actions"));
 }
@@ -84,7 +86,7 @@ fn unsupported_unit_body_continues_independent_suffix_and_invalid_is_fatal() {
             .unwrap()
             .is_none()
     );
-    let (_, row) = selected_trace(&contract);
+    let (_, row) = legacy_selected_trace(&contract);
     let attempted = attempts(&row);
     let at = |name| attempted.iter().position(|r| *r == name).unwrap();
     assert!(at("algebra.unit-actions") < at("algebra.unit-composition"));
@@ -151,7 +153,7 @@ fn ordinary_unit_return_enters_composition_without_an_operation_shape_gate() {
         tokens(&context.unit(root).unwrap().unwrap()),
         tokens(&context.algebra(root).unwrap())
     );
-    let (_, row) = selected_trace(&contract);
+    let (_, row) = legacy_selected_trace(&contract);
     assert_eq!(row["body_owner"], "algebra.unit-actions");
     assert!(!attempts(&row).contains(&"algebra.unit-composition"));
     let rendered = crate::render_with_capabilities(&contract).unwrap();
@@ -176,7 +178,7 @@ fn real_set_lifecycle_has_public_unit_composition_and_existing_direct_queries_st
         .position(|c| c.name == "lifecycle")
         .unwrap();
     contract.stateful_circuits.swap(0, index);
-    let (_, row) = selected_trace(&contract);
+    let (_, row) = legacy_selected_trace(&contract);
     assert_eq!(row["body_owner"], "algebra.unit-actions");
     assert!(!attempts(&row).contains(&"algebra.unit-composition"));
 

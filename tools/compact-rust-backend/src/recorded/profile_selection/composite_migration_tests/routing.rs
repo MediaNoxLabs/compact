@@ -1,6 +1,8 @@
 // This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
+// Direct legacy_selected traces below preserve the staged predecessor priority laws.
+// Current public/helper emission assertions, where present, use algebra.ordinary.
 use super::*;
 use crate::recorded::admission_probe::trace;
 #[test]
@@ -16,7 +18,7 @@ fn actual_public_and_internal_helper_owners_are_composite_algebra() {
         assert!(
             rows.iter().any(|r| r["circuit"] == name
                 && r["phase"] == "public_emission"
-                && r["body_owner"] == "algebra.composite-values"),
+                && r["body_owner"] == "algebra.ordinary"),
             "public {name}: {rows:?}"
         );
     }
@@ -54,7 +56,7 @@ fn actual_public_and_internal_helper_owners_are_composite_algebra() {
     assert_eq!(helper_row["internal"], true);
     assert_eq!(helper_row["helper"], true);
     assert_eq!(helper_row["phase"], "helper_planning");
-    assert_eq!(helper_row["body_owner"], "algebra.composite-values");
+    assert_eq!(helper_row["body_owner"], "algebra.ordinary");
     assert_eq!(helper_row["outcome"]["status"], "supported");
     assert!(!rows.iter().chain(helper_rows.iter()).any(|r| {
         r["attempts"]
@@ -134,7 +136,7 @@ fn composite_selection_is_lazy_between_earlier_context_and_later_shielded_routes
         let maps = Context::new(contract);
         let (_, rows) = trace::capture_json(|| {
             let scope = trace::Scope::begin(root, false);
-            let selected = maps.selected(root).unwrap();
+            let selected = maps.legacy_selected(root).unwrap();
             scope.finish(&Ok::<_, RenderError>(
                 crate::recorded::RecordingOutcome::Supported(()),
             ));

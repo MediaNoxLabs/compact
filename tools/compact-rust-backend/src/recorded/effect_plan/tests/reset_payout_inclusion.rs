@@ -158,10 +158,7 @@ fn current(c: &Contract, name: &str, label: &str) -> String {
         })
         .collect();
     assert_eq!(actual.len(), 1, "{label}");
-    assert_eq!(
-        actual[0]["body_owner"], "algebra.composite-values",
-        "{label}"
-    );
+    assert_eq!(actual[0]["body_owner"], "algebra.ordinary", "{label}");
     output.source
 }
 fn capture(c: &Contract, name: &str, label: &str, rust: &str) {
@@ -183,7 +180,7 @@ fn capture(c: &Contract, name: &str, label: &str, rust: &str) {
         serde_json::to_vec_pretty(&json!({
             "label":label,"root":name,"old_whole_reset_accepted":true,
             "checked_plan_succeeded":true,"native_render_succeeded":true,
-            "body_owner":"algebra.composite-values",
+            "body_owner":"algebra.ordinary",
             "qualification":"IR/render only; raw consumer compilation and proofs are separate"
         }))
         .unwrap(),

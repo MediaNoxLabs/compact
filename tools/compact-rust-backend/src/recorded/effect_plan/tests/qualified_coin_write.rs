@@ -413,8 +413,8 @@ fn fresh_frontend_nested_path_and_public_body_owners_are_current_algebra() {
     // The zero-parameter Unit interface reaches membership composition first;
     // that route composes checked effects without requiring a membership-shaped body.
     for (name, owner) in [
-        ("write_once", "algebra.membership"),
-        ("write_read", "algebra.composite-values"),
+        ("write_once", "algebra.ordinary"),
+        ("write_read", "algebra.ordinary"),
     ] {
         let capability = output
             .capabilities

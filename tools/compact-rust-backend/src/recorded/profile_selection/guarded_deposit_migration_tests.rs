@@ -60,8 +60,9 @@ impl<'a> Context<'a> {
     fn domain(&self, c: &StatefulCircuit) -> Result<Option<TypedPlan>, RenderError> {
         checked_guarded_deposit_domain(c, &self.ledger, &self.witnesses, &self.pure, &self.circuits)
     }
-    fn selected(&self, c: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {
-        select(
+    // Historical staged-priority oracle; production emission is checked separately.
+    fn legacy_selected(&self, c: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {
+        legacy_select(
             c,
             &self.ledger,
             &self.witnesses,
@@ -71,11 +72,11 @@ impl<'a> Context<'a> {
         )
     }
 }
-fn selected_trace(c: &Contract, r: &StatefulCircuit) -> serde_json::Value {
+fn legacy_selected_trace(c: &Contract, r: &StatefulCircuit) -> serde_json::Value {
     let maps = Context::new(c);
     let (_, rows) = trace::capture_json(|| {
         let scope = trace::Scope::begin(r, false);
-        let result = maps.selected(r).unwrap();
+        let result = maps.legacy_selected(r).unwrap();
         // This captures selector ownership only; public_owner checks actual emission.
         scope.finish(&Ok::<_, RenderError>(
             crate::recorded::RecordingOutcome::Supported(()),
@@ -111,12 +112,12 @@ fn public_owner(c: &Contract, name: &str) {
         .filter(|r| r["circuit"] == name && r["phase"] == "public_emission" && r["helper"] == false)
         .collect::<Vec<_>>();
     assert_eq!(rows.len(), 1);
-    assert_eq!(rows[0]["body_owner"], "algebra.guarded-deposit");
+    assert_eq!(rows[0]["body_owner"], "algebra.ordinary");
     assert_eq!(rows[0]["outcome"]["status"], "supported");
     assert_eq!(
         attempts(rows[0])
             .iter()
-            .filter(|&&s| s == "algebra.guarded-deposit")
+            .filter(|&&s| s == "algebra.ordinary")
             .count(),
         1
     );
@@ -147,7 +148,7 @@ fn renamed_and_internal_declarations_keep_the_declared_domain() {
         assert!(maps.old(r).is_some(), "whole frozen oracle first");
         assert!(maps.domain(r).unwrap().is_some());
         assert_eq!(
-            selected_trace(&c, r)["body_owner"],
+            legacy_selected_trace(&c, r)["body_owner"],
             "algebra.guarded-deposit"
         );
         if internal {
@@ -166,7 +167,7 @@ fn renamed_and_internal_declarations_keep_the_declared_domain() {
             assert_eq!(rows.as_array().unwrap().len(), 1);
             assert_eq!(rows[0]["phase"], "helper_planning");
             assert_eq!(rows[0]["helper"], true);
-            assert_eq!(rows[0]["body_owner"], "algebra.guarded-deposit");
+            assert_eq!(rows[0]["body_owner"], "algebra.ordinary");
         } else {
             public_owner(&c, &r.name);
         }

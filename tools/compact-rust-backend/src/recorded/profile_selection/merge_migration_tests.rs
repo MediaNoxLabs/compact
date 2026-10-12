@@ -117,7 +117,7 @@ fn whole_old_merge_exports_and_internal_helper_keep_existing_composite_owner() {
             })
             .collect();
         assert_eq!(owners.len(), 1);
-        assert_eq!(owners[0]["body_owner"], "algebra.composite-values");
+        assert_eq!(owners[0]["body_owner"], "algebra.ordinary");
         assert!(
             !owners[0]["attempts"]
                 .as_array()
@@ -140,7 +140,7 @@ fn whole_old_merge_exports_and_internal_helper_keep_existing_composite_owner() {
     });
     assert!(item.unwrap().is_supported());
     no_old_attempt(&rows);
-    assert_eq!(rows[0]["body_owner"], "algebra.composite-values");
+    assert_eq!(rows[0]["body_owner"], "algebra.ordinary");
 }
 #[test]
 fn composable_coin_result_does_not_require_old_merge_effect_counts() {

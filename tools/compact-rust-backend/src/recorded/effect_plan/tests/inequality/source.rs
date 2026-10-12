@@ -54,7 +54,7 @@ fn genuine_source_inequalities_have_checked_public_composite_owners() {
             })
             .collect::<Vec<_>>();
         assert_eq!(actual.len(), 1);
-        assert_eq!(actual[0]["body_owner"], "algebra.composite-values");
+        assert_eq!(actual[0]["body_owner"], "algebra.ordinary");
         assert_eq!(actual[0]["outcome"]["status"], "supported");
     }
 }

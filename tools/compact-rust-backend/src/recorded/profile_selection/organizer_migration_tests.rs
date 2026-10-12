@@ -82,8 +82,8 @@ fn assert_actual(c: &Contract) {
     let (result, rows) = trace::capture_json(|| crate::render_with_capabilities(c));
     let output = result.unwrap();
     for (name, owner) in [
-        ("add_participant", "algebra.membership"),
-        ("add_organizer", "algebra.kernel"),
+        ("add_participant", "algebra.ordinary"),
+        ("add_organizer", "algebra.ordinary"),
     ] {
         assert!(
             output

@@ -65,9 +65,7 @@ fn old_forms_preserve_names_shadowed_binding_physical_layout_and_internal_calls(
             let cx = Context::new(&c);
             assert!(cx.old(cx.circuits["put"]).unwrap());
             assert!(cx.checked(cx.circuits["put"]).is_ok());
-            assert!(
-                current(&c, "writeViaHelper", "algebra.unit-composition").contains("record_insert")
-            );
+            assert!(current(&c, "writeViaHelper", "algebra.ordinary").contains("record_insert"));
         } else {
             included(&c, "put");
         }
@@ -104,7 +102,7 @@ fn field_interface_supports_direct_expression_indirect_and_non_map_returns() {
         let c = contract(v);
         let cx = Context::new(&c);
         assert!(!cx.old(cx.circuits["ensure"]).unwrap());
-        let text = current(&c, "ensure", "algebra.terminal-returns");
+        let text = current(&c, "ensure", "algebra.ordinary");
         if mode != "non_map" {
             assert!(text.find("missing key").unwrap() < text.find("record_lookup").unwrap());
         }
@@ -113,6 +111,6 @@ fn field_interface_supports_direct_expression_indirect_and_non_map_returns() {
         "../../../../tests/effect-plan-maps-schema20-ir.json"
     ))
     .unwrap();
-    assert!(current(&c, "direct_lookup", "algebra.terminal-returns").contains("record_lookup"));
-    assert!(current(&c, "direct_member", "algebra.membership").contains("record_member"));
+    assert!(current(&c, "direct_lookup", "algebra.ordinary").contains("record_lookup"));
+    assert!(current(&c, "direct_member", "algebra.ordinary").contains("record_member"));
 }

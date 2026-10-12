@@ -61,7 +61,7 @@ fn genuine_field_multiplication_composes_with_counter_and_witness_effects() {
             .collect();
         assert_eq!(rows.len(), 1);
         assert_eq!(rows[0]["outcome"]["status"], "supported");
-        assert_eq!(rows[0]["body_owner"], "algebra.composite-values");
+        assert_eq!(rows[0]["body_owner"], "algebra.ordinary");
         let label = format!("source-{entry}");
         let metadata = json!({
             "label":label,"root":entry,"internal":root.internal,

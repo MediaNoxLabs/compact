@@ -3,12 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // The direct VectorFoldCall child is a native-valid recording refusal; fixed Field
 // commitments themselves are supported. Do not replace this with malformed types.
+// Direct legacy_selected traces below preserve the staged predecessor priority laws.
+// Current public/helper emission assertions, where present, use algebra.ordinary.
 use super::*;
-fn selected_trace(c: &Contract, r: &StatefulCircuit) -> serde_json::Value {
+fn legacy_selected_trace(c: &Contract, r: &StatefulCircuit) -> serde_json::Value {
     let maps = Context::new(c);
     let (_, rows) = trace::capture_json(|| {
         let scope = trace::Scope::begin(r, false);
-        let result = maps.selected(r).unwrap();
+        let result = maps.legacy_selected(r).unwrap();
         // Selector evidence only; full capability is checked separately by public_owner.
         scope.finish(&Ok::<_, RenderError>(
             crate::recorded::RecordingOutcome::Supported(()),
@@ -29,7 +31,7 @@ fn attempts(row: &serde_json::Value) -> Vec<&str> {
 #[test]
 fn actual_receive_owner_is_once_and_stops_later_profiles() {
     let c = source();
-    let row = selected_trace(&c, root(&c));
+    let row = legacy_selected_trace(&c, root(&c));
     assert_eq!(row["body_owner"], "algebra.shielded-receive");
     let a = attempts(&row);
     assert_eq!(
@@ -53,7 +55,7 @@ fn earlier_organizer_and_composite_owner_prevent_receive_attempts() {
         .iter()
         .find(|r| !r.internal)
         .unwrap();
-    let row = selected_trace(&organizer, root);
+    let row = legacy_selected_trace(&organizer, root);
     assert_eq!(row["body_owner"], "algebra.membership");
     assert!(!attempts(&row).contains(&"algebra.shielded-receive"));
     let composite: Contract = serde_json::from_str(include_str!(
@@ -65,7 +67,7 @@ fn earlier_organizer_and_composite_owner_prevent_receive_attempts() {
         .iter()
         .find(|r| r.name == "snapshot")
         .unwrap();
-    let row = selected_trace(&composite, root);
+    let row = legacy_selected_trace(&composite, root);
     assert_eq!(row["body_owner"], "algebra.composite-values");
     assert!(!attempts(&row).contains(&"algebra.shielded-receive"));
 }
@@ -84,7 +86,7 @@ fn unsupported_body_continues_independent_suffix_and_invariant_stays_fatal() {
         },
     }];
     assert!(Context::new(&c).domain(root(&c)).unwrap().is_none());
-    let row = selected_trace(&c, root(&c));
+    let row = legacy_selected_trace(&c, root(&c));
     let a = attempts(&row);
     assert!(
         a.iter()

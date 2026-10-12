@@ -128,7 +128,7 @@ fn current(c: &Contract, name: &str) -> String {
         .iter()
         .find(|r| r["circuit"] == name && r["phase"] == "public_emission" && r["helper"] == false)
         .unwrap();
-    assert_eq!(row["body_owner"], "algebra.membership");
+    assert_eq!(row["body_owner"], "algebra.ordinary");
     assert!(
         row["guards"].as_array().unwrap().is_empty(),
         "all explicit shape permits are now retired; generic rejection remains"

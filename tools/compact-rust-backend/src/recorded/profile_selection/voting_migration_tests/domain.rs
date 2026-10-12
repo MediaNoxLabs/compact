@@ -59,7 +59,7 @@ fn duplicate_source_formals_are_refused_before_checked_plan_construction() {
             if gap.path == "parameters[1]" && gap.detail == "duplicate parameter"
     ));
     assert!(maps.domain(root(&c)).unwrap().is_none());
-    let row = selected_trace(&c, root(&c));
+    let row = legacy_selected_trace(&c, root(&c));
     assert_ne!(row["body_owner"], "algebra.voting-commit");
     assert!(attempts(&row).contains(&"algebra.guarded-deposit"));
     assert!(!attempts(&row).contains(&"selector.funded-mint"));

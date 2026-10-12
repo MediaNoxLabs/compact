@@ -124,8 +124,9 @@ impl<'a> Context<'a> {
     fn domain(&self, c: &StatefulCircuit) -> Result<Option<TypedPlan>, RenderError> {
         checked_receive_domain(c, &self.ledger, &self.witnesses, &self.pure, &self.circuits)
     }
-    fn selected(&self, c: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {
-        select(
+    // Historical staged-priority oracle; production emission is checked separately.
+    fn legacy_selected(&self, c: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {
+        legacy_select(
             c,
             &self.ledger,
             &self.witnesses,
@@ -160,14 +161,14 @@ fn public_owner(c: &Contract, name: &str) {
         .filter(|r| r["circuit"] == name && r["phase"] == "public_emission" && r["helper"] == false)
         .collect::<Vec<_>>();
     assert_eq!(rows.len(), 1, "actual invocation {name}");
-    assert_eq!(rows[0]["body_owner"], "algebra.shielded-receive");
+    assert_eq!(rows[0]["body_owner"], "algebra.ordinary");
     assert_eq!(rows[0]["outcome"]["status"], "supported");
     assert_eq!(
         rows[0]["attempts"]
             .as_array()
             .unwrap()
             .iter()
-            .filter(|a| a["route"] == "algebra.shielded-receive")
+            .filter(|a| a["route"] == "algebra.ordinary")
             .count(),
         1
     );
@@ -210,7 +211,7 @@ fn included(c: &Contract, name: &str, label: &str) {
         assert_eq!(rows.as_array().unwrap().len(), 1);
         assert_eq!(rows[0]["phase"], "helper_planning");
         assert_eq!(rows[0]["helper"], true);
-        assert_eq!(rows[0]["body_owner"], "algebra.shielded-receive");
+        assert_eq!(rows[0]["body_owner"], "algebra.ordinary");
     } else {
         public_owner(c, name);
     }

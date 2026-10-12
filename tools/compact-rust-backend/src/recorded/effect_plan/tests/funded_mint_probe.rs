@@ -92,7 +92,7 @@ fn probe(c: Contract, label: &str) {
             })
             .collect::<Vec<_>>();
         assert_eq!(emitted.len(), 1);
-        assert_eq!(emitted[0]["body_owner"], "algebra.composite-values");
+        assert_eq!(emitted[0]["body_owner"], "algebra.ordinary");
         assert_eq!(emitted[0]["outcome"]["status"], "supported");
     }
 }

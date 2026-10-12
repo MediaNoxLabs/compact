@@ -97,10 +97,7 @@ fn owner(source: &Contract, names: &[&str]) -> String {
             })
             .collect();
         assert_eq!(actual.len(), 1);
-        assert_eq!(
-            actual[0]["body_owner"], "algebra.composite-values",
-            "{name}"
-        );
+        assert_eq!(actual[0]["body_owner"], "algebra.ordinary", "{name}");
     }
     output.source
 }

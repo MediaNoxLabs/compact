@@ -39,10 +39,11 @@ impl<'a> Context<'a> {
     fn domain(&self, r: &StatefulCircuit) -> Result<Option<TypedPlan>, RenderError> {
         checked_zswap_domain(r, &self.ledger, &self.witnesses, &self.pure, &self.circuits)
     }
-    fn selected(&self, r: &StatefulCircuit) -> (ProfileSelection, serde_json::Value) {
+    // Historical staged-priority oracle; production emission is checked separately.
+    fn legacy_selected(&self, r: &StatefulCircuit) -> (ProfileSelection, serde_json::Value) {
         let (plan, rows) = trace::capture_json(|| {
             let scope = trace::Scope::begin(r, r.internal);
-            let plan = select(
+            let plan = legacy_select(
                 r,
                 &self.ledger,
                 &self.witnesses,
@@ -84,15 +85,15 @@ fn intent_only_expansion_uses_first_eligible_algebra_owner() {
                 .is_none()
         );
         assert!(maps.domain(r).unwrap().is_some());
-        let (_, selector_row) = maps.selected(r);
+        let (_, selector_row) = maps.legacy_selected(r);
         assert_eq!(selector_row["body_owner"], owner);
         assert_eq!(attempts(&selector_row).last(), Some(&owner));
     }
     let (output, rows) = trace::capture_json(|| crate::render_with_capabilities(&c));
     let output = output.unwrap();
     for (name, owner) in [
-        ("produce", "algebra.membership"),
-        ("consume", "algebra.zswap"),
+        ("produce", "algebra.ordinary"),
+        ("consume", "algebra.ordinary"),
     ] {
         let capability = output
             .capabilities
@@ -196,7 +197,7 @@ fn earlier_winners_never_attempt_the_final_zswap_domain() {
         ),
     ] {
         let c: Contract = serde_json::from_str(text).unwrap();
-        let (_, row) = Context::new(&c).selected(root(&c, name));
+        let (_, row) = Context::new(&c).legacy_selected(root(&c, name));
         assert_eq!(row["body_owner"], owner);
         assert!(!attempts(&row).contains(&"algebra.zswap"));
     }
@@ -239,7 +240,7 @@ fn unsupported_body_refuses_at_last_priority_without_old_fallback() {
         "whole frozen Zswap oracle also refuses this expression"
     );
     assert!(maps.domain(root(&c, "flow")).unwrap().is_none());
-    let (selected, row) = maps.selected(root(&c, "flow"));
+    let (selected, row) = maps.legacy_selected(root(&c, "flow"));
     assert!(selected.typed_result.is_none());
     let attempted = attempts(&row);
     assert_eq!(
@@ -278,7 +279,7 @@ fn former_boolean_inequality_refusal_preserves_earlier_checked_unit_owner() {
         .is_none()
     );
     assert!(maps.domain(root(&c, "flow")).unwrap().is_some());
-    let (selected, row) = maps.selected(root(&c, "flow"));
+    let (selected, row) = maps.legacy_selected(root(&c, "flow"));
     assert!(selected.typed_result.is_some());
     assert_eq!(row["body_owner"], "algebra.unit-composition");
     let (output, rows) = trace::capture_json(|| crate::render_with_capabilities(&c));
@@ -299,7 +300,7 @@ fn former_boolean_inequality_refusal_preserves_earlier_checked_unit_owner() {
         })
         .collect::<Vec<_>>();
     assert_eq!(rows.len(), 1);
-    assert_eq!(rows[0]["body_owner"], "algebra.unit-composition");
+    assert_eq!(rows[0]["body_owner"], "algebra.ordinary");
     assert_eq!(
         attempts(rows[0])
             .iter()
@@ -307,6 +308,6 @@ fn former_boolean_inequality_refusal_preserves_earlier_checked_unit_owner() {
             .count(),
         0
     );
-    assert!(!attempts(rows[0]).contains(&"algebra.ordinary"));
+    assert_eq!(attempts(rows[0]), ["algebra.ordinary"]);
     assert!(!attempts(rows[0]).contains(&"selector.zswap"));
 }

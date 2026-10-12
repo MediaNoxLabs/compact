@@ -166,13 +166,13 @@ fn current(c: &Contract, name: &str, owner: &str) -> String {
         row["guards"].as_array().unwrap().is_empty(),
         "all explicit opaque shape permits retired"
     );
-    if owner == "algebra.terminal-returns" {
+    if r.result == Type::Field {
         assert!(cx.terminal(r).unwrap().is_some());
         let attempts = row["attempts"].as_array().unwrap();
         assert_eq!(
             attempts
                 .iter()
-                .filter(|a| a["route"] == "algebra.terminal-returns")
+                .filter(|a| a["route"] == "algebra.ordinary")
                 .count(),
             1
         );
@@ -187,15 +187,7 @@ fn current(c: &Contract, name: &str, owner: &str) -> String {
 fn included(c: &Contract, name: &str) {
     let cx = Context::new(c);
     assert!(cx.old(cx.circuits[name]).unwrap(), "complete old {name}");
-    let text = current(
-        c,
-        name,
-        if cx.circuits[name].result == Type::Unit {
-            "algebra.unit-composition"
-        } else {
-            "algebra.terminal-returns"
-        },
-    );
+    let text = current(c, name, "algebra.ordinary");
     if cx.circuits[name].result == Type::Unit {
         assert!(text.contains("record_insert"));
     } else {

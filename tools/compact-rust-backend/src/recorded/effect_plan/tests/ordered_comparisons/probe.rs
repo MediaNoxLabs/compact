@@ -27,14 +27,7 @@ pub(super) fn export(
         .collect();
     assert_eq!(rows.len(), 1, "{label}: actual public emission");
     assert_eq!(rows[0]["outcome"]["status"], "supported");
-    assert_eq!(
-        rows[0]["body_owner"],
-        if require_old {
-            "algebra.unit-composition"
-        } else {
-            "algebra.composite-values"
-        }
-    );
+    assert_eq!(rows[0]["body_owner"], "algebra.ordinary");
     let metadata = json!({
         "label":label,"root":root.name,"internal":root.internal,
         "source_variant":"unchanged retained full source IR",

@@ -12,16 +12,6 @@ mod boundaries;
 #[path = "zswap_inclusion/variants.rs"]
 mod variants;
 
-// Public Unit signatures now use the shared checked interface, including the
-// Uint128 member of qualified coins. Expression effect returns still use Zswap.
-fn expected_owner(root: &StatefulCircuit) -> &'static str {
-    if root.return_value == StateReturn::Unit {
-        "algebra.unit-composition"
-    } else {
-        "algebra.zswap"
-    }
-}
-
 fn source() -> Contract {
     serde_json::from_str(include_str!(
         "../../../../tests/native-zswap-intents-schema20-ir.json"
@@ -94,11 +84,11 @@ fn included(c: &Contract, name: &str, label: &str) {
         .filter(|r| r["circuit"] == name && r["phase"] == "public_emission" && r["helper"] == false)
         .collect();
     assert_eq!(rows.len(), 1, "{label}");
-    let owner = expected_owner(r);
-    if owner == "algebra.unit-composition" {
+    let owner = "algebra.ordinary";
+    if r.return_value == StateReturn::Unit {
         assert!(
             has_public_program(&plan),
-            "Unit requires public program evidence"
+            "This retained Unit source has a public program"
         );
     }
     assert_eq!(rows[0]["body_owner"], owner, "{label}");
@@ -109,12 +99,7 @@ fn included(c: &Contract, name: &str, label: &str) {
         .map(|a| a["route"].as_str().unwrap())
         .collect();
     assert_eq!(attempts.iter().filter(|&&r| r == owner).count(), 1);
-    if owner == "algebra.unit-composition" {
-        assert!(
-            !attempts.contains(&"algebra.zswap"),
-            "earlier Unit admission stops the later adapter"
-        );
-    }
+    assert_eq!(attempts, ["algebra.ordinary"]);
 
     capture(c, name, label, &output.source, owner);
 }

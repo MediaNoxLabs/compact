@@ -167,7 +167,7 @@ fn included_with_internal(
                 assert_eq!(rows.as_array().unwrap().len(), 1);
                 assert_eq!(rows[0]["phase"], "helper_planning");
                 assert_eq!(rows[0]["helper"], true);
-                assert_eq!(rows[0]["body_owner"], "algebra.composite-values");
+                assert_eq!(rows[0]["body_owner"], "algebra.ordinary");
             }
             let output = current(&c, name, label);
             capture(&c, name, label, internal, &output);
@@ -195,10 +195,7 @@ fn current(c: &Contract, name: &str, label: &str) -> String {
         })
         .collect();
     assert_eq!(actual.len(), 1, "{label}");
-    assert_eq!(
-        actual[0]["body_owner"], "algebra.composite-values",
-        "{label}"
-    );
+    assert_eq!(actual[0]["body_owner"], "algebra.ordinary", "{label}");
     output.source
 }
 fn capture(c: &Contract, name: &str, label: &str, internal: Option<&str>, rust: &str) {
@@ -220,7 +217,7 @@ fn capture(c: &Contract, name: &str, label: &str, internal: Option<&str>, rust: 
         serde_json::to_vec_pretty(&json!({
             "label":label,"root":name,"internal_root":internal,"old_whole_payout_accepted":true,
             "checked_plan_succeeded":true,"native_render_succeeded":true,
-            "body_owner":"algebra.composite-values",
+            "body_owner":"algebra.ordinary",
             "qualification":"IR/render only; raw consumer compilation and proofs are separate"
         }))
         .unwrap(),

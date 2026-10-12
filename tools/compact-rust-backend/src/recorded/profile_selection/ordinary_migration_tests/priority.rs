@@ -6,17 +6,13 @@
 use super::*;
 
 #[test]
-fn ordinary_preserves_earlier_declared_and_effectful_owners() {
+fn ordinary_consolidates_declared_interfaces_and_preserves_effectful_bypass() {
     let c = identity(Type::Field);
     let (_, row) = public(&c, "identity");
-    assert_eq!(row["body_owner"], "algebra.membership");
-    assert!(
-        !row["attempts"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .any(|a| a["route"] == "algebra.ordinary")
-    );
+    assert_eq!(row["body_owner"], "algebra.ordinary");
+    let attempts = row["attempts"].as_array().unwrap();
+    assert_eq!(attempts.len(), 1);
+    assert_eq!(attempts[0]["route"], "algebra.ordinary");
     let mut c = identity(Type::OpaqueBytes);
     c.stateful_circuits[0].return_value = StateReturn::Effectful {
         body: crate::ir::ReturnPlan::Value {

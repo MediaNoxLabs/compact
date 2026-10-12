@@ -89,7 +89,7 @@ fn included(c: &Contract, name: &str, label: &str) {
         .filter(|r| r["circuit"] == name && r["phase"] == "public_emission" && r["helper"] == false)
         .collect();
     assert_eq!(rows.len(), 1, "{label}");
-    assert_eq!(rows[0]["body_owner"], "algebra.membership", "{label}");
+    assert_eq!(rows[0]["body_owner"], "algebra.ordinary", "{label}");
     let attempts: Vec<_> = rows[0]["attempts"]
         .as_array()
         .unwrap()
@@ -99,7 +99,7 @@ fn included(c: &Contract, name: &str, label: &str) {
     assert_eq!(
         attempts
             .iter()
-            .filter(|&&r| r == "algebra.membership")
+            .filter(|&&r| r == "algebra.ordinary")
             .count(),
         1
     );
@@ -129,7 +129,7 @@ fn capture(c: &Contract, name: &str, label: &str, generated: &str) {
         serde_json::to_vec_pretty(&json!({
             "index": index, "label": label, "root": name,
             "old_whole_phase_reset_accepted": true, "checked_plan_succeeded": true,
-            "native_render_succeeded": true, "body_owner": "algebra.membership",
+            "native_render_succeeded": true, "body_owner": "algebra.ordinary",
             "qualification": "IR/render evidence only; compilation and proof are separate"
         }))
         .unwrap(),

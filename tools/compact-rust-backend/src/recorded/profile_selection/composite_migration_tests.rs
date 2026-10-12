@@ -106,8 +106,9 @@ impl<'a> Context<'a> {
     fn domain(&self, c: &StatefulCircuit) -> Result<Option<TypedPlan>, RenderError> {
         checked_composite_domain(c, &self.ledger, &self.witnesses, &self.pure, &self.circuits)
     }
-    fn selected(&self, c: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {
-        select(
+    // Historical staged-priority oracle; production emission is checked separately.
+    fn legacy_selected(&self, c: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {
+        legacy_select(
             c,
             &self.ledger,
             &self.witnesses,

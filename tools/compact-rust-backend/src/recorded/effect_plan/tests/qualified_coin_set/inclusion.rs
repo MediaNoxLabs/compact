@@ -31,7 +31,7 @@ fn included(c: &Contract, name: &str, label: &str) {
         .collect::<Vec<_>>();
     assert_eq!(rows.len(), 1);
     assert_eq!(
-        rows[0]["body_owner"], "algebra.membership",
+        rows[0]["body_owner"], "algebra.ordinary",
         "{label}: whole old control now routes through independently checked composition"
     );
     let capability = output
@@ -56,7 +56,7 @@ fn included(c: &Contract, name: &str, label: &str) {
         std::fs::write(directory.join("lib.rs"), output.source).unwrap();
         std::fs::write(directory.join("case.json"), serde_json::to_vec_pretty(&serde_json::json!({
             "label": label, "root": name, "whole_old_accepted": true, "checked_candidate": true,
-            "actual_owner": "algebra.membership", "claim": "finite qualified Set subdomain only; no retirement or proof claim"
+            "actual_owner": "algebra.ordinary", "claim": "finite qualified Set subdomain only; no retirement or proof claim"
         })).unwrap()).unwrap();
     }
 }
@@ -143,14 +143,7 @@ fn full_frontend_nested_sources_use_first_eligible_algebra() {
                 })
                 .collect::<Vec<_>>();
             assert_eq!(rows.len(), 1);
-            // The qualified coin contains Uint128; its public Unit interface
-            // now reaches the earlier checked Unit adapter.
-            let expected = if *name == "insert_selected" {
-                "algebra.unit-composition"
-            } else {
-                "algebra.membership"
-            };
-            assert_eq!(rows[0]["body_owner"], expected, "{name}");
+            assert_eq!(rows[0]["body_owner"], "algebra.ordinary", "{name}");
         }
     }
 }

@@ -115,10 +115,7 @@ fn included(c: &Contract, name: &str, label: &str) -> Json {
         )
     };
     assert_eq!(actual.as_array().unwrap().len(), 1, "{label}");
-    assert_eq!(
-        actual[0]["body_owner"], "algebra.guarded-deposit",
-        "{label}"
-    );
+    assert_eq!(actual[0]["body_owner"], "algebra.ordinary", "{label}");
     capture(c, name, label, &output.source, &actual[0]);
     actual[0]["body_owner"].clone()
 }
@@ -165,10 +162,7 @@ fn returned_mut<'a>(c: &'a mut Contract, name: &str) -> &'a mut Expr {
 
 #[test]
 fn both_retained_sources_use_checked_guarded_deposit_owner() {
-    for (full, owner) in [
-        (true, "algebra.guarded-deposit"),
-        (false, "algebra.guarded-deposit"),
-    ] {
+    for (full, owner) in [(true, "algebra.ordinary"), (false, "algebra.ordinary")] {
         assert_eq!(
             included(&source(full), "set_topic", &format!("baseline-full-{full}")),
             owner

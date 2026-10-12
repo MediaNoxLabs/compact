@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // The direct VectorFoldCall child is a native-valid recording refusal; fixed Field
 // commitments themselves are supported. Do not replace this with malformed types.
+// Direct legacy_selected traces below preserve the staged predecessor priority laws.
+// Current public/helper emission assertions, where present, use algebra.ordinary.
 use super::*;
 use crate::recorded::admission_probe::trace;
 fn trace(contract: &Contract) -> serde_json::Value {
@@ -10,7 +12,7 @@ fn trace(contract: &Contract) -> serde_json::Value {
     let context = Context::new(contract);
     let (_, rows) = trace::capture_json(|| {
         let scope = trace::Scope::begin(root, false);
-        let result = context.selected(root).unwrap();
+        let result = context.legacy_selected(root).unwrap();
         scope.finish(&Ok::<_, RenderError>(
             crate::recorded::RecordingOutcome::Supported(()),
         ));

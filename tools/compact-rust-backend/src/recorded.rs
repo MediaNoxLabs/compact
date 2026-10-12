@@ -19,6 +19,7 @@
 // Pass-through observations compile out of production. The expression is
 // evaluated once in its original scope, preserving `?`, eager/lazy selection,
 // and validation order. Hooks never choose a plan.
+#[cfg(test)]
 macro_rules! record_option {
     ($route:literal, $value:expr) => {{
         let value = $value;
@@ -56,6 +57,7 @@ mod item;
 mod opaque_map_migration_tests;
 #[cfg(test)]
 mod opaque_set_migration_tests;
+#[cfg(test)]
 mod profile_attempt;
 mod profile_selection;
 #[cfg(test)]

@@ -72,15 +72,8 @@ fn probe(source: &str, entry: &str, label: &str, require_old: bool) {
         })
         .collect::<Vec<_>>();
     assert_eq!(rows.len(), 1, "{label}: one actual public emission");
-    // Existing membership priority covers one Enum formal and Boolean-only
-    // roots. A String+Enum signature and the two now-composing Map roots keep
-    // their existing unit-composition owner; candidate success is independent.
-    let expected_owner = if label.starts_with("retained-guard-") || !require_old {
-        "algebra.membership"
-    } else {
-        "algebra.unit-composition"
-    };
-    assert_eq!(rows[0]["body_owner"], expected_owner);
+    // Every admitted ordinary interface uses the common checked attempt.
+    assert_eq!(rows[0]["body_owner"], "algebra.ordinary");
     assert_eq!(rows[0]["outcome"]["status"], "supported");
     let metadata = json!({
         "label":label,"root":entry,"internal":root.internal,

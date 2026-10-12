@@ -223,7 +223,7 @@ fn retired_audited_local_handler_yields_checked_local_and_public_effect_composit
                 row.phase == Phase::PublicEmission && !row.helper && row.circuit == "verify"
             })
             .unwrap();
-        assert_eq!(row.body_owner, Some("algebra.unit-actions"));
+        assert_eq!(row.body_owner, Some("algebra.ordinary"));
         assert!(matches!(row.outcome, Outcome::Supported));
         assert!(row.action_dispatch.is_none() && row.return_dispatch.is_none());
         assert!(rendered.capabilities.circuits[0].recorded);

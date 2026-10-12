@@ -259,7 +259,7 @@ fn assert_whole_old_and_checked(c: &Contract, root_name: &str) {
             r["circuit"] == root.name && r["phase"] == "public_emission" && r["helper"] == false
         })
         .unwrap();
-    assert_eq!(row["body_owner"], "algebra.unit-composition");
+    assert_eq!(row["body_owner"], "algebra.ordinary");
     assert!(
         !row["attempts"]
             .as_array()

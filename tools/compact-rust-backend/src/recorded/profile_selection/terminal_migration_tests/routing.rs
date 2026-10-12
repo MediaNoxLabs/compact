@@ -3,15 +3,17 @@
 // SPDX-License-Identifier: Apache-2.0
 // The direct VectorFoldCall child is a native-valid recording refusal; fixed Field
 // commitments themselves are supported. Do not replace this with malformed types.
+// Direct legacy_selected traces below preserve the staged predecessor priority laws.
+// Current public/helper emission assertions, where present, use algebra.ordinary.
 use super::*;
 use crate::recorded::admission_probe::trace;
 
-fn selected_trace(contract: &Contract) -> (ProfileSelection, serde_json::Value) {
+fn legacy_selected_trace(contract: &Contract) -> (ProfileSelection, serde_json::Value) {
     let circuit = &contract.stateful_circuits[0];
     let context = Context::new(contract);
     let (selected, rows) = trace::capture_json(|| {
         let scope = trace::Scope::begin(circuit, false);
-        let selected = context.selected(circuit).unwrap();
+        let selected = context.legacy_selected(circuit).unwrap();
         // This scope observes selector execution only, not final public capability.
         scope.finish(&Ok::<_, RenderError>(
             crate::recorded::RecordingOutcome::Supported(()),
@@ -38,7 +40,7 @@ fn migrated_owner_is_actual_once_and_stops_the_later_chain() {
     let old = context.old(circuit).unwrap();
     let checked = context.algebra(circuit).unwrap();
     assert_ne!(tokens(&old), tokens(&checked));
-    let (selected, row) = selected_trace(&contract);
+    let (selected, row) = legacy_selected_trace(&contract);
     assert_eq!(selected_tokens(selected), Some(tokens(&checked)));
     assert_eq!(row["body_owner"], "algebra.terminal-returns");
     let attempted = attempts(&row);
@@ -60,7 +62,7 @@ fn earlier_point_owner_prevents_terminal_attempt() {
         "../../../../tests/jubjub-scalar-cell-schema20-ir.json"
     ))
     .unwrap();
-    let (selected, row) = selected_trace(&contract);
+    let (selected, row) = legacy_selected_trace(&contract);
     assert!(selected.typed_result.is_some());
     assert_eq!(row["body_owner"], "algebra.jubjub-values");
     assert!(!attempts(&row).contains(&"algebra.terminal-returns"));
@@ -102,7 +104,7 @@ fn unsupported_in_domain_body_keeps_independent_later_attempts() {
             .unwrap()
             .is_none()
     );
-    let (_, row) = selected_trace(&contract);
+    let (_, row) = legacy_selected_trace(&contract);
     let attempted = attempts(&row);
     let position = |name| attempted.iter().position(|id| *id == name).unwrap();
     assert!(position("algebra.terminal-returns") < position("algebra.unit-actions"));
@@ -151,7 +153,7 @@ fn later_unit_family_still_wins_outside_declared_field_domain() {
             .unwrap()
             .is_none()
     );
-    let (selected, row) = selected_trace(&contract);
+    let (selected, row) = legacy_selected_trace(&contract);
     assert!(selected.typed_result.is_some());
     assert_eq!(row["body_owner"], "algebra.unit-actions");
     let attempted = attempts(&row);

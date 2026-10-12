@@ -99,14 +99,14 @@ fn assert_actual_owner(c: &Contract) {
             r["circuit"] == "advance" && r["phase"] == "public_emission" && r["helper"] == false
         })
         .unwrap();
-    assert_eq!(row["body_owner"], "algebra.membership");
+    assert_eq!(row["body_owner"], "algebra.ordinary");
     let attempts: Vec<_> = row["attempts"]
         .as_array()
         .unwrap()
         .iter()
         .map(|a| a["route"].as_str().unwrap())
         .collect();
-    assert_eq!(attempts[0], "algebra.membership");
+    assert_eq!(attempts[0], "algebra.ordinary");
     assert!(!attempts.iter().any(|route| route.starts_with("organizer.")));
     assert!(!attempts.contains(&"organizer.enum-advance"));
     assert!(!attempts.contains(&"organizer.witness-merkle"));

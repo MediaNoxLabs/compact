@@ -300,7 +300,7 @@ fn unchanged_point_and_effectful_routes_can_use_the_wider_root_domain() {
         stateful_circuits: vec![effectful],
     };
     for (contract, name, owner) in [
-        (point, "apply", "algebra.jubjub-values"),
+        (point, "apply", "algebra.ordinary"),
         (effectful, "echo", "effectful.checked-migration"),
     ] {
         let (output, rows) = crate::recorded::admission_probe::trace::capture_json(|| {
@@ -355,6 +355,6 @@ fn fresh_full_source_opaque_exports_have_actual_composite_ownership() {
             })
             .collect::<Vec<_>>();
         assert_eq!(rows.len(), 1, "{name}");
-        assert_eq!(rows[0]["body_owner"], "algebra.composite-values", "{name}");
+        assert_eq!(rows[0]["body_owner"], "algebra.ordinary", "{name}");
     }
 }

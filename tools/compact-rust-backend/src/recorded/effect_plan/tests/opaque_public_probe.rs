@@ -52,7 +52,7 @@ fn root_outcome(c: &Contract, name: &str, expected_gap: Option<&str>, label: &st
         })
         .collect::<Vec<_>>();
     assert_eq!(rows.len(), 1, "{label}");
-    assert_eq!(rows[0]["body_owner"], "algebra.membership", "{label}");
+    assert_eq!(rows[0]["body_owner"], "algebra.ordinary", "{label}");
     let capability = output
         .capabilities
         .circuits

@@ -86,9 +86,6 @@ fn genuine_wide_add_source_uses_existing_composite_ownership() {
             })
             .collect();
         assert_eq!(owners.len(), 1, "{name}");
-        assert_eq!(
-            owners[0]["body_owner"], "algebra.composite-values",
-            "{name}"
-        );
+        assert_eq!(owners[0]["body_owner"], "algebra.ordinary", "{name}");
     }
 }

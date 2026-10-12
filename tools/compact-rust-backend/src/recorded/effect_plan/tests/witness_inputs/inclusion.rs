@@ -33,7 +33,7 @@ fn old_first(c: &Contract, name: &str, label: &str) {
         .filter(|r| r["circuit"] == name && r["phase"] == "public_emission" && r["helper"] == false)
         .collect::<Vec<_>>();
     assert_eq!(rows.len(), 1);
-    assert_eq!(rows[0]["body_owner"], "algebra.membership");
+    assert_eq!(rows[0]["body_owner"], "algebra.ordinary");
     if let Some(destination) = std::env::var_os("COMPACT_WITNESS_INPUT_PROBE_OUTPUT") {
         let base = std::path::PathBuf::from(destination);
         std::fs::create_dir_all(&base).unwrap();
@@ -144,5 +144,5 @@ fn fresh_witness_source_uses_actual_composite_ownership() {
         })
         .collect::<Vec<_>>();
     assert_eq!(rows.len(), 1);
-    assert_eq!(rows[0]["body_owner"], "algebra.composite-values");
+    assert_eq!(rows[0]["body_owner"], "algebra.ordinary");
 }

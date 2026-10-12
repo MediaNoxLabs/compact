@@ -53,22 +53,7 @@ fn inspect(source: &'static str, roots: &'static [&'static str], old_required: b
                     })
                     .collect();
                 assert_eq!(rows.len(), 1);
-                let (owner, status) = if old_required {
-                    (
-                        match *name {
-                            "remove_service" | "drop" | "remove" => "algebra.membership",
-                            _ => "algebra.unit-composition",
-                        },
-                        "supported",
-                    )
-                } else if *name == "direct_member" {
-                    // The one-string Boolean interface owns direct membership.
-                    ("algebra.membership", "supported")
-                } else if *name == "direct_lookup" {
-                    ("algebra.terminal-returns", "supported")
-                } else {
-                    ("algebra.composite-values", "supported")
-                };
+                let (owner, status) = ("algebra.ordinary", "supported");
                 assert_eq!(rows[0]["body_owner"], owner, "{name}: actual owner");
                 assert_eq!(
                     rows[0]["outcome"]["status"], status,
@@ -178,6 +163,6 @@ fn calibrated_nested_map_lookup_has_terminal_recording_owner() {
         })
         .collect();
     assert_eq!(rows.len(), 1);
-    assert_eq!(rows[0]["body_owner"], "algebra.terminal-returns");
+    assert_eq!(rows[0]["body_owner"], "algebra.ordinary");
     assert_eq!(rows[0]["outcome"]["status"], "supported");
 }

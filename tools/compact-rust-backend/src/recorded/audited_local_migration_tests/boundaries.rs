@@ -12,23 +12,23 @@ fn local_values_and_root_products_preserve_canonical_domains_and_source_exclusio
         (
             "opaque_bytes",
             json!({"kind":"opaque_bytes"}),
-            "algebra.unit-composition",
+            "algebra.ordinary",
         ),
-        ("unit", json!({"kind":"unit"}), "algebra.unit-composition"),
+        ("unit", json!({"kind":"unit"}), "algebra.ordinary"),
         (
             "tuple11",
             json!({"kind":"tuple","elements":vec![json!({"kind":"field"});11]}),
-            "algebra.unit-composition",
+            "algebra.ordinary",
         ),
         (
             "wide129",
             json!({"kind":"unsigned","max":"680564733841876926926749214863536422911"}),
-            "algebra.unit-composition",
+            "algebra.ordinary",
         ),
         (
             "named_product",
             json!({"kind":"struct","name":"LocalProduct","fields":[{"name":"items","ty":{"kind":"vector","length":2,"element":{"kind":"field"}}},{"name":"label","ty":{"kind":"opaque_string"}}]}),
-            "algebra.membership",
+            "algebra.ordinary",
         ),
     ] {
         let mut c = fixture();
@@ -126,7 +126,7 @@ fn old_audit_refusals_are_separate_from_checked_expansion_and_real_fold_gaps() {
         Some(RecordingOutcome::Unsupported(_))
     ));
     // A checked expansion, never counted as a complete old-positive inclusion.
-    let methods = calls(&current(&mapped, VERIFY, "algebra.unit-composition"));
+    let methods = calls(&current(&mapped, VERIFY, "algebra.ordinary"));
     assert_eq!(
         methods
             .iter()
@@ -184,7 +184,7 @@ fn checked_read_only_sibling_internal_policy_and_optional_tail_boundaries() {
     current(
         &sibling,
         "verifySchnorrJubjubDigestSignature",
-        "algebra.unit-composition",
+        "algebra.ordinary",
     );
     let mut internal = fixture();
     target_mut(&mut internal, VERIFY).internal = true;
@@ -210,13 +210,9 @@ fn checked_read_only_sibling_internal_policy_and_optional_tail_boundaries() {
     }
     assert!(old(&different_tail, ACCEPT).unwrap().is_none());
     assert!(
-        calls(&current(
-            &different_tail,
-            ACCEPT,
-            "algebra.unit-composition"
-        ))
-        .iter()
-        .any(|n| n == "record_increment")
+        calls(&current(&different_tail, ACCEPT, "algebra.ordinary"))
+            .iter()
+            .any(|n| n == "record_increment")
     );
     // Reuse the separately executed ordinary/recursive worker gates: this slice
     // changes no depth/work/layout limit and needs no new resource multiplier.

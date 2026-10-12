@@ -51,8 +51,9 @@ impl<'a> Context<'a> {
     fn domain(&self, c: &StatefulCircuit) -> Result<Option<TypedPlan>, RenderError> {
         checked_composite_domain(c, &self.ledger, &self.witnesses, &self.pure, &self.circuits)
     }
-    fn selected(&self, c: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {
-        select(
+    // Historical staged-priority oracle; production emission is checked separately.
+    fn legacy_selected(&self, c: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {
+        legacy_select(
             c,
             &self.ledger,
             &self.witnesses,
@@ -62,11 +63,11 @@ impl<'a> Context<'a> {
         )
     }
 }
-fn selected_trace(c: &Contract, r: &StatefulCircuit) -> serde_json::Value {
+fn legacy_selected_trace(c: &Contract, r: &StatefulCircuit) -> serde_json::Value {
     let maps = Context::new(c);
     let (_, rows) = trace::capture_json(|| {
         let scope = trace::Scope::begin(r, false);
-        let result = maps.selected(r).unwrap();
+        let result = maps.legacy_selected(r).unwrap();
         // This captures selector ownership only; public_owner checks actual emission.
         scope.finish(&Ok::<_, RenderError>(
             crate::recorded::RecordingOutcome::Supported(()),
@@ -102,12 +103,12 @@ fn public_owner(c: &Contract, name: &str) {
         .filter(|r| r["circuit"] == name && r["phase"] == "public_emission" && r["helper"] == false)
         .collect::<Vec<_>>();
     assert_eq!(rows.len(), 1);
-    assert_eq!(rows[0]["body_owner"], "algebra.composite-values");
+    assert_eq!(rows[0]["body_owner"], "algebra.ordinary");
     assert_eq!(rows[0]["outcome"]["status"], "supported");
     assert_eq!(
         attempts(rows[0])
             .iter()
-            .filter(|&&s| s == "algebra.composite-values")
+            .filter(|&&s| s == "algebra.ordinary")
             .count(),
         1
     );
@@ -120,7 +121,7 @@ fn complete_old_cash_out_keeps_actual_composite_owner_without_reset_attempt() {
     assert!(maps.old(root(&c)).is_some(), "whole frozen oracle first");
     assert!(maps.domain(root(&c)).unwrap().is_some());
     public_owner(&c, "cash_out");
-    let row = selected_trace(&c, root(&c));
+    let row = legacy_selected_trace(&c, root(&c));
     let a = attempts(&row);
     assert!(!a.contains(&"selector.reset-payout"));
     assert!(!a.contains(&"selector.funded-mint"));
@@ -140,7 +141,7 @@ fn generic_composition_does_not_require_old_reset_or_payout_effect_counts() {
     assert!(maps.old(root(&c)).is_none());
     assert!(maps.domain(root(&c)).unwrap().is_some());
     public_owner(&c, "cash_out");
-    assert!(!attempts(&selected_trace(&c, root(&c))).contains(&"selector.reset-payout"));
+    assert!(!attempts(&legacy_selected_trace(&c, root(&c))).contains(&"selector.reset-payout"));
 }
 
 #[test]
@@ -167,7 +168,7 @@ fn unsupported_action_keeps_fallback_order_and_first_action_diagnostic() {
     let maps = Context::new(&c);
     assert!(maps.old(root(&c)).is_none());
     assert!(maps.domain(root(&c)).unwrap().is_none());
-    let row = selected_trace(&c, root(&c));
+    let row = legacy_selected_trace(&c, root(&c));
     let a = attempts(&row);
     let at = a
         .iter()

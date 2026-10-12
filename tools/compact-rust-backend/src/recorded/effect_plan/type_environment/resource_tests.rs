@@ -233,10 +233,10 @@ fn owned_pipeline_boundary() {
             .collect::<Vec<_>>();
         assert_eq!(roots.len(), 1);
         if accepted {
-            assert_eq!(roots[0]["body_owner"], "algebra.unit-actions");
+            assert_eq!(roots[0]["body_owner"], "algebra.ordinary");
             assert_eq!(roots[0]["outcome"]["status"], "supported");
         } else {
-            assert_ne!(roots[0]["body_owner"], "algebra.unit-actions");
+            assert_ne!(roots[0]["body_owner"], "algebra.ordinary");
             eprintln!("over-limit public admission: {}", roots[0]);
         }
         let capabilities = rendered

@@ -3,12 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // The direct VectorFoldCall child is a native-valid recording refusal; fixed Field
 // commitments themselves are supported. Do not replace this with malformed types.
+// Direct legacy_selected traces below preserve the staged predecessor priority laws.
+// Current public/helper emission assertions, where present, use algebra.ordinary.
 use super::*;
 
 #[test]
 fn deposit_owner_keeps_priority_and_stops_later_families() {
     let c = source();
-    let row = selected_trace(&c, root(&c));
+    let row = legacy_selected_trace(&c, root(&c));
     assert_eq!(row["body_owner"], "algebra.guarded-deposit");
     let a = attempts(&row);
     assert_eq!(
@@ -43,7 +45,7 @@ fn earlier_composite_and_receive_owners_prevent_deposit_attempts() {
     ] {
         let c: Contract = serde_json::from_str(json).unwrap();
         let r = c.stateful_circuits.iter().find(|r| r.name == name).unwrap();
-        let row = selected_trace(&c, r);
+        let row = legacy_selected_trace(&c, r);
         assert_eq!(row["body_owner"], owner);
         assert!(!attempts(&row).contains(&"algebra.guarded-deposit"));
     }
@@ -73,7 +75,7 @@ fn unsupported_body_falls_through_without_hiding_first_action_diagnostic() {
     let maps = Context::new(&c);
     assert!(maps.old(root(&c)).is_none());
     assert!(maps.domain(root(&c)).unwrap().is_none());
-    let row = selected_trace(&c, root(&c));
+    let row = legacy_selected_trace(&c, root(&c));
     let a = attempts(&row);
     let at = a
         .iter()

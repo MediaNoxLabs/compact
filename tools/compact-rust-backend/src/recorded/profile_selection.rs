@@ -13,11 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Ordered checked-interface admission for recorded circuits.
+//! One checked ordinary admission; the old staged selector is a test-only oracle.
 //!
-//! Checked attempts stop at the first admitted plan. Rejections
-//! from checked profiles are retained for later legacy diagnostic refinement;
-//! a rejection does not prevent an independent later profile from admitting.
+//! A validated plan owns success. Unsupported explicitly retains the existing
+//! legacy compatibility renderer; Invalid is fatal. Diagnostic projection below
+//! preserves prior error precedence without authorizing a different plan.
 //!
 //! Effectful-return admission is performed earlier by the caller, before helper
 //! routing and parameter validation. Keep that ordering outside this selector.
@@ -29,15 +29,21 @@ use crate::ir::{LedgerField, PureCircuit, StatefulCircuit, WitnessDeclaration};
 
 use super::RecordingGap;
 use super::effect_plan;
+#[cfg(test)]
 use super::profile_attempt::ProfileAttempt;
 use super::typed_plan;
 use super::typed_plan::TypedPlan;
 
+#[cfg(test)]
 #[path = "profile_selection/ordinary_domain.rs"]
 mod ordinary_domain;
 #[cfg(test)]
 #[path = "profile_selection/ordinary_migration_tests.rs"]
 mod ordinary_migration_tests;
+#[cfg(test)]
+#[path = "profile_selection/single_attempt_tests.rs"]
+mod single_attempt_tests;
+#[cfg(test)]
 #[path = "profile_selection/unit_domain.rs"]
 mod unit_domain;
 
@@ -135,6 +141,7 @@ pub(super) struct ProfileSelection {
 
 /// Membership interfaces enter at the old first typed priority, including helpers.
 /// Independent effect composition replaces whole-body and operation-count admission.
+#[cfg(test)]
 fn checked_membership_domain(
     circuit: &StatefulCircuit,
     ledger: &HashMap<&str, &LedgerField>,
@@ -184,6 +191,7 @@ fn checked_membership_domain(
 /// Roll out the declared point result domain at its existing selector priority.
 /// Shape evidence never authorizes this route. Unsupported can try independent
 /// later families; a checked-plan invariant failure aborts before any fallback.
+#[cfg(test)]
 fn checked_jubjub_domain(
     circuit: &StatefulCircuit,
     ledger: &HashMap<&str, &LedgerField>,
@@ -201,6 +209,7 @@ fn checked_jubjub_domain(
 
 /// Ordinary Field interfaces are the migration boundary; body support follows
 /// checked operations. No one-slot or syntactic read/write evidence is required.
+#[cfg(test)]
 fn checked_terminal_domain(
     circuit: &StatefulCircuit,
     ledger: &HashMap<&str, &LedgerField>,
@@ -234,6 +243,7 @@ fn checked_terminal_domain(
 
 /// Ordinary Unit interfaces enter at the former unit-action priority. Body
 /// support is compositional: no helper/write counts or flat Cell paths authorize it.
+#[cfg(test)]
 fn checked_unit_domain(
     circuit: &StatefulCircuit,
     ledger: &HashMap<&str, &LedgerField>,
@@ -261,6 +271,7 @@ fn checked_unit_domain(
 
 /// Bytes32 expression interfaces enter at the former context-query priority.
 /// Observation counts and whole-body shape audits do not authorize composition.
+#[cfg(test)]
 fn checked_context_domain(
     circuit: &StatefulCircuit,
     ledger: &HashMap<&str, &LedgerField>,
@@ -281,6 +292,7 @@ fn checked_context_domain(
 }
 
 /// Kernel interfaces roll out here; actual effects follow checked composition.
+#[cfg(test)]
 fn checked_kernel_domain(
     circuit: &StatefulCircuit,
     ledger: &HashMap<&str, &LedgerField>,
@@ -312,6 +324,7 @@ fn checked_kernel_domain(
 
 /// Struct expression interfaces compose at the old composite selector priority.
 /// Internal helpers retain eligibility; body effects, not evidence counts, decide.
+#[cfg(test)]
 fn checked_composite_attempt(
     circuit: &StatefulCircuit,
     ledger: &HashMap<&str, &LedgerField>,
@@ -331,6 +344,7 @@ fn checked_composite_attempt(
 }
 
 /// Retain unsupported diagnostics without treating them as global admission errors.
+#[cfg(test)]
 fn resolve_checked_attempt(
     result: Result<TypedPlan, effect_plan::PlanError>,
 ) -> Result<ProfileAttempt<TypedPlan>, RenderError> {
@@ -358,6 +372,7 @@ fn checked_composite_domain(
 
 /// Receive interfaces enter at the old receive priority, including internal helpers.
 /// Typed composition decides body support without wrapper or intent-count shape gates.
+#[cfg(test)]
 fn checked_receive_domain(
     circuit: &StatefulCircuit,
     ledger: &HashMap<&str, &LedgerField>,
@@ -380,6 +395,7 @@ fn checked_receive_domain(
 
 /// Voting interfaces enter at the old voting priority, including internal helpers.
 /// Typed composition decides body support without operation or witness-count gates.
+#[cfg(test)]
 fn checked_voting_domain(
     circuit: &StatefulCircuit,
     ledger: &HashMap<&str, &LedgerField>,
@@ -404,6 +420,7 @@ fn checked_voting_domain(
 /// Guarded deposit interfaces enter at their existing selector priority.
 /// The beneficiary is any declared one-field Bytes<32> product. Typed effects,
 /// rather than a receive/merge prefix or static evidence counts, admit the body.
+#[cfg(test)]
 fn checked_guarded_deposit_domain(
     circuit: &StatefulCircuit,
     ledger: &HashMap<&str, &LedgerField>,
@@ -428,6 +445,7 @@ fn checked_guarded_deposit_domain(
     ))
 }
 
+#[cfg(test)]
 fn resolve_checked_plan(
     result: Result<TypedPlan, effect_plan::PlanError>,
 ) -> Result<Option<TypedPlan>, RenderError> {
@@ -443,6 +461,7 @@ fn resolve_checked_plan(
 
 /// External Unit carrier interfaces enter at the former Zswap priority.
 /// Typed effects decide body support; intent/query counts do not grant admission.
+#[cfg(test)]
 fn checked_zswap_domain(
     circuit: &StatefulCircuit,
     ledger: &HashMap<&str, &LedgerField>,
@@ -476,7 +495,8 @@ fn checked_zswap_domain(
     ))
 }
 
-pub(super) fn select(
+#[cfg(test)]
+pub(super) fn legacy_select(
     circuit: &StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,
     witnesses: &HashMap<&str, &WitnessDeclaration>,
@@ -656,4 +676,80 @@ pub(super) fn select(
         shielded_send_rejection,
         unit_composition_rejection,
     })
+}
+
+/// Ordinary support has one authority. Effectful plans were already checked by
+/// the caller; its independent StartFunding compatibility path is unchanged.
+pub(super) fn select(
+    circuit: &StatefulCircuit,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure_circuits: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+    effectful_plan: Option<TypedPlan>,
+) -> Result<ProfileSelection, RenderError> {
+    if let Some(plan) = effectful_plan {
+        return Ok(admitted(plan));
+    }
+    match effect_plan::lower_with_calls_diagnostic(
+        circuit,
+        ledger_fields,
+        witnesses,
+        pure_circuits,
+        circuits,
+    ) {
+        Ok(plan) => {
+            #[cfg(test)]
+            super::admission_probe::trace::option("algebra.ordinary", true);
+            Ok(admitted(plan))
+        }
+        Err(effect_plan::DiagnosticPlanError::Unsupported(rejection)) => {
+            #[cfg(test)]
+            super::admission_probe::trace::option("algebra.ordinary", false);
+            Ok(compatibility_rejection(circuit, rejection))
+        }
+        Err(effect_plan::DiagnosticPlanError::Invalid(gap)) => {
+            Err(RenderError::RecordingPlanInvariant {
+                path: gap.path,
+                detail: gap.detail,
+            })
+        }
+    }
+}
+
+fn admitted(plan: TypedPlan) -> ProfileSelection {
+    ProfileSelection {
+        organizer_steps: Some(plan.steps),
+        typed_result: Some(plan.result),
+        shielded_send_rejection: None,
+        unit_composition_rejection: None,
+    }
+}
+
+/// Preserve the existing diagnostic consumers while legacy support is still
+/// explicit in render_recorded_item. These predicates cannot authorize output.
+fn compatibility_rejection(
+    circuit: &StatefulCircuit,
+    rejection: effect_plan::LoweringRejection,
+) -> ProfileSelection {
+    use crate::ir::{StateReturn, Type};
+    let mut selection = ProfileSelection {
+        organizer_steps: None,
+        typed_result: None,
+        shielded_send_rejection: None,
+        unit_composition_rejection: None,
+    };
+    if circuit.result == Type::Unit && circuit.return_value == StateReturn::Unit {
+        // Keep every typed provenance field: action ordinal, phase, precision,
+        // concrete node, resource cause and exact component-boundary path.
+        selection.unit_composition_rejection = Some(rejection);
+    } else if matches!(circuit.result, Type::Struct { .. })
+        && matches!(circuit.return_value, StateReturn::Expression { .. })
+        && typed_plan::shielded_send_result(&circuit.result)
+    {
+        // Exactly the former composite-interface diagnostic projection. This
+        // consumes only the public gap; its later use is still refusal-only.
+        selection.shielded_send_rejection = Some(rejection.into_gap());
+    }
+    selection
 }

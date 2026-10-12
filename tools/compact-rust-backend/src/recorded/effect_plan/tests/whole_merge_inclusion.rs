@@ -87,7 +87,7 @@ fn included(c: &Contract, name: &str, label: &str) {
         });
         assert!(item.unwrap().is_supported(), "{label}");
         assert_eq!(helper_rows.as_array().unwrap().len(), 1);
-        assert_eq!(helper_rows[0]["body_owner"], "algebra.composite-values");
+        assert_eq!(helper_rows[0]["body_owner"], "algebra.ordinary");
         assert_eq!(helper_rows[0]["phase"], "helper_planning");
         assert_eq!(helper_rows[0]["helper"], true);
     } else {
@@ -107,7 +107,7 @@ fn included(c: &Contract, name: &str, label: &str) {
             })
             .collect();
         assert_eq!(rows.len(), 1, "{label}");
-        assert_eq!(rows[0]["body_owner"], "algebra.composite-values", "{label}");
+        assert_eq!(rows[0]["body_owner"], "algebra.ordinary", "{label}");
         let attempts: Vec<_> = rows[0]["attempts"]
             .as_array()
             .unwrap()
@@ -117,7 +117,7 @@ fn included(c: &Contract, name: &str, label: &str) {
         assert_eq!(
             attempts
                 .iter()
-                .filter(|&&r| r == "algebra.composite-values")
+                .filter(|&&r| r == "algebra.ordinary")
                 .count(),
             1
         );
@@ -148,7 +148,7 @@ fn capture(c: &Contract, name: &str, label: &str, generated: &str) {
         serde_json::to_vec_pretty(&json!({
             "index": index, "label": label, "root": name,
             "old_whole_merge_accepted": true, "checked_plan_succeeded": true,
-            "native_render_succeeded": true, "body_owner": "algebra.composite-values",
+            "native_render_succeeded": true, "body_owner": "algebra.ordinary",
             "qualification": "IR/render evidence only; compilation and proof are separate"
         }))
         .unwrap(),

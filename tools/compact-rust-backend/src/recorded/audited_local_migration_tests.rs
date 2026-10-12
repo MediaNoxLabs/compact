@@ -81,7 +81,7 @@ fn current(c: &Contract, name: &str, expected_owner: &str) -> typed_plan::TypedP
     checked(c, name).unwrap()
 }
 fn included(c: &Contract, name: &str) -> typed_plan::TypedPlan {
-    included_as(c, name, "algebra.unit-composition")
+    included_as(c, name, "algebra.ordinary")
 }
 fn included_as(c: &Contract, name: &str, expected_owner: &str) -> typed_plan::TypedPlan {
     assert!(

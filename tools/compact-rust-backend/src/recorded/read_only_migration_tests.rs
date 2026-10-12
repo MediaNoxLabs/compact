@@ -83,7 +83,7 @@ fn current(c: &Contract, name: &str) -> typed_plan::TypedPlan {
         .iter()
         .find(|r| r["circuit"] == name && r["phase"] == "public_emission" && r["helper"] == false)
         .unwrap();
-    assert_eq!(row["body_owner"], "algebra.unit-composition");
+    assert_eq!(row["body_owner"], "algebra.ordinary");
     assert!(
         !row["attempts"]
             .as_array()

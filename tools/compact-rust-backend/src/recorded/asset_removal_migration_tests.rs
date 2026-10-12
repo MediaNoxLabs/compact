@@ -172,7 +172,7 @@ fn assert_current(c: &Contract) -> String {
         .iter()
         .find(|r| r["circuit"] == ROOT && r["phase"] == "public_emission" && r["helper"] == false)
         .unwrap();
-    assert_eq!(row["body_owner"], "algebra.membership");
+    assert_eq!(row["body_owner"], "algebra.ordinary");
     let guards = row["guards"].as_array().unwrap();
     assert!(!guards.iter().any(|g| matches!(
         g["route"].as_str(),

@@ -111,7 +111,7 @@ fn checked(c: &Contract) -> effect_plan::CheckedPlan {
 }
 
 #[test]
-fn complete_old_unit_root_moves_once_at_the_same_priority() {
+fn complete_old_unit_root_uses_one_ordinary_attempt() {
     let c = subject();
     let old: ProfileAttempt<TypedPlan, typed_plan::CompositionRejection> =
         typed_plan::lower_unit_composition_checked(
@@ -143,7 +143,7 @@ fn complete_old_unit_root_moves_once_at_the_same_priority() {
         })
         .collect();
     assert_eq!(public.len(), 1);
-    assert_eq!(public[0]["body_owner"], "algebra.unit-composition");
+    assert_eq!(public[0]["body_owner"], "algebra.ordinary");
     let routes: Vec<_> = public[0]["attempts"]
         .as_array()
         .unwrap()
@@ -151,24 +151,12 @@ fn complete_old_unit_root_moves_once_at_the_same_priority() {
         .map(|a| a["route"].as_str().unwrap())
         .collect();
     assert_eq!(
-        routes
-            .iter()
-            .filter(|&&r| r == "algebra.unit-composition")
-            .count(),
+        routes.iter().filter(|&&r| r == "algebra.ordinary").count(),
         1
     );
     assert!(!routes.contains(&"selector.unit-composition"));
     assert!(!routes.contains(&"algebra.zswap"));
-    assert!(
-        routes
-            .iter()
-            .position(|&r| r == "algebra.unit-actions")
-            .unwrap()
-            < routes
-                .iter()
-                .position(|&r| r == "algebra.unit-composition")
-                .unwrap()
-    );
+    assert_eq!(routes, ["algebra.ordinary"]);
 }
 
 #[test]
@@ -401,7 +389,7 @@ fn unsupported_refines_same_action_and_invalid_remains_fatal() {
 }
 
 #[test]
-fn argument_observations_and_earlier_owner_priority_are_preserved() {
+fn argument_observations_survive_single_ordinary_admission() {
     let mut c = subject();
     c.stateful_circuits[1].parameters = vec![Parameter {
         name: "n".into(),
@@ -427,7 +415,7 @@ fn argument_observations_and_earlier_owner_priority_are_preserved() {
         .iter()
         .find(|r| r["circuit"] == "root" && r["phase"] == "public_emission" && r["helper"] == false)
         .unwrap();
-    assert_eq!(root["body_owner"], "algebra.membership");
+    assert_eq!(root["body_owner"], "algebra.ordinary");
     assert!(
         !root["attempts"]
             .as_array()

@@ -110,7 +110,7 @@ fn assert_current(c: &Contract) {
                 r["circuit"] == name && r["phase"] == "public_emission" && r["helper"] == false
             })
             .unwrap();
-        assert_eq!(row["body_owner"], "algebra.unit-composition", "{name}");
+        assert_eq!(row["body_owner"], "algebra.ordinary", "{name}");
         let attempts = row["attempts"].as_array().unwrap();
         assert!(
             !attempts

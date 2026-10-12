@@ -69,7 +69,7 @@ fn complete_old_empty_guard_consumer_moves_to_checked_execution() {
                 && r["helper"] == false
         })
         .unwrap();
-    assert_eq!(row["body_owner"], "algebra.unit-composition");
+    assert_eq!(row["body_owner"], "algebra.ordinary");
     assert!(
         !row["attempts"]
             .as_array()

@@ -3,12 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // The direct VectorFoldCall child is a native-valid recording refusal; fixed Field
 // commitments themselves are supported. Do not replace this with malformed types.
+// Direct legacy_selected traces below preserve the staged predecessor priority laws.
+// Current public/helper emission assertions, where present, use algebra.ordinary.
 use super::*;
 
 #[test]
 fn voting_owner_runs_once_and_stops_later_profiles() {
     let c = source();
-    let row = selected_trace(&c, root(&c));
+    let row = legacy_selected_trace(&c, root(&c));
     assert_eq!(row["body_owner"], "algebra.voting-commit");
     let a = attempts(&row);
     assert_eq!(
@@ -45,7 +47,7 @@ fn earlier_organizer_composite_and_receive_owners_prevent_voting_attempts() {
             .iter()
             .find(|r| name.map_or(!r.internal, |name| r.name == name))
             .unwrap();
-        let row = selected_trace(&c, r);
+        let row = legacy_selected_trace(&c, r);
         assert_eq!(row["body_owner"], owner);
         assert!(!attempts(&row).contains(&"algebra.voting-commit"));
     }
@@ -67,7 +69,7 @@ fn unsupported_body_preserves_later_independent_attempt_order() {
         },
     }];
     assert!(Context::new(&c).domain(root(&c)).unwrap().is_none());
-    let row = selected_trace(&c, root(&c));
+    let row = legacy_selected_trace(&c, root(&c));
     let a = attempts(&row);
     let voting = a
         .iter()

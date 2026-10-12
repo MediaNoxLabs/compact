@@ -117,14 +117,14 @@ fn assert_actual(c: &Contract) {
             r["circuit"] == "add_voter" && r["phase"] == "public_emission" && r["helper"] == false
         })
         .unwrap();
-    assert_eq!(row["body_owner"], "algebra.kernel");
+    assert_eq!(row["body_owner"], "algebra.ordinary");
     let routes: Vec<_> = row["attempts"]
         .as_array()
         .unwrap()
         .iter()
         .map(|a| a["route"].as_str().unwrap())
         .collect();
-    assert_eq!(routes[0], "algebra.membership");
+    assert_eq!(routes[0], "algebra.ordinary");
     assert!(!routes.iter().any(|route| route.starts_with("organizer.")));
     assert!(!routes.contains(&"organizer.witness-merkle"));
 }

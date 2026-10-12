@@ -83,8 +83,9 @@ impl<'a> Context<'a> {
     fn old(&self, r: &StatefulCircuit) -> Option<TypedPlan> {
         typed_plan::lower(r, &self.ledger, &self.witnesses, &self.pure, &self.circuits)
     }
-    fn selected(&self, r: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {
-        select(
+    // Historical staged-priority oracle; production emission is checked separately.
+    fn legacy_selected(&self, r: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {
+        legacy_select(
             r,
             &self.ledger,
             &self.witnesses,
@@ -102,12 +103,12 @@ fn attempts(row: &serde_json::Value) -> Vec<&str> {
         .map(|a| a["route"].as_str().unwrap())
         .collect()
 }
-fn selected(c: &Contract) -> serde_json::Value {
+fn legacy_selected(c: &Contract) -> serde_json::Value {
     let r = &c.stateful_circuits[0];
     let maps = Context::new(c);
     let (_, rows) = trace::capture_json(|| {
         let scope = trace::Scope::begin(r, false);
-        let result = maps.selected(r).unwrap();
+        let result = maps.legacy_selected(r).unwrap();
         scope.finish(&Ok::<_, RenderError>(
             crate::recorded::RecordingOutcome::Supported(()),
         ));
@@ -157,10 +158,10 @@ fn declared_interfaces_admit_composition_without_old_effect_counts() {
         assert!(maps.old(r).is_none(), "new composition: {r:?}");
         assert!(maps.domain(r).unwrap().is_some(), "{r:?}");
         let row = emitted(&c, "composed");
-        assert_eq!(row["body_owner"], "algebra.membership");
+        assert_eq!(row["body_owner"], "algebra.ordinary");
         let a = attempts(&row);
-        assert_eq!(a.iter().filter(|&&x| x == "algebra.membership").count(), 1);
-        assert!(!a.contains(&"algebra.jubjub-values"));
+        assert_eq!(a.iter().filter(|&&x| x == "algebra.ordinary").count(), 1);
+        assert_eq!(a, ["algebra.ordinary"]);
         assert!(!a.contains(&"selector.membership-optional"));
     }
 }
@@ -175,10 +176,10 @@ fn genuine_string_result_and_unit_return_forms_use_membership() {
         .unwrap();
     assert!(Context::new(&c).old(r).is_some());
     assert!(Context::new(&c).domain(r).unwrap().is_some());
-    assert_eq!(emitted(&c, "take_down")["body_owner"], "algebra.membership");
+    assert_eq!(emitted(&c, "take_down")["body_owner"], "algebra.ordinary");
     let mut c = subject(vec![], Type::Unit);
     c.stateful_circuits[0].return_value = StateReturn::Unit;
-    assert_eq!(emitted(&c, "composed")["body_owner"], "algebra.membership");
+    assert_eq!(emitted(&c, "composed")["body_owner"], "algebra.ordinary");
 }
 #[test]
 fn nearby_native_interfaces_decline_without_widening_to_all_public_values() {
@@ -242,7 +243,7 @@ fn internal_helpers_keep_the_same_interface_and_checked_owner() {
         )
     });
     assert!(item.unwrap().is_supported());
-    assert_eq!(rows[0]["body_owner"], "algebra.membership");
+    assert_eq!(rows[0]["body_owner"], "algebra.ordinary");
     assert_eq!(rows[0]["helper"], true);
 }
 #[test]
@@ -251,7 +252,7 @@ fn earlier_organizer_and_effectful_admission_remain_authoritative() {
         (
             include_str!("../../../tests/welcome-organizer-schema13-ir.json"),
             None,
-            "algebra.membership",
+            "algebra.ordinary",
         ),
         (
             include_str!("../../../tests/effectful-return-schema20-ir.json"),
@@ -271,15 +272,15 @@ fn earlier_organizer_and_effectful_admission_remain_authoritative() {
         });
         let row = emitted(&c, name);
         assert_eq!(row["body_owner"], owner);
-        // The organizer was retired in #590. Its current checked membership
+        // The organizer was retired in #590. Its current ordinary
         // owner runs once; the earlier effectful route still bypasses it.
-        let expected_membership_attempts = usize::from(owner == "algebra.membership");
+        let expected_ordinary_attempts = usize::from(owner == "algebra.ordinary");
         assert_eq!(
             attempts(&row)
                 .iter()
-                .filter(|&&route| route == "algebra.membership")
+                .filter(|&&route| route == "algebra.ordinary")
                 .count(),
-            expected_membership_attempts
+            expected_ordinary_attempts
         );
         assert!(!attempts(&row).contains(&"organizer.organizer"));
     }
@@ -293,7 +294,10 @@ fn interface_decline_reaches_later_independent_unit_owner() {
             .unwrap()
             .is_none()
     );
-    let row = emitted(&c, "composed");
+    let current = emitted(&c, "composed");
+    assert_eq!(current["body_owner"], "algebra.ordinary");
+    assert_eq!(attempts(&current), ["algebra.ordinary"]);
+    let row = legacy_selected(&c);
     assert_eq!(row["body_owner"], "algebra.unit-actions");
     let a = attempts(&row);
     assert!(
@@ -330,7 +334,7 @@ fn unsupported_body_declines_and_preserves_later_attempts() {
             .unwrap()
             .is_none()
     );
-    let row = selected(&c);
+    let row = legacy_selected(&c);
     assert_ne!(row["body_owner"], "algebra.membership");
     let a = attempts(&row);
     let at = a.iter().position(|&x| x == "algebra.membership").unwrap();
@@ -347,7 +351,7 @@ fn duplicate_and_noncanonical_source_are_not_accepted_plans() {
         matches!(effect_plan::check_with_calls(r,&maps.ledger,&maps.witnesses,&maps.pure,&maps.circuits),Err(effect_plan::PlanError::Unsupported(gap)) if gap.path=="parameters[1]"&&gap.detail=="duplicate parameter")
     );
     assert!(maps.domain(r).unwrap().is_none());
-    assert_ne!(selected(&c)["body_owner"], "algebra.membership");
+    assert_ne!(legacy_selected(&c)["body_owner"], "algebra.membership");
     let c = subject(
         vec![Type::Unsigned {
             max: format!("0{}", u64::MAX),

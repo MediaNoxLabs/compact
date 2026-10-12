@@ -66,7 +66,7 @@ fn old_first(c: &Contract, label: &str) {
         })
         .collect::<Vec<_>>();
     assert_eq!(rows.len(), 1);
-    assert_eq!(rows[0]["body_owner"], "algebra.membership");
+    assert_eq!(rows[0]["body_owner"], "algebra.ordinary");
     if let Some(destination) = std::env::var_os("COMPACT_PUBLIC_PRODUCT_PROBE_OUTPUT") {
         let base = std::path::PathBuf::from(destination);
         std::fs::create_dir_all(&base).unwrap();
@@ -140,9 +140,6 @@ fn genuine_product_source_uses_existing_composite_ownership() {
             })
             .collect::<Vec<_>>();
         assert_eq!(owners.len(), 1, "{name}");
-        assert_eq!(
-            owners[0]["body_owner"], "algebra.composite-values",
-            "{name}"
-        );
+        assert_eq!(owners[0]["body_owner"], "algebra.ordinary", "{name}");
     }
 }

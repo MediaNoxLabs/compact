@@ -130,7 +130,7 @@ fn assert_current(c: &Contract) {
         .iter()
         .find(|x| x["circuit"] == ROOT && x["phase"] == "public_emission" && x["helper"] == false)
         .unwrap();
-    assert_eq!(row["body_owner"], "algebra.unit-composition");
+    assert_eq!(row["body_owner"], "algebra.ordinary");
     let attempts = row["attempts"].as_array().unwrap();
     assert!(
         !attempts

@@ -47,7 +47,7 @@ fn assert_actual(c: &Contract) {
         .iter()
         .find(|r| r["circuit"] == "root" && r["phase"] == "public_emission" && r["helper"] == false)
         .unwrap();
-    assert_eq!(root["body_owner"], "algebra.unit-composition");
+    assert_eq!(root["body_owner"], "algebra.ordinary");
     let ProfileAttempt::Admitted(plan) = attempt_contract(c).unwrap() else {
         panic!("expected checked Unit")
     };

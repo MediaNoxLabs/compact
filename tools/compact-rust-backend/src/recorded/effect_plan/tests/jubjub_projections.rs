@@ -84,13 +84,8 @@ fn inspect(source: &str, entry: &str, label: &str, require_old: bool, y_first: b
         })
         .collect::<Vec<_>>();
     assert_eq!(rows.len(), 1, "{label}: actual public emission");
-    if require_old {
-        assert_eq!(rows[0]["body_owner"], "algebra.unit-composition");
-        assert_eq!(rows[0]["outcome"]["status"], "supported");
-    } else {
-        assert_eq!(rows[0]["body_owner"], "algebra.composite-values");
-        assert_eq!(rows[0]["outcome"]["status"], "supported");
-    }
+    assert_eq!(rows[0]["body_owner"], "algebra.ordinary");
+    assert_eq!(rows[0]["outcome"]["status"], "supported");
     let metadata = json!({
         "label":label,"root":entry,"internal":root.internal,
         "source_variant":if y_first {"typed X-to-Y projection substitution in complete genuine IR"} else {"unchanged retained full source IR"},

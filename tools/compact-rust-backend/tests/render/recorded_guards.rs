@@ -626,7 +626,7 @@ fn conditional_assertion_keeps_typed_equality_and_branch_local_observations() {
     };
     **left = Expr::TransientHash {
         value: Box::new(Expr::PersistentCommit {
-            value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+            value: Box::new(super::support::unsupported_commit_input()),
             opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
         }),
     };

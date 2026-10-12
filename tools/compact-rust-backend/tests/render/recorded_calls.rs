@@ -119,11 +119,11 @@ fn recorded_field_returning_helpers_compose_once_in_each_caller() {
         source
             .matches("fn __compact_recorded_body_innerValue<")
             .count(),
-        1
+        0
     );
     assert_eq!(
         source.matches("__compact_recorded_body_innerValue").count(),
-        1
+        0
     );
     assert!(source.contains("pub fn outerA<Private"));
     assert!(source.contains("pub fn outerB<Private"));
@@ -175,14 +175,16 @@ fn recorded_field_returning_helpers_compose_once_in_each_caller() {
         source
             .matches("fn __compact_recorded_body_innerValue<")
             .count(),
-        1
+        0
     );
     assert_eq!(
         source.matches("__compact_recorded_body_innerValue").count(),
-        1
+        0
     );
-    assert!(source.contains("__compact_param_0: runtime::Field"));
-    assert!(source.contains("__compact_param_1: runtime::Field"));
+    for name in ["outerA", "outerB"] {
+        assert_scoped_witness_write(&source, name);
+        assert_eq!(recorded_function(&source, name).matches(" + ").count(), 2);
+    }
 
     // The compiler lowers `value = innerValue(1, 2) + 3` to a Field
     // action binding with an expression-nested call. Its checked scoped body
@@ -209,11 +211,11 @@ fn recorded_field_returning_helpers_compose_once_in_each_caller() {
         source
             .matches("fn __compact_recorded_body_innerValue<")
             .count(),
-        1
+        0
     );
     assert_eq!(
         source.matches("__compact_recorded_body_innerValue").count(),
-        1
+        0
     );
     assert!(source.contains("pub fn outerNested<Private"));
     assert_scoped_witness_write(&source, "outerNested");
@@ -226,13 +228,13 @@ fn recorded_field_returning_helpers_compose_once_in_each_caller() {
         nested_only
             .matches("fn __compact_recorded_body_innerValue<")
             .count(),
-        1
+        0
     );
     assert_eq!(
         nested_only
             .matches("__compact_recorded_body_innerValue")
             .count(),
-        1
+        0
     );
 
     contract.stateful_circuits[0].return_value = StateReturn::Expression {
@@ -352,12 +354,12 @@ fn nested_call_exposes_a_trace_only_when_every_step_is_supported() {
     let defaulted = render_with_capabilities(&contract).unwrap();
     assert!(defaulted.capabilities.circuits[0].recorded);
     assert!(defaulted.capabilities.circuits[0].observed_call);
-    // The unchanged commitment input domain refuses a later nested step.
+    // A native-valid unsupported VectorMap child refuses a later nested step.
     contract.stateful_circuits[0]
         .actions
         .push(StateAction::Expression {
             value: Expr::PersistentCommit {
-                value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+                value: Box::new(super::support::unsupported_commit_input()),
                 opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
             },
         });
@@ -511,7 +513,7 @@ fn pure_field_calls_preserve_unit_and_record_ordinary_hashed_returns() {
     contract.stateful_circuits[0].return_value = StateReturn::Expression {
         value: Expr::TransientHash {
             value: Box::new(Expr::PersistentCommit {
-                value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+                value: Box::new(super::support::unsupported_commit_input()),
                 opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
             }),
         },
@@ -647,9 +649,10 @@ fn typed_pair_hash_call_composes_certified_bodies_and_rejects_invalid_calls() {
             .all(|c| c.recorded && c.observed_call)
     );
     assert!(
-        rendered
+        !rendered
             .source
-            .contains("fn __compact_recorded_body_storeVector")
+            .contains("fn __compact_recorded_body_storeVector"),
+        "checked callers inline the body, so no unused definition is emitted"
     );
     assert!(rendered.source.contains("pure_circuits::hashVector("));
     let body =

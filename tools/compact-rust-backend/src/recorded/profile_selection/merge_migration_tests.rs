@@ -2,6 +2,8 @@
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
 //! Merge is subsumed by earlier composition; ordinary fallback diagnostics stay intact.
+// The direct VectorMap child is a native-valid recording refusal; fixed Field
+// commitments themselves are supported. Do not replace this with malformed types.
 use super::*;
 use crate::ir::{Contract, Expr, LocalBinding, StateAction, StateReturn, Type};
 use crate::recorded::{RecordingGapCode, admission_probe::trace};
@@ -168,7 +170,7 @@ fn composable_coin_result_does_not_require_old_merge_effect_counts() {
 fn unsupported_hash() -> Expr {
     Expr::TransientHash {
         value: Box::new(Expr::PersistentCommit {
-            value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+            value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),
             opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
         }),
     }

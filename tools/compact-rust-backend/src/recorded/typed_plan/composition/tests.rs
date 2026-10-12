@@ -239,10 +239,11 @@ fn unselected_checked_effect_is_supported_but_unsupported_effect_keeps_legacy_pr
             .find(|x| x.name == "close")
             .unwrap();
         assert!(capability.recorded && capability.observed_call);
-        // Native fixed-FAB commitments remain wider than the checked Bytes32 pair.
+        // Fixed commitments are supported. This explicit opaque-input native-IR
+        // control is frontend-excluded and retains concrete policy provenance.
         let expression = &mut circuit(&mut v, "guard")["actions"][index]["otherwise"]["value"];
         expression["left"] = json!({"kind":"hash_to_curve","value":{
-            "kind":"persistent_commit","value":{"kind":"jubjub_point_x","value":expression["left"].clone()},
+            "kind":"persistent_commit","value":{"kind":"default","ty":{"kind":"opaque_string"}},
             "opening":{"kind":"bytes_literal","bytes":vec![0u8;32]}
         }});
         let still_rejected = rejected(v.clone(), "close");
@@ -489,7 +490,7 @@ fn direct_root_call_argument_keeps_effects_and_unsupported_nested_audit_reason()
     assert!(capability.recorded && capability.observed_call);
     let binding = &mut circuit(&mut v, "close")["actions"][0]["arguments"][0]["bindings"][0];
     binding["value"] = json!({"kind":"transient_hash", "value":{
-        "kind":"persistent_commit","value":{"kind":"field_literal","value":"0"},
+        "kind":"persistent_commit","value":{"kind":"default","ty":{"kind":"opaque_string"}},
         "opening":{"kind":"bytes_literal","bytes":vec![0u8;32]}
     }});
     let still_rejected = rejected(v.clone(), "close");
@@ -504,7 +505,8 @@ fn direct_root_call_argument_keeps_effects_and_unsupported_nested_audit_reason()
         .unwrap();
     assert!(!capability.recorded && !capability.observed_call);
     let gap = capability.recording_unavailable.as_ref().unwrap();
-    // The frozen Audit stops at its enclosing hash shape. Checked lowering
+    // This opaque-input control is frontend-excluded native IR. The frozen
+    // Audit stops at its enclosing hash shape. Checked lowering
     // identifies the actual unsupported commitment inside that operand.
     assert_eq!(gap.path, format!("{}.value", still_rejected.gap.path));
     assert_eq!(gap.ir_node, "Expr::PersistentCommit");

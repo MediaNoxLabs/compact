@@ -133,7 +133,7 @@ fn interface_and_helper_boundaries_are_not_replaced_with_enum_tree_recognition()
         "kind":"if", "condition":{"kind":"boolean","value":true},
         "then":{"kind":"sequence","actions":[]},
         "otherwise":{"kind":"expression","value":{"kind":"persistent_commit",
-            "value":{"kind":"field_literal","value":"0"},
+            "value":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),
             "opening":{"kind":"bytes_literal","bytes":vec![0u8;32]}}}
     }));
     let c = contract(v);

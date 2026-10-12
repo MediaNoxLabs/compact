@@ -46,7 +46,7 @@ fn send_gap(value: Value) -> compact_rust_backend::RecordingGap {
     send.recording_unavailable.clone().unwrap()
 }
 
-fn admit_defaults_then_replace_with_unsupported_commit(mut value: Value) -> Value {
+fn admit_defaults_then_replace_with_source_rejected_opaque_commit(mut value: Value) -> Value {
     let output = rendered(value.clone());
     assert!(
         output
@@ -60,9 +60,11 @@ fn admit_defaults_then_replace_with_unsupported_commit(mut value: Value) -> Valu
         if node["kind"] == "default" && node["ty"]["kind"] == "opaque_string" {
             // The old default expression is now supported. Keep the same
             // surrounding hash and source path, with an independently
-            // unsupported commitment input policy as the negative control.
+            // opaque persistent commitment policy as the negative control.
+            // This is native-valid IR but explicitly rejected by the Compact
+            // frontend; it is not a source-valid language coverage gap.
             *node = json!({"kind":"persistent_commit",
-                "value":{"kind":"field_literal","value":"0"},
+                "value":{"kind":"default","ty":{"kind":"opaque_string"}},
                 "opening":{"kind":"bytes_literal","bytes":vec![0u8;32]}});
             return 1;
         }
@@ -98,7 +100,7 @@ fn action_gap_keeps_precedence_over_return_profile_diagnostic() {
             "value": {"kind": "transient_hash", "value": {"kind":"default", "ty":{"kind":"opaque_string"}}}
         }], "body": original
     });
-    let gap = send_gap(admit_defaults_then_replace_with_unsupported_commit(value));
+    let gap = send_gap(admit_defaults_then_replace_with_source_rejected_opaque_commit(value));
     assert_eq!(gap.code, RecordingGapCode::UnsupportedAction);
     assert_eq!(gap.path, "actions[0]");
 }
@@ -115,12 +117,13 @@ fn supported_default_and_rejected_commit_keep_exact_unused_binding() {
         }],
         "body": original
     });
-    let gap = send_gap(admit_defaults_then_replace_with_unsupported_commit(value));
+    let gap = send_gap(admit_defaults_then_replace_with_source_rejected_opaque_commit(value));
     assert_eq!(gap.code, RecordingGapCode::UnsupportedExpression);
     assert_eq!(gap.ir_node, "RecordedPlan");
     assert!(
-        gap.detail
-            .contains("persistent commitment requires a Bytes32 pair and Bytes32 opening")
+        gap.detail.contains(
+            "persistent commitment requires a fixed aligned FAB value and Bytes32 opening"
+        )
     );
     assert_eq!(gap.path, "return_value.value.bindings[0].value.value");
 }
@@ -138,7 +141,7 @@ fn defaults_and_rejected_commits_keep_unselected_and_nested_source_paths() {
             "value": {"kind": "transient_hash", "value": {"kind":"default", "ty":{"kind":"opaque_string"}}}
         }], "body": {"kind": "default", "ty": result_ty}}
     });
-    let gap = send_gap(admit_defaults_then_replace_with_unsupported_commit(branch));
+    let gap = send_gap(admit_defaults_then_replace_with_source_rejected_opaque_commit(branch));
     assert_eq!(gap.code, RecordingGapCode::UnsupportedExpression);
     assert_eq!(
         gap.path,
@@ -153,14 +156,13 @@ fn defaults_and_rejected_commits_keep_unselected_and_nested_source_paths() {
             "value": {"kind":"transient_hash", "value":{"kind":"default", "ty":{"kind":"opaque_string"}}}
         }], "body": first
     });
-    let gap = send_gap(admit_defaults_then_replace_with_unsupported_commit(
-        argument,
-    ));
+    let gap = send_gap(admit_defaults_then_replace_with_source_rejected_opaque_commit(argument));
     assert_eq!(gap.code, RecordingGapCode::UnsupportedExpression);
     assert_eq!(gap.ir_node, "RecordedPlan");
     assert!(
-        gap.detail
-            .contains("persistent commitment requires a Bytes32 pair and Bytes32 opening")
+        gap.detail.contains(
+            "persistent commitment requires a fixed aligned FAB value and Bytes32 opening"
+        )
     );
     assert_eq!(
         gap.path,

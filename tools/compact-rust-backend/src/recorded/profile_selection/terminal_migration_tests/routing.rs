@@ -1,6 +1,8 @@
 // This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
+// The direct VectorMap child is a native-valid recording refusal; fixed Field
+// commitments themselves are supported. Do not replace this with malformed types.
 use super::*;
 use crate::recorded::admission_probe::trace;
 
@@ -83,7 +85,7 @@ fn unsupported_in_domain_body_keeps_independent_later_attempts() {
     contract.stateful_circuits[0].return_value = StateReturn::Expression {
         value: Expr::TransientHash {
             value: Box::new(Expr::PersistentCommit {
-                value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+                value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),
                 opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
             }),
         },

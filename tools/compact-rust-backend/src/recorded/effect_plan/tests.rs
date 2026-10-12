@@ -32,6 +32,8 @@ mod map_remaining;
 mod ordinary;
 #[path = "tests/own_public_key.rs"]
 mod own_public_key;
+#[path = "tests/persistent_commit.rs"]
+mod persistent_commit;
 #[path = "tests/phase_reset_inclusion.rs"]
 mod phase_reset_inclusion;
 #[path = "tests/pure_inclusion.rs"]

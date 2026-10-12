@@ -115,13 +115,55 @@ fn contract(helper_name: &str, caller: bool, collide: bool) -> Contract {
     }
 }
 
+// Ordinary checked returns now inline CounterRead callers. These naming laws
+// need a real legacy call: the existing unsigned identity VectorMap binding is
+// independently native-valid and legacy-supported, but not yet checked.
+fn legacy_contract(helper_name: &str, caller: bool, collide: bool) -> Contract {
+    let mut fixture = contract(helper_name, caller, collide);
+    let scalar = Type::Unsigned { max: "255".into() };
+    for circuit in &mut fixture.stateful_circuits {
+        if !matches!(circuit.return_value, StateReturn::CounterRead { .. }) {
+            continue;
+        }
+        let actions = std::mem::take(&mut circuit.actions);
+        circuit.actions = vec![StateAction::Let {
+            bindings: vec![LocalBinding {
+                name: "mapped_for_legacy".into(),
+                ty: Type::Vector {
+                    element: Box::new(scalar.clone()),
+                    length: 1,
+                },
+                value: Expr::VectorMap {
+                    parameter: Parameter {
+                        name: "item".into(),
+                        ty: scalar.clone(),
+                    },
+                    source: Box::new(Expr::Tuple {
+                        elements: vec![Expr::UnsignedLiteral {
+                            value: "1".into(),
+                            max: "255".into(),
+                        }],
+                    }),
+                    body: Box::new(Expr::Parameter {
+                        name: "item".into(),
+                    }),
+                    result: scalar.clone(),
+                    length: 1,
+                },
+            }],
+            action: Box::new(StateAction::Sequence { actions }),
+        }];
+    }
+    fixture
+}
+
 #[test]
 fn raw_spelled_helper_records_without_changing_native_name() {
-    let native = render(&contract("r#type", false, false)).unwrap();
+    let native = render(&legacy_contract("r#type", false, false)).unwrap();
     syn::parse_file(&native).unwrap();
     assert!(native.contains("pub(crate) fn r#type<"));
 
-    let recorded = render_with_capabilities(&contract("r#type", true, false)).unwrap();
+    let recorded = render_with_capabilities(&legacy_contract("r#type", true, false)).unwrap();
     syn::parse_file(&recorded.source).unwrap();
     assert!(recorded.source.contains("pub(crate) fn r#type<"));
     assert!(recorded.source.contains("fn __compact_recorded_body_type<"));
@@ -136,7 +178,7 @@ fn raw_spelled_helper_records_without_changing_native_name() {
 
 #[test]
 fn compact_dollar_normalization_retains_existing_helper_spelling() {
-    let source = render(&contract("a$b", true, false)).unwrap();
+    let source = render(&legacy_contract("a$b", true, false)).unwrap();
     syn::parse_file(&source).unwrap();
     assert!(source.contains("pub(crate) fn a_b<"));
     assert!(source.contains("fn __compact_recorded_body_a_b<"));
@@ -145,9 +187,9 @@ fn compact_dollar_normalization_retains_existing_helper_spelling() {
 #[test]
 fn helper_collision_uses_stable_fallback_for_normal_and_raw_spelling() {
     for helper_name in ["inner", "r#type"] {
-        // CounterRead keeps this complete root on actual legacy action dispatch.
-        // The canonical Uint128 public parameter is no longer a routing boundary.
-        let fixture = contract(helper_name, true, true);
+        // The complete identity-map binding keeps a real legacy action call;
+        // CounterRead by itself is now covered by checked ordinary returns.
+        let fixture = legacy_contract(helper_name, true, true);
         let source = render(&fixture).unwrap();
         syn::parse_file(&source).unwrap();
         let suffix = helper_name
@@ -166,7 +208,7 @@ fn helper_collision_uses_stable_fallback_for_normal_and_raw_spelling() {
 
 #[test]
 fn raw_spelled_sibling_occupies_the_preferred_helper_name() {
-    let mut contract = contract("r#type", true, true);
+    let mut contract = legacy_contract("r#type", true, true);
     contract.stateful_circuits[2].name = "r#__compact_recorded_body_type".into();
     let source = render(&contract).unwrap();
     syn::parse_file(&source).unwrap();
@@ -176,7 +218,7 @@ fn raw_spelled_sibling_occupies_the_preferred_helper_name() {
 
 #[test]
 fn raw_spelled_sibling_also_occupies_the_fallback_name() {
-    let mut contract = contract("inner", true, true);
+    let mut contract = legacy_contract("inner", true, true);
     let mut fallback_collision = contract.stateful_circuits[1].clone();
     fallback_collision.name = "r#__compact_recorded_body_1_x696e6e6572".into();
     contract.stateful_circuits.push(fallback_collision);
@@ -222,7 +264,7 @@ fn checked_only_call_inlines_without_emitting_an_unused_helper() {
 
 #[test]
 fn mixed_callers_keep_the_used_helper_and_validate_its_transitive_body() {
-    let mut fixture = contract("inner", true, false);
+    let mut fixture = legacy_contract("inner", true, false);
     let mut leaf = fixture.stateful_circuits[0].clone();
     leaf.name = "leaf".into();
     fixture.stateful_circuits[0].actions = vec![StateAction::CircuitCall {
@@ -236,6 +278,15 @@ fn mixed_callers_keep_the_used_helper_and_validate_its_transitive_body() {
     checked.name = "checked".into();
     checked.result = Type::Unit;
     checked.return_value = StateReturn::Unit;
+    // Keep the second caller genuinely checked; only the first has the legacy
+    // identity-map binding. Preserve its original transitive helper call.
+    let StateAction::Let { action, .. } = checked.actions.remove(0) else {
+        unreachable!()
+    };
+    let StateAction::Sequence { actions } = *action else {
+        unreachable!()
+    };
+    checked.actions = actions;
     fixture.stateful_circuits.push(checked);
     let rendered = render_with_capabilities(&fixture).unwrap();
     assert!(

@@ -2,6 +2,8 @@
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
 //! Funded mint is subsumed by existing generic composition; no new route is added.
+// The direct VectorMap child is a native-valid recording refusal; fixed Field
+// commitments themselves are supported. Do not replace this with malformed types.
 use super::*;
 use crate::ir::{Contract, Expr, StateAction, StateReturn, Type};
 use crate::recorded::admission_probe::trace;
@@ -159,7 +161,7 @@ fn unsupported_action_keeps_fallback_order_and_first_action_diagnostic() {
     // Keep the positive default above, then exercise the unchanged commitment boundary.
     root_mut(&mut c).actions[0] = StateAction::Expression {
         value: Expr::PersistentCommit {
-            value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+            value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),
             opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
         },
     };

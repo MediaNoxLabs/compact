@@ -2,6 +2,9 @@
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
 
+#[path = "build/product.rs"]
+mod product;
+
 fn main() {
     let input = "../../tools/compact-rust-backend/tests/call-arg-declared-type-schema20-ir.json";
     println!("cargo:rerun-if-changed={input}");
@@ -44,4 +47,5 @@ fn main() {
     );
     let output = std::path::PathBuf::from(std::env::var_os("OUT_DIR").unwrap());
     std::fs::write(output.join("contract.rs"), rendered.source).unwrap();
+    product::render(input, &output);
 }

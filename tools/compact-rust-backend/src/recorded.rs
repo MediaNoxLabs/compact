@@ -28,6 +28,9 @@ macro_rules! record_option {
     }};
 }
 
+#[cfg(test)]
+pub(crate) mod test_support;
+
 mod diagnostics;
 pub(crate) use diagnostics::RecordingOutcome;
 pub use diagnostics::{

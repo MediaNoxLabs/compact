@@ -18,6 +18,9 @@
 use super::*;
 use compact_rust_call_arg_declared_type_fixture::ledger_contract as contract;
 
+mod strict;
+pub(crate) use strict::run as run_strict;
+
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
     let mut rng = StdRng::seed_from_u64(0x0090_434f_4d4d_4954);
     let initial = contract::initial_state(ConstructorContext::new(()))?;

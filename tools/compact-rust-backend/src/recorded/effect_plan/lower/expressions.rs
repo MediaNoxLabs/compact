@@ -140,16 +140,13 @@ impl Lowerer<'_> {
                 let value = self.expression(value, scope, bindings, &format!("{path}.value"))?;
                 let opening =
                     self.expression(opening, scope, bindings, &format!("{path}.opening"))?;
-                if value.ty
-                    != (Type::Tuple {
-                        elements: vec![Type::Bytes { length: 32 }; 2],
-                    })
+                if !validate::fixed_aligned_fab_type(&value.ty)
                     || opening.ty != (Type::Bytes { length: 32 })
                 {
                     return Err(self.unsupported_expression_reason(
                         expression,
                         path,
-                        "persistent commitment requires a Bytes32 pair and Bytes32 opening",
+                        "persistent commitment requires a fixed aligned FAB value and Bytes32 opening",
                     ));
                 }
                 (

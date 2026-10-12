@@ -2,6 +2,8 @@
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
 //! The carrier domain is an interface boundary, not a whole-body recognizer.
+// The direct VectorMap child is a native-valid recording refusal; fixed Field
+// commitments themselves are supported. Do not replace this with malformed types.
 use super::*;
 use crate::ir::{Contract, Expr, Parameter, ReturnPlan, StateAction, StateReturn, Type};
 use crate::recorded::admission_probe::trace;
@@ -213,11 +215,7 @@ fn unsupported_body_refuses_at_last_priority_without_old_fallback() {
         value: Expr::Equal {
             left: Box::new(Expr::HashToCurve {
                 value: Box::new(Expr::PersistentCommit {
-                    value: Box::new(Expr::JubjubPointX {
-                        value: Box::new(Expr::HashToCurve {
-                            value: Box::new(Expr::BytesLiteral { bytes: vec![7; 32] }),
-                        }),
-                    }),
+                    value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),
                     opening: Box::new(Expr::FieldToBytes32 {
                         value: Box::new(Expr::FieldLiteral { value: "1".into() }),
                     }),

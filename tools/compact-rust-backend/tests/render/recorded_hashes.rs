@@ -468,7 +468,7 @@ fn certified_pure_hash_bridge_records_body_variants_but_direct_hashes_remain_bou
     };
     bindings[0].value = Expr::TransientHash {
         value: Box::new(Expr::PersistentCommit {
-            value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+            value: Box::new(super::support::unsupported_commit_input()),
             opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
         }),
     };
@@ -482,7 +482,7 @@ fn certified_pure_hash_bridge_records_body_variants_but_direct_hashes_remain_bou
 }
 
 #[test]
-fn persistent_hash_helper_recording_preserves_formals_and_rejects_effects() {
+fn persistent_hash_helper_recording_composes_effects_and_preserves_formals() {
     let mut contract: Contract =
         serde_json::from_str(include_str!("../inline-type-scope-schema12-ir.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
@@ -508,7 +508,7 @@ fn persistent_hash_helper_recording_preserves_formals_and_rejects_effects() {
         });
     let rendered = render_with_capabilities(&effectful).unwrap();
     assert!(
-        !rendered
+        rendered
             .capabilities
             .circuits
             .iter()
@@ -516,6 +516,16 @@ fn persistent_hash_helper_recording_preserves_formals_and_rejects_effects() {
             .unwrap()
             .recorded
     );
+    let helper = effectful
+        .stateful_circuits
+        .iter_mut()
+        .find(|circuit| circuit.name == "scalarHelper")
+        .unwrap();
+    let StateAction::CellWrite { index, .. } = helper.actions.last_mut().unwrap() else {
+        unreachable!()
+    };
+    *index = 99;
+    assert!(render_with_capabilities(&effectful).is_err());
     let mut wrong_width = contract.clone();
     wrong_width
         .stateful_circuits

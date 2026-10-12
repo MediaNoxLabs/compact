@@ -1,6 +1,8 @@
 // This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
+// The direct VectorMap child is a native-valid recording refusal; fixed Field
+// commitments themselves are supported. Do not replace this with malformed types.
 use super::*;
 #[test]
 fn malformed_declarations_and_operands_fail_native_validation_before_selection() {
@@ -73,7 +75,7 @@ fn neighboring_interfaces_and_unsupported_compositions_keep_distinct_boundaries(
     let mut c = fixture();
     root(&mut c, "hasName").actions = vec![StateAction::Expression {
         value: Expr::PersistentCommit {
-            value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+            value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),
             opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
         },
     }];

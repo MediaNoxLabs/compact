@@ -343,15 +343,16 @@ fn rich_value_support_does_not_authorize_arithmetic_or_unrelated_nodes() {
         y: Box::new(literal("1")),
     };
     render(&checked(constructed, Type::JubjubPoint)).unwrap();
-    let unsupported = Expr::PersistentCommit {
+    let commitment = Expr::PersistentCommit {
         value: Box::new(literal("0")),
         opening: Box::new(bytes(0)),
     };
-    assert!(
-        refusal(unsupported, bytes_type())
-            .detail
-            .contains("persistent commitment")
+    render(&checked(commitment, bytes_type())).unwrap();
+    let gap = refusal(
+        crate::recorded::test_support::unsupported_commit(),
+        bytes_type(),
     );
+    assert_eq!(gap.ir_node, "Expr::VectorMap");
 }
 
 #[test]

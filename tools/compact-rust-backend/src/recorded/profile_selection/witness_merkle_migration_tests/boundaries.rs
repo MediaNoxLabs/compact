@@ -107,7 +107,7 @@ fn original_signature_and_hidden_direct_effect_refusals_remain_explicit() {
         "kind":"if","condition":{"kind":"boolean","value":true},
         "then":{"kind":"sequence","actions":[]},
         "otherwise":{"kind":"expression","value":{"kind":"persistent_commit",
-            "value":{"kind":"field_literal","value":"0"},"opening":{"kind":"bytes_literal","bytes":vec![0u8;32]}}}
+            "value":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),"opening":{"kind":"bytes_literal","bytes":vec![0u8;32]}}}
     }));
     let c = contract(v);
     assert!(old(&c).unwrap().is_none());

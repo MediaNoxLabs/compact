@@ -204,7 +204,7 @@ fn new_compositional_point_domain_is_separate_from_old_inclusion() {
 }
 
 #[test]
-fn point_values_are_checked_without_widening_persistent_commit_inputs() {
+fn point_values_compose_with_fixed_persistent_commit_inputs() {
     let mut contract = subject();
     contract.stateful_circuits[0].return_value = StateReturn::Expression {
         value: Expr::EcNeg {
@@ -251,20 +251,25 @@ fn point_values_are_checked_without_widening_persistent_commit_inputs() {
     let context = Context::new(&contract);
     let circuit = &contract.stateful_circuits[0];
     assert!(context.old(circuit).is_none());
-    assert!(matches!(
-        context.algebra(circuit),
-        Err(effect_plan::PlanError::Unsupported(_))
-    ));
-    assert!(context.selected(circuit).unwrap().typed_result.is_none());
+    assert!(context.algebra(circuit).is_ok());
+    assert!(context.selected(circuit).unwrap().typed_result.is_some());
     let rendered = crate::render_with_capabilities(&contract).unwrap();
-    assert!(!rendered.capabilities.circuits[0].recorded);
-    assert_eq!(
-        rendered.capabilities.circuits[0]
-            .recording_unavailable
-            .as_ref()
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.source.contains("persistent_commit"));
+    // A genuine unsupported fixed-value operation stays a separate boundary.
+    contract.stateful_circuits[0].return_value = StateReturn::Expression {
+        value: Expr::HashToCurve {
+            value: Box::new(crate::recorded::test_support::unsupported_commit()),
+        },
+    };
+    let context = Context::new(&contract);
+    assert!(context.algebra(&contract.stateful_circuits[0]).is_err());
+    assert!(
+        !crate::render_with_capabilities(&contract)
             .unwrap()
-            .ir_node,
-        "StateReturn::Expression"
+            .capabilities
+            .circuits[0]
+            .recorded
     );
 }
 

@@ -1,6 +1,8 @@
 // This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
+// The direct VectorMap child is a native-valid recording refusal; fixed Field
+// commitments themselves are supported. Do not replace this with malformed types.
 use super::*;
 use crate::recorded::admission_probe::trace;
 fn trace(contract: &Contract) -> serde_json::Value {
@@ -57,11 +59,7 @@ fn unsupported_continues_independent_suffix_but_invariant_is_fatal() {
         value: Box::new(Expr::JubjubPointX {
             value: Box::new(Expr::HashToCurve {
                 value: Box::new(Expr::PersistentCommit {
-                    value: Box::new(Expr::JubjubPointX {
-                        value: Box::new(Expr::HashToCurve {
-                            value: Box::new(project(address())),
-                        }),
-                    }),
+                    value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),
                     opening: Box::new(Expr::FieldToBytes32 {
                         value: Box::new(Expr::FieldLiteral { value: "1".into() }),
                     }),

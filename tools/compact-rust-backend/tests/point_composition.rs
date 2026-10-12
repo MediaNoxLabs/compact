@@ -161,13 +161,23 @@ fn helper_scope_type_slot_cycle_and_unselected_effects_stay_checked() {
                     .unwrap()
                     .contains("own_coin_public_key()")
             );
-            // An unsupported operand at the same lazy position is still checked.
+            // The newly supported Field commitment at the same lazy position
+            // remains admitted; an unsupported child is still checked.
             let actions = circuit(&mut v, "changes")["actions"]
                 .as_array_mut()
                 .unwrap();
             actions.last_mut().unwrap()["otherwise"]["value"] = json!({"kind":"persistent_commit",
                 "value":{"kind":"field_literal","value":"0"},
                 "opening":{"kind":"bytes_literal","bytes":vec![0u8;32]}});
+            assert!(recorded(v.clone(), "check"));
+            let actions = circuit(&mut v, "changes")["actions"]
+                .as_array_mut()
+                .unwrap();
+            actions.last_mut().unwrap()["otherwise"]["value"]["value"] = json!({"kind":"vector_map",
+                "parameter":{"name":"sentinel_item","ty":{"kind":"field"}},
+                "source":{"kind":"tuple","elements":[{"kind":"field_literal","value":"1"}]},
+                "body":{"kind":"parameter","name":"sentinel_item"},
+                "result":{"kind":"field"},"length":1});
         }
         assert!(!recorded(v, "check"), "{mutation}");
     }

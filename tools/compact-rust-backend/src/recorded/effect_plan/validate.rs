@@ -324,10 +324,7 @@ fn block(
             Operation::PersistentCommit { value, opening } => {
                 use_value(value)?;
                 use_value(opening)?;
-                value.ty
-                    == (Type::Tuple {
-                        elements: vec![Type::Bytes { length: 32 }; 2],
-                    })
+                fixed_aligned_fab_type(&value.ty)
                     && opening.ty == (Type::Bytes { length: 32 })
                     && *ty == (Type::Bytes { length: 32 })
             }

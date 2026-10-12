@@ -2,6 +2,8 @@
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
 
+// Concrete diagnostic control: opaque persistent input is native-IR valid but
+// rejected by the Compact frontend. Fixed Field commitments are now supported.
 use super::*;
 use crate::ir::*;
 use crate::recorded::{LegacyActionPrecision, effect_plan};
@@ -23,10 +25,7 @@ fn field() -> Expr {
 }
 fn unsupported() -> StateAction {
     StateAction::Expression {
-        value: Expr::PersistentCommit {
-            value: Box::new(field()),
-            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
-        },
+        value: crate::recorded::test_support::opaque_commit_policy(),
     }
 }
 fn empty() -> StateAction {
@@ -113,12 +112,9 @@ fn signature_and_return_failures_cannot_inherit_action_origin() {
     assert_eq!(rejection.precision, Precision::Unclassified);
 
     let mut root = circuit("root", vec![empty(), empty()]);
-    root.result = Type::Field;
+    root.result = Type::Bytes { length: 32 };
     root.return_value = StateReturn::Expression {
-        value: Expr::PersistentCommit {
-            value: Box::new(field()),
-            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
-        },
+        value: crate::recorded::test_support::opaque_commit_policy(),
     };
     let rejection = refusal(&[root]);
     assert_eq!(rejection.root_action, None);

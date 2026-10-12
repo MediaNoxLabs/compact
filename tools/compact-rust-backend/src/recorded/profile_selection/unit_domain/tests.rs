@@ -1,6 +1,8 @@
 // This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
+// Concrete diagnostic control: opaque persistent input is native-IR valid but
+// rejected by the Compact frontend. Fixed Field commitments are now supported.
 use super::*;
 use crate::ir::{
     Contract, CounterAmount, Expr, LedgerFieldKind, Parameter, SCHEMA_VERSION, StateAction,
@@ -367,7 +369,9 @@ fn unsupported_refines_same_action_and_invalid_remains_fatal() {
     let mut c = subject();
     c.stateful_circuits[0].actions[1] = StateAction::Expression {
         value: Expr::PersistentCommit {
-            value: Box::new(Expr::FieldLiteral { value: "1".into() }),
+            value: Box::new(Expr::Default {
+                ty: Type::OpaqueString,
+            }),
             opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
         },
     };

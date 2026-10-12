@@ -64,6 +64,7 @@ fn direct_plain_merkle_root_recording_requires_exact_digest_and_slot() {
     assert!(rendered.capabilities.circuits[0].recorded);
     assert!(rendered.capabilities.circuits[0].observed_call);
 
+    // Typed composition accepts computed roots and preceding tree effects.
     let mut computed = contract.clone();
     let StateReturn::MerkleCheckRoot { root, .. } = &mut computed.stateful_circuits[0].return_value
     else {
@@ -71,7 +72,7 @@ fn direct_plain_merkle_root_recording_requires_exact_digest_and_slot() {
     };
     *root = Expr::Default { ty: digest.clone() };
     assert!(
-        !render_with_capabilities(&computed)
+        render_with_capabilities(&computed)
             .unwrap()
             .capabilities
             .circuits[0]
@@ -87,7 +88,7 @@ fn direct_plain_merkle_root_recording_requires_exact_digest_and_slot() {
             value: Expr::Boolean { value: true },
         });
     assert!(
-        !render_with_capabilities(&effectful)
+        render_with_capabilities(&effectful)
             .unwrap()
             .capabilities
             .circuits[0]
@@ -154,9 +155,11 @@ fn direct_plain_merkle_root_recording_requires_exact_digest_and_slot() {
         *root = Expr::Default { ty: digest.clone() };
     }
     assert!(
-        !render_with_capabilities(&computed_historic)
-            .map(|rendered| rendered.capabilities.circuits[0].recorded)
-            .unwrap_or(false)
+        render_with_capabilities(&computed_historic)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
     );
     let mut effectful_historic = historic.clone();
     effectful_historic.stateful_circuits[0]
@@ -167,9 +170,11 @@ fn direct_plain_merkle_root_recording_requires_exact_digest_and_slot() {
             value: Expr::Boolean { value: true },
         });
     assert!(
-        !render_with_capabilities(&effectful_historic)
-            .map(|rendered| rendered.capabilities.circuits[0].recorded)
-            .unwrap_or(false)
+        render_with_capabilities(&effectful_historic)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
     );
 
     contract.stateful_circuits[0].parameters[0].ty = Type::Field;

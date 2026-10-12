@@ -1,6 +1,8 @@
 // This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
+// The direct VectorMap child is a native-valid recording refusal; fixed Field
+// commitments themselves are supported. Do not replace this with malformed types.
 use super::*;
 fn selected_trace(c: &Contract, r: &StatefulCircuit) -> serde_json::Value {
     let maps = Context::new(c);
@@ -73,11 +75,7 @@ fn unsupported_body_continues_independent_suffix_and_invariant_stays_fatal() {
     root_mut(&mut c).actions = vec![StateAction::Expression {
         value: Expr::HashToCurve {
             value: Box::new(Expr::PersistentCommit {
-                value: Box::new(Expr::JubjubPointX {
-                    value: Box::new(Expr::HashToCurve {
-                        value: Box::new(parameter("coin")),
-                    }),
-                }),
+                value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),
                 opening: Box::new(Expr::FieldToBytes32 {
                     value: Box::new(Expr::FieldLiteral { value: "1".into() }),
                 }),

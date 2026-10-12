@@ -83,13 +83,29 @@ fn renamed_three_and_four_field_scalar_products_record_without_name_or_arity_gat
 }
 
 #[test]
-fn nested_string_product_records_and_empty_product_remains_outside_domain() {
+fn nested_string_and_empty_products_have_typed_recorded_insertion() {
     let nested: Value =
         serde_json::from_str(include_str!("map-composition/nested_map.json")).unwrap();
     assert!(recorded(nested, "put"));
     let empty: Value =
         serde_json::from_str(include_str!("map-composition/empty_map.json")).unwrap();
-    assert!(!recorded(empty, "put"));
+    let output =
+        render_with_capabilities(&serde_json::from_value::<Contract>(empty).unwrap()).unwrap();
+    assert!(
+        output
+            .capabilities
+            .circuits
+            .iter()
+            .any(|c| c.name == "put" && c.recorded && c.observed_call)
+    );
+    assert!(
+        output
+            .source
+            .split("pub mod recorded")
+            .nth(1)
+            .unwrap()
+            .contains("record_insert(")
+    );
 }
 
 #[test]

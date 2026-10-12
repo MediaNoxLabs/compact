@@ -173,12 +173,20 @@ fn checked_hidden_effects_compose_but_unselected_unsupported_effects_are_refused
             "chunked={chunked}"
         );
 
-        // Native fixed-FAB commitments remain wider than the checked Bytes32 pair.
+        // Fixed-FAB Field commitments now compose in the unselected helper arm.
         circuit(&mut v, "guard")["actions"][index]["otherwise"] = json!({
             "kind":"expression", "value": {"kind":"persistent_commit",
                 "value":{"kind":"field_literal","value":"0"},
                 "opening":{"kind":"bytes_literal","bytes":vec![0u8; 32]}}
         });
+        assert!(recorded(v.clone()));
+        // Keep whole-helper admission negative using a native-valid typed IR
+        // VectorMap child, not an obsolete commitment input restriction.
+        circuit(&mut v, "guard")["actions"][index]["otherwise"]["value"]["value"] = json!({"kind":"vector_map",
+                "parameter":{"name":"sentinel_item","ty":{"kind":"field"}},
+                "source":{"kind":"tuple","elements":[{"kind":"field_literal","value":"1"}]},
+                "body":{"kind":"parameter","name":"sentinel_item"},
+                "result":{"kind":"field"},"length":1});
         let contract: Contract = serde_json::from_value(v).unwrap();
         let output = render_with_capabilities(&contract).unwrap();
         let capability = output

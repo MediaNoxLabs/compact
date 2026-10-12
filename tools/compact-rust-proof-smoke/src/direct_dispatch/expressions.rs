@@ -386,6 +386,17 @@ pub(super) fn persistent_commit(
     persistent_commit::run(Path::new(&root))
 }
 
+pub(super) fn persistent_commit_strict(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let usage = "usage: compact-rust-proof-smoke --persistent-commit-strict <proof-output>";
+    let root = arguments.next().ok_or(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage.into());
+    }
+    persistent_commit::run_strict(Path::new(&root))
+}
+
 pub(super) fn inline_type_scope(
     arguments: &mut impl Iterator<Item = OsString>,
 ) -> Result<(), Box<dyn Error>> {

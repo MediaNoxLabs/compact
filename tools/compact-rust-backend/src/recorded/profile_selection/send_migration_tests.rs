@@ -2,6 +2,8 @@
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
 //! Send is subsumed by generic checked composition; diagnostics survive fallback.
+// Concrete diagnostic control: opaque persistent input is native-IR valid but
+// rejected by the Compact frontend. Fixed Field commitments are now supported.
 use super::*;
 use crate::ir::{Contract, Expr, LocalBinding, StateAction, StateReturn, Type};
 use crate::recorded::admission_probe::trace;
@@ -151,7 +153,9 @@ fn actual_composite_gap_survives_only_for_send_interface_without_legacy_reanalys
             ty: Type::Field,
             value: Expr::TransientHash {
                 value: Box::new(Expr::PersistentCommit {
-                    value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+                    value: Box::new(Expr::Default {
+                        ty: Type::OpaqueString,
+                    }),
                     opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
                 }),
             },
@@ -189,7 +193,9 @@ fn actual_composite_gap_survives_only_for_send_interface_without_legacy_reanalys
                 ty: Type::Field,
                 value: Expr::TransientHash {
                     value: Box::new(Expr::PersistentCommit {
-                        value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+                        value: Box::new(Expr::Default {
+                            ty: Type::OpaqueString,
+                        }),
                         opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
                     }),
                 },

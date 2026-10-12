@@ -175,8 +175,24 @@ LIST_EFFECTS_EXTENSION = inventory.BASELINE.with_name("recording_admission_inven
 MAP_EFFECTS_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.map-effects-609.json")
 
 
+PERSISTENT_COMMIT_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.persistent-commit-inputs-611.json")
+
+
+def checkpoint_609(root):
+    """Authenticate fixed-aligned commitment inputs before historical fixtures."""
+    extension = json.loads(PERSISTENT_COMMIT_EXTENSION.read_text())
+    try:
+        source = (root / inventory.persistent_commit.OWNER).read_bytes()
+    except FileNotFoundError:
+        return root
+    if inventory.digest(source) == extension['owners'][inventory.persistent_commit.OWNER]['current_sha256']:
+        return inventory.persistent_commit.checkpoint(root, extension)
+    return root
+
+
 def checkpoint_608(root):
     """Authenticate remaining Map effects before historical fixtures."""
+    root = checkpoint_609(root)
     extension = json.loads(MAP_EFFECTS_EXTENSION.read_text())
     try:
         source = (root / inventory.map_effects.OWNER).read_bytes()
@@ -796,7 +812,8 @@ class InventoryTests(unittest.TestCase):
                                   ordinary_interface_extension=json.loads(ORDINARY_INTERFACE_EXTENSION.read_text()),
                                   storage_codec_extension=json.loads(STORAGE_CODEC_EXTENSION.read_text()),
                                   list_effects_extension=json.loads(LIST_EFFECTS_EXTENSION.read_text()),
-                                  map_effects_extension=json.loads(MAP_EFFECTS_EXTENSION.read_text()))
+                                  map_effects_extension=json.loads(MAP_EFFECTS_EXTENSION.read_text()),
+                                  persistent_commit_extension=json.loads(PERSISTENT_COMMIT_EXTENSION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)

@@ -119,7 +119,7 @@ fn recorded_nested_unsigned_projection_composes_widths_and_effects() {
 }
 
 #[test]
-fn recorded_conditional_field_pair_rejects_unrecorded_predicates_and_arms() {
+fn recorded_conditional_field_pair_preserves_native_predicate_and_arm_validation() {
     let mut contract: Contract = serde_json::from_str(include_str!(
         "../../fixtures/recorded-closed-conditional-field-pair.json"
     ))
@@ -127,11 +127,13 @@ fn recorded_conditional_field_pair_rejects_unrecorded_predicates_and_arms() {
     contract.schema_version = SCHEMA_VERSION;
     let rendered = render_with_capabilities(&contract).unwrap();
     assert!(rendered.capabilities.circuits[0].recorded);
-    assert!(
-        rendered
-            .source
-            .contains("__compact_recorded_conditional_pair_")
+    // Check the emitted conditional, independently of a retired temporary name.
+    let body = super::lifecycle_recording::generated_body(
+        &rendered.source,
+        "recorded",
+        &contract.stateful_circuits[0].name,
     );
+    assert!(body.contains("if "), "{body}");
 
     let closed = contract.clone();
     let StateAction::Let { action, .. } = &mut contract.stateful_circuits[0].actions[0] else {
@@ -519,7 +521,7 @@ fn recorded_nested_uint4_composes_typed_arithmetic_and_witness_arms() {
 }
 
 #[test]
-fn closed_unsigned_ternary_comparison_records_only_matching_literal_arms() {
+fn unsigned_ternary_comparison_records_typed_literal_and_parameter_arms() {
     let uint = Type::Unsigned { max: "255".into() };
     let narrow = Type::Unsigned { max: "1".into() };
     let arm = |value: &str| Expr::Coerce {
@@ -587,7 +589,12 @@ fn closed_unsigned_ternary_comparison_records_only_matching_literal_arms() {
         ty: narrow,
     };
     let rendered = render_with_capabilities(&contract).unwrap();
-    assert!(!rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].recorded);
+    // An unselected branch must still have a valid parameter binding.
+    contract.stateful_circuits[0]
+        .parameters
+        .retain(|p| p.name != "y");
+    assert!(render_with_capabilities(&contract).is_err());
 }
 
 #[test]

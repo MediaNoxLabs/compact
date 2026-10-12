@@ -213,7 +213,7 @@ fn recording_gaps_follow_the_first_definite_ir_failure() {
     };
     actions[1] = StateAction::Expression {
         value: Expr::PersistentCommit {
-            value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+            value: Box::new(super::support::unsupported_commit_input()),
             opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
         },
     };
@@ -280,7 +280,7 @@ fn conditional_recording_rejects_an_unsupported_unselected_branch() {
     };
     **otherwise = StateAction::Expression {
         value: Expr::PersistentCommit {
-            value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+            value: Box::new(super::support::unsupported_commit_input()),
             opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
         },
     };
@@ -330,11 +330,24 @@ fn recording_gaps_include_unsupported_type_and_called_callee_path() {
     };
     let report = render_with_capabilities(&contract).unwrap().capabilities;
     assert!(report.circuits[0].recorded && report.circuits[0].observed_call);
-    // Owned scalar storage is supported; an opaque vector remains outside the
-    // qualified storage codec even though its local Default is representable.
-    let unsupported_storage = Type::Vector {
+    // Recursive opaque vectors now have qualified storage codecs. Tuple9 is
+    // native-renderable but remains beyond the tuple8 storage codec boundary.
+    let opaque_vector = Type::Vector {
         element: Box::new(Type::OpaqueString),
         length: 2,
+    };
+    contract.ledger_fields[0].declaration = LedgerFieldKind::Cell {
+        ty: opaque_vector.clone(),
+    };
+    contract.stateful_circuits[0].actions[0] = StateAction::CellWrite {
+        field: "small".into(),
+        index: 0,
+        value: Expr::Default { ty: opaque_vector },
+    };
+    let report = render_with_capabilities(&contract).unwrap().capabilities;
+    assert!(report.circuits[0].recorded && report.circuits[0].observed_call);
+    let unsupported_storage = Type::Tuple {
+        elements: vec![Type::Field; 9],
     };
     contract.ledger_fields[0].declaration = LedgerFieldKind::Cell {
         ty: unsupported_storage.clone(),
@@ -373,7 +386,7 @@ fn recording_gaps_include_unsupported_type_and_called_callee_path() {
     assert!(report.circuits[0].recorded && report.circuits[0].observed_call);
 
     // Preserve the newly supported nested scalar default, then exercise the
-    // same callee diagnostic with a refused commitment input policy.
+    // same callee diagnostic with a native-valid unsupported VectorMap child.
     contract.stateful_circuits[0].actions = vec![StateAction::Expression {
         value: Expr::Default { ty: Type::Boolean },
     }];
@@ -381,7 +394,7 @@ fn recording_gaps_include_unsupported_type_and_called_callee_path() {
     assert!(report.circuits[0].recorded && report.circuits[0].observed_call);
     contract.stateful_circuits[0].actions = vec![StateAction::Expression {
         value: Expr::PersistentCommit {
-            value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+            value: Box::new(super::support::unsupported_commit_input()),
             opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
         },
     }];

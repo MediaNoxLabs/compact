@@ -81,8 +81,23 @@ fn service_and_arbitrary_nonempty_flat_string_products_record() {
 }
 
 #[test]
-fn mixed_scalar_map_values_compose_while_empty_values_stay_outside_codec() {
-    assert!(!recorded(fixture("empty"), "put"));
+fn mixed_and_empty_map_products_use_their_declared_codecs() {
+    let empty = render(fixture("empty"));
+    assert!(
+        empty
+            .capabilities
+            .circuits
+            .iter()
+            .any(|c| c.name == "put" && c.recorded && c.observed_call)
+    );
+    assert!(
+        empty
+            .source
+            .split("pub mod recorded")
+            .nth(1)
+            .unwrap()
+            .contains("record_insert(")
+    );
     let output = render(fixture("mixed"));
     assert!(
         output
@@ -148,14 +163,35 @@ fn hidden_unselected_and_unused_map_effects_are_audited() {
                 "then":{"kind":"sequence","actions":[]},
                 "otherwise":otherwise
             }));
+        let output = render(value.clone());
         assert!(
-            !render(value)
+            output
                 .capabilities
                 .circuits
                 .iter()
-                .find(|row| row.name == "put")
+                .any(|c| c.name == "put" && c.recorded && c.observed_call)
+        );
+        assert!(
+            output
+                .source
+                .split("pub mod recorded")
+                .nth(1)
                 .unwrap()
-                .recorded
+                .contains("record_reset(")
+        );
+        let hidden = &mut circuit(&mut value, "put")["actions"]
+            .as_array_mut()
+            .unwrap()
+            .last_mut()
+            .unwrap()["otherwise"];
+        if unused {
+            hidden["action"]["index"] = json!(99);
+        } else {
+            hidden["index"] = json!(99);
+        }
+        assert!(
+            !recorded(value, "put"),
+            "unselected wrong slot, unused={unused}"
         );
     }
     let mut value = fixture("pair");
@@ -168,15 +204,28 @@ fn hidden_unselected_and_unused_map_effects_are_audited() {
                          "value":{"kind":"map_is_empty","field":"entries","index":0}}],
             "action":{"kind":"sequence","actions":[]}
         }));
+    let output = render(value.clone());
     assert!(
-        !render(value)
+        output
             .capabilities
             .circuits
             .iter()
-            .find(|row| row.name == "put")
-            .unwrap()
-            .recorded
+            .any(|c| c.name == "put" && c.recorded && c.observed_call)
     );
+    assert!(
+        output
+            .source
+            .split("pub mod recorded")
+            .nth(1)
+            .unwrap()
+            .contains("record_is_empty(")
+    );
+    circuit(&mut value, "put")["actions"]
+        .as_array_mut()
+        .unwrap()
+        .last_mut()
+        .unwrap()["bindings"][0]["value"]["index"] = json!(99);
+    assert!(!recorded(value, "put"), "unused query wrong slot");
 }
 
 #[test]
@@ -240,6 +289,29 @@ fn map_composition_rejects_struct_identity_scope_and_helper_graph_mutants() {
                     "otherwise":{"kind":"map_reset","field":"entries","index":0}
                 })),
             _ => unreachable!(),
+        }
+        if mutation == "helper_hidden_map" {
+            let output = render(value.clone());
+            assert!(
+                output
+                    .capabilities
+                    .circuits
+                    .iter()
+                    .any(|c| c.name == "put" && c.recorded && c.observed_call)
+            );
+            assert!(
+                output
+                    .source
+                    .split("pub mod recorded")
+                    .nth(1)
+                    .unwrap()
+                    .contains("record_reset(")
+            );
+            circuit(&mut value, "bump")["actions"]
+                .as_array_mut()
+                .unwrap()
+                .last_mut()
+                .unwrap()["otherwise"]["index"] = json!(99);
         }
         assert!(!recorded(value, "put"), "{mutation}");
     }

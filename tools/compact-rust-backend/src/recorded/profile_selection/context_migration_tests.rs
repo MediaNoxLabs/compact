@@ -308,14 +308,24 @@ fn malformed_direct_query_commit_scope_and_projection_are_refused() {
             index: 1,
         },
         commit(bytes(), bytes(), Expr::BytesLiteral { bytes: vec![0; 31] }),
-        Expr::PersistentCommit {
-            value: Box::new(Expr::Tuple {
-                elements: vec![project(address())],
-            }),
-            opening: Box::new(bytes()),
-        },
         commit(parameter("unknown"), bytes(), project(address())),
     ];
+    let single = subject(Expr::PersistentCommit {
+        value: Box::new(Expr::Tuple {
+            elements: vec![project(address())],
+        }),
+        opening: Box::new(bytes()),
+    });
+    let single_context = Context::new(&single);
+    assert!(single_context.old(&single.stateful_circuits[0]).is_none());
+    assert!(single_context.algebra(&single.stateful_circuits[0]).is_ok());
+    assert!(
+        crate::render_with_capabilities(&single)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
+    );
     for (i, value) in cases.into_iter().enumerate() {
         let contract = subject(value);
         let context = Context::new(&contract);

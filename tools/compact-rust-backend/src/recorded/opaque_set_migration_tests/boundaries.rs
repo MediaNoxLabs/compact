@@ -100,7 +100,7 @@ fn complete_helper_qualification_excludes_unsupported_children_and_recursion() {
     named(&mut v,"assertWritable")["actions"].as_array_mut().unwrap().push(json!({
         "kind":"if","condition":{"kind":"boolean","value":true},
         "then":{"kind":"sequence","actions":[]},
-        "otherwise":{"kind":"expression","value":{"kind":"persistent_commit","value":{"kind":"field_literal","value":"0"},"opening":{"kind":"bytes_literal","bytes":vec![0u8;32]}}}
+        "otherwise":{"kind":"expression","value":{"kind":"persistent_commit","value":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),"opening":{"kind":"bytes_literal","bytes":vec![0u8;32]}}}
     }));
     let c = contract(v);
     let cx = Context::new(&c);

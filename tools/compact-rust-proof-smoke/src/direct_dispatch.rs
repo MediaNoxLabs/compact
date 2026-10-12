@@ -182,6 +182,7 @@ pub(super) fn try_run(
         ("--pure-field-arguments", _) => Some(expressions::pure_field_arguments(arguments)),
         ("--stateful-pure-return", _) => Some(recorded::stateful_pure_return(arguments)),
         ("--persistent-commit", _) => Some(expressions::persistent_commit(arguments)),
+        ("--persistent-commit-strict", _) => Some(expressions::persistent_commit_strict(arguments)),
         ("--assert-witness", _) => Some(recorded::assert_witness(arguments)),
         ("--witness-vector-let", _) => Some(recorded::witness_vector_let(arguments)),
         ("--witness-vector-bare", _) => Some(recorded::witness_vector_bare(arguments)),

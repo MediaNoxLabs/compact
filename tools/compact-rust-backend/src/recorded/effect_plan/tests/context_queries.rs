@@ -156,9 +156,17 @@ fn commitment() -> Plan {
     )
 }
 #[test]
-fn forged_commit_requires_pair_bytes_opening_output_and_live_operands() {
+fn forged_commit_preserves_opening_output_and_live_operands() {
     validate::check(commitment(), environment(address_type())).unwrap();
-    for mode in 0..6 {
+    // A live Bytes32 operand is a valid fixed FAB, not a forged pair anymore.
+    let mut single = commitment();
+    let Operation::PersistentCommit { value: input, .. } = &mut single.body.bindings[3].operation
+    else {
+        unreachable!()
+    };
+    *input = value(0, bytes_type());
+    validate::check(single, environment(address_type())).unwrap();
+    for mode in 1..6 {
         let mut forged = commitment();
         let Operation::PersistentCommit {
             value: input,
@@ -168,7 +176,6 @@ fn forged_commit_requires_pair_bytes_opening_output_and_live_operands() {
             unreachable!()
         };
         match mode {
-            0 => *input = value(0, bytes_type()),
             1 => {
                 *opening = value(
                     2,

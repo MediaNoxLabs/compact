@@ -625,3 +625,7 @@ fn recorded_vector_witness_let_matches_typescript_and_advances_private_state_onc
         }
     }
 }
+
+#[cfg(feature = "ledger-transaction")]
+#[path = "observed/commitments.rs"]
+mod observed_commitments;

@@ -46,7 +46,7 @@ fn capability(report: &RustCapabilityReport) -> &RustCircuitCapability {
     report.circuits.iter().find(|row| row.name == ROOT).unwrap()
 }
 fn persistent_commit() -> Value {
-    json!({"kind":"persistent_commit","value":{"kind":"field_literal","value":"0"},"opening":{"kind":"bytes_literal","bytes":vec![0_u8;32]}})
+    json!({"kind":"persistent_commit","value":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),"opening":{"kind":"bytes_literal","bytes":vec![0_u8;32]}})
 }
 
 fn assert_resource(gap: &Value) {

@@ -24,7 +24,7 @@ use compact_rust_backend::ir::{
 use compact_rust_backend::{RenderError, render, render_with_capabilities};
 
 #[test]
-fn opaque_string_set_recording_composes_typed_operations_and_rejects_unsupported_defaults() {
+fn opaque_string_set_recording_composes_defaults_and_checks_declared_keys() {
     let mut contract: Contract =
         serde_json::from_str(include_str!("../opaque-string-set-schema13-ir.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
@@ -63,8 +63,23 @@ fn opaque_string_set_recording_composes_typed_operations_and_rejects_unsupported
     };
     assert_eq!(
         statuses(&contract),
-        vec![("addName".into(), true), ("hasName".into(), false)]
+        vec![("addName".into(), true), ("hasName".into(), true)]
     );
+    let output = render_with_capabilities(&contract).unwrap();
+    assert!(
+        generated_body(&output.source, "recorded", "hasName")
+            .contains(&quote::quote!(.record_member).to_string())
+    );
+    let StateReturn::SetMember { value, .. } = &mut contract.stateful_circuits[1].return_value
+    else {
+        unreachable!()
+    };
+    *value = Expr::FieldLiteral { value: "1".into() };
+    assert!(matches!(
+        render(&contract),
+        Err(RenderError::Located { error, .. })
+            if matches!(*error, RenderError::TypeMismatch { expected: Type::OpaqueString, actual: Type::Field })
+    ));
 }
 
 #[test]
@@ -167,7 +182,7 @@ fn opaque_set_check_in_composes_typed_effects_and_preserves_witness_order() {
     let defaulted = render_with_capabilities(&contract).unwrap();
     assert!(defaulted.capabilities.circuits[0].recorded);
     assert!(defaulted.capabilities.circuits[0].observed_call);
-    // Keep the now-supported default callback value. An unsupported commitment
+    // Keep the now-supported default callback value. A commitment with an unsupported VectorMap child
     // in its local prefix still refuses recording at that exact argument path.
     let StateAction::Expression {
         value: Expr::WitnessCall { arguments, .. },
@@ -180,7 +195,7 @@ fn opaque_set_check_in_composes_typed_effects_and_preserves_witness_order() {
             name: "unsupported_commit".into(),
             ty: Type::Bytes { length: 32 },
             value: Expr::PersistentCommit {
-                value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+                value: Box::new(super::support::unsupported_commit_input()),
                 opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
             },
         }],
@@ -188,7 +203,7 @@ fn opaque_set_check_in_composes_typed_effects_and_preserves_witness_order() {
     };
     let rejected = render_with_capabilities(&contract).unwrap();
     assert!(!rejected.capabilities.circuits[0].recorded);
-    // The checked domain refuses the commitment, then the retained witness
+    // The checked domain refuses the VectorMap child, then the retained witness
     // fallback's cell_source rejects the enclosing Let argument atomically.
     let gap = rejected.capabilities.circuits[0]
         .recording_unavailable
@@ -218,16 +233,18 @@ fn opaque_set_check_in_composes_typed_effects_and_preserves_witness_order() {
     contract.ledger_fields[1].declaration = LedgerFieldKind::Set {
         ty: Type::OpaqueBytes,
     };
-    let rejected = render_with_capabilities(&contract).unwrap();
-    assert!(!rejected.capabilities.circuits[0].recorded);
-    assert_eq!(
-        rejected.capabilities.circuits[0]
-            .recording_unavailable
-            .as_ref()
-            .unwrap()
-            .path,
-        "actions[0]"
+    let bytes = render_with_capabilities(&contract).unwrap();
+    assert!(
+        bytes.capabilities.circuits[0].recorded && bytes.capabilities.circuits[0].observed_call
     );
+    let body = generated_body(&bytes.source, "recorded", "check_in");
+    assert!(body.find("record_member").unwrap() < body.find("record_insert").unwrap());
+    assert!(body.find("record_insert").unwrap() < body.find("record_remove").unwrap());
+    contract.stateful_circuits[0].parameters[0].ty = Type::Field;
+    assert!(matches!(
+        render(&contract),
+        Err(RenderError::TypeMismatch { .. })
+    ));
 }
 
 #[test]
@@ -581,26 +598,25 @@ fn enum_set_locals_record_typed_keys_in_source_order() {
             name: "unsupported_commit".into(),
             ty: Type::Bytes { length: 32 },
             value: Expr::PersistentCommit {
-                value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+                value: Box::new(super::support::unsupported_commit_input()),
                 opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
             },
         },
     );
     let defaulted = render_with_capabilities(&contract).unwrap();
     assert!(!defaulted.capabilities.circuits[0].recorded);
-    // The retained commitment-binding fallback accepts a Field literal value
-    // but requires a Bytes32 CellRead opening. Its first concrete refusal is
-    // therefore this literal opening, before it reaches the enum binding.
+    // The retained commitment-binding fallback refuses the VectorMap operand
+    // before opening evaluation or the later enum binding.
     let gap = defaulted.capabilities.circuits[0]
         .recording_unavailable
         .as_ref()
         .unwrap();
-    assert_eq!(gap.ir_node, "Expr::BytesLiteral");
-    assert_eq!(gap.path, "actions[0].bindings[0].value.opening");
+    assert_eq!(gap.ir_node, "Expr::VectorMap");
+    assert_eq!(gap.path, "actions[0].bindings[0].value.value");
 }
 
 #[test]
-fn closed_literal_vector_call_records_set_key_but_other_pure_calls_remain_unavailable() {
+fn typed_pure_vector_calls_record_set_keys_and_keep_callee_authority() {
     let mut contract = identity(Type::Unit, Expr::Unit);
     let vector = Type::Vector {
         element: Box::new(Type::Field),
@@ -677,14 +693,17 @@ fn closed_literal_vector_call_records_set_key_but_other_pure_calls_remain_unavai
 
     contract.circuits[0].body = Expr::Default { ty: vector.clone() };
     let defaulted = render_with_capabilities(&contract).unwrap();
-    assert!(!defaulted.capabilities.circuits[0].recorded);
-    assert_eq!(
-        defaulted.capabilities.circuits[0]
-            .recording_unavailable
-            .as_ref()
+    assert!(
+        defaulted.capabilities.circuits[0].recorded
+            && defaulted.capabilities.circuits[0].observed_call
+    );
+    let body = generated_body(&defaulted.source, "recorded", "test");
+    assert!(
+        body.find(&quote::quote!(crate::pure_circuits::getVector()).to_string())
             .unwrap()
-            .ir_node,
-        "StateAction::Let"
+            < body
+                .find(&quote::quote!(.record_insert).to_string())
+                .unwrap()
     );
 
     contract.circuits[0].body = Expr::Vector {
@@ -706,7 +725,29 @@ fn closed_literal_vector_call_records_set_key_but_other_pure_calls_remain_unavai
         arguments: vec![Expr::FieldLiteral { value: "7".into() }],
     };
     let argument_bearing = render_with_capabilities(&contract).unwrap();
-    assert!(!argument_bearing.capabilities.circuits[0].recorded);
+    assert!(
+        argument_bearing.capabilities.circuits[0].recorded
+            && argument_bearing.capabilities.circuits[0].observed_call
+    );
+    let body = generated_body(&argument_bearing.source, "recorded", "test");
+    assert!(
+        body.find(&quote::quote!(crate::pure_circuits::getVector).to_string())
+            .unwrap()
+            < body
+                .find(&quote::quote!(.record_insert).to_string())
+                .unwrap()
+    );
+    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    let Expr::Call { arguments, .. } = &mut bindings[0].value else {
+        unreachable!()
+    };
+    arguments.clear();
+    assert!(
+        render(&contract).is_err(),
+        "callee arity remains authoritative"
+    );
 }
 
 #[test]

@@ -138,13 +138,28 @@ fn resource_metadata_manifest(bytes: &[u8]) -> Result<Value, String> {
     serde_json::from_slice(bytes).map_err(|error| error.to_string())
 }
 
+// #611 replaces obsolete public refusal controls in one test-only oracle owner.
+// Pin this separate checkpoint to avoid a self-referential inventory manifest.
+const COMMIT_INPUTS_SHA256: &str =
+    "4feeb870cede6548b17cc870c6d67f545274f9c98c73923e691acca665c45caf";
+const COMMIT_INPUTS: &[u8] = include_bytes!("legacy-commit-inputs-611.json");
+
+fn commit_inputs_manifest(bytes: &[u8]) -> Result<Value, String> {
+    if digest(bytes) != COMMIT_INPUTS_SHA256 {
+        return Err("unreviewed commitment test checkpoint".into());
+    }
+    serde_json::from_slice(bytes).map_err(|error| error.to_string())
+}
+
 fn projected_legacy_source(
     path: &str,
     current: &str,
     retirement: &Value,
     resource_metadata: &Value,
 ) -> Result<String, String> {
-    let before_metadata = legacy_source(path, current, resource_metadata)?;
+    let commit_inputs = commit_inputs_manifest(COMMIT_INPUTS)?;
+    let before_commit = legacy_source(path, current, &commit_inputs)?;
+    let before_metadata = legacy_source(path, &before_commit, resource_metadata)?;
     legacy_source(path, &before_metadata, retirement)
 }
 
@@ -192,6 +207,7 @@ pub(super) fn legacy_authority() -> Value {
     }
     authority["retirement_projection"] = retirement;
     authority["resource_metadata_projection"] = resource_metadata;
+    authority["commit_input_test_projection"] = commit_inputs_manifest(COMMIT_INPUTS).unwrap();
     authority
 }
 
@@ -202,7 +218,29 @@ fn retired_oracle_projection_rejects_drift_and_forged_authority() {
     let resource_metadata = resource_metadata_manifest(RESOURCE_METADATA).unwrap();
     assert!(resource_metadata_manifest(br#"{"owners":{}}"#).is_err());
     assert!(retirement_manifest(br#"{"owners":{}}"#).is_err());
+    let commit_inputs = commit_inputs_manifest(COMMIT_INPUTS).unwrap();
+    assert!(commit_inputs_manifest(br#"{"owners":{}}"#).is_err());
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    for (path, row) in commit_inputs["owners"].as_object().unwrap() {
+        let current = std::fs::read_to_string(root.join(path)).unwrap();
+        assert_eq!(
+            digest(
+                legacy_source(path, &current, &commit_inputs)
+                    .unwrap()
+                    .as_bytes()
+            ),
+            row["previous_sha256"]
+        );
+        assert!(legacy_source(path, &(current.clone() + "\n// drift\n"), &commit_inputs).is_err());
+        let edit = &row["predecessor_reconstruction"][0];
+        let partial = current.replacen(
+            edit["current"].as_str().unwrap(),
+            edit["previous"].as_str().unwrap(),
+            1,
+        );
+        assert_ne!(partial, current);
+        assert!(projected_legacy_source(path, &partial, &retirement, &resource_metadata).is_err());
+    }
     for (path, row) in retirement["owners"].as_object().unwrap() {
         let current = std::fs::read_to_string(root.join(path)).unwrap();
         assert_eq!(
@@ -223,7 +261,8 @@ fn retired_oracle_projection_rejects_drift_and_forged_authority() {
             .is_err()
         );
         let edit = &row["predecessor_reconstruction"][0];
-        let before_metadata = legacy_source(path, &current, &resource_metadata).unwrap();
+        let before_commit = legacy_source(path, &current, &commit_inputs).unwrap();
+        let before_metadata = legacy_source(path, &before_commit, &resource_metadata).unwrap();
         let partial = before_metadata.replacen(
             edit["current"].as_str().unwrap(),
             edit["previous"].as_str().unwrap(),
@@ -231,7 +270,7 @@ fn retired_oracle_projection_rejects_drift_and_forged_authority() {
         );
         assert!(projected_legacy_source(path, &partial, &retirement, &resource_metadata).is_err());
     }
-    // Every original source digest remains mandatory after both exact stages.
+    // Every original source digest remains mandatory after all exact stages.
     let authority = legacy_authority();
     assert_eq!(authority["files"].as_array().unwrap().len(), 49);
     let path = "tools/compact-rust-backend/src/recorded/typed_plan/composition.rs";

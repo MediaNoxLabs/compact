@@ -12,6 +12,7 @@ fn main() {
         "commit_echo",
         "degrade_hash_echo",
         "persistent_hash_echo",
+        "persistent_commit_echo",
         "upgrade_echo",
     ] {
         let circuit = rendered

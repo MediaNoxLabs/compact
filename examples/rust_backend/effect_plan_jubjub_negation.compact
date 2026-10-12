@@ -1,0 +1,26 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger calls: Counter;
+export struct Coordinates { x: Field; y: Field; }
+witness point(): JubjubPoint;
+witness permit(): Boolean;
+constructor() {}
+circuit check_negation(expected: JubjubPoint): [] {
+  const negated = ecNeg(point());
+  assert(jubjubPointX(negated) == jubjubPointX(expected), "wrong x");
+  assert(jubjubPointY(negated) == jubjubPointY(expected), "wrong y");
+}
+export circuit close(expected: JubjubPoint): [] {
+  calls.increment(1);
+  check_negation(expected);
+  assert(permit(), "denied");
+}
+export circuit coordinates(fallback: JubjubPoint, selected: Boolean): Coordinates {
+  calls.increment(1);
+  const value = disclose(selected) ? point() : fallback;
+  const negated = ecNeg(value);
+  assert(permit(), "denied");
+  return Coordinates { x: disclose(jubjubPointX(negated)), y: disclose(jubjubPointY(negated)) };
+}

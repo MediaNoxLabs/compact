@@ -251,6 +251,7 @@ impl Lowerer<'_> {
             | Expr::JubjubPointY { .. }
             | Expr::JubjubScalarFromNative { .. }
             | Expr::EcMulGenerator { .. }
+            | Expr::EcNeg { .. }
             | Expr::EcMul { .. }
             | Expr::EcAdd { .. } => {
                 // One result temporary keeps this recursive dispatch frame bounded.

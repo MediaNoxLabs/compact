@@ -166,6 +166,7 @@ pub(super) enum Operation {
     JubjubPointY(Value),
     JubjubScalarFromNative(Value),
     EcMulGenerator(Value),
+    EcNeg(Value),
     EcMul {
         point: Value,
         scalar: Value,

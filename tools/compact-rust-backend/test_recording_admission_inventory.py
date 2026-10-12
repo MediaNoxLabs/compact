@@ -97,7 +97,23 @@ ALIGNED_TEST_EXTENSION = inventory.BASELINE.with_name("recording_admission_inven
 ENCODING_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.encoding-583.json")
 
 
+NEGATION_TEST_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.negation-test-585.json")
+
+
+def checkpoint_584(root):
+    owner = next(iter(inventory.negation_test.OWNERS))
+    try:
+        current = (root / owner).read_bytes()
+    except FileNotFoundError:
+        return root
+    if inventory.digest(current) == inventory.negation_test.OWNERS[owner][1]:
+        return inventory.negation_test.checkpoint(root, json.loads(NEGATION_TEST_EXTENSION.read_text()),
+                                                  json.loads(ENCODING_EXTENSION.read_text()))
+    return root
+
+
 def checkpoint_582(root):
+    root = checkpoint_584(root)
     # Historical fixtures may already contain the exact preceding bytes.
     try:
         current = (root / inventory.encoding.OWNER).read_bytes()
@@ -354,7 +370,8 @@ class InventoryTests(unittest.TestCase):
                                   funded_mint_transition=json.loads(FUNDED_MINT_TRANSITION.read_text()),
                                   keccak_test_extension=json.loads(KECCAK_TEST_EXTENSION.read_text()),
                                   aligned_test_extension=json.loads(ALIGNED_TEST_EXTENSION.read_text()),
-                                  encoding_extension=json.loads(ENCODING_EXTENSION.read_text()))
+                                  encoding_extension=json.loads(ENCODING_EXTENSION.read_text()),
+                                  negation_test_extension=json.loads(NEGATION_TEST_EXTENSION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)

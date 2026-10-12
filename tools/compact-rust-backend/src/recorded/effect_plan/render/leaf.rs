@@ -179,6 +179,10 @@ pub(super) fn render(
             crate::jubjub_value::Operation::Generator(operand(input)),
             path,
         )?,
+        Operation::EcNeg(input) => {
+            let input = value(input);
+            syn::parse_quote!(runtime::ec_neg(#input))
+        }
         Operation::EcMul { point, scalar } => jubjub(
             crate::jubjub_value::Operation::Multiply(operand(point), operand(scalar)),
             path,

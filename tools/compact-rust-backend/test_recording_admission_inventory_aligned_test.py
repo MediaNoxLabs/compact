@@ -22,7 +22,7 @@ class AlignedTestExtensionTests(unittest.TestCase):
         for owner in aligned.OWNERS:
             path = self.root / owner
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes((inventory.ROOT / owner).read_bytes())
+            path.write_bytes((previous.checkpoint_584(inventory.ROOT) / owner).read_bytes())
 
     def report(self):
         return prior_tests.FundedMintTransitionTests.report(

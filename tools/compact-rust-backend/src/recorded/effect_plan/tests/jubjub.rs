@@ -4,6 +4,8 @@
 
 //! Point-domain admission, operand order and the deliberately unchanged scalar surface.
 use super::*;
+#[path = "jubjub/negation.rs"]
+mod negation;
 #[path = "jubjub/validation.rs"]
 mod validation;
 

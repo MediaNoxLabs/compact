@@ -394,6 +394,10 @@ fn block(
                 use_value(scalar)?;
                 scalar.ty == Type::Field && *ty == Type::JubjubPoint
             }
+            Operation::EcNeg(value) => {
+                use_value(value)?;
+                value.ty == Type::JubjubPoint && *ty == Type::JubjubPoint
+            }
             Operation::EcMul { point, scalar } => {
                 use_value(point)?;
                 use_value(scalar)?;

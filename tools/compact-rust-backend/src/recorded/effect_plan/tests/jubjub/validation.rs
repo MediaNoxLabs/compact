@@ -52,6 +52,7 @@ fn validate_operation(
 #[test]
 fn validator_checks_each_jubjub_operand_result_and_scope_independently() {
     let valid = [
+        (Operation::EcNeg(point(0)), Type::JubjubPoint),
         (Operation::JubjubScalarFromNative(scalar(1)), Type::Field),
         (Operation::EcMulGenerator(scalar(1)), Type::JubjubPoint),
         (
@@ -77,6 +78,10 @@ fn validator_checks_each_jubjub_operand_result_and_scope_independently() {
         assert!(validate_operation(Operation::JubjubScalarFromNative(input), Type::Field).is_err());
     }
     for operation in [
+        Operation::EcNeg(scalar(1)),
+        Operation::EcNeg(point(1)),
+        Operation::EcNeg(point(4)),
+        Operation::EcNeg(point(9)),
         Operation::JubjubScalarFromNative(point(0)),
         Operation::EcMulGenerator(point(0)),
         Operation::EcMul {

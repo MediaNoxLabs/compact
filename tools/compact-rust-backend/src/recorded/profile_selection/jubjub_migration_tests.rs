@@ -204,11 +204,33 @@ fn new_compositional_point_domain_is_separate_from_old_inclusion() {
 }
 
 #[test]
-fn unsupported_point_operation_does_not_reenter_the_old_family() {
+fn point_negation_is_checked_while_point_construction_has_no_old_fallback() {
     let mut contract = subject();
     contract.stateful_circuits[0].return_value = StateReturn::Expression {
         value: Expr::EcNeg {
             value: Box::new(parameter("point")),
+        },
+    };
+    let context = Context::new(&contract);
+    let circuit = &contract.stateful_circuits[0];
+    assert!(context.old(circuit).is_none());
+    assert!(context.algebra(circuit).is_ok());
+    assert!(context.selected(circuit).unwrap().typed_result.is_some());
+    assert!(
+        crate::render_with_capabilities(&contract)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
+    );
+    contract.stateful_circuits[0].return_value = StateReturn::Expression {
+        value: Expr::ConstructJubjubPoint {
+            x: Box::new(Expr::JubjubPointX {
+                value: Box::new(parameter("point")),
+            }),
+            y: Box::new(Expr::JubjubPointY {
+                value: Box::new(parameter("point")),
+            }),
         },
     };
     let context = Context::new(&contract);

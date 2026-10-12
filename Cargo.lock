@@ -1367,6 +1367,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-effect-plan-jubjub-negation-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-base-crypto",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-storage",
+ "rand 0.8.6",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-effect-plan-jubjub-nested-layout-fixture"
 version = "0.1.0"
 dependencies = [
@@ -2596,6 +2609,7 @@ dependencies = [
  "compact-rust-effect-plan-counter-only-source-fixture",
  "compact-rust-effect-plan-counter-source-fixture",
  "compact-rust-effect-plan-exact-hash-input-source-fixture",
+ "compact-rust-effect-plan-jubjub-negation-source-fixture",
  "compact-rust-effect-plan-jubjub-source-fixture",
  "compact-rust-effect-plan-maps-source-fixture",
  "compact-rust-effect-plan-merkle-source-fixture",

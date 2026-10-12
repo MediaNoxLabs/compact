@@ -337,9 +337,14 @@ fn rich_value_support_does_not_authorize_arithmetic_or_unrelated_nodes() {
             value: Box::new(bytes(1)),
         }),
     };
+    render(&checked(expression, Type::JubjubPoint)).unwrap();
+    let unsupported = Expr::ConstructJubjubPoint {
+        x: Box::new(literal("0")),
+        y: Box::new(literal("1")),
+    };
     assert_eq!(
-        refusal(expression, Type::JubjubPoint).ir_node,
-        "Expr::EcNeg"
+        refusal(unsupported, Type::JubjubPoint).ir_node,
+        "Expr::ConstructJubjubPoint"
     );
 }
 

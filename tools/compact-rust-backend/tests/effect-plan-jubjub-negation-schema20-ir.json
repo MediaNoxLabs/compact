@@ -1,0 +1,403 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "calls",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_jubjub_negation.compact",
+        "line": 5,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "point",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "jubjub_point"
+      },
+      "source": {
+        "file": "effect_plan_jubjub_negation.compact",
+        "line": 7,
+        "column": 1
+      }
+    },
+    {
+      "name": "permit",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "source": {
+        "file": "effect_plan_jubjub_negation.compact",
+        "line": 8,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "check_negation",
+      "parameters": [
+        {
+          "name": "expected",
+          "ty": {
+            "kind": "jubjub_point"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "negated",
+              "ty": {
+                "kind": "jubjub_point"
+              },
+              "value": {
+                "kind": "ec_neg",
+                "value": {
+                  "kind": "witness_call",
+                  "name": "point",
+                  "arguments": [
+                  ]
+                }
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "assert",
+                "condition": {
+                  "kind": "equal",
+                  "left": {
+                    "kind": "jubjub_point_x",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "negated"
+                    }
+                  },
+                  "right": {
+                    "kind": "jubjub_point_x",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "expected"
+                    }
+                  }
+                },
+                "message": "wrong x"
+              },
+              {
+                "kind": "assert",
+                "condition": {
+                  "kind": "equal",
+                  "left": {
+                    "kind": "jubjub_point_y",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "negated"
+                    }
+                  },
+                  "right": {
+                    "kind": "jubjub_point_y",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "expected"
+                    }
+                  }
+                },
+                "message": "wrong y"
+              }
+            ]
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "effect_plan_jubjub_negation.compact",
+        "line": 10,
+        "column": 1
+      }
+    },
+    {
+      "name": "close",
+      "parameters": [
+        {
+          "name": "expected",
+          "ty": {
+            "kind": "jubjub_point"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_14",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_14"
+            }
+          }
+        },
+        {
+          "kind": "circuit_call",
+          "name": "check_negation",
+          "arguments": [
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "expected"
+              },
+              "ty": {
+                "kind": "jubjub_point"
+              }
+            }
+          ]
+        },
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "witness_call",
+            "name": "permit",
+            "arguments": [
+            ]
+          },
+          "message": "denied"
+        }
+      ],
+      "source": {
+        "file": "effect_plan_jubjub_negation.compact",
+        "line": 15,
+        "column": 1
+      }
+    },
+    {
+      "name": "coordinates",
+      "parameters": [
+        {
+          "name": "fallback",
+          "ty": {
+            "kind": "jubjub_point"
+          }
+        },
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Coordinates",
+        "fields": [
+          {
+            "name": "x",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "y",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "value",
+              "ty": {
+                "kind": "jubjub_point"
+              },
+              "value": {
+                "kind": "if",
+                "condition": {
+                  "kind": "parameter",
+                  "name": "selected"
+                },
+                "then": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "witness_call",
+                    "name": "point",
+                    "arguments": [
+                    ]
+                  },
+                  "ty": {
+                    "kind": "jubjub_point"
+                  }
+                },
+                "otherwise": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "fallback"
+                  },
+                  "ty": {
+                    "kind": "jubjub_point"
+                  }
+                }
+              }
+            }
+          ],
+          "body": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "negated",
+                "ty": {
+                  "kind": "jubjub_point"
+                },
+                "value": {
+                  "kind": "ec_neg",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "value"
+                  }
+                }
+              }
+            ],
+            "body": {
+              "kind": "sequence",
+              "steps": [
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "witness_call",
+                    "name": "permit",
+                    "arguments": [
+                    ]
+                  },
+                  "message": "denied"
+                }
+              ],
+              "value": {
+                "kind": "struct_literal",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Coordinates",
+                  "fields": [
+                    {
+                      "name": "x",
+                      "ty": {
+                        "kind": "field"
+                      }
+                    },
+                    {
+                      "name": "y",
+                      "ty": {
+                        "kind": "field"
+                      }
+                    }
+                  ]
+                },
+                "fields": [
+                  {
+                    "kind": "jubjub_point_x",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "negated"
+                    }
+                  },
+                  {
+                    "kind": "jubjub_point_y",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "negated"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_13",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_13"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_jubjub_negation.compact",
+        "line": 20,
+        "column": 1
+      }
+    }
+  ]
+}

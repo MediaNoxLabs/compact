@@ -26,6 +26,7 @@ default = []
 experimental-recording-plan = ["dep:compact-rust-recording-effect-plan-prototype-fixture"]
 
 [dependencies]
+compact-rust-effect-plan-jubjub-negation-source-fixture = { path = "../../tests-rust-backend/effect-plan-jubjub-negation-source", features = ["ledger-transaction"] }
 compact-rust-effect-plan-aligned-witness-results-source-fixture = { path = "../../tests-rust-backend/effect-plan-aligned-witness-results-source", features = ["ledger-transaction"] }
 compact-rust-effect-plan-aligned-hashes-source-fixture = { path = "../../tests-rust-backend/effect-plan-aligned-hashes-source", features = ["ledger-transaction"] }
 compact-rust-effect-plan-exact-hash-input-source-fixture = { path = "../../tests-rust-backend/effect-plan-exact-hash-input-source", features = ["ledger-transaction"] }

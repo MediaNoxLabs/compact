@@ -224,3 +224,7 @@ fn recorded_generator_empty_public_program_is_not_a_prepared_call() {
 #[cfg(feature = "ledger-transaction")]
 #[path = "witness_jubjub/hash_recording.rs"]
 mod hash_recording;
+
+#[cfg(feature = "ledger-transaction")]
+#[path = "witness_jubjub/negation_recording.rs"]
+mod negation_recording;

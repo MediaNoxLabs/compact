@@ -33,6 +33,10 @@ impl Lowerer<'_> {
                 Operation::EcMulGenerator(operand(scalar, "scalar", Type::Field)?),
                 Type::JubjubPoint,
             ),
+            Expr::EcNeg { value } => (
+                Operation::EcNeg(operand(value, "value", Type::JubjubPoint)?),
+                Type::JubjubPoint,
+            ),
             Expr::EcMul { point, scalar } => {
                 let point = operand(point, "point", Type::JubjubPoint)?;
                 let scalar = operand(scalar, "scalar", Type::Field)?;

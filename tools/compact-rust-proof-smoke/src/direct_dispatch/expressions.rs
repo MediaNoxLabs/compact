@@ -51,6 +51,30 @@ pub(super) fn mixed_width_recording(
     }
 }
 
+pub(super) fn mixed_width_record_pinned(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let root = arguments
+        .next()
+        .ok_or("usage: compact-rust-proof-smoke --mixed-width-record-pinned <proof-output>")?;
+    if arguments.next().is_some() {
+        return Err(
+            "usage: compact-rust-proof-smoke --mixed-width-record-pinned <proof-output>".into(),
+        );
+    }
+    let proof = std::thread::Builder::new()
+        .name("mixed-width-pinned-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            mixed_width_recording::run_pinned(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("mixed-width pinned proof thread panicked".into()),
+    }
+}
+
 pub(super) fn wide_unsigned_field_cast(
     arguments: &mut impl Iterator<Item = OsString>,
 ) -> Result<(), Box<dyn Error>> {

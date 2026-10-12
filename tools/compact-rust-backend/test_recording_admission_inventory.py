@@ -118,8 +118,24 @@ WITNESS_MERKLE_TRANSITION = inventory.BASELINE.with_name("recording_admission_in
 ORGANIZER_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-590.json")
 
 
+UNSIGNED_PRODUCT_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-591.json")
+
+
+def checkpoint_590(root):
+    """Historical fixtures use the authenticated signed final-organizer checkpoint."""
+    transition = json.loads(UNSIGNED_PRODUCT_TRANSITION.read_text())
+    try:
+        source = (root / inventory.RECORDED).read_bytes()
+    except FileNotFoundError:
+        return root
+    if inventory.digest(source) == transition['owners'][inventory.RECORDED]['current_sha256']:
+        return inventory.unsigned_product.checkpoint(root, transition)
+    return root
+
+
 def checkpoint_589(root):
     """Historical fixtures use the authenticated signed witness-Merkle checkpoint."""
+    root = checkpoint_590(root)
     transition = json.loads(ORGANIZER_TRANSITION.read_text())
     try:
         source = (root / inventory.SELECTOR).read_bytes()
@@ -473,7 +489,8 @@ class InventoryTests(unittest.TestCase):
                                   optional_write_transition=json.loads(OPTIONAL_WRITE_TRANSITION.read_text()),
                                   enum_advance_transition=json.loads(ENUM_ADVANCE_TRANSITION.read_text()),
                                   witness_merkle_transition=json.loads(WITNESS_MERKLE_TRANSITION.read_text()),
-                                  organizer_transition=json.loads(ORGANIZER_TRANSITION.read_text()))
+                                  organizer_transition=json.loads(ORGANIZER_TRANSITION.read_text()),
+                                  unsigned_product_transition=json.loads(UNSIGNED_PRODUCT_TRANSITION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)

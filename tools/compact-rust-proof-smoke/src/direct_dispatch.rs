@@ -41,6 +41,9 @@ pub(super) fn try_run(
     match (selector, asset) {
         ("--prepare-proof-material", _) => Some(material::prepare_proof_material(arguments)),
         ("--mixed-width-recording", _) => Some(expressions::mixed_width_recording(arguments)),
+        ("--mixed-width-record-pinned", _) => {
+            Some(expressions::mixed_width_record_pinned(arguments))
+        }
         ("--wide-unsigned-field-cast", _) => Some(expressions::wide_unsigned_field_cast(arguments)),
         ("--closed-pure-unsigned-call", _) => {
             Some(expressions::closed_pure_unsigned_call(arguments))

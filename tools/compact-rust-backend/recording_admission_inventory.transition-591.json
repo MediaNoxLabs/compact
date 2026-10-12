@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "issue": 591,
+  "baseline_commit": "ae2f343eb277a8f1fdc98e55a5dce057a1d1f729",
+  "claim": "Retire guarded unsigned-product admission; authenticate unchanged whole-old oracle and measured checked ownership. Source inventory is not language coverage.",
+  "previous_selector": {
+    "ordered_calls": [],
+    "function_sha256": "39edd1256e89f088a942088f357a48bd920afd3a413d932a8296c36fb8894085"
+  },
+  "current_selector": {
+    "ordered_calls": [],
+    "function_sha256": "39edd1256e89f088a942088f357a48bd920afd3a413d932a8296c36fb8894085"
+  },
+  "owners": {
+    "tools/compact-rust-backend/src/recorded.rs": {
+      "previous_sha256": "f6d8714546518436028fa81089ebd914d70b35c8630d23564f3bf6a08913f2c8",
+      "current_sha256": "2421a01be2c094d6dfd0b8ac7360c34889cb6458503b8cb68623d36463a13d9b",
+      "predecessor_reconstruction": [
+        {
+          "current": "use legacy::actions::append_steps;\nuse legacy::expressions::{boolean_expression, field_expression};\nuse legacy::guarded_map::closed_guarded_struct_map_read_steps;\nuse legacy::guarded_pure::closed_guarded_struct_pure_steps;\nuse legacy::opaque_map::closed_typed_opaque_map_write_steps;\nuse legacy::opaque_set::closed_guarded_opaque_set_mutation_steps;\n\n",
+          "previous": "use legacy::actions::append_steps;\nuse legacy::expressions::{boolean_expression, field_expression};\nuse legacy::guarded_map::closed_guarded_struct_map_read_steps;\nuse legacy::guarded_pure::{\n    closed_guarded_struct_pure_steps, closed_guarded_unsigned_product_steps,\n};\nuse legacy::opaque_map::closed_typed_opaque_map_write_steps;\nuse legacy::opaque_set::closed_guarded_opaque_set_mutation_steps;\n\n"
+        },
+        {
+          "current": "mod profile_attempt;\nmod profile_selection;\nmod pure_calls;\n#[cfg(test)]\nmod unsigned_product_migration_tests;\npub(crate) use helpers::plan_recorded_helpers;\n#[cfg(test)]\nuse profile_attempt::ProfileAttempt;\n",
+          "previous": "mod profile_attempt;\nmod profile_selection;\nmod pure_calls;\npub(crate) use helpers::plan_recorded_helpers;\n#[cfg(test)]\nuse profile_attempt::ProfileAttempt;\n"
+        },
+        {
+          "current": "    let guarded_pure_steps = record_option!(\n        \"guard.guarded-struct-pure\",\n        closed_guarded_struct_pure_steps(circuit, &parameters, pure_circuits, circuits)?\n    );\n    let guarded_pure_call = guarded_pure_steps.is_some();\n    let mut steps = organizer_steps\n        .or(guarded_map_read_steps)\n",
+          "previous": "    let guarded_pure_steps = record_option!(\n        \"guard.guarded-struct-pure\",\n        closed_guarded_struct_pure_steps(circuit, &parameters, pure_circuits, circuits)?\n    )\n    .or(record_option!(\n        \"guard.guarded-unsigned-product\",\n        closed_guarded_unsigned_product_steps(circuit, &parameters, pure_circuits)?\n    ));\n    let guarded_pure_call = guarded_pure_steps.is_some();\n    let mut steps = organizer_steps\n        .or(guarded_map_read_steps)\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/legacy/guarded_pure.rs": {
+      "previous_sha256": "777cb193a357ad0b91adb2ff34b5a3c71eff756a11201782c0a9acd97e1fff5b",
+      "current_sha256": "9feaf91e856802cfd564812c3734f1484c137530367d36407c1d6f6a5b8c480a",
+      "predecessor_reconstruction": [
+        {
+          "current": "// A mixed-width product assertion lives in a pure Unit circuit because\n// the stateful source cannot inline ordering comparisons. Admit only its\n// exact two-Uint32, multiply-by-four, less-equal body before Counter-one.\n#[cfg(test)]\npub(in crate::recorded) fn closed_guarded_unsigned_product_steps(\n    circuit: &StatefulCircuit,\n    parameters: &HashMap<&str, (&Type, syn::Ident)>,\n",
+          "previous": "// A mixed-width product assertion lives in a pure Unit circuit because\n// the stateful source cannot inline ordering comparisons. Admit only its\n// exact two-Uint32, multiply-by-four, less-equal body before Counter-one.\npub(in crate::recorded) fn closed_guarded_unsigned_product_steps(\n    circuit: &StatefulCircuit,\n    parameters: &HashMap<&str, (&Type, syn::Ident)>,\n"
+        }
+      ]
+    }
+  },
+  "new_and_shared_sources": {
+    "tools/compact-rust-backend/tests/mixed-width-operand-schema20-ir.json": "a4eef2edb49e75a43356c9edc5bd76e1e04a5707bf781699c2922499d4e84ce9",
+    "tools/compact-rust-backend/src/recorded/unsigned_product_migration_tests.rs": "7d19a022734f1b5a215450ecaa7f1140e9cf17c1a796064c8708d39f7d43b627",
+    "tools/compact-rust-backend/src/recorded/unsigned_product_migration_tests/boundaries.rs": "8e369809c76e7821728920ddb051c26cdb30666fbb9d560102787a717ea98b93",
+    "tools/compact-rust-backend/src/recorded/unsigned_product_migration_tests/inclusion.rs": "3c662bc3094e1e01bc7020a47f9409f69ac2059f8345d849426448df8a85a412",
+    "tools/compact-rust-backend/src/recorded/legacy/value_sources.rs": "58392dabd6b787fee3f88024f7c742a676480470cab1b1d694c091cb351464a5"
+  }
+}

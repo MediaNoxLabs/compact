@@ -43,9 +43,7 @@ mod legacy;
 use legacy::actions::append_steps;
 use legacy::expressions::{boolean_expression, field_expression};
 use legacy::guarded_map::closed_guarded_struct_map_read_steps;
-use legacy::guarded_pure::{
-    closed_guarded_struct_pure_steps, closed_guarded_unsigned_product_steps,
-};
+use legacy::guarded_pure::closed_guarded_struct_pure_steps;
 use legacy::opaque_map::closed_typed_opaque_map_write_steps;
 use legacy::opaque_set::closed_guarded_opaque_set_mutation_steps;
 
@@ -57,6 +55,8 @@ mod item;
 mod profile_attempt;
 mod profile_selection;
 mod pure_calls;
+#[cfg(test)]
+mod unsigned_product_migration_tests;
 pub(crate) use helpers::plan_recorded_helpers;
 #[cfg(test)]
 use profile_attempt::ProfileAttempt;
@@ -751,11 +751,7 @@ fn render_recorded_item(
     let guarded_pure_steps = record_option!(
         "guard.guarded-struct-pure",
         closed_guarded_struct_pure_steps(circuit, &parameters, pure_circuits, circuits)?
-    )
-    .or(record_option!(
-        "guard.guarded-unsigned-product",
-        closed_guarded_unsigned_product_steps(circuit, &parameters, pure_circuits)?
-    ));
+    );
     let guarded_pure_call = guarded_pure_steps.is_some();
     let mut steps = organizer_steps
         .or(guarded_map_read_steps)

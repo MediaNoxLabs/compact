@@ -59,6 +59,7 @@ import recording_admission_inventory_optional_write as optional_write
 import recording_admission_inventory_enum_advance as enum_advance
 import recording_admission_inventory_witness_merkle as witness_merkle
 import recording_admission_inventory_organizer as organizer
+import recording_admission_inventory_unsigned_product as unsigned_product
 import recording_admission_inventory_jubjub as jubjub
 import recording_admission_inventory_calls as calls
 import recording_admission_inventory_terminal as terminal
@@ -303,7 +304,15 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
            optional_write_transition: dict | None = None,
            enum_advance_transition: dict | None = None,
            witness_merkle_transition: dict | None = None,
-           organizer_transition: dict | None = None) -> dict:
+           organizer_transition: dict | None = None,
+           unsigned_product_transition: dict | None = None) -> dict:
+    if unsigned_product_transition is not None:
+        arguments = locals().copy()
+        arguments['unsigned_product_transition'] = None
+        def historical_verify(checkpoint):
+            return verify(**{**arguments, 'root': checkpoint})
+        return unsigned_product.verify_transition(
+            root, baseline, unsigned_product_transition, historical_verify, selector_signature)
     if organizer_transition is not None:
         arguments = locals().copy()
         arguments['organizer_transition'] = None
@@ -1196,6 +1205,7 @@ def main(argv=None) -> int:
     parser.add_argument('--enum-advance-transition', type=Path, help='explicit #588 enum-advance organizer retirement with signed predecessor reconstruction')
     parser.add_argument('--witness-merkle-transition', type=Path, help='explicit #589 witness-Merkle retirement after #588')
     parser.add_argument('--organizer-transition', type=Path, help='explicit #590 final organizer retirement after #589')
+    parser.add_argument('--unsigned-product-transition', type=Path, help='explicit #591 guarded unsigned-product retirement after #590')
     parser.add_argument('--optional-write-transition', type=Path, help='explicit #587 optional-write organizer retirement with signed predecessor reconstruction')
     parser.add_argument('--unit-composition-transition', type=Path, help='explicit #580 final Unit selector retirement with signed predecessor reconstruction')
     args = parser.parse_args(argv)
@@ -1223,6 +1233,7 @@ def main(argv=None) -> int:
     protected += [args.enum_advance_transition] if args.enum_advance_transition else []
     protected += [args.witness_merkle_transition] if args.witness_merkle_transition else []
     protected += [args.organizer_transition] if args.organizer_transition else []
+    protected += [args.unsigned_product_transition] if args.unsigned_product_transition else []
     protected += [args.optional_write_transition] if args.optional_write_transition else []
     protected += [args.unit_composition_transition] if args.unit_composition_transition else []
     if args.output and any(args.output.resolve() == path.resolve() for path in protected):
@@ -1263,9 +1274,10 @@ def main(argv=None) -> int:
         enum_advance_transition = json.loads(args.enum_advance_transition.read_text()) if args.enum_advance_transition else None
         witness_merkle_transition = json.loads(args.witness_merkle_transition.read_text()) if args.witness_merkle_transition else None
         organizer_transition = json.loads(args.organizer_transition.read_text()) if args.organizer_transition else None
+        unsigned_product_transition = json.loads(args.unsigned_product_transition.read_text()) if args.unsigned_product_transition else None
         optional_write_transition = json.loads(args.optional_write_transition.read_text()) if args.optional_write_transition else None
         unit_composition_transition = json.loads(args.unit_composition_transition.read_text()) if args.unit_composition_transition else None
-        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension, voting_transition, phase_reset_transition, immediate_send_transition, zswap_transition, membership_transition, send_transition, observation_test_extension, merge_transition, guarded_deposit_transition, routing_test_extension, reset_payout_transition, shielded_payout_transition, inequality_test_extension, funded_mint_transition, keccak_test_extension, aligned_test_extension, encoding_extension, negation_test_extension, value_test_extension, unit_composition_transition, optional_write_transition, enum_advance_transition, witness_merkle_transition, organizer_transition)
+        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension, voting_transition, phase_reset_transition, immediate_send_transition, zswap_transition, membership_transition, send_transition, observation_test_extension, merge_transition, guarded_deposit_transition, routing_test_extension, reset_payout_transition, shielded_payout_transition, inequality_test_extension, funded_mint_transition, keccak_test_extension, aligned_test_extension, encoding_extension, negation_test_extension, value_test_extension, unit_composition_transition, optional_write_transition, enum_advance_transition, witness_merkle_transition, organizer_transition, unsigned_product_transition)
     except (OSError, ValueError, TypeError, KeyError) as error:
         parser.exit(2, f'inventory error: {error}\n')
     rendered = json.dumps(report, indent=2) + '\n'

@@ -13,11 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Ordered organizer and typed-profile admission for recorded circuits.
+//! Ordered checked-interface admission for recorded circuits.
 //!
-//! Organizer attempts intentionally use eager `or`: their validation errors
-//! remain observable even when an earlier organizer returned steps. Typed
-//! attempts use lazy `or_else` and stop at the first admitted plan. Rejections
+//! Checked attempts stop at the first admitted plan. Rejections
 //! from checked profiles are retained for later legacy diagnostic refinement;
 //! a rejection does not prevent an independent later profile from admitting.
 //!
@@ -31,13 +29,16 @@ use crate::ir::{LedgerField, PureCircuit, StatefulCircuit, WitnessDeclaration};
 
 use super::RecordingGap;
 use super::effect_plan;
-use super::guarded_mutations::closed_organizer_gate_steps;
 use super::profile_attempt::ProfileAttempt;
 use super::typed_plan;
 use super::typed_plan::TypedPlan;
 
 #[path = "profile_selection/unit_domain.rs"]
 mod unit_domain;
+
+#[cfg(test)]
+#[path = "profile_selection/organizer_migration_tests.rs"]
+mod organizer_migration_tests;
 
 #[cfg(test)]
 #[path = "profile_selection/witness_merkle_migration_tests.rs"]
@@ -111,8 +112,8 @@ mod shielded_payout_migration_tests;
 mod funded_mint_migration_tests;
 
 /// An admitted step sequence and the evidence retained from declined profiles.
-/// Legacy organizers have no typed result; absence of steps permits legacy
-/// action lowering. The caller owns whether a retained gap can refine a failure.
+/// Absence of checked steps permits legacy action lowering. The caller owns
+/// whether a retained gap can refine a failure.
 pub(super) struct ProfileSelection {
     pub(super) organizer_steps: Option<Vec<syn::Stmt>>,
     pub(super) typed_result: Option<syn::Expr>,
@@ -463,16 +464,7 @@ pub(super) fn select(
         typed_result = Some(plan.result);
         Some(plan.steps)
     } else {
-        record_option!(
-            "organizer.organizer",
-            closed_organizer_gate_steps(
-                circuit,
-                ledger_fields,
-                witnesses,
-                pure_circuits,
-                circuits
-            )?
-        )
+        None
     };
     let typed_prefix = if organizer_steps.is_none() {
         match record_option!(

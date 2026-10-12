@@ -47,6 +47,9 @@ pub(super) fn try_run(
         }
         ("--test-center-counter", _) => Some(contracts::test_center_counter(arguments)),
         ("--test-center-welcome", _) => Some(contracts::test_center_welcome(arguments)),
+        ("--test-center-welcome-organizers", _) => {
+            Some(contracts::test_center_welcome_organizers(arguments))
+        }
         ("--opaque-string-set", _) => Some(collections::opaque_string_set(arguments)),
         ("--opaque-string-map", _) => Some(collections::opaque_string_map(arguments)),
         ("--map-effects", _) => Some(collections::map_effects(arguments)),

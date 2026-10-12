@@ -127,12 +127,13 @@ fn actual_owner_and_eager_sibling_order_are_preserved() {
             .iter()
             .map(|a| a["route"].as_str().unwrap())
             .collect();
-        assert_eq!(&attempts[..1], &["organizer.organizer"]);
+        assert_eq!(attempts[0], "algebra.membership");
+        assert!(!attempts.iter().any(|route| route.starts_with("organizer.")));
         assert!(!attempts.contains(&"organizer.optional-write"));
         assert!(!attempts.contains(&"organizer.enum-advance"));
         assert!(!attempts.contains(&"organizer.witness-merkle"));
         if name == "set_topic" {
-            assert_eq!(attempts[1], "algebra.membership");
+            assert_eq!(attempts[0], "algebra.membership");
         }
     }
 }

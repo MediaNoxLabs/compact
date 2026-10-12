@@ -50,6 +50,7 @@ use legacy::opaque_map::closed_typed_opaque_map_write_steps;
 use legacy::opaque_set::closed_guarded_opaque_set_mutation_steps;
 
 mod facade;
+#[cfg(test)]
 mod guarded_mutations;
 mod helpers;
 mod item;

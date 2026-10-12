@@ -124,6 +124,7 @@ fn assert_actual(c: &Contract) {
         .iter()
         .map(|a| a["route"].as_str().unwrap())
         .collect();
-    assert_eq!(routes[0], "organizer.organizer");
+    assert_eq!(routes[0], "algebra.membership");
+    assert!(!routes.iter().any(|route| route.starts_with("organizer.")));
     assert!(!routes.contains(&"organizer.witness-merkle"));
 }

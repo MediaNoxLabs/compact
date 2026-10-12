@@ -16,10 +16,10 @@ impl Lowerer<'_> {
         path: &str,
     ) -> Result<(), RecordingGap> {
         let StateAction::PureCall { name, arguments } = action else {
-            return Err(RecordingGap::action(action, path.into()));
+            return Err(self.unsupported_action(action, path));
         };
         let Some((declaration, signature)) = self.declarations.resolve_call(name) else {
-            return Err(RecordingGap::action(action, path.into()));
+            return Err(self.unsupported_action(action, path));
         };
         if signature.kind != super::super::declarations::CallKind::Pure
             || signature.result != Type::Unit

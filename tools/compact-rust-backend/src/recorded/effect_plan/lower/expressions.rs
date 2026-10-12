@@ -146,7 +146,7 @@ impl Lowerer<'_> {
                     })
                     || opening.ty != (Type::Bytes { length: 32 })
                 {
-                    return Err(invalid(
+                    return Err(self.unsupported_expression_reason(
                         path,
                         "persistent commitment requires a Bytes32 pair and Bytes32 opening",
                     ));
@@ -370,7 +370,7 @@ impl Lowerer<'_> {
                     result,
                 )
             }
-            _ => return Err(RecordingGap::expression(expression, path.into())),
+            _ => return Err(self.unsupported_expression(expression, path)),
         };
         self.declarations.types().validate_at(&ty, path)?;
         Ok(self.emit(operation, ty, bindings, path))

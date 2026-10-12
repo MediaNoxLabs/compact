@@ -33,10 +33,10 @@ impl Lowerer<'_> {
         path: &str,
     ) -> Result<Value, RecordingGap> {
         let Some((declaration, signature)) = self.declarations.resolve_call(name) else {
-            return Err(site.missing(path));
+            return Err(self.concrete_failure(site.missing(path)));
         };
         if matches!(site, CallSite::Statement(_)) && signature.kind != CallKind::Stateful {
-            return Err(site.missing(path));
+            return Err(self.concrete_failure(site.missing(path)));
         }
         if signature.kind == CallKind::Pure {
             return self.pure_call(declaration, name, arguments, scope, bindings, path);

@@ -23,7 +23,7 @@ impl Lowerer<'_> {
             | Expr::UnsignedAdd { left, right, .. }
             | Expr::UnsignedSubtract { left, right, .. }
             | Expr::UnsignedMultiply { left, right, .. } => (left, right),
-            _ => return Err(RecordingGap::expression(expression, path.into())),
+            _ => return Err(self.unsupported_expression(expression, path)),
         };
         let a = self.expression(left, scope, bindings, &format!("{path}.left"))?;
         let b = self.expression(right, scope, bindings, &format!("{path}.right"))?;

@@ -47,7 +47,7 @@ impl Lowerer<'_> {
                 let right = operand(right, "right", Type::JubjubPoint)?;
                 (Operation::EcAdd { left, right }, Type::JubjubPoint)
             }
-            _ => return Err(RecordingGap::expression(expression, path.into())),
+            _ => return Err(self.unsupported_expression(expression, path)),
         })
     }
 }
@@ -64,7 +64,7 @@ impl Lowerer<'_> {
         let (input, x_coordinate) = match expression {
             Expr::JubjubPointX { value } => (value, true),
             Expr::JubjubPointY { value } => (value, false),
-            _ => return Err(RecordingGap::expression(expression, path.into())),
+            _ => return Err(self.unsupported_expression(expression, path)),
         };
         let operand_path = format!("{path}.value");
         let value = self.expression(input, scope, bindings, &operand_path)?;
@@ -94,7 +94,7 @@ impl Lowerer<'_> {
         path: &str,
     ) -> Result<(Operation, Type), RecordingGap> {
         let Expr::ConstructJubjubPoint { x, y } = expression else {
-            return Err(RecordingGap::expression(expression, path.into()));
+            return Err(self.unsupported_expression(expression, path));
         };
         let mut operand = |expression, name| {
             let path = format!("{path}.{name}");

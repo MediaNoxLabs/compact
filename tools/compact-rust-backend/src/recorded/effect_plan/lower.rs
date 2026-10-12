@@ -28,6 +28,7 @@ mod sets;
 mod transient;
 mod zswap;
 use super::pure_certification::{Certificates, Certifier};
+use super::rejection::{LoweringRejection, Precision};
 
 type Scope = HashMap<String, Value>;
 struct Lowerer<'a> {
@@ -39,6 +40,8 @@ struct Lowerer<'a> {
     max_call_depth: usize,
     max_expanded_steps: usize,
     next: usize,
+    root_action: Option<usize>,
+    failure_precision: Precision,
 }
 
 #[cfg(test)]
@@ -47,7 +50,9 @@ pub(super) fn lower_with_calls<'a>(
     declarations: &'a Declarations,
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
 ) -> Result<Plan, RecordingGap> {
-    lower_with_pure_calls(circuit, declarations, &HashMap::new(), circuits).map(|(plan, _)| plan)
+    lower_with_pure_calls(circuit, declarations, &HashMap::new(), circuits)
+        .map(|(plan, _)| plan)
+        .map_err(|rejection| rejection.into_parts().0)
 }
 
 pub(super) fn lower_with_pure_calls<'a>(
@@ -55,12 +60,12 @@ pub(super) fn lower_with_pure_calls<'a>(
     declarations: &'a Declarations,
     pure: &'a HashMap<&'a str, &'a PureCircuit>,
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
-) -> Result<(Plan, Certificates), RecordingGap> {
+) -> Result<(Plan, Certificates), LoweringRejection> {
     declarations
         .types()
         .validate_at(&circuit.result, "return_value")?;
     if !root_interface_type(&circuit.result, circuit.internal) {
-        return Err(invalid("return_value", "unsupported circuit result type"));
+        return Err(invalid("return_value", "unsupported circuit result type").into());
     }
     let (max_call_depth, max_expanded_steps) = crate::resource_limits::recording_call_limits();
     let mut lower = Lowerer {
@@ -72,6 +77,8 @@ pub(super) fn lower_with_pure_calls<'a>(
         max_call_depth,
         max_expanded_steps,
         next: 0,
+        root_action: None,
+        failure_precision: Precision::Unclassified,
     };
     let mut scope = Scope::new();
     let mut parameters = Vec::new();
@@ -81,19 +88,22 @@ pub(super) fn lower_with_pure_calls<'a>(
             .types()
             .validate_at(&p.ty, &format!("parameters[{i}]"))?;
         if !root_interface_type(&p.ty, circuit.internal) {
-            return Err(invalid(
-                &format!("parameters[{i}]"),
-                "unsupported parameter type",
-            ));
+            return Err(invalid(&format!("parameters[{i}]"), "unsupported parameter type").into());
         }
         let value = lower.fresh(p.ty.clone());
         if scope.insert(p.name.clone(), value.clone()).is_some() {
-            return Err(invalid(&format!("parameters[{i}]"), "duplicate parameter"));
+            return Err(invalid(&format!("parameters[{i}]"), "duplicate parameter").into());
         }
         parameters.push(value);
     }
     let mut bindings = Vec::new();
-    let result = lower.circuit_body(circuit, &scope, &mut bindings, "")?;
+    let result = lower
+        .circuit_body(circuit, &scope, &mut bindings, "")
+        .map_err(|gap| LoweringRejection {
+            gap,
+            root_action: lower.root_action,
+            precision: lower.failure_precision,
+        })?;
     let plan = Plan {
         parameters,
         body: Block { bindings, result },
@@ -103,6 +113,26 @@ pub(super) fn lower_with_pure_calls<'a>(
 }
 
 impl Lowerer<'_> {
+    // Errors propagate immediately; no alternative production catches a failure.
+    // Mark provenance only at an explicit refusal producer, never from gap text.
+    fn concrete_failure(&mut self, gap: RecordingGap) -> RecordingGap {
+        self.failure_precision = Precision::ConcreteNode;
+        gap
+    }
+
+    fn unsupported_expression(&mut self, expression: &Expr, path: &str) -> RecordingGap {
+        self.concrete_failure(RecordingGap::expression(expression, path.into()))
+    }
+
+    fn unsupported_action(&mut self, action: &StateAction, path: &str) -> RecordingGap {
+        self.concrete_failure(RecordingGap::action(action, path.into()))
+    }
+
+    fn unsupported_expression_reason(&mut self, path: &str, detail: &str) -> RecordingGap {
+        // Keep the existing gap byte-for-byte; provenance is additive metadata.
+        self.concrete_failure(invalid(path, detail))
+    }
+
     /// Defensive fuel for direct candidate callers as well as public preflight.
     /// Visits are charged before expansion; shared DAG descendants are charged
     /// for every actual invocation, not once per declaration.
@@ -483,7 +513,7 @@ impl Lowerer<'_> {
             | StateAction::HistoricMerkleResetHistory { .. } => {
                 self.merkle_action(action, scope, bindings, path)?;
             }
-            _ => return Err(RecordingGap::action(action, path.into())),
+            _ => return Err(self.unsupported_action(action, path)),
         }
         Ok(())
     }

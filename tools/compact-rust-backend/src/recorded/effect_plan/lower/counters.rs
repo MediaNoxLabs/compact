@@ -36,7 +36,7 @@ impl Lowerer<'_> {
             StateAction::CounterReset { field, index } => Operation::CounterReset {
                 slot: self.counter(field, *index, path)?,
             },
-            _ => return Err(RecordingGap::action(action, path.into())),
+            _ => return Err(self.unsupported_action(action, path)),
         };
         self.emit(operation, Type::Unit, bindings, path);
         Ok(())

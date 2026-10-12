@@ -15,8 +15,13 @@ impl Lowerer<'_> {
         base: &str,
     ) -> Result<Value, RecordingGap> {
         let return_path = path_at(base, "return_value");
-        let return_scope =
-            self.terminal_actions(actions, scope, bindings, &path_at(base, "actions"))?;
+        let return_scope = self.terminal_actions(
+            actions,
+            scope,
+            bindings,
+            &path_at(base, "actions"),
+            self.call_stack.len() == 1,
+        )?;
         match returned {
             StateReturn::Expression { value } => self.expression(
                 value,
@@ -133,14 +138,26 @@ impl Lowerer<'_> {
         scope: &Scope,
         bindings: &mut Vec<Binding>,
         path: &str,
+        root_boundary: bool,
     ) -> Result<Scope, RecordingGap> {
         let Some((last, prefix)) = actions.split_last() else {
             return Ok(scope.clone());
         };
+        let outer = self.root_action;
         for (i, action) in prefix.iter().enumerate() {
+            if root_boundary {
+                self.root_action = Some(i);
+            }
             self.action(action, scope, bindings, &format!("{path}[{i}]"))?;
+            self.root_action = outer;
         }
-        self.terminal_action(last, scope, bindings, &format!("{path}[{}]", prefix.len()))
+        if root_boundary {
+            self.root_action = Some(prefix.len());
+        }
+        let result =
+            self.terminal_action(last, scope, bindings, &format!("{path}[{}]", prefix.len()))?;
+        self.root_action = outer;
+        Ok(result)
     }
 
     /// Follow only final Sequence children and Let bodies; If branches stay local.
@@ -154,7 +171,7 @@ impl Lowerer<'_> {
         self.spend(path)?;
         match action {
             StateAction::Sequence { actions } => {
-                self.terminal_actions(actions, scope, bindings, &format!("{path}.actions"))
+                self.terminal_actions(actions, scope, bindings, &format!("{path}.actions"), false)
             }
             StateAction::Let {
                 bindings: locals,

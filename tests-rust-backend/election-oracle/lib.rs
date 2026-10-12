@@ -1327,35 +1327,45 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_authority_secret): (_, runtime::FixedBytes<32>) = frame
+            let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
+            let (frame, __compact_effect_1): (_, runtime::FixedBytes<32>) = frame
                 .try_witness_metered(|context, meter| {
                     witnesses.private_secret_key(context.witness_context_with(super::LedgerView {
                         state: context.query.state.get_ref(),
                         meter,
                     }))
                 })?;
-            let __compact_authority_hash =
-                crate::pure_circuits::public_key(__compact_authority_secret)?;
-            let (frame, __compact_authority): (_, runtime::FixedBytes<32>) =
+            let __compact_effect_2: runtime::FixedBytes<32> =
+                crate::pure_circuits::public_key(__compact_effect_1)?;
+            let (frame, __compact_effect_3): (_, runtime::FixedBytes<32>) =
                 crate::ledger_slots::authority.record_read(frame)?;
-            if __compact_authority_hash != __compact_authority {
+            let __compact_effect_4: bool = __compact_effect_2 == __compact_effect_3;
+            if !__compact_effect_4 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Attempted to set topic without authorization".to_owned(),
                 ));
             }
-            let (frame, __compact_phase): (_, crate::types::PublicState) =
+            let __compact_effect_5: () = ();
+            let (frame, __compact_effect_6): (_, crate::types::PublicState) =
                 crate::ledger_slots::state.record_read(frame)?;
-            if __compact_phase != crate::types::PublicState::setup {
+            let __compact_effect_7: crate::types::PublicState = crate::types::PublicState::setup;
+            let __compact_effect_8: bool = __compact_effect_6 == __compact_effect_7;
+            if !__compact_effect_8 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Attempted to set topic after setup phase".to_owned(),
                 ));
             }
-            let __compact_optional_value: crate::types::Maybe = crate::types::Maybe {
-                is_some: true,
-                value: __compact_param_0.clone(),
+            let __compact_effect_9: () = ();
+            let __compact_effect_10: bool = true;
+            let __compact_effect_11: crate::types::Maybe = crate::types::Maybe {
+                is_some: __compact_effect_10,
+                value: (__compact_effect_0).clone(),
             };
-            let frame = crate::ledger_slots::topic.record_write(frame, __compact_optional_value)?;
-            Ok(frame.finish(()))
+            let frame =
+                crate::ledger_slots::topic.record_write(frame, (__compact_effect_11).clone())?;
+            let __compact_effect_12: () = ();
+            let __compact_effect_13: () = ();
+            Ok(frame.finish(__compact_effect_13))
         }
         pub fn add_voter<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,

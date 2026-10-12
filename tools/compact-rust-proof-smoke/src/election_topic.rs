@@ -19,6 +19,8 @@ use compact_rust_election_oracle_fixture::ledger_contract as contract;
 use compact_rust_election_oracle_fixture::types::{MaybeCompact1, PermissibleVotes, PrivateState};
 use contract::{LedgerView, Witnesses};
 use midnight_compact_runtime as runtime;
+const RETAINED_IR: &str =
+    include_str!("../../compact-rust-backend/tests/election-oracle-schema20-ir.json");
 const AUTHORITY: [u8; 32] = [
     0x33, 0xef, 0xf3, 0xd5, 0x7e, 0x66, 0xfd, 0x14, 0x2b, 0xb4, 0x08, 0xe4, 0x89, 0x44, 0xa4, 0xd6,
     0xb8, 0xf2, 0xdb, 0xf5, 0xc1, 0x80, 0x96, 0xf8, 0x27, 0xb0, 0x28, 0x3d, 0xbf, 0x91, 0x11, 0xc8,
@@ -81,6 +83,10 @@ impl Witnesses<u64> for FixedWitness {
 }
 
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
+    counter_scenario::validate_ir(
+        &std::fs::read(root.join("contract/compact-rust-ir.json"))?,
+        RETAINED_IR,
+    )?;
     let topic = runtime::OpaqueString::from("議題 🗳️");
     let initial =
         contract::initial_state(ConstructorContext::new(10_u64), FixedBytes::new(AUTHORITY))?;
@@ -128,21 +134,32 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
     let prepared = generated
         .recording()
         .set_topic_call(&observed, 10_u64, topic.clone())?
-        .prepare(verifier, Fr::from(0_u64))?;
+        .prepare(verifier.clone(), Fr::from(0_u64))?;
     if format!("{manual:?}") != format!("{prepared:?}") {
         return Err("typed topic call differs from manual recording".into());
     }
-    check_transaction(root, "set_topic", deploy, prepared, &mut rng, |applied| {
-        if applied.data.get_ref() != &expected_state {
-            return Err("applied topic state differs from native".into());
-        }
-        let stored = contract::PublicStateView::from(applied).topic()?;
-        if !stored.is_some || stored.value != topic {
-            return Err("applied optional topic changed".into());
-        }
-        Ok(())
-    })?;
-    println!("election authority/phase guarded Unicode topic proved and applied through ledger-8");
+    if prepared.input != AlignedValue::from(topic.clone())
+        || prepared.output != AlignedValue::from(())
+    {
+        return Err("topic public input/output binding differs".into());
+    }
+    let stored = contract::PublicStateView::from(&native.context).topic()?;
+    if !stored.is_some || stored.value != topic {
+        return Err("expected optional topic state differs".into());
+    }
+    kernel_shielded_effects::prove_and_verify_call(root, "set_topic", &prepared, &verifier)?;
+    opaque_public::apply_funded(
+        root,
+        "set_topic",
+        prepared,
+        deploy,
+        &expected_state,
+        rng,
+        587,
+    )?;
+    println!(
+        "election topic: authority/phase guarded Unicode write proved, changed binding rejected, default-strict funded ledger8 application passed; constructor state supplied, deployment not proved"
+    );
     Ok(())
 }
 
@@ -382,4 +399,40 @@ pub(super) fn add_voter(root: &Path) -> Result<(), Box<dyn Error>> {
         println!("election voter {value} proved and applied through ledger-8");
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod source_tests {
+    use super::*;
+    #[test]
+    fn changed_source_refuses_before_keys() {
+        counter_scenario::validate_ir(RETAINED_IR.as_bytes(), RETAINED_IR).unwrap();
+        let mut altered: serde_json::Value = serde_json::from_str(RETAINED_IR).unwrap();
+        altered["independent_topic_guard"] = true.into();
+        assert!(
+            counter_scenario::validate_ir(&serde_json::to_vec(&altered).unwrap(), RETAINED_IR)
+                .is_err()
+        );
+    }
+    #[test]
+    fn absent_source_refuses_before_keys_or_state() {
+        let root = std::env::temp_dir().join(format!(
+            "compact-topic-proof-absent-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        assert!(!root.exists());
+        assert_eq!(
+            run(&root)
+                .unwrap_err()
+                .downcast_ref::<io::Error>()
+                .unwrap()
+                .kind(),
+            io::ErrorKind::NotFound
+        );
+        assert!(!root.exists());
+    }
 }

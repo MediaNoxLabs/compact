@@ -106,8 +106,24 @@ VALUE_TEST_EXTENSION = inventory.BASELINE.with_name("recording_admission_invento
 UNIT_COMPOSITION_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-580.json")
 
 
+OPTIONAL_WRITE_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-587.json")
+
+
+def checkpoint_580(root):
+    """Historical fixtures use the authenticated signed Unit checkpoint."""
+    transition = json.loads(OPTIONAL_WRITE_TRANSITION.read_text())
+    try:
+        source = (root / inventory.SELECTOR).read_bytes()
+    except FileNotFoundError:
+        return root
+    if inventory.digest(source) == transition['owners'][inventory.SELECTOR]['current_sha256']:
+        return inventory.optional_write.checkpoint(root, transition)
+    return root
+
+
 def checkpoint_586(root):
     """Historical fixtures reconstruct the authenticated pre-retirement source."""
+    root = checkpoint_580(root)
     transition = json.loads(UNIT_COMPOSITION_TRANSITION.read_text())
     try:
         source = (root / inventory.SELECTOR).read_bytes()
@@ -405,7 +421,8 @@ class InventoryTests(unittest.TestCase):
                                   encoding_extension=json.loads(ENCODING_EXTENSION.read_text()),
                                   negation_test_extension=json.loads(NEGATION_TEST_EXTENSION.read_text()),
                                   value_test_extension=json.loads(VALUE_TEST_EXTENSION.read_text()),
-                                  unit_composition_transition=json.loads(UNIT_COMPOSITION_TRANSITION.read_text()))
+                                  unit_composition_transition=json.loads(UNIT_COMPOSITION_TRANSITION.read_text()),
+                                  optional_write_transition=json.loads(OPTIONAL_WRITE_TRANSITION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)

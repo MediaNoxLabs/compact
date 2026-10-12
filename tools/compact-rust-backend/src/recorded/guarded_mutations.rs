@@ -461,6 +461,7 @@ fn closed_authority_prefix<'a>(
 /// A typed authority witness/hash and enum phase guard before a single optional
 /// opaque Cell write. Every binding and ledger access is checked by provenance;
 /// names carry no semantic meaning in this closed proof-supported shape.
+#[cfg(test)]
 pub(super) fn closed_authorized_optional_write_steps(
     circuit: &StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,

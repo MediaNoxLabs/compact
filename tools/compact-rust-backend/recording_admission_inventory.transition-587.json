@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "issue": 587,
+  "baseline_commit": "0c91c8e1786d34918186d458424b889274d0d1ac",
+  "claim": "Retire only optional-write organizer admission into existing checked membership; exact signed source reconstruction and live source checks, not language coverage.",
+  "previous_selector": {
+    "ordered_calls": [],
+    "function_sha256": "73ca3422910f820dbb79f50fe2367f21989dc36ef730586410df08efe158c216"
+  },
+  "current_selector": {
+    "ordered_calls": [],
+    "function_sha256": "882395c285a47d78d75f66c673c72d2e20f042776357aa02466b67d014a6d3a6"
+  },
+  "owners": {
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": {
+      "previous_sha256": "27b6c37833672c0008e2c4c794ae2e9b1ec0a03c8a3bd4a726439d0c2715b0da",
+      "current_sha256": "6e8c268df7fa1aabb59435cb024001410bc09bb0c2fd54e4243ce701b72ad69e",
+      "predecessor_reconstruction": [
+        {
+          "current": "use super::RecordingGap;\nuse super::effect_plan;\nuse super::guarded_mutations::{\n    closed_authorized_enum_advance_steps, closed_organizer_gate_steps,\n    closed_witness_admitted_merkle_insert_steps,\n};\nuse super::profile_attempt::ProfileAttempt;\nuse super::typed_plan;\n",
+          "previous": "use super::RecordingGap;\nuse super::effect_plan;\nuse super::guarded_mutations::{\n    closed_authorized_enum_advance_steps, closed_authorized_optional_write_steps,\n    closed_organizer_gate_steps, closed_witness_admitted_merkle_insert_steps,\n};\nuse super::profile_attempt::ProfileAttempt;\nuse super::typed_plan;\n"
+        },
+        {
+          "current": "\n#[path = \"profile_selection/unit_domain.rs\"]\nmod unit_domain;\n\n#[cfg(test)]\n#[path = \"profile_selection/optional_write_migration_tests.rs\"]\nmod optional_write_migration_tests;\n\n#[cfg(test)]\n#[path = \"profile_selection/broad_unit_inclusion_tests.rs\"]\n",
+          "previous": "\n#[path = \"profile_selection/unit_domain.rs\"]\nmod unit_domain;\n\n#[cfg(test)]\n#[path = \"profile_selection/broad_unit_inclusion_tests.rs\"]\n"
+        },
+        {
+          "current": "            )?\n        )\n        .or(record_option!(\n            \"organizer.enum-advance\",\n            closed_authorized_enum_advance_steps(circuit, ledger_fields, witnesses, pure_circuits,)?\n        ))\n",
+          "previous": "            )?\n        )\n        .or(record_option!(\n            \"organizer.optional-write\",\n            closed_authorized_optional_write_steps(\n                circuit,\n                ledger_fields,\n                witnesses,\n                pure_circuits,\n            )?\n        ))\n        .or(record_option!(\n            \"organizer.enum-advance\",\n            closed_authorized_enum_advance_steps(circuit, ledger_fields, witnesses, pure_circuits,)?\n        ))\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/guarded_mutations.rs": {
+      "previous_sha256": "3f32e37efb6577e6687c258e992dab209e780abb24813a8b64d940a636aefc4b",
+      "current_sha256": "c485b09f021b854baabb721550ea2a507eb6d674d00d04acf755fcf576b7ed53",
+      "predecessor_reconstruction": [
+        {
+          "current": "/// A typed authority witness/hash and enum phase guard before a single optional\n/// opaque Cell write. Every binding and ledger access is checked by provenance;\n/// names carry no semantic meaning in this closed proof-supported shape.\n#[cfg(test)]\npub(super) fn closed_authorized_optional_write_steps(\n    circuit: &StatefulCircuit,\n    ledger_fields: &HashMap<&str, &LedgerField>,\n",
+          "previous": "/// A typed authority witness/hash and enum phase guard before a single optional\n/// opaque Cell write. Every binding and ledger access is checked by provenance;\n/// names carry no semantic meaning in this closed proof-supported shape.\npub(super) fn closed_authorized_optional_write_steps(\n    circuit: &StatefulCircuit,\n    ledger_fields: &HashMap<&str, &LedgerField>,\n"
+        }
+      ]
+    }
+  },
+  "new_and_shared_sources": {
+    "tools/compact-rust-backend/src/recorded/profile_selection/optional_write_migration_tests.rs": "87e28cb5246b4292692f40ed26fe53ea8b8f07996b70e57719336e88b5223c04",
+    "tools/compact-rust-backend/src/recorded/profile_selection/optional_write_migration_tests/inclusion.rs": "c47f75568053fc0ceeca763b6fb0c5d69ac3fb7fcda307df2f734da34300958e",
+    "tools/compact-rust-backend/src/recorded/profile_selection/optional_write_migration_tests/boundaries.rs": "44a584753255cf3d021699f99929fac34b08978182f2875bc6f6776712be0f5d"
+  }
+}

@@ -1472,6 +1472,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-effect-plan-nested-map-remove-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-base-crypto",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-storage",
+ "rand 0.8.6",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-effect-plan-opaque-aligned-hashes-source-fixture"
 version = "0.1.0"
 dependencies = [

@@ -474,9 +474,9 @@ fn block(
             | Operation::MapLookup { slot, key }
             | Operation::MapRemove { slot, key } => {
                 use_value(key)?;
-                let member = matches!(binding.operation, Operation::MapMember { .. });
+                let needs_value_codec = matches!(binding.operation, Operation::MapLookup { .. });
                 let (declared_key, declared_value) =
-                    maps::types(declarations, *slot, !member, path)?;
+                    maps::types(declarations, *slot, needs_value_codec, path)?;
                 key.ty == *declared_key
                     && *ty
                         == match binding.operation {

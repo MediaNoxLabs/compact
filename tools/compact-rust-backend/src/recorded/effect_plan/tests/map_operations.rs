@@ -4,6 +4,8 @@
 //! Map composition laws; immutable authority and runtime execution have separate tests.
 use super::super::type_environment::TypeEnvironment;
 use super::*;
+#[path = "map_operations/removal.rs"]
+mod removal;
 #[path = "map_operations/source.rs"]
 mod source;
 #[path = "map_operations/validation.rs"]
@@ -221,7 +223,7 @@ fn direct_map_returns_preserve_root_scope_and_share_query_operations() {
     }
 }
 #[test]
-fn key_only_nested_membership_does_not_authorize_scalar_map_values() {
+fn key_only_nested_membership_and_removal_do_not_authorize_scalar_map_values() {
     let nested = Type::LedgerMap {
         key: Box::new(Type::Field),
         value: Box::new(validate::uint("18446744073709551615")),
@@ -233,12 +235,17 @@ fn key_only_nested_membership_does_not_authorize_scalar_map_values() {
     let plan = checked(&c).unwrap();
     assert!(rendered(&plan).contains("record_member"));
     crate::render_with_capabilities(&c).unwrap();
+    c.stateful_circuits[0].actions = vec![StateAction::MapRemove {
+        field: "table".into(),
+        index: 0,
+        key: parameter("key"),
+    }];
+    let plan = checked(&c).unwrap();
+    let text = rendered(&plan);
+    assert_eq!(text.matches("record_remove").count(), 1);
+    assert!(text.find("record_remove").unwrap() < text.find("record_member").unwrap());
+    crate::render_with_capabilities(&c).unwrap();
     for action in [
-        StateAction::MapRemove {
-            field: "table".into(),
-            index: 0,
-            key: parameter("key"),
-        },
         StateAction::MapInsert {
             field: "table".into(),
             index: 0,

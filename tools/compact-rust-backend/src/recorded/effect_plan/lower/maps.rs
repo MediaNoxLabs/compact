@@ -80,7 +80,9 @@ impl Lowerer<'_> {
             | StateAction::MapRemove { field, index, key } => (field, *index, key),
             _ => unreachable!("Map action dispatch"),
         };
-        let (slot, key_type, value_type) = self.map_slot(name, index, true, path)?;
+        // Removal consumes only the key; it does not decode the stored value.
+        let needs_value_codec = matches!(action, StateAction::MapInsert { .. });
+        let (slot, key_type, value_type) = self.map_slot(name, index, needs_value_codec, path)?;
         let key = self.map_operand(key, &key_type, scope, bindings, &format!("{path}.key"))?;
         let operation = if let StateAction::MapInsert { value, .. } = action {
             let value = self.map_operand(

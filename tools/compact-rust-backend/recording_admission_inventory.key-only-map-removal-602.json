@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "issue": 602,
+  "baseline_commit": "c80688bd47f86122f76fd1beadeaa573786a4101",
+  "claim": "Key-only Map removal uses existing native slot representation without decoding values; scalar lookup/insert policy and existing guard remain. Runtime only relocates remove methods to the existing key-only API. No retirement or resource limit change.",
+  "selector": {
+    "ordered_calls": [],
+    "function_sha256": "39edd1256e89f088a942088f357a48bd920afd3a413d932a8296c36fb8894085"
+  },
+  "owners": {
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/maps.rs": {
+      "previous_sha256": "e3cbd02c22f8236bd0536284e25de1a8bd97393c363d260030d3c0bb5ffa3a2b",
+      "current_sha256": "98c476dbbd666aecd6caf0b681a6dc86518efbd9c5ceab0874cb1defe5159355",
+      "predecessor_reconstruction": [
+        {
+          "current": "            | StateAction::MapRemove { field, index, key } => (field, *index, key),\n            _ => unreachable!(\"Map action dispatch\"),\n        };\n        // Removal consumes only the key; it does not decode the stored value.\n        let needs_value_codec = matches!(action, StateAction::MapInsert { .. });\n        let (slot, key_type, value_type) = self.map_slot(name, index, needs_value_codec, path)?;\n        let key = self.map_operand(key, &key_type, scope, bindings, &format!(\"{path}.key\"))?;\n        let operation = if let StateAction::MapInsert { value, .. } = action {\n            let value = self.map_operand(\n",
+          "previous": "            | StateAction::MapRemove { field, index, key } => (field, *index, key),\n            _ => unreachable!(\"Map action dispatch\"),\n        };\n        let (slot, key_type, value_type) = self.map_slot(name, index, true, path)?;\n        let key = self.map_operand(key, &key_type, scope, bindings, &format!(\"{path}.key\"))?;\n        let operation = if let StateAction::MapInsert { value, .. } = action {\n            let value = self.map_operand(\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate.rs": {
+      "previous_sha256": "2f45ebf3c3da06b5cf492e4d3416fda9ee4e3ca01afd8e014c3c8f5b871b6a93",
+      "current_sha256": "7729b2cc66fa3597d8573dfeac783af60cedf5b46b8e1ee3e75cbc1300f48a1c",
+      "predecessor_reconstruction": [
+        {
+          "current": "            | Operation::MapLookup { slot, key }\n            | Operation::MapRemove { slot, key } => {\n                use_value(key)?;\n                let needs_value_codec = matches!(binding.operation, Operation::MapLookup { .. });\n                let (declared_key, declared_value) =\n                    maps::types(declarations, *slot, needs_value_codec, path)?;\n                key.ty == *declared_key\n                    && *ty\n                        == match binding.operation {\n",
+          "previous": "            | Operation::MapLookup { slot, key }\n            | Operation::MapRemove { slot, key } => {\n                use_value(key)?;\n                let member = matches!(binding.operation, Operation::MapMember { .. });\n                let (declared_key, declared_value) =\n                    maps::types(declarations, *slot, !member, path)?;\n                key.ty == *declared_key\n                    && *ty\n                        == match binding.operation {\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/map_operations.rs": {
+      "previous_sha256": "3bcdd6725069cc1a4e8e8c51137aad510c6685abf72aeec685903b8416d8e109",
+      "current_sha256": "2122dd33f36c48417fc06b8b90e1f0d6deca5544f3ec772d1261142d6f65c8f1",
+      "predecessor_reconstruction": [
+        {
+          "current": "//! Map composition laws; immutable authority and runtime execution have separate tests.\nuse super::super::type_environment::TypeEnvironment;\nuse super::*;\n#[path = \"map_operations/removal.rs\"]\nmod removal;\n#[path = \"map_operations/source.rs\"]\nmod source;\n#[path = \"map_operations/validation.rs\"]\n",
+          "previous": "//! Map composition laws; immutable authority and runtime execution have separate tests.\nuse super::super::type_environment::TypeEnvironment;\nuse super::*;\n#[path = \"map_operations/source.rs\"]\nmod source;\n#[path = \"map_operations/validation.rs\"]\n"
+        },
+        {
+          "current": "    }\n}\n#[test]\nfn key_only_nested_membership_and_removal_do_not_authorize_scalar_map_values() {\n    let nested = Type::LedgerMap {\n        key: Box::new(Type::Field),\n        value: Box::new(validate::uint(\"18446744073709551615\")),\n",
+          "previous": "    }\n}\n#[test]\nfn key_only_nested_membership_does_not_authorize_scalar_map_values() {\n    let nested = Type::LedgerMap {\n        key: Box::new(Type::Field),\n        value: Box::new(validate::uint(\"18446744073709551615\")),\n"
+        },
+        {
+          "current": "    let plan = checked(&c).unwrap();\n    assert!(rendered(&plan).contains(\"record_member\"));\n    crate::render_with_capabilities(&c).unwrap();\n    c.stateful_circuits[0].actions = vec![StateAction::MapRemove {\n        field: \"table\".into(),\n        index: 0,\n        key: parameter(\"key\"),\n    }];\n    let plan = checked(&c).unwrap();\n    let text = rendered(&plan);\n    assert_eq!(text.matches(\"record_remove\").count(), 1);\n    assert!(text.find(\"record_remove\").unwrap() < text.find(\"record_member\").unwrap());\n    crate::render_with_capabilities(&c).unwrap();\n    for action in [\n        StateAction::MapInsert {\n            field: \"table\".into(),\n            index: 0,\n",
+          "previous": "    let plan = checked(&c).unwrap();\n    assert!(rendered(&plan).contains(\"record_member\"));\n    crate::render_with_capabilities(&c).unwrap();\n    for action in [\n        StateAction::MapRemove {\n            field: \"table\".into(),\n            index: 0,\n            key: parameter(\"key\"),\n        },\n        StateAction::MapInsert {\n            field: \"table\".into(),\n            index: 0,\n"
+        }
+      ]
+    },
+    "runtime-rs/src/slots/map.rs": {
+      "previous_sha256": "8925e5db2d20a548d73e8126bd2b5ac06afc774e07f0e71cc1ca9bf09b3aff3a",
+      "current_sha256": "a90f19b5603acaacc13b46b93e4b86ef37a39f1292fd00f7e516f9406d58520b",
+      "predecessor_reconstruction": [
+        {
+          "current": "///\n/// This marker has no value codec. It lets a generated slot name the nested\n/// structure while keeping scalar lookup and insert methods unavailable.\n///\n/// Removing a nested child does not require a scalar codec. Scalar access stays\n/// unavailable, including its recorded forms:\n///\n/// ```compile_fail,E0599\n/// use midnight_compact_runtime::{Field, context::CircuitContext, slots::{MapNode, MapSlot}};\n/// fn scalar_lookup(context: CircuitContext<()>) {\n///     let slot = MapSlot::<bool, MapNode<bool, Field>>::new(&[0]);\n///     slot.lookup(context, true);\n/// }\n/// ```\n///\n/// ```compile_fail,E0599\n/// use midnight_compact_runtime::{Field, context::CircuitContext, slots::{MapNode, MapSlot}};\n/// fn scalar_insert(context: CircuitContext<()>, value: MapNode<bool, Field>) {\n///     let slot = MapSlot::<bool, MapNode<bool, Field>>::new(&[0]);\n///     slot.insert(context, true, value);\n/// }\n/// ```\n///\n/// ```compile_fail,E0599\n/// use midnight_compact_runtime::{Field, recording::RecordingFrame, slots::{MapNode, MapSlot}};\n/// fn scalar_lookup(frame: RecordingFrame<()>) {\n///     let slot = MapSlot::<bool, MapNode<bool, Field>>::new(&[0]);\n///     slot.record_lookup(frame, true);\n/// }\n/// ```\n///\n/// ```compile_fail,E0599\n/// use midnight_compact_runtime::{Field, recording::RecordingFrame, slots::{MapNode, MapSlot}};\n/// fn scalar_insert(frame: RecordingFrame<()>, value: MapNode<bool, Field>) {\n///     let slot = MapSlot::<bool, MapNode<bool, Field>>::new(&[0]);\n///     slot.record_insert(frame, true, value);\n/// }\n/// ```\n#[derive(Clone, Copy, Debug)]\npub struct MapNode<K, V>(PhantomData<fn() -> (K, V)>);\n\n",
+          "previous": "///\n/// This marker has no value codec. It lets a generated slot name the nested\n/// structure while keeping scalar lookup and insert methods unavailable.\n#[derive(Clone, Copy, Debug)]\npub struct MapNode<K, V>(PhantomData<fn() -> (K, V)>);\n\n"
+        },
+        {
+          "current": "        context.member_map(self.path, key)\n    }\n\n    pub fn remove<Private, D: DB>(\n        self,\n        context: CircuitContext<Private, D>,\n        key: K,\n    ) -> Result<CircuitResult<Private, (), D>, CompactError> {\n        context.remove_map(self.path, key)\n    }\n\n    pub fn size<Private, D: DB>(\n        self,\n        context: CircuitContext<Private, D>,\n",
+          "previous": "        context.member_map(self.path, key)\n    }\n\n    pub fn size<Private, D: DB>(\n        self,\n        context: CircuitContext<Private, D>,\n"
+        },
+        {
+          "current": "        K: Clone,\n    {\n        frame.member_map(self.path, key)\n    }\n\n    pub fn record_remove<Private, D: DB>(\n        self,\n        frame: RecordingFrame<Private, D>,\n        key: K,\n    ) -> Result<RecordingFrame<Private, D>, CompactError> {\n        frame.remove_map(self.path, key)\n    }\n\n    pub fn record_size<Private, D: DB>(\n",
+          "previous": "        K: Clone,\n    {\n        frame.member_map(self.path, key)\n    }\n\n    pub fn record_size<Private, D: DB>(\n"
+        },
+        {
+          "current": "        self.insert(context, key, V::default())\n    }\n\n    pub fn reset<Private, D: DB>(\n        self,\n        context: CircuitContext<Private, D>,\n",
+          "previous": "        self.insert(context, key, V::default())\n    }\n\n    pub fn remove<Private, D: DB>(\n        self,\n        context: CircuitContext<Private, D>,\n        key: K,\n    ) -> Result<CircuitResult<Private, (), D>, CompactError> {\n        context.remove_map(self.path, key)\n    }\n\n    pub fn reset<Private, D: DB>(\n        self,\n        context: CircuitContext<Private, D>,\n"
+        },
+        {
+          "current": "        self.record_insert(frame, key, V::default())\n    }\n\n    pub fn record_reset<Private, D: DB>(\n        self,\n        frame: RecordingFrame<Private, D>,\n",
+          "previous": "        self.record_insert(frame, key, V::default())\n    }\n\n    pub fn record_remove<Private, D: DB>(\n        self,\n        frame: RecordingFrame<Private, D>,\n        key: K,\n    ) -> Result<RecordingFrame<Private, D>, CompactError> {\n        frame.remove_map(self.path, key)\n    }\n\n    pub fn record_reset<Private, D: DB>(\n        self,\n        frame: RecordingFrame<Private, D>,\n"
+        }
+      ]
+    }
+  },
+  "new_and_shared_sources": {
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/map_operations/removal.rs": "d694c239063023a5832b7802f7e681178f707dc5ad7376757835d4ac6ad1049b",
+    "runtime-rs/tests/recording_map_removal.rs": "b84d9e7ed5dd66e702864837b6af2a26fa5667797a25bfc0cf9474300ab5f550",
+    "tools/compact-rust-backend/src/recorded.rs": "27935b71e82285633b02996e2b33d7a45cf69f9bb8f49ecaf0ff589eabd04a9f",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/maps.rs": "107e2d37884c3c9417e31ebd0f2237d5c927c94394e22f449261d95ae0556c01",
+    "tools/compact-rust-backend/src/resource_limits/policy.rs": "8d1e091410d3f802b1f54654314146ba1615f6c45222645b586099528ed5294f",
+    "runtime-rs/src/context/map.rs": "e6acc1e7aaceda69a8517ea2c25b3ac728d2472743c406ca4a0670113de03c0b",
+    "runtime-rs/src/context/set.rs": "43e7753900c0ae7d1b2d9dd4039f4d6427e9a87b2a19615bb59b00fea0d41933",
+    "runtime-rs/src/recording.rs": "2170fd96b593f72cf10be7b1eb5bf18130931eb2da92bfe4866101ec83e71d20",
+    "runtime-rs/src/ledger/collections.rs": "3c3e36056578589d336d9a2dbbd8739c0b1e78c09abf1780cebbb7afaa54081d"
+  }
+}

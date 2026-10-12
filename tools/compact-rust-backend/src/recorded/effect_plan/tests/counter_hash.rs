@@ -1,7 +1,7 @@
 // This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
-//! Persistent fixed-byte products and canonical Field encoding have separate signatures.
+//! Persistent aligned fixed products and canonical Field encoding have separate signatures.
 use super::*;
 
 fn bytes(n: usize) -> Expr {
@@ -88,21 +88,14 @@ fn fixed_byte_products_include_old_pairs_triples_and_exact_fab_tuple_boundary() 
 }
 
 #[test]
-fn persistent_domain_does_not_inherit_other_local_leaf_types() {
-    for ty in [
-        Type::Field,
-        Type::Boolean,
-        Type::JubjubPoint,
-        Type::OpaqueString,
-        Type::OpaqueBytes,
-        Type::Unsigned { max: "255".into() },
-    ] {
-        assert!(!validate::hash_input_type(&ty), "{ty:?}");
-        assert!(!validate::hash_input_type(&Type::Vector {
+fn persistent_aligned_domain_supports_fixed_leaves_but_refuses_dynamic_inputs() {
+    for ty in [Type::OpaqueString, Type::OpaqueBytes] {
+        assert!(!validate::fixed_aligned_fab_type(&ty), "{ty:?}");
+        assert!(!validate::fixed_aligned_fab_type(&Type::Vector {
             element: Box::new(ty.clone()),
             length: 0
         }));
-        assert!(!validate::hash_input_type(&Type::Tuple {
+        assert!(!validate::fixed_aligned_fab_type(&Type::Tuple {
             elements: vec![Type::Bytes { length: 32 }, ty]
         }));
     }
@@ -110,10 +103,7 @@ fn persistent_domain_does_not_inherit_other_local_leaf_types() {
         Expr::Boolean { value: true },
         Expr::FieldLiteral { value: "1".into() },
     ] {
-        assert!(matches!(
-            checked(hash(value)),
-            Err(PlanError::Unsupported(_))
-        ));
+        accepted(hash(value));
     }
     for value in [
         bytes(32),
@@ -239,10 +229,12 @@ fn independent_validation_rejects_forged_operands_results_scope_and_order() {
             }
             2 => plan.body.bindings[0].value.ty = Type::Bytes { length: 31 },
             3 => {
-                plan.body.bindings[1].operation = Operation::PersistentHash(Value {
+                plan.parameters[0].ty = Type::OpaqueString;
+                plan.body.bindings.remove(0);
+                plan.body.bindings[0].operation = Operation::PersistentHash(Value {
                     id: 0,
-                    ty: Type::Field,
-                })
+                    ty: Type::OpaqueString,
+                });
             }
             4 => {
                 plan.body.bindings[1].operation = Operation::PersistentHash(Value {

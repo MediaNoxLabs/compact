@@ -15,6 +15,7 @@ impl Lowerer<'_> {
         let (Expr::DegradeToTransient { value }
         | Expr::UpgradeFromTransient { value }
         | Expr::TransientHash { value }
+        | Expr::HashToCurve { value }
         | Expr::TransientCommit { value, .. }) = expression
         else {
             unreachable!("transient crypto dispatcher");
@@ -28,7 +29,10 @@ impl Lowerer<'_> {
                 Operation::UpgradeFromTransient(value),
                 Type::Bytes { length: 32 },
             )),
-            Expr::TransientHash { .. } if validate::fixed_fab_type(&value.ty) => {
+            Expr::HashToCurve { .. } if validate::aligned_fab_type(&value.ty) => {
+                Ok((Operation::HashToCurve(value), Type::JubjubPoint))
+            }
+            Expr::TransientHash { .. } if validate::aligned_fab_type(&value.ty) => {
                 Ok((Operation::TransientHash(value), Type::Field))
             }
             Expr::TransientCommit { opening, .. } => {
@@ -36,10 +40,10 @@ impl Lowerer<'_> {
                 // reporting a signature mismatch; the validator rechecks it.
                 let opening =
                     self.expression(opening, scope, bindings, &format!("{path}.opening"))?;
-                if !validate::fixed_fab_type(&value.ty) || opening.ty != Type::Field {
+                if !validate::aligned_fab_type(&value.ty) || opening.ty != Type::Field {
                     return Err(invalid(
                         path,
-                        "transient commitment requires fixed FAB value and Field opening",
+                        "transient commitment requires aligned FAB value and Field opening",
                     ));
                 }
                 Ok((Operation::TransientCommit { value, opening }, Type::Field))

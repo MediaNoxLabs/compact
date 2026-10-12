@@ -134,9 +134,10 @@ pub(super) enum Operation {
     },
     /// Canonical little-endian Field encoding, distinct from transient degradation.
     FieldToBytes32(Value),
-    /// Persistent FAB hashing of independently checked fixed-byte products.
+    /// Persistent FAB hashing of independently checked fixed aligned values.
     PersistentHash(Value),
     Keccak256(Value),
+    HashToCurve(Value),
     /// Official ledger8 digest/field conversions and transient FAB operations.
     DegradeToTransient(Value),
     UpgradeFromTransient(Value),

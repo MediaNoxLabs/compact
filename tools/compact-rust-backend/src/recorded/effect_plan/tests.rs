@@ -537,3 +537,6 @@ mod map_operations;
 
 #[path = "tests/keccak.rs"]
 mod keccak;
+
+#[path = "tests/aligned_hashes.rs"]
+mod aligned_hashes;

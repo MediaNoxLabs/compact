@@ -1243,6 +1243,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-effect-plan-aligned-hashes-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-base-crypto",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-storage",
+ "rand 0.8.6",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-effect-plan-composite-source-fixture"
 version = "0.1.0"
 dependencies = [
@@ -1395,6 +1408,19 @@ dependencies = [
 
 [[package]]
 name = "compact-rust-effect-plan-nested-map-member-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-base-crypto",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-storage",
+ "rand 0.8.6",
+ "serde_json",
+]
+
+[[package]]
+name = "compact-rust-effect-plan-opaque-aligned-hashes-source-fixture"
 version = "0.1.0"
 dependencies = [
  "compact-rust-backend",
@@ -2538,6 +2564,7 @@ dependencies = [
  "compact-rust-did-relation-nested-reducer-fixture",
  "compact-rust-did-relation-two-reducer-fixture",
  "compact-rust-did-service-map-reducer-fixture",
+ "compact-rust-effect-plan-aligned-hashes-source-fixture",
  "compact-rust-effect-plan-counter-only-source-fixture",
  "compact-rust-effect-plan-counter-source-fixture",
  "compact-rust-effect-plan-jubjub-source-fixture",
@@ -2993,6 +3020,7 @@ dependencies = [
 name = "compact-rust-ternary-cond-oracle-fixture"
 version = "0.1.0"
 dependencies = [
+ "compact-rust-backend",
  "hex",
  "midnight-compact-runtime",
  "midnight-onchain-state",
@@ -3382,6 +3410,8 @@ dependencies = [
  "compact-rust-backend",
  "hex",
  "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
  "serde_json",
 ]
 
@@ -3389,6 +3419,7 @@ dependencies = [
 name = "compact-rust-witness-jubjub-fixture"
 version = "0.1.0"
 dependencies = [
+ "compact-rust-backend",
  "hex",
  "midnight-compact-runtime",
  "midnight-onchain-state",

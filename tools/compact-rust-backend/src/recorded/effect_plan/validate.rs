@@ -8,18 +8,14 @@ use crate::ir::{LedgerFieldKind, Type};
 use std::collections::{HashMap, HashSet};
 mod aggregates;
 mod calls;
-mod keccak;
-pub(super) use keccak::keccak_input_type;
+mod fab;
+pub(super) use fab::{aligned_fab_type, fixed_aligned_fab_type, keccak_input_type};
 mod domain;
 pub(super) mod maps;
 mod merkle;
 pub(super) use merkle::root_type;
-mod persistent;
 mod pure;
 mod sets;
-mod transient;
-pub(super) use persistent::hash_input_type;
-pub(super) use transient::fixed_fab_type;
 
 struct Validation {
     allocated: HashSet<usize>,
@@ -340,18 +336,22 @@ fn block(
                 use_value(value)?;
                 value.ty == Type::Field && *ty == (Type::Bytes { length: 32 })
             }
+            Operation::HashToCurve(value) => {
+                use_value(value)?;
+                aligned_fab_type(&value.ty) && *ty == Type::JubjubPoint
+            }
             Operation::TransientHash(value) => {
                 use_value(value)?;
-                fixed_fab_type(&value.ty) && *ty == Type::Field
+                aligned_fab_type(&value.ty) && *ty == Type::Field
             }
             Operation::TransientCommit { value, opening } => {
                 use_value(value)?;
                 use_value(opening)?;
-                fixed_fab_type(&value.ty) && opening.ty == Type::Field && *ty == Type::Field
+                aligned_fab_type(&value.ty) && opening.ty == Type::Field && *ty == Type::Field
             }
             Operation::PersistentHash(value) => {
                 use_value(value)?;
-                hash_input_type(&value.ty) && *ty == (Type::Bytes { length: 32 })
+                fixed_aligned_fab_type(&value.ty) && *ty == (Type::Bytes { length: 32 })
             }
             Operation::Keccak256(value) => {
                 use_value(value)?;

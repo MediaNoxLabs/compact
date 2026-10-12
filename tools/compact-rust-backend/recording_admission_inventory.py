@@ -34,6 +34,8 @@ Kernel retirement requires --kernel-transition after #526; its unchanged planner
 is compiled only for tests and cannot be a production selector dependency.
 Keccak test adaptation requires --keccak-test-extension after #572 and reconstructs
 only three authenticated test owners; production authority and route counts stay unchanged.
+Aligned hash test adaptation requires --aligned-test-extension after #581 and
+reconstructs five test owners before the immutable three-owner Keccak checkpoint.
 Human review must classify new/changed routes before a future baseline update.
 """
 from __future__ import annotations
@@ -69,6 +71,7 @@ import recording_admission_inventory_reset_payout as reset_payout
 import recording_admission_inventory_shielded_payout as shielded_payout
 import recording_admission_inventory_funded_mint as funded_mint
 import recording_admission_inventory_keccak_test as keccak_test
+import recording_admission_inventory_aligned_test as aligned_test
 
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE = Path(__file__).with_suffix('.baseline.json')
@@ -276,12 +279,18 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
            shielded_payout_transition: dict | None = None,
            inequality_test_extension: dict | None = None,
            funded_mint_transition: dict | None = None,
-           keccak_test_extension: dict | None = None) -> dict:
+           keccak_test_extension: dict | None = None,
+           aligned_test_extension: dict | None = None) -> dict:
     errors = validate_baseline(baseline)
     report = {'schema_version': 1, 'baseline_commit': baseline.get('baseline_commit'),
               'claim': 'source route inventory; not language or behavioral coverage',
               'route_count': len(baseline.get('routes', [])),
               'source_changes': [], 'route_checks': [], 'retired_routes': [], 'errors': errors}
+    if aligned_test_extension is not None:
+        try:
+            root = aligned_test.checkpoint(root, aligned_test_extension, keccak_test_extension)
+        except (OSError, UnicodeError, ValueError, KeyError) as error:
+            errors.append(str(error))
     if keccak_test_extension is not None:
         try:
             # Authenticate whole current test owners before reconstructing their
@@ -1038,6 +1047,13 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
             'predecessor_sources_sha256': {owner: hashes[0] for owner, hashes in keccak_test.OWNERS.items()},
             'claim': 'Exact test-only predecessor reconstruction; unchanged complete historical authority and production checks.',
         }
+    if report['passed'] and aligned_test_extension is not None:
+        report['reviewed_aligned_test_extension'] = {
+            'issue': 582, 'new_retired_routes': [],
+            'current_sources_sha256': {owner: hashes[1] for owner, hashes in aligned_test.OWNERS.items()},
+            'predecessor_sources_sha256': {owner: hashes[0] for owner, hashes in aligned_test.OWNERS.items()},
+            'claim': 'Exact test-only reconstruction through immutable #581; production reads remain on disk.',
+        }
     return report
 
 
@@ -1072,6 +1088,7 @@ def main(argv=None) -> int:
     parser.add_argument('--shielded-payout-transition', type=Path, help='explicit #570 shielded payout subsumption after #569')
     parser.add_argument('--inequality-test-extension', type=Path, help='explicit #571 test-only inequality negative correction; no retirement')
     parser.add_argument('--funded-mint-transition', type=Path, help='explicit #572 funded mint subsumption after #570 and #571')
+    parser.add_argument('--aligned-test-extension', type=Path, help='explicit #582 test-only aligned hash adaptation; no retirement')
     parser.add_argument('--keccak-test-extension', type=Path, help='explicit #581 test-only Keccak operand adaptation; no retirement')
     args = parser.parse_args(argv)
     protected = [args.baseline] + ([args.transition] if args.transition else []) + ([args.instrumentation] if args.instrumentation else []) + ([args.jubjub_transition] if args.jubjub_transition else []) + ([args.call_extension] if args.call_extension else []) + ([args.terminal_transition] if args.terminal_transition else []) + ([args.unit_actions_transition] if args.unit_actions_transition else []) + ([args.context_query_transition] if args.context_query_transition else []) + ([args.kernel_transition] if args.kernel_transition else []) + ([args.composite_transition] if args.composite_transition else []) + ([args.receive_transition] if args.receive_transition else [])
@@ -1090,6 +1107,7 @@ def main(argv=None) -> int:
     protected += [args.shielded_payout_transition] if args.shielded_payout_transition else []
     protected += [args.inequality_test_extension] if args.inequality_test_extension else []
     protected += [args.funded_mint_transition] if args.funded_mint_transition else []
+    protected += [args.aligned_test_extension] if args.aligned_test_extension else []
     protected += [args.keccak_test_extension] if args.keccak_test_extension else []
     if args.output and any(args.output.resolve() == path.resolve() for path in protected):
         parser.error('--output cannot overwrite baseline, transition, instrumentation, or call-extension evidence')
@@ -1121,8 +1139,9 @@ def main(argv=None) -> int:
         shielded_payout_transition = json.loads(args.shielded_payout_transition.read_text()) if args.shielded_payout_transition else None
         inequality_test_extension = json.loads(args.inequality_test_extension.read_text()) if args.inequality_test_extension else None
         funded_mint_transition = json.loads(args.funded_mint_transition.read_text()) if args.funded_mint_transition else None
+        aligned_test_extension = json.loads(args.aligned_test_extension.read_text()) if args.aligned_test_extension else None
         keccak_test_extension = json.loads(args.keccak_test_extension.read_text()) if args.keccak_test_extension else None
-        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension, voting_transition, phase_reset_transition, immediate_send_transition, zswap_transition, membership_transition, send_transition, observation_test_extension, merge_transition, guarded_deposit_transition, routing_test_extension, reset_payout_transition, shielded_payout_transition, inequality_test_extension, funded_mint_transition, keccak_test_extension)
+        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension, voting_transition, phase_reset_transition, immediate_send_transition, zswap_transition, membership_transition, send_transition, observation_test_extension, merge_transition, guarded_deposit_transition, routing_test_extension, reset_payout_transition, shielded_payout_transition, inequality_test_extension, funded_mint_transition, keccak_test_extension, aligned_test_extension)
     except (OSError, ValueError, TypeError, KeyError) as error:
         parser.exit(2, f'inventory error: {error}\n')
     rendered = json.dumps(report, indent=2) + '\n'

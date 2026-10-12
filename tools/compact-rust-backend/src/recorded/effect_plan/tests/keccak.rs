@@ -126,10 +126,10 @@ fn keccak_tuple_and_named_representation_limits_are_distinct() {
     };
     assert!(!validate::keccak_input_type(&ledger));
     assert!(!validate::keccak_input_type(&uint("01")));
-    // Persistent hashes retain their independently reviewed byte-only boundary.
-    for ty in [Type::Field, Type::OpaqueString, Type::JubjubPoint] {
+    // Aligned hashes retain their independently reviewed fixed-input boundary.
+    for ty in [Type::OpaqueBytes, Type::OpaqueString] {
         assert!(validate::keccak_input_type(&ty));
-        assert!(!validate::hash_input_type(&ty));
+        assert!(!validate::fixed_aligned_fab_type(&ty));
     }
 }
 

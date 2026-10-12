@@ -97,6 +97,7 @@ impl Lowerer<'_> {
             Expr::DegradeToTransient { .. }
             | Expr::UpgradeFromTransient { .. }
             | Expr::TransientHash { .. }
+            | Expr::HashToCurve { .. }
             | Expr::TransientCommit { .. } => {
                 self.transient_crypto(expression, scope, bindings, path)?
             }
@@ -125,10 +126,10 @@ impl Lowerer<'_> {
                     }
                     Operation::Keccak256(value)
                 } else {
-                    if !validate::hash_input_type(&value.ty) {
+                    if !validate::fixed_aligned_fab_type(&value.ty) {
                         return Err(invalid(
                             path,
-                            "persistent hash requires a fixed-byte product",
+                            "persistent hash requires a supported aligned FAB value",
                         ));
                     }
                     Operation::PersistentHash(value)

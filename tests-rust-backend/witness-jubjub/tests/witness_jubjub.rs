@@ -120,7 +120,8 @@ fn witness_points_compose_with_curve_natives_and_keep_transcript_order() {
     assert_oracle(&result, point_json(result.result), &oracle["generator"]);
 }
 
-struct GeneratorWitness(std::cell::RefCell<Vec<(Field, u64)>>);
+#[derive(Clone)]
+struct GeneratorWitness(std::rc::Rc<std::cell::RefCell<Vec<(Field, u64)>>>);
 
 impl Witnesses<u64> for GeneratorWitness {
     fn secret_point(
@@ -219,3 +220,7 @@ fn recorded_generator_empty_public_program_is_not_a_prepared_call() {
     ));
     assert_eq!(*witness.0.borrow(), vec![(seed, 7)]);
 }
+
+#[cfg(feature = "ledger-transaction")]
+#[path = "witness_jubjub/hash_recording.rs"]
+mod hash_recording;

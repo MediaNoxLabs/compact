@@ -91,17 +91,30 @@ INEQUALITY_TEST_EXTENSION = inventory.BASELINE.with_name("recording_admission_in
 KECCAK_TEST_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.keccak-test-581.json")
 
 
+ALIGNED_TEST_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.aligned-test-582.json")
+
+
+def checkpoint_581(root):
+    """Only reconstruct the fully authenticated current #582 snapshot."""
+    owner = inequality_test.OWNER
+    if inventory.digest((root / owner).read_bytes()) == inventory.aligned_test.OWNERS[owner][1]:
+        return inventory.aligned_test.checkpoint(root, json.loads(ALIGNED_TEST_EXTENSION.read_text()),
+                                               json.loads(KECCAK_TEST_EXTENSION.read_text()))
+    return root
+
+
 def checkpoint_bytes(owner):
     """Historical test fixtures use authenticated pre-581 test snapshots only."""
-    source = (inventory.ROOT / owner).read_bytes()
+    source = (checkpoint_581(inventory.ROOT) / owner).read_bytes()
     if owner not in inventory.keccak_test.OWNERS:
         return source
     snapshots = inventory.keccak_test.predecessor_sources(
-        inventory.ROOT, json.loads(KECCAK_TEST_EXTENSION.read_text()))
+        checkpoint_581(inventory.ROOT), json.loads(KECCAK_TEST_EXTENSION.read_text()))
     return snapshots[owner].encode()
 
 
 def inequality_checkpoint_source(root):
+    root = checkpoint_581(root)
     source = (root / inequality_test.OWNER).read_text()
     if inventory.digest(source.encode()) == inventory.keccak_test.OWNERS[inequality_test.OWNER][1]:
         snapshots = inventory.keccak_test.predecessor_sources(
@@ -130,10 +143,12 @@ FUNDED_MINT_TRANSITION = inventory.BASELINE.with_name("recording_admission_inven
 
 
 def funded_mint_checkpoint_sources(root):
+    root = checkpoint_581(root)
     return funded_mint.predecessor_sources(root, json.loads(FUNDED_MINT_TRANSITION.read_text()))
 
 
 def shielded_payout_checkpoint_sources(root):
+    root = checkpoint_581(root)
     prior = funded_mint_checkpoint_sources(root)
     sources = {owner: (root / owner).read_text() for owner in shielded_payout.REVIEWED_OWNERS}
     return {**prior, **shielded_payout.predecessor_source_snapshot(
@@ -141,6 +156,7 @@ def shielded_payout_checkpoint_sources(root):
 
 
 def reset_payout_checkpoint_sources(root):
+    root = checkpoint_581(root)
     prior = shielded_payout_checkpoint_sources(root)
     sources = {owner: (root / owner).read_text() for owner in reset_payout.REVIEWED_OWNERS}
     return {**prior, **reset_payout.predecessor_source_snapshot(
@@ -148,6 +164,7 @@ def reset_payout_checkpoint_sources(root):
 
 
 def guarded_checkpoint_sources(root):
+    root = checkpoint_581(root)
     prior = reset_payout_checkpoint_sources(root)
     sources = {owner: (root / owner).read_text() for owner in guarded.REVIEWED_OWNERS}
     return {routing_test.OWNER: routing_checkpoint_source(root), **prior,
@@ -156,6 +173,7 @@ def guarded_checkpoint_sources(root):
 
 
 def merge_checkpoint_sources(root):
+    root = checkpoint_581(root)
     prior = guarded_checkpoint_sources(root)
     sources = {owner: (root / owner).read_text() for owner in merge.REVIEWED_OWNERS}
     return {**prior, **merge.predecessor_source_snapshot(
@@ -163,6 +181,7 @@ def merge_checkpoint_sources(root):
 
 
 def send_checkpoint_sources(root):
+    root = checkpoint_581(root)
     prior = merge_checkpoint_sources(root)
     sources = {owner: (root / owner).read_text() for owner in send.REVIEWED_OWNERS}
     return {**prior, **send.predecessor_source_snapshot(
@@ -170,12 +189,14 @@ def send_checkpoint_sources(root):
 
 
 def membership_checkpoint_sources(root):
+    root = checkpoint_581(root)
     prior = send_checkpoint_sources(root)
     return {**prior, **membership.predecessor_source_snapshot(
         prior, json.loads(MEMBERSHIP_TRANSITION.read_text()))}
 
 
 def zswap_checkpoint_sources(root):
+    root = checkpoint_581(root)
     prior = membership_checkpoint_sources(root)
     sources = {owner: (root / owner).read_text() for owner in zswap.REVIEWED_OWNERS}
     return {**prior, **zswap.predecessor_source_snapshot(
@@ -183,6 +204,7 @@ def zswap_checkpoint_sources(root):
 
 
 def immediate_checkpoint_sources(root):
+    root = checkpoint_581(root)
     prior = zswap_checkpoint_sources(root)
     sources = {owner: (root / owner).read_text() for owner in immediate.REVIEWED_OWNERS}
     sources.update(prior)
@@ -314,7 +336,8 @@ class InventoryTests(unittest.TestCase):
                                   shielded_payout_transition=json.loads(SHIELDED_PAYOUT_TRANSITION.read_text()),
                                   inequality_test_extension=json.loads(INEQUALITY_TEST_EXTENSION.read_text()),
                                   funded_mint_transition=json.loads(FUNDED_MINT_TRANSITION.read_text()),
-                                  keccak_test_extension=json.loads(KECCAK_TEST_EXTENSION.read_text()))
+                                  keccak_test_extension=json.loads(KECCAK_TEST_EXTENSION.read_text()),
+                                  aligned_test_extension=json.loads(ALIGNED_TEST_EXTENSION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)

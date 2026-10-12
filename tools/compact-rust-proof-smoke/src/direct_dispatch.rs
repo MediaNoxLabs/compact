@@ -51,6 +51,7 @@ pub(super) fn try_run(
         ("--opaque-string-map", _) => Some(collections::opaque_string_map(arguments)),
         ("--map-effects", _) => Some(collections::map_effects(arguments)),
         ("--unit-composition", _) => Some(collections::unit_composition(arguments)),
+        ("--aligned-hashes", _) => Some(collections::aligned_hashes(arguments)),
         ("--conditional-set", _) => Some(collections::conditional_set(arguments)),
         ("--adt-set-enum", _) => Some(collections::adt_set_enum(arguments)),
         ("--guarded-recording", _) => Some(expressions::guarded_recording(arguments)),

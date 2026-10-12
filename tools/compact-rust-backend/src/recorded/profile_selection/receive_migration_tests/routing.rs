@@ -71,8 +71,10 @@ fn earlier_organizer_and_composite_owner_prevent_receive_attempts() {
 fn unsupported_body_continues_independent_suffix_and_invariant_stays_fatal() {
     let mut c = source();
     root_mut(&mut c).actions = vec![StateAction::Expression {
-        value: Expr::PersistentHash {
-            value: Box::new(parameter("coin")),
+        value: Expr::EcNeg {
+            value: Box::new(Expr::HashToCurve {
+                value: Box::new(parameter("coin")),
+            }),
         },
     }];
     assert!(Context::new(&c).domain(root(&c)).unwrap().is_none());

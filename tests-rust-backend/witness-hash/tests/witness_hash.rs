@@ -172,3 +172,7 @@ fn current_recorded_hash_and_commitment_preserve_witness_outputs() {
         assert_eq!(replay.context.effects, native.context.query.effects);
     }
 }
+
+#[cfg(feature = "ledger-transaction")]
+#[path = "witness_hash/recording.rs"]
+mod recording;

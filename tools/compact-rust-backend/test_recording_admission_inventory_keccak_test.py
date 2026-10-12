@@ -21,7 +21,7 @@ class KeccakTestExtensionTests(unittest.TestCase):
         for owner in keccak.OWNERS:
             path = self.root / owner
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes((inventory.ROOT / owner).read_bytes())
+            path.write_bytes((previous.checkpoint_581(inventory.ROOT) / owner).read_bytes())
 
     def report(self):
         return prior_tests.FundedMintTransitionTests.report(

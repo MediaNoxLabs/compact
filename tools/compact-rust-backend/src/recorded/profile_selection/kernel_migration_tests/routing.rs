@@ -111,8 +111,10 @@ fn rollout_excludes_internal_field_parameter_and_explicit_return_plan() {
 #[test]
 fn unsupported_body_continues_suffix_but_invariant_is_fatal() {
     let mut contract = subject();
-    contract.stateful_circuits[0].actions = vec![action(Expr::HashToCurve {
-        value: Box::new(parameter("domain")),
+    contract.stateful_circuits[0].actions = vec![action(Expr::EcNeg {
+        value: Box::new(Expr::HashToCurve {
+            value: Box::new(parameter("domain")),
+        }),
     })];
     let context = Context::new(&contract);
     assert!(

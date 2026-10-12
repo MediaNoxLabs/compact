@@ -332,12 +332,14 @@ fn rich_value_support_does_not_authorize_arithmetic_or_unrelated_nodes() {
             .detail
             .contains("unsigned input")
     );
-    let expression = Expr::HashToCurve {
-        value: Box::new(bytes(1)),
+    let expression = Expr::EcNeg {
+        value: Box::new(Expr::HashToCurve {
+            value: Box::new(bytes(1)),
+        }),
     };
     assert_eq!(
         refusal(expression, Type::JubjubPoint).ir_node,
-        "Expr::HashToCurve"
+        "Expr::EcNeg"
     );
 }
 

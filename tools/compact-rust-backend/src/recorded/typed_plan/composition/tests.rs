@@ -222,10 +222,11 @@ fn unselected_checked_effect_is_supported_but_unsupported_effect_keeps_legacy_pr
         assert!(capability.recorded && capability.observed_call);
         assert!(capability.recording_unavailable.is_none());
 
-        // Hash-to-curve remains a distinct unsupported operation. Keep the
+        // Point negation remains a distinct unsupported operation. Keep the
         // private observation and exact legacy diagnostic precedence control.
         let expression = &mut circuit(&mut v, "guard")["actions"][index]["otherwise"]["value"];
         expression["left"]["kind"] = json!("hash_to_curve");
+        expression["left"] = json!({"kind":"ec_neg", "value":expression["left"].clone()});
         expression["right"] = json!({"kind":"default", "ty":{"kind":"jubjub_point"}});
         let unsupported = rejected(v.clone(), "close");
         assert_eq!(unsupported.gap.path, r.gap.path);

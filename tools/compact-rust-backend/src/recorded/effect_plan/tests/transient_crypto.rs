@@ -107,9 +107,10 @@ fn fixed_fab_products_include_primitive_leaves_and_exact_tuple_boundary() {
         })),
         Err(PlanError::Unsupported(_))
     ));
+    // Dynamic hash inputs are qualified; synthesizing Default remains a separate refusal.
     for ty in [Type::OpaqueString, Type::OpaqueBytes] {
-        assert!(!validate::fixed_fab_type(&ty));
-        assert!(!validate::fixed_fab_type(&Type::Vector {
+        assert!(validate::aligned_fab_type(&ty));
+        assert!(validate::aligned_fab_type(&Type::Vector {
             element: Box::new(ty.clone()),
             length: 0
         }));
@@ -274,7 +275,7 @@ fn independent_validator_rejects_wrong_signature_results_and_live_operand_refere
     }
 }
 #[test]
-fn independent_validator_rejects_live_dynamic_inputs_and_sibling_scope_escape() {
+fn independent_validator_rejects_unsupported_defaults_and_sibling_scope_escape() {
     for expression in [hash(field()), commit(field(), field())] {
         let mut plan = checked(expression).unwrap().plan().clone();
         let position = plan

@@ -1,0 +1,33 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger calls: Counter;
+export struct Output { x: Field; y: Field; value: Field; }
+constructor() {}
+export circuit curve_string(value: Opaque<"string">): Output {
+ calls.increment(1);
+ const point = hashToCurve<Opaque<"string">>(value);
+ return Output { x: jubjubPointX(point), y: jubjubPointY(point), value: 0 };
+}
+export circuit curve_bytes(value: Opaque<"Uint8Array">): Output {
+ calls.increment(1);
+ const point = hashToCurve<Opaque<"Uint8Array">>(value);
+ return Output { x: jubjubPointX(point), y: jubjubPointY(point), value: 0 };
+}
+export circuit transient_string(value: Opaque<"string">): Output {
+ calls.increment(1);
+ return Output { x: 0, y: 0, value: transientHash<Opaque<"string">>(value) };
+}
+export circuit transient_bytes(value: Opaque<"Uint8Array">): Output {
+ calls.increment(1);
+ return Output { x: 0, y: 0, value: transientHash<Opaque<"Uint8Array">>(value) };
+}
+export circuit commit_string(value: Opaque<"string">): Output {
+ calls.increment(1);
+ return Output { x: 0, y: 0, value: transientCommit<Opaque<"string">>(value, 7) };
+}
+export circuit commit_bytes(value: Opaque<"Uint8Array">): Output {
+ calls.increment(1);
+ return Output { x: 0, y: 0, value: transientCommit<Opaque<"Uint8Array">>(value, 7) };
+}

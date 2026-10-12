@@ -145,6 +145,10 @@ pub(super) fn render(
             let input = value(input);
             syn::parse_quote!(runtime::persistent_hash(#input))
         }
+        Operation::HashToCurve(input) => {
+            let input = value(input);
+            syn::parse_quote!(runtime::hash_to_curve(#input))
+        }
         Operation::Keccak256(input) => {
             let input = value(input);
             syn::parse_quote!(runtime::keccak256(#input))

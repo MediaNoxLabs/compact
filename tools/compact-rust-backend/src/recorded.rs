@@ -43,7 +43,6 @@ mod legacy;
 use legacy::actions::append_steps;
 use legacy::expressions::{boolean_expression, field_expression};
 use legacy::guarded_pure::closed_guarded_struct_pure_steps;
-use legacy::opaque_map::closed_typed_opaque_map_write_steps;
 
 mod facade;
 #[cfg(test)]
@@ -52,6 +51,8 @@ mod guarded_map_migration_tests;
 mod guarded_mutations;
 mod helpers;
 mod item;
+#[cfg(test)]
+mod opaque_map_migration_tests;
 #[cfg(test)]
 mod opaque_set_migration_tests;
 mod profile_attempt;
@@ -722,33 +723,18 @@ fn render_recorded_item(
         "guard.closed-opaque-map-operation",
         opaque_map_operation.is_some(),
     );
-    let typed_map_write_steps = record_option!(
-        "guard.opaque-map-write",
-        closed_typed_opaque_map_write_steps(
-            circuit,
-            &parameters,
-            ledger_fields,
-            pure_circuits,
-            circuits,
-            shared_callees,
-        )?
-    );
-    let typed_map_write_gate = typed_map_write_steps.is_some();
     let guarded_pure_steps = record_option!(
         "guard.guarded-struct-pure",
         closed_guarded_struct_pure_steps(circuit, &parameters, pure_circuits, circuits)?
     );
     let guarded_pure_call = guarded_pure_steps.is_some();
-    let mut steps = organizer_steps
-        .or(typed_map_write_steps)
-        .or(guarded_pure_steps)
-        .unwrap_or_default();
+    let mut steps = organizer_steps.or(guarded_pure_steps).unwrap_or_default();
     let mut next_temp = 0;
     let mut visiting = HashSet::from([circuit.name.clone()]);
     // A root Let encloses both its ordered actions and its final return.
     // Capture this exact Field Cell read once, before the nested actions,
     // so the returned value cannot accidentally observe the post-write state.
-    let root_field_return = if !organizer_gate && !typed_map_write_gate && !guarded_pure_call {
+    let root_field_return = if !organizer_gate && !guarded_pure_call {
         match (circuit.actions.as_slice(), &circuit.return_value) {
             (
                 [StateAction::Let { bindings, action }],
@@ -785,7 +771,7 @@ fn render_recorded_item(
         None
     };
     let mut recorded_root_return: Option<(&str, syn::Expr)> = None;
-    if !organizer_gate && !typed_map_write_gate {
+    if !organizer_gate {
         if let Some((name, field, action)) = root_field_return {
             #[cfg(test)]
             admission_probe::trace::action("guard.root-let-snapshot");
@@ -854,7 +840,6 @@ fn render_recorded_item(
     // composition failure instead of collapsing it to UnsupportedReturn for an outer If
     // or Call. Action diagnostics above still take precedence.
     if !organizer_gate
-        && !typed_map_write_gate
         && !guarded_pure_call
         && circuit.actions.is_empty()
         && steps.is_empty()
@@ -1416,7 +1401,6 @@ fn render_recorded_item(
         )
         && opaque_map_operation.is_none()
         && !opaque_asset_removal
-        && !typed_map_write_gate
         && !organizer_gate
     {
         return Ok(RecordingOutcome::Unsupported(

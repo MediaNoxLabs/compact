@@ -22,6 +22,11 @@ use compact_rust_asset_registry_oracle_fixture::types::{
 };
 use midnight_compact_runtime as runtime;
 
+const RETAINED_IR: &str =
+    include_str!("../../compact-rust-backend/tests/asset-registry-schema20-ir.json");
+
+pub(super) mod manual;
+
 pub(super) fn record(revised: bool) -> Result<AssetRecord, Box<dyn Error>> {
     Ok(AssetRecord {
         code: FixedBytes::new([if revised { 3 } else { 0 }; 32]),
@@ -44,6 +49,11 @@ pub(super) fn record(revised: bool) -> Result<AssetRecord, Box<dyn Error>> {
 }
 
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
+    counter_scenario::validate_ir(
+        &std::fs::read(root.join("contract/compact-rust-ir.json"))?,
+        RETAINED_IR,
+    )?;
+    // Constructor and optional native Insert seed are supplied; neither is proved.
     const CIRCUIT: &str = "setRecord";
     let key = runtime::OpaqueString::from("record-α-1");
     for update in [false, true] {
@@ -91,60 +101,75 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
                 block_height: 0,
             },
         );
+        let native_witness = manual::TimestampWitness::default();
+        let recorded_witness = manual::TimestampWitness::default();
+        let observed_witness = manual::TimestampWitness::default();
+        let manual_witness = manual::TimestampWitness::default();
+        let generated = asset::Contract::from(observed_witness.clone());
         let native = asset::setRecord(
             observed.circuit_context(private_state),
-            &witnesses,
+            &native_witness,
             key.clone(),
             value.clone(),
             mutation,
         )?;
         let recorded = asset::recorded::setRecord(
             observed.circuit_context(private_state),
-            &witnesses,
+            &recorded_witness,
             key.clone(),
             value.clone(),
             mutation,
         )?;
-        if native.context.query.state.get_ref() != recorded.execution.context.query.state.get_ref()
-            || native.context.query.effects != recorded.execution.context.query.effects
-            || native.gas_cost != recorded.execution.gas_cost
-            || native.context.private_state != recorded.execution.context.private_state
-            || native.private_transcript_outputs != recorded.execution.private_transcript_outputs
-        {
-            return Err(
-                format!("asset record update={update} recording differs from native").into(),
-            );
-        }
+        let call = generated.recording().setRecord_call(
+            &observed,
+            private_state,
+            key.clone(),
+            value.clone(),
+            mutation,
+        )?;
+        let manual_execution = manual::write(
+            observed.circuit_context(private_state),
+            key.clone(),
+            manual::StoredValue::Record(value.clone()),
+            update,
+            &manual_witness,
+        )?;
+        manual::compare(
+            &native,
+            &recorded,
+            call.recorded(),
+            &manual_execution,
+            private_state,
+            &[
+                &native_witness,
+                &recorded_witness,
+                &observed_witness,
+                &manual_witness,
+            ],
+        )?;
         let expected_state = native.context.query.state.get_ref().clone();
         let input = AlignedValue::concat(&[
             AlignedValue::from(key.clone()),
             AlignedValue::from(value.clone()),
             AlignedValue::from(mutation),
         ]);
-        let manual = check_generated_trace(root, CIRCUIT, recorded, input)?;
+        let manual = check_generated_trace(root, CIRCUIT, recorded, input.clone())?;
         let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
             root.join("keys/setRecord.verifier"),
         )?))?;
-        let typed = asset::Contract::from(witnesses)
-            .recording()
-            .setRecord_call(
-                &observed,
-                private_state,
-                key.clone(),
-                value.clone(),
-                mutation,
-            )?
-            .prepare(verifier, Fr::from(0_u64))?;
+        let typed = call.prepare(verifier.clone(), Fr::from(0_u64))?;
+        if typed.input != input || typed.output != AlignedValue::from(()) {
+            return Err(
+                "Map write declared key/value/mutation order or Unit output differs".into(),
+            );
+        }
         if format!("{manual:?}") != format!("{typed:?}") {
             return Err(
                 format!("asset record update={update} typed call differs from recording").into(),
             );
         }
-        check_transaction(root, CIRCUIT, deploy, typed, &mut rng, |applied| {
-            let data = applied.data.get_ref();
-            if data != &expected_state {
-                return Err("proven asset record changed expected native state".into());
-            }
+        {
+            let data = &expected_state;
             let stored = map_view_at_path::<runtime::OpaqueString, AssetRecord, _>(data, &[1, 10])?
                 .lookup(key.clone())?;
             if stored != value {
@@ -167,9 +192,56 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
                     return Err("proven asset record stored wrong write count".into());
                 }
             }
-            Ok(())
-        })?;
-        println!("typed asset record update={update} proved and applied through ledger-8");
+        }
+        kernel_shielded_effects::prove_and_verify_call(root, CIRCUIT, &typed, &verifier)?;
+        opaque_public::apply_funded(
+            root,
+            CIRCUIT,
+            typed,
+            deploy,
+            &expected_state,
+            rng,
+            596 + u64::from(update),
+        )?;
+        println!(
+            "typed asset record update={update}: source-bound native/recorded/observed/manual/replay, verified proof and changed-binding refusal, default-strict funded ledger-8 application; constructor and Update seed supplied, deployment and seed not proved"
+        );
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn map_write_source_changes_refuse_before_keys() {
+        counter_scenario::validate_ir(RETAINED_IR.as_bytes(), RETAINED_IR).unwrap();
+        let mut changed: serde_json::Value = serde_json::from_str(RETAINED_IR).unwrap();
+        changed["independent_map_write_guard"] = true.into();
+        assert!(
+            counter_scenario::validate_ir(&serde_json::to_vec(&changed).unwrap(), RETAINED_IR)
+                .is_err()
+        );
+    }
+    #[test]
+    fn map_write_absent_source_refuses_before_keys_or_state() {
+        let root = std::env::temp_dir().join(format!(
+            "compact-record-write-absent-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        assert!(!root.exists());
+        assert_eq!(
+            run(&root)
+                .unwrap_err()
+                .downcast_ref::<io::Error>()
+                .unwrap()
+                .kind(),
+            io::ErrorKind::NotFound
+        );
+        assert!(!root.exists());
+    }
 }

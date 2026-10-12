@@ -164,9 +164,17 @@ fn assert_current(c: &Contract) {
             .any(|a| a["route"] == "guard.guarded-map-read"),
         "Map-read admission is retired independently of this old Set oracle"
     );
-    for sibling in ["guard.opaque-map-write", "guard.guarded-struct-pure"] {
-        assert!(attempts.iter().any(|a| a["route"] == sibling));
-    }
+    assert!(
+        !attempts
+            .iter()
+            .any(|a| a["route"] == "guard.opaque-map-write"),
+        "Map-write admission is retired independently of this old oracle"
+    );
+    assert!(
+        attempts
+            .iter()
+            .any(|a| a["route"] == "guard.guarded-struct-pure")
+    );
 }
 fn assert_old_positive(c: &Contract, label: &str) {
     let cx = Context::new(c);

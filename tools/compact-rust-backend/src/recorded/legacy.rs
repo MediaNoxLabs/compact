@@ -22,6 +22,7 @@
 #[cfg(test)]
 pub(super) mod guarded_map;
 pub(super) mod guarded_pure;
+#[cfg(test)]
 pub(super) mod opaque_map;
 #[cfg(test)]
 pub(super) mod opaque_set;

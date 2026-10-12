@@ -137,9 +137,17 @@ fn assert_current(c: &Contract) {
             .iter()
             .any(|x| x["route"] == "guard.guarded-map-read")
     );
-    for sibling in ["guard.opaque-map-write", "guard.guarded-struct-pure"] {
-        assert!(attempts.iter().any(|x| x["route"] == sibling));
-    }
+    assert!(
+        !attempts
+            .iter()
+            .any(|x| x["route"] == "guard.opaque-map-write"),
+        "Map-write admission is retired independently of this old oracle"
+    );
+    assert!(
+        attempts
+            .iter()
+            .any(|x| x["route"] == "guard.guarded-struct-pure")
+    );
 }
 fn assert_old_positive(c: &Contract, label: &str) {
     assert!(old(c).unwrap().is_some(), "complete old {label}");

@@ -11,7 +11,7 @@
     {
       "path": "tests-rust-backend/did-enum-map-reducer/lib.rs",
       "captured_sha256": "df5651cc8d834118e208c6b45c427bd7b8deab308348733e5b53b788292813e6",
-      "current_sha256": "7bcdca2602c2da299def28461c086e2825b081a893419acf3f749468a0e26f94"
+      "current_sha256": "f6a4854ed6774a093343ade36fb26bc1528a24b1a7745fca4bcd60f3ee05f6af"
     },
     {
       "path": "tests-rust-backend/did-enum-map-reducer/tests/provenance.rs",

@@ -63,8 +63,13 @@ fn contract(helper_name: &str, caller: bool, collide: bool) -> Contract {
             name: helper_name.into(),
             arguments: vec![seed],
         }],
-        result: Type::Unit,
-        return_value: StateReturn::Unit,
+        result: Type::Unsigned {
+            max: u64::MAX.to_string(),
+        },
+        return_value: StateReturn::CounterRead {
+            field: "count".into(),
+            index: 1,
+        },
     };
     let mut stateful_circuits = vec![helper];
     if caller {
@@ -79,13 +84,22 @@ fn contract(helper_name: &str, caller: bool, collide: bool) -> Contract {
     Contract {
         schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
-        ledger_fields: vec![LedgerField {
-            source: None,
-            id: "cell".into(),
-            index: 0,
-            path: vec![],
-            declaration: LedgerFieldKind::Cell { ty: Type::Field },
-        }],
+        ledger_fields: vec![
+            LedgerField {
+                source: None,
+                id: "cell".into(),
+                index: 0,
+                path: vec![],
+                declaration: LedgerFieldKind::Cell { ty: Type::Field },
+            },
+            LedgerField {
+                source: None,
+                id: "count".into(),
+                index: 1,
+                path: vec![],
+                declaration: LedgerFieldKind::Counter,
+            },
+        ],
         constructor: None,
         witnesses: vec![WitnessDeclaration {
             source: None,
@@ -131,18 +145,9 @@ fn compact_dollar_normalization_retains_existing_helper_spelling() {
 #[test]
 fn helper_collision_uses_stable_fallback_for_normal_and_raw_spelling() {
     for helper_name in ["inner", "r#type"] {
-        let mut fixture = contract(helper_name, true, true);
-        // The scalar Unit algebra inlines this helper. Keep this naming test on
-        // the existing shared-helper route using an unused Uint128 public input,
-        // outside both scalar and composed Unit public parameter domains.
-        for caller in fixture.stateful_circuits.iter_mut().filter(|c| !c.internal) {
-            caller.parameters.push(Parameter {
-                name: "unused".into(),
-                ty: Type::Unsigned {
-                    max: u128::MAX.to_string(),
-                },
-            });
-        }
+        // CounterRead keeps this complete root on actual legacy action dispatch.
+        // The canonical Uint128 public parameter is no longer a routing boundary.
+        let fixture = contract(helper_name, true, true);
         let source = render(&fixture).unwrap();
         syn::parse_file(&source).unwrap();
         let suffix = helper_name
@@ -188,5 +193,153 @@ fn invalid_declaration_precedes_helper_planning() {
     assert_eq!(
         render(&malformed),
         Err(RenderError::InvalidIdentifier("bad-name".into()))
+    );
+}
+
+#[test]
+fn checked_only_call_inlines_without_emitting_an_unused_helper() {
+    let mut fixture = contract("inner", true, false);
+    let caller = &mut fixture.stateful_circuits[1];
+    caller.result = Type::Unit;
+    caller.return_value = StateReturn::Unit;
+    let rendered = render_with_capabilities(&fixture).unwrap();
+    assert!(
+        rendered
+            .capabilities
+            .circuits
+            .iter()
+            .all(|c| c.recorded && c.observed_call)
+    );
+    let functions = recorded_functions(&rendered.source);
+    assert!(
+        !functions
+            .iter()
+            .any(|f| f.sig.ident == "__compact_recorded_body_inner")
+    );
+    let outer = functions.iter().find(|f| f.sig.ident == "outer").unwrap();
+    assert_one_witness_then_write(outer);
+}
+
+#[test]
+fn mixed_callers_keep_the_used_helper_and_validate_its_transitive_body() {
+    let mut fixture = contract("inner", true, false);
+    let mut leaf = fixture.stateful_circuits[0].clone();
+    leaf.name = "leaf".into();
+    fixture.stateful_circuits[0].actions = vec![StateAction::CircuitCall {
+        name: "leaf".into(),
+        arguments: vec![Expr::Parameter {
+            name: "seed".into(),
+        }],
+    }];
+    fixture.stateful_circuits.push(leaf);
+    let mut checked = fixture.stateful_circuits[1].clone();
+    checked.name = "checked".into();
+    checked.result = Type::Unit;
+    checked.return_value = StateReturn::Unit;
+    fixture.stateful_circuits.push(checked);
+    let rendered = render_with_capabilities(&fixture).unwrap();
+    assert!(
+        rendered
+            .capabilities
+            .circuits
+            .iter()
+            .all(|c| c.recorded && c.observed_call)
+    );
+    let functions = recorded_functions(&rendered.source);
+    let inner = functions
+        .iter()
+        .find(|f| f.sig.ident == "__compact_recorded_body_inner")
+        .unwrap();
+    let outer = functions.iter().find(|f| f.sig.ident == "outer").unwrap();
+    let checked = functions.iter().find(|f| f.sig.ident == "checked").unwrap();
+    assert!(
+        quote::quote!(#outer)
+            .to_string()
+            .contains("__compact_recorded_body_inner")
+    );
+    assert!(
+        !quote::quote!(#checked)
+            .to_string()
+            .contains("__compact_recorded_body_inner")
+    );
+    assert_one_witness_then_write(inner);
+    assert_one_witness_then_write(checked);
+    // The retained helper itself inlines its checked child, so only its live
+    // out-of-line definition is necessary. The child is still fully validated.
+    assert!(
+        !functions
+            .iter()
+            .any(|f| f.sig.ident == "__compact_recorded_body_leaf")
+    );
+    fixture.stateful_circuits[2].actions = vec![StateAction::CircuitCall {
+        name: "inner".into(),
+        arguments: vec![Expr::Parameter {
+            name: "seed".into(),
+        }],
+    }];
+    assert!(
+        render(&fixture).is_err(),
+        "transitive recursion must not be pruned away"
+    );
+}
+
+fn recorded_functions(source: &str) -> Vec<syn::ItemFn> {
+    let file = syn::parse_file(source).unwrap();
+    let ledger = file
+        .items
+        .into_iter()
+        .find_map(|item| match item {
+            syn::Item::Mod(module) if module.ident == "ledger_contract" => {
+                Some(module.content.unwrap().1)
+            }
+            _ => None,
+        })
+        .expect("ledger_contract module");
+    ledger
+        .into_iter()
+        .find_map(|item| match item {
+            syn::Item::Mod(module) if module.ident == "recorded" => Some(
+                module
+                    .content
+                    .unwrap()
+                    .1
+                    .into_iter()
+                    .filter_map(|item| {
+                        if let syn::Item::Fn(function) = item {
+                            Some(function)
+                        } else {
+                            None
+                        }
+                    })
+                    .collect(),
+            ),
+            _ => None,
+        })
+        .expect("recorded module")
+}
+
+fn assert_one_witness_then_write(function: &syn::ItemFn) {
+    use syn::visit_mut::{self, VisitMut};
+    #[derive(Default)]
+    struct EffectCalls(Vec<String>);
+    impl VisitMut for EffectCalls {
+        fn visit_expr_method_call_mut(&mut self, call: &mut syn::ExprMethodCall) {
+            let name = call.method.to_string();
+            if matches!(
+                name.as_str(),
+                "try_witness_metered" | "secret" | "record_write"
+            ) {
+                self.0.push(name);
+            }
+            visit_mut::visit_expr_method_call_mut(self, call);
+        }
+    }
+    let mut calls = EffectCalls::default();
+    calls.visit_item_fn_mut(&mut function.clone());
+    assert_eq!(
+        calls.0,
+        ["try_witness_metered", "secret", "record_write"],
+        "{} must retain one metered witness callback before one Cell write",
+        function.sig.ident
     );
 }

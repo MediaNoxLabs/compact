@@ -244,49 +244,6 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
-        fn __compact_recorded_body_verifyLocal<Private, W: super::TryWitnesses<Private>>(
-            frame: runtime::recording::RecordingFrame<Private>,
-            witnesses: &W,
-            __compact_param_0: runtime::JubjubPoint,
-            __compact_param_1: runtime::JubjubPoint,
-        ) -> Result<(runtime::recording::RecordingFrame<Private>, ()), runtime::CompactError>
-        {
-            let __compact_effect_0: runtime::JubjubPoint = __compact_param_0;
-            let __compact_effect_1: runtime::JubjubPoint = __compact_param_1;
-            let (frame, __compact_effect_2): (_, bool) =
-                frame.try_witness_metered(|context, meter| {
-                    witnesses.admitted(context.witness_context_with(super::LedgerView {
-                        state: context.query.state.get_ref(),
-                        meter,
-                    }))
-                })?;
-            if !__compact_effect_2 {
-                return Err(runtime::CompactError::AssertionFailed(
-                    "witness denied".to_owned(),
-                ));
-            }
-            let __compact_effect_3: () = ();
-            let __compact_effect_4: runtime::Field = runtime::jubjub_point_x(__compact_effect_0);
-            let __compact_effect_5: runtime::Field = runtime::jubjub_point_x(__compact_effect_1);
-            let __compact_effect_6: bool = __compact_effect_4 == __compact_effect_5;
-            if !__compact_effect_6 {
-                return Err(runtime::CompactError::AssertionFailed(
-                    "wrong point".to_owned(),
-                ));
-            }
-            let __compact_effect_7: () = ();
-            let __compact_effect_8: runtime::Field = runtime::jubjub_point_y(__compact_effect_0);
-            let __compact_effect_9: runtime::Field = runtime::jubjub_point_y(__compact_effect_1);
-            let __compact_effect_10: bool = __compact_effect_8 == __compact_effect_9;
-            if !__compact_effect_10 {
-                return Err(runtime::CompactError::AssertionFailed(
-                    "wrong point".to_owned(),
-                ));
-            }
-            let __compact_effect_11: () = ();
-            let __compact_effect_12: () = ();
-            Ok((frame, __compact_effect_12))
-        }
         pub fn verify<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,

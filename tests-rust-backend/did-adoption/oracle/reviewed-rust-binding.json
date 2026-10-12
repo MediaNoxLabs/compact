@@ -35,7 +35,7 @@
     {
       "path": "tests-rust-backend/did-adoption/lib.rs",
       "captured_sha256": "c3ae6d09f37cf421a2fd2bbe7209894b395edd4a03052e5cd912573f115a5d8e",
-      "current_sha256": "5e3795a1e9b070c28ad6a11f9b2c3a32a23e31afc177caf1c922f5ff6e340797"
+      "current_sha256": "7a80927d42da86847beebb0d5bdc7cda983f7197f337bc48d6a5716ff105e442"
     }
   ],
   "reviewed_artifacts": [

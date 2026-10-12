@@ -145,8 +145,24 @@ EMPTY_RECORDING_EXTENSION = inventory.BASELINE.with_name("recording_admission_in
 GUARDED_PURE_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-600.json")
 
 
+REACHABLE_HELPERS_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.reachable-helpers-599.json")
+
+
+def checkpoint_600(root):
+    """Authenticate emission-only cleanup before historical fixture setup."""
+    extension = json.loads(REACHABLE_HELPERS_EXTENSION.read_text())
+    try:
+        source = (root / inventory.reachable_helpers.OWNER).read_bytes()
+    except FileNotFoundError:
+        return root
+    if inventory.digest(source) == extension['owners'][inventory.reachable_helpers.OWNER]['current_sha256']:
+        return inventory.reachable_helpers.checkpoint(root, extension)
+    return root
+
+
 def checkpoint_598(root):
     """Authenticate guarded-pure retirement before historical fixture setup."""
+    root = checkpoint_600(root)
     transition = json.loads(GUARDED_PURE_TRANSITION.read_text())
     try:
         source = (root / inventory.guarded_pure.RECORDED).read_bytes()
@@ -626,7 +642,8 @@ class InventoryTests(unittest.TestCase):
                                   opaque_map_transition=json.loads(OPAQUE_MAP_TRANSITION.read_text()),
                                   resource_diagnostics_extension=json.loads(RESOURCE_DIAGNOSTICS_EXTENSION.read_text()),
                                   empty_recording_extension=json.loads(EMPTY_RECORDING_EXTENSION.read_text()),
-                                  guarded_pure_transition=json.loads(GUARDED_PURE_TRANSITION.read_text()))
+                                  guarded_pure_transition=json.loads(GUARDED_PURE_TRANSITION.read_text()),
+                                  reachable_helpers_extension=json.loads(REACHABLE_HELPERS_EXTENSION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)

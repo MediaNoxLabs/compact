@@ -64,7 +64,7 @@ mod profile_selection;
 mod pure_calls;
 #[cfg(test)]
 mod unsigned_product_migration_tests;
-pub(crate) use helpers::plan_recorded_helpers;
+pub(crate) use helpers::{plan_recorded_helpers, retain_reachable_helpers};
 #[cfg(test)]
 use profile_attempt::ProfileAttempt;
 use pure_calls::closed_pure_field_call;

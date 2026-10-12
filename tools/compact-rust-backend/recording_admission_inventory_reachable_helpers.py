@@ -1,0 +1,83 @@
+# This file is part of Compact.
+# Copyright (C) 2026 Midnight Foundation
+# SPDX-License-Identifier: Apache-2.0
+"""Authenticate post-render recorded-helper reachability without changing route retirement."""
+import copy
+from recording_admission_inventory_jubjub import canonical, digest
+from recording_admission_inventory_aligned_test import _TextSnapshot
+
+MANIFEST_SHA = 'be717f6e73ed34a938df78416a878c22f47f2a44ce2767185c0e1592775fc32d'
+OWNER = 'tools/compact-rust-backend/src/recorded/helpers.rs'
+SELECTOR = 'tools/compact-rust-backend/src/recorded/profile_selection.rs'
+
+
+def predecessor_sources(root, extension):
+    if canonical(extension) != MANIFEST_SHA:
+        raise ValueError('helpers599: unreviewed emission extension')
+    sources = {}
+    for owner, row in extension['owners'].items():
+        source = (root / owner).read_text()
+        if digest(source.encode()) != row['current_sha256']:
+            raise ValueError('helpers599: current complete source changed: ' + owner)
+        for edit in row['predecessor_reconstruction']:
+            if not edit['current'] or source.count(edit['current']) != 1:
+                raise ValueError('helpers599: predecessor replacement is not unique: ' + owner)
+            source = source.replace(edit['current'], edit['previous'], 1)
+        if digest(source.encode()) != row['previous_sha256']:
+            raise ValueError('helpers599: signed predecessor reconstruction failed: ' + owner)
+        sources[owner] = source
+    for owner, expected in extension['new_and_shared_sources'].items():
+        if digest((root / owner).read_bytes()) != expected:
+            raise ValueError('helpers599: checked authority or tests changed: ' + owner)
+    return sources
+
+
+class _Checkpoint:
+    """Only exact reviewed predecessors; every other file remains live."""
+    def __init__(self, root, sources, extension):
+        if canonical(extension) != MANIFEST_SHA or set(sources) != set(extension['owners']):
+            raise ValueError('helpers599: unauthenticated predecessor set')
+        for owner, source in sources.items():
+            if digest(source.encode()) != extension['owners'][owner]['previous_sha256']:
+                raise ValueError('helpers599: unauthenticated predecessor owner: ' + owner)
+        self._root, self._sources = root, sources
+
+    def __truediv__(self, owner):
+        return _TextSnapshot(self._sources[owner]) if owner in self._sources else self._root / owner
+
+
+def checkpoint(root, extension):
+    return _Checkpoint(root, predecessor_sources(root, extension), extension)
+
+
+def verify_extension(root, baseline, extension, historical_verify, selector_signature):
+    report = {'schema_version': 1, 'claim': 'source emission authority; not language or behavioral coverage',
+              'route_count': len(baseline.get('routes', [])), 'route_checks': [],
+              'retired_routes': [], 'source_changes': [], 'errors': [], 'passed': False}
+    try:
+        prior = historical_verify(checkpoint(root, extension))
+        if not prior['passed']:
+            report['errors'] = ['helpers599: immutable predecessor checks failed', *prior['errors']]
+            return report
+        report = copy.deepcopy(prior)
+        report['passed'] = False
+        actual_selector = selector_signature((root / SELECTOR).read_text())
+        if actual_selector != extension['selector'] or actual_selector != prior['current_selector']:
+            raise ValueError('helpers599: actual adapter priority or selector identity changed')
+        if len(prior['retired_routes']) != 29 or prior['route_count'] != 84:
+            raise ValueError('helpers599: predecessor inventory counts changed')
+        report['reviewed_reachable_helpers_extension'] = {
+            'issue': 599, 'claim': extension['claim'],
+            'retirement_count_unchanged': True,
+            'predecessor_commit': extension['baseline_commit'],
+            'owners': copy.deepcopy(extension['owners']),
+        }
+        report['source_changes'] = [
+            {'source': owner, 'baseline_sha256': expected,
+             'current_sha256': digest((root / owner).read_bytes())}
+            for owner, expected in baseline['source_fingerprints'].items()
+            if digest((root / owner).read_bytes()) != expected]
+        report['passed'] = True
+    except (OSError, ValueError, KeyError, UnicodeError) as error:
+        report['errors'].append(str(error))
+    return report

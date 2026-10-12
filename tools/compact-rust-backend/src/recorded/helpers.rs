@@ -16,6 +16,9 @@
 //! Discovery, stable naming and emission planning for shared recorded helpers.
 use super::*;
 
+mod reachability;
+pub(crate) use reachability::retain_reachable_helpers;
+
 pub(super) fn helper_ident(
     name: &str,
     circuits: &HashMap<&str, &StatefulCircuit>,

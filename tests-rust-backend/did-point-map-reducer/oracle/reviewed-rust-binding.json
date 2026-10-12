@@ -11,7 +11,7 @@
     {
       "path": "tests-rust-backend/did-point-map-reducer/lib.rs",
       "captured_sha256": "20c4122cc7fb0e91a8451a8d69db025c7af7f84c27413de65ffa67323f663f64",
-      "current_sha256": "aac9b9c5990c4858cb363f28024a8a3e781da07e5fc8a3890b40ceda3a6d415b"
+      "current_sha256": "b2ade6c2cfa82d3f76f910d8e9082dfa3da3193371f5e07626e6e1f36be5a50f"
     },
     {
       "path": "tests-rust-backend/did-point-map-reducer/tests/provenance.rs",

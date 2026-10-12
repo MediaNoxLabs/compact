@@ -11,7 +11,7 @@
     {
       "path": "tests-rust-backend/did-alias-digest-reducer/lib.rs",
       "captured_sha256": "9de0af0a0146f80528f06691da7f6b47e5723fabe56417c439d1a04b7a947dc9",
-      "current_sha256": "c82089fc577d5d88f5ef413886986637cbad3e23fde8dea3e0ee45ca792ba04b"
+      "current_sha256": "8ca36c02b22df25e905d5f1056aee4fd300183e149b5f470340b3f64fa310217"
     },
     {
       "path": "tests-rust-backend/did-alias-digest-reducer/tests/provenance.rs",

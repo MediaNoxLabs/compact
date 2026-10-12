@@ -265,40 +265,6 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
-        fn __compact_recorded_body_checked<Private, W: super::TryWitnesses<Private>>(
-            frame: runtime::recording::RecordingFrame<Private>,
-            witnesses: &W,
-            __compact_param_0: runtime::Field,
-        ) -> Result<(runtime::recording::RecordingFrame<Private>, ()), runtime::CompactError>
-        {
-            let __compact_effect_0: runtime::Field = __compact_param_0;
-            let (frame, __compact_effect_1): (_, bool) =
-                crate::ledger_slots::active.record_read(frame)?;
-            if !__compact_effect_1 {
-                return Err(runtime::CompactError::AssertionFailed(
-                    "inactive".to_owned(),
-                ));
-            }
-            let __compact_effect_2: () = ();
-            let (frame, __compact_effect_3): (_, bool) =
-                frame.try_witness_metered(|context, meter| {
-                    witnesses.authorize(
-                        context.witness_context_with(super::LedgerView {
-                            state: context.query.state.get_ref(),
-                            meter,
-                        }),
-                        __compact_effect_0,
-                    )
-                })?;
-            if !__compact_effect_3 {
-                return Err(runtime::CompactError::AssertionFailed(
-                    "unauthorized".to_owned(),
-                ));
-            }
-            let __compact_effect_4: () = ();
-            let __compact_effect_5: () = ();
-            Ok((frame, __compact_effect_5))
-        }
         pub fn update<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,

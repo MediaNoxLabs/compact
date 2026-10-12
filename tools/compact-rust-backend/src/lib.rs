@@ -3197,13 +3197,14 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
             Ok(())
         })?;
     }
-    let (shared_recorded_callees, mut recorded_items) = recorded::plan_recorded_helpers(
+    let (shared_recorded_callees, recorded_helpers) = recorded::plan_recorded_helpers(
         &contract.stateful_circuits,
         &ledger_fields,
         &witness_syntax.declarations,
         &callable_circuits,
         &callable_stateful_circuits,
     )?;
+    let mut recorded_items = Vec::new();
     let mut proof_capabilities = Vec::new();
     for circuit in &contract.stateful_circuits {
         located(circuit.source.as_ref(), || {
@@ -3481,6 +3482,17 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
             #borrowed_from_contract
         }
     });
+    // All admission and helper validation has already completed. Prune only
+    // private definitions absent from the final recorded Rust reference graph;
+    // keep the names used during rendering and every public item unchanged.
+    let mut reachable_helpers = recorded::retain_reachable_helpers(
+        recorded_helpers,
+        &mut recorded_items,
+        &mut recorded_methods,
+        &mut borrowed_recorded_methods,
+    );
+    reachable_helpers.append(&mut recorded_items);
+    let recorded_items = reachable_helpers;
     let recorded_module: Option<syn::Item> = if recorded_items.is_empty() {
         None
     } else {

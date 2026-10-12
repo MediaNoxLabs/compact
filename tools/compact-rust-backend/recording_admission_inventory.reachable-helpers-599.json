@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "issue": 599,
+  "baseline_commit": "cbfce332a7654520411fbde5d9e1ddf8ed16d2ef",
+  "claim": "Post-render deletion of unreachable private recorded helpers only; admission and validation remain prior to filtering. No route retirement or public API change.",
+  "selector": {
+    "ordered_calls": [],
+    "function_sha256": "39edd1256e89f088a942088f357a48bd920afd3a413d932a8296c36fb8894085"
+  },
+  "owners": {
+    "tools/compact-rust-backend/src/recorded/helpers.rs": {
+      "previous_sha256": "f27c0c2fbb931b2efa6e4bfbfd4a663b83a2298dcaf7933fd60dcb30a73a5fef",
+      "current_sha256": "39ab813c3e0c88bdc7955cd3d16f07feee8abc65c711173e24a79ceb7d5517a6",
+      "predecessor_reconstruction": [
+        {
+          "current": "\n//! Discovery, stable naming and emission planning for shared recorded helpers.\nuse super::*;\n\nmod reachability;\npub(crate) use reachability::retain_reachable_helpers;\n\npub(super) fn helper_ident(\n    name: &str,\n",
+          "previous": "\n//! Discovery, stable naming and emission planning for shared recorded helpers.\nuse super::*;\n\npub(super) fn helper_ident(\n    name: &str,\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded.rs": {
+      "previous_sha256": "e41308a6b82db7248a39bae32f7ea79a4578755cb0e6978d21034cb00ce2f3cd",
+      "current_sha256": "27935b71e82285633b02996e2b33d7a45cf69f9bb8f49ecaf0ff589eabd04a9f",
+      "predecessor_reconstruction": [
+        {
+          "current": "mod pure_calls;\n#[cfg(test)]\nmod unsigned_product_migration_tests;\npub(crate) use helpers::{plan_recorded_helpers, retain_reachable_helpers};\n#[cfg(test)]\nuse profile_attempt::ProfileAttempt;\nuse pure_calls::closed_pure_field_call;\n",
+          "previous": "mod pure_calls;\n#[cfg(test)]\nmod unsigned_product_migration_tests;\npub(crate) use helpers::plan_recorded_helpers;\n#[cfg(test)]\nuse profile_attempt::ProfileAttempt;\nuse pure_calls::closed_pure_field_call;\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/lib.rs": {
+      "previous_sha256": "0061f29f23b43ae15009b47d80916db58887d3f01eecf27581214c60d0ba5a5e",
+      "current_sha256": "b5e1abc6d5f9d8cff753c302b2650fa7a845e6560015a3a9f97329ee61359493",
+      "predecessor_reconstruction": [
+        {
+          "current": "            Ok(())\n        })?;\n    }\n    let (shared_recorded_callees, recorded_helpers) = recorded::plan_recorded_helpers(\n        &contract.stateful_circuits,\n        &ledger_fields,\n        &witness_syntax.declarations,\n        &callable_circuits,\n        &callable_stateful_circuits,\n    )?;\n    let mut recorded_items = Vec::new();\n    let mut proof_capabilities = Vec::new();\n    for circuit in &contract.stateful_circuits {\n        located(circuit.source.as_ref(), || {\n",
+          "previous": "            Ok(())\n        })?;\n    }\n    let (shared_recorded_callees, mut recorded_items) = recorded::plan_recorded_helpers(\n        &contract.stateful_circuits,\n        &ledger_fields,\n        &witness_syntax.declarations,\n        &callable_circuits,\n        &callable_stateful_circuits,\n    )?;\n    let mut proof_capabilities = Vec::new();\n    for circuit in &contract.stateful_circuits {\n        located(circuit.source.as_ref(), || {\n"
+        },
+        {
+          "current": "            #borrowed_from_contract\n        }\n    });\n    // All admission and helper validation has already completed. Prune only\n    // private definitions absent from the final recorded Rust reference graph;\n    // keep the names used during rendering and every public item unchanged.\n    let mut reachable_helpers = recorded::retain_reachable_helpers(\n        recorded_helpers,\n        &mut recorded_items,\n        &mut recorded_methods,\n        &mut borrowed_recorded_methods,\n    );\n    reachable_helpers.append(&mut recorded_items);\n    let recorded_items = reachable_helpers;\n    let recorded_module: Option<syn::Item> = if recorded_items.is_empty() {\n        None\n    } else {\n",
+          "previous": "            #borrowed_from_contract\n        }\n    });\n    let recorded_module: Option<syn::Item> = if recorded_items.is_empty() {\n        None\n    } else {\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/recorded_helper_naming.rs": {
+      "previous_sha256": "92e503cd6c7994593881cd926b20696081d1534121d05b23c3be11a811f04740",
+      "current_sha256": "d585f9a8a289c40e65e1dffa3cf8cc1ba370137aad107426ba502a4253e111b0",
+      "predecessor_reconstruction": [
+        {
+          "current": "            name: helper_name.into(),\n            arguments: vec![seed],\n        }],\n        result: Type::Unsigned {\n            max: u64::MAX.to_string(),\n        },\n        return_value: StateReturn::CounterRead {\n            field: \"count\".into(),\n            index: 1,\n        },\n    };\n    let mut stateful_circuits = vec![helper];\n    if caller {\n",
+          "previous": "            name: helper_name.into(),\n            arguments: vec![seed],\n        }],\n        result: Type::Unit,\n        return_value: StateReturn::Unit,\n    };\n    let mut stateful_circuits = vec![helper];\n    if caller {\n"
+        },
+        {
+          "current": "    Contract {\n        schema_version: SCHEMA_VERSION,\n        type_aliases: vec![],\n        ledger_fields: vec![\n            LedgerField {\n                source: None,\n                id: \"cell\".into(),\n                index: 0,\n                path: vec![],\n                declaration: LedgerFieldKind::Cell { ty: Type::Field },\n            },\n            LedgerField {\n                source: None,\n                id: \"count\".into(),\n                index: 1,\n                path: vec![],\n                declaration: LedgerFieldKind::Counter,\n            },\n        ],\n        constructor: None,\n        witnesses: vec![WitnessDeclaration {\n            source: None,\n",
+          "previous": "    Contract {\n        schema_version: SCHEMA_VERSION,\n        type_aliases: vec![],\n        ledger_fields: vec![LedgerField {\n            source: None,\n            id: \"cell\".into(),\n            index: 0,\n            path: vec![],\n            declaration: LedgerFieldKind::Cell { ty: Type::Field },\n        }],\n        constructor: None,\n        witnesses: vec![WitnessDeclaration {\n            source: None,\n"
+        },
+        {
+          "current": "#[test]\nfn helper_collision_uses_stable_fallback_for_normal_and_raw_spelling() {\n    for helper_name in [\"inner\", \"r#type\"] {\n        // CounterRead keeps this complete root on actual legacy action dispatch.\n        // The canonical Uint128 public parameter is no longer a routing boundary.\n        let fixture = contract(helper_name, true, true);\n        let source = render(&fixture).unwrap();\n        syn::parse_file(&source).unwrap();\n        let suffix = helper_name\n",
+          "previous": "#[test]\nfn helper_collision_uses_stable_fallback_for_normal_and_raw_spelling() {\n    for helper_name in [\"inner\", \"r#type\"] {\n        let mut fixture = contract(helper_name, true, true);\n        // The scalar Unit algebra inlines this helper. Keep this naming test on\n        // the existing shared-helper route using an unused Uint128 public input,\n        // outside both scalar and composed Unit public parameter domains.\n        for caller in fixture.stateful_circuits.iter_mut().filter(|c| !c.internal) {\n            caller.parameters.push(Parameter {\n                name: \"unused\".into(),\n                ty: Type::Unsigned {\n                    max: u128::MAX.to_string(),\n                },\n            });\n        }\n        let source = render(&fixture).unwrap();\n        syn::parse_file(&source).unwrap();\n        let suffix = helper_name\n"
+        },
+        {
+          "current": "        Err(RenderError::InvalidIdentifier(\"bad-name\".into()))\n    );\n}\n\n#[test]\nfn checked_only_call_inlines_without_emitting_an_unused_helper() {\n    let mut fixture = contract(\"inner\", true, false);\n    let caller = &mut fixture.stateful_circuits[1];\n    caller.result = Type::Unit;\n    caller.return_value = StateReturn::Unit;\n    let rendered = render_with_capabilities(&fixture).unwrap();\n    assert!(\n        rendered\n            .capabilities\n            .circuits\n            .iter()\n            .all(|c| c.recorded && c.observed_call)\n    );\n    let functions = recorded_functions(&rendered.source);\n    assert!(\n        !functions\n            .iter()\n            .any(|f| f.sig.ident == \"__compact_recorded_body_inner\")\n    );\n    let outer = functions.iter().find(|f| f.sig.ident == \"outer\").unwrap();\n    assert_one_witness_then_write(outer);\n}\n\n#[test]\nfn mixed_callers_keep_the_used_helper_and_validate_its_transitive_body() {\n    let mut fixture = contract(\"inner\", true, false);\n    let mut leaf = fixture.stateful_circuits[0].clone();\n    leaf.name = \"leaf\".into();\n    fixture.stateful_circuits[0].actions = vec![StateAction::CircuitCall {\n        name: \"leaf\".into(),\n        arguments: vec![Expr::Parameter {\n            name: \"seed\".into(),\n        }],\n    }];\n    fixture.stateful_circuits.push(leaf);\n    let mut checked = fixture.stateful_circuits[1].clone();\n    checked.name = \"checked\".into();\n    checked.result = Type::Unit;\n    checked.return_value = StateReturn::Unit;\n    fixture.stateful_circuits.push(checked);\n    let rendered = render_with_capabilities(&fixture).unwrap();\n    assert!(\n        rendered\n            .capabilities\n            .circuits\n            .iter()\n            .all(|c| c.recorded && c.observed_call)\n    );\n    let functions = recorded_functions(&rendered.source);\n    let inner = functions\n        .iter()\n        .find(|f| f.sig.ident == \"__compact_recorded_body_inner\")\n        .unwrap();\n    let outer = functions.iter().find(|f| f.sig.ident == \"outer\").unwrap();\n    let checked = functions.iter().find(|f| f.sig.ident == \"checked\").unwrap();\n    assert!(\n        quote::quote!(#outer)\n            .to_string()\n            .contains(\"__compact_recorded_body_inner\")\n    );\n    assert!(\n        !quote::quote!(#checked)\n            .to_string()\n            .contains(\"__compact_recorded_body_inner\")\n    );\n    assert_one_witness_then_write(inner);\n    assert_one_witness_then_write(checked);\n    // The retained helper itself inlines its checked child, so only its live\n    // out-of-line definition is necessary. The child is still fully validated.\n    assert!(\n        !functions\n            .iter()\n            .any(|f| f.sig.ident == \"__compact_recorded_body_leaf\")\n    );\n    fixture.stateful_circuits[2].actions = vec![StateAction::CircuitCall {\n        name: \"inner\".into(),\n        arguments: vec![Expr::Parameter {\n            name: \"seed\".into(),\n        }],\n    }];\n    assert!(\n        render(&fixture).is_err(),\n        \"transitive recursion must not be pruned away\"\n    );\n}\n\nfn recorded_functions(source: &str) -> Vec<syn::ItemFn> {\n    let file = syn::parse_file(source).unwrap();\n    let ledger = file\n        .items\n        .into_iter()\n        .find_map(|item| match item {\n            syn::Item::Mod(module) if module.ident == \"ledger_contract\" => {\n                Some(module.content.unwrap().1)\n            }\n            _ => None,\n        })\n        .expect(\"ledger_contract module\");\n    ledger\n        .into_iter()\n        .find_map(|item| match item {\n            syn::Item::Mod(module) if module.ident == \"recorded\" => Some(\n                module\n                    .content\n                    .unwrap()\n                    .1\n                    .into_iter()\n                    .filter_map(|item| {\n                        if let syn::Item::Fn(function) = item {\n                            Some(function)\n                        } else {\n                            None\n                        }\n                    })\n                    .collect(),\n            ),\n            _ => None,\n        })\n        .expect(\"recorded module\")\n}\n\nfn assert_one_witness_then_write(function: &syn::ItemFn) {\n    use syn::visit_mut::{self, VisitMut};\n    #[derive(Default)]\n    struct EffectCalls(Vec<String>);\n    impl VisitMut for EffectCalls {\n        fn visit_expr_method_call_mut(&mut self, call: &mut syn::ExprMethodCall) {\n            let name = call.method.to_string();\n            if matches!(\n                name.as_str(),\n                \"try_witness_metered\" | \"secret\" | \"record_write\"\n            ) {\n                self.0.push(name);\n            }\n            visit_mut::visit_expr_method_call_mut(self, call);\n        }\n    }\n    let mut calls = EffectCalls::default();\n    calls.visit_item_fn_mut(&mut function.clone());\n    assert_eq!(\n        calls.0,\n        [\"try_witness_metered\", \"secret\", \"record_write\"],\n        \"{} must retain one metered witness callback before one Cell write\",\n        function.sig.ident\n    );\n}\n",
+          "previous": "        Err(RenderError::InvalidIdentifier(\"bad-name\".into()))\n    );\n}\n"
+        }
+      ]
+    }
+  },
+  "new_and_shared_sources": {
+    "tools/compact-rust-backend/src/recorded/helpers/reachability.rs": "360fd34f84226f86f9c2d0935e34aa470a08ffe27d1ac0d0b1ab9d0fea565a55",
+    "tools/compact-rust-backend/src/recorded/helpers/reachability/tests.rs": "6a4b9e618e941522b8f8523b570551289b346bedea1e3093e33c0eed4465fe21",
+    "tools/compact-rust-backend/src/recorded/legacy/guarded_pure.rs": "9feaf91e856802cfd564812c3734f1484c137530367d36407c1d6f6a5b8c480a",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/control.rs": "3d1baf4955c97196b637e89a4cfb7a155260a04ae79bba48715e55a9f080df6d",
+    "tools/compact-rust-backend/src/recorded/legacy/calls.rs": "72c733a875763f71845fcadd22c033c8975756fc915a82cca348b89013a9f4c3",
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_domain.rs": "c00c5f9602d0ef1b5ffa1981be2707996e817be43c7896f4361b710cfa61fde5",
+    "tools/compact-rust-backend/src/resource_limits/policy.rs": "8d1e091410d3f802b1f54654314146ba1615f6c45222645b586099528ed5294f",
+    "runtime-rs/src/transaction.rs": "9397fe72f44ebaaca429798109ce990696dcaf1869ba190a564aaa6dbdde173a"
+  }
+}

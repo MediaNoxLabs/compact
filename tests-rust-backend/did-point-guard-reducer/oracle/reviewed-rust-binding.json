@@ -11,7 +11,7 @@
     {
       "path": "tests-rust-backend/did-point-guard-reducer/lib.rs",
       "captured_sha256": "d18636495ca68b6d021396e90dc3487ad43af607ce0d8b10b995454d10c19ec0",
-      "current_sha256": "c85e0a7c013e1bd025d454fe180ca650eac7837cfb407b1b86eda9814ee5b49c"
+      "current_sha256": "e28d8bd67f3de7f6292040c23a749b4cde794c94492a75fdee6164c996037d96"
     },
     {
       "path": "tests-rust-backend/did-point-guard-reducer/tests/provenance.rs",

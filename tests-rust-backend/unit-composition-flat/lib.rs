@@ -250,46 +250,6 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
-        fn __compact_recorded_body_guard<Private>(
-            frame: runtime::recording::RecordingFrame<Private>,
-            __compact_param_0: runtime::BoundedUint<18446744073709551615>,
-        ) -> Result<(runtime::recording::RecordingFrame<Private>, ()), runtime::CompactError>
-        {
-            let __compact_effect_0: runtime::BoundedUint<18446744073709551615> = __compact_param_0;
-            let (frame, __compact_effect_raw_1) =
-                crate::ledger_slots::version.record_read(frame)?;
-            let __compact_effect_1: runtime::BoundedUint<18446744073709551615> =
-                <runtime::BoundedUint<18446744073709551615>>::new(__compact_effect_raw_1 as u128)?;
-            let __compact_effect_2: bool = __compact_effect_0 == __compact_effect_1;
-            if !__compact_effect_2 {
-                return Err(runtime::CompactError::AssertionFailed("stale".to_owned()));
-            }
-            let __compact_effect_3: () = ();
-            let __compact_effect_4: () = ();
-            Ok((frame, __compact_effect_4))
-        }
-        fn __compact_recorded_body_note<Private, W: super::TryWitnesses<Private>>(
-            frame: runtime::recording::RecordingFrame<Private>,
-            witnesses: &W,
-        ) -> Result<(runtime::recording::RecordingFrame<Private>, ()), runtime::CompactError>
-        {
-            let __compact_effect_0: runtime::BoundedUint<65535> =
-                <runtime::BoundedUint<65535>>::new(1u128)?;
-            let frame = crate::ledger_slots::version
-                .record_increment(frame, (__compact_effect_0).value() as u16)?;
-            let __compact_effect_1: () = ();
-            let (frame, __compact_effect_2): (_, runtime::BoundedUint<18446744073709551615>) =
-                frame.try_witness_metered(|context, meter| {
-                    witnesses.now(context.witness_context_with(super::LedgerView {
-                        state: context.query.state.get_ref(),
-                        meter,
-                    }))
-                })?;
-            let frame = crate::ledger_slots::updated.record_write(frame, __compact_effect_2)?;
-            let __compact_effect_3: () = ();
-            let __compact_effect_4: () = ();
-            Ok((frame, __compact_effect_4))
-        }
         fn __compact_recorded_body_close<Private, W: super::TryWitnesses<Private>>(
             frame: runtime::recording::RecordingFrame<Private>,
             witnesses: &W,

@@ -188,16 +188,6 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
-        fn __compact_recorded_body_update<Private>(
-            frame: runtime::recording::RecordingFrame<Private>,
-        ) -> Result<(runtime::recording::RecordingFrame<Private>, ()), runtime::CompactError>
-        {
-            let __compact_effect_0: bool = true;
-            let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_0)?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok((frame, __compact_effect_2))
-        }
         pub fn run<Private>(
             context: runtime::context::CircuitContext<Private>,
             __compact_param_0: crate::types::Mutation,

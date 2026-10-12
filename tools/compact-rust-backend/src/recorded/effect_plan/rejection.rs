@@ -12,12 +12,26 @@ pub(super) enum Precision {
     Unclassified,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+pub(super) enum FailurePhase {
+    #[default]
+    OutsideBody,
+    CircuitBody,
+}
+
+/// Sized diagnostic label keeps a single pointer in the recursive error carrier.
+#[derive(Debug)]
+pub(super) struct ConcreteNode {
+    pub(super) name: String,
+}
+
 #[derive(Debug)]
 pub(in crate::recorded) struct LoweringRejection {
     pub(super) gap: RecordingGap,
     pub(super) root_action: Option<usize>,
     pub(super) precision: Precision,
-    pub(super) concrete_node: Option<Box<str>>,
+    pub(super) phase: FailurePhase,
+    pub(super) concrete_node: Option<Box<ConcreteNode>>,
 }
 
 impl From<RecordingGap> for LoweringRejection {
@@ -26,6 +40,7 @@ impl From<RecordingGap> for LoweringRejection {
             gap,
             root_action: None,
             precision: Precision::Unclassified,
+            phase: FailurePhase::OutsideBody,
             concrete_node: None,
         }
     }
@@ -33,7 +48,14 @@ impl From<RecordingGap> for LoweringRejection {
 
 impl LoweringRejection {
     /// Existing callers intentionally discard provenance without running lowering again.
-    pub(super) fn into_parts(self) -> (RecordingGap, Option<usize>, Precision, Option<Box<str>>) {
+    pub(super) fn into_parts(
+        self,
+    ) -> (
+        RecordingGap,
+        Option<usize>,
+        Precision,
+        Option<Box<ConcreteNode>>,
+    ) {
         (
             self.gap,
             self.root_action,
@@ -49,20 +71,43 @@ impl LoweringRejection {
         legacy_precision: crate::recorded::LegacyActionPrecision,
         gap: RecordingGap,
     ) -> RecordingGap {
-        if self.root_action == Some(ordinal)
-            && self.precision == Precision::ConcreteNode
-            && legacy_precision == crate::recorded::LegacyActionPrecision::Coarse
-            && gap.code == super::RecordingGapCode::UnsupportedAction
+        if self.root_action != Some(ordinal)
+            || gap.code != super::RecordingGapCode::UnsupportedAction
         {
+            return gap;
+        }
+        let concrete = self.precision == Precision::ConcreteNode
+            && legacy_precision == crate::recorded::LegacyActionPrecision::Coarse;
+        // Only an authenticated failed binding can identify the actual legacy
+        // refusal within an enclosing Let. A coarse call alone cannot establish
+        // which argument or nested action failed first.
+        let resource = self.phase == FailurePhase::CircuitBody
+            && self.gap.resource.as_ref().is_some_and(|resource| {
+                resource.phase == crate::recorded::RecordingResourcePhase::FixedLayoutValidation
+            })
+            && match legacy_precision {
+                crate::recorded::LegacyActionPrecision::BindingValue(index) => {
+                    let binding = format!("{}.bindings[{index}].value", gap.path);
+                    encloses(&binding, &self.gap.path)
+                }
+                _ => false,
+            };
+        if concrete || resource {
             let mut refined = self.gap.clone();
-            if let Some(node) = &self.concrete_node {
-                refined.ir_node = node.to_string();
+            if concrete && let Some(node) = &self.concrete_node {
+                refined.ir_node = node.name.clone();
             }
             refined
         } else {
             gap
         }
     }
+}
+
+fn encloses(parent: &str, child: &str) -> bool {
+    child.strip_prefix(parent).is_some_and(|suffix| {
+        suffix.is_empty() || suffix.starts_with('.') || suffix.starts_with('[')
+    })
 }
 
 #[derive(Debug)]

@@ -116,6 +116,7 @@ pub(super) fn lower(
 
 fn invalid(path: &str, detail: impl Into<String>) -> RecordingGap {
     RecordingGap {
+        resource: None,
         code: RecordingGapCode::UnsupportedExpression,
         ir_node: "RecordedPlan".into(),
         path: path.into(),

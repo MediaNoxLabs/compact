@@ -28,7 +28,7 @@ mod sets;
 mod transient;
 mod zswap;
 use super::pure_certification::{Certificates, Certifier};
-use super::rejection::{LoweringRejection, Precision};
+use super::rejection::{ConcreteNode, FailurePhase, LoweringRejection, Precision};
 
 type Scope = HashMap<String, Value>;
 struct Lowerer<'a> {
@@ -42,7 +42,7 @@ struct Lowerer<'a> {
     next: usize,
     root_action: Option<usize>,
     failure_precision: Precision,
-    concrete_node: Option<Box<str>>,
+    concrete_node: Option<Box<ConcreteNode>>,
 }
 
 #[cfg(test)]
@@ -104,6 +104,7 @@ pub(super) fn lower_with_pure_calls<'a>(
         .map_err(|gap| LoweringRejection {
             gap,
             root_action: lower.root_action,
+            phase: FailurePhase::CircuitBody,
             precision: lower.failure_precision,
             concrete_node: lower.concrete_node.take(),
         })?;
@@ -139,11 +140,11 @@ impl Lowerer<'_> {
     ) -> RecordingGap {
         // Keep the ordinary gap byte-for-byte. Only Unit diagnostic refinement
         // consumes this actual node label; no display text is parsed.
-        self.concrete_node = Some(
-            RecordingGap::expression(expression, String::new())
-                .ir_node
-                .into_boxed_str(),
-        );
+        // A sized box keeps this rare-error label to one pointer in recursive
+        // error carriers; boxing a str would retain a two-word fat pointer.
+        self.concrete_node = Some(Box::new(ConcreteNode {
+            name: RecordingGap::expression(expression, String::new()).ir_node,
+        }));
         self.concrete_failure(invalid(path, detail))
     }
 

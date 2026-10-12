@@ -271,6 +271,7 @@ fn point_values_are_checked_without_widening_persistent_commit_inputs() {
 #[test]
 fn invalid_plan_is_a_fatal_invariant_with_its_original_diagnostic() {
     let gap = super::super::RecordingGap {
+        resource: None,
         code: super::super::RecordingGapCode::UnsupportedExpression,
         ir_node: "RecordedPlan".into(),
         path: "forged.binding".into(),

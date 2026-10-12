@@ -570,6 +570,7 @@ impl Audit<'_> {
     }
     fn declaration_rejection(&mut self, name: &str, path: &str, detail: &str) {
         self.reject(RecordingGap {
+            resource: None,
             code: super::super::RecordingGapCode::RecordingUnavailable,
             ir_node: "CircuitDeclaration".to_owned(),
             path: path.to_owned(),

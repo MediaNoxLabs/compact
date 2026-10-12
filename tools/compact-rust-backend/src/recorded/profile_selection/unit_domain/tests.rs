@@ -309,6 +309,7 @@ fn pure_witness_key_and_private_intent_effects_do_not_supply_public_evidence() {
         );
         let refusal = rejected(&c);
         let outer = RecordingGap {
+            resource: None,
             code: RecordingGapCode::UnsupportedAction,
             ir_node: "sentinel".into(),
             path: "actions[0]".into(),
@@ -354,6 +355,7 @@ fn unsupported_refines_same_action_and_invalid_remains_fatal() {
     };
     let refusal = rejected(&c);
     let outer = RecordingGap {
+        resource: None,
         code: RecordingGapCode::UnsupportedAction,
         ir_node: "StateAction::Expression".into(),
         path: "unrelated text".into(),

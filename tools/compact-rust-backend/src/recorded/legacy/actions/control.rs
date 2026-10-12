@@ -55,6 +55,7 @@ pub(in crate::recorded) fn append_control_steps(
     match action {
         StateAction::Sequence { actions } => {
             for (index, action) in actions.iter().enumerate() {
+                let mut child_precision = LegacyActionPrecision::Concrete;
                 if let RecordingOutcome::Unsupported(gap) = append_steps(
                     action,
                     &format!("{path}.actions[{index}]"),
@@ -68,8 +69,9 @@ pub(in crate::recorded) fn append_control_steps(
                     steps,
                     next_temp,
                     visiting,
-                    &mut LegacyActionPrecision::Concrete,
+                    &mut child_precision,
                 )? {
+                    failure_precision.inherit_binding(child_precision);
                     return Ok(RecordingOutcome::Unsupported(gap));
                 }
             }
@@ -99,6 +101,7 @@ pub(in crate::recorded) fn append_control_steps(
                 )));
             };
             let mut then_steps = Vec::new();
+            let mut child_precision = LegacyActionPrecision::Concrete;
             if let RecordingOutcome::Unsupported(gap) = append_steps(
                 then,
                 &format!("{path}.then"),
@@ -112,11 +115,13 @@ pub(in crate::recorded) fn append_control_steps(
                 &mut then_steps,
                 next_temp,
                 visiting,
-                &mut LegacyActionPrecision::Concrete,
+                &mut child_precision,
             )? {
+                failure_precision.inherit_binding(child_precision);
                 return Ok(RecordingOutcome::Unsupported(gap));
             }
             let mut otherwise_steps = Vec::new();
+            let mut child_precision = LegacyActionPrecision::Concrete;
             if let RecordingOutcome::Unsupported(gap) = append_steps(
                 otherwise,
                 &format!("{path}.otherwise"),
@@ -130,8 +135,9 @@ pub(in crate::recorded) fn append_control_steps(
                 &mut otherwise_steps,
                 next_temp,
                 visiting,
-                &mut LegacyActionPrecision::Concrete,
+                &mut child_precision,
             )? {
+                failure_precision.inherit_binding(child_precision);
                 return Ok(RecordingOutcome::Unsupported(gap));
             }
             let selected = syn::Ident::new(
@@ -250,6 +256,7 @@ pub(in crate::recorded) fn append_control_steps(
             }
             let mut failure = None;
             for (index, action) in callee.actions.iter().enumerate() {
+                let mut child_precision = LegacyActionPrecision::Concrete;
                 if let RecordingOutcome::Unsupported(gap) = append_steps(
                     action,
                     &format!("callee[{name}].actions[{index}]"),
@@ -263,8 +270,9 @@ pub(in crate::recorded) fn append_control_steps(
                     steps,
                     next_temp,
                     visiting,
-                    &mut LegacyActionPrecision::Concrete,
+                    &mut child_precision,
                 )? {
+                    failure_precision.inherit_binding(child_precision);
                     failure = Some(gap);
                     break;
                 }

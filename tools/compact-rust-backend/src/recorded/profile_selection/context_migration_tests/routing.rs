@@ -81,6 +81,7 @@ fn unsupported_continues_independent_suffix_but_invariant_is_fatal() {
     assert!(position("algebra.context-query") < position("algebra.composite-values"));
     assert!(!attempted.contains(&"selector.context-query"));
     let gap = crate::recorded::RecordingGap {
+        resource: None,
         code: crate::recorded::RecordingGapCode::UnsupportedExpression,
         ir_node: "RecordedPlan".into(),
         path: "forged.context".into(),

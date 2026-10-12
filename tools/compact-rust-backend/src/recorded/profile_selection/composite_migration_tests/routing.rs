@@ -101,6 +101,7 @@ fn checked_domain_excludes_nonstruct_and_explicit_return_plans() {
 #[test]
 fn invariant_failure_is_fatal_and_unsupported_declines_without_old_fallback() {
     let gap = crate::recorded::RecordingGap {
+        resource: None,
         code: crate::recorded::RecordingGapCode::UnsupportedExpression,
         ir_node: "RecordedPlan".into(),
         path: "return_value.value".into(),

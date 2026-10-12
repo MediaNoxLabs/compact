@@ -139,6 +139,7 @@ fn unsupported_body_continues_suffix_but_invariant_is_fatal() {
                 .unwrap()
     );
     let gap = crate::recorded::RecordingGap {
+        resource: None,
         code: crate::recorded::RecordingGapCode::UnsupportedExpression,
         ir_node: "RecordedPlan".into(),
         path: "forged.kernel".into(),

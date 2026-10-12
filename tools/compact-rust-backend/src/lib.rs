@@ -15,7 +15,10 @@ mod jubjub_value;
 mod naming;
 mod native_frame;
 mod recorded;
-pub use recorded::{RecordingGap, RecordingGapCode};
+pub use recorded::{
+    RecordingGap, RecordingGapCode, RecordingResource, RecordingResourceKind,
+    RecordingResourcePhase,
+};
 mod stateful;
 mod type_declarations;
 mod value_lowering;

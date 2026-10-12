@@ -97,6 +97,7 @@ fn unsupported_body_continues_independent_suffix_and_invariant_stays_fatal() {
     );
     assert!(!a.contains(&"selector.shielded-receive"));
     let gap = RecordingGap {
+        resource: None,
         code: super::super::super::RecordingGapCode::UnsupportedExpression,
         ir_node: "RecordedPlan".into(),
         path: "forged.receive".into(),

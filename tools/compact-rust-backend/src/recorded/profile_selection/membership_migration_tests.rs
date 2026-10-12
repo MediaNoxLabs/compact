@@ -361,6 +361,7 @@ fn duplicate_and_noncanonical_source_are_not_accepted_plans() {
 #[test]
 fn invalid_checked_plan_propagates_its_exact_diagnostic() {
     let gap = RecordingGap {
+        resource: None,
         code: crate::recorded::RecordingGapCode::UnsupportedExpression,
         ir_node: "RecordedPlan".into(),
         path: "membership.forged.operand".into(),

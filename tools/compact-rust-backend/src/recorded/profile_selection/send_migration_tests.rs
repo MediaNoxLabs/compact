@@ -209,6 +209,7 @@ fn actual_composite_gap_survives_only_for_send_interface_without_legacy_reanalys
 #[test]
 fn checked_composite_invariants_are_fatal_and_unsupported_is_retained() {
     let gap = RecordingGap {
+        resource: None,
         code: super::super::RecordingGapCode::UnsupportedExpression,
         ir_node: "RecordedPlan".into(),
         path: "return_value.value".into(),

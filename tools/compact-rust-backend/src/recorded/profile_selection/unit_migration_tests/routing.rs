@@ -91,6 +91,7 @@ fn unsupported_unit_body_continues_independent_suffix_and_invalid_is_fatal() {
     assert!(at("algebra.unit-composition") < at("algebra.zswap"));
     assert!(!attempted.contains(&"selector.unit-actions"));
     let gap = crate::recorded::RecordingGap {
+        resource: None,
         code: crate::recorded::RecordingGapCode::UnsupportedExpression,
         ir_node: "RecordedPlan".into(),
         path: "forged.unit.member".into(),

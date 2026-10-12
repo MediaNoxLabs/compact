@@ -38,7 +38,10 @@ macro_rules! record_guard {
 
 mod diagnostics;
 pub(crate) use diagnostics::RecordingOutcome;
-pub use diagnostics::{RecordingGap, RecordingGapCode};
+pub use diagnostics::{
+    RecordingGap, RecordingGapCode, RecordingResource, RecordingResourceKind,
+    RecordingResourcePhase,
+};
 mod legacy;
 use legacy::actions::append_steps;
 use legacy::expressions::{boolean_expression, field_expression};
@@ -94,13 +97,22 @@ use crate::{RenderError, expression_with_calls, ident, retained_value, rust_type
 mod audited_local;
 mod read_only_verification;
 
-// Only a direct root call dispatch/argument refusal is coarse enough to refine.
-// Recursive action diagnostics retain their original concrete failure. This
-// private provenance is never inferred from serialized gap strings.
+// Direct call refusals and exact failed binding ordinals are distinct provenance.
+// Only binding provenance propagates through recursive legacy action boundaries;
+// ordinary concrete/call diagnostics retain their previous priority.
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum LegacyActionPrecision {
     Concrete,
     Coarse,
+    BindingValue(usize),
+}
+
+impl LegacyActionPrecision {
+    fn inherit_binding(&mut self, child: Self) {
+        if matches!(child, Self::BindingValue(_)) {
+            *self = child;
+        }
+    }
 }
 
 fn unavailable_action(action: &StateAction, path: &str) -> RecordingOutcome<()> {

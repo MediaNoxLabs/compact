@@ -5,6 +5,19 @@
 //! Fixed layout is bounded separately from raw type syntax and dynamic payloads.
 use super::*;
 use crate::ir::LocalBinding;
+use crate::{RecordingResourceKind, RecordingResourcePhase};
+
+fn assert_resource(gap: &RecordingGap, kind: RecordingResourceKind, limit: usize, path: &str) {
+    let resource = gap.resource.as_ref().expect("typed layout producer");
+    assert_eq!(resource.kind, kind);
+    assert_eq!(
+        resource.phase,
+        RecordingResourcePhase::FixedLayoutValidation
+    );
+    assert_eq!(resource.limit, limit);
+    assert_eq!(gap.path, path);
+    assert_eq!(gap.ir_node, "RecordedPlan");
+}
 
 fn vector(element: Type, length: usize) -> Type {
     Type::Vector {
@@ -25,18 +38,24 @@ fn fixed_vectors_multiply_byte_payloads_before_canonical_equality() {
         },
         2,
     );
-    assert!(
-        env.validate(&excessive)
-            .unwrap_err()
-            .detail
-            .contains("fixed-byte aggregate")
+    let gap = env.validate(&excessive).unwrap_err();
+    assert_eq!(
+        gap.detail,
+        format!("fixed-byte aggregate payload exceeds {limit} bytes")
+    );
+    assert_resource(
+        &gap,
+        RecordingResourceKind::FixedBytePayload,
+        limit,
+        "types",
     );
     let overflow = vector(vector(Type::Bytes { length: 32 }, 64), usize::MAX);
-    assert!(
-        env.validate(&overflow)
-            .unwrap_err()
-            .detail
-            .contains("fixed-byte aggregate")
+    let gap = env.validate(&overflow).unwrap_err();
+    assert_resource(
+        &gap,
+        RecordingResourceKind::FixedBytePayload,
+        limit,
+        "types",
     );
     env.validate(&vector(vector(Type::Bytes { length: 16 }, 8), 512))
         .unwrap();
@@ -58,11 +77,16 @@ fn zero_byte_and_opaque_elements_still_have_bounded_fixed_layout() {
         Type::Bytes { length: 0 },
     ] {
         env.validate(&vector(element.clone(), limit - 1)).unwrap();
-        assert!(
-            env.validate(&vector(element.clone(), limit))
-                .unwrap_err()
-                .detail
-                .contains("fixed aggregate layout")
+        let gap = env.validate(&vector(element.clone(), limit)).unwrap_err();
+        assert_eq!(
+            gap.detail,
+            format!("fixed aggregate layout exceeds {limit} slots")
+        );
+        assert_resource(
+            &gap,
+            RecordingResourceKind::FixedLayoutSlots,
+            limit,
+            "types",
         );
         assert!(env.validate(&vector(element, usize::MAX)).is_err());
     }
@@ -73,7 +97,9 @@ fn zero_byte_and_opaque_elements_still_have_bounded_fixed_layout() {
     // A zero-length outer array does not hide an invalid element annotation.
     assert!(
         env.validate(&vector(Type::Unsigned { max: "bad".into() }, 0))
-            .is_err()
+            .unwrap_err()
+            .resource
+            .is_none()
     );
     assert!(
         env.validate(&vector(vector(Type::Unit, usize::MAX), 0))
@@ -157,12 +183,12 @@ fn reachable_pure_hidden_layout_is_bounded_before_native_typing() {
     let mut certifier = super::super::super::pure_certification::Certifier::new(&pure, &stateful);
     certifier.certify("bounded", "test").unwrap();
     // Unreachable oversized declarations did not invalidate the bounded helper.
-    assert!(
-        certifier
-            .certify("caller", "test")
-            .unwrap_err()
-            .detail
-            .contains("fixed aggregate layout")
+    let gap = certifier.certify("caller", "test").unwrap_err();
+    assert_resource(
+        &gap,
+        RecordingResourceKind::FixedLayoutSlots,
+        limit,
+        "test.callee[excessive]",
     );
 }
 

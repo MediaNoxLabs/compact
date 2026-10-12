@@ -90,6 +90,7 @@ fn unsupported_body_preserves_later_independent_attempt_order() {
 #[test]
 fn unsupported_refuses_but_invalid_plan_keeps_its_diagnostic() {
     let gap = RecordingGap {
+        resource: None,
         code: crate::recorded::RecordingGapCode::UnsupportedExpression,
         ir_node: "RecordedPlan".into(),
         path: "forged.voting.operand".into(),

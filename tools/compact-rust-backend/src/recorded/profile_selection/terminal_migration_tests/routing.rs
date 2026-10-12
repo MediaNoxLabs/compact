@@ -200,6 +200,7 @@ fn declared_rollout_boundary_is_not_the_whole_algebra_domain() {
 #[test]
 fn checked_invariant_is_fatal_and_preserves_the_original_diagnostic() {
     let gap = crate::recorded::RecordingGap {
+        resource: None,
         code: crate::recorded::RecordingGapCode::UnsupportedExpression,
         ir_node: "RecordedPlan".into(),
         path: "forged.terminal.call".into(),

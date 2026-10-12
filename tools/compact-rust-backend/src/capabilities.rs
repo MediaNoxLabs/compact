@@ -322,3 +322,7 @@ mod proof_applicability_tests {
         assert_eq!(row["observed_call"], false);
     }
 }
+
+#[cfg(test)]
+#[path = "capabilities/resource_diagnostic_tests.rs"]
+pub(crate) mod resource_diagnostic_tests;

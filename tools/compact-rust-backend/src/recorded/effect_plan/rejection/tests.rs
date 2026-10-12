@@ -199,3 +199,6 @@ fn refinement_requires_explicit_origin_not_display_strings() {
         coarse
     );
 }
+
+#[path = "resource_tests.rs"]
+mod resource_tests;

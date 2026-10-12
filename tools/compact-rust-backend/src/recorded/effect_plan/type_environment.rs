@@ -7,6 +7,7 @@
 //! remain the definition authority; no generated syntax is retained here.
 use super::{RecordingGap, invalid};
 use crate::ir::{LedgerField, PureCircuit, StatefulCircuit, StructField, Type, WitnessDeclaration};
+use crate::recorded::RecordingResourceKind;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 #[derive(Debug, Default)]
@@ -172,13 +173,15 @@ pub(super) fn check_fixed_layouts(types: &[&Type], path: &str) -> Result<(), Rec
             return Err(invalid(
                 path,
                 format!("fixed-byte aggregate payload exceeds {byte_limit} bytes"),
-            ));
+            )
+            .with_fixed_layout_resource(RecordingResourceKind::FixedBytePayload, byte_limit));
         }
         if layout.slots > slot_limit {
             return Err(invalid(
                 path,
                 format!("fixed aggregate layout exceeds {slot_limit} slots"),
-            ));
+            )
+            .with_fixed_layout_resource(RecordingResourceKind::FixedLayoutSlots, slot_limit));
         }
         layouts.insert(ty as *const Type, layout);
     }

@@ -1,0 +1,412 @@
+{
+  "schema_version": 1,
+  "issue": 597,
+  "baseline_commit": "7d04e3acb48c1b15d0ade0c38de5ff3b1d99a22e",
+  "claim": "Structured resource diagnostic provenance only; accepted domain, source order, resource limits and route retirement counts unchanged.",
+  "selector": {
+    "ordered_calls": [],
+    "function_sha256": "39edd1256e89f088a942088f357a48bd920afd3a413d932a8296c36fb8894085"
+  },
+  "owners": {
+    "tools/compact-rust-backend/src/capabilities.rs": {
+      "previous_sha256": "43dee1f3ae38b1dca85e0965c09c2ba2a7d7b0e3dbdb128a18996c0f86b1184c",
+      "current_sha256": "407190557724e551cda93f297be4070da7db614340ea9d30a3ef99416a65014c",
+      "predecessor_reconstruction": [
+        {
+          "current": "        assert_eq!(row[\"observed_call\"], false);\n    }\n}\n\n#[cfg(test)]\n#[path = \"capabilities/resource_diagnostic_tests.rs\"]\npub(crate) mod resource_diagnostic_tests;\n",
+          "previous": "        assert_eq!(row[\"observed_call\"], false);\n    }\n}\n"
+        }
+      ],
+      "classification": "reviewed diagnostic/API/test change"
+    },
+    "tools/compact-rust-backend/src/lib.rs": {
+      "previous_sha256": "26c79dd5fb1e471136635c7519b2d9b34ff5ab2f385ae300113d6e624a360ab0",
+      "current_sha256": "0061f29f23b43ae15009b47d80916db58887d3f01eecf27581214c60d0ba5a5e",
+      "predecessor_reconstruction": [
+        {
+          "current": "mod naming;\nmod native_frame;\nmod recorded;\npub use recorded::{\n    RecordingGap, RecordingGapCode, RecordingResource, RecordingResourceKind,\n    RecordingResourcePhase,\n};\nmod stateful;\nmod type_declarations;\nmod value_lowering;\n",
+          "previous": "mod naming;\nmod native_frame;\nmod recorded;\npub use recorded::{RecordingGap, RecordingGapCode};\nmod stateful;\nmod type_declarations;\nmod value_lowering;\n"
+        }
+      ],
+      "classification": "reviewed diagnostic/API/test change"
+    },
+    "tools/compact-rust-backend/src/recorded.rs": {
+      "previous_sha256": "1591f9ce88f49ff1586712b483927aa776bb3abaa5ca17a52ff977dd370d45dd",
+      "current_sha256": "299f68373bfe355fbb4636d3f9b3d6e5addb19cf5c96954b77c1118d08ebabd9",
+      "predecessor_reconstruction": [
+        {
+          "current": "\nmod diagnostics;\npub(crate) use diagnostics::RecordingOutcome;\npub use diagnostics::{\n    RecordingGap, RecordingGapCode, RecordingResource, RecordingResourceKind,\n    RecordingResourcePhase,\n};\nmod legacy;\nuse legacy::actions::append_steps;\nuse legacy::expressions::{boolean_expression, field_expression};\n",
+          "previous": "\nmod diagnostics;\npub(crate) use diagnostics::RecordingOutcome;\npub use diagnostics::{RecordingGap, RecordingGapCode};\nmod legacy;\nuse legacy::actions::append_steps;\nuse legacy::expressions::{boolean_expression, field_expression};\n"
+        },
+        {
+          "current": "mod audited_local;\nmod read_only_verification;\n\n// Direct call refusals and exact failed binding ordinals are distinct provenance.\n// Only binding provenance propagates through recursive legacy action boundaries;\n// ordinary concrete/call diagnostics retain their previous priority.\n#[derive(Clone, Copy, PartialEq, Eq)]\nenum LegacyActionPrecision {\n    Concrete,\n    Coarse,\n    BindingValue(usize),\n}\n\nimpl LegacyActionPrecision {\n    fn inherit_binding(&mut self, child: Self) {\n        if matches!(child, Self::BindingValue(_)) {\n            *self = child;\n        }\n    }\n}\n\nfn unavailable_action(action: &StateAction, path: &str) -> RecordingOutcome<()> {\n",
+          "previous": "mod audited_local;\nmod read_only_verification;\n\n// Only a direct root call dispatch/argument refusal is coarse enough to refine.\n// Recursive action diagnostics retain their original concrete failure. This\n// private provenance is never inferred from serialized gap strings.\n#[derive(Clone, Copy, PartialEq, Eq)]\nenum LegacyActionPrecision {\n    Concrete,\n    Coarse,\n}\n\nfn unavailable_action(action: &StateAction, path: &str) -> RecordingOutcome<()> {\n"
+        }
+      ],
+      "classification": "reviewed diagnostic/API/test change"
+    },
+    "tools/compact-rust-backend/src/recorded/diagnostics.rs": {
+      "previous_sha256": "b0d226b07256e2e4abdc6202372d2007952cbd79c6fe9667018db7cbd80e5839",
+      "current_sha256": "ce000c8a345098d21947a3e68c841146dbd0b6a643732389c006e0280051e302",
+      "predecessor_reconstruction": [
+        {
+          "current": "use crate::ir::{Expr, StateAction, StateReturn, Type};\nuse serde::Serialize;\n\nmod resource;\npub use resource::{RecordingResource, RecordingResourceKind, RecordingResourcePhase};\n\n/// The first definite reason an exported circuit has no recorded Rust API.\n#[derive(Debug, Clone, PartialEq, Eq, Serialize)]\npub struct RecordingGap {\n",
+          "previous": "use crate::ir::{Expr, StateAction, StateReturn, Type};\nuse serde::Serialize;\n\n/// The first definite reason an exported circuit has no recorded Rust API.\n#[derive(Debug, Clone, PartialEq, Eq, Serialize)]\npub struct RecordingGap {\n"
+        },
+        {
+          "current": "    pub ir_node: String,\n    pub path: String,\n    pub detail: String,\n    /// Additive capability-schema-3 metadata; absent for ordinary refusals.\n    /// Rust callers constructing this public struct must set this field explicitly.\n    #[serde(skip_serializing_if = \"Option::is_none\")]\n    pub resource: Option<Box<RecordingResource>>,\n}\n\n#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]\n",
+          "previous": "    pub ir_node: String,\n    pub path: String,\n    pub detail: String,\n}\n\n#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]\n"
+        },
+        {
+          "current": "    pub(super) fn action(action: &StateAction, path: String) -> Self {\n        let ir_node = node_name(action, \"StateAction\");\n        Self {\n            resource: None,\n            code: RecordingGapCode::UnsupportedAction,\n            ir_node: ir_node.clone(),\n            path,\n",
+          "previous": "    pub(super) fn action(action: &StateAction, path: String) -> Self {\n        let ir_node = node_name(action, \"StateAction\");\n        Self {\n            code: RecordingGapCode::UnsupportedAction,\n            ir_node: ir_node.clone(),\n            path,\n"
+        },
+        {
+          "current": "    pub(super) fn returned(value: &StateReturn) -> Self {\n        let ir_node = node_name(value, \"StateReturn\");\n        Self {\n            resource: None,\n            code: RecordingGapCode::UnsupportedReturn,\n            ir_node: ir_node.clone(),\n            path: \"return_value\".to_owned(),\n",
+          "previous": "    pub(super) fn returned(value: &StateReturn) -> Self {\n        let ir_node = node_name(value, \"StateReturn\");\n        Self {\n            code: RecordingGapCode::UnsupportedReturn,\n            ir_node: ir_node.clone(),\n            path: \"return_value\".to_owned(),\n"
+        },
+        {
+          "current": "    pub(super) fn expression(value: &Expr, path: String) -> Self {\n        let ir_node = node_name(value, \"Expr\");\n        Self {\n            resource: None,\n            code: RecordingGapCode::UnsupportedExpression,\n            ir_node: ir_node.clone(),\n            path,\n",
+          "previous": "    pub(super) fn expression(value: &Expr, path: String) -> Self {\n        let ir_node = node_name(value, \"Expr\");\n        Self {\n            code: RecordingGapCode::UnsupportedExpression,\n            ir_node: ir_node.clone(),\n            path,\n"
+        },
+        {
+          "current": "\n    pub(super) fn unsupported_type(action: &StateAction, ty: &Type, path: String) -> Self {\n        Self {\n            resource: None,\n            code: RecordingGapCode::UnsupportedType,\n            ir_node: node_name(action, \"StateAction\"),\n            path,\n",
+          "previous": "\n    pub(super) fn unsupported_type(action: &StateAction, ty: &Type, path: String) -> Self {\n        Self {\n            code: RecordingGapCode::UnsupportedType,\n            ir_node: node_name(action, \"StateAction\"),\n            path,\n"
+        },
+        {
+          "current": "\n    pub(super) fn no_effect() -> Self {\n        Self {\n            resource: None,\n            code: RecordingGapCode::NoRecordedEffect,\n            ir_node: \"StatefulCircuit\".to_owned(),\n            path: \"actions\".to_owned(),\n",
+          "previous": "\n    pub(super) fn no_effect() -> Self {\n        Self {\n            code: RecordingGapCode::NoRecordedEffect,\n            ir_node: \"StatefulCircuit\".to_owned(),\n            path: \"actions\".to_owned(),\n"
+        },
+        {
+          "current": "    }\n\n    pub(crate) fn recording_dependency(gap: Self) -> Self {\n        let mut detail = \"the observed-call API requires a recorded circuit\".to_owned();\n        if gap.resource.is_some() {\n            detail.push_str(\": \");\n            detail.push_str(&gap.detail);\n        }\n        Self {\n            resource: gap.resource,\n            code: RecordingGapCode::RecordingUnavailable,\n            ir_node: gap.ir_node,\n            path: gap.path,\n            detail,\n        }\n    }\n\n    pub(crate) fn name_collision(name: &str) -> Self {\n        Self {\n            resource: None,\n            code: RecordingGapCode::NameCollision,\n            ir_node: \"StatefulCircuit\".to_owned(),\n            path: \"name\".to_owned(),\n",
+          "previous": "    }\n\n    pub(crate) fn recording_dependency(gap: Self) -> Self {\n        Self {\n            code: RecordingGapCode::RecordingUnavailable,\n            ir_node: gap.ir_node,\n            path: gap.path,\n            detail: \"the observed-call API requires a recorded circuit\".to_owned(),\n        }\n    }\n\n    pub(crate) fn name_collision(name: &str) -> Self {\n        Self {\n            code: RecordingGapCode::NameCollision,\n            ir_node: \"StatefulCircuit\".to_owned(),\n            path: \"name\".to_owned(),\n"
+        }
+      ],
+      "classification": "reviewed diagnostic/API/test change"
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan.rs": {
+      "previous_sha256": "d2eb974a80f1ccb472f157934306fa9fef16fba7354277ac4130ff1258a350ba",
+      "current_sha256": "642bd807ff656b6e49a86d17640bb99da17d9ffb07cf5bf9a9d6b56925137ce9",
+      "predecessor_reconstruction": [
+        {
+          "current": "\nfn invalid(path: &str, detail: impl Into<String>) -> RecordingGap {\n    RecordingGap {\n        resource: None,\n        code: RecordingGapCode::UnsupportedExpression,\n        ir_node: \"RecordedPlan\".into(),\n        path: path.into(),\n",
+          "previous": "\nfn invalid(path: &str, detail: impl Into<String>) -> RecordingGap {\n    RecordingGap {\n        code: RecordingGapCode::UnsupportedExpression,\n        ir_node: \"RecordedPlan\".into(),\n        path: path.into(),\n"
+        }
+      ],
+      "classification": "neutral None field initialization"
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower.rs": {
+      "previous_sha256": "dafa745ed6fcb2ad9ab6d0555d0c2a6e26c57283b87d81fcff1717e24c330b06",
+      "current_sha256": "e7c92a1335f332310c15677c05012dd2ae9a02b271d46d53f00f2ed6e2584e02",
+      "predecessor_reconstruction": [
+        {
+          "current": "mod transient;\nmod zswap;\nuse super::pure_certification::{Certificates, Certifier};\nuse super::rejection::{ConcreteNode, FailurePhase, LoweringRejection, Precision};\n\ntype Scope = HashMap<String, Value>;\nstruct Lowerer<'a> {\n",
+          "previous": "mod transient;\nmod zswap;\nuse super::pure_certification::{Certificates, Certifier};\nuse super::rejection::{LoweringRejection, Precision};\n\ntype Scope = HashMap<String, Value>;\nstruct Lowerer<'a> {\n"
+        },
+        {
+          "current": "    next: usize,\n    root_action: Option<usize>,\n    failure_precision: Precision,\n    concrete_node: Option<Box<ConcreteNode>>,\n}\n\n#[cfg(test)]\n",
+          "previous": "    next: usize,\n    root_action: Option<usize>,\n    failure_precision: Precision,\n    concrete_node: Option<Box<str>>,\n}\n\n#[cfg(test)]\n"
+        },
+        {
+          "current": "        .map_err(|gap| LoweringRejection {\n            gap,\n            root_action: lower.root_action,\n            phase: FailurePhase::CircuitBody,\n            precision: lower.failure_precision,\n            concrete_node: lower.concrete_node.take(),\n        })?;\n",
+          "previous": "        .map_err(|gap| LoweringRejection {\n            gap,\n            root_action: lower.root_action,\n            precision: lower.failure_precision,\n            concrete_node: lower.concrete_node.take(),\n        })?;\n"
+        },
+        {
+          "current": "    ) -> RecordingGap {\n        // Keep the ordinary gap byte-for-byte. Only Unit diagnostic refinement\n        // consumes this actual node label; no display text is parsed.\n        // A sized box keeps this rare-error label to one pointer in recursive\n        // error carriers; boxing a str would retain a two-word fat pointer.\n        self.concrete_node = Some(Box::new(ConcreteNode {\n            name: RecordingGap::expression(expression, String::new()).ir_node,\n        }));\n        self.concrete_failure(invalid(path, detail))\n    }\n\n",
+          "previous": "    ) -> RecordingGap {\n        // Keep the ordinary gap byte-for-byte. Only Unit diagnostic refinement\n        // consumes this actual node label; no display text is parsed.\n        self.concrete_node = Some(\n            RecordingGap::expression(expression, String::new())\n                .ir_node\n                .into_boxed_str(),\n        );\n        self.concrete_failure(invalid(path, detail))\n    }\n\n"
+        }
+      ],
+      "classification": "reviewed diagnostic/API/test change"
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/rejection.rs": {
+      "previous_sha256": "677eaa227c2cabca4fa043e33c1b0562716b5354ac0a2a4a35c5a794c1d6d724",
+      "current_sha256": "3d41cb4ab13956ee0326ca0e1d2337c71feb16ced42576cc79bfe4564cb8767b",
+      "predecessor_reconstruction": [
+        {
+          "current": "    Unclassified,\n}\n\n#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]\npub(super) enum FailurePhase {\n    #[default]\n    OutsideBody,\n    CircuitBody,\n}\n\n/// Sized diagnostic label keeps a single pointer in the recursive error carrier.\n#[derive(Debug)]\npub(super) struct ConcreteNode {\n    pub(super) name: String,\n}\n\n#[derive(Debug)]\npub(in crate::recorded) struct LoweringRejection {\n    pub(super) gap: RecordingGap,\n    pub(super) root_action: Option<usize>,\n    pub(super) precision: Precision,\n    pub(super) phase: FailurePhase,\n    pub(super) concrete_node: Option<Box<ConcreteNode>>,\n}\n\nimpl From<RecordingGap> for LoweringRejection {\n",
+          "previous": "    Unclassified,\n}\n\n#[derive(Debug)]\npub(in crate::recorded) struct LoweringRejection {\n    pub(super) gap: RecordingGap,\n    pub(super) root_action: Option<usize>,\n    pub(super) precision: Precision,\n    pub(super) concrete_node: Option<Box<str>>,\n}\n\nimpl From<RecordingGap> for LoweringRejection {\n"
+        },
+        {
+          "current": "            gap,\n            root_action: None,\n            precision: Precision::Unclassified,\n            phase: FailurePhase::OutsideBody,\n            concrete_node: None,\n        }\n    }\n",
+          "previous": "            gap,\n            root_action: None,\n            precision: Precision::Unclassified,\n            concrete_node: None,\n        }\n    }\n"
+        },
+        {
+          "current": "\nimpl LoweringRejection {\n    /// Existing callers intentionally discard provenance without running lowering again.\n    pub(super) fn into_parts(\n        self,\n    ) -> (\n        RecordingGap,\n        Option<usize>,\n        Precision,\n        Option<Box<ConcreteNode>>,\n    ) {\n        (\n            self.gap,\n            self.root_action,\n",
+          "previous": "\nimpl LoweringRejection {\n    /// Existing callers intentionally discard provenance without running lowering again.\n    pub(super) fn into_parts(self) -> (RecordingGap, Option<usize>, Precision, Option<Box<str>>) {\n        (\n            self.gap,\n            self.root_action,\n"
+        },
+        {
+          "current": "        legacy_precision: crate::recorded::LegacyActionPrecision,\n        gap: RecordingGap,\n    ) -> RecordingGap {\n        if self.root_action != Some(ordinal)\n            || gap.code != super::RecordingGapCode::UnsupportedAction\n        {\n            return gap;\n        }\n        let concrete = self.precision == Precision::ConcreteNode\n            && legacy_precision == crate::recorded::LegacyActionPrecision::Coarse;\n        // Only an authenticated failed binding can identify the actual legacy\n        // refusal within an enclosing Let. A coarse call alone cannot establish\n        // which argument or nested action failed first.\n        let resource = self.phase == FailurePhase::CircuitBody\n            && self.gap.resource.as_ref().is_some_and(|resource| {\n                resource.phase == crate::recorded::RecordingResourcePhase::FixedLayoutValidation\n            })\n            && match legacy_precision {\n                crate::recorded::LegacyActionPrecision::BindingValue(index) => {\n                    let binding = format!(\"{}.bindings[{index}].value\", gap.path);\n                    encloses(&binding, &self.gap.path)\n                }\n                _ => false,\n            };\n        if concrete || resource {\n            let mut refined = self.gap.clone();\n            if concrete && let Some(node) = &self.concrete_node {\n                refined.ir_node = node.name.clone();\n            }\n            refined\n        } else {\n            gap\n        }\n    }\n}\n\nfn encloses(parent: &str, child: &str) -> bool {\n    child.strip_prefix(parent).is_some_and(|suffix| {\n        suffix.is_empty() || suffix.starts_with('.') || suffix.starts_with('[')\n    })\n}\n\n#[derive(Debug)]\n",
+          "previous": "        legacy_precision: crate::recorded::LegacyActionPrecision,\n        gap: RecordingGap,\n    ) -> RecordingGap {\n        if self.root_action == Some(ordinal)\n            && self.precision == Precision::ConcreteNode\n            && legacy_precision == crate::recorded::LegacyActionPrecision::Coarse\n            && gap.code == super::RecordingGapCode::UnsupportedAction\n        {\n            let mut refined = self.gap.clone();\n            if let Some(node) = &self.concrete_node {\n                refined.ir_node = node.to_string();\n            }\n            refined\n        } else {\n            gap\n        }\n    }\n}\n\n#[derive(Debug)]\n"
+        }
+      ],
+      "classification": "reviewed diagnostic/API/test change"
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/rejection/tests.rs": {
+      "previous_sha256": "ad756f908807bb016a81ddfab053b3780d8c7da9b201ee0f118a46d3388d9e9b",
+      "current_sha256": "f5894d9cb817e7499481c988393a1379e5c848d08b6c22cd0016bad5a9c6d61d",
+      "predecessor_reconstruction": [
+        {
+          "current": "        coarse\n    );\n}\n\n#[path = \"resource_tests.rs\"]\nmod resource_tests;\n",
+          "previous": "        coarse\n    );\n}\n"
+        }
+      ],
+      "classification": "reviewed diagnostic/API/test change"
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/type_environment.rs": {
+      "previous_sha256": "cfb8e3e4df0bbbae7ee37cbbd7ee58a4409a157b68d0c3d4c40d9d42412a57f9",
+      "current_sha256": "46d7015357ea3d57becb9849e77cbb86d8b500a8c8fd2440dcf9497f9d9c9cdd",
+      "predecessor_reconstruction": [
+        {
+          "current": "//! remain the definition authority; no generated syntax is retained here.\nuse super::{RecordingGap, invalid};\nuse crate::ir::{LedgerField, PureCircuit, StatefulCircuit, StructField, Type, WitnessDeclaration};\nuse crate::recorded::RecordingResourceKind;\nuse std::collections::{BTreeMap, HashMap, HashSet};\n\n#[derive(Debug, Default)]\n",
+          "previous": "//! remain the definition authority; no generated syntax is retained here.\nuse super::{RecordingGap, invalid};\nuse crate::ir::{LedgerField, PureCircuit, StatefulCircuit, StructField, Type, WitnessDeclaration};\nuse std::collections::{BTreeMap, HashMap, HashSet};\n\n#[derive(Debug, Default)]\n"
+        },
+        {
+          "current": "            return Err(invalid(\n                path,\n                format!(\"fixed-byte aggregate payload exceeds {byte_limit} bytes\"),\n            )\n            .with_fixed_layout_resource(RecordingResourceKind::FixedBytePayload, byte_limit));\n        }\n        if layout.slots > slot_limit {\n            return Err(invalid(\n                path,\n                format!(\"fixed aggregate layout exceeds {slot_limit} slots\"),\n            )\n            .with_fixed_layout_resource(RecordingResourceKind::FixedLayoutSlots, slot_limit));\n        }\n        layouts.insert(ty as *const Type, layout);\n    }\n",
+          "previous": "            return Err(invalid(\n                path,\n                format!(\"fixed-byte aggregate payload exceeds {byte_limit} bytes\"),\n            ));\n        }\n        if layout.slots > slot_limit {\n            return Err(invalid(\n                path,\n                format!(\"fixed aggregate layout exceeds {slot_limit} slots\"),\n            ));\n        }\n        layouts.insert(ty as *const Type, layout);\n    }\n"
+        }
+      ],
+      "classification": "reviewed diagnostic/API/test change"
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/type_environment/tests/owned.rs": {
+      "previous_sha256": "42727e02c6e420ec83bd81bad1ff594c03119ec69d7c14121eb33d6b2d82fc95",
+      "current_sha256": "8b0952810a6493323d5bb12ceb6652852bf6f4111af88daa18e5c54997c20282",
+      "predecessor_reconstruction": [
+        {
+          "current": "//! Fixed layout is bounded separately from raw type syntax and dynamic payloads.\nuse super::*;\nuse crate::ir::LocalBinding;\nuse crate::{RecordingResourceKind, RecordingResourcePhase};\n\nfn assert_resource(gap: &RecordingGap, kind: RecordingResourceKind, limit: usize, path: &str) {\n    let resource = gap.resource.as_ref().expect(\"typed layout producer\");\n    assert_eq!(resource.kind, kind);\n    assert_eq!(\n        resource.phase,\n        RecordingResourcePhase::FixedLayoutValidation\n    );\n    assert_eq!(resource.limit, limit);\n    assert_eq!(gap.path, path);\n    assert_eq!(gap.ir_node, \"RecordedPlan\");\n}\n\nfn vector(element: Type, length: usize) -> Type {\n    Type::Vector {\n",
+          "previous": "//! Fixed layout is bounded separately from raw type syntax and dynamic payloads.\nuse super::*;\nuse crate::ir::LocalBinding;\n\nfn vector(element: Type, length: usize) -> Type {\n    Type::Vector {\n"
+        },
+        {
+          "current": "        },\n        2,\n    );\n    let gap = env.validate(&excessive).unwrap_err();\n    assert_eq!(\n        gap.detail,\n        format!(\"fixed-byte aggregate payload exceeds {limit} bytes\")\n    );\n    assert_resource(\n        &gap,\n        RecordingResourceKind::FixedBytePayload,\n        limit,\n        \"types\",\n    );\n    let overflow = vector(vector(Type::Bytes { length: 32 }, 64), usize::MAX);\n    let gap = env.validate(&overflow).unwrap_err();\n    assert_resource(\n        &gap,\n        RecordingResourceKind::FixedBytePayload,\n        limit,\n        \"types\",\n    );\n    env.validate(&vector(vector(Type::Bytes { length: 16 }, 8), 512))\n        .unwrap();\n",
+          "previous": "        },\n        2,\n    );\n    assert!(\n        env.validate(&excessive)\n            .unwrap_err()\n            .detail\n            .contains(\"fixed-byte aggregate\")\n    );\n    let overflow = vector(vector(Type::Bytes { length: 32 }, 64), usize::MAX);\n    assert!(\n        env.validate(&overflow)\n            .unwrap_err()\n            .detail\n            .contains(\"fixed-byte aggregate\")\n    );\n    env.validate(&vector(vector(Type::Bytes { length: 16 }, 8), 512))\n        .unwrap();\n"
+        },
+        {
+          "current": "        Type::Bytes { length: 0 },\n    ] {\n        env.validate(&vector(element.clone(), limit - 1)).unwrap();\n        let gap = env.validate(&vector(element.clone(), limit)).unwrap_err();\n        assert_eq!(\n            gap.detail,\n            format!(\"fixed aggregate layout exceeds {limit} slots\")\n        );\n        assert_resource(\n            &gap,\n            RecordingResourceKind::FixedLayoutSlots,\n            limit,\n            \"types\",\n        );\n        assert!(env.validate(&vector(element, usize::MAX)).is_err());\n    }\n",
+          "previous": "        Type::Bytes { length: 0 },\n    ] {\n        env.validate(&vector(element.clone(), limit - 1)).unwrap();\n        assert!(\n            env.validate(&vector(element.clone(), limit))\n                .unwrap_err()\n                .detail\n                .contains(\"fixed aggregate layout\")\n        );\n        assert!(env.validate(&vector(element, usize::MAX)).is_err());\n    }\n"
+        },
+        {
+          "current": "    // A zero-length outer array does not hide an invalid element annotation.\n    assert!(\n        env.validate(&vector(Type::Unsigned { max: \"bad\".into() }, 0))\n            .unwrap_err()\n            .resource\n            .is_none()\n    );\n    assert!(\n        env.validate(&vector(vector(Type::Unit, usize::MAX), 0))\n",
+          "previous": "    // A zero-length outer array does not hide an invalid element annotation.\n    assert!(\n        env.validate(&vector(Type::Unsigned { max: \"bad\".into() }, 0))\n            .is_err()\n    );\n    assert!(\n        env.validate(&vector(vector(Type::Unit, usize::MAX), 0))\n"
+        },
+        {
+          "current": "    let mut certifier = super::super::super::pure_certification::Certifier::new(&pure, &stateful);\n    certifier.certify(\"bounded\", \"test\").unwrap();\n    // Unreachable oversized declarations did not invalidate the bounded helper.\n    let gap = certifier.certify(\"caller\", \"test\").unwrap_err();\n    assert_resource(\n        &gap,\n        RecordingResourceKind::FixedLayoutSlots,\n        limit,\n        \"test.callee[excessive]\",\n    );\n}\n\n",
+          "previous": "    let mut certifier = super::super::super::pure_certification::Certifier::new(&pure, &stateful);\n    certifier.certify(\"bounded\", \"test\").unwrap();\n    // Unreachable oversized declarations did not invalidate the bounded helper.\n    assert!(\n        certifier\n            .certify(\"caller\", \"test\")\n            .unwrap_err()\n            .detail\n            .contains(\"fixed aggregate layout\")\n    );\n}\n\n"
+        }
+      ],
+      "classification": "reviewed diagnostic/API/test change"
+    },
+    "tools/compact-rust-backend/src/recorded/legacy/actions.rs": {
+      "previous_sha256": "56efd8dfd63c4782c8de29fe5d3e4d81618dec215ecfd99a37400878596cb22a",
+      "current_sha256": "39c576e3e93cc9d098808d9e7303f8e8c64df1d98c1834cbb71e5e70baf93f14",
+      "predecessor_reconstruction": [
+        {
+          "current": "            steps,\n            next_temp,\n            visiting,\n            failure_precision,\n        ),\n        StateAction::Expression { .. }\n        | StateAction::PureCall { .. }\n",
+          "previous": "            steps,\n            next_temp,\n            visiting,\n        ),\n        StateAction::Expression { .. }\n        | StateAction::PureCall { .. }\n"
+        }
+      ],
+      "classification": "reviewed diagnostic/API/test change"
+    },
+    "tools/compact-rust-backend/src/recorded/legacy/actions/bindings.rs": {
+      "previous_sha256": "2a04775606628608067e3fc76c5ae8657d30c9e86d17ead77c81e3a2a32a93d2",
+      "current_sha256": "e7739762c36c616d3f8454a3d6420a180654cb68ed3e932ce6a57a2d63c94b3f",
+      "predecessor_reconstruction": [
+        {
+          "current": "    steps: &mut Vec<syn::Stmt>,\n    next_temp: &mut usize,\n    visiting: &mut HashSet<String>,\n    failure_precision: &mut LegacyActionPrecision,\n) -> Result<RecordingOutcome<()>, RenderError> {\n    match action {\n        whole @ StateAction::Let {\n",
+          "previous": "    steps: &mut Vec<syn::Stmt>,\n    next_temp: &mut usize,\n    visiting: &mut HashSet<String>,\n) -> Result<RecordingOutcome<()>, RenderError> {\n    match action {\n        whole @ StateAction::Let {\n"
+        },
+        {
+          "current": "            }\n            let mut scoped = locals.clone();\n            for (binding_index, binding) in bindings.iter().enumerate() {\n                // A later checked refusal may not replace this earlier binding.\n                *failure_precision = LegacyActionPrecision::BindingValue(binding_index);\n                if binding.ty == Type::OpaqueString\n                    && let Expr::Parameter { name } = &binding.value\n                    && parameters\n",
+          "previous": "            }\n            let mut scoped = locals.clone();\n            for (binding_index, binding) in bindings.iter().enumerate() {\n                if binding.ty == Type::OpaqueString\n                    && let Expr::Parameter { name } = &binding.value\n                    && parameters\n"
+        },
+        {
+          "current": "                    return Ok(unavailable_action(action, path));\n                }\n            }\n            *failure_precision = LegacyActionPrecision::Concrete;\n            let mut child_precision = LegacyActionPrecision::Concrete;\n            let outcome = append_steps(\n                nested_action,\n                &format!(\"{path}.action\"),\n                &scoped,\n",
+          "previous": "                    return Ok(unavailable_action(action, path));\n                }\n            }\n            append_steps(\n                nested_action,\n                &format!(\"{path}.action\"),\n                &scoped,\n"
+        },
+        {
+          "current": "                steps,\n                next_temp,\n                visiting,\n                &mut child_precision,\n            )?;\n            if matches!(&outcome, RecordingOutcome::Unsupported(_)) {\n                failure_precision.inherit_binding(child_precision);\n            }\n            Ok(outcome)\n        }\n        _ => Ok(unavailable_action(action, path)),\n    }\n",
+          "previous": "                steps,\n                next_temp,\n                visiting,\n                &mut LegacyActionPrecision::Concrete,\n            )\n        }\n        _ => Ok(unavailable_action(action, path)),\n    }\n"
+        }
+      ],
+      "classification": "reviewed diagnostic/API/test change"
+    },
+    "tools/compact-rust-backend/src/recorded/legacy/actions/control.rs": {
+      "previous_sha256": "d313179d5f5337547a3346c3f451b4181d04402cc77f6e555afb2e7b48083b9e",
+      "current_sha256": "3d1baf4955c97196b637e89a4cfb7a155260a04ae79bba48715e55a9f080df6d",
+      "predecessor_reconstruction": [
+        {
+          "current": "    match action {\n        StateAction::Sequence { actions } => {\n            for (index, action) in actions.iter().enumerate() {\n                let mut child_precision = LegacyActionPrecision::Concrete;\n                if let RecordingOutcome::Unsupported(gap) = append_steps(\n                    action,\n                    &format!(\"{path}.actions[{index}]\"),\n",
+          "previous": "    match action {\n        StateAction::Sequence { actions } => {\n            for (index, action) in actions.iter().enumerate() {\n                if let RecordingOutcome::Unsupported(gap) = append_steps(\n                    action,\n                    &format!(\"{path}.actions[{index}]\"),\n"
+        },
+        {
+          "current": "                    steps,\n                    next_temp,\n                    visiting,\n                    &mut child_precision,\n                )? {\n                    failure_precision.inherit_binding(child_precision);\n                    return Ok(RecordingOutcome::Unsupported(gap));\n                }\n            }\n",
+          "previous": "                    steps,\n                    next_temp,\n                    visiting,\n                    &mut LegacyActionPrecision::Concrete,\n                )? {\n                    return Ok(RecordingOutcome::Unsupported(gap));\n                }\n            }\n"
+        },
+        {
+          "current": "                )));\n            };\n            let mut then_steps = Vec::new();\n            let mut child_precision = LegacyActionPrecision::Concrete;\n            if let RecordingOutcome::Unsupported(gap) = append_steps(\n                then,\n                &format!(\"{path}.then\"),\n",
+          "previous": "                )));\n            };\n            let mut then_steps = Vec::new();\n            if let RecordingOutcome::Unsupported(gap) = append_steps(\n                then,\n                &format!(\"{path}.then\"),\n"
+        },
+        {
+          "current": "                &mut then_steps,\n                next_temp,\n                visiting,\n                &mut child_precision,\n            )? {\n                failure_precision.inherit_binding(child_precision);\n                return Ok(RecordingOutcome::Unsupported(gap));\n            }\n            let mut otherwise_steps = Vec::new();\n            let mut child_precision = LegacyActionPrecision::Concrete;\n            if let RecordingOutcome::Unsupported(gap) = append_steps(\n                otherwise,\n                &format!(\"{path}.otherwise\"),\n",
+          "previous": "                &mut then_steps,\n                next_temp,\n                visiting,\n                &mut LegacyActionPrecision::Concrete,\n            )? {\n                return Ok(RecordingOutcome::Unsupported(gap));\n            }\n            let mut otherwise_steps = Vec::new();\n            if let RecordingOutcome::Unsupported(gap) = append_steps(\n                otherwise,\n                &format!(\"{path}.otherwise\"),\n"
+        },
+        {
+          "current": "                &mut otherwise_steps,\n                next_temp,\n                visiting,\n                &mut child_precision,\n            )? {\n                failure_precision.inherit_binding(child_precision);\n                return Ok(RecordingOutcome::Unsupported(gap));\n            }\n            let selected = syn::Ident::new(\n",
+          "previous": "                &mut otherwise_steps,\n                next_temp,\n                visiting,\n                &mut LegacyActionPrecision::Concrete,\n            )? {\n                return Ok(RecordingOutcome::Unsupported(gap));\n            }\n            let selected = syn::Ident::new(\n"
+        },
+        {
+          "current": "            }\n            let mut failure = None;\n            for (index, action) in callee.actions.iter().enumerate() {\n                let mut child_precision = LegacyActionPrecision::Concrete;\n                if let RecordingOutcome::Unsupported(gap) = append_steps(\n                    action,\n                    &format!(\"callee[{name}].actions[{index}]\"),\n",
+          "previous": "            }\n            let mut failure = None;\n            for (index, action) in callee.actions.iter().enumerate() {\n                if let RecordingOutcome::Unsupported(gap) = append_steps(\n                    action,\n                    &format!(\"callee[{name}].actions[{index}]\"),\n"
+        },
+        {
+          "current": "                    steps,\n                    next_temp,\n                    visiting,\n                    &mut child_precision,\n                )? {\n                    failure_precision.inherit_binding(child_precision);\n                    failure = Some(gap);\n                    break;\n                }\n",
+          "previous": "                    steps,\n                    next_temp,\n                    visiting,\n                    &mut LegacyActionPrecision::Concrete,\n                )? {\n                    failure = Some(gap);\n                    break;\n                }\n"
+        }
+      ],
+      "classification": "reviewed diagnostic/API/test change"
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/composite_migration_tests/routing.rs": {
+      "previous_sha256": "a9316c33d0fd6a0e5ddbb998e8e45433befe0a0f5923a4688604919ec3b777ad",
+      "current_sha256": "9922d50357a5f525c58e77fd19591571373663bcb0ec914cf9945076fa83fd2f",
+      "predecessor_reconstruction": [
+        {
+          "current": "#[test]\nfn invariant_failure_is_fatal_and_unsupported_declines_without_old_fallback() {\n    let gap = crate::recorded::RecordingGap {\n        resource: None,\n        code: crate::recorded::RecordingGapCode::UnsupportedExpression,\n        ir_node: \"RecordedPlan\".into(),\n        path: \"return_value.value\".into(),\n",
+          "previous": "#[test]\nfn invariant_failure_is_fatal_and_unsupported_declines_without_old_fallback() {\n    let gap = crate::recorded::RecordingGap {\n        code: crate::recorded::RecordingGapCode::UnsupportedExpression,\n        ir_node: \"RecordedPlan\".into(),\n        path: \"return_value.value\".into(),\n"
+        }
+      ],
+      "classification": "neutral None field initialization"
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/context_migration_tests/routing.rs": {
+      "previous_sha256": "091249f445dbee5c3bb5049c8106a4926543506bafde9ae6fe1d836b570bd2d9",
+      "current_sha256": "8db4870a3cfdf573064c34f5c21e4965c6d5b8c4c52328005cbd7bfc007d8630",
+      "predecessor_reconstruction": [
+        {
+          "current": "    assert!(position(\"algebra.context-query\") < position(\"algebra.composite-values\"));\n    assert!(!attempted.contains(&\"selector.context-query\"));\n    let gap = crate::recorded::RecordingGap {\n        resource: None,\n        code: crate::recorded::RecordingGapCode::UnsupportedExpression,\n        ir_node: \"RecordedPlan\".into(),\n        path: \"forged.context\".into(),\n",
+          "previous": "    assert!(position(\"algebra.context-query\") < position(\"algebra.composite-values\"));\n    assert!(!attempted.contains(&\"selector.context-query\"));\n    let gap = crate::recorded::RecordingGap {\n        code: crate::recorded::RecordingGapCode::UnsupportedExpression,\n        ir_node: \"RecordedPlan\".into(),\n        path: \"forged.context\".into(),\n"
+        }
+      ],
+      "classification": "neutral None field initialization"
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/jubjub_migration_tests.rs": {
+      "previous_sha256": "e5e159dbe0967d615609e37aaa4ecdca4d9a1ebb27e2c38486ec1524af658248",
+      "current_sha256": "00b96ff94e81dfc949b19aa62984133f1478f24da63fd8c930ce04303360b1d4",
+      "predecessor_reconstruction": [
+        {
+          "current": "#[test]\nfn invalid_plan_is_a_fatal_invariant_with_its_original_diagnostic() {\n    let gap = super::super::RecordingGap {\n        resource: None,\n        code: super::super::RecordingGapCode::UnsupportedExpression,\n        ir_node: \"RecordedPlan\".into(),\n        path: \"forged.binding\".into(),\n",
+          "previous": "#[test]\nfn invalid_plan_is_a_fatal_invariant_with_its_original_diagnostic() {\n    let gap = super::super::RecordingGap {\n        code: super::super::RecordingGapCode::UnsupportedExpression,\n        ir_node: \"RecordedPlan\".into(),\n        path: \"forged.binding\".into(),\n"
+        }
+      ],
+      "classification": "neutral None field initialization"
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/kernel_migration_tests/routing.rs": {
+      "previous_sha256": "d455f7cc267e4f1a7b343b7a7ca9377f8e71bf5d70e53ac6fe51495f32e73168",
+      "current_sha256": "f0434667df3e8e2c9c0aff286a032dda0ab6bc55f28470ca8a372981470f4b03",
+      "predecessor_reconstruction": [
+        {
+          "current": "                .unwrap()\n    );\n    let gap = crate::recorded::RecordingGap {\n        resource: None,\n        code: crate::recorded::RecordingGapCode::UnsupportedExpression,\n        ir_node: \"RecordedPlan\".into(),\n        path: \"forged.kernel\".into(),\n",
+          "previous": "                .unwrap()\n    );\n    let gap = crate::recorded::RecordingGap {\n        code: crate::recorded::RecordingGapCode::UnsupportedExpression,\n        ir_node: \"RecordedPlan\".into(),\n        path: \"forged.kernel\".into(),\n"
+        }
+      ],
+      "classification": "neutral None field initialization"
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/membership_migration_tests.rs": {
+      "previous_sha256": "71f9b7d085d214a042a0efeb2db8dceb6ce1d05861edec3a63aa0035821d8478",
+      "current_sha256": "bbc4c78892df70b28f7ba5529312ffd076504a97ebf5c4f24949c7370f249ab2",
+      "predecessor_reconstruction": [
+        {
+          "current": "#[test]\nfn invalid_checked_plan_propagates_its_exact_diagnostic() {\n    let gap = RecordingGap {\n        resource: None,\n        code: crate::recorded::RecordingGapCode::UnsupportedExpression,\n        ir_node: \"RecordedPlan\".into(),\n        path: \"membership.forged.operand\".into(),\n",
+          "previous": "#[test]\nfn invalid_checked_plan_propagates_its_exact_diagnostic() {\n    let gap = RecordingGap {\n        code: crate::recorded::RecordingGapCode::UnsupportedExpression,\n        ir_node: \"RecordedPlan\".into(),\n        path: \"membership.forged.operand\".into(),\n"
+        }
+      ],
+      "classification": "neutral None field initialization"
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/receive_migration_tests/routing.rs": {
+      "previous_sha256": "6591cde2310fbdbef0d18710b7f2b9c09e076e955f01885a22c999b9ce6b198e",
+      "current_sha256": "7fe4ec0d8c70b100c6a027133e94451fbdb2b6d01c9d3295f6b15d8423103fb6",
+      "predecessor_reconstruction": [
+        {
+          "current": "    );\n    assert!(!a.contains(&\"selector.shielded-receive\"));\n    let gap = RecordingGap {\n        resource: None,\n        code: super::super::super::RecordingGapCode::UnsupportedExpression,\n        ir_node: \"RecordedPlan\".into(),\n        path: \"forged.receive\".into(),\n",
+          "previous": "    );\n    assert!(!a.contains(&\"selector.shielded-receive\"));\n    let gap = RecordingGap {\n        code: super::super::super::RecordingGapCode::UnsupportedExpression,\n        ir_node: \"RecordedPlan\".into(),\n        path: \"forged.receive\".into(),\n"
+        }
+      ],
+      "classification": "neutral None field initialization"
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/send_migration_tests.rs": {
+      "previous_sha256": "3be956f8755bdcab5bcd5ebeba9e506a2be7bd82b9f918cb22e0c20803d51232",
+      "current_sha256": "bcd81c82a43301ce1c535a9b2a57e4ec5117b2cacef2e0d6efbc62dc9f21ca11",
+      "predecessor_reconstruction": [
+        {
+          "current": "#[test]\nfn checked_composite_invariants_are_fatal_and_unsupported_is_retained() {\n    let gap = RecordingGap {\n        resource: None,\n        code: super::super::RecordingGapCode::UnsupportedExpression,\n        ir_node: \"RecordedPlan\".into(),\n        path: \"return_value.value\".into(),\n",
+          "previous": "#[test]\nfn checked_composite_invariants_are_fatal_and_unsupported_is_retained() {\n    let gap = RecordingGap {\n        code: super::super::RecordingGapCode::UnsupportedExpression,\n        ir_node: \"RecordedPlan\".into(),\n        path: \"return_value.value\".into(),\n"
+        }
+      ],
+      "classification": "neutral None field initialization"
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/terminal_migration_tests/routing.rs": {
+      "previous_sha256": "e366a7f493184c2bb2d13d9bfe57d628cc3439fb1bd6c6d1d0336695a486c09f",
+      "current_sha256": "521bb28afa0376a08d5ddc005475fda25b7efad191433fc0a8bd103efba4ad09",
+      "predecessor_reconstruction": [
+        {
+          "current": "#[test]\nfn checked_invariant_is_fatal_and_preserves_the_original_diagnostic() {\n    let gap = crate::recorded::RecordingGap {\n        resource: None,\n        code: crate::recorded::RecordingGapCode::UnsupportedExpression,\n        ir_node: \"RecordedPlan\".into(),\n        path: \"forged.terminal.call\".into(),\n",
+          "previous": "#[test]\nfn checked_invariant_is_fatal_and_preserves_the_original_diagnostic() {\n    let gap = crate::recorded::RecordingGap {\n        code: crate::recorded::RecordingGapCode::UnsupportedExpression,\n        ir_node: \"RecordedPlan\".into(),\n        path: \"forged.terminal.call\".into(),\n"
+        }
+      ],
+      "classification": "neutral None field initialization"
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_domain/tests.rs": {
+      "previous_sha256": "29745c19a3d231d144fa514282ce9ab99a3534b79502629ff56033da1e6603be",
+      "current_sha256": "fee61ad10af3f531334666d148c956515a30640c62c362f95fbb2eb5b0842a9e",
+      "predecessor_reconstruction": [
+        {
+          "current": "        );\n        let refusal = rejected(&c);\n        let outer = RecordingGap {\n            resource: None,\n            code: RecordingGapCode::UnsupportedAction,\n            ir_node: \"sentinel\".into(),\n            path: \"actions[0]\".into(),\n",
+          "previous": "        );\n        let refusal = rejected(&c);\n        let outer = RecordingGap {\n            code: RecordingGapCode::UnsupportedAction,\n            ir_node: \"sentinel\".into(),\n            path: \"actions[0]\".into(),\n"
+        },
+        {
+          "current": "    };\n    let refusal = rejected(&c);\n    let outer = RecordingGap {\n        resource: None,\n        code: RecordingGapCode::UnsupportedAction,\n        ir_node: \"StateAction::Expression\".into(),\n        path: \"unrelated text\".into(),\n",
+          "previous": "    };\n    let refusal = rejected(&c);\n    let outer = RecordingGap {\n        code: RecordingGapCode::UnsupportedAction,\n        ir_node: \"StateAction::Expression\".into(),\n        path: \"unrelated text\".into(),\n"
+        }
+      ],
+      "classification": "neutral None field initialization"
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_migration_tests/routing.rs": {
+      "previous_sha256": "84e26a904fec03b1520457f960a2278bffafc8002ac417df5093e878b5be0cde",
+      "current_sha256": "5c7e1c2b9685631edee7bf7f0e5f85bc4451134ebf1d6391649ea357b5c1efef",
+      "predecessor_reconstruction": [
+        {
+          "current": "    assert!(at(\"algebra.unit-composition\") < at(\"algebra.zswap\"));\n    assert!(!attempted.contains(&\"selector.unit-actions\"));\n    let gap = crate::recorded::RecordingGap {\n        resource: None,\n        code: crate::recorded::RecordingGapCode::UnsupportedExpression,\n        ir_node: \"RecordedPlan\".into(),\n        path: \"forged.unit.member\".into(),\n",
+          "previous": "    assert!(at(\"algebra.unit-composition\") < at(\"algebra.zswap\"));\n    assert!(!attempted.contains(&\"selector.unit-actions\"));\n    let gap = crate::recorded::RecordingGap {\n        code: crate::recorded::RecordingGapCode::UnsupportedExpression,\n        ir_node: \"RecordedPlan\".into(),\n        path: \"forged.unit.member\".into(),\n"
+        }
+      ],
+      "classification": "neutral None field initialization"
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/voting_migration_tests/routing.rs": {
+      "previous_sha256": "b54583c0dc42fc6e2cabbe58414733038a914af659c533d09a4addb5db6fd285",
+      "current_sha256": "c5154fa60a5a6d9eb2b6a397780278c26305c212f5932711c5b12c9c425d6dad",
+      "predecessor_reconstruction": [
+        {
+          "current": "#[test]\nfn unsupported_refuses_but_invalid_plan_keeps_its_diagnostic() {\n    let gap = RecordingGap {\n        resource: None,\n        code: crate::recorded::RecordingGapCode::UnsupportedExpression,\n        ir_node: \"RecordedPlan\".into(),\n        path: \"forged.voting.operand\".into(),\n",
+          "previous": "#[test]\nfn unsupported_refuses_but_invalid_plan_keeps_its_diagnostic() {\n    let gap = RecordingGap {\n        code: crate::recorded::RecordingGapCode::UnsupportedExpression,\n        ir_node: \"RecordedPlan\".into(),\n        path: \"forged.voting.operand\".into(),\n"
+        }
+      ],
+      "classification": "neutral None field initialization"
+    },
+    "tools/compact-rust-backend/src/recorded/typed_plan/composition.rs": {
+      "previous_sha256": "6ba7e4bd2462be2b33437f8cf7bf5bd3ee3bebb897ce1ed7d12b55d9d83e0c42",
+      "current_sha256": "5c3a0f7db8adf35883319ff80cca0df8d903daad40324b48c3a7bbeabf08f13c",
+      "predecessor_reconstruction": [
+        {
+          "current": "    }\n    fn declaration_rejection(&mut self, name: &str, path: &str, detail: &str) {\n        self.reject(RecordingGap {\n            resource: None,\n            code: super::super::RecordingGapCode::RecordingUnavailable,\n            ir_node: \"CircuitDeclaration\".to_owned(),\n            path: path.to_owned(),\n",
+          "previous": "    }\n    fn declaration_rejection(&mut self, name: &str, path: &str, detail: &str) {\n        self.reject(RecordingGap {\n            code: super::super::RecordingGapCode::RecordingUnavailable,\n            ir_node: \"CircuitDeclaration\".to_owned(),\n            path: path.to_owned(),\n"
+        }
+      ],
+      "classification": "neutral None field initialization"
+    }
+  },
+  "new_and_shared_sources": {
+    "tools/compact-rust-backend/src/capabilities/resource_diagnostic_tests.rs": "c6984673b2fe0d5b0dae3e9df8cf6499e8e26740f583017cd84716a7098f6817",
+    "tools/compact-rust-backend/src/recorded/diagnostics/resource.rs": "5bc8e36b73eb24035f32d60ba74ee3ce6d75613aa345cfd332965a2b59f598c5",
+    "tools/compact-rust-backend/src/recorded/effect_plan/rejection/resource_tests.rs": "9fbc9bd1d00661abf0c1de060c310d7686c1be3ac40de44e9e24cc29765b4ecc",
+    "tools/compact-rust-backend/src/resource_limits/policy.rs": "8d1e091410d3f802b1f54654314146ba1615f6c45222645b586099528ed5294f",
+    "tools/compact-rust-backend/src/recorded/helpers.rs": "f27c0c2fbb931b2efa6e4bfbfd4a663b83a2298dcaf7933fd60dcb30a73a5fef",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/maps.rs": "107e2d37884c3c9417e31ebd0f2237d5c927c94394e22f449261d95ae0556c01"
+  },
+  "preserved_diagnostic_obligations": []
+}

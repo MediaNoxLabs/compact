@@ -8,6 +8,8 @@ use crate::ir::{LedgerFieldKind, Type};
 use std::collections::{HashMap, HashSet};
 mod aggregates;
 mod calls;
+mod keccak;
+pub(super) use keccak::keccak_input_type;
 mod domain;
 pub(super) mod maps;
 mod merkle;
@@ -350,6 +352,10 @@ fn block(
             Operation::PersistentHash(value) => {
                 use_value(value)?;
                 hash_input_type(&value.ty) && *ty == (Type::Bytes { length: 32 })
+            }
+            Operation::Keccak256(value) => {
+                use_value(value)?;
+                keccak_input_type(&value.ty) && *ty == (Type::Bytes { length: 32 })
             }
             Operation::Add(a, b) | Operation::Multiply(a, b) => {
                 use_value(a)?;

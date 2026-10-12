@@ -534,3 +534,6 @@ mod retained_map_family;
 
 #[path = "tests/map_operations.rs"]
 mod map_operations;
+
+#[path = "tests/keccak.rs"]
+mod keccak;

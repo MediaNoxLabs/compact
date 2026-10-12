@@ -145,6 +145,10 @@ pub(super) fn render(
             let input = value(input);
             syn::parse_quote!(runtime::persistent_hash(#input))
         }
+        Operation::Keccak256(input) => {
+            let input = value(input);
+            syn::parse_quote!(runtime::keccak256(#input))
+        }
         Operation::Add(a, b) | Operation::Multiply(a, b) => {
             let (a, b) = (value(a), value(b));
             if matches!(binding.operation, Operation::Multiply(..)) {

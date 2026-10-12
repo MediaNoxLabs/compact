@@ -88,8 +88,25 @@ ROUTING_TEST_EXTENSION = inventory.BASELINE.with_name("recording_admission_inven
 INEQUALITY_TEST_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.inequality-test-571.json")
 
 
+KECCAK_TEST_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.keccak-test-581.json")
+
+
+def checkpoint_bytes(owner):
+    """Historical test fixtures use authenticated pre-581 test snapshots only."""
+    source = (inventory.ROOT / owner).read_bytes()
+    if owner not in inventory.keccak_test.OWNERS:
+        return source
+    snapshots = inventory.keccak_test.predecessor_sources(
+        inventory.ROOT, json.loads(KECCAK_TEST_EXTENSION.read_text()))
+    return snapshots[owner].encode()
+
+
 def inequality_checkpoint_source(root):
     source = (root / inequality_test.OWNER).read_text()
+    if inventory.digest(source.encode()) == inventory.keccak_test.OWNERS[inequality_test.OWNER][1]:
+        snapshots = inventory.keccak_test.predecessor_sources(
+            root, json.loads(KECCAK_TEST_EXTENSION.read_text()))
+        source = snapshots[inequality_test.OWNER]
     if inventory.digest(source.encode()) in {inequality_test.PRIOR_SHA, routing_test.PRIOR_SHA}:
         return source
     return inequality_test.predecessor_source(source, json.loads(INEQUALITY_TEST_EXTENSION.read_text()))
@@ -296,7 +313,8 @@ class InventoryTests(unittest.TestCase):
                                   reset_payout_transition=json.loads(RESET_PAYOUT_TRANSITION.read_text()),
                                   shielded_payout_transition=json.loads(SHIELDED_PAYOUT_TRANSITION.read_text()),
                                   inequality_test_extension=json.loads(INEQUALITY_TEST_EXTENSION.read_text()),
-                                  funded_mint_transition=json.loads(FUNDED_MINT_TRANSITION.read_text()))
+                                  funded_mint_transition=json.loads(FUNDED_MINT_TRANSITION.read_text()),
+                                  keccak_test_extension=json.loads(KECCAK_TEST_EXTENSION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)
@@ -325,7 +343,7 @@ class RetirementTransitionTests(unittest.TestCase):
         for relative in {*self.baseline['source_fingerprints'], inventory.ORACLE, jubjub.ORACLE, terminal.ORACLE, unit.ORACLE, context.ORACLE, context.IR, composite.ORACLE, composite.FIELD, receive.ORACLE, *context.SHARED_ANCHORS, *inventory.HOOK_SOURCES, *immediate.REVIEWED_OWNERS, *membership.REVIEWED_OWNERS, *merge.REVIEWED_OWNERS, *guarded.REVIEWED_OWNERS, *reset_payout.REVIEWED_OWNERS, *shielded_payout.REVIEWED_OWNERS, *funded_mint.REVIEWED_OWNERS}:
             destination = self.root / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
-            destination.write_bytes((inventory.ROOT / relative).read_bytes())
+            destination.write_bytes(checkpoint_bytes(relative))
         (self.root / observation_test.OWNER).write_text(observation_checkpoint_source(inventory.ROOT))
         # Keep every historical mutation suite on its original 8-family/12-call
         # checkpoint. Reconstruction authenticates both complete source owners;

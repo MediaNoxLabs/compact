@@ -27,7 +27,7 @@ class ResetPayoutTransitionTests(unittest.TestCase):
             path = self.root / owner
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(predecessor[owner].encode() if owner in predecessor
-                             else (inventory.ROOT / owner).read_bytes())
+                             else previous.checkpoint_bytes(owner))
 
     def report(self):
         return inventory.verify(

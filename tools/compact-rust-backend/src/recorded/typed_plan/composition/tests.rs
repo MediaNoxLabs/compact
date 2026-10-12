@@ -198,7 +198,7 @@ fn unselected_checked_effect_is_supported_but_unsupported_effect_keeps_legacy_pr
 
         // A literal-only hash would make the helper locally auditable. Retain
         // the private key observation so the whole legacy composition root
-        // refuses this arm, independently of the direct checked Keccak gap.
+        // refuses this arm, independently of the newly supported checked Keccak.
         circuit(&mut v, "guard")["actions"][index]["otherwise"] = json!({
             "kind":"expression", "value": {
                 "kind":"equal", "left": {
@@ -211,6 +211,24 @@ fn unselected_checked_effect_is_supported_but_unsupported_effect_keeps_legacy_pr
         });
         let still_rejected = rejected(v.clone(), "close");
         assert_eq!(still_rejected.gap.path, r.gap.path);
+        let c: Contract = serde_json::from_value(v.clone()).unwrap();
+        let result = render_with_capabilities(&c).unwrap();
+        let capability = result
+            .capabilities
+            .circuits
+            .iter()
+            .find(|x| x.name == "close")
+            .unwrap();
+        assert!(capability.recorded && capability.observed_call);
+        assert!(capability.recording_unavailable.is_none());
+
+        // Hash-to-curve remains a distinct unsupported operation. Keep the
+        // private observation and exact legacy diagnostic precedence control.
+        let expression = &mut circuit(&mut v, "guard")["actions"][index]["otherwise"]["value"];
+        expression["left"]["kind"] = json!("hash_to_curve");
+        expression["right"] = json!({"kind":"default", "ty":{"kind":"jubjub_point"}});
+        let unsupported = rejected(v.clone(), "close");
+        assert_eq!(unsupported.gap.path, r.gap.path);
         let c: Contract = serde_json::from_value(v).unwrap();
         let result = render_with_capabilities(&c).unwrap();
         let capability = result
@@ -457,7 +475,7 @@ fn direct_root_call_argument_keeps_effects_and_unsupported_nested_audit_reason()
 }
 
 #[test]
-fn flat_and_chunked_direct_hash_lazy_arms_have_complete_old_refusals() {
+fn flat_and_chunked_direct_hash_lazy_arms_keep_old_refusals_and_gain_checked_support() {
     for name in ["flat", "chunked"] {
         let mut v = fixture(name);
         let actions = circuit(&mut v, "guard")["actions"].as_array_mut().unwrap();
@@ -484,6 +502,7 @@ fn flat_and_chunked_direct_hash_lazy_arms_have_complete_old_refusals() {
             .iter()
             .find(|c| c.name == "close")
             .unwrap();
-        assert!(!capability.recorded && !capability.observed_call);
+        assert!(capability.recorded && capability.observed_call);
+        assert!(capability.recording_unavailable.is_none());
     }
 }

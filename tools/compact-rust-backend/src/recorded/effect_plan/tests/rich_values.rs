@@ -332,10 +332,13 @@ fn rich_value_support_does_not_authorize_arithmetic_or_unrelated_nodes() {
             .detail
             .contains("unsigned input")
     );
-    let expression = Expr::Keccak256 {
+    let expression = Expr::HashToCurve {
         value: Box::new(bytes(1)),
     };
-    assert_eq!(refusal(expression, bytes_type()).ir_node, "Expr::Keccak256");
+    assert_eq!(
+        refusal(expression, Type::JubjubPoint).ir_node,
+        "Expr::HashToCurve"
+    );
 }
 
 #[test]

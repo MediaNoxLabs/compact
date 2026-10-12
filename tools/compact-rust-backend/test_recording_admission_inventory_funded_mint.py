@@ -26,9 +26,9 @@ class FundedMintTransitionTests(unittest.TestCase):
                       *self.funded_transition['test_sources_sha256']]:
             path = self.root / owner
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes((inventory.ROOT / owner).read_bytes())
+            path.write_bytes(previous.checkpoint_bytes(owner))
 
-    def report(self):
+    def report(self, **later_extensions):
         return inventory.verify(
             self.root, self.baseline, transition=self.transition,
             baseline_bytes=self.baseline_bytes, instrumentation=self.instrumentation,
@@ -45,7 +45,7 @@ class FundedMintTransitionTests(unittest.TestCase):
             reset_payout_transition=self.reset_transition,
             shielded_payout_transition=self.payout_transition,
             inequality_test_extension=self.inequality_extension,
-            funded_mint_transition=self.funded_transition)
+            funded_mint_transition=self.funded_transition, **later_extensions)
 
     def test_only_funded_route_retires_and_all_seven_predecessors_are_exact(self):
         report = self.report()

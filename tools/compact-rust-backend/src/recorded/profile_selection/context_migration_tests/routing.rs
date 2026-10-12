@@ -53,8 +53,12 @@ fn earlier_point_route_keeps_priority() {
 }
 #[test]
 fn unsupported_continues_independent_suffix_but_invariant_is_fatal() {
-    let contract = subject(Expr::Keccak256 {
-        value: Box::new(project(address())),
+    let contract = subject(Expr::FieldToBytes32 {
+        value: Box::new(Expr::JubjubPointX {
+            value: Box::new(Expr::HashToCurve {
+                value: Box::new(project(address())),
+            }),
+        }),
     });
     assert!(
         Context::new(&contract)

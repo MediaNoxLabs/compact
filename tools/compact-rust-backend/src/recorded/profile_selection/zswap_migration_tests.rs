@@ -209,12 +209,14 @@ fn unsupported_body_refuses_at_last_priority_without_old_fallback() {
         .find(|r| r.name == "flow")
         .unwrap();
     r.actions = vec![StateAction::Expression {
-        // Native-valid hashing remains outside the direct checked expression algebra.
+        // Native-valid hash-to-curve remains outside the direct checked expression algebra.
         value: Expr::Equal {
-            left: Box::new(Expr::Keccak256 {
+            left: Box::new(Expr::HashToCurve {
                 value: Box::new(Expr::BytesLiteral { bytes: vec![7; 32] }),
             }),
-            right: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
+            right: Box::new(Expr::Default {
+                ty: Type::JubjubPoint,
+            }),
         },
     }];
     let maps = Context::new(&c);

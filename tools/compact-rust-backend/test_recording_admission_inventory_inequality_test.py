@@ -19,7 +19,7 @@ class InequalityTestExtensionTests(unittest.TestCase):
         prior_tests.ShieldedPayoutTransitionTests.setUp(self)
         self.inequality_extension = json.loads(previous.INEQUALITY_TEST_EXTENSION.read_text())
         self.test_owner = self.root / inequality.OWNER
-        self.test_owner.write_bytes((inventory.ROOT / inequality.OWNER).read_bytes())
+        self.test_owner.write_bytes(previous.checkpoint_bytes(inequality.OWNER))
 
     def report(self):
         return inventory.verify(

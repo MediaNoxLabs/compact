@@ -24,7 +24,7 @@ class SendTransitionTests(unittest.TestCase):
                       *self.send_transition['shared_sources_sha256']]:
             path = self.root / owner
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes(predecessor[owner].encode() if owner in predecessor else (inventory.ROOT / owner).read_bytes())
+            path.write_bytes(predecessor[owner].encode() if owner in predecessor else previous.checkpoint_bytes(owner))
 
     def report(self):
         return inventory.verify(

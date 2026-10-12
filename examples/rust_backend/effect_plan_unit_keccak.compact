@@ -1,0 +1,33 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger active: Boolean;
+witness expectedHash(): Bytes<32>;
+witness authorized(): Boolean;
+witness digestPayload(): Bytes<32>;
+export struct Digest { value: Bytes<32>; }
+constructor() { active = true; }
+circuit verifyLocal(payload: Bytes<32>): [] {
+  assert(keccak256<Bytes<32>>(payload) == expectedHash(), "hash mismatch");
+  assert(authorized(), "not authorized");
+}
+export circuit close(payload: Bytes<32>): [] {
+  verifyLocal(payload);
+  active = false;
+}
+export circuit lazy_close(payload: Bytes<32>, selected: Boolean): [] {
+  if (disclose(selected)) {
+    verifyLocal(payload);
+    active = false;
+  }
+}
+
+export circuit digest(selected: Boolean): Digest {
+  const value = disclose(selected)
+    ? disclose(keccak256<Bytes<32>>(digestPayload()))
+    : (0 as Bytes<32>);
+  assert(authorized(), "not authorized");
+  active = false;
+  return Digest { value };
+}

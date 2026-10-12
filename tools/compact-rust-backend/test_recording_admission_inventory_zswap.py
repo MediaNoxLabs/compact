@@ -21,7 +21,7 @@ class ZswapTransitionTests(unittest.TestCase):
         for owner in [*zswap.REVIEWED_OWNERS, zswap.TEST_SOURCE]:
             path = self.root / owner
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes((inventory.ROOT / owner).read_bytes())
+            path.write_bytes(previous.checkpoint_bytes(owner))
         for owner, source in previous.membership_checkpoint_sources(inventory.ROOT).items():
             (self.root / owner).write_text(source)
         self.zswap_transition = json.loads(previous.ZSWAP_TRANSITION.read_text())

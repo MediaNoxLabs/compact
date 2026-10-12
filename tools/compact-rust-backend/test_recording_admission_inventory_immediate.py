@@ -22,7 +22,7 @@ class ImmediateTransitionTests(unittest.TestCase):
                       *phase.REVIEWED_OWNERS, *phase.SHARED_CALLERS}:
             path = self.root / owner
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes((inventory.ROOT / owner).read_bytes())
+            path.write_bytes(previous.checkpoint_bytes(owner))
         # Preserve the #550 checkpoint and every original mutation expectation.
         for owner, source in previous.zswap_checkpoint_sources(inventory.ROOT).items():
             (self.root / owner).write_text(source)

@@ -11,6 +11,7 @@ mod lower;
 mod model;
 #[cfg(all(test, feature = "experimental-recording-plan"))]
 mod property_tests;
+#[cfg(test)]
 mod public_effects;
 mod pure_certification;
 mod rejection;
@@ -25,6 +26,7 @@ mod validate;
 use super::{RecordingGap, RecordingGapCode, typed_plan::TypedPlan};
 use crate::ir::{LedgerField, PureCircuit, StatefulCircuit, WitnessDeclaration};
 pub(super) use model::CheckedPlan;
+#[cfg(test)]
 pub(super) use public_effects::has_public_program;
 pub(super) use rejection::{DiagnosticPlanError, LoweringRejection};
 use std::collections::HashMap;

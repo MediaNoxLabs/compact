@@ -134,10 +134,7 @@ fn wider_interfaces_do_not_supply_public_effect_evidence_or_change_return_forms(
             message: "private-only".into(),
         }];
         assert!(!effect_plan::has_public_program(&checked(&c)));
-        assert!(matches!(
-            attempt_contract(&c).unwrap(),
-            ProfileAttempt::Rejected(_)
-        ));
+        assert_supported(&c); // Execution availability is independent of public evidence.
         c.stateful_circuits[0].actions = vec![public_action()];
         c.stateful_circuits[0].return_value = StateReturn::Expression { value: Expr::Unit };
         assert!(matches!(

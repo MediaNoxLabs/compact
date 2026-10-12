@@ -35,7 +35,11 @@ pub struct RustCapabilityReport {
 pub struct RustCircuitCapability {
     pub name: String,
     pub source: Option<ir::SourceLocation>,
+    /// Whether a recorded execution function was emitted. An execution may have
+    /// an empty public program, which transaction preparation rejects.
     pub recorded: bool,
+    /// Whether the typed observed-call API was emitted, not a promise that every
+    /// execution can be prepared or proved. `proof_required` comes from the frontend.
     pub observed_call: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub proof_required: Option<bool>,
@@ -160,6 +164,25 @@ mod proof_applicability_tests {
             report.circuits[0].recording_status,
             Some(RecordingStatus::NotApplicable)
         );
+    }
+
+    #[test]
+    fn nonproof_execution_apis_do_not_imply_transaction_preparation() {
+        let mut report = report();
+        report.circuits[0].recorded = true;
+        report.circuits[0].observed_call = true;
+        report
+            .apply_contract_info(&json!({"circuits": [{"name": "exported", "proof": false}]}))
+            .unwrap();
+        let serialized = serde_json::to_value(&report).unwrap();
+        assert_eq!(serialized["schema_version"], 3);
+        let row = &serialized["circuits"][0];
+        assert_eq!(row["recorded"], true);
+        assert_eq!(row["observed_call"], true);
+        assert_eq!(row["proof_required"], false);
+        assert_eq!(row["recording_status"], "not_applicable");
+        assert!(row.get("recording_unavailable").is_none());
+        assert!(row.get("observed_call_unavailable").is_none());
     }
 
     #[test]

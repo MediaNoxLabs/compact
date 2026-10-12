@@ -307,19 +307,27 @@ fn pure_witness_key_and_private_intent_effects_do_not_supply_public_evidence() {
             !effect_plan::has_public_program(&checked(&c)),
             "valid private plan has no VM operations"
         );
-        let refusal = rejected(&c);
-        let outer = RecordingGap {
-            resource: None,
-            code: RecordingGapCode::UnsupportedAction,
-            ir_node: "sentinel".into(),
-            path: "actions[0]".into(),
-            detail: "outer".into(),
+        assert_supported(&c);
+        let ProfileAttempt::Admitted(plan) = attempt_contract(&c).unwrap() else {
+            unreachable!("qualified execution remains recordable")
         };
-        assert_eq!(
-            refusal.refine_action(0, LegacyActionPrecision::Coarse, outer.clone()),
-            outer,
-            "obligation cannot refine an action"
-        );
+        let steps = &plan.steps;
+        let text = quote::quote!(#(#steps)*).to_string();
+        let required = match &c.stateful_circuits[0].actions[0] {
+            StateAction::PureCall { .. } => "pure_circuits",
+            StateAction::Assert { .. } => "AssertionFailed",
+            StateAction::Expression {
+                value: Expr::Default { .. },
+            } => "Default",
+            StateAction::Expression {
+                value: Expr::WitnessCall { .. },
+            } => "try_witness_metered",
+            StateAction::Expression {
+                value: Expr::NativeWitnessCall { .. },
+            } => "own_coin_public_key",
+            _ => unreachable!(),
+        };
+        assert!(text.contains(required), "recording preserves {required}");
     }
     c.stateful_circuits[0].actions = vec![StateAction::Expression {
         value: Expr::CreateZswapInput {
@@ -329,7 +337,12 @@ fn pure_witness_key_and_private_intent_effects_do_not_supply_public_evidence() {
         },
     }];
     assert!(!effect_plan::has_public_program(&checked(&c)));
-    rejected(&c);
+    let ProfileAttempt::Admitted(plan) = attempt_contract(&c).unwrap() else {
+        panic!("checked private intent remains recordable")
+    };
+    let steps = &plan.steps;
+    let text = quote::quote!(#(#steps)*).to_string();
+    assert!(text.contains("create_zswap_input"));
     c.stateful_circuits[0].actions = vec![StateAction::Expression {
         value: Expr::CreateZswapOutput {
             coin: Box::new(Expr::Default {
@@ -341,7 +354,12 @@ fn pure_witness_key_and_private_intent_effects_do_not_supply_public_evidence() {
         },
     }];
     assert!(!effect_plan::has_public_program(&checked(&c)));
-    rejected(&c);
+    let ProfileAttempt::Admitted(plan) = attempt_contract(&c).unwrap() else {
+        panic!("checked private intent remains recordable")
+    };
+    let steps = &plan.steps;
+    let text = quote::quote!(#(#steps)*).to_string();
+    assert!(text.contains("create_zswap_output"));
 }
 
 #[test]
@@ -417,3 +435,6 @@ fn argument_observations_and_earlier_owner_priority_are_preserved() {
 
 #[path = "tests/interfaces.rs"]
 mod interfaces;
+
+#[path = "tests/empty_execution.rs"]
+mod empty_execution;

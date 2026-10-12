@@ -1,0 +1,28 @@
+{
+  "format": "compact-reviewed-rust-binding/v1",
+  "scope": "Checked Unit empty-public execution changes private recorded helper emission. Original TS capture, four case identities, source and behavior assertions are unchanged; this is a reviewed Rust consumer binding, not fresh TS or proof evidence.",
+  "captures": [
+    {
+      "file": "cases.json",
+      "sha256": "68a2a1e71a6a5e0ea89292328341545dc103887c16a5eea152ce9bdc3495097d"
+    }
+  ],
+  "replacements": [
+    {
+      "path": "tests-rust-backend/did-digest-read-reducer/lib.rs",
+      "captured_sha256": "1ecefd3330ab686f218378635440e39aa050a7e4d1e402015a73ead38673d159",
+      "current_sha256": "1568142db397155a1591861bd9932738acfa502bb460f88f56ef998c032b8bc6"
+    },
+    {
+      "path": "tests-rust-backend/did-digest-read-reducer/tests/provenance.rs",
+      "captured_sha256": "17a8bda9df6f5a22aa1d5b92aecbfb241f27178a02c61a9b9381a25c59cb9103",
+      "current_sha256": "657121b59c4957e3e580d7d86ca9a5cfde47f18da588519feaadbbff8b9b654a"
+    }
+  ],
+  "reviewed_artifacts": [
+    {
+      "path": "tests-rust-backend/support/reviewed_capture.rs",
+      "sha256": "482cea8e2806f220a939e02f459ffad9c7ff25c685e7bf6aab051f2bc528217b"
+    }
+  ]
+}

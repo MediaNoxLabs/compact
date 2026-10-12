@@ -139,8 +139,24 @@ OPAQUE_MAP_TRANSITION = inventory.BASELINE.with_name("recording_admission_invent
 RESOURCE_DIAGNOSTICS_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.resource-diagnostics-597.json")
 
 
+EMPTY_RECORDING_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.empty-recording-598.json")
+
+
+def checkpoint_597(root):
+    """Authenticate execution expansion before historical fixture setup."""
+    extension = json.loads(EMPTY_RECORDING_EXTENSION.read_text())
+    try:
+        source = (root / inventory.empty_recording.OWNER).read_bytes()
+    except FileNotFoundError:
+        return root
+    if inventory.digest(source) == extension['owners'][inventory.empty_recording.OWNER]['current_sha256']:
+        return inventory.empty_recording.checkpoint(root, extension)
+    return root
+
+
 def checkpoint_596(root):
     """Authenticate diagnostics-only projection before historical fixture setup."""
+    root = checkpoint_597(root)
     extension = json.loads(RESOURCE_DIAGNOSTICS_EXTENSION.read_text())
     try:
         source = (root / inventory.resource_diagnostics.OWNER).read_bytes()
@@ -592,7 +608,8 @@ class InventoryTests(unittest.TestCase):
                                   map_value_extension=json.loads(MAP_VALUE_EXTENSION.read_text()),
                                   guarded_map_transition=json.loads(GUARDED_MAP_TRANSITION.read_text()),
                                   opaque_map_transition=json.loads(OPAQUE_MAP_TRANSITION.read_text()),
-                                  resource_diagnostics_extension=json.loads(RESOURCE_DIAGNOSTICS_EXTENSION.read_text()))
+                                  resource_diagnostics_extension=json.loads(RESOURCE_DIAGNOSTICS_EXTENSION.read_text()),
+                                  empty_recording_extension=json.loads(EMPTY_RECORDING_EXTENSION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)

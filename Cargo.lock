@@ -1839,6 +1839,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-empty-recording-ir-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "serde_json",
+]
+
+[[package]]
+name = "compact-rust-empty-recording-witness-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-enum-identity-fixture"
 version = "0.1.0"
 dependencies = [

@@ -21,11 +21,8 @@ pub(super) fn attempt(
         Ok(plan) => plan,
         Err(error) => return failure(error),
     };
-    if !effect_plan::has_public_program(&checked) {
-        let mut gap = RecordingGap::no_effect();
-        gap.detail = "Unit composition has no replayable public ledger operation".into();
-        return Ok(ProfileAttempt::Rejected(gap.into()));
-    }
+    // Recording captures checked execution, including private-only effects.
+    // Transaction preparation separately requires a nonempty public transcript.
     match effect_plan::render(&checked) {
         Ok(plan) => Ok(ProfileAttempt::Admitted(plan)),
         Err(gap) => failure(effect_plan::DiagnosticPlanError::Invalid(gap)),

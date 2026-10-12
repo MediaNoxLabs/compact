@@ -1,0 +1,64 @@
+{
+  "command": [
+    "/Users/ysh/.codex/local-evidence/compact-unit-value-operations/compactc-final",
+    "--target",
+    "rust",
+    "--target",
+    "ts",
+    "--skip-zk",
+    "--rust-runtime-root",
+    "/Users/ysh/.codex/worktrees/recording-effect-prototype/compact",
+    "/Users/ysh/.codex/local-evidence/compact-empty-recording/witness-source/empty_witness_guard.compact",
+    "/Users/ysh/.codex/local-evidence/compact-empty-recording/witness-source/generated"
+  ],
+  "exit": 0,
+  "seconds": 0.367550459006452,
+  "original_prior_probe_sha256": "5728ccc93419283da267fd02d057c11081bfb0e2893aea0e6b43e7976c9206f5",
+  "source_sha256": "784b91c215d11102108c8a6a2835057378a3031ba7f72bfa568143854739af46",
+  "wrapper_sha256": "3f7d2b5597ab9760dfff3b4cb2b62567ee37f8d481b048a530cad18cd5395ecf",
+  "scheme_sha256": "03e7806ba005445449434bc14f9134c919449106e9316bd8a70e9f84d2d610d4",
+  "scope": "Fresh witness-dependent derivative, default-v2; older ABI52 wrapper and authenticated Scheme, not current native renderer attribution.",
+  "ir_sha256": "7eb59b20154f68d90a23753aa0ec3c56a711a0ea43ec569ec786e8296cc623e9",
+  "classification": {
+    "circuits": [
+      "assertFreshEnough",
+      "assertAgeWithin",
+      "ageGap"
+    ],
+    "stateful_circuits": [
+      "recordFreshEnough",
+      "finish"
+    ],
+    "witnesses": [
+      "permit"
+    ]
+  },
+  "whole_contract_info_sha256": "6e25e8eafef72d70956b70a7e2ec6dbca265d86476c125cf3493ed9aa91af67c",
+  "frontend_circuits": [
+    {
+      "name": "assertFreshEnough",
+      "pure": true,
+      "proof": false
+    },
+    {
+      "name": "assertAgeWithin",
+      "pure": true,
+      "proof": false
+    },
+    {
+      "name": "ageGap",
+      "pure": true,
+      "proof": false
+    },
+    {
+      "name": "recordFreshEnough",
+      "pure": false,
+      "proof": false
+    }
+  ],
+  "proof_scope": "recordFreshEnough is stateful but proof=false; recording does not assert proof applicability. No proof run or empty transaction claim.",
+  "classification_correction": "Initial receipt listed only queried recordFreshEnough/finish/permit target names; corrected to complete declaration lists without rerunning frontend.",
+  "retained_source_path": "examples/rust_backend/empty_witness_guard.compact",
+  "retained_ir_path": "tools/compact-rust-backend/tests/empty-witness-guard-schema20-ir.json",
+  "relocation": "Source and whole IR copied byte-for-byte from authenticated scratch generation; basename unchanged; no new frontend execution claimed."
+}

@@ -95,6 +95,9 @@ use crate::stateful::circuit_uses_witness;
 use crate::{RenderError, expression_with_calls, ident, retained_value, rust_type};
 
 mod audited_local;
+#[cfg(test)]
+#[path = "recorded/audited_local_migration_tests.rs"]
+mod audited_local_migration_tests;
 mod read_only_verification;
 
 // Direct call refusals and exact failed binding ordinals are distinct provenance.
@@ -683,13 +686,6 @@ fn render_recorded_item(
     };
     if circuit.internal && !helper {
         return Ok(RecordingOutcome::Unsupported(RecordingGap::no_effect()));
-    }
-    if !helper
-        && let Some(item) = audited_local::render(circuit, ledger_fields, witnesses, circuits)?
-    {
-        #[cfg(test)]
-        admission_probe::trace::handled("early.audited-local");
-        return Ok(item);
     }
     if !helper
         && let Some(item) =

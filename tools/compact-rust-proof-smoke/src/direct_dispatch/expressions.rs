@@ -555,3 +555,25 @@ pub(super) fn literal_bytes_field_strict(
     }
     literal_bytes_field::run_strict(Path::new(&root))
 }
+
+/// Original source-paired attestation endpoints with strict funded ledger checks.
+pub(super) fn schnorr_attestation_strict(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let usage = "usage: compact-rust-proof-smoke --schnorr-attestation-strict <proof-output>";
+    let root = arguments.next().ok_or(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("schnorr-attestation-strict-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            schnorr_attestation::run_strict(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("Schnorr attestation strict proof thread panicked".into()),
+    }
+}

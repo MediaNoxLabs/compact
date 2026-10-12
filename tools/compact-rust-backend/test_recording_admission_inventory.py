@@ -181,8 +181,24 @@ PERSISTENT_COMMIT_EXTENSION = inventory.BASELINE.with_name("recording_admission_
 VECTOR_MAP_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.vector-map-613.json")
 
 
+AUDITED_LOCAL_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.audited-local-614.json")
+
+
+def checkpoint_613(root):
+    """Authenticate early audited-local retirement before historical fixtures."""
+    transition = json.loads(AUDITED_LOCAL_TRANSITION.read_text())
+    try:
+        source = (root / inventory.audited_local.OWNER).read_bytes()
+    except FileNotFoundError:
+        return root
+    if inventory.digest(source) == transition['owners'][inventory.audited_local.OWNER]['current_sha256']:
+        return inventory.audited_local.checkpoint(root, transition)
+    return root
+
+
 def checkpoint_611(root):
     """Authenticate typed vector maps before historical fixtures."""
+    root = checkpoint_613(root)
     extension = json.loads(VECTOR_MAP_EXTENSION.read_text())
     try:
         source = (root / inventory.vector_map.OWNER).read_bytes()
@@ -830,7 +846,8 @@ class InventoryTests(unittest.TestCase):
                                   list_effects_extension=json.loads(LIST_EFFECTS_EXTENSION.read_text()),
                                   map_effects_extension=json.loads(MAP_EFFECTS_EXTENSION.read_text()),
                                   persistent_commit_extension=json.loads(PERSISTENT_COMMIT_EXTENSION.read_text()),
-                                  vector_map_extension=json.loads(VECTOR_MAP_EXTENSION.read_text()))
+                                  vector_map_extension=json.loads(VECTOR_MAP_EXTENSION.read_text()),
+                                  audited_local_transition=json.loads(AUDITED_LOCAL_TRANSITION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)

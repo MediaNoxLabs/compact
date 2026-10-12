@@ -151,6 +151,19 @@ fn commit_inputs_manifest(bytes: &[u8]) -> Result<Value, String> {
     serde_json::from_slice(bytes).map_err(|error| error.to_string())
 }
 
+// #614 preserves the complete early audited-local renderer as a test-only oracle.
+// Reverse only its two authenticated cfg annotations before older projections.
+const AUDITED_LOCAL_SHA256: &str =
+    "3e433671c8b8c9086350ccbbe2f9898385a258a6482b5c97ac378f28014c9bcf";
+const AUDITED_LOCAL: &[u8] = include_bytes!("legacy-audited-local-614.json");
+
+fn audited_local_manifest(bytes: &[u8]) -> Result<Value, String> {
+    if digest(bytes) != AUDITED_LOCAL_SHA256 {
+        return Err("unreviewed audited-local checkpoint".into());
+    }
+    serde_json::from_slice(bytes).map_err(|error| error.to_string())
+}
+
 fn projected_legacy_source(
     path: &str,
     current: &str,
@@ -158,7 +171,9 @@ fn projected_legacy_source(
     resource_metadata: &Value,
 ) -> Result<String, String> {
     let commit_inputs = commit_inputs_manifest(COMMIT_INPUTS)?;
-    let before_commit = legacy_source(path, current, &commit_inputs)?;
+    let audited_local = audited_local_manifest(AUDITED_LOCAL)?;
+    let before_audited_local = legacy_source(path, current, &audited_local)?;
+    let before_commit = legacy_source(path, &before_audited_local, &commit_inputs)?;
     let before_metadata = legacy_source(path, &before_commit, resource_metadata)?;
     legacy_source(path, &before_metadata, retirement)
 }
@@ -208,6 +223,7 @@ pub(super) fn legacy_authority() -> Value {
     authority["retirement_projection"] = retirement;
     authority["resource_metadata_projection"] = resource_metadata;
     authority["commit_input_test_projection"] = commit_inputs_manifest(COMMIT_INPUTS).unwrap();
+    authority["audited_local_projection"] = audited_local_manifest(AUDITED_LOCAL).unwrap();
     authority
 }
 
@@ -221,6 +237,41 @@ fn retired_oracle_projection_rejects_drift_and_forged_authority() {
     let commit_inputs = commit_inputs_manifest(COMMIT_INPUTS).unwrap();
     assert!(commit_inputs_manifest(br#"{"owners":{}}"#).is_err());
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let audited_local = audited_local_manifest(AUDITED_LOCAL).unwrap();
+    assert!(audited_local_manifest(br#"{"owners":{}}"#).is_err());
+    for (path, row) in audited_local["owners"].as_object().unwrap() {
+        let current = std::fs::read_to_string(root.join(path)).unwrap();
+        assert_eq!(
+            digest(
+                legacy_source(path, &current, &audited_local)
+                    .unwrap()
+                    .as_bytes()
+            ),
+            row["previous_sha256"]
+        );
+        assert!(
+            projected_legacy_source(
+                path,
+                &(current.clone() + "\n// drift\n"),
+                &retirement,
+                &resource_metadata,
+            )
+            .is_err()
+        );
+        let edits = row["predecessor_reconstruction"].as_array().unwrap();
+        assert_eq!(edits.len(), 2);
+        for edit in edits {
+            let partial = current.replacen(
+                edit["current"].as_str().unwrap(),
+                edit["previous"].as_str().unwrap(),
+                1,
+            );
+            assert_ne!(partial, current);
+            assert!(
+                projected_legacy_source(path, &partial, &retirement, &resource_metadata).is_err()
+            );
+        }
+    }
     for (path, row) in commit_inputs["owners"].as_object().unwrap() {
         let current = std::fs::read_to_string(root.join(path)).unwrap();
         assert_eq!(

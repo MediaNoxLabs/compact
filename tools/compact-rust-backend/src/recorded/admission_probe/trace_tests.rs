@@ -213,7 +213,7 @@ fn actual_helper_previews_and_final_exports_are_separated() {
 }
 
 #[test]
-fn early_handler_ownership_keeps_its_supported_or_refused_final_outcome() {
+fn retired_audited_local_handler_yields_checked_local_and_public_effect_composition() {
     for local in [true, false] {
         let contract = fixtures::audited_local(local);
         let (rendered, rows) = capture(&contract);
@@ -223,9 +223,21 @@ fn early_handler_ownership_keeps_its_supported_or_refused_final_outcome() {
                 row.phase == Phase::PublicEmission && !row.helper && row.circuit == "verify"
             })
             .unwrap();
-        assert_eq!(row.body_owner, Some("early.audited-local"));
-        assert_eq!(matches!(row.outcome, Outcome::Supported), local);
-        assert_eq!(rendered.capabilities.circuits[0].recorded, local);
+        assert_eq!(row.body_owner, Some("algebra.unit-actions"));
+        assert!(matches!(row.outcome, Outcome::Supported));
+        assert!(row.action_dispatch.is_none() && row.return_dispatch.is_none());
+        assert!(rendered.capabilities.circuits[0].recorded);
+        assert!(rendered.capabilities.circuits[0].observed_call);
+        assert!(
+            !rows
+                .iter()
+                .any(|row| row.body_owner == Some("early.audited-local"))
+        );
+        // The old native-only local audit refused this transitive public write.
+        // Current checked composition records it rather than calling it unseen.
+        if !local {
+            assert!(rendered.source.contains("record_write"));
+        }
     }
 }
 

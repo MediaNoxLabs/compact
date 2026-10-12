@@ -73,6 +73,9 @@ pub(super) fn try_run(
         ("--guarded-recording", _) => Some(expressions::guarded_recording(arguments)),
         (_, Some(proof)) => Some(run_asset(proof, arguments)),
         ("--schnorr-attestation", _) => Some(expressions::schnorr_attestation(arguments)),
+        ("--schnorr-attestation-strict", _) => {
+            Some(expressions::schnorr_attestation_strict(arguments))
+        }
         ("--zswap-transfer", _) => Some(shielded::zswap_transfer(arguments)),
         ("--shielded-receive", _) => Some(shielded::shielded_receive(arguments)),
         ("--shielded-merge", _) => Some(shielded::shielded_merge(arguments)),

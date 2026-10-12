@@ -261,9 +261,9 @@ pub(super) fn advance(root: &Path) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 struct LedgerWitness {
-    calls: std::cell::RefCell<Vec<&'static str>>,
+    calls: std::rc::Rc<std::cell::RefCell<Vec<&'static str>>>,
 }
 
 impl Witnesses<u64> for LedgerWitness {
@@ -341,6 +341,10 @@ impl Witnesses<u64> for LedgerWitness {
 }
 
 pub(super) fn add_voter(root: &Path) -> Result<(), Box<dyn Error>> {
+    counter_scenario::validate_ir(
+        &std::fs::read(root.join("contract/compact-rust-ir.json"))?,
+        RETAINED_IR,
+    )?;
     for value in [8_u8, 9] {
         let initial =
             contract::initial_state(ConstructorContext::new(10_u64), FixedBytes::new(AUTHORITY))?;
@@ -368,15 +372,13 @@ pub(super) fn add_voter(root: &Path) -> Result<(), Box<dyn Error>> {
             },
         );
         let pk = FixedBytes::new([value; 32]);
-        let native = contract::add_voter(
-            observed.circuit_context(private),
-            &LedgerWitness::default(),
-            pk,
-        )?;
+        let native_witness = LedgerWitness::default();
+        let native = contract::add_voter(observed.circuit_context(private), &native_witness, pk)?;
         let witness = LedgerWitness::default();
         let recorded =
             contract::recorded::add_voter(observed.circuit_context(private), &witness, pk)?;
         if *witness.calls.borrow() != ["path", "secret"]
+            || *native_witness.calls.borrow() != *witness.calls.borrow()
             || native.gas_cost != recorded.execution.gas_cost
             || native.private_transcript_outputs != recorded.execution.private_transcript_outputs
             || recorded.execution.private_transcript_outputs.len() != 2
@@ -392,28 +394,40 @@ pub(super) fn add_voter(root: &Path) -> Result<(), Box<dyn Error>> {
         let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
             root.join("keys/add_voter.verifier"),
         )?))?;
-        let generated = contract::Contract::from(LedgerWitness::default());
+        let observed_witness = LedgerWitness::default();
+        let generated = contract::Contract::from(observed_witness.clone());
         let prepared = generated
             .recording()
             .add_voter_call(&observed, private, pk)?
-            .prepare(verifier, Fr::from(0_u64))?;
-        if format!("{manual:?}") != format!("{prepared:?}") {
+            .prepare(verifier.clone(), Fr::from(0_u64))?;
+        if format!("{manual:?}") != format!("{prepared:?}")
+            || *observed_witness.calls.borrow() != ["path", "secret"]
+        {
             return Err("typed voter call differs from recording".into());
         }
-        check_transaction(root, "add_voter", deploy, prepared, &mut rng, |applied| {
-            if applied.data.get_ref() != &expected_state {
-                return Err("applied voter state differs from native".into());
-            }
-            let view = contract::PublicStateView::from(applied);
-            let tree = view.eligible_voters()?;
-            if tree.first_free()?.value() != u128::from(value - 7)
-                || tree.find_path_for_leaf(pk).is_none()
-            {
-                return Err("applied voter path or index changed".into());
-            }
-            Ok(())
-        })?;
-        println!("election voter {value} proved and applied through ledger-8");
+        if prepared.input != AlignedValue::from(pk) || prepared.output != AlignedValue::from(()) {
+            return Err("voter original public input/output differs".into());
+        }
+        let view = contract::PublicStateView::from(&native.context);
+        let tree = view.eligible_voters()?;
+        if tree.first_free()?.value() != u128::from(value - 7)
+            || tree.find_path_for_leaf(pk).is_none()
+        {
+            return Err("expected voter path or index changed".into());
+        }
+        kernel_shielded_effects::prove_and_verify_call(root, "add_voter", &prepared, &verifier)?;
+        opaque_public::apply_funded(
+            root,
+            "add_voter",
+            prepared,
+            deploy,
+            &expected_state,
+            rng,
+            589 + u64::from(value),
+        )?;
+        println!(
+            "election voter {value}: proof verified, changed binding rejected, default-strict funded ledger8 application passed; constructor and seeded prior state supplied, deployment not proved"
+        );
     }
     Ok(())
 }
@@ -452,6 +466,14 @@ mod source_tests {
         );
         assert_eq!(
             advance(&root)
+                .unwrap_err()
+                .downcast_ref::<io::Error>()
+                .unwrap()
+                .kind(),
+            io::ErrorKind::NotFound
+        );
+        assert_eq!(
+            add_voter(&root)
                 .unwrap_err()
                 .downcast_ref::<io::Error>()
                 .unwrap()

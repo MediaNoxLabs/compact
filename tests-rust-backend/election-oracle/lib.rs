@@ -1380,47 +1380,64 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_admission): (_, crate::types::MaybeCompact1) = frame
+            let __compact_effect_0: runtime::FixedBytes<32> = __compact_param_0;
+            let (frame, __compact_effect_1): (_, crate::types::MaybeCompact1) = frame
                 .try_witness_metered(|context, meter| {
                     witnesses.context_eligible_voters_path_of(
                         context.witness_context_with(super::LedgerView {
                             state: context.query.state.get_ref(),
                             meter,
                         }),
-                        __compact_param_0,
+                        __compact_effect_0,
                     )
                 })?;
-            if __compact_admission.is_some {
+            let __compact_effect_2: bool = __compact_effect_1.is_some;
+            let (frame, __compact_effect_5): (_, bool) = if __compact_effect_2 {
+                let __compact_effect_3: bool = false;
+                (frame, __compact_effect_3)
+            } else {
+                let __compact_effect_4: bool = true;
+                (frame, __compact_effect_4)
+            };
+            if !__compact_effect_5 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Attempted to add a voter twice".to_owned(),
                 ));
             }
-            let (frame, __compact_authority_secret): (_, runtime::FixedBytes<32>) = frame
+            let __compact_effect_6: () = ();
+            let (frame, __compact_effect_7): (_, runtime::FixedBytes<32>) = frame
                 .try_witness_metered(|context, meter| {
                     witnesses.private_secret_key(context.witness_context_with(super::LedgerView {
                         state: context.query.state.get_ref(),
                         meter,
                     }))
                 })?;
-            let __compact_authority_hash =
-                crate::pure_circuits::public_key(__compact_authority_secret)?;
-            let (frame, __compact_authority): (_, runtime::FixedBytes<32>) =
+            let __compact_effect_8: runtime::FixedBytes<32> =
+                crate::pure_circuits::public_key(__compact_effect_7)?;
+            let (frame, __compact_effect_9): (_, runtime::FixedBytes<32>) =
                 crate::ledger_slots::authority.record_read(frame)?;
-            if __compact_authority_hash != __compact_authority {
+            let __compact_effect_10: bool = __compact_effect_8 == __compact_effect_9;
+            if !__compact_effect_10 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Attempted to add a voter without authorization".to_owned(),
                 ));
             }
-            let (frame, __compact_phase): (_, crate::types::PublicState) =
+            let __compact_effect_11: () = ();
+            let (frame, __compact_effect_12): (_, crate::types::PublicState) =
                 crate::ledger_slots::state.record_read(frame)?;
-            if __compact_phase != crate::types::PublicState::setup {
+            let __compact_effect_13: crate::types::PublicState = crate::types::PublicState::setup;
+            let __compact_effect_14: bool = __compact_effect_12 == __compact_effect_13;
+            if !__compact_effect_14 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Attempted to add a voter after setup phase".to_owned(),
                 ));
             }
+            let __compact_effect_15: () = ();
             let frame =
-                crate::ledger_slots::eligible_voters.record_insert(frame, __compact_param_0)?;
-            Ok(frame.finish(()))
+                crate::ledger_slots::eligible_voters.record_insert(frame, __compact_effect_0)?;
+            let __compact_effect_16: () = ();
+            let __compact_effect_17: () = ();
+            Ok(frame.finish(__compact_effect_17))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

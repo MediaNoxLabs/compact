@@ -31,15 +31,17 @@ use crate::ir::{LedgerField, PureCircuit, StatefulCircuit, WitnessDeclaration};
 
 use super::RecordingGap;
 use super::effect_plan;
-use super::guarded_mutations::{
-    closed_organizer_gate_steps, closed_witness_admitted_merkle_insert_steps,
-};
+use super::guarded_mutations::closed_organizer_gate_steps;
 use super::profile_attempt::ProfileAttempt;
 use super::typed_plan;
 use super::typed_plan::TypedPlan;
 
 #[path = "profile_selection/unit_domain.rs"]
 mod unit_domain;
+
+#[cfg(test)]
+#[path = "profile_selection/witness_merkle_migration_tests.rs"]
+mod witness_merkle_migration_tests;
 
 #[cfg(test)]
 #[path = "profile_selection/enum_migration_tests.rs"]
@@ -471,15 +473,6 @@ pub(super) fn select(
                 circuits
             )?
         )
-        .or(record_option!(
-            "organizer.witness-merkle",
-            closed_witness_admitted_merkle_insert_steps(
-                circuit,
-                ledger_fields,
-                witnesses,
-                pure_circuits,
-            )?
-        ))
     };
     let typed_prefix = if organizer_steps.is_none() {
         match record_option!(

@@ -107,12 +107,9 @@ fn assert_actual_owner(c: &Contract) {
         .map(|a| a["route"].as_str().unwrap())
         .collect();
     assert_eq!(
-        &attempts[..3],
-        &[
-            "organizer.organizer",
-            "organizer.witness-merkle",
-            "algebra.membership"
-        ]
+        &attempts[..2],
+        &["organizer.organizer", "algebra.membership"]
     );
     assert!(!attempts.contains(&"organizer.enum-advance"));
+    assert!(!attempts.contains(&"organizer.witness-merkle"));
 }

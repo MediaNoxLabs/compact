@@ -108,7 +108,7 @@ fn actual_owner_and_eager_sibling_order_are_preserved() {
     for (name, owner) in [
         ("set_topic", "algebra.membership"),
         ("advance", "algebra.membership"),
-        ("add_voter", "organizer.witness-merkle"),
+        ("add_voter", "algebra.kernel"),
     ] {
         let row = rows
             .as_array()
@@ -127,14 +127,12 @@ fn actual_owner_and_eager_sibling_order_are_preserved() {
             .iter()
             .map(|a| a["route"].as_str().unwrap())
             .collect();
-        assert_eq!(
-            &attempts[..2],
-            &["organizer.organizer", "organizer.witness-merkle"]
-        );
+        assert_eq!(&attempts[..1], &["organizer.organizer"]);
         assert!(!attempts.contains(&"organizer.optional-write"));
         assert!(!attempts.contains(&"organizer.enum-advance"));
+        assert!(!attempts.contains(&"organizer.witness-merkle"));
         if name == "set_topic" {
-            assert_eq!(attempts[2], "algebra.membership");
+            assert_eq!(attempts[1], "algebra.membership");
         }
     }
 }

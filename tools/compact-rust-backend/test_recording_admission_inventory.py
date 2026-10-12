@@ -112,8 +112,24 @@ OPTIONAL_WRITE_TRANSITION = inventory.BASELINE.with_name("recording_admission_in
 ENUM_ADVANCE_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-588.json")
 
 
+WITNESS_MERKLE_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-589.json")
+
+
+def checkpoint_588(root):
+    """Historical fixtures use the authenticated signed enum-advance checkpoint."""
+    transition = json.loads(WITNESS_MERKLE_TRANSITION.read_text())
+    try:
+        source = (root / inventory.SELECTOR).read_bytes()
+    except FileNotFoundError:
+        return root
+    if inventory.digest(source) == transition['owners'][inventory.SELECTOR]['current_sha256']:
+        return inventory.witness_merkle.checkpoint(root, transition)
+    return root
+
+
 def checkpoint_587(root):
     """Historical fixtures use the authenticated signed optional-write checkpoint."""
+    root = checkpoint_588(root)
     transition = json.loads(ENUM_ADVANCE_TRANSITION.read_text())
     try:
         source = (root / inventory.SELECTOR).read_bytes()
@@ -439,7 +455,8 @@ class InventoryTests(unittest.TestCase):
                                   value_test_extension=json.loads(VALUE_TEST_EXTENSION.read_text()),
                                   unit_composition_transition=json.loads(UNIT_COMPOSITION_TRANSITION.read_text()),
                                   optional_write_transition=json.loads(OPTIONAL_WRITE_TRANSITION.read_text()),
-                                  enum_advance_transition=json.loads(ENUM_ADVANCE_TRANSITION.read_text()))
+                                  enum_advance_transition=json.loads(ENUM_ADVANCE_TRANSITION.read_text()),
+                                  witness_merkle_transition=json.loads(WITNESS_MERKLE_TRANSITION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)

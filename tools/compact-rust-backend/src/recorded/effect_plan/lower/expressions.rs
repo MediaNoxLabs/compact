@@ -261,7 +261,7 @@ impl Lowerer<'_> {
             }
             Expr::FieldCast { value } => {
                 let value = self.expression(value, scope, bindings, &format!("{path}.value"))?;
-                if validate::bound(&value.ty).is_none() {
+                if validate::unsigned_bound(&value.ty).is_none() {
                     return Err(invalid(path, "Field cast requires unsigned input"));
                 }
                 return self.coerce(value, &Type::Field, bindings, path);

@@ -1,38 +1,40 @@
 // This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
-//! Measured next gap shared by retained full DID/crypto source qualifications.
+//! Measured full-root outcomes after Schnorr arithmetic composes; ownership is separate.
 use super::*;
 
-pub(super) fn assert_wide_field_cast_gap(label: &str, gap: &RecordingGap) {
-    let prefix = match label {
-        "crypto-close" | "crypto-verifyOnly" => "actions[0].callee[authorize].actions[1]",
-        "did-deactivate" => "actions[0].callee[assertController].actions[1]",
-        "did-recoverControllerKey" => {
-            "actions[0].action.actions[0].callee[assertRecoveryCanUpdate].actions[1]"
-        }
-        "did-rotateControllerKey"
-        | "did-removeVerificationMethod"
+pub(super) fn remaining_map_member_path(label: &str) -> Option<&'static str> {
+    match label {
+        "crypto-close"
+        | "crypto-verifyOnly"
+        | "did-deactivate"
+        | "did-recoverControllerKey"
+        | "did-rotateControllerKey"
+        | "did-setAlsoKnownAs" => None,
+        "did-removeVerificationMethod"
         | "did-removeSchnorrJubjubVerificationMethod"
-        | "did-removeService" => {
-            "actions[0].action.actions[0].callee[assertControllerCanUpdate].actions[0].callee[assertController].actions[1]"
+        | "did-removeService" => Some("actions[0].action.actions[1].condition"),
+        "did-setSchnorrJubjubVerificationMethod" | "did-setService" => {
+            Some("actions[0].action.action.actions[2].then.actions[0].condition.body")
         }
-        "did-setAlsoKnownAs"
-        | "did-setVerificationMethod"
-        | "did-setSchnorrJubjubVerificationMethod"
-        | "did-setService" => {
-            "actions[0].action.action.actions[0].callee[assertControllerCanUpdate].actions[0].callee[assertController].actions[1]"
+        "did-setVerificationMethod" => {
+            Some("actions[0].action.action.actions[3].then.actions[0].condition.body")
         }
-        "did-setVerificationMethodRelation" => {
-            "actions[0].action.action.action.actions[0].callee[assertControllerCanUpdate].actions[0].callee[assertController].actions[1]"
-        }
+        "did-setVerificationMethodRelation" => Some(
+            "actions[0].action.action.action.actions[2].condition.callee[verificationMethodExists].return_value.value.condition",
+        ),
         _ => panic!("unmeasured retained Schnorr root: {label}"),
-    };
-    let suffix = "callee[schnorrVerifyDigest].actions[0].callee[schnorrVerify].actions[0].action.action.action.action.action.action.action.action.actions[1].condition.left.right";
-    assert_eq!(gap.ir_node, "RecordedPlan", "{label}: {gap:?}");
+    }
+}
+
+pub(super) fn assert_map_member_gap(label: &str, gap: &RecordingGap) {
+    let path = remaining_map_member_path(label)
+        .unwrap_or_else(|| panic!("{label}: complete retained root must compose: {gap:?}"));
+    assert_eq!(gap.ir_node, "Expr::MapMember", "{label}: {gap:?}");
     assert_eq!(
-        gap.detail, "Field cast requires unsigned input",
+        gap.detail, "Expr::MapMember is not supported in this recorded expression",
         "{label}: {gap:?}"
     );
-    assert_eq!(gap.path, format!("{prefix}.{suffix}"), "{label}: {gap:?}");
+    assert_eq!(gap.path, path, "{label}: {gap:?}");
 }

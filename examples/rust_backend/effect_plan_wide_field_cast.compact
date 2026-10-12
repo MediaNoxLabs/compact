@@ -1,0 +1,32 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger calls: Counter;
+export struct Converted { value: Field; }
+export struct Checked { value: Field; marker: Field; }
+witness next129(): Uint<129>;
+witness next248(): Uint<248>;
+witness marker(): Field;
+export circuit cast129(input: Uint<129>): Converted {
+  calls.increment(1);
+  return Converted { value: input as Field };
+}
+export circuit cast248(input: Uint<248>): Converted {
+  calls.increment(1);
+  return Converted { value: input as Field };
+}
+export circuit witness129(selected: Boolean): Checked {
+  calls.increment(1);
+  const input = disclose(selected) ? disclose(next129()) : 7 as Uint<129>;
+  const value = input as Field;
+  const after = disclose(marker());
+  return Checked { value: value, marker: after };
+}
+export circuit witness248(selected: Boolean): Checked {
+  calls.increment(1);
+  const input = disclose(selected) ? disclose(next248()) : 7 as Uint<248>;
+  const value = input as Field;
+  const after = disclose(marker());
+  return Checked { value: value, marker: after };
+}

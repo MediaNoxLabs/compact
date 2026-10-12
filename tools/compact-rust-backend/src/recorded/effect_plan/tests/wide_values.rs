@@ -5,6 +5,9 @@
 //! Wide value laws remain separate from operation-specific arithmetic policies.
 use super::*;
 
+#[path = "wide_values/field_cast_source.rs"]
+mod field_cast_source;
+
 const TWO128: &str = "340282366920938463463374607431768211456";
 const MAX248: &str = "452312848583266388373324160190187140051835877600158453279131187530910662655";
 const TWO248: &str = "452312848583266388373324160190187140051835877600158453279131187530910662656";
@@ -46,6 +49,62 @@ fn expect_unsupported(value: Expr) {
         Err(PlanError::Unsupported(_))
     ));
 }
+fn direct_field_cast(value: Expr) -> Expr {
+    Expr::FieldCast {
+        value: Box::new(value),
+    }
+}
+fn rendered_steps(checked: &CheckedPlan) -> String {
+    let steps = render(checked).unwrap().steps;
+    quote::quote!(#(#steps)*).to_string()
+}
+#[test]
+fn direct_field_cast_matches_coercion_for_small_and_canonical_wide_sources() {
+    for (max, value) in [
+        ("0", "0"),
+        ("255", "1"),
+        (
+            "340282366920938463463374607431768211455",
+            "340282366920938463463374607431768211455",
+        ),
+        (TWO128, "0"),
+        (TWO128, "1"),
+        (TWO128, "340282366920938463463374607431768211455"),
+        (TWO128, TWO128),
+        ("680564733841876926926749214863536422910", TWO128),
+        (MAX248, TWO128),
+        (MAX248, MAX248),
+    ] {
+        let coerced = check_expression(as_field(unsigned(value, max))).unwrap();
+        let direct = check_expression(direct_field_cast(unsigned(value, max)));
+        assert_eq!(rendered_steps(&direct.unwrap()), rendered_steps(&coerced));
+    }
+}
+#[test]
+fn direct_field_cast_rejects_non_unsigned_values_and_malformed_bounds() {
+    for value in [
+        Expr::Boolean { value: true },
+        Expr::FieldLiteral { value: "1".into() },
+        Expr::BytesLiteral { bytes: vec![1; 32] },
+    ] {
+        let Err(PlanError::Unsupported(gap)) = check_expression(direct_field_cast(value)) else {
+            panic!("direct FieldCast requires an unsigned source");
+        };
+        assert_eq!(gap.path, "return_value.body.value");
+        assert_eq!(gap.detail, "Field cast requires unsigned input");
+    }
+    for (value, max) in [
+        ("340282366920938463463374607431768211457", TWO128),
+        (TWO248, MAX248),
+        ("1", TWO248),
+        ("01", TWO128),
+        ("-1", TWO128),
+        ("1", "0340282366920938463463374607431768211456"),
+        ("1", "invalid"),
+    ] {
+        expect_unsupported(direct_field_cast(unsigned(value, max)));
+    }
+}
 #[test]
 fn canonical_wide_literals_cover_small_values_two128_and_max248() {
     for (max, value) in [
@@ -82,7 +141,7 @@ fn canonical_wide_literals_cover_small_values_two128_and_max248() {
 #[test]
 fn wide_references_equality_and_shadowing_preserve_scoped_values() {
     let ty = validate::uint(TWO128);
-    let mut candidate = circuit(as_field(reference("value")));
+    let mut candidate = circuit(direct_field_cast(reference("value")));
     candidate.return_value = StateReturn::Effectful {
         body: ReturnPlan::Let {
             bindings: vec![LocalBinding {
@@ -102,11 +161,11 @@ fn wide_references_equality_and_shadowing_preserve_scoped_values() {
                         value: unsigned("1", TWO128),
                     }],
                     result: Box::new(ReturnPlan::Value {
-                        value: as_field(reference("value")),
+                        value: direct_field_cast(reference("value")),
                     }),
                 }),
                 otherwise: Box::new(ReturnPlan::Value {
-                    value: as_field(reference("value")),
+                    value: direct_field_cast(reference("value")),
                 }),
             }),
         },
@@ -220,9 +279,7 @@ fn independent_validator_rejects_forged_wide_bytes_bounds_and_references() {
 #[test]
 fn wide_widening_and_joins_preserve_arithmetic_and_implicit_narrowing_limits() {
     let literal = || unsigned(TWO128, TWO128);
-    expect_unsupported(Expr::FieldCast {
-        value: Box::new(literal()),
-    });
+    render(&check_expression(direct_field_cast(literal())).unwrap()).unwrap();
     // An explicit narrowing cast is now recorded and keeps the runtime range
     // check; this out-of-range value fails when executed, not while lowering.
     let cast = check_expression(as_field(Expr::UnsignedCast {

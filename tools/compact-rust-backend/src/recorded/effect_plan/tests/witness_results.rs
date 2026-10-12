@@ -93,7 +93,7 @@ fn operation(plan: &mut Plan) -> &mut Binding {
 }
 
 #[test]
-fn existing_and_legacy_witness_results_have_a_distinct_bounded_domain() {
+fn aligned_witness_results_have_a_distinct_bounded_domain() {
     let root = circuit();
     let wide = Type::Unsigned {
         max: "340282366920938463463374607431768211456".into(),
@@ -104,12 +104,28 @@ fn existing_and_legacy_witness_results_have_a_distinct_bounded_domain() {
         Type::Boolean,
         Type::JubjubPoint,
         Type::OpaqueBytes,
+        Type::OpaqueString,
+        vector(Type::OpaqueBytes),
+        structure(Type::OpaqueBytes),
+        structure(vector(Type::OpaqueString)),
+        Type::Struct {
+            name: "Empty".into(),
+            fields: vec![],
+        },
+        Type::Vector {
+            element: Box::new(Type::OpaqueString),
+            length: 0,
+        },
         Type::Bytes { length: 0 },
         Type::Bytes { length: 32 },
         wide.clone(),
         vector(wide),
+        tuple(0),
         tuple(1),
         tuple(8),
+        tuple(9),
+        tuple(11),
+        vector(tuple(11)),
         vector(tuple(8)),
         structure(tuple(8)),
         structure(vector(Type::Field)),
@@ -126,13 +142,10 @@ fn existing_and_legacy_witness_results_have_a_distinct_bounded_domain() {
         assert!(validate::witness_result_type(&result), "{result:?}");
     }
     for result in [
-        Type::OpaqueString,
-        vector(Type::OpaqueBytes),
-        structure(Type::OpaqueBytes),
-        tuple(0),
-        tuple(9),
-        vector(tuple(9)),
+        tuple(12),
+        vector(tuple(12)),
         structure(tuple(9)),
+        structure(vector(tuple(9))),
         Type::Unsigned {
             max: "not-a-bound".into(),
         },
@@ -215,8 +228,9 @@ fn independent_validation_rechecks_result_declaration_and_argument_definitions()
             "result" => binding.value.ty = Type::Field,
             "source_result" => source.result = Type::Field,
             "both_results" => {
-                source.result = Type::OpaqueString;
-                binding.value.ty = Type::OpaqueString;
+                // A matching annotation cannot make an unrepresentable output valid.
+                source.result = tuple(12);
+                binding.value.ty = tuple(12);
             }
             "arity" => arguments.clear(),
             "source_parameter" => source.parameters[0].ty = Type::Boolean,
@@ -382,4 +396,86 @@ fn witness_result_vectors_charge_expanded_slots_and_nested_byte_payloads() {
         gap.detail.contains("fixed-byte aggregate payload exceeds"),
         "{gap:?}"
     );
+}
+
+#[test]
+fn aligned_witness_rendering_selects_exact_private_outputs_only_for_opaque_results() {
+    use quote::ToTokens;
+    for (result, exact) in [
+        (Type::Unit, false),
+        (tuple(0), false),
+        (tuple(11), false),
+        (Type::OpaqueString, true),
+        (structure(vector(Type::OpaqueBytes)), true),
+    ] {
+        let root = circuit();
+        let declaration = witness(result);
+        let plan = checked(&root, &declaration).unwrap();
+        let rendered = render(&plan).unwrap();
+        let body = rendered
+            .steps
+            .iter()
+            .map(|s| s.to_token_stream().to_string())
+            .collect::<Vec<_>>()
+            .join(" ");
+        assert_eq!(
+            body.matches("try_witness_metered_exact").count(),
+            usize::from(exact)
+        );
+        assert_eq!(body.matches("try_witness_metered").count(), 1);
+        assert_eq!(body.matches("witnesses . observe").count(), 1);
+    }
+}
+
+#[test]
+fn witness_parameter_eligibility_is_not_narrowed_to_the_result_encoding_domain() {
+    // Callback inputs are local typed values: tuple12 remains a legal parameter,
+    // although official aligned output conversion stops at tuple11.
+    let mut declaration = witness(Type::Field);
+    declaration.parameters[0].ty = tuple(12);
+    let mut root = circuit();
+    root.actions = vec![StateAction::Expression {
+        value: call(Expr::Tuple {
+            elements: vec![field_value(); 12],
+        }),
+    }];
+    let plan = checked(&root, &declaration).unwrap();
+    validate::check(plan.plan().clone(), declarations(&root, &declaration)).unwrap();
+    render(&plan).unwrap();
+    assert!(validate::witness_parameter_type(&tuple(12)));
+    assert!(!validate::witness_result_type(&tuple(12)));
+}
+
+#[test]
+fn aligned_witness_results_do_not_expand_persistent_hash_input_semantics() {
+    for result in [
+        Type::OpaqueString,
+        Type::OpaqueBytes,
+        structure(Type::OpaqueString),
+        structure(vector(Type::OpaqueBytes)),
+    ] {
+        let declaration = witness(result);
+        let mut root = circuit();
+        root.actions = vec![StateAction::Expression {
+            value: Expr::PersistentHash {
+                value: Box::new(call(field_value())),
+            },
+        }];
+        let Err(PlanError::Unsupported(gap)) = checked(&root, &declaration) else {
+            panic!("opaque persistent hashing must remain refused");
+        };
+        assert_eq!(
+            gap.detail,
+            "persistent hash requires a supported aligned FAB value"
+        );
+        // The same exact witness result is valid for the separately qualified curve operation.
+        root.actions = vec![StateAction::Expression {
+            value: Expr::HashToCurve {
+                value: Box::new(call(field_value())),
+            },
+        }];
+        let plan = checked(&root, &declaration).unwrap();
+        validate::check(plan.plan().clone(), declarations(&root, &declaration)).unwrap();
+        render(&plan).unwrap();
+    }
 }

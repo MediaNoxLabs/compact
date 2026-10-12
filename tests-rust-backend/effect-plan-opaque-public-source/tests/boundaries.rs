@@ -282,11 +282,18 @@ fn invalid_nested_input_stops_before_witness_while_invalid_output_stops_after_it
         for witness in [&a, &b, &w] {
             assert_eq!(*witness.calls.borrow(), vec![(5, 1)]);
         }
-        // Public output guard runs after local execution. The existing witness
-        // FAB conversion policy is unchanged and is not claimed lossless here.
+        // #583 preserves exact private witness FAB before transport checks.
+        // The public result guard still refuses this call after one callback;
+        // it never reaches private-output preparation validation.
+        let expected = r::exact_private_output(r::OpaqueBytes::from(bad.clone()));
+        assert_eq!(atoms(&expected), vec![bad]);
+        assert_eq!(native.private_transcript_outputs, vec![expected]);
+        assert_eq!(native.context.private_state, 6);
         assert_eq!(
-            native.private_transcript_outputs,
-            vec![r::fab::AlignedValue::from(r::OpaqueBytes::from(bad))]
+            slots::calls
+                .inspect(state.contract().data.get_ref())
+                .unwrap(),
+            0
         );
     }
 }

@@ -109,16 +109,9 @@ fn owned_cells_and_public_opaque_interfaces_keep_witness_results_separate() {
                 arguments: vec![],
             },
         }];
-        if ty == Type::OpaqueBytes {
-            // Top-level owned bytes also have separately qualified witness results.
-            render(&maps_check(&source).unwrap()).unwrap();
-        } else {
-            // OpaqueString and products with opaque members remain refused.
-            assert!(matches!(
-                maps_check(&source),
-                Err(PlanError::Unsupported(_))
-            ));
-        }
+        // The separately qualified aligned witness result can feed this Cell
+        // domain; canonical storage/type authority remains independently checked.
+        render(&maps_check(&source).unwrap()).unwrap();
         let mut helper = contract(ty.clone()).stateful_circuits.remove(0);
         helper.name = "helper".into();
         helper.internal = true;

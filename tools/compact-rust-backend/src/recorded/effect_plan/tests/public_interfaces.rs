@@ -90,11 +90,14 @@ fn public_opaque_types_are_separate_from_witness_and_local_domains() {
     assert!(!validate::surface_type(&Type::OpaqueBytes));
     assert!(!validate::surface_type(&Type::OpaqueString));
     assert!(validate::witness_result_type(&Type::OpaqueBytes));
-    assert!(!validate::witness_result_type(&Type::OpaqueString));
-    assert!(!validate::witness_result_type(&structure(
+    assert!(validate::witness_result_type(&Type::OpaqueString));
+    assert!(validate::witness_result_type(&structure(
         "Message",
         Type::OpaqueBytes
     )));
+    assert!(!validate::witness_result_type(&Type::Tuple {
+        elements: vec![Type::Field; 12]
+    }));
     assert!(validate::storage_value_type(&Type::OpaqueString));
     assert!(validate::value_type(&Type::OpaqueString));
 }

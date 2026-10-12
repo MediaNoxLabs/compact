@@ -133,9 +133,11 @@ fn owned_callback_inputs_include_tuple9_with_separate_result_and_storage_limits(
         render(&plan).unwrap();
     }
     assert!(validate::public_interface_type(&tuple(9).0));
-    assert!(!validate::witness_result_type(&tuple(9).0));
+    assert!(validate::witness_result_type(&tuple(9).0));
     assert!(!validate::storage_value_type(&tuple(9).0));
-    assert!(!validate::witness_result_type(&Type::OpaqueString));
+    assert!(validate::witness_result_type(&Type::OpaqueString));
+    assert!(validate::witness_parameter_type(&tuple(12).0));
+    assert!(!validate::witness_result_type(&tuple(12).0));
     // Named structs still acquire ledger representation derives with tuple8 bound.
     assert!(validate::witness_parameter_type(&structure(tuple(8).0)));
     assert!(!validate::witness_parameter_type(&structure(tuple(9).0)));

@@ -247,3 +247,24 @@ pub(super) fn exact_hash_input(
         Err(_) => Err("Exact hash input proof thread panicked".into()),
     }
 }
+
+pub(super) fn aligned_witness_results(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let usage = "usage: compact-rust-proof-smoke --aligned-witness-results <proof-output>";
+    let root = arguments.next().ok_or(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("aligned-witness-results-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            super::super::aligned_witness_results::run(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("Aligned witness results proof thread panicked".into()),
+    }
+}

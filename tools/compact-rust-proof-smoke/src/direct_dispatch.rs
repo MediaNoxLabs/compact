@@ -53,6 +53,7 @@ pub(super) fn try_run(
         ("--unit-composition", _) => Some(collections::unit_composition(arguments)),
         ("--aligned-hashes", _) => Some(collections::aligned_hashes(arguments)),
         ("--exact-hash-input", _) => Some(collections::exact_hash_input(arguments)),
+        ("--aligned-witness-results", _) => Some(collections::aligned_witness_results(arguments)),
         ("--conditional-set", _) => Some(collections::conditional_set(arguments)),
         ("--adt-set-enum", _) => Some(collections::adt_set_enum(arguments)),
         ("--guarded-recording", _) => Some(expressions::guarded_recording(arguments)),

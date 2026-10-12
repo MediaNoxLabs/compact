@@ -345,15 +345,9 @@ fn owned_public_roots_keep_storage_and_witness_result_boundaries() {
             &HashMap::new(),
             &HashMap::from([("owned", &witness)]),
         );
-        if ty == Type::OpaqueBytes || matches!(ty, Type::Vector { .. }) || ty == empty::empty_type()
-        {
-            // Result-only witness qualification includes fixed products and empty
-            // named products. Public eligibility and witness parameters stay independent.
-            render(&observed.unwrap()).unwrap();
-        } else {
-            // Text and products containing dynamic opaque members stay refused.
-            assert!(matches!(observed, Err(PlanError::Unsupported(_))));
-        }
+        // Aligned witness outputs include these owned products, independently
+        // of the narrower storage domain checked above.
+        render(&observed.unwrap()).unwrap();
         // Default expressions are only supported for named structures. Use
         // already qualified local expressions for opaque and vector values.
         let value = match &ty {

@@ -28,6 +28,7 @@ mod adt_set_enum;
 mod adt_set_qualified_coin_info;
 mod adt_set_vector;
 mod aligned_hashes;
+mod aligned_witness_results;
 mod asset_custody_grant;
 mod asset_dispatch;
 mod asset_freshness;

@@ -1256,6 +1256,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-effect-plan-aligned-witness-results-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-base-crypto",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-storage",
+ "rand 0.8.6",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-effect-plan-composite-source-fixture"
 version = "0.1.0"
 dependencies = [
@@ -2579,6 +2592,7 @@ dependencies = [
  "compact-rust-did-relation-two-reducer-fixture",
  "compact-rust-did-service-map-reducer-fixture",
  "compact-rust-effect-plan-aligned-hashes-source-fixture",
+ "compact-rust-effect-plan-aligned-witness-results-source-fixture",
  "compact-rust-effect-plan-counter-only-source-fixture",
  "compact-rust-effect-plan-counter-source-fixture",
  "compact-rust-effect-plan-exact-hash-input-source-fixture",

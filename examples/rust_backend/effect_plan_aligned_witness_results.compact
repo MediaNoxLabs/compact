@@ -1,0 +1,55 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger calls: Counter;
+export struct Entry { text: Opaque<"string">; point: JubjubPoint; }
+export struct Nested { items: Vector<2, [Opaque<"string">, JubjubPoint]>; }
+export struct Hashes { x: Field; y: Field; transient: Field; }
+export struct Digest { value: Bytes<32>; }
+witness text_value(): Opaque<"string">;
+witness entry_value(): Entry;
+witness nested_value(): Nested;
+witness tuple_value(): [Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>];
+witness permit(): Boolean;
+constructor() {}
+export circuit text(fallback: Opaque<"string">, selected: Boolean): Hashes {
+  calls.increment(1);
+  const value = disclose(selected) ? text_value() : fallback;
+  const point = hashToCurve<Opaque<"string">>(value);
+  const transient = transientHash<Opaque<"string">>(value);
+  assert(permit(), "denied");
+  return Hashes { x: disclose(jubjubPointX(point)), y: disclose(jubjubPointY(point)), transient: disclose(transient) };
+}
+export circuit entry(fallback: Entry, selected: Boolean): Hashes {
+  calls.increment(1);
+  const value = disclose(selected) ? entry_value() : fallback;
+  const point = hashToCurve<Entry>(value);
+  const transient = transientHash<Entry>(value);
+  assert(permit(), "denied");
+  return Hashes { x: disclose(jubjubPointX(point)), y: disclose(jubjubPointY(point)), transient: disclose(transient) };
+}
+export circuit nested(fallback: Nested, selected: Boolean): Hashes {
+  calls.increment(1);
+  const value = disclose(selected) ? nested_value() : fallback;
+  const point = hashToCurve<Nested>(value);
+  const transient = transientHash<Nested>(value);
+  assert(permit(), "denied");
+  return Hashes { x: disclose(jubjubPointX(point)), y: disclose(jubjubPointY(point)), transient: disclose(transient) };
+}
+export circuit tuple11(fallback: [Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>], selected: Boolean): Digest {
+  calls.increment(1);
+  const value = disclose(selected) ? tuple_value() : fallback;
+  const digest = persistentHash<[Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>]>(value);
+  assert(permit(), "denied");
+  return Digest { value: disclose(digest) };
+}
+circuit verify_text(): [] {
+  const value = text_value();
+  assert(transientHash<Opaque<"string">>(value) != 0, "zero text hash");
+}
+export circuit unit_text(): [] {
+  calls.increment(1);
+  verify_text();
+  assert(permit(), "denied");
+}

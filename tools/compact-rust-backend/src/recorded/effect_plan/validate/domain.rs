@@ -108,28 +108,11 @@ pub(super) fn storage_value_type(ty: &Type) -> bool {
     *ty != Type::Unit && member(ty)
 }
 
-/// Recorded witness outputs require Clone plus the official aligned-value conversion.
-/// Preserve existing surface results and the legacy fixed-product witness domain;
-/// only top-level opaque bytes have been qualified as dynamic witness outputs.
+/// Recorded witness outputs use the qualified official aligned FAB domain.
+/// This includes owned opaque leaves and standalone tuples through arity11;
+/// named products retain their stricter generated-derive representation limits.
 /// Canonical declarations and size/depth budgets are checked by each caller first.
+/// Parameters, public interfaces, storage and fixed-only hashes stay separate.
 pub(super) fn witness_result_type(ty: &Type) -> bool {
-    fn fixed_product(ty: &Type) -> bool {
-        match ty {
-            Type::Boolean
-            | Type::Field
-            | Type::JubjubPoint
-            | Type::Bytes { .. }
-            | Type::Unsigned { .. }
-            | Type::Enum { .. } => true,
-            Type::Struct { fields, .. } => fields.iter().all(|field| fixed_product(&field.ty)),
-            Type::Vector { element, .. } => fixed_product(element),
-            // Retain the legacy CellValue product boundary, even though official
-            // FAB conversion alone supports larger standalone tuples.
-            Type::Tuple { elements } => {
-                !elements.is_empty() && elements.len() <= 8 && elements.iter().all(fixed_product)
-            }
-            _ => false,
-        }
-    }
-    value_type(ty) && (surface_type(ty) || *ty == Type::OpaqueBytes || fixed_product(ty))
+    super::fab::aligned_fab_type(ty)
 }

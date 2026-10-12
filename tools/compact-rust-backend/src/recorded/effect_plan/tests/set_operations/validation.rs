@@ -186,12 +186,8 @@ fn set_domain_refusals_and_witness_policy_are_independent_of_opaque_public_roots
                 arguments: vec![],
             }),
         }];
-        if ty == Type::OpaqueBytes {
-            // Qualified owned witness results can feed an already admitted Set.
-            render(&checked(&c).unwrap()).unwrap();
-        } else {
-            // OpaqueString and products with opaque members remain refused results.
-            assert!(matches!(checked(&c), Err(PlanError::Unsupported(_))));
-        }
+        // Qualified aligned witness results can feed an already admitted Set;
+        // the Set key policy and declaration authority are unchanged.
+        render(&checked(&c).unwrap()).unwrap();
     }
 }

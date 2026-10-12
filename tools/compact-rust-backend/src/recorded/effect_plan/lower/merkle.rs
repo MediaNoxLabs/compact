@@ -32,7 +32,7 @@ impl Lowerer<'_> {
             return Err(invalid(path, "Merkle tree kind or depth mismatch"));
         }
         self.declarations.types().validate_at(ty, path)?;
-        if !validate::storage_value_type(ty) {
+        if !validate::merkle_leaf_type(ty) {
             return Err(invalid(path, "unsupported Merkle leaf type"));
         }
         Ok((

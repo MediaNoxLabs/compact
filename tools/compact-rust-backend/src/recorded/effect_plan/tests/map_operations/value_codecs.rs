@@ -1,7 +1,7 @@
 // This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
-//! Map values reuse existing CellValue codecs without changing other storage domains.
+//! Map values and qualified ordinary storage reuse the same existing CellValue codecs.
 use super::*;
 fn vector(element: Type, length: usize) -> Type {
     Type::Vector {
@@ -59,7 +59,7 @@ fn recursive_map_value_codecs_cover_empty_owned_products_vectors_and_wide_intege
     }
 }
 #[test]
-fn map_codec_policy_preserves_other_storage_domains_and_tuple_eight_boundary() {
+fn map_codec_policy_shares_qualified_storage_and_preserves_tuple_eight_boundary() {
     for value in [
         vector(Type::Field, 2),
         tuple(8),
@@ -70,15 +70,13 @@ fn map_codec_policy_preserves_other_storage_domains_and_tuple_eight_boundary() {
         },
     ] {
         assert!(validate::maps::scalar_value_type(&value));
-        assert!(
-            !validate::storage_value_type(&value),
-            "Cell/Set/key policy unchanged"
-        );
-        assert!(!validate::cell_type(&value));
+        assert!(validate::cell_type(&value));
+        assert!(validate::set_element_type(&value));
+        assert!(validate::map_key_type(&value));
         let c = contract(value, Type::Field);
         assert!(
-            checked(&c).is_err(),
-            "a value codec does not authorize a Map key"
+            checked(&c).is_ok(),
+            "qualified CellValue now authorizes Map keys"
         );
     }
     for value in [

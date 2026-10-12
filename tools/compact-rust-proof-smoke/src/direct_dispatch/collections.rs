@@ -114,6 +114,20 @@ pub(super) fn adt_set_vector(
     adt_set_vector::run(Path::new(&root))
 }
 
+pub(super) fn adt_set_vector_strict(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let root = arguments
+        .next()
+        .ok_or("usage: compact-rust-proof-smoke --adt-set-vector-strict <proof-output>")?;
+    if arguments.next().is_some() {
+        return Err(
+            "usage: compact-rust-proof-smoke --adt-set-vector-strict <proof-output>".into(),
+        );
+    }
+    adt_set_vector::run_strict(Path::new(&root))
+}
+
 pub(super) fn adt_list_vector_field_4(
     arguments: &mut impl Iterator<Item = OsString>,
 ) -> Result<(), Box<dyn Error>> {

@@ -38,7 +38,7 @@ fn leaf<'a>(
         ));
     }
     declarations.types().validate_at(ty, path)?;
-    if !storage_value_type(ty) {
+    if !merkle_leaf_type(ty) {
         return Err(invalid(path, "unsupported Merkle leaf type"));
     }
     Ok(ty)

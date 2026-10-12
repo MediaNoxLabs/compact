@@ -543,3 +543,6 @@ mod aligned_hashes;
 
 #[path = "tests/unit_value_operations.rs"]
 mod unit_value_operations;
+
+#[path = "tests/storage_codecs.rs"]
+mod storage_codecs;

@@ -318,7 +318,7 @@ fn wide_widening_and_joins_preserve_arithmetic_and_implicit_narrowing_limits() {
     }
 }
 #[test]
-fn wide_public_and_witness_values_preserve_cell_boundaries() {
+fn wide_public_witness_and_cell_values_keep_declaration_authority() {
     let mut candidate = circuit(as_field(unsigned(TWO128, TWO128)));
     candidate.parameters.push(Parameter {
         name: "wide".into(),
@@ -348,10 +348,8 @@ fn wide_public_and_witness_values_preserve_cell_boundaries() {
         field: "wide".into(),
         index: 0,
     }));
-    assert!(matches!(
-        check(&candidate, &fields, &HashMap::new()),
-        Err(PlanError::Unsupported(_))
-    ));
+    let plan = check(&candidate, &fields, &HashMap::new()).unwrap();
+    render(&plan).unwrap();
     candidate = circuit(as_field(unsigned(TWO128, TWO128)));
     candidate.return_value = StateReturn::Effectful {
         body: ReturnPlan::Sequence {
@@ -365,8 +363,21 @@ fn wide_public_and_witness_values_preserve_cell_boundaries() {
             }),
         },
     };
+    let plan = check(&candidate, &fields, &HashMap::new()).unwrap();
+    render(&plan).unwrap();
+    let mut wrong_slot = candidate.clone();
+    let StateReturn::Effectful {
+        body: ReturnPlan::Sequence { actions, .. },
+    } = &mut wrong_slot.return_value
+    else {
+        unreachable!()
+    };
+    let StateAction::CellWrite { index, .. } = &mut actions[0] else {
+        unreachable!()
+    };
+    *index = 1;
     assert!(matches!(
-        check(&candidate, &fields, &HashMap::new()),
+        check(&wrong_slot, &fields, &HashMap::new()),
         Err(PlanError::Unsupported(_))
     ));
 
@@ -383,8 +394,8 @@ fn wide_public_and_witness_values_preserve_cell_boundaries() {
         name: "mark".into(),
         arguments: vec![unsigned(TWO128, TWO128)],
     });
-    // Callback arguments have a separate typed-value policy; the cell refusals
-    // above remain intact when public wide values become encodable.
+    // Callback and storage roles share this canonical wide carrier while slot
+    // identity and callback signatures remain independent authorities.
     let checked = check(
         &candidate,
         &HashMap::new(),
@@ -399,7 +410,7 @@ fn wide_public_and_witness_values_preserve_cell_boundaries() {
         arguments: vec![],
     }));
     // Wide results independently enter the qualified witness-result domain.
-    // Neither public nor callback eligibility admits wide ledger cells.
+    // Cell admission above uses its separately qualified codec policy.
     let checked = check(
         &candidate,
         &HashMap::new(),

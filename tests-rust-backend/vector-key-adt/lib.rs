@@ -290,110 +290,172 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_static_0: runtime::FixedVector<runtime::Field, 2> =
-                runtime::FixedVector::new([
-                    runtime::Field::from(0u128),
-                    runtime::Field::from(1u128),
-                ]);
-            let frame = crate::ledger_slots::keys
-                .record_insert(frame, (__compact_recorded_static_0).clone())?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: runtime::Field = runtime::Field::from_le_bytes(&[
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_1: runtime::Field = runtime::Field::from_le_bytes(&[
+                1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_2: runtime::FixedVector<runtime::Field, 2> =
+                runtime::FixedVector::new([__compact_effect_0, __compact_effect_1]);
+            let frame =
+                crate::ledger_slots::keys.record_insert(frame, (__compact_effect_2).clone())?;
+            let __compact_effect_3: () = ();
+            let __compact_effect_4: () = ();
+            Ok(frame.finish(__compact_effect_4))
         }
         pub fn setMember<Private>(
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_static_0: runtime::FixedVector<runtime::Field, 2> =
-                runtime::FixedVector::new([
-                    runtime::Field::from(0u128),
-                    runtime::Field::from(1u128),
-                ]);
-            let __compact_recorded_key_1 = (__compact_recorded_static_0).clone();
-            let (frame, __compact_recorded_member_2): (_, bool) =
-                crate::ledger_slots::keys.record_member(frame, __compact_recorded_key_1)?;
-            let frame =
-                crate::ledger_slots::present.record_write(frame, __compact_recorded_member_2)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: runtime::Field = runtime::Field::from_le_bytes(&[
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_1: runtime::Field = runtime::Field::from_le_bytes(&[
+                1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_2: runtime::FixedVector<runtime::Field, 2> =
+                runtime::FixedVector::new([__compact_effect_0, __compact_effect_1]);
+            let (frame, __compact_effect_3): (_, bool) =
+                crate::ledger_slots::keys.record_member(frame, (__compact_effect_2).clone())?;
+            let frame = crate::ledger_slots::present.record_write(frame, __compact_effect_3)?;
+            let __compact_effect_4: () = ();
+            let __compact_effect_5: () = ();
+            Ok(frame.finish(__compact_effect_5))
         }
         pub fn setRemove<Private>(
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_static_0: runtime::FixedVector<runtime::Field, 2> =
-                runtime::FixedVector::new([
-                    runtime::Field::from(0u128),
-                    runtime::Field::from(1u128),
-                ]);
-            let frame = crate::ledger_slots::keys
-                .record_remove(frame, (__compact_recorded_static_0).clone())?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: runtime::Field = runtime::Field::from_le_bytes(&[
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_1: runtime::Field = runtime::Field::from_le_bytes(&[
+                1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_2: runtime::FixedVector<runtime::Field, 2> =
+                runtime::FixedVector::new([__compact_effect_0, __compact_effect_1]);
+            let frame =
+                crate::ledger_slots::keys.record_remove(frame, (__compact_effect_2).clone())?;
+            let __compact_effect_3: () = ();
+            let __compact_effect_4: () = ();
+            Ok(frame.finish(__compact_effect_4))
         }
         pub fn mapInsert<Private>(
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_static_0: runtime::FixedVector<runtime::Field, 2> =
-                runtime::FixedVector::new([
-                    runtime::Field::from(0u128),
-                    runtime::Field::from(1u128),
-                ]);
-            let __compact_recorded_key_1 = (__compact_recorded_static_0).clone();
+            let __compact_effect_0: runtime::Field = runtime::Field::from_le_bytes(&[
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_1: runtime::Field = runtime::Field::from_le_bytes(&[
+                1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_2: runtime::FixedVector<runtime::Field, 2> =
+                runtime::FixedVector::new([__compact_effect_0, __compact_effect_1]);
+            let __compact_effect_3: runtime::Field = runtime::Field::from_le_bytes(&[
+                7u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
             let frame = crate::ledger_slots::values.record_insert(
                 frame,
-                __compact_recorded_key_1,
-                runtime::Field::from(7u128),
+                (__compact_effect_2).clone(),
+                __compact_effect_3,
             )?;
-            Ok(frame.finish(()))
+            let __compact_effect_4: () = ();
+            let __compact_effect_5: () = ();
+            Ok(frame.finish(__compact_effect_5))
         }
         pub fn mapMember<Private>(
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_static_0: runtime::FixedVector<runtime::Field, 2> =
-                runtime::FixedVector::new([
-                    runtime::Field::from(0u128),
-                    runtime::Field::from(1u128),
-                ]);
-            let (frame, __compact_recorded_member_1): (_, bool) = crate::ledger_slots::values
-                .record_member(frame, (__compact_recorded_static_0).clone())?;
-            let frame =
-                crate::ledger_slots::present.record_write(frame, __compact_recorded_member_1)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: runtime::Field = runtime::Field::from_le_bytes(&[
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_1: runtime::Field = runtime::Field::from_le_bytes(&[
+                1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_2: runtime::FixedVector<runtime::Field, 2> =
+                runtime::FixedVector::new([__compact_effect_0, __compact_effect_1]);
+            let (frame, __compact_effect_3): (_, bool) =
+                crate::ledger_slots::values.record_member(frame, (__compact_effect_2).clone())?;
+            let frame = crate::ledger_slots::present.record_write(frame, __compact_effect_3)?;
+            let __compact_effect_4: () = ();
+            let __compact_effect_5: () = ();
+            Ok(frame.finish(__compact_effect_5))
         }
         pub fn mapLookup<Private>(
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_static_0: runtime::FixedVector<runtime::Field, 2> =
-                runtime::FixedVector::new([
-                    runtime::Field::from(0u128),
-                    runtime::Field::from(1u128),
-                ]);
-            let (frame, __compact_recorded_lookup_1): (_, runtime::Field) =
-                crate::ledger_slots::values
-                    .record_lookup(frame, (__compact_recorded_static_0).clone())?;
-            let frame =
-                crate::ledger_slots::stored.record_write(frame, __compact_recorded_lookup_1)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: runtime::Field = runtime::Field::from_le_bytes(&[
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_1: runtime::Field = runtime::Field::from_le_bytes(&[
+                1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_2: runtime::FixedVector<runtime::Field, 2> =
+                runtime::FixedVector::new([__compact_effect_0, __compact_effect_1]);
+            let (frame, __compact_effect_3): (_, runtime::Field) =
+                crate::ledger_slots::values.record_lookup(frame, (__compact_effect_2).clone())?;
+            let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_3)?;
+            let __compact_effect_4: () = ();
+            let __compact_effect_5: () = ();
+            Ok(frame.finish(__compact_effect_5))
         }
         pub fn mapRemove<Private>(
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_static_0: runtime::FixedVector<runtime::Field, 2> =
-                runtime::FixedVector::new([
-                    runtime::Field::from(0u128),
-                    runtime::Field::from(1u128),
-                ]);
-            let frame = crate::ledger_slots::values
-                .record_remove(frame, (__compact_recorded_static_0).clone())?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: runtime::Field = runtime::Field::from_le_bytes(&[
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_1: runtime::Field = runtime::Field::from_le_bytes(&[
+                1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_2: runtime::FixedVector<runtime::Field, 2> =
+                runtime::FixedVector::new([__compact_effect_0, __compact_effect_1]);
+            let frame =
+                crate::ledger_slots::values.record_remove(frame, (__compact_effect_2).clone())?;
+            let __compact_effect_3: () = ();
+            let __compact_effect_4: () = ();
+            Ok(frame.finish(__compact_effect_4))
         }
         pub fn mapInsertDefault<Private>(
             context: runtime::context::CircuitContext<Private>,

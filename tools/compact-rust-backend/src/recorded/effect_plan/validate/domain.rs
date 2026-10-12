@@ -92,22 +92,6 @@ pub(super) fn coercible(source: &Type, target: &Type) -> bool {
     }
 }
 
-/// Storage eligibility is independent of public/stateful/witness interfaces.
-/// A top-level Unit storage value stays refused, while Unit members retain the prior
-/// surface policy. Canonical definitions and resource bounds are checked first.
-pub(super) fn storage_value_type(ty: &Type) -> bool {
-    fn member(ty: &Type) -> bool {
-        match ty {
-            Type::OpaqueString | Type::OpaqueBytes => true,
-            Type::Struct { fields, .. } => {
-                !fields.is_empty() && fields.iter().all(|field| member(&field.ty))
-            }
-            _ => surface_type(ty),
-        }
-    }
-    *ty != Type::Unit && member(ty)
-}
-
 /// Recorded witness outputs use the qualified official aligned FAB domain.
 /// This includes owned opaque leaves and standalone tuples through arity11;
 /// named products retain their stricter generated-derive representation limits.

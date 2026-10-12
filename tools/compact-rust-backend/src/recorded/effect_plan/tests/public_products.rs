@@ -118,11 +118,11 @@ fn public_products_follow_official_encoding_and_named_derive_boundaries() {
     }
     // Witness outputs now share the bounded aligned representation; storage
     // retains its own narrower boundary, including tuple9 refusal.
-    assert!(!validate::storage_value_type(&tuple(9)));
+    assert!(!validate::cell_type(&tuple(9)));
     assert!(validate::witness_result_type(&tuple(9)));
     assert!(!validate::witness_result_type(&tuple(12)));
     assert!(!validate::witness_result_type(&named(tuple(9))));
-    assert!(!validate::storage_value_type(&validate::uint(
+    assert!(validate::cell_type(&validate::uint(
         "340282366920938463463374607431768211456"
     )));
     assert!(validate::witness_result_type(&Type::OpaqueString));

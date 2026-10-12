@@ -19,7 +19,7 @@ pub(super) fn element<'a>(
         return Err(invalid(path, "expected Set declaration"));
     };
     declarations.types().validate_at(ty, path)?;
-    if !storage_value_type(ty) {
+    if !set_element_type(ty) {
         return Err(invalid(path, "unsupported Set element type"));
     }
     Ok(ty)

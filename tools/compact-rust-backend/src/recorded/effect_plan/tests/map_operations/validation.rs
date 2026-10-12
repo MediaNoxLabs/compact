@@ -83,12 +83,28 @@ fn scalar_codec_limits_remain_distinct_from_map_membership() {
     }
     for key in [
         Type::Unit,
-        validate::uint("340282366920938463463374607431768211456"),
+        Type::Tuple {
+            elements: vec![Type::Field; 9],
+        },
     ] {
         let mut c = contract(key, Type::Field);
         c.stateful_circuits[0].actions.clear();
         assert!(matches!(checked(&c), Err(PlanError::Unsupported(_))));
     }
+    let mut c = contract(
+        validate::uint("340282366920938463463374607431768211456"),
+        Type::Field,
+    );
+    c.stateful_circuits[0].actions.clear();
+    let plan = checked(&c).unwrap();
+    assert!(
+        plan.plan()
+            .body
+            .bindings
+            .iter()
+            .any(|b| matches!(b.operation, Operation::MapMember { .. }))
+    );
+    render(&plan).unwrap();
 }
 #[test]
 fn map_slot_selection_preserves_distinct_identity_and_chunked_paths() {

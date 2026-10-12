@@ -92,6 +92,7 @@ pub(super) fn try_run(
             Some(shielded::adt_set_qualified_coin_info(arguments))
         }
         ("--adt-set-vector", _) => Some(collections::adt_set_vector(arguments)),
+        ("--adt-set-vector-strict", _) => Some(collections::adt_set_vector_strict(arguments)),
         ("--adt-list-vector-field-4", _) => Some(collections::adt_list_vector_field_4(arguments)),
         ("--adt-list-bytes", _) => Some(collections::adt_list_bytes(arguments)),
         ("--adt-list-enum", _) => Some(collections::adt_list_enum(arguments)),

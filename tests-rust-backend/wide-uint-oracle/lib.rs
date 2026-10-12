@@ -194,14 +194,22 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_witness_0) = frame.try_witness_metered(|context, meter| {
+            let (frame, __compact_effect_0): (
+                _,
+                runtime::WideUint<
+                    1329227995784915872903807060280344575u128,
+                    340282366920938463463374607431768211455u128,
+                >,
+            ) = frame.try_witness_metered(|context, meter| {
                 witnesses.nextWide(context.witness_context_with(super::LedgerView {
                     state: context.query.state.get_ref(),
                     meter,
                 }))
             })?;
-            let frame = crate::ledger_slots::wide.record_write(frame, __compact_witness_0)?;
-            Ok(frame.finish(()))
+            let frame = crate::ledger_slots::wide.record_write(frame, __compact_effect_0)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn readWide<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -216,14 +224,14 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (
+            let (frame, __compact_effect_0): (
                 _,
                 runtime::WideUint<
                     1329227995784915872903807060280344575u128,
                     340282366920938463463374607431768211455u128,
                 >,
             ) = crate::ledger_slots::wide.record_read(frame)?;
-            Ok(frame.finish(observed))
+            Ok(frame.finish(__compact_effect_0))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

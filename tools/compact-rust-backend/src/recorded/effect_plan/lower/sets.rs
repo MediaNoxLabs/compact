@@ -17,7 +17,7 @@ impl Lowerer<'_> {
             return Err(invalid(path, "expected Set field"));
         };
         self.declarations.types().validate_at(ty, path)?;
-        if !validate::storage_value_type(ty) {
+        if !validate::set_element_type(ty) {
             return Err(invalid(path, "unsupported Set element type"));
         }
         Ok((SetSlot { declaration, index }, ty.clone()))

@@ -166,8 +166,24 @@ PROVED_SET_SEQUENCE_TRANSITION = inventory.BASELINE.with_name("recording_admissi
 ORDINARY_INTERFACE_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.ordinary-interface-606.json")
 
 
+STORAGE_CODEC_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.storage-codecs-607.json")
+
+
+def checkpoint_606(root):
+    """Authenticate shared storage domains before historical fixtures."""
+    extension = json.loads(STORAGE_CODEC_EXTENSION.read_text())
+    try:
+        source = (root / inventory.storage_codecs.OWNER).read_bytes()
+    except FileNotFoundError:
+        return root
+    if inventory.digest(source) == extension['owners'][inventory.storage_codecs.OWNER]['current_sha256']:
+        return inventory.storage_codecs.checkpoint(root, extension)
+    return root
+
+
 def checkpoint_605(root):
     """Authenticate the complete new ordinary route before historical fixtures."""
+    root = checkpoint_606(root)
     extension = json.loads(ORDINARY_INTERFACE_EXTENSION.read_text())
     try:
         source = (root / inventory.ordinary_interface.OWNER).read_bytes()
@@ -745,7 +761,8 @@ class InventoryTests(unittest.TestCase):
                                   opaque_boolean_transition=json.loads(OPAQUE_BOOLEAN_TRANSITION.read_text()),
                                   opaque_field_transition=json.loads(OPAQUE_FIELD_TRANSITION.read_text()),
                                   proved_set_sequence_transition=json.loads(PROVED_SET_SEQUENCE_TRANSITION.read_text()),
-                                  ordinary_interface_extension=json.loads(ORDINARY_INTERFACE_EXTENSION.read_text()))
+                                  ordinary_interface_extension=json.loads(ORDINARY_INTERFACE_EXTENSION.read_text()),
+                                  storage_codec_extension=json.loads(STORAGE_CODEC_EXTENSION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)

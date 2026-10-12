@@ -104,7 +104,7 @@ fn declarations(contract: &Contract) -> declarations::Declarations {
 }
 
 #[test]
-fn cell_domain_preserves_prior_members_and_adds_only_owned_leaf_storage() {
+fn cell_domain_preserves_prior_members_and_qualifies_recursive_codecs() {
     for ty in [
         Type::Field,
         Type::Boolean,
@@ -116,14 +116,6 @@ fn cell_domain_preserves_prior_members_and_adds_only_owned_leaf_storage() {
         Type::OpaqueBytes,
         owned(),
         structure("Nested", vec![owned(), Type::Unit]),
-    ] {
-        assert!(validate::cell_type(&ty), "{ty:?}");
-        let contract = contract(ty);
-        let checked = maps_check(&contract).unwrap();
-        render(&checked).unwrap();
-    }
-    for ty in [
-        Type::Unit,
         Type::Tuple {
             elements: vec![Type::Boolean],
         },
@@ -142,6 +134,33 @@ fn cell_domain_preserves_prior_members_and_adds_only_owned_leaf_storage() {
         ),
         Type::Unsigned {
             max: "340282366920938463463374607431768211456".into(),
+        },
+    ] {
+        assert!(validate::cell_type(&ty), "{ty:?}");
+        let plan = maps_check(&contract(ty)).unwrap();
+        assert!(
+            plan.plan()
+                .body
+                .bindings
+                .iter()
+                .any(|b| matches!(b.operation, Operation::CellRead(_)))
+        );
+        render(&plan).unwrap();
+    }
+    for ty in [
+        Type::Unit,
+        Type::Tuple {
+            elements: vec![Type::Boolean; 9],
+        },
+        Type::Vector {
+            element: Box::new(Type::Tuple {
+                elements: vec![Type::Field; 9],
+            }),
+            length: 0,
+        },
+        Type::Unsigned {
+            max: "452312848583266388373324160190187140051835877600158453279131187530910662656"
+                .into(),
         },
     ] {
         assert!(!validate::cell_type(&ty), "{ty:?}");

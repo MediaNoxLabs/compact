@@ -10,9 +10,9 @@ use super::*;
 /// Canonical definitions and resource preflight remain the caller's authority.
 /// Keep the established top-level Unit refusal; Unit members and empty named
 /// products still have recursive CellValue representations.
-/// This capability does not widen Map keys, ordinary Cells or Sets.
+/// Storage roles share codec capability; operation and declaration checks remain separate.
 pub(in super::super) fn scalar_value_type(ty: &Type) -> bool {
-    *ty != Type::Unit && value_type(ty) && super::domain::derives_supported(ty)
+    super::storage::map_value_type(ty)
 }
 
 pub(in super::super) fn types<'a>(
@@ -31,7 +31,7 @@ pub(in super::super) fn types<'a>(
         return Err(invalid(path, "expected Map declaration"));
     };
     declarations.types().validate_at(key, path)?;
-    if !storage_value_type(key) {
+    if !map_key_type(key) {
         return Err(invalid(path, "unsupported Map key type"));
     }
     if scalar {

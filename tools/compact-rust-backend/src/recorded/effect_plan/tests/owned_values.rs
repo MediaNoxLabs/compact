@@ -330,13 +330,16 @@ fn owned_public_roots_keep_storage_and_witness_result_boundaries() {
             &HashMap::from([("owned", &cell)]),
             &HashMap::new(),
         );
-        if matches!(ty, Type::OpaqueString | Type::OpaqueBytes) {
-            // Owned Cell reads now have a separately qualified storage domain.
-            render(&storage.unwrap()).unwrap();
-        } else {
-            // The carrier contains a Vector; vectors and empty products remain excluded.
-            assert!(matches!(storage, Err(PlanError::Unsupported(_))));
-        }
+        let storage = storage.unwrap();
+        assert!(
+            storage
+                .plan()
+                .body
+                .bindings
+                .iter()
+                .any(|b| matches!(b.operation, Operation::CellRead(_)))
+        );
+        render(&storage).unwrap();
         let witness = WitnessDeclaration {
             source: None,
             name: "owned".into(),
@@ -477,7 +480,7 @@ fn complete_retained_owned_value_source_uses_checked_operations() {
     }
 }
 #[test]
-fn local_and_witness_owned_inputs_preserve_vector_storage_boundaries() {
+fn local_witness_and_cell_inputs_preserve_recursive_owned_values() {
     let cases = vec![
         (
             Type::OpaqueString,
@@ -569,10 +572,15 @@ fn local_and_witness_owned_inputs_preserve_vector_storage_boundaries() {
             value,
         }];
         let storage = check(&caller, &HashMap::from([("owned", &cell)]), &HashMap::new());
-        if matches!(ty, Type::OpaqueString | Type::OpaqueBytes) {
-            render(&storage.unwrap()).unwrap();
-        } else {
-            assert!(matches!(storage, Err(PlanError::Unsupported(_))));
-        }
+        let storage = storage.unwrap();
+        assert!(
+            storage
+                .plan()
+                .body
+                .bindings
+                .iter()
+                .any(|b| matches!(b.operation, Operation::CellWrite { .. }))
+        );
+        render(&storage).unwrap();
     }
 }

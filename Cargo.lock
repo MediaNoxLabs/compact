@@ -2508,6 +2508,8 @@ version = "0.1.0"
 dependencies = [
  "midnight-base-crypto",
  "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
  "serde_json",
 ]
 

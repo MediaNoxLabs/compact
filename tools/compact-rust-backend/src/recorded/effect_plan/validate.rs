@@ -16,6 +16,8 @@ mod merkle;
 pub(super) use merkle::root_type;
 mod pure;
 mod sets;
+mod storage;
+pub(super) use storage::{map_key_type, merkle_leaf_type, set_element_type};
 
 struct Validation {
     allocated: HashSet<usize>,
@@ -100,11 +102,7 @@ pub(super) fn root_interface_type(ty: &Type, internal: bool) -> bool {
 }
 /// Declared Cell storage may own opaque values without widening interfaces.
 pub(super) fn cell_type(ty: &Type) -> bool {
-    storage_value_type(ty)
-}
-/// Shared ordinary Cell/Set value representation policy, separate from interfaces.
-pub(super) fn storage_value_type(ty: &Type) -> bool {
-    domain::storage_value_type(ty)
+    storage::cell_value_type(ty)
 }
 /// Witness inputs are typed callback values, not private FAB output encodings.
 /// Keep this policy named separately from roots, results and ledger storage.

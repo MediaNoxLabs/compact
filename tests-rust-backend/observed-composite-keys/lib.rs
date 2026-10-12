@@ -288,9 +288,12 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: runtime::FixedVector<runtime::Field, 2> = __compact_param_0;
             let frame = crate::ledger_slots::vectorKeys
-                .record_insert(frame, (__compact_param_0).clone())?;
-            Ok(frame.finish(()))
+                .record_insert(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn insert_tuple<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -298,8 +301,11 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame = crate::ledger_slots::tupleKeys.record_insert(frame, __compact_param_0)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: (runtime::Field, bool) = __compact_param_0;
+            let frame = crate::ledger_slots::tupleKeys.record_insert(frame, __compact_effect_0)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn insert_struct<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -307,9 +313,12 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: crate::types::CompositeKey = __compact_param_0;
             let frame = crate::ledger_slots::structKeys
-                .record_insert(frame, (__compact_param_0).clone())?;
-            Ok(frame.finish(()))
+                .record_insert(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn roundtrip_tuple<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -317,12 +326,14 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame = crate::ledger_slots::tupleKeys.record_insert(frame, __compact_param_0)?;
-            let frame = crate::ledger_slots::tupleKeys.record_remove(frame, __compact_param_0)?;
-            let __compact_recorded_key_0 = __compact_param_0;
-            let (frame, __compact_recorded_member_1): (_, bool) =
-                crate::ledger_slots::tupleKeys.record_member(frame, __compact_recorded_key_0)?;
-            Ok(frame.finish(__compact_recorded_member_1))
+            let __compact_effect_0: (runtime::Field, bool) = __compact_param_0;
+            let frame = crate::ledger_slots::tupleKeys.record_insert(frame, __compact_effect_0)?;
+            let __compact_effect_1: () = ();
+            let frame = crate::ledger_slots::tupleKeys.record_remove(frame, __compact_effect_0)?;
+            let __compact_effect_2: () = ();
+            let (frame, __compact_effect_3): (_, bool) =
+                crate::ledger_slots::tupleKeys.record_member(frame, __compact_effect_0)?;
+            Ok(frame.finish(__compact_effect_3))
         }
         pub fn roundtrip_struct<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -330,14 +341,16 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: crate::types::CompositeKey = __compact_param_0;
             let frame = crate::ledger_slots::structKeys
-                .record_insert(frame, (__compact_param_0).clone())?;
+                .record_insert(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_1: () = ();
             let frame = crate::ledger_slots::structKeys
-                .record_remove(frame, (__compact_param_0).clone())?;
-            let __compact_recorded_key_0 = (__compact_param_0).clone();
-            let (frame, __compact_recorded_member_1): (_, bool) =
-                crate::ledger_slots::structKeys.record_member(frame, __compact_recorded_key_0)?;
-            Ok(frame.finish(__compact_recorded_member_1))
+                .record_remove(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_2: () = ();
+            let (frame, __compact_effect_3): (_, bool) = crate::ledger_slots::structKeys
+                .record_member(frame, (__compact_effect_0).clone())?;
+            Ok(frame.finish(__compact_effect_3))
         }
         #[allow(
             clippy::too_many_arguments,

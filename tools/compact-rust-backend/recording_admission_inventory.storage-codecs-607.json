@@ -1,0 +1,261 @@
+{
+  "schema_version": 1,
+  "issue": 607,
+  "new_route_ids": [],
+  "baseline_commit": "bce2fb6939f26167564d36a2f877f5a76497f39d",
+  "claim": "Share qualified recursive CellValue codecs across Cell, Set and Map key roles; preserve exact previous scalar Map value and Merkle leaf domains, canonical and resource authority, selector priority and retirement accounting.",
+  "previous_selector": {
+    "ordered_calls": [],
+    "function_sha256": "3960fe663af28139e7e4f584311cf173335d298575a65948a2d2f7009216e33b"
+  },
+  "current_selector": {
+    "ordered_calls": [],
+    "function_sha256": "3960fe663af28139e7e4f584311cf173335d298575a65948a2d2f7009216e33b"
+  },
+  "owners": {
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/merkle.rs": {
+      "previous_sha256": "c4a1daf3fdc383f39b28e9046dcb7f8e2c0535a643b322a9a54449f2d3a5a80c",
+      "current_sha256": "de34659d017092caa2c42979e019cf7f7866c9a82b442d0c5b60b2eacc0385bd",
+      "predecessor_reconstruction": [
+        {
+          "current": "            return Err(invalid(path, \"Merkle tree kind or depth mismatch\"));\n        }\n        self.declarations.types().validate_at(ty, path)?;\n        if !validate::merkle_leaf_type(ty) {\n            return Err(invalid(path, \"unsupported Merkle leaf type\"));\n        }\n        Ok((\n",
+          "previous": "            return Err(invalid(path, \"Merkle tree kind or depth mismatch\"));\n        }\n        self.declarations.types().validate_at(ty, path)?;\n        if !validate::storage_value_type(ty) {\n            return Err(invalid(path, \"unsupported Merkle leaf type\"));\n        }\n        Ok((\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/sets.rs": {
+      "previous_sha256": "bc492e473efdf8abab77f67f3f24310ab0ec6c5a8aedb920f7518ae9efa568a2",
+      "current_sha256": "188e10a81622358ea483d86196e44c88343c52f1d5873b636fc0c45e8096b4b0",
+      "predecessor_reconstruction": [
+        {
+          "current": "            return Err(invalid(path, \"expected Set field\"));\n        };\n        self.declarations.types().validate_at(ty, path)?;\n        if !validate::set_element_type(ty) {\n            return Err(invalid(path, \"unsupported Set element type\"));\n        }\n        Ok((SetSlot { declaration, index }, ty.clone()))\n",
+          "previous": "            return Err(invalid(path, \"expected Set field\"));\n        };\n        self.declarations.types().validate_at(ty, path)?;\n        if !validate::storage_value_type(ty) {\n            return Err(invalid(path, \"unsupported Set element type\"));\n        }\n        Ok((SetSlot { declaration, index }, ty.clone()))\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests.rs": {
+      "previous_sha256": "a124c44c008ed82dd7917c53913817a94a83379eb2ea9f14141751670357aac6",
+      "current_sha256": "27c854d94f1b3fa3275c75bba7967e47f28b04d10597d92bde399a9e0120e4df",
+      "predecessor_reconstruction": [
+        {
+          "current": "\n#[path = \"tests/unit_value_operations.rs\"]\nmod unit_value_operations;\n\n#[path = \"tests/storage_codecs.rs\"]\nmod storage_codecs;\n",
+          "previous": "\n#[path = \"tests/unit_value_operations.rs\"]\nmod unit_value_operations;\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/map_operations/value_codecs.rs": {
+      "previous_sha256": "b5070398f490e2257d09052bbe4f78a4838aaaceaaad9f6f4e0029494f155b1a",
+      "current_sha256": "8c4cbd58a7018e799d5d4af9be9b99aba213d90090dec04449b5f5c401b9f18b",
+      "predecessor_reconstruction": [
+        {
+          "current": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n//! Map values and qualified ordinary storage reuse the same existing CellValue codecs.\nuse super::*;\nfn vector(element: Type, length: usize) -> Type {\n    Type::Vector {\n",
+          "previous": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n//! Map values reuse existing CellValue codecs without changing other storage domains.\nuse super::*;\nfn vector(element: Type, length: usize) -> Type {\n    Type::Vector {\n"
+        },
+        {
+          "current": "    }\n}\n#[test]\nfn map_codec_policy_shares_qualified_storage_and_preserves_tuple_eight_boundary() {\n    for value in [\n        vector(Type::Field, 2),\n        tuple(8),\n",
+          "previous": "    }\n}\n#[test]\nfn map_codec_policy_preserves_other_storage_domains_and_tuple_eight_boundary() {\n    for value in [\n        vector(Type::Field, 2),\n        tuple(8),\n"
+        },
+        {
+          "current": "        },\n    ] {\n        assert!(validate::maps::scalar_value_type(&value));\n        assert!(validate::cell_type(&value));\n        assert!(validate::set_element_type(&value));\n        assert!(validate::map_key_type(&value));\n        let c = contract(value, Type::Field);\n        assert!(\n            checked(&c).is_ok(),\n            \"qualified CellValue now authorizes Map keys\"\n        );\n    }\n    for value in [\n",
+          "previous": "        },\n    ] {\n        assert!(validate::maps::scalar_value_type(&value));\n        assert!(\n            !validate::storage_value_type(&value),\n            \"Cell/Set/key policy unchanged\"\n        );\n        assert!(!validate::cell_type(&value));\n        let c = contract(value, Type::Field);\n        assert!(\n            checked(&c).is_err(),\n            \"a value codec does not authorize a Map key\"\n        );\n    }\n    for value in [\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/public_interfaces.rs": {
+      "previous_sha256": "95a909b1d1dcf68159c48b208fd458a768d4c2b6079e0f97be7a17a2b53cb686",
+      "current_sha256": "51de0e9a464454a0dde8c6084c104f55d5f1727b2e504c4349cceba930eb6cdc",
+      "predecessor_reconstruction": [
+        {
+          "current": "    assert!(!validate::witness_result_type(&Type::Tuple {\n        elements: vec![Type::Field; 12]\n    }));\n    assert!(validate::cell_type(&Type::OpaqueString));\n    assert!(validate::value_type(&Type::OpaqueString));\n}\n\n",
+          "previous": "    assert!(!validate::witness_result_type(&Type::Tuple {\n        elements: vec![Type::Field; 12]\n    }));\n    assert!(validate::storage_value_type(&Type::OpaqueString));\n    assert!(validate::value_type(&Type::OpaqueString));\n}\n\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/public_products.rs": {
+      "previous_sha256": "c9a84740f4def23cd904dc4e278ce6aa183f6a92d8b57ac71e5f23dfc2580d86",
+      "current_sha256": "59acde540d251434799651e3b258e19b20bddff4c20cbc20ecc8bef39ae3fc7e",
+      "predecessor_reconstruction": [
+        {
+          "current": "    }\n    // Witness outputs now share the bounded aligned representation; storage\n    // retains its own narrower boundary, including tuple9 refusal.\n    assert!(!validate::cell_type(&tuple(9)));\n    assert!(validate::witness_result_type(&tuple(9)));\n    assert!(!validate::witness_result_type(&tuple(12)));\n    assert!(!validate::witness_result_type(&named(tuple(9))));\n    assert!(validate::cell_type(&validate::uint(\n        \"340282366920938463463374607431768211456\"\n    )));\n    assert!(validate::witness_result_type(&Type::OpaqueString));\n",
+          "previous": "    }\n    // Witness outputs now share the bounded aligned representation; storage\n    // retains its own narrower boundary, including tuple9 refusal.\n    assert!(!validate::storage_value_type(&tuple(9)));\n    assert!(validate::witness_result_type(&tuple(9)));\n    assert!(!validate::witness_result_type(&tuple(12)));\n    assert!(!validate::witness_result_type(&named(tuple(9))));\n    assert!(!validate::storage_value_type(&validate::uint(\n        \"340282366920938463463374607431768211456\"\n    )));\n    assert!(validate::witness_result_type(&Type::OpaqueString));\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/witness_inputs.rs": {
+      "previous_sha256": "bae722f656007ba1c6a0e137146e60def60e1e38ca30f1c9c6299258df7dd4fa",
+      "current_sha256": "5e25466f47430d1801af043f964891967d68cdbfcab71bc00cd5f9c2765f0c15",
+      "predecessor_reconstruction": [
+        {
+          "current": "    }\n    assert!(validate::public_interface_type(&tuple(9).0));\n    assert!(validate::witness_result_type(&tuple(9).0));\n    assert!(!validate::cell_type(&tuple(9).0));\n    assert!(validate::witness_result_type(&Type::OpaqueString));\n    assert!(validate::witness_parameter_type(&tuple(12).0));\n    assert!(!validate::witness_result_type(&tuple(12).0));\n",
+          "previous": "    }\n    assert!(validate::public_interface_type(&tuple(9).0));\n    assert!(validate::witness_result_type(&tuple(9).0));\n    assert!(!validate::storage_value_type(&tuple(9).0));\n    assert!(validate::witness_result_type(&Type::OpaqueString));\n    assert!(validate::witness_parameter_type(&tuple(12).0));\n    assert!(!validate::witness_result_type(&tuple(12).0));\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate.rs": {
+      "previous_sha256": "7729b2cc66fa3597d8573dfeac783af60cedf5b46b8e1ee3e75cbc1300f48a1c",
+      "current_sha256": "8dcecda90cca2ff68c642010d3a67b64edec9c9b43def0dee2ecfb4359a76676",
+      "predecessor_reconstruction": [
+        {
+          "current": "pub(super) use merkle::root_type;\nmod pure;\nmod sets;\nmod storage;\npub(super) use storage::{map_key_type, merkle_leaf_type, set_element_type};\n\nstruct Validation {\n    allocated: HashSet<usize>,\n",
+          "previous": "pub(super) use merkle::root_type;\nmod pure;\nmod sets;\n\nstruct Validation {\n    allocated: HashSet<usize>,\n"
+        },
+        {
+          "current": "}\n/// Declared Cell storage may own opaque values without widening interfaces.\npub(super) fn cell_type(ty: &Type) -> bool {\n    storage::cell_value_type(ty)\n}\n/// Witness inputs are typed callback values, not private FAB output encodings.\n/// Keep this policy named separately from roots, results and ledger storage.\n",
+          "previous": "}\n/// Declared Cell storage may own opaque values without widening interfaces.\npub(super) fn cell_type(ty: &Type) -> bool {\n    storage_value_type(ty)\n}\n/// Shared ordinary Cell/Set value representation policy, separate from interfaces.\npub(super) fn storage_value_type(ty: &Type) -> bool {\n    domain::storage_value_type(ty)\n}\n/// Witness inputs are typed callback values, not private FAB output encodings.\n/// Keep this policy named separately from roots, results and ledger storage.\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/domain.rs": {
+      "previous_sha256": "e7aa6a80f5e17b1728d7e694b8032d95b6b5d4fa079416a9ab8807180b90e41f",
+      "current_sha256": "4e10cf69cb441f3a6a5de0d357a20b2d45c758be4c6b4bf7d2315775f8dce593",
+      "predecessor_reconstruction": [
+        {
+          "current": "    }\n}\n\n/// Recorded witness outputs use the qualified official aligned FAB domain.\n/// This includes owned opaque leaves and standalone tuples through arity11;\n/// named products retain their stricter generated-derive representation limits.\n",
+          "previous": "    }\n}\n\n/// Storage eligibility is independent of public/stateful/witness interfaces.\n/// A top-level Unit storage value stays refused, while Unit members retain the prior\n/// surface policy. Canonical definitions and resource bounds are checked first.\npub(super) fn storage_value_type(ty: &Type) -> bool {\n    fn member(ty: &Type) -> bool {\n        match ty {\n            Type::OpaqueString | Type::OpaqueBytes => true,\n            Type::Struct { fields, .. } => {\n                !fields.is_empty() && fields.iter().all(|field| member(&field.ty))\n            }\n            _ => surface_type(ty),\n        }\n    }\n    *ty != Type::Unit && member(ty)\n}\n\n/// Recorded witness outputs use the qualified official aligned FAB domain.\n/// This includes owned opaque leaves and standalone tuples through arity11;\n/// named products retain their stricter generated-derive representation limits.\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/maps.rs": {
+      "previous_sha256": "107e2d37884c3c9417e31ebd0f2237d5c927c94394e22f449261d95ae0556c01",
+      "current_sha256": "fcc2825eee212afaae3d54171dc38ba664bdac9657ae12e4bdf1aea40204a66b",
+      "predecessor_reconstruction": [
+        {
+          "current": "/// Canonical definitions and resource preflight remain the caller's authority.\n/// Keep the established top-level Unit refusal; Unit members and empty named\n/// products still have recursive CellValue representations.\n/// Storage roles share codec capability; operation and declaration checks remain separate.\npub(in super::super) fn scalar_value_type(ty: &Type) -> bool {\n    super::storage::map_value_type(ty)\n}\n\npub(in super::super) fn types<'a>(\n",
+          "previous": "/// Canonical definitions and resource preflight remain the caller's authority.\n/// Keep the established top-level Unit refusal; Unit members and empty named\n/// products still have recursive CellValue representations.\n/// This capability does not widen Map keys, ordinary Cells or Sets.\npub(in super::super) fn scalar_value_type(ty: &Type) -> bool {\n    *ty != Type::Unit && value_type(ty) && super::domain::derives_supported(ty)\n}\n\npub(in super::super) fn types<'a>(\n"
+        },
+        {
+          "current": "        return Err(invalid(path, \"expected Map declaration\"));\n    };\n    declarations.types().validate_at(key, path)?;\n    if !map_key_type(key) {\n        return Err(invalid(path, \"unsupported Map key type\"));\n    }\n    if scalar {\n",
+          "previous": "        return Err(invalid(path, \"expected Map declaration\"));\n    };\n    declarations.types().validate_at(key, path)?;\n    if !storage_value_type(key) {\n        return Err(invalid(path, \"unsupported Map key type\"));\n    }\n    if scalar {\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/merkle.rs": {
+      "previous_sha256": "fbc0e70480c74b3e4c194d0fa37f41fec8ef2d010e4a666f27f7d3c911b3ffc2",
+      "current_sha256": "ee4bc4dae3c778fecba1086237cdf263e909b62233baf9be0687af22a5e68b4c",
+      "predecessor_reconstruction": [
+        {
+          "current": "        ));\n    }\n    declarations.types().validate_at(ty, path)?;\n    if !merkle_leaf_type(ty) {\n        return Err(invalid(path, \"unsupported Merkle leaf type\"));\n    }\n    Ok(ty)\n",
+          "previous": "        ));\n    }\n    declarations.types().validate_at(ty, path)?;\n    if !storage_value_type(ty) {\n        return Err(invalid(path, \"unsupported Merkle leaf type\"));\n    }\n    Ok(ty)\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/sets.rs": {
+      "previous_sha256": "963910b2139bc0be4b272356eb260b46ee0697bce3d0fe47d56b55f60439cf08",
+      "current_sha256": "09b7554835bbee0db167cd4aac1c5130a909a048091cf712443b24d974914570",
+      "predecessor_reconstruction": [
+        {
+          "current": "        return Err(invalid(path, \"expected Set declaration\"));\n    };\n    declarations.types().validate_at(ty, path)?;\n    if !set_element_type(ty) {\n        return Err(invalid(path, \"unsupported Set element type\"));\n    }\n    Ok(ty)\n",
+          "previous": "        return Err(invalid(path, \"expected Set declaration\"));\n    };\n    declarations.types().validate_at(ty, path)?;\n    if !storage_value_type(ty) {\n        return Err(invalid(path, \"unsupported Set element type\"));\n    }\n    Ok(ty)\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/map_operations/validation.rs": {
+      "previous_sha256": "6c16013498ebe64c6cfc5522e9a95a3443b6f7822c9183145f7aa02c20e62761",
+      "current_sha256": "b4ce17e5fdbb7462ad0ebcdd8382bfecdd2cfa2eac1c3c01c11adc102d016c97",
+      "predecessor_reconstruction": [
+        {
+          "current": "    }\n    for key in [\n        Type::Unit,\n        Type::Tuple {\n            elements: vec![Type::Field; 9],\n        },\n    ] {\n        let mut c = contract(key, Type::Field);\n        c.stateful_circuits[0].actions.clear();\n        assert!(matches!(checked(&c), Err(PlanError::Unsupported(_))));\n    }\n    let mut c = contract(\n        validate::uint(\"340282366920938463463374607431768211456\"),\n        Type::Field,\n    );\n    c.stateful_circuits[0].actions.clear();\n    let plan = checked(&c).unwrap();\n    assert!(\n        plan.plan()\n            .body\n            .bindings\n            .iter()\n            .any(|b| matches!(b.operation, Operation::MapMember { .. }))\n    );\n    render(&plan).unwrap();\n}\n#[test]\nfn map_slot_selection_preserves_distinct_identity_and_chunked_paths() {\n",
+          "previous": "    }\n    for key in [\n        Type::Unit,\n        validate::uint(\"340282366920938463463374607431768211456\"),\n    ] {\n        let mut c = contract(key, Type::Field);\n        c.stateful_circuits[0].actions.clear();\n        assert!(matches!(checked(&c), Err(PlanError::Unsupported(_))));\n    }\n}\n#[test]\nfn map_slot_selection_preserves_distinct_identity_and_chunked_paths() {\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/owned_cells.rs": {
+      "previous_sha256": "9e4ac12a3a67e9f7bce557b4a941cf847ecc8a700be729816f3a631314241e37",
+      "current_sha256": "a3f4e16faae9378d146f843be03f4a4626b7a50d674250e25762b6655d6f3731",
+      "predecessor_reconstruction": [
+        {
+          "current": "}\n\n#[test]\nfn cell_domain_preserves_prior_members_and_qualifies_recursive_codecs() {\n    for ty in [\n        Type::Field,\n        Type::Boolean,\n",
+          "previous": "}\n\n#[test]\nfn cell_domain_preserves_prior_members_and_adds_only_owned_leaf_storage() {\n    for ty in [\n        Type::Field,\n        Type::Boolean,\n"
+        },
+        {
+          "current": "        Type::OpaqueBytes,\n        owned(),\n        structure(\"Nested\", vec![owned(), Type::Unit]),\n        Type::Tuple {\n            elements: vec![Type::Boolean],\n        },\n",
+          "previous": "        Type::OpaqueBytes,\n        owned(),\n        structure(\"Nested\", vec![owned(), Type::Unit]),\n    ] {\n        assert!(validate::cell_type(&ty), \"{ty:?}\");\n        let contract = contract(ty);\n        let checked = maps_check(&contract).unwrap();\n        render(&checked).unwrap();\n    }\n    for ty in [\n        Type::Unit,\n        Type::Tuple {\n            elements: vec![Type::Boolean],\n        },\n"
+        },
+        {
+          "current": "        ),\n        Type::Unsigned {\n            max: \"340282366920938463463374607431768211456\".into(),\n        },\n    ] {\n        assert!(validate::cell_type(&ty), \"{ty:?}\");\n        let plan = maps_check(&contract(ty)).unwrap();\n        assert!(\n            plan.plan()\n                .body\n                .bindings\n                .iter()\n                .any(|b| matches!(b.operation, Operation::CellRead(_)))\n        );\n        render(&plan).unwrap();\n    }\n    for ty in [\n        Type::Unit,\n        Type::Tuple {\n            elements: vec![Type::Boolean; 9],\n        },\n        Type::Vector {\n            element: Box::new(Type::Tuple {\n                elements: vec![Type::Field; 9],\n            }),\n            length: 0,\n        },\n        Type::Unsigned {\n            max: \"452312848583266388373324160190187140051835877600158453279131187530910662656\"\n                .into(),\n        },\n    ] {\n        assert!(!validate::cell_type(&ty), \"{ty:?}\");\n",
+          "previous": "        ),\n        Type::Unsigned {\n            max: \"340282366920938463463374607431768211456\".into(),\n        },\n    ] {\n        assert!(!validate::cell_type(&ty), \"{ty:?}\");\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/owned_values.rs": {
+      "previous_sha256": "5aeac22443fbdab8a20afe8a0a056a07902ddebae312caf5beca9dd117c14eb9",
+      "current_sha256": "fed4401f5fe27b709e06531cb94dfd6bf6a3145ffe9c29b28fccca2a93d4997e",
+      "predecessor_reconstruction": [
+        {
+          "current": "            &HashMap::from([(\"owned\", &cell)]),\n            &HashMap::new(),\n        );\n        let storage = storage.unwrap();\n        assert!(\n            storage\n                .plan()\n                .body\n                .bindings\n                .iter()\n                .any(|b| matches!(b.operation, Operation::CellRead(_)))\n        );\n        render(&storage).unwrap();\n        let witness = WitnessDeclaration {\n            source: None,\n            name: \"owned\".into(),\n",
+          "previous": "            &HashMap::from([(\"owned\", &cell)]),\n            &HashMap::new(),\n        );\n        if matches!(ty, Type::OpaqueString | Type::OpaqueBytes) {\n            // Owned Cell reads now have a separately qualified storage domain.\n            render(&storage.unwrap()).unwrap();\n        } else {\n            // The carrier contains a Vector; vectors and empty products remain excluded.\n            assert!(matches!(storage, Err(PlanError::Unsupported(_))));\n        }\n        let witness = WitnessDeclaration {\n            source: None,\n            name: \"owned\".into(),\n"
+        },
+        {
+          "current": "    }\n}\n#[test]\nfn local_witness_and_cell_inputs_preserve_recursive_owned_values() {\n    let cases = vec![\n        (\n            Type::OpaqueString,\n",
+          "previous": "    }\n}\n#[test]\nfn local_and_witness_owned_inputs_preserve_vector_storage_boundaries() {\n    let cases = vec![\n        (\n            Type::OpaqueString,\n"
+        },
+        {
+          "current": "            value,\n        }];\n        let storage = check(&caller, &HashMap::from([(\"owned\", &cell)]), &HashMap::new());\n        let storage = storage.unwrap();\n        assert!(\n            storage\n                .plan()\n                .body\n                .bindings\n                .iter()\n                .any(|b| matches!(b.operation, Operation::CellWrite { .. }))\n        );\n        render(&storage).unwrap();\n    }\n}\n",
+          "previous": "            value,\n        }];\n        let storage = check(&caller, &HashMap::from([(\"owned\", &cell)]), &HashMap::new());\n        if matches!(ty, Type::OpaqueString | Type::OpaqueBytes) {\n            render(&storage.unwrap()).unwrap();\n        } else {\n            assert!(matches!(storage, Err(PlanError::Unsupported(_))));\n        }\n    }\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/set_operations/validation.rs": {
+      "previous_sha256": "ec3b1f6df765f552bd3f2e9bb33948f2061d85ae2b26f2fd4e1aebd49e206fc5",
+      "current_sha256": "cb399f352891f525c3158ec8cdd1d3e0e504eddcd802151fc07ee8b7ce92234f",
+      "predecessor_reconstruction": [
+        {
+          "current": "\n#[test]\nfn set_domain_refusals_and_witness_policy_are_independent_of_opaque_public_roots() {\n    // Size has no operand: qualification is still the declared Set codec policy.\n    for ty in [\n        Type::Unit,\n        Type::Tuple {\n",
+          "previous": "\n#[test]\nfn set_domain_refusals_and_witness_policy_are_independent_of_opaque_public_roots() {\n    // Size has no operand: these fail on the declared Set domain itself.\n    for ty in [\n        Type::Unit,\n        Type::Tuple {\n"
+        },
+        {
+          "current": "            field: \"seen\".into(),\n            index: 1,\n        };\n        if matches!(\n            c.ledger_fields[1].declaration,\n            LedgerFieldKind::Set { ty: Type::Unit }\n        ) {\n            assert!(matches!(checked(&c), Err(PlanError::Unsupported(_))));\n        } else {\n            let plan = checked(&c).unwrap();\n            assert!(\n                plan.plan()\n                    .body\n                    .bindings\n                    .iter()\n                    .any(|b| matches!(b.operation, Operation::SetSize { .. }))\n            );\n            render(&plan).unwrap();\n        }\n        c.ledger_fields[1].declaration = LedgerFieldKind::Set {\n            ty: Type::Tuple {\n                elements: vec![Type::Boolean; 9],\n            },\n        };\n        assert!(\n            matches!(checked(&c), Err(PlanError::Unsupported(_))),\n            \"FAB tuple9 is still not a Set codec\"\n        );\n    }\n    for ty in [Type::OpaqueString, Type::OpaqueBytes, owned()] {\n        let mut c = contract(ty.clone());\n",
+          "previous": "            field: \"seen\".into(),\n            index: 1,\n        };\n        assert!(matches!(checked(&c), Err(PlanError::Unsupported(_))));\n    }\n    for ty in [Type::OpaqueString, Type::OpaqueBytes, owned()] {\n        let mut c = contract(ty.clone());\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/wide_values.rs": {
+      "previous_sha256": "1d55a5f5d827b52b7fa7723b8d735a1ff4d0a72f5c30f8f3556d17378f1d9cfe",
+      "current_sha256": "98166aa2e5143093059c964643d85676151ee3597edabcbc90defa611999055d",
+      "predecessor_reconstruction": [
+        {
+          "current": "    }\n}\n#[test]\nfn wide_public_witness_and_cell_values_keep_declaration_authority() {\n    let mut candidate = circuit(as_field(unsigned(TWO128, TWO128)));\n    candidate.parameters.push(Parameter {\n        name: \"wide\".into(),\n",
+          "previous": "    }\n}\n#[test]\nfn wide_public_and_witness_values_preserve_cell_boundaries() {\n    let mut candidate = circuit(as_field(unsigned(TWO128, TWO128)));\n    candidate.parameters.push(Parameter {\n        name: \"wide\".into(),\n"
+        },
+        {
+          "current": "        field: \"wide\".into(),\n        index: 0,\n    }));\n    let plan = check(&candidate, &fields, &HashMap::new()).unwrap();\n    render(&plan).unwrap();\n    candidate = circuit(as_field(unsigned(TWO128, TWO128)));\n    candidate.return_value = StateReturn::Effectful {\n        body: ReturnPlan::Sequence {\n",
+          "previous": "        field: \"wide\".into(),\n        index: 0,\n    }));\n    assert!(matches!(\n        check(&candidate, &fields, &HashMap::new()),\n        Err(PlanError::Unsupported(_))\n    ));\n    candidate = circuit(as_field(unsigned(TWO128, TWO128)));\n    candidate.return_value = StateReturn::Effectful {\n        body: ReturnPlan::Sequence {\n"
+        },
+        {
+          "current": "            }),\n        },\n    };\n    let plan = check(&candidate, &fields, &HashMap::new()).unwrap();\n    render(&plan).unwrap();\n    let mut wrong_slot = candidate.clone();\n    let StateReturn::Effectful {\n        body: ReturnPlan::Sequence { actions, .. },\n    } = &mut wrong_slot.return_value\n    else {\n        unreachable!()\n    };\n    let StateAction::CellWrite { index, .. } = &mut actions[0] else {\n        unreachable!()\n    };\n    *index = 1;\n    assert!(matches!(\n        check(&wrong_slot, &fields, &HashMap::new()),\n        Err(PlanError::Unsupported(_))\n    ));\n\n",
+          "previous": "            }),\n        },\n    };\n    assert!(matches!(\n        check(&candidate, &fields, &HashMap::new()),\n        Err(PlanError::Unsupported(_))\n    ));\n\n"
+        },
+        {
+          "current": "        name: \"mark\".into(),\n        arguments: vec![unsigned(TWO128, TWO128)],\n    });\n    // Callback and storage roles share this canonical wide carrier while slot\n    // identity and callback signatures remain independent authorities.\n    let checked = check(\n        &candidate,\n        &HashMap::new(),\n",
+          "previous": "        name: \"mark\".into(),\n        arguments: vec![unsigned(TWO128, TWO128)],\n    });\n    // Callback arguments have a separate typed-value policy; the cell refusals\n    // above remain intact when public wide values become encodable.\n    let checked = check(\n        &candidate,\n        &HashMap::new(),\n"
+        },
+        {
+          "current": "        arguments: vec![],\n    }));\n    // Wide results independently enter the qualified witness-result domain.\n    // Cell admission above uses its separately qualified codec policy.\n    let checked = check(\n        &candidate,\n        &HashMap::new(),\n",
+          "previous": "        arguments: vec![],\n    }));\n    // Wide results independently enter the qualified witness-result domain.\n    // Neither public nor callback eligibility admits wide ledger cells.\n    let checked = check(\n        &candidate,\n        &HashMap::new(),\n"
+        }
+      ]
+    }
+  },
+  "new_and_shared_sources": {
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/storage_codecs.rs": "c75d526520d0b6bc9daeaae7fe09ce66f1c7bc6e20bd82652d1cbd8917f4441a",
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/storage_codecs/authority.rs": "f3a1c8ac2c1937dfe699d41f24bd7c54543f31ec56bdc622ae87628ad12fb27d",
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/storage_codecs/domain.rs": "6ce1935d47484f0299ee836bdda49d16a936c97e24a5cff25e3ee2fcf9ef539a",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/storage.rs": "ccdf77cd9e53b5ad516b6489b0b5ba08719e77ce0033865c7f632cc5b20b3e98",
+    "tools/compact-rust-backend/src/recorded/effect_plan.rs": "fcd70eccbf7f9b133a2a6527a20b631303f129378d4869ec77e58a93c1c480e2",
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower.rs": "e7c92a1335f332310c15677c05012dd2ae9a02b271d46d53f00f2ed6e2584e02",
+    "tools/compact-rust-backend/src/recorded/effect_plan/rejection.rs": "3d41cb4ab13956ee0326ca0e1d2337c71feb16ced42576cc79bfe4564cb8767b",
+    "tools/compact-rust-backend/src/recorded/legacy/actions.rs": "39c576e3e93cc9d098808d9e7303f8e8c64df1d98c1834cbb71e5e70baf93f14",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/collections.rs": "502dd04921b10bfa8ef6bba8ce2c6dbfed5fef7ee715b8e1203f672a925c3ab8",
+    "tools/compact-rust-backend/src/recorded/helpers.rs": "39ab813c3e0c88bdc7955cd3d16f07feee8abc65c711173e24a79ceb7d5517a6",
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_domain.rs": "c00c5f9602d0ef1b5ffa1981be2707996e817be43c7896f4361b710cfa61fde5",
+    "tools/compact-rust-backend/src/resource_limits/policy.rs": "8d1e091410d3f802b1f54654314146ba1615f6c45222645b586099528ed5294f",
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/maps.rs": "98c476dbbd666aecd6caf0b681a6dc86518efbd9c5ceab0874cb1defe5159355",
+    "runtime-rs/src/slots/map.rs": "a90f19b5603acaacc13b46b93e4b86ef37a39f1292fd00f7e516f9406d58520b",
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/ordinary.rs": "97a9bac2f54a8d3d808b51fe0a796839b6d4db559af71cce47629d3d8a1fea44",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/assertions.rs": "2111fd862692b4d57075f2fa24a41b93821cde0b3f1d6123bd8ca0c3a0dff9a9",
+    "tools/compact-rust-backend/tests/welcome-schema20-ir.json": "8963572627b26394b74d550ec94e87b7b4848ba7edf8c3b2ffd509e54129d6ea"
+  },
+  "anchor_adaptations": [],
+  "baseline_retired_routes": 34,
+  "baseline_boundaries": 84
+}

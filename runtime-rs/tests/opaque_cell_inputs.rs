@@ -172,3 +172,8 @@ fn safe_constructor_returns_alignment_error_instead_of_panicking() {
         if message == "CellValue does not match its declared alignment")
     );
 }
+
+#[path = "opaque_cell_inputs/compound_slots.rs"]
+mod compound_slots;
+#[path = "opaque_cell_inputs/zero_width_slots.rs"]
+mod zero_width_slots;

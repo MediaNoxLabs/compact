@@ -139,7 +139,7 @@ fn set_values_cannot_escape_a_sibling_block() {
 
 #[test]
 fn set_domain_refusals_and_witness_policy_are_independent_of_opaque_public_roots() {
-    // Size has no operand: these fail on the declared Set domain itself.
+    // Size has no operand: qualification is still the declared Set codec policy.
     for ty in [
         Type::Unit,
         Type::Tuple {
@@ -164,7 +164,31 @@ fn set_domain_refusals_and_witness_policy_are_independent_of_opaque_public_roots
             field: "seen".into(),
             index: 1,
         };
-        assert!(matches!(checked(&c), Err(PlanError::Unsupported(_))));
+        if matches!(
+            c.ledger_fields[1].declaration,
+            LedgerFieldKind::Set { ty: Type::Unit }
+        ) {
+            assert!(matches!(checked(&c), Err(PlanError::Unsupported(_))));
+        } else {
+            let plan = checked(&c).unwrap();
+            assert!(
+                plan.plan()
+                    .body
+                    .bindings
+                    .iter()
+                    .any(|b| matches!(b.operation, Operation::SetSize { .. }))
+            );
+            render(&plan).unwrap();
+        }
+        c.ledger_fields[1].declaration = LedgerFieldKind::Set {
+            ty: Type::Tuple {
+                elements: vec![Type::Boolean; 9],
+            },
+        };
+        assert!(
+            matches!(checked(&c), Err(PlanError::Unsupported(_))),
+            "FAB tuple9 is still not a Set codec"
+        );
     }
     for ty in [Type::OpaqueString, Type::OpaqueBytes, owned()] {
         let mut c = contract(ty.clone());

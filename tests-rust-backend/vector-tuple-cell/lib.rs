@@ -169,9 +169,12 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: runtime::FixedVector<runtime::Field, 3> = __compact_param_0;
             let frame =
-                crate::ledger_slots::values.record_write(frame, (__compact_param_0).clone())?;
-            Ok(frame.finish(()))
+                crate::ledger_slots::values.record_write(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn read_values<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -183,9 +186,9 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (_, runtime::FixedVector<runtime::Field, 3>) =
+            let (frame, __compact_effect_0): (_, runtime::FixedVector<runtime::Field, 3>) =
                 crate::ledger_slots::values.record_read(frame)?;
-            Ok(frame.finish(observed))
+            Ok(frame.finish((__compact_effect_0).clone()))
         }
         pub fn set_pair<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -193,8 +196,11 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame = crate::ledger_slots::pair.record_write(frame, __compact_param_0)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: (runtime::Field, bool) = __compact_param_0;
+            let frame = crate::ledger_slots::pair.record_write(frame, __compact_effect_0)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn read_pair<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -203,9 +209,9 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (_, (runtime::Field, bool)) =
+            let (frame, __compact_effect_0): (_, (runtime::Field, bool)) =
                 crate::ledger_slots::pair.record_read(frame)?;
-            Ok(frame.finish(observed))
+            Ok(frame.finish(__compact_effect_0))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

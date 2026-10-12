@@ -17,10 +17,10 @@ class UnitInterfaceExtensionTests(unittest.TestCase):
     def setUp(self):
         set_tests.OpaqueSetTransitionTests.setUp(self)
         self.unit_interface_extension = json.loads(previous.UNIT_INTERFACE_EXTENSION.read_text())
-        for owner in [*self.unit_interface_extension['owners'], *self.unit_interface_extension['new_and_shared_sources']]:
+        for owner in [*self.unit_interface_extension['owners'], *self.unit_interface_extension['new_and_shared_sources'], inventory.map_values.OWNER]:
             path = self.root / owner
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes((inventory.ROOT / owner).read_bytes())
+            path.write_bytes((previous.checkpoint_593(inventory.ROOT) / owner).read_bytes())
 
     def report(self):
         return funded_tests.FundedMintTransitionTests.report(

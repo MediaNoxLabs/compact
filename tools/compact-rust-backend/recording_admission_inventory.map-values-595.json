@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "issue": 595,
+  "baseline_commit": "912c0ac23e9c06dd91f5b65fccc3d2105b7719e7",
+  "claim": "Scalar Map VALUE eligibility delegates to existing recursive CellValue codecs, preserving keys/Cell/Set and public interfaces. Domain expansion only; no retired route or language coverage claim.",
+  "selector": {
+    "ordered_calls": [],
+    "function_sha256": "39edd1256e89f088a942088f357a48bd920afd3a413d932a8296c36fb8894085"
+  },
+  "owners": {
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/maps.rs": {
+      "previous_sha256": "9bf8a45e53888dd36550f0c9655cd63ddc7cf306de9673bbd75f6f0b8cb4eab7",
+      "current_sha256": "107e2d37884c3c9417e31ebd0f2237d5c927c94394e22f449261d95ae0556c01",
+      "predecessor_reconstruction": [
+        {
+          "current": "// SPDX-License-Identifier: Apache-2.0\n//! Map identity and active operand types come from immutable declarations.\nuse super::*;\n\n/// Scalar Map values are ledger Cells, not necessarily scalar Rust primitives.\n/// Existing CellValue implementations cover owned products, fixed vectors and\n/// canonical wide integers; tuple codecs stop at arity8 (FAB alone reaches11).\n/// Canonical definitions and resource preflight remain the caller's authority.\n/// Keep the established top-level Unit refusal; Unit members and empty named\n/// products still have recursive CellValue representations.\n/// This capability does not widen Map keys, ordinary Cells or Sets.\npub(in super::super) fn scalar_value_type(ty: &Type) -> bool {\n    *ty != Type::Unit && value_type(ty) && super::domain::derives_supported(ty)\n}\n\npub(in super::super) fn types<'a>(\n    declarations: &'a Declarations,\n",
+          "previous": "// SPDX-License-Identifier: Apache-2.0\n//! Map identity and active operand types come from immutable declarations.\nuse super::*;\n\npub(in super::super) fn types<'a>(\n    declarations: &'a Declarations,\n"
+        },
+        {
+          "current": "    }\n    if scalar {\n        declarations.types().validate_at(value, path)?;\n        if !scalar_value_type(value) {\n            return Err(invalid(path, \"unsupported scalar Map value type\"));\n        }\n    } else {\n",
+          "previous": "    }\n    if scalar {\n        declarations.types().validate_at(value, path)?;\n        if !storage_value_type(value) || !value_type(value) {\n            return Err(invalid(path, \"unsupported scalar Map value type\"));\n        }\n    } else {\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/map_operations.rs": {
+      "previous_sha256": "0b91792b2529bcc83049a244e619c3f029f73fccc1f6af46cd3bda4d36b243bc",
+      "current_sha256": "3bcdd6725069cc1a4e8e8c51137aad510c6685abf72aeec685903b8416d8e109",
+      "predecessor_reconstruction": [
+        {
+          "current": "mod source;\n#[path = \"map_operations/validation.rs\"]\nmod validation;\n#[path = \"map_operations/value_codecs.rs\"]\nmod value_codecs;\n\nfn parameter(name: &str) -> Expr {\n    Expr::Parameter { name: name.into() }\n",
+          "previous": "mod source;\n#[path = \"map_operations/validation.rs\"]\nmod validation;\n\nfn parameter(name: &str) -> Expr {\n    Expr::Parameter { name: name.into() }\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/map_operations/validation.rs": {
+      "previous_sha256": "dadfffe76c3fa7489fb2eb928272425a0d63f7d6609b21390ecbc85a5ac7a5d9",
+      "current_sha256": "6c16013498ebe64c6cfc5522e9a95a3443b6f7822c9183145f7aa02c20e62761",
+      "predecessor_reconstruction": [
+        {
+          "current": "fn scalar_codec_limits_remain_distinct_from_map_membership() {\n    for value in [\n        Type::Unit,\n        // Map values now use the existing recursive CellValue codec domain.\n        // Arity9 still has FAB conversion but no CellValue tuple decoder.\n        Type::Tuple {\n            elements: vec![Type::Field; 9],\n        },\n    ] {\n        let c = contract(Type::Field, value);\n",
+          "previous": "fn scalar_codec_limits_remain_distinct_from_map_membership() {\n    for value in [\n        Type::Unit,\n        validate::uint(\"340282366920938463463374607431768211456\"),\n        Type::Tuple { elements: vec![] },\n        Type::Struct {\n            name: \"Empty\".into(),\n            fields: vec![],\n        },\n    ] {\n        let c = contract(Type::Field, value);\n"
+        }
+      ]
+    }
+  },
+  "new_and_shared_sources": {
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/map_operations/value_codecs.rs": "9896ef2ff9410e776d7f1f625c6d1766d1a2baebb574a4d8e9b3414e0384fbaf",
+    "tools/compact-rust-backend/src/recorded.rs": "76f32da6fbbe7fbc9d436b8a843e45033274f506e22d0e008e290d5a0ffd43df",
+    "tools/compact-rust-backend/src/recorded/legacy/guarded_map.rs": "84f8f1d308bdd893b4e12fee9063ed55d87b6f8fa059ba86565d890f026e60cf",
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": "5d09e79880ebf286a94cea6437e1e13c378710d5c25797f9894149a05dcdb260",
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_domain.rs": "aa9bd5e3e9d324334f4e9994d5d87e4c8216eb885daa36be351f561cbde478b5",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/domain.rs": "e7aa6a80f5e17b1728d7e694b8032d95b6b5d4fa079416a9ab8807180b90e41f",
+    "tools/compact-rust-backend/src/recorded/effect_plan/type_environment.rs": "cfb8e3e4df0bbbae7ee37cbbd7ee58a4409a157b68d0c3d4c40d9d42412a57f9",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate.rs": "2f45ebf3c3da06b5cf492e4d3416fda9ee4e3ca01afd8e014c3c8f5b871b6a93",
+    "runtime-rs/src/ledger.rs": "f04942b12971c5936d193b39233c743522ec8b08ded98c0df798a5640c0d525e",
+    "runtime-rs-macros/src/lib.rs": "efb8a079d89ad42ffe6e744fcdab8f6422e3cd3330545799bf2b6227a4becc30"
+  },
+  "preserved_adapter_obligations": [
+    "*ty != Type::Unit && value_type(ty) && super::domain::derives_supported(ty)",
+    "if !storage_value_type(key)",
+    "if !scalar_value_type(value)",
+    "crate::map_slot_types(key, value)",
+    "declarations.types().validate_at(value, path)?;"
+  ]
+}

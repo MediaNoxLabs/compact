@@ -127,8 +127,24 @@ OPAQUE_SET_TRANSITION = inventory.BASELINE.with_name("recording_admission_invent
 UNIT_INTERFACE_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.unit-interface-593.json")
 
 
+MAP_VALUE_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.map-values-595.json")
+
+
+def checkpoint_593(root):
+    """Historical fixtures retain the authenticated signed Unit-interface checkpoint."""
+    extension = json.loads(MAP_VALUE_EXTENSION.read_text())
+    try:
+        source = (root / inventory.map_values.OWNER).read_bytes()
+    except FileNotFoundError:
+        return root
+    if inventory.digest(source) == extension['owners'][inventory.map_values.OWNER]['current_sha256']:
+        return inventory.map_values.checkpoint(root, extension)
+    return root
+
+
 def checkpoint_592(root):
     """Historical fixtures use the exact signed opaque Set retirement checkpoint."""
+    root = checkpoint_593(root)
     extension = json.loads(UNIT_INTERFACE_EXTENSION.read_text())
     try:
         source = (root / inventory.unit_interface.OWNER).read_bytes()
@@ -524,7 +540,8 @@ class InventoryTests(unittest.TestCase):
                                   organizer_transition=json.loads(ORGANIZER_TRANSITION.read_text()),
                                   unsigned_product_transition=json.loads(UNSIGNED_PRODUCT_TRANSITION.read_text()),
                                   opaque_set_transition=json.loads(OPAQUE_SET_TRANSITION.read_text()),
-                                  unit_interface_extension=json.loads(UNIT_INTERFACE_EXTENSION.read_text()))
+                                  unit_interface_extension=json.loads(UNIT_INTERFACE_EXTENSION.read_text()),
+                                  map_value_extension=json.loads(MAP_VALUE_EXTENSION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)

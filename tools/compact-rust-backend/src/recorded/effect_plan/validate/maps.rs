@@ -4,6 +4,17 @@
 //! Map identity and active operand types come from immutable declarations.
 use super::*;
 
+/// Scalar Map values are ledger Cells, not necessarily scalar Rust primitives.
+/// Existing CellValue implementations cover owned products, fixed vectors and
+/// canonical wide integers; tuple codecs stop at arity8 (FAB alone reaches11).
+/// Canonical definitions and resource preflight remain the caller's authority.
+/// Keep the established top-level Unit refusal; Unit members and empty named
+/// products still have recursive CellValue representations.
+/// This capability does not widen Map keys, ordinary Cells or Sets.
+pub(in super::super) fn scalar_value_type(ty: &Type) -> bool {
+    *ty != Type::Unit && value_type(ty) && super::domain::derives_supported(ty)
+}
+
 pub(in super::super) fn types<'a>(
     declarations: &'a Declarations,
     slot: MapSlot,
@@ -25,7 +36,7 @@ pub(in super::super) fn types<'a>(
     }
     if scalar {
         declarations.types().validate_at(value, path)?;
-        if !storage_value_type(value) || !value_type(value) {
+        if !scalar_value_type(value) {
             return Err(invalid(path, "unsupported scalar Map value type"));
         }
     } else {

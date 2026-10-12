@@ -72,11 +72,10 @@ fn maps_reject_missing_self_and_in_scope_wrong_typed_operands() {
 fn scalar_codec_limits_remain_distinct_from_map_membership() {
     for value in [
         Type::Unit,
-        validate::uint("340282366920938463463374607431768211456"),
-        Type::Tuple { elements: vec![] },
-        Type::Struct {
-            name: "Empty".into(),
-            fields: vec![],
+        // Map values now use the existing recursive CellValue codec domain.
+        // Arity9 still has FAB conversion but no CellValue tuple decoder.
+        Type::Tuple {
+            elements: vec![Type::Field; 9],
         },
     ] {
         let c = contract(Type::Field, value);

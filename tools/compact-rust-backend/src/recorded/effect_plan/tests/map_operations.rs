@@ -8,6 +8,8 @@ use super::*;
 mod source;
 #[path = "map_operations/validation.rs"]
 mod validation;
+#[path = "map_operations/value_codecs.rs"]
+mod value_codecs;
 
 fn parameter(name: &str) -> Expr {
     Expr::Parameter { name: name.into() }

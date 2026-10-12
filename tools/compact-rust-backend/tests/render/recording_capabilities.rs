@@ -207,6 +207,17 @@ fn recording_gaps_follow_the_first_definite_ir_failure() {
         }],
     };
     let report = render_with_capabilities(&contract).unwrap().capabilities;
+    assert!(report.circuits[0].recorded && report.circuits[0].observed_call);
+    let StateAction::Sequence { actions } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    actions[1] = StateAction::Expression {
+        value: Expr::PersistentCommit {
+            value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
+        },
+    };
+    let report = render_with_capabilities(&contract).unwrap().capabilities;
     let gap = report.circuits[0].recording_unavailable.as_ref().unwrap();
     assert_eq!(gap.code.as_str(), "unsupported_action");
     assert_eq!(gap.ir_node, "StateAction::Expression");
@@ -230,7 +241,7 @@ fn recording_gaps_follow_the_first_definite_ir_failure() {
 
 #[test]
 fn conditional_recording_rejects_an_unsupported_unselected_branch() {
-    let contract = Contract {
+    let mut contract = Contract {
         schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
         constructor: None,
@@ -263,6 +274,17 @@ fn conditional_recording_rejects_an_unsupported_unselected_branch() {
         }],
     };
     let report = render_with_capabilities(&contract).unwrap().capabilities;
+    assert!(report.circuits[0].recorded && report.circuits[0].observed_call);
+    let StateAction::If { otherwise, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    **otherwise = StateAction::Expression {
+        value: Expr::PersistentCommit {
+            value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
+        },
+    };
+    let report = render_with_capabilities(&contract).unwrap().capabilities;
     let capability = &report.circuits[0];
     assert!(!capability.recorded);
     assert!(!capability.observed_call);
@@ -274,7 +296,7 @@ fn conditional_recording_rejects_an_unsupported_unselected_branch() {
 
 #[test]
 fn recording_gaps_include_unsupported_type_and_called_callee_path() {
-    let unsupported_cell_type = Type::OpaqueString;
+    let owned_cell_type = Type::OpaqueString;
     let mut contract = Contract {
         schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
@@ -286,7 +308,7 @@ fn recording_gaps_include_unsupported_type_and_called_callee_path() {
             index: 0,
             path: vec![],
             declaration: LedgerFieldKind::Cell {
-                ty: unsupported_cell_type.clone(),
+                ty: owned_cell_type.clone(),
             },
         }],
         circuits: vec![],
@@ -301,10 +323,28 @@ fn recording_gaps_include_unsupported_type_and_called_callee_path() {
                 field: "small".into(),
                 index: 0,
                 value: Expr::Default {
-                    ty: unsupported_cell_type,
+                    ty: owned_cell_type,
                 },
             }],
         }],
+    };
+    let report = render_with_capabilities(&contract).unwrap().capabilities;
+    assert!(report.circuits[0].recorded && report.circuits[0].observed_call);
+    // Owned scalar storage is supported; an opaque vector remains outside the
+    // qualified storage codec even though its local Default is representable.
+    let unsupported_storage = Type::Vector {
+        element: Box::new(Type::OpaqueString),
+        length: 2,
+    };
+    contract.ledger_fields[0].declaration = LedgerFieldKind::Cell {
+        ty: unsupported_storage.clone(),
+    };
+    contract.stateful_circuits[0].actions[0] = StateAction::CellWrite {
+        field: "small".into(),
+        index: 0,
+        value: Expr::Default {
+            ty: unsupported_storage,
+        },
     };
     let report = render_with_capabilities(&contract).unwrap().capabilities;
     let gap = report.circuits[0].recording_unavailable.as_ref().unwrap();
@@ -332,10 +372,18 @@ fn recording_gaps_include_unsupported_type_and_called_callee_path() {
     assert_eq!(report.circuits[0].name, "outer");
     assert!(report.circuits[0].recorded && report.circuits[0].observed_call);
 
-    // Preserve the nested callee-path objective with an actually unsupported
-    // scalar default expression (native default still renders successfully).
+    // Preserve the newly supported nested scalar default, then exercise the
+    // same callee diagnostic with a refused commitment input policy.
     contract.stateful_circuits[0].actions = vec![StateAction::Expression {
         value: Expr::Default { ty: Type::Boolean },
+    }];
+    let report = render_with_capabilities(&contract).unwrap().capabilities;
+    assert!(report.circuits[0].recorded && report.circuits[0].observed_call);
+    contract.stateful_circuits[0].actions = vec![StateAction::Expression {
+        value: Expr::PersistentCommit {
+            value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
+        },
     }];
     let report = render_with_capabilities(&contract).unwrap().capabilities;
     let gap = report.circuits[0].recording_unavailable.as_ref().unwrap();

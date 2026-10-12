@@ -17,7 +17,7 @@ pub(super) fn validate(
         Operation::EnumVariant { variant } => {
             matches!(ty, Type::Enum { variants, .. } if variants.contains(variant))
         }
-        Operation::Default => matches!(ty, Type::Struct { .. }) && value_type(ty),
+        Operation::Default => default_value_type(ty),
         Operation::StructConstruct { fields: values } => {
             let Type::Struct { fields, .. } = ty else {
                 return Ok(false);

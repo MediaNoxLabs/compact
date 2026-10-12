@@ -581,7 +581,7 @@ fn conditional_assertion_keeps_typed_equality_and_branch_local_observations() {
     selected.visit_file_mut(&mut syntax);
     assert_eq!(selected.0, 1);
 
-    // Dynamic opaque hashing remains outside the qualified fixed-FAB domain.
+    // Dynamic opaque hashing and direct defaults now compose in the selected arm.
     let StateAction::Assert {
         condition: Expr::If { then, .. },
         ..
@@ -596,6 +596,26 @@ fn conditional_assertion_keeps_typed_equality_and_branch_local_observations() {
             }),
         }),
         right: Box::new(Expr::FieldLiteral { value: "1".into() }),
+    };
+    let report = render_with_capabilities(&contract).unwrap().capabilities;
+    assert!(report.circuits[0].recorded && report.circuits[0].observed_call);
+    // Keep an independently unsupported commitment operand under the same
+    // assertion, preserving the diagnostic and selected-arm boundary.
+    let StateAction::Assert {
+        condition: Expr::If { then, .. },
+        ..
+    } = &mut contract.stateful_circuits[0].actions[0]
+    else {
+        unreachable!()
+    };
+    let Expr::Equal { left, .. } = then.as_mut() else {
+        unreachable!()
+    };
+    **left = Expr::TransientHash {
+        value: Box::new(Expr::PersistentCommit {
+            value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
+        }),
     };
     let report = render_with_capabilities(&contract).unwrap().capabilities;
     assert!(!report.circuits[0].recorded);

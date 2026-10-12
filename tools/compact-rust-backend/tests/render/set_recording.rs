@@ -164,16 +164,38 @@ fn opaque_set_check_in_composes_typed_effects_and_preserves_witness_order() {
         unreachable!()
     };
     arguments[0] = Expr::Default { ty: opaque.clone() };
+    let defaulted = render_with_capabilities(&contract).unwrap();
+    assert!(defaulted.capabilities.circuits[0].recorded);
+    assert!(defaulted.capabilities.circuits[0].observed_call);
+    // Keep the now-supported default callback value. An unsupported commitment
+    // in its local prefix still refuses recording at that exact argument path.
+    let StateAction::Expression {
+        value: Expr::WitnessCall { arguments, .. },
+    } = &mut contract.stateful_circuits[0].actions[2]
+    else {
+        unreachable!()
+    };
+    arguments[0] = Expr::Let {
+        bindings: vec![LocalBinding {
+            name: "unsupported_commit".into(),
+            ty: Type::Bytes { length: 32 },
+            value: Expr::PersistentCommit {
+                value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+                opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
+            },
+        }],
+        body: Box::new(Expr::Default { ty: opaque.clone() }),
+    };
     let rejected = render_with_capabilities(&contract).unwrap();
     assert!(!rejected.capabilities.circuits[0].recorded);
-    assert_eq!(
-        rejected.capabilities.circuits[0]
-            .recording_unavailable
-            .as_ref()
-            .unwrap()
-            .path,
-        "actions[2].value.arguments[0]"
-    );
+    // The checked domain refuses the commitment, then the retained witness
+    // fallback's cell_source rejects the enclosing Let argument atomically.
+    let gap = rejected.capabilities.circuits[0]
+        .recording_unavailable
+        .as_ref()
+        .unwrap();
+    assert_eq!(gap.ir_node, "Expr::Let");
+    assert_eq!(gap.path, "actions[2].value.arguments[0]");
 
     contract.stateful_circuits[0].actions[2] = StateAction::SetRemove {
         field: "checked".into(),
@@ -542,22 +564,39 @@ fn enum_set_locals_record_typed_keys_in_source_order() {
     let removed = body.find("record_remove").unwrap();
     assert!(bound < inserted && inserted < observed && observed < removed);
 
-    // Default<Enum> remains outside checked default construction; the valid
-    // enum-variant operation above does not remove that independent boundary.
+    // Enum defaults now preserve the same typed key and operation ordering.
     let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
         unreachable!();
     };
     bindings[0].value = Expr::Default { ty: names };
     let defaulted = render_with_capabilities(&contract).unwrap();
-    assert!(!defaulted.capabilities.circuits[0].recorded);
-    assert_eq!(
-        defaulted.capabilities.circuits[0]
-            .recording_unavailable
-            .as_ref()
-            .unwrap()
-            .ir_node,
-        "StateAction::Let",
+    assert!(defaulted.capabilities.circuits[0].recorded);
+    assert!(defaulted.capabilities.circuits[0].observed_call);
+    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    bindings.insert(
+        0,
+        LocalBinding {
+            name: "unsupported_commit".into(),
+            ty: Type::Bytes { length: 32 },
+            value: Expr::PersistentCommit {
+                value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+                opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
+            },
+        },
     );
+    let defaulted = render_with_capabilities(&contract).unwrap();
+    assert!(!defaulted.capabilities.circuits[0].recorded);
+    // The retained commitment-binding fallback accepts a Field literal value
+    // but requires a Bytes32 CellRead opening. Its first concrete refusal is
+    // therefore this literal opening, before it reaches the enum binding.
+    let gap = defaulted.capabilities.circuits[0]
+        .recording_unavailable
+        .as_ref()
+        .unwrap();
+    assert_eq!(gap.ir_node, "Expr::BytesLiteral");
+    assert_eq!(gap.path, "actions[0].bindings[0].value.opening");
 }
 
 #[test]

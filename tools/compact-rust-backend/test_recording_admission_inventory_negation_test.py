@@ -21,7 +21,7 @@ class NegationTestExtensionTests(unittest.TestCase):
         for owner in negation.OWNERS:
             path = self.root / owner
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes((inventory.ROOT / owner).read_bytes())
+            path.write_bytes((previous.checkpoint_585(inventory.ROOT) / owner).read_bytes())
 
     def report(self):
         return prior_tests.FundedMintTransitionTests.report(
@@ -67,7 +67,7 @@ class NegationTestExtensionTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             negation._TestCheckpoint(self.root, {inventory.SELECTOR: 'forged'})
         # The checkpoint never supplies production content.
-        snapshots = negation.predecessor_sources(inventory.ROOT, json.loads(previous.NEGATION_TEST_EXTENSION.read_text()))
+        snapshots = negation.predecessor_sources(previous.checkpoint_585(inventory.ROOT), json.loads(previous.NEGATION_TEST_EXTENSION.read_text()))
         checkpoint = negation._TestCheckpoint(self.root, snapshots)
         self.assertEqual(checkpoint / inventory.SELECTOR, self.root / inventory.SELECTOR)
 

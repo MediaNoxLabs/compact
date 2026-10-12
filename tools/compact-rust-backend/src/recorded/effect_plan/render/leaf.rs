@@ -153,10 +153,12 @@ pub(super) fn render(
             let input = value(input);
             syn::parse_quote!(runtime::keccak256(#input))
         }
-        Operation::Add(a, b) | Operation::Multiply(a, b) => {
+        Operation::Add(a, b) | Operation::Subtract(a, b) | Operation::Multiply(a, b) => {
             let (a, b) = (value(a), value(b));
             if matches!(binding.operation, Operation::Multiply(..)) {
                 syn::parse_quote!(#a * #b)
+            } else if matches!(binding.operation, Operation::Subtract(..)) {
+                syn::parse_quote!(#a - #b)
             } else {
                 syn::parse_quote!(#a + #b)
             }
@@ -182,6 +184,10 @@ pub(super) fn render(
         Operation::EcNeg(input) => {
             let input = value(input);
             syn::parse_quote!(runtime::ec_neg(#input))
+        }
+        Operation::ConstructJubjubPoint { x, y } => {
+            let (x, y) = (value(x), value(y));
+            syn::parse_quote!(runtime::construct_jubjub_point(#x, #y)?)
         }
         Operation::EcMul { point, scalar } => jubjub(
             crate::jubjub_value::Operation::Multiply(operand(point), operand(scalar)),

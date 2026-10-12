@@ -54,6 +54,7 @@ pub(super) fn try_run(
         ("--aligned-hashes", _) => Some(collections::aligned_hashes(arguments)),
         ("--exact-hash-input", _) => Some(collections::exact_hash_input(arguments)),
         ("--jubjub-negation", _) => Some(collections::jubjub_negation(arguments)),
+        ("--unit-value-operations", _) => Some(collections::unit_value_operations(arguments)),
         ("--aligned-witness-results", _) => Some(collections::aligned_witness_results(arguments)),
         ("--conditional-set", _) => Some(collections::conditional_set(arguments)),
         ("--adt-set-enum", _) => Some(collections::adt_set_enum(arguments)),

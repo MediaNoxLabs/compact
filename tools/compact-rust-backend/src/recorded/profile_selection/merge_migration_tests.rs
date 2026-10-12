@@ -167,11 +167,13 @@ fn composable_coin_result_does_not_require_old_merge_effect_counts() {
 }
 fn unsupported_hash() -> Expr {
     Expr::TransientHash {
-        value: Box::new(Expr::Default {
-            ty: Type::OpaqueString,
+        value: Box::new(Expr::PersistentCommit {
+            value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
         }),
     }
 }
+
 #[test]
 fn rejected_merge_keeps_action_precedence_and_generic_return_diagnostic() {
     for actionful in [false, true] {
@@ -193,6 +195,33 @@ fn rejected_merge_keeps_action_precedence_and_generic_return_diagnostic() {
                 value: unsupported_hash(),
             });
         }
+        // Preserve the previous default-hash case as an explicit composition gain.
+        let mut supported = c.clone();
+        let supported_root = root_mut(&mut supported);
+        let StateReturn::Expression {
+            value: Expr::Let { bindings, .. },
+        } = &mut supported_root.return_value
+        else {
+            unreachable!()
+        };
+        let default_hash = Expr::TransientHash {
+            value: Box::new(Expr::Default {
+                ty: Type::OpaqueString,
+            }),
+        };
+        bindings[0].value = default_hash.clone();
+        if actionful {
+            *supported_root.actions.last_mut().unwrap() = StateAction::Expression {
+                value: default_hash,
+            };
+        }
+        let positive_maps = Context::new(&supported);
+        let positive_root = positive_maps.circuits["merge_qualified"];
+        assert!(positive_maps.old(positive_root).is_none());
+        assert!(matches!(
+            positive_maps.attempt(positive_root),
+            ProfileAttempt::Admitted(_)
+        ));
         let maps = Context::new(&c);
         let root = maps.circuits["merge_qualified"];
         assert!(maps.old(root).is_none());

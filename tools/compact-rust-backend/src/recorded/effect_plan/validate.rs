@@ -132,6 +132,14 @@ pub(super) fn equality_type(ty: &Type) -> bool {
 pub(super) fn named_struct_derives_supported(ty: &Type) -> bool {
     matches!(ty, Type::Struct { .. }) && domain::derives_supported(ty)
 }
+/// Default has its own Rust trait bound; local ownership is not sufficient.
+pub(super) fn default_value_type(ty: &Type) -> bool {
+    domain::default_value_type(ty)
+}
+/// Reuse the same tuple trait limit for certified pure and checked defaults.
+pub(super) fn default_tuple_traits_supported(nodes: &[&Type]) -> bool {
+    domain::default_tuple_traits_supported(nodes)
+}
 pub(super) fn value_type(ty: &Type) -> bool {
     domain::value_type(ty)
 }
@@ -357,7 +365,7 @@ fn block(
                 use_value(value)?;
                 keccak_input_type(&value.ty) && *ty == (Type::Bytes { length: 32 })
             }
-            Operation::Add(a, b) | Operation::Multiply(a, b) => {
+            Operation::Add(a, b) | Operation::Subtract(a, b) | Operation::Multiply(a, b) => {
                 use_value(a)?;
                 use_value(b)?;
                 a.ty == Type::Field && b.ty == Type::Field && *ty == Type::Field
@@ -397,6 +405,11 @@ fn block(
             Operation::EcNeg(value) => {
                 use_value(value)?;
                 value.ty == Type::JubjubPoint && *ty == Type::JubjubPoint
+            }
+            Operation::ConstructJubjubPoint { x, y } => {
+                use_value(x)?;
+                use_value(y)?;
+                x.ty == Type::Field && y.ty == Type::Field && *ty == Type::JubjubPoint
             }
             Operation::EcMul { point, scalar } => {
                 use_value(point)?;

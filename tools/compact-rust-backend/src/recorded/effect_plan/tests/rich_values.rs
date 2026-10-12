@@ -338,13 +338,19 @@ fn rich_value_support_does_not_authorize_arithmetic_or_unrelated_nodes() {
         }),
     };
     render(&checked(expression, Type::JubjubPoint)).unwrap();
-    let unsupported = Expr::ConstructJubjubPoint {
+    let constructed = Expr::ConstructJubjubPoint {
         x: Box::new(literal("0")),
         y: Box::new(literal("1")),
     };
-    assert_eq!(
-        refusal(unsupported, Type::JubjubPoint).ir_node,
-        "Expr::ConstructJubjubPoint"
+    render(&checked(constructed, Type::JubjubPoint)).unwrap();
+    let unsupported = Expr::PersistentCommit {
+        value: Box::new(literal("0")),
+        opening: Box::new(bytes(0)),
+    };
+    assert!(
+        refusal(unsupported, bytes_type())
+            .detail
+            .contains("persistent commitment")
     );
 }
 

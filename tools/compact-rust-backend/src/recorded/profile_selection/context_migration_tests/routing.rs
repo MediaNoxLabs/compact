@@ -55,13 +55,17 @@ fn earlier_point_route_keeps_priority() {
 fn unsupported_continues_independent_suffix_but_invariant_is_fatal() {
     let contract = subject(Expr::FieldToBytes32 {
         value: Box::new(Expr::JubjubPointX {
-            value: Box::new(Expr::ConstructJubjubPoint {
-                x: Box::new(Expr::JubjubPointX {
-                    value: Box::new(Expr::HashToCurve {
-                        value: Box::new(project(address())),
+            value: Box::new(Expr::HashToCurve {
+                value: Box::new(Expr::PersistentCommit {
+                    value: Box::new(Expr::JubjubPointX {
+                        value: Box::new(Expr::HashToCurve {
+                            value: Box::new(project(address())),
+                        }),
+                    }),
+                    opening: Box::new(Expr::FieldToBytes32 {
+                        value: Box::new(Expr::FieldLiteral { value: "1".into() }),
                     }),
                 }),
-                y: Box::new(Expr::FieldLiteral { value: "1".into() }),
             }),
         }),
     });

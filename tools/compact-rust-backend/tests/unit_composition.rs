@@ -156,10 +156,28 @@ fn checked_hidden_effects_compose_but_unselected_unsupported_effects_are_refused
                 .contains("keccak256")
         );
 
-        // Scalar defaults remain native-valid but outside the checked domain.
-        // Even an unselected branch must retain that refusal.
+        // Scalar defaults now lower in the unselected helper arm as well.
         circuit(&mut v, "guard")["actions"][index]["otherwise"] = json!({
             "kind":"expression", "value":{"kind":"default","ty":{"kind":"boolean"}}
+        });
+        let contract: Contract = serde_json::from_value(v.clone()).unwrap();
+        let output = render_with_capabilities(&contract).unwrap();
+        let capability = output
+            .capabilities
+            .circuits
+            .iter()
+            .find(|c| c.name == "close")
+            .unwrap();
+        assert!(
+            capability.recorded && capability.observed_call,
+            "chunked={chunked}"
+        );
+
+        // Native fixed-FAB commitments remain wider than the checked Bytes32 pair.
+        circuit(&mut v, "guard")["actions"][index]["otherwise"] = json!({
+            "kind":"expression", "value": {"kind":"persistent_commit",
+                "value":{"kind":"field_literal","value":"0"},
+                "opening":{"kind":"bytes_literal","bytes":vec![0u8; 32]}}
         });
         let contract: Contract = serde_json::from_value(v).unwrap();
         let output = render_with_capabilities(&contract).unwrap();

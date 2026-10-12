@@ -107,17 +107,14 @@ fn fixed_fab_products_include_primitive_leaves_and_exact_tuple_boundary() {
         })),
         Err(PlanError::Unsupported(_))
     ));
-    // Dynamic hash inputs are qualified; synthesizing Default remains a separate refusal.
+    // Dynamic hash inputs and their owned defaults are independently qualified.
     for ty in [Type::OpaqueString, Type::OpaqueBytes] {
         assert!(validate::aligned_fab_type(&ty));
         assert!(validate::aligned_fab_type(&Type::Vector {
             element: Box::new(ty.clone()),
             length: 0
         }));
-        assert!(matches!(
-            checked(hash(Expr::Default { ty })),
-            Err(PlanError::Unsupported(_))
-        ));
+        accepted(hash(Expr::Default { ty }));
     }
 }
 #[test]
@@ -275,7 +272,7 @@ fn independent_validator_rejects_wrong_signature_results_and_live_operand_refere
     }
 }
 #[test]
-fn independent_validator_rejects_unsupported_defaults_and_sibling_scope_escape() {
+fn independent_validator_accepts_opaque_defaults_but_rejects_missing_traits_and_scope_escape() {
     for expression in [hash(field()), commit(field(), field())] {
         let mut plan = checked(expression).unwrap().plan().clone();
         let position = plan
@@ -304,6 +301,18 @@ fn independent_validator_rejects_unsupported_defaults_and_sibling_scope_escape()
         definition.operation = Operation::Default;
         operand.ty = Type::OpaqueString;
         plan.body.bindings[position].operation = operation;
+        recheck(plan.clone()).unwrap();
+        // A matching annotation cannot fabricate a tuple13 Default implementation.
+        let unsupported = Type::Tuple {
+            elements: vec![Type::Field; 13],
+        };
+        let definition = plan
+            .body
+            .bindings
+            .iter_mut()
+            .find(|b| matches!(b.operation, Operation::Default))
+            .unwrap();
+        definition.value.ty = unsupported;
         assert!(recheck(plan).is_err());
     }
     let mut plan = checked(Expr::If {

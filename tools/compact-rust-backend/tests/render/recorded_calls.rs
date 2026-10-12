@@ -343,12 +343,23 @@ fn nested_call_exposes_a_trace_only_when_every_step_is_supported() {
         1
     );
 
-    // Scalar default is native-valid but not yet a checked algebra operation.
-    // Keep the nested-step refusal independent of already-supported hashes.
+    // Scalar defaults are checked even in nested discarded steps.
     contract.stateful_circuits[0]
         .actions
         .push(StateAction::Expression {
             value: Expr::Default { ty: Type::Boolean },
+        });
+    let defaulted = render_with_capabilities(&contract).unwrap();
+    assert!(defaulted.capabilities.circuits[0].recorded);
+    assert!(defaulted.capabilities.circuits[0].observed_call);
+    // The unchanged commitment input domain refuses a later nested step.
+    contract.stateful_circuits[0]
+        .actions
+        .push(StateAction::Expression {
+            value: Expr::PersistentCommit {
+                value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+                opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
+            },
         });
     let rendered = render_with_capabilities(&contract).unwrap();
     assert!(!rendered.capabilities.circuits[0].recorded);
@@ -491,6 +502,17 @@ fn pure_field_calls_preserve_unit_and_record_ordinary_hashed_returns() {
         value: Expr::TransientHash {
             value: Box::new(Expr::Default {
                 ty: Type::OpaqueString,
+            }),
+        },
+    };
+    let defaulted = render_with_capabilities(&contract).unwrap();
+    assert!(defaulted.capabilities.circuits[0].recorded);
+    assert!(defaulted.capabilities.circuits[0].observed_call);
+    contract.stateful_circuits[0].return_value = StateReturn::Expression {
+        value: Expr::TransientHash {
+            value: Box::new(Expr::PersistentCommit {
+                value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+                opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
             }),
         },
     };

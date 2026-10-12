@@ -55,13 +55,17 @@ fn unsupported_body_preserves_later_independent_attempt_order() {
     let r = root_mut(&mut c);
     let coin = r.parameters[1].name.clone();
     r.actions = vec![StateAction::Expression {
-        value: Expr::ConstructJubjubPoint {
-            x: Box::new(Expr::JubjubPointX {
-                value: Box::new(Expr::HashToCurve {
-                    value: Box::new(Expr::Parameter { name: coin }),
+        value: Expr::HashToCurve {
+            value: Box::new(Expr::PersistentCommit {
+                value: Box::new(Expr::JubjubPointX {
+                    value: Box::new(Expr::HashToCurve {
+                        value: Box::new(Expr::Parameter { name: coin }),
+                    }),
+                }),
+                opening: Box::new(Expr::FieldToBytes32 {
+                    value: Box::new(Expr::FieldLiteral { value: "1".into() }),
                 }),
             }),
-            y: Box::new(Expr::FieldLiteral { value: "1".into() }),
         },
     }];
     assert!(Context::new(&c).domain(root(&c)).unwrap().is_none());

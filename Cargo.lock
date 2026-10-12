@@ -1709,6 +1709,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-effect-plan-unit-value-operations-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-base-crypto",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-storage",
+ "rand 0.8.6",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-effect-plan-unsigned-arithmetic-source-fixture"
 version = "0.1.0"
 dependencies = [
@@ -2059,6 +2072,8 @@ version = "0.1.0"
 dependencies = [
  "hex",
  "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
  "serde_json",
 ]
 
@@ -2620,6 +2635,7 @@ dependencies = [
  "compact-rust-effect-plan-stateful-calls-source-fixture",
  "compact-rust-effect-plan-transient-crypto-source-fixture",
  "compact-rust-effect-plan-unit-composition-source-fixture",
+ "compact-rust-effect-plan-unit-value-operations-source-fixture",
  "compact-rust-effect-plan-unsigned-arithmetic-source-fixture",
  "compact-rust-effect-plan-wide-add-source-fixture",
  "compact-rust-effect-plan-wide-casts-source-fixture",

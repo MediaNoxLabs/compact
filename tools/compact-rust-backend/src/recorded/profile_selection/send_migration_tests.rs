@@ -150,8 +150,9 @@ fn actual_composite_gap_survives_only_for_send_interface_without_legacy_reanalys
             name: "hidden".into(),
             ty: Type::Field,
             value: Expr::TransientHash {
-                value: Box::new(Expr::Default {
-                    ty: Type::OpaqueString,
+                value: Box::new(Expr::PersistentCommit {
+                    value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+                    opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
                 }),
             },
         }],
@@ -160,19 +161,15 @@ fn actual_composite_gap_survives_only_for_send_interface_without_legacy_reanalys
     let maps = Context::new(&c);
     let root = &c.stateful_circuits[1];
     let ProfileAttempt::Rejected(checked) = maps.attempt(root) else {
-        panic!("unsupported dynamic hash")
+        panic!("unsupported persistent-commit input")
     };
     let ProfileAttempt::Rejected(old) = maps.old(root) else {
         panic!("old child refusal")
     };
-    assert_eq!(old.ir_node, "Expr::Default");
+    assert_eq!(old.ir_node, "Expr::PersistentCommit");
     assert_eq!(checked.path, "return_value.value.bindings[0].value.value");
     assert_eq!(checked.ir_node, "RecordedPlan");
-    assert!(
-        checked
-            .detail
-            .contains("default requires a supported struct type")
-    );
+    assert!(checked.detail.contains("persistent commitment"));
     let selected = maps.selected(root);
     assert!(selected.typed_result.is_none());
     let retained = selected.shielded_send_rejection.unwrap();
@@ -191,8 +188,9 @@ fn actual_composite_gap_survives_only_for_send_interface_without_legacy_reanalys
                 name: "hidden".into(),
                 ty: Type::Field,
                 value: Expr::TransientHash {
-                    value: Box::new(Expr::Default {
-                        ty: Type::OpaqueString,
+                    value: Box::new(Expr::PersistentCommit {
+                        value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+                        opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
                     }),
                 },
             }],

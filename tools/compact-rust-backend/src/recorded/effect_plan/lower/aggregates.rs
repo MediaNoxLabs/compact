@@ -41,8 +41,11 @@ impl Lowerer<'_> {
             }
             Expr::Default { ty } => {
                 self.declarations.types().validate_at(ty, path)?;
-                if !matches!(ty, Type::Struct { .. }) || !validate::value_type(ty) {
-                    return Err(invalid(path, "default requires a supported struct type"));
+                if !validate::default_value_type(ty) {
+                    return Err(invalid(
+                        path,
+                        "default requires a supported Default value type",
+                    ));
                 }
                 Ok((Operation::Default, ty.clone()))
             }

@@ -147,6 +147,8 @@ pub(super) enum Operation {
         opening: Value,
     },
     Add(Value, Value),
+    /// Modular subtraction in the official Field domain.
+    Subtract(Value, Value),
     /// Modular multiplication in the official Field domain.
     Multiply(Value, Value),
     /// Checked small unsigned arithmetic; operand and result bounds are independent.
@@ -167,6 +169,11 @@ pub(super) enum Operation {
     JubjubScalarFromNative(Value),
     EcMulGenerator(Value),
     EcNeg(Value),
+    /// Fallible validation of two affine Field coordinates.
+    ConstructJubjubPoint {
+        x: Value,
+        y: Value,
+    },
     EcMul {
         point: Value,
         scalar: Value,

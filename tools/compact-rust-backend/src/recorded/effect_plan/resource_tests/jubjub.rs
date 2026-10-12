@@ -45,6 +45,19 @@ fn deep_point(operations: usize) -> Contract {
     point_contract(value, vec![])
 }
 
+fn deep_constructor(operations: usize) -> Contract {
+    let mut value = parameter("point");
+    for _ in 0..operations {
+        value = Expr::ConstructJubjubPoint {
+            x: Box::new(Expr::JubjubPointX {
+                value: Box::new(value),
+            }),
+            y: Box::new(Expr::FieldLiteral { value: "1".into() }),
+        };
+    }
+    point_contract(value, vec![])
+}
+
 fn wide_point(width: usize) -> Contract {
     let bindings = (0..width)
         .map(|i| LocalBinding {
@@ -84,6 +97,8 @@ fn point_boundaries_on_two_mib_worker() {
     isolated("jubjub::point_boundaries_on_two_mib_worker", || {
         let depth = maximum_depth(deep_point);
         let width = maximum_width(wide_point);
+        let constructor_depth = maximum_depth(deep_constructor);
+        eprintln!("Jubjub admitted constructor-operation depth={constructor_depth}");
         eprintln!("Jubjub admitted point-operation depth={depth}, local width={width}");
         for (label, make, maximum) in [
             (
@@ -92,6 +107,11 @@ fn point_boundaries_on_two_mib_worker() {
                 depth,
             ),
             ("point multiplication locals", wide_point, width),
+            (
+                "nested point construction",
+                deep_constructor,
+                constructor_depth,
+            ),
         ] {
             qualify(&make(maximum), label);
             let next = make(maximum + 1);

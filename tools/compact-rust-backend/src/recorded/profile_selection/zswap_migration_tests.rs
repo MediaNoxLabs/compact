@@ -209,15 +209,19 @@ fn unsupported_body_refuses_at_last_priority_without_old_fallback() {
         .find(|r| r.name == "flow")
         .unwrap();
     r.actions = vec![StateAction::Expression {
-        // Point construction remains outside the checked algebra after negation is admitted.
+        // The checked persistent-commit input remains a Bytes32 pair, not Field.
         value: Expr::Equal {
-            left: Box::new(Expr::ConstructJubjubPoint {
-                x: Box::new(Expr::JubjubPointX {
-                    value: Box::new(Expr::HashToCurve {
-                        value: Box::new(Expr::BytesLiteral { bytes: vec![7; 32] }),
+            left: Box::new(Expr::HashToCurve {
+                value: Box::new(Expr::PersistentCommit {
+                    value: Box::new(Expr::JubjubPointX {
+                        value: Box::new(Expr::HashToCurve {
+                            value: Box::new(Expr::BytesLiteral { bytes: vec![7; 32] }),
+                        }),
+                    }),
+                    opening: Box::new(Expr::FieldToBytes32 {
+                        value: Box::new(Expr::FieldLiteral { value: "1".into() }),
                     }),
                 }),
-                y: Box::new(Expr::FieldLiteral { value: "1".into() }),
             }),
             right: Box::new(Expr::Default {
                 ty: Type::JubjubPoint,

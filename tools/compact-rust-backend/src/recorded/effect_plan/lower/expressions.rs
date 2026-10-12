@@ -252,6 +252,7 @@ impl Lowerer<'_> {
             | Expr::JubjubScalarFromNative { .. }
             | Expr::EcMulGenerator { .. }
             | Expr::EcNeg { .. }
+            | Expr::ConstructJubjubPoint { .. }
             | Expr::EcMul { .. }
             | Expr::EcAdd { .. } => {
                 // One result temporary keeps this recursive dispatch frame bounded.
@@ -260,12 +261,15 @@ impl Lowerer<'_> {
                     Expr::JubjubPointX { .. } | Expr::JubjubPointY { .. }
                 ) {
                     Self::jubjub_coordinate
+                } else if matches!(expression, Expr::ConstructJubjubPoint { .. }) {
+                    Self::jubjub_constructor
                 } else {
                     Self::jubjub
                 };
                 lower(self, expression, scope, bindings, path)?
             }
             Expr::Add { .. }
+            | Expr::Subtract { .. }
             | Expr::Multiply { .. }
             | Expr::Compare { .. }
             | Expr::Equal { .. }

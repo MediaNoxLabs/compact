@@ -116,3 +116,19 @@ pub(super) fn storage_value_type(ty: &Type) -> bool {
 pub(super) fn witness_result_type(ty: &Type) -> bool {
     super::fab::aligned_fab_type(ty)
 }
+
+/// Rust Default implementations cover tuples through arity12. The caller's
+/// bounded borrowed type walk includes nested members, even empty vectors.
+pub(super) fn default_tuple_traits_supported(nodes: &[&Type]) -> bool {
+    nodes
+        .iter()
+        .all(|ty| !matches!(ty, Type::Tuple { elements } if elements.len() > 12))
+}
+
+/// Default is an operation capability, independent of FAB/interface policies.
+/// Canonical named definitions and resource budgets are still caller authority.
+pub(super) fn default_value_type(ty: &Type) -> bool {
+    value_type(ty)
+        && crate::resource_limits::recording_type_nodes(ty)
+            .is_ok_and(|nodes| default_tuple_traits_supported(&nodes))
+}

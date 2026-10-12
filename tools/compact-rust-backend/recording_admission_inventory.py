@@ -75,6 +75,7 @@ import recording_admission_inventory_funded_mint as funded_mint
 import recording_admission_inventory_keccak_test as keccak_test
 import recording_admission_inventory_aligned_test as aligned_test
 import recording_admission_inventory_negation_test as negation_test
+import recording_admission_inventory_value_test as value_test
 import recording_admission_inventory_encoding as encoding
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -286,12 +287,18 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
            keccak_test_extension: dict | None = None,
            aligned_test_extension: dict | None = None,
            encoding_extension: dict | None = None,
-           negation_test_extension: dict | None = None) -> dict:
+           negation_test_extension: dict | None = None,
+           value_test_extension: dict | None = None) -> dict:
     errors = validate_baseline(baseline)
     report = {'schema_version': 1, 'baseline_commit': baseline.get('baseline_commit'),
               'claim': 'source route inventory; not language or behavioral coverage',
               'route_count': len(baseline.get('routes', [])),
               'source_changes': [], 'route_checks': [], 'retired_routes': [], 'errors': errors}
+    if value_test_extension is not None:
+        try:
+            root = value_test.checkpoint(root, value_test_extension, negation_test_extension)
+        except (OSError, UnicodeError, ValueError, KeyError) as error:
+            errors.append(str(error))
     if negation_test_extension is not None:
         try:
             root = negation_test.checkpoint(root, negation_test_extension, encoding_extension)
@@ -1064,6 +1071,13 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
             'predecessor_sources_sha256': {owner: hashes[0] for owner, hashes in keccak_test.OWNERS.items()},
             'claim': 'Exact test-only predecessor reconstruction; unchanged complete historical authority and production checks.',
         }
+    if report['passed'] and value_test_extension is not None:
+        report['reviewed_value_test_extension'] = {
+            'issue': 586,
+            'current_sources_sha256': {owner: hashes[1] for owner, hashes in value_test.OWNERS.items()},
+            'predecessor_sources_sha256': {owner: hashes[0] for owner, hashes in value_test.OWNERS.items()},
+            'new_retired_routes': [],
+        }
     if report['passed'] and negation_test_extension is not None:
         report['reviewed_negation_test_extension'] = {
             'issue': 585,
@@ -1122,6 +1136,7 @@ def main(argv=None) -> int:
     parser.add_argument('--inequality-test-extension', type=Path, help='explicit #571 test-only inequality negative correction; no retirement')
     parser.add_argument('--funded-mint-transition', type=Path, help='explicit #572 funded mint subsumption after #570 and #571')
     parser.add_argument('--encoding-extension', type=Path, help='explicit #583 exact witness encoding; no admission or retirement change')
+    parser.add_argument('--value-test-extension', type=Path, help='explicit #586 test-only LocalUnit leaf adaptation; no retirement')
     parser.add_argument('--negation-test-extension', type=Path, help='explicit #585 test-only EcNeg adaptation; no retirement')
     parser.add_argument('--aligned-test-extension', type=Path, help='explicit #582 test-only aligned hash adaptation; no retirement')
     parser.add_argument('--keccak-test-extension', type=Path, help='explicit #581 test-only Keccak operand adaptation; no retirement')
@@ -1143,6 +1158,7 @@ def main(argv=None) -> int:
     protected += [args.inequality_test_extension] if args.inequality_test_extension else []
     protected += [args.funded_mint_transition] if args.funded_mint_transition else []
     protected += [args.encoding_extension] if args.encoding_extension else []
+    protected += [args.value_test_extension] if args.value_test_extension else []
     protected += [args.negation_test_extension] if args.negation_test_extension else []
     protected += [args.aligned_test_extension] if args.aligned_test_extension else []
     protected += [args.keccak_test_extension] if args.keccak_test_extension else []
@@ -1177,10 +1193,11 @@ def main(argv=None) -> int:
         inequality_test_extension = json.loads(args.inequality_test_extension.read_text()) if args.inequality_test_extension else None
         funded_mint_transition = json.loads(args.funded_mint_transition.read_text()) if args.funded_mint_transition else None
         encoding_extension = json.loads(args.encoding_extension.read_text()) if args.encoding_extension else None
+        value_test_extension = json.loads(args.value_test_extension.read_text()) if args.value_test_extension else None
         negation_test_extension = json.loads(args.negation_test_extension.read_text()) if args.negation_test_extension else None
         aligned_test_extension = json.loads(args.aligned_test_extension.read_text()) if args.aligned_test_extension else None
         keccak_test_extension = json.loads(args.keccak_test_extension.read_text()) if args.keccak_test_extension else None
-        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension, voting_transition, phase_reset_transition, immediate_send_transition, zswap_transition, membership_transition, send_transition, observation_test_extension, merge_transition, guarded_deposit_transition, routing_test_extension, reset_payout_transition, shielded_payout_transition, inequality_test_extension, funded_mint_transition, keccak_test_extension, aligned_test_extension, encoding_extension, negation_test_extension)
+        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension, voting_transition, phase_reset_transition, immediate_send_transition, zswap_transition, membership_transition, send_transition, observation_test_extension, merge_transition, guarded_deposit_transition, routing_test_extension, reset_payout_transition, shielded_payout_transition, inequality_test_extension, funded_mint_transition, keccak_test_extension, aligned_test_extension, encoding_extension, negation_test_extension, value_test_extension)
     except (OSError, ValueError, TypeError, KeyError) as error:
         parser.exit(2, f'inventory error: {error}\n')
     rendered = json.dumps(report, indent=2) + '\n'

@@ -204,7 +204,7 @@ fn new_compositional_point_domain_is_separate_from_old_inclusion() {
 }
 
 #[test]
-fn point_negation_is_checked_while_point_construction_has_no_old_fallback() {
+fn point_values_are_checked_without_widening_persistent_commit_inputs() {
     let mut contract = subject();
     contract.stateful_circuits[0].return_value = StateReturn::Expression {
         value: Expr::EcNeg {
@@ -230,6 +230,21 @@ fn point_negation_is_checked_while_point_construction_has_no_old_fallback() {
             }),
             y: Box::new(Expr::JubjubPointY {
                 value: Box::new(parameter("point")),
+            }),
+        },
+    };
+    let context = Context::new(&contract);
+    let circuit = &contract.stateful_circuits[0];
+    assert!(context.old(circuit).is_none());
+    assert!(context.algebra(circuit).is_ok());
+    assert!(context.selected(circuit).unwrap().typed_result.is_some());
+    contract.stateful_circuits[0].return_value = StateReturn::Expression {
+        value: Expr::HashToCurve {
+            value: Box::new(Expr::PersistentCommit {
+                value: Box::new(Expr::JubjubPointX {
+                    value: Box::new(parameter("point")),
+                }),
+                opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
             }),
         },
     };

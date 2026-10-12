@@ -111,13 +111,17 @@ fn rollout_excludes_internal_field_parameter_and_explicit_return_plan() {
 #[test]
 fn unsupported_body_continues_suffix_but_invariant_is_fatal() {
     let mut contract = subject();
-    contract.stateful_circuits[0].actions = vec![action(Expr::ConstructJubjubPoint {
-        x: Box::new(Expr::JubjubPointX {
-            value: Box::new(Expr::HashToCurve {
-                value: Box::new(parameter("domain")),
+    contract.stateful_circuits[0].actions = vec![action(Expr::HashToCurve {
+        value: Box::new(Expr::PersistentCommit {
+            value: Box::new(Expr::JubjubPointX {
+                value: Box::new(Expr::HashToCurve {
+                    value: Box::new(parameter("domain")),
+                }),
+            }),
+            opening: Box::new(Expr::FieldToBytes32 {
+                value: Box::new(Expr::FieldLiteral { value: "1".into() }),
             }),
         }),
-        y: Box::new(Expr::FieldLiteral { value: "1".into() }),
     })];
     let context = Context::new(&contract);
     assert!(

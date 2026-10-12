@@ -46,6 +46,36 @@ fn send_gap(value: Value) -> compact_rust_backend::RecordingGap {
     send.recording_unavailable.clone().unwrap()
 }
 
+fn admit_defaults_then_replace_with_unsupported_commit(mut value: Value) -> Value {
+    let output = rendered(value.clone());
+    assert!(
+        output
+            .capabilities
+            .circuits
+            .iter()
+            .all(|c| c.recorded && c.observed_call)
+    );
+
+    fn replace(node: &mut Value) -> usize {
+        if node["kind"] == "default" && node["ty"]["kind"] == "opaque_string" {
+            // The old default expression is now supported. Keep the same
+            // surrounding hash and source path, with an independently
+            // unsupported commitment input policy as the negative control.
+            *node = json!({"kind":"persistent_commit",
+                "value":{"kind":"field_literal","value":"0"},
+                "opening":{"kind":"bytes_literal","bytes":vec![0u8;32]}});
+            return 1;
+        }
+        match node {
+            Value::Array(nodes) => nodes.iter_mut().map(replace).sum(),
+            Value::Object(fields) => fields.values_mut().map(replace).sum(),
+            _ => 0,
+        }
+    }
+    assert!(replace(&mut value) > 0);
+    value
+}
+
 #[test]
 fn admitted_send_profiles_keep_native_and_recorded_surface() {
     let source = rendered(source());
@@ -68,13 +98,13 @@ fn action_gap_keeps_precedence_over_return_profile_diagnostic() {
             "value": {"kind": "transient_hash", "value": {"kind":"default", "ty":{"kind":"opaque_string"}}}
         }], "body": original
     });
-    let gap = send_gap(value);
+    let gap = send_gap(admit_defaults_then_replace_with_unsupported_commit(value));
     assert_eq!(gap.code, RecordingGapCode::UnsupportedAction);
     assert_eq!(gap.path, "actions[0]");
 }
 
 #[test]
-fn rejected_unused_dynamic_hash_reports_its_exact_binding() {
+fn supported_default_and_rejected_commit_keep_exact_unused_binding() {
     let mut value = source();
     let original = value["stateful_circuits"][1]["return_value"]["value"].take();
     value["stateful_circuits"][1]["return_value"]["value"] = json!({
@@ -85,18 +115,18 @@ fn rejected_unused_dynamic_hash_reports_its_exact_binding() {
         }],
         "body": original
     });
-    let gap = send_gap(value);
+    let gap = send_gap(admit_defaults_then_replace_with_unsupported_commit(value));
     assert_eq!(gap.code, RecordingGapCode::UnsupportedExpression);
     assert_eq!(gap.ir_node, "RecordedPlan");
     assert!(
         gap.detail
-            .contains("default requires a supported struct type")
+            .contains("persistent commitment requires a Bytes32 pair and Bytes32 opening")
     );
     assert_eq!(gap.path, "return_value.value.bindings[0].value.value");
 }
 
 #[test]
-fn rejected_unselected_branch_and_nested_argument_keep_source_paths() {
+fn defaults_and_rejected_commits_keep_unselected_and_nested_source_paths() {
     let mut branch = source();
     let original = branch["stateful_circuits"][1]["return_value"]["value"].take();
     let result_ty = branch["stateful_circuits"][1]["result"].clone();
@@ -108,7 +138,7 @@ fn rejected_unselected_branch_and_nested_argument_keep_source_paths() {
             "value": {"kind": "transient_hash", "value": {"kind":"default", "ty":{"kind":"opaque_string"}}}
         }], "body": {"kind": "default", "ty": result_ty}}
     });
-    let gap = send_gap(branch);
+    let gap = send_gap(admit_defaults_then_replace_with_unsupported_commit(branch));
     assert_eq!(gap.code, RecordingGapCode::UnsupportedExpression);
     assert_eq!(
         gap.path,
@@ -123,12 +153,14 @@ fn rejected_unselected_branch_and_nested_argument_keep_source_paths() {
             "value": {"kind":"transient_hash", "value":{"kind":"default", "ty":{"kind":"opaque_string"}}}
         }], "body": first
     });
-    let gap = send_gap(argument);
+    let gap = send_gap(admit_defaults_then_replace_with_unsupported_commit(
+        argument,
+    ));
     assert_eq!(gap.code, RecordingGapCode::UnsupportedExpression);
     assert_eq!(gap.ir_node, "RecordedPlan");
     assert!(
         gap.detail
-            .contains("default requires a supported struct type")
+            .contains("persistent commitment requires a Bytes32 pair and Bytes32 opening")
     );
     assert_eq!(
         gap.path,

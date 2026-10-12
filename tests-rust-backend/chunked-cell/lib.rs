@@ -598,13 +598,14 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_recorded_value_0): (_, runtime::Field) =
+            let __compact_effect_0: runtime::Field = __compact_param_0;
+            let (frame, __compact_effect_1): (_, runtime::Field) =
                 crate::ledger_slots::amount.record_read(frame)?;
-            let __compact_recorded_difference_1: runtime::Field =
-                __compact_recorded_value_0 - __compact_param_0;
-            let frame =
-                crate::ledger_slots::amount.record_write(frame, __compact_recorded_difference_1)?;
-            Ok(frame.finish(()))
+            let __compact_effect_2: runtime::Field = __compact_effect_1 - __compact_effect_0;
+            let frame = crate::ledger_slots::amount.record_write(frame, __compact_effect_2)?;
+            let __compact_effect_3: () = ();
+            let __compact_effect_4: () = ();
+            Ok(frame.finish(__compact_effect_4))
         }
         pub fn multiply_amount<Private>(
             context: runtime::context::CircuitContext<Private>,

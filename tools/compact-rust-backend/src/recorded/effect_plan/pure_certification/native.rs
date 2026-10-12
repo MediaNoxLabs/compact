@@ -49,10 +49,7 @@ pub(super) fn check_defaults(defaults: &[&Type], path: &str) -> Result<(), super
     for ty in defaults {
         let nodes = crate::resource_limits::recording_type_nodes(ty)
             .map_err(|error| super::invalid(path, error.to_string()))?;
-        if nodes
-            .iter()
-            .any(|ty| matches!(ty, Type::Tuple { elements } if elements.len() > 12))
-        {
+        if !super::super::validate::default_tuple_traits_supported(&nodes) {
             return Err(super::invalid(
                 path,
                 "pure Default requires tuple arity at most 12, including nested vector elements",

@@ -82,3 +82,30 @@ impl Lowerer<'_> {
         Ok((operation, Type::Field))
     }
 }
+
+// Constructor temporaries must not enlarge every recursive EcAdd/EcMul frame.
+// Recursive dispatch selects this helper using its shared result slot.
+impl Lowerer<'_> {
+    pub(super) fn jubjub_constructor(
+        &mut self,
+        expression: &Expr,
+        scope: &Scope,
+        bindings: &mut Vec<Binding>,
+        path: &str,
+    ) -> Result<(Operation, Type), RecordingGap> {
+        let Expr::ConstructJubjubPoint { x, y } = expression else {
+            return Err(RecordingGap::expression(expression, path.into()));
+        };
+        let mut operand = |expression, name| {
+            let path = format!("{path}.{name}");
+            let value = self.expression(expression, scope, bindings, &path)?;
+            if value.ty != Type::Field {
+                return Err(invalid(&path, "expected Field Jubjub operand"));
+            }
+            Ok(value)
+        };
+        let x = operand(x, "x")?;
+        let y = operand(y, "y")?;
+        Ok((Operation::ConstructJubjubPoint { x, y }, Type::JubjubPoint))
+    }
+}

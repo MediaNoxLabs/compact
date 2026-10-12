@@ -222,14 +222,31 @@ fn unselected_checked_effect_is_supported_but_unsupported_effect_keeps_legacy_pr
         assert!(capability.recorded && capability.observed_call);
         assert!(capability.recording_unavailable.is_none());
 
-        // Point negation remains a distinct unsupported operation. Keep the
-        // private observation and exact legacy diagnostic precedence control.
+        // Negation and point defaults are now supported; the private observation
+        // preserves the exact old whole-root refusal independently.
         let expression = &mut circuit(&mut v, "guard")["actions"][index]["otherwise"]["value"];
         expression["left"]["kind"] = json!("hash_to_curve");
         expression["left"] = json!({"kind":"ec_neg", "value":expression["left"].clone()});
         expression["right"] = json!({"kind":"default", "ty":{"kind":"jubjub_point"}});
         let unsupported = rejected(v.clone(), "close");
         assert_eq!(unsupported.gap.path, r.gap.path);
+        let c: Contract = serde_json::from_value(v.clone()).unwrap();
+        let result = render_with_capabilities(&c).unwrap();
+        let capability = result
+            .capabilities
+            .circuits
+            .iter()
+            .find(|x| x.name == "close")
+            .unwrap();
+        assert!(capability.recorded && capability.observed_call);
+        // Native fixed-FAB commitments remain wider than the checked Bytes32 pair.
+        let expression = &mut circuit(&mut v, "guard")["actions"][index]["otherwise"]["value"];
+        expression["left"] = json!({"kind":"hash_to_curve","value":{
+            "kind":"persistent_commit","value":{"kind":"jubjub_point_x","value":expression["left"].clone()},
+            "opening":{"kind":"bytes_literal","bytes":vec![0u8;32]}
+        }});
+        let still_rejected = rejected(v.clone(), "close");
+        assert_eq!(still_rejected.gap.path, r.gap.path);
         let c: Contract = serde_json::from_value(v).unwrap();
         let result = render_with_capabilities(&c).unwrap();
         let capability = result
@@ -459,6 +476,22 @@ fn direct_root_call_argument_keeps_effects_and_unsupported_nested_audit_reason()
     binding["ty"] = json!({"kind":"field"});
     binding["value"] =
         json!({"kind":"transient_hash", "value":{"kind":"default","ty":{"kind":"opaque_string"}}});
+    let still_rejected = rejected(v.clone(), "close");
+    assert_eq!(still_rejected.gap.path, r.gap.path);
+    let c: Contract = serde_json::from_value(v.clone()).unwrap();
+    let rendered = render_with_capabilities(&c).unwrap();
+    let capability = rendered
+        .capabilities
+        .circuits
+        .iter()
+        .find(|x| x.name == "close")
+        .unwrap();
+    assert!(capability.recorded && capability.observed_call);
+    let binding = &mut circuit(&mut v, "close")["actions"][0]["arguments"][0]["bindings"][0];
+    binding["value"] = json!({"kind":"transient_hash", "value":{
+        "kind":"persistent_commit","value":{"kind":"field_literal","value":"0"},
+        "opening":{"kind":"bytes_literal","bytes":vec![0u8;32]}
+    }});
     let still_rejected = rejected(v.clone(), "close");
     assert_eq!(still_rejected.gap.path, r.gap.path);
     let c: Contract = serde_json::from_value(v).unwrap();

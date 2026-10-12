@@ -303,6 +303,18 @@ fn unsupported_body_declines_and_preserves_later_attempts() {
         Context::new(&c)
             .domain(&c.stateful_circuits[0])
             .unwrap()
+            .is_some()
+    );
+    c.stateful_circuits[0].actions[0] = StateAction::Expression {
+        value: Expr::PersistentCommit {
+            value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
+        },
+    };
+    assert!(
+        Context::new(&c)
+            .domain(&c.stateful_circuits[0])
+            .unwrap()
             .is_none()
     );
     let row = selected(&c);

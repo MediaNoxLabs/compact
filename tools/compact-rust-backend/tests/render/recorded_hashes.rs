@@ -441,8 +441,7 @@ fn certified_pure_hash_bridge_records_body_variants_but_direct_hashes_remain_bou
         body.find("pure_circuits::bridge()?").unwrap() < body.find("record_write(frame").unwrap()
     );
 
-    // Direct scalar hashes now compose too; dynamic opaque hashes remain outside
-    // the qualified fixed-FAB domain.
+    // Direct scalar and dynamic opaque hashes both compose, including defaults.
     let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
         unreachable!()
     };
@@ -457,6 +456,20 @@ fn certified_pure_hash_bridge_records_body_variants_but_direct_hashes_remain_bou
     bindings[0].value = Expr::TransientHash {
         value: Box::new(Expr::Default {
             ty: Type::OpaqueString,
+        }),
+    };
+    let accepted = render_with_capabilities(&contract).unwrap();
+    assert!(
+        accepted.capabilities.circuits[0].recorded
+            && accepted.capabilities.circuits[0].observed_call
+    );
+    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    bindings[0].value = Expr::TransientHash {
+        value: Box::new(Expr::PersistentCommit {
+            value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
         }),
     };
     let rejected = render_with_capabilities(&contract).unwrap();

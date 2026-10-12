@@ -231,7 +231,7 @@ fn standalone_large_tuple_value_and_pure_interface_do_not_claim_equality() {
     assert!(!validate::equality_type(&ty));
 }
 #[test]
-fn opaque_default_stays_in_certified_pure_body_or_named_struct() {
+fn opaque_default_is_checked_directly_and_in_certified_pure_bodies() {
     let pure = PureCircuit {
         source: None,
         name: "empty".into(),
@@ -251,20 +251,32 @@ fn opaque_default_stays_in_certified_pure_body_or_named_struct() {
         ),
         vec![pure],
     );
-    assert!(matches!(
+    accept(
+        local(
+            "text",
+            Type::OpaqueString,
+            Expr::Default {
+                ty: Type::OpaqueString,
+            },
+            boolean(),
+        ),
+        vec![],
+    );
+    let unsupported = Type::Tuple {
+        elements: vec![Type::Field; 13],
+    };
+    assert!(
         check_root(
             &root(local(
-                "text",
-                Type::OpaqueString,
-                Expr::Default {
-                    ty: Type::OpaqueString
-                },
+                "tuple",
+                unsupported.clone(),
+                Expr::Default { ty: unsupported },
                 boolean()
             )),
             &[]
-        ),
-        Err(PlanError::Unsupported(_))
-    ));
+        )
+        .is_err()
+    );
 }
 #[test]
 fn owned_public_roots_keep_storage_and_witness_result_boundaries() {

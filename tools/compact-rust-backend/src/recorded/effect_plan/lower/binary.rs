@@ -15,6 +15,7 @@ impl Lowerer<'_> {
     ) -> Result<(Operation, Type), RecordingGap> {
         let (left, right) = match expression {
             Expr::Add { left, right }
+            | Expr::Subtract { left, right }
             | Expr::Multiply { left, right }
             | Expr::Compare { left, right, .. }
             | Expr::Equal { left, right }
@@ -27,11 +28,13 @@ impl Lowerer<'_> {
         let a = self.expression(left, scope, bindings, &format!("{path}.left"))?;
         let b = self.expression(right, scope, bindings, &format!("{path}.right"))?;
         Ok(match expression {
-            Expr::Add { .. } | Expr::Multiply { .. }
+            Expr::Add { .. } | Expr::Subtract { .. } | Expr::Multiply { .. }
                 if a.ty == Type::Field && b.ty == Type::Field =>
             {
                 let operation = if matches!(expression, Expr::Multiply { .. }) {
                     Operation::Multiply(a, b)
+                } else if matches!(expression, Expr::Subtract { .. }) {
+                    Operation::Subtract(a, b)
                 } else {
                     Operation::Add(a, b)
                 };

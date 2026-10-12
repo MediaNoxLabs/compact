@@ -58,6 +58,15 @@ fn unsupported_body_falls_through_without_hiding_first_action_diagnostic() {
             },
         },
     );
+    assert!(Context::new(&c).old(root(&c)).is_none());
+    assert!(Context::new(&c).domain(root(&c)).unwrap().is_some());
+    // Keep the positive default above, then exercise the unchanged commitment boundary.
+    root_mut(&mut c).actions[0] = StateAction::Expression {
+        value: Expr::PersistentCommit {
+            value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
+        },
+    };
     let maps = Context::new(&c);
     assert!(maps.old(root(&c)).is_none());
     assert!(maps.domain(root(&c)).unwrap().is_none());

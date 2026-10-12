@@ -40,7 +40,7 @@ fn received_bridge_prefix_and_identity_refusals_remain_distinct_from_inclusion()
     }
 }
 #[test]
-fn direct_opaque_default_and_recursive_stateful_calls_are_not_old_admitted() {
+fn direct_opaque_default_is_new_composition_while_recursion_remains_refused() {
     for recursive in [false, true] {
         let mut c = source();
         let body = returned_mut(&mut c, "mergeCoin");
@@ -67,8 +67,9 @@ fn direct_opaque_default_and_recursive_stateful_calls_are_not_old_admitted() {
                 env.old(env.stateful[name]).is_none(),
                 "{name}/recursive={recursive}"
             );
-            assert!(
+            assert_eq!(
                 env.checked(env.stateful[name]).is_err(),
+                recursive,
                 "{name}/recursive={recursive}"
             );
         }

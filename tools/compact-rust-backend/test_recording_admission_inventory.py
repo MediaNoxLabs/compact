@@ -100,7 +100,23 @@ ENCODING_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory
 NEGATION_TEST_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.negation-test-585.json")
 
 
+VALUE_TEST_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.value-test-586.json")
+
+
+def checkpoint_585(root):
+    owner = next(iter(inventory.value_test.OWNERS))
+    try:
+        current = (root / owner).read_bytes()
+    except FileNotFoundError:
+        return root
+    if inventory.digest(current) == inventory.value_test.OWNERS[owner][1]:
+        return inventory.value_test.checkpoint(root, json.loads(VALUE_TEST_EXTENSION.read_text()),
+                                               json.loads(NEGATION_TEST_EXTENSION.read_text()))
+    return root
+
+
 def checkpoint_584(root):
+    root = checkpoint_585(root)
     owner = next(iter(inventory.negation_test.OWNERS))
     try:
         current = (root / owner).read_bytes()
@@ -371,7 +387,8 @@ class InventoryTests(unittest.TestCase):
                                   keccak_test_extension=json.loads(KECCAK_TEST_EXTENSION.read_text()),
                                   aligned_test_extension=json.loads(ALIGNED_TEST_EXTENSION.read_text()),
                                   encoding_extension=json.loads(ENCODING_EXTENSION.read_text()),
-                                  negation_test_extension=json.loads(NEGATION_TEST_EXTENSION.read_text()))
+                                  negation_test_extension=json.loads(NEGATION_TEST_EXTENSION.read_text()),
+                                  value_test_extension=json.loads(VALUE_TEST_EXTENSION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)

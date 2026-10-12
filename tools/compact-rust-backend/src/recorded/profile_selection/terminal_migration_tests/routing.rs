@@ -75,6 +75,19 @@ fn unsupported_in_domain_body_keeps_independent_later_attempts() {
             }),
         },
     };
+    assert!(
+        Context::new(&contract)
+            .algebra(&contract.stateful_circuits[0])
+            .is_ok()
+    );
+    contract.stateful_circuits[0].return_value = StateReturn::Expression {
+        value: Expr::TransientHash {
+            value: Box::new(Expr::PersistentCommit {
+                value: Box::new(Expr::FieldLiteral { value: "0".into() }),
+                opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
+            }),
+        },
+    };
     let context = Context::new(&contract);
     assert!(matches!(
         context.algebra(&contract.stateful_circuits[0]),

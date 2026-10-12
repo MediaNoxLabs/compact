@@ -2,8 +2,8 @@
 # Copyright (C) 2026 Midnight Foundation
 # SPDX-License-Identifier: Apache-2.0
 """Authenticate EcNeg test updates; all production reads remain live."""
-from recording_admission_inventory_jubjub import canonical, digest
-from recording_admission_inventory_aligned_test import _TextSnapshot
+from recording_admission_inventory_jubjub import canonical
+from recording_admission_inventory_test_adaptations import restore_tests, TestCheckpoint
 
 MANIFEST_SHA = 'e9e5cb3217bec452fa16072a9906f78bbc9f74f6f48eee3fde4ecaacd07c2732'
 PRIOR_MANIFEST_SHA = '881dbeecd6a1aaffe9d251fe8ea9e3d82cad42e4462afc0ca86641984a52a1f8'
@@ -36,33 +36,13 @@ OWNERS = {
 
 
 def predecessor_sources(root, extension):
-    if canonical(extension) != MANIFEST_SHA:
-        raise ValueError('negation585: unreviewed test manifest')
-    restored = {}
-    for owner, (previous, current) in OWNERS.items():
-        source = (root / owner).read_text()
-        if digest(source.encode()) != current:
-            raise ValueError('negation585: current test owner changed: ' + owner)
-        for edit in extension['owners'][owner]['test_adaptations']:
-            if not edit['current'] or source.count(edit['current']) != 1:
-                raise ValueError('negation585: replacement is not unique: ' + owner)
-            source = source.replace(edit['current'], edit['previous'], 1)
-        if digest(source.encode()) != previous:
-            raise ValueError('negation585: complete predecessor reconstruction failed: ' + owner)
-        restored[owner] = source
-    return restored
+    return restore_tests(root, extension, MANIFEST_SHA, OWNERS, 'negation585')
 
 
-class _TestCheckpoint:
+class _TestCheckpoint(TestCheckpoint):
     """Only six authenticated test owners; never redirect a production source."""
     def __init__(self, root, sources):
-        if set(sources) != set(OWNERS) or any(
-                digest(source.encode()) != OWNERS[owner][0] for owner, source in sources.items()):
-            raise ValueError('negation585: unauthenticated test snapshot')
-        self._root, self._sources = root, sources
-
-    def __truediv__(self, owner):
-        return _TextSnapshot(self._sources[owner]) if owner in self._sources else self._root / owner
+        super().__init__(root, sources, OWNERS, 'negation585')
 
 
 def checkpoint(root, extension, encoding):

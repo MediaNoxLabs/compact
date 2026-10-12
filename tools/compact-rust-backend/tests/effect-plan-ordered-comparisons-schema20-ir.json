@@ -1,0 +1,543 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "calls",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_ordered_comparisons.compact",
+        "line": 5,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "left",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "255"
+      },
+      "source": {
+        "file": "effect_plan_ordered_comparisons.compact",
+        "line": 8,
+        "column": 1
+      }
+    },
+    {
+      "name": "right",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "18446744073709551615"
+      },
+      "source": {
+        "file": "effect_plan_ordered_comparisons.compact",
+        "line": 9,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "compare",
+      "parameters": [
+        {
+          "name": "a",
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        },
+        {
+          "name": "b",
+          "ty": {
+            "kind": "unsigned",
+            "max": "18446744073709551615"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Relations",
+        "fields": [
+          {
+            "name": "less",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "lessEqual",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "greater",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "greaterEqual",
+            "ty": {
+              "kind": "boolean"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "struct_literal",
+          "ty": {
+            "kind": "struct",
+            "name": "Relations",
+            "fields": [
+              {
+                "name": "less",
+                "ty": {
+                  "kind": "boolean"
+                }
+              },
+              {
+                "name": "lessEqual",
+                "ty": {
+                  "kind": "boolean"
+                }
+              },
+              {
+                "name": "greater",
+                "ty": {
+                  "kind": "boolean"
+                }
+              },
+              {
+                "name": "greaterEqual",
+                "ty": {
+                  "kind": "boolean"
+                }
+              }
+            ]
+          },
+          "fields": [
+            {
+              "kind": "compare",
+              "operator": "less",
+              "left": {
+                "kind": "unsigned_cast",
+                "max": "18446744073709551615",
+                "value": {
+                  "kind": "parameter",
+                  "name": "a"
+                }
+              },
+              "right": {
+                "kind": "parameter",
+                "name": "b"
+              }
+            },
+            {
+              "kind": "compare",
+              "operator": "less_equal",
+              "left": {
+                "kind": "unsigned_cast",
+                "max": "18446744073709551615",
+                "value": {
+                  "kind": "parameter",
+                  "name": "a"
+                }
+              },
+              "right": {
+                "kind": "parameter",
+                "name": "b"
+              }
+            },
+            {
+              "kind": "compare",
+              "operator": "greater",
+              "left": {
+                "kind": "unsigned_cast",
+                "max": "18446744073709551615",
+                "value": {
+                  "kind": "parameter",
+                  "name": "a"
+                }
+              },
+              "right": {
+                "kind": "parameter",
+                "name": "b"
+              }
+            },
+            {
+              "kind": "compare",
+              "operator": "greater_equal",
+              "left": {
+                "kind": "unsigned_cast",
+                "max": "18446744073709551615",
+                "value": {
+                  "kind": "parameter",
+                  "name": "a"
+                }
+              },
+              "right": {
+                "kind": "parameter",
+                "name": "b"
+              }
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_17",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_17"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_ordered_comparisons.compact",
+        "line": 10,
+        "column": 1
+      }
+    },
+    {
+      "name": "compare128",
+      "parameters": [
+        {
+          "name": "a",
+          "ty": {
+            "kind": "unsigned",
+            "max": "340282366920938463463374607431768211455"
+          }
+        },
+        {
+          "name": "b",
+          "ty": {
+            "kind": "unsigned",
+            "max": "340282366920938463463374607431768211455"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Relations",
+        "fields": [
+          {
+            "name": "less",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "lessEqual",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "greater",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "greaterEqual",
+            "ty": {
+              "kind": "boolean"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "struct_literal",
+          "ty": {
+            "kind": "struct",
+            "name": "Relations",
+            "fields": [
+              {
+                "name": "less",
+                "ty": {
+                  "kind": "boolean"
+                }
+              },
+              {
+                "name": "lessEqual",
+                "ty": {
+                  "kind": "boolean"
+                }
+              },
+              {
+                "name": "greater",
+                "ty": {
+                  "kind": "boolean"
+                }
+              },
+              {
+                "name": "greaterEqual",
+                "ty": {
+                  "kind": "boolean"
+                }
+              }
+            ]
+          },
+          "fields": [
+            {
+              "kind": "compare",
+              "operator": "less",
+              "left": {
+                "kind": "parameter",
+                "name": "a"
+              },
+              "right": {
+                "kind": "parameter",
+                "name": "b"
+              }
+            },
+            {
+              "kind": "compare",
+              "operator": "less_equal",
+              "left": {
+                "kind": "parameter",
+                "name": "a"
+              },
+              "right": {
+                "kind": "parameter",
+                "name": "b"
+              }
+            },
+            {
+              "kind": "compare",
+              "operator": "greater",
+              "left": {
+                "kind": "parameter",
+                "name": "a"
+              },
+              "right": {
+                "kind": "parameter",
+                "name": "b"
+              }
+            },
+            {
+              "kind": "compare",
+              "operator": "greater_equal",
+              "left": {
+                "kind": "parameter",
+                "name": "a"
+              },
+              "right": {
+                "kind": "parameter",
+                "name": "b"
+              }
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_16",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_16"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_ordered_comparisons.compact",
+        "line": 14,
+        "column": 1
+      }
+    },
+    {
+      "name": "witnessed",
+      "parameters": [
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Outcome",
+        "fields": [
+          {
+            "name": "less",
+            "ty": {
+              "kind": "boolean"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "struct_literal",
+          "ty": {
+            "kind": "struct",
+            "name": "Outcome",
+            "fields": [
+              {
+                "name": "less",
+                "ty": {
+                  "kind": "boolean"
+                }
+              }
+            ]
+          },
+          "fields": [
+            {
+              "kind": "if",
+              "condition": {
+                "kind": "parameter",
+                "name": "selected"
+              },
+              "then": {
+                "kind": "coerce",
+                "value": {
+                  "kind": "let",
+                  "bindings": [
+                    {
+                      "name": "t_14",
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "255"
+                      },
+                      "value": {
+                        "kind": "witness_call",
+                        "name": "left",
+                        "arguments": [
+                        ]
+                      }
+                    }
+                  ],
+                  "body": {
+                    "kind": "compare",
+                    "operator": "less",
+                    "left": {
+                      "kind": "unsigned_cast",
+                      "max": "18446744073709551615",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "t_14"
+                      }
+                    },
+                    "right": {
+                      "kind": "witness_call",
+                      "name": "right",
+                      "arguments": [
+                      ]
+                    }
+                  }
+                },
+                "ty": {
+                  "kind": "boolean"
+                }
+              },
+              "otherwise": {
+                "kind": "coerce",
+                "value": {
+                  "kind": "boolean",
+                  "value": false
+                },
+                "ty": {
+                  "kind": "boolean"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_15",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_15"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_ordered_comparisons.compact",
+        "line": 18,
+        "column": 1
+      }
+    }
+  ]
+}

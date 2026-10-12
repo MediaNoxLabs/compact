@@ -58,33 +58,22 @@ fn inspect(source: &str, entry: &str, label: &str, require_old: bool, y_first: b
             "{label}: complete old admission BEFORE candidate"
         );
     }
-    // Measured after projection support: the complete Schnorr paths next need
-    // ordered comparison; point guard and genuine projection sources compose.
-    let needs_compare = label.starts_with("did-") || label.starts_with("crypto-");
+    let retained_schnorr = label.starts_with("did-") || label.starts_with("crypto-");
     let checked = match check_with_calls(root, &ledger, &witnesses, &pure, &stateful) {
         Ok(plan) => {
             assert!(
-                !needs_compare,
-                "{label}: deliberately update the measured comparison gap"
+                !retained_schnorr,
+                "{label}: update measured full-root multiplication gap deliberately"
             );
             render(&plan).unwrap();
             json!({"status":"supported"})
         }
         Err(PlanError::Unsupported(gap)) => {
             assert!(
-                needs_compare,
+                retained_schnorr,
                 "{label}: projection source must compose: {gap:?}"
             );
-            assert_eq!(gap.ir_node, "Expr::Compare", "{label}: {gap:?}");
-            assert_eq!(
-                gap.detail,
-                "Expr::Compare is not supported in this recorded expression"
-            );
-            assert!(
-                gap.path.contains(".callee[schnorrVerify].")
-                    && gap.path.ends_with(".condition.body"),
-                "{label}: exact Schnorr comparison origin: {gap:?}"
-            );
+            super::retained_schnorr::assert_multiplication_gap(label, &gap);
             json!({"status":"unsupported","ir_node":gap.ir_node,"path":gap.path,"detail":gap.detail})
         }
         Err(PlanError::Invalid(gap)) => panic!("{label}: invariant failure {gap:?}"),

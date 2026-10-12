@@ -365,6 +365,11 @@ fn block(
                 use_value(b)?;
                 bound(&a.ty).is_some() && bound(&b.ty).is_some() && bound(ty).is_some()
             }
+            Operation::Compare { left, right, .. } => {
+                use_value(left)?;
+                use_value(right)?;
+                bound(&left.ty).is_some() && bound(&right.ty).is_some() && *ty == Type::Boolean
+            }
             Operation::Equal(a, b) | Operation::NotEqual(a, b) => {
                 use_value(a)?;
                 use_value(b)?;

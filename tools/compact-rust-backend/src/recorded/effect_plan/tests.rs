@@ -519,3 +519,9 @@ mod whole_merge_inclusion;
 
 #[path = "tests/guarded_deposit_inclusion.rs"]
 mod guarded_deposit_inclusion;
+
+#[path = "tests/ordered_comparisons.rs"]
+mod ordered_comparisons;
+
+#[path = "tests/retained_schnorr.rs"]
+mod retained_schnorr;

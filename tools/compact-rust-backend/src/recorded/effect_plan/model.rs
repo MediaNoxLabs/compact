@@ -144,6 +144,12 @@ pub(super) enum Operation {
     UnsignedAdd(Value, Value),
     UnsignedSubtract(Value, Value),
     UnsignedMultiply(Value, Value),
+    /// Ordered comparison of independently bounded u128 unsigned carriers.
+    Compare {
+        operator: crate::ir::ComparisonOperator,
+        left: Value,
+        right: Value,
+    },
     Equal(Value, Value),
     NotEqual(Value, Value),
     /// Coordinates of an already validated official embedded-curve point.

@@ -175,6 +175,22 @@ pub(super) fn render(
             crate::jubjub_value::Operation::Add(operand(left), operand(right)),
             path,
         )?,
+        Operation::Compare {
+            operator,
+            left,
+            right,
+        } => {
+            use crate::ir::ComparisonOperator;
+            let (left, right) = (value(left), value(right));
+            match operator {
+                ComparisonOperator::Less => syn::parse_quote!(#left.value() < #right.value()),
+                ComparisonOperator::LessEqual => syn::parse_quote!(#left.value() <= #right.value()),
+                ComparisonOperator::Greater => syn::parse_quote!(#left.value() > #right.value()),
+                ComparisonOperator::GreaterEqual => {
+                    syn::parse_quote!(#left.value() >= #right.value())
+                }
+            }
+        }
         Operation::Equal(a, b) | Operation::NotEqual(a, b) => {
             let (a, b) = (value(a), value(b));
             if matches!(binding.operation, Operation::NotEqual(..)) {

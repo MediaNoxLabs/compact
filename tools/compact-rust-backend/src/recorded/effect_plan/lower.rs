@@ -13,6 +13,7 @@ use super::{
 use crate::ir::*;
 use std::collections::HashMap;
 mod aggregates;
+mod binary;
 mod calls;
 mod counters;
 mod expressions;

@@ -247,48 +247,13 @@ impl Lowerer<'_> {
                 };
                 lower(self, expression, scope, bindings, path)?
             }
-            Expr::Add { left, right }
-            | Expr::Equal { left, right }
-            | Expr::NotEqual { left, right }
-            | Expr::UnsignedAdd { left, right, .. }
-            | Expr::UnsignedSubtract { left, right, .. }
-            | Expr::UnsignedMultiply { left, right, .. } => {
-                let a = self.expression(left, scope, bindings, &format!("{path}.left"))?;
-                let b = self.expression(right, scope, bindings, &format!("{path}.right"))?;
-                match expression {
-                    Expr::Add { .. } if a.ty == Type::Field && b.ty == Type::Field => {
-                        (Operation::Add(a, b), Type::Field)
-                    }
-                    Expr::Equal { .. } | Expr::NotEqual { .. }
-                        if validate::equality_type(&a.ty) && a.ty == b.ty =>
-                    {
-                        let operation = if matches!(expression, Expr::NotEqual { .. }) {
-                            Operation::NotEqual(a, b)
-                        } else {
-                            Operation::Equal(a, b)
-                        };
-                        (operation, Type::Boolean)
-                    }
-                    Expr::UnsignedAdd { max, .. }
-                        if validate::unsigned_add_type(&a.ty, &b.ty, &uint(max)) =>
-                    {
-                        (Operation::UnsignedAdd(a, b), uint(max))
-                    }
-                    Expr::UnsignedSubtract { max, .. } | Expr::UnsignedMultiply { max, .. }
-                        if validate::bound(&a.ty).is_some()
-                            && validate::bound(&b.ty).is_some()
-                            && validate::bound(&uint(max)).is_some() =>
-                    {
-                        let operation = match expression {
-                            Expr::UnsignedSubtract { .. } => Operation::UnsignedSubtract(a, b),
-                            Expr::UnsignedMultiply { .. } => Operation::UnsignedMultiply(a, b),
-                            _ => unreachable!("unsigned arithmetic arm"),
-                        };
-                        (operation, uint(max))
-                    }
-                    _ => return Err(invalid(path, "invalid arithmetic operand types")),
-                }
-            }
+            Expr::Add { .. }
+            | Expr::Compare { .. }
+            | Expr::Equal { .. }
+            | Expr::NotEqual { .. }
+            | Expr::UnsignedAdd { .. }
+            | Expr::UnsignedSubtract { .. }
+            | Expr::UnsignedMultiply { .. } => self.binary(expression, scope, bindings, path)?,
             Expr::Coerce { value, ty } => {
                 let value = self.expression(value, scope, bindings, &format!("{path}.value"))?;
                 return self.coerce(value, ty, bindings, path);

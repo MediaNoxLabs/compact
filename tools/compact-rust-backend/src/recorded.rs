@@ -289,6 +289,7 @@ fn proved_opaque_set_sequence(circuit: &StatefulCircuit) -> bool {
 /// The one-operation OpaqueString Set shapes proved by the set oracle. Keep
 /// the field, physical index, and parameter source tied to the typed IR so
 /// general opaque expressions remain outside the recording surface.
+#[cfg(test)]
 fn closed_opaque_set_operation(
     circuit: &StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,
@@ -1397,10 +1398,6 @@ fn render_recorded_item(
         && !record_guard!(
             "guard.proved-opaque-set-sequence",
             proved_opaque_set_sequence(circuit)
-        )
-        && !record_guard!(
-            "guard.closed-opaque-set-operation",
-            closed_opaque_set_operation(circuit, ledger_fields)
         )
         && opaque_map_operation.is_none()
         && !organizer_gate

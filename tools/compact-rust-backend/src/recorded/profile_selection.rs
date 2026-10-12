@@ -86,6 +86,9 @@ mod zswap_migration_tests;
 #[cfg(test)]
 #[path = "profile_selection/membership_migration_tests.rs"]
 mod membership_migration_tests;
+#[cfg(test)]
+#[path = "profile_selection/opaque_boolean_migration_tests.rs"]
+mod opaque_boolean_migration_tests;
 
 #[cfg(test)]
 #[path = "profile_selection/send_migration_tests.rs"]
@@ -131,6 +134,15 @@ fn checked_membership_domain(
     circuits: &HashMap<&str, &StatefulCircuit>,
 ) -> Result<Option<TypedPlan>, RenderError> {
     use crate::ir::{StateReturn, Type};
+    // This declared interface accepts every independently checked return form;
+    // its eligibility does not depend on Set/Map operations or body shape.
+    if circuit.result == Type::Boolean
+        && matches!(circuit.parameters.as_slice(), [p] if p.ty == Type::OpaqueString)
+    {
+        return resolve_checked_plan(effect_plan::lower_with_calls(
+            circuit, ledger, witnesses, pure, circuits,
+        ));
+    }
     let uint64 = Type::Unsigned {
         max: u64::MAX.to_string(),
     };

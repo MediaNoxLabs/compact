@@ -1,6 +1,6 @@
 {
   "format": "compact-reviewed-rust-binding/v1",
-  "scope": "Unit effect-algebra production routing. Original TypeScript capture bytes remain unchanged; current Rust generation and provenance assertions are reviewed separately. No fresh TS execution or added proof claim.",
+  "scope": "Checked opaque Boolean interface routing (#603). Original TypeScript capture bytes remain unchanged; only recorded member_control uses typed composition. Current Rust generation is independently reviewed; no fresh TS execution or DID proof claim.",
   "captures": [
     {
       "file": "cases.json",
@@ -11,7 +11,7 @@
     {
       "path": "tests-rust-backend/did-alias-set-reducer/lib.rs",
       "captured_sha256": "940fc875f9e46fbc96a7b032f3fed103aed5888e42820227de3c3bd30554fc1c",
-      "current_sha256": "69200513b5add179cb181bdebe4f713c51b8e43084c33ccbebdb46a54039ef43"
+      "current_sha256": "3d00dbc3afc4b75fa40d5f9ec11fddb40551a4deebb022c9627a41fae3501fa2"
     },
     {
       "path": "tests-rust-backend/did-alias-set-reducer/tests/provenance.rs",

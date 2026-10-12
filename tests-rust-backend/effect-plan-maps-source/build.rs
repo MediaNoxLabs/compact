@@ -24,7 +24,7 @@ fn main() {
         ])
     );
     for circuit in &rendered.capabilities.circuits {
-        let expected = !circuit.name.starts_with("direct_");
+        let expected = circuit.name != "direct_lookup";
         assert_eq!(circuit.recorded, expected, "{circuit:?}");
         assert_eq!(circuit.observed_call, expected, "{circuit:?}");
     }

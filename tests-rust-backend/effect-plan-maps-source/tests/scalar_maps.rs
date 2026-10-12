@@ -200,7 +200,7 @@ fn scalar_membership_lookup_insert_overwrite_and_remove_match_official_ts() {
     }
 }
 #[test]
-fn missing_lookup_refuses_and_direct_returns_remain_native_ts_controls() {
+fn direct_membership_is_recorded_and_direct_lookup_retains_native_ts_controls() {
     let (state, _) = setup();
     let contract = c::Contract::from(Witness::new([false, false], None));
     let native = c::lookup(state.circuit_context(5), "missing".into())
@@ -234,14 +234,36 @@ fn missing_lookup_refuses_and_direct_returns_remain_native_ts_controls() {
     assert_eq!(missing["status"], "refused");
     assert_eq!(missing["args"], serde_json::json!(["missing"]));
     assert_eq!(missing["events"], serde_json::json!([]));
-    // Direct StateReturn roots intentionally retain their existing admission policy.
-    // They are native+TS controls; there is no fabricated recorded/observed surface.
+    // The String-to-Boolean interface now delegates direct membership to checked
+    // composition. String-to-Field lookup remains a native-only control.
     for (key, present) in [("seed", true), ("missing", false)] {
+        let (state, verifier) = setup();
         let result = c::direct_member(state.circuit_context(5), key.into()).unwrap();
+        let recorded = c::recorded::direct_member(state.circuit_context(5), key.into()).unwrap();
+        let (frame, value) = slots::table
+            .record_member(RecordingFrame::new(state.circuit_context(5)), key.into())
+            .unwrap();
+        let manual = frame.finish(value);
+        let call = contract
+            .recording()
+            .direct_member_call(&state, 5, key.into())
+            .unwrap();
+        compare(&result, &recorded, &manual);
+        compare(&result, call.recorded(), &manual);
+        let prepared = call.prepare(verifier, r::Field::from(0_u64)).unwrap();
+        assert_eq!(
+            prepared.input,
+            r::fab::AlignedValue::from(r::OpaqueString::from(key))
+        );
+        assert_eq!(prepared.output, r::fab::AlignedValue::from(present));
         assert_eq!(result.result, present);
         inspect(&result, &[("seed", 7)], 0);
         let reference = row(&format!("direct-member-{key}"));
+        assert_eq!(reference["circuit"], "direct_member");
         assert_eq!(reference["args"], serde_json::json!([key]));
+        assert_eq!(reference["seed"], "seed");
+        assert_eq!(reference["choices"], serde_json::json!([false, false]));
+        assert!(reference["fail"].is_null());
         assert_eq!(reference["result"], present);
         assert_ts(
             &reference,
@@ -271,6 +293,23 @@ fn missing_lookup_refuses_and_direct_returns_remain_native_ts_controls() {
     assert_eq!(reference["args"], serde_json::json!(["missing"]));
     // Safe collection APIs refuse noncanonical keys before trailing-NUL normalization.
     for key in ["seed\0", "a\0b\0"] {
+        let refusal = c::direct_member(state.circuit_context(5), key.into())
+            .err()
+            .unwrap();
+        assert_eq!(
+            c::recorded::direct_member(state.circuit_context(5), key.into())
+                .err()
+                .unwrap(),
+            refusal
+        );
+        assert_eq!(
+            contract
+                .recording()
+                .direct_member_call(&state, 5, key.into())
+                .err()
+                .unwrap(),
+            refusal
+        );
         assert!(c::member(state.circuit_context(5), key.into()).is_err());
         assert!(c::recorded::member(state.circuit_context(5), key.into()).is_err());
         assert!(

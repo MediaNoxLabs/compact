@@ -174,15 +174,13 @@ fn assert_current(c: &Contract) -> String {
         .unwrap();
     assert_eq!(row["body_owner"], "algebra.membership");
     let guards = row["guards"].as_array().unwrap();
-    assert!(
-        !guards
-            .iter()
-            .any(|g| g["route"] == "guard.closed-opaque-asset-removal")
-    );
+    assert!(!guards.iter().any(|g| matches!(
+        g["route"].as_str(),
+        Some("guard.closed-opaque-asset-removal" | "guard.closed-opaque-set-operation")
+    )));
     for route in [
         "guard.closed-opaque-map-operation",
         "guard.proved-opaque-set-sequence",
-        "guard.closed-opaque-set-operation",
     ] {
         assert!(
             guards.iter().any(|g| g["route"] == route),

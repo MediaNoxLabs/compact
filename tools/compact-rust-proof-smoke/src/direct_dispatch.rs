@@ -54,6 +54,7 @@ pub(super) fn try_run(
             Some(contracts::test_center_welcome_organizers(arguments))
         }
         ("--opaque-string-set", _) => Some(collections::opaque_string_set(arguments)),
+        ("--opaque-string-set-member", _) => Some(collections::opaque_string_set_member(arguments)),
         ("--opaque-string-map", _) => Some(collections::opaque_string_map(arguments)),
         ("--map-effects", _) => Some(collections::map_effects(arguments)),
         ("--map-value-products", _) => Some(collections::map_value_products(arguments)),

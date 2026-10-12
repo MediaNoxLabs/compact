@@ -38,6 +38,20 @@ pub(super) fn opaque_string_set(
     opaque_string_set::run(Path::new(&root))
 }
 
+pub(super) fn opaque_string_set_member(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let root = arguments
+        .next()
+        .ok_or("usage: compact-rust-proof-smoke --opaque-string-set-member <proof-output>")?;
+    if arguments.next().is_some() {
+        return Err(
+            "usage: compact-rust-proof-smoke --opaque-string-set-member <proof-output>".into(),
+        );
+    }
+    opaque_string_set::run_member(Path::new(&root))
+}
+
 pub(super) fn opaque_string_map(
     arguments: &mut impl Iterator<Item = OsString>,
 ) -> Result<(), Box<dyn Error>> {

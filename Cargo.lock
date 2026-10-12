@@ -2561,6 +2561,7 @@ dependencies = [
  "midnight-onchain-state",
  "midnight-serialize",
  "midnight-storage",
+ "rand 0.8.6",
  "serde_json",
 ]
 

@@ -138,9 +138,10 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (_, runtime::Field) =
-                crate::ledger_slots::table.record_lookup(frame, true)?;
-            Ok(frame.finish(observed))
+            let __compact_effect_0: bool = true;
+            let (frame, __compact_effect_1): (_, runtime::Field) =
+                crate::ledger_slots::table.record_lookup(frame, __compact_effect_0)?;
+            Ok(frame.finish(__compact_effect_1))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

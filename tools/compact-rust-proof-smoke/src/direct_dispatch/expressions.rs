@@ -529,3 +529,18 @@ pub(super) fn opaque_cell_input(
         Err(_) => Err("opaque-cell-input proof thread panicked".into()),
     }
 }
+
+/// Selected source-bound strict-funded snapshot; historical runner stays available.
+pub(super) fn literal_bytes_field_strict(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let root = arguments
+        .next()
+        .ok_or("usage: compact-rust-proof-smoke --literal-bytes-field-strict <proof-output>")?;
+    if arguments.next().is_some() {
+        return Err(
+            "usage: compact-rust-proof-smoke --literal-bytes-field-strict <proof-output>".into(),
+        );
+    }
+    literal_bytes_field::run_strict(Path::new(&root))
+}

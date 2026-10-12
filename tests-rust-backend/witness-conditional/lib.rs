@@ -260,6 +260,40 @@ pub mod ledger_contract {
             };
             Ok(frame.finish(__compact_effect_5))
         }
+        pub fn pair_secret<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::Field,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, (runtime::Field, runtime::Field)>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: runtime::Field = __compact_param_0;
+            let (frame, __compact_effect_1): (_, runtime::Field) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.secret(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_effect_0,
+                    )
+                })?;
+            let (frame, __compact_effect_2): (_, runtime::Field) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.secret(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_effect_0,
+                    )
+                })?;
+            let __compact_effect_3: (runtime::Field, runtime::Field) =
+                (__compact_effect_1, __compact_effect_2);
+            Ok(frame.finish(__compact_effect_3))
+        }
         pub fn nested_secret<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
@@ -369,6 +403,48 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "choose_secret",
+                    input,
+                ))
+            }
+            pub fn pair_secret<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                seed: runtime::Field,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<
+                    Private,
+                    (runtime::Field, runtime::Field),
+                >,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                pair_secret(context, self.witnesses, seed)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn pair_secret_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                seed: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<
+                    'observed,
+                    Private,
+                    (runtime::Field, runtime::Field),
+                >,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(seed);
+                let recorded = self.pair_secret(observed.circuit_context(private_state), seed)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "pair_secret",
                     input,
                 ))
             }

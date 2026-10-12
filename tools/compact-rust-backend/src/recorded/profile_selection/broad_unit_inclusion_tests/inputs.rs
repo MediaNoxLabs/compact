@@ -124,6 +124,30 @@ fn retirement_manifest(bytes: &[u8]) -> Result<Value, String> {
     serde_json::from_slice(bytes).map_err(|error| error.to_string())
 }
 
+// #597 added only optional resource metadata to this retained oracle owner.
+// Authenticate its immutable checkpoint before the original retirement projection.
+const RESOURCE_METADATA_SHA256: &str =
+    "a4d3559923d732989a8245bb1984f131479feba07554a2e5006dec16b89f8145";
+const RESOURCE_METADATA: &[u8] =
+    include_bytes!("../../../../recording_admission_inventory.resource-diagnostics-597.json");
+
+fn resource_metadata_manifest(bytes: &[u8]) -> Result<Value, String> {
+    if digest(bytes) != RESOURCE_METADATA_SHA256 {
+        return Err("unreviewed resource metadata checkpoint".into());
+    }
+    serde_json::from_slice(bytes).map_err(|error| error.to_string())
+}
+
+fn projected_legacy_source(
+    path: &str,
+    current: &str,
+    retirement: &Value,
+    resource_metadata: &Value,
+) -> Result<String, String> {
+    let before_metadata = legacy_source(path, current, resource_metadata)?;
+    legacy_source(path, &before_metadata, retirement)
+}
+
 fn legacy_source(path: &str, current: &str, retirement: &Value) -> Result<String, String> {
     let Some(owner) = retirement["owners"].get(path) else {
         return Ok(current.to_owned());
@@ -152,12 +176,14 @@ fn legacy_source(path: &str, current: &str, retirement: &Value) -> Result<String
 pub(super) fn legacy_authority() -> Value {
     let mut authority: Value = serde_json::from_str(include_str!("legacy-authority.json")).unwrap();
     let retirement = retirement_manifest(include_bytes!("legacy-retirement.json")).unwrap();
+    let resource_metadata = resource_metadata_manifest(RESOURCE_METADATA).unwrap();
     let repository = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
     for row in authority["files"].as_array().unwrap() {
         let path = row["path"].as_str().unwrap();
         assert!(relative_path(path));
         let current = std::fs::read_to_string(repository.join(path)).unwrap();
-        let previous = legacy_source(path, &current, &retirement).unwrap();
+        let previous =
+            projected_legacy_source(path, &current, &retirement, &resource_metadata).unwrap();
         assert_eq!(
             digest(previous.as_bytes()),
             row["sha256"],
@@ -165,6 +191,7 @@ pub(super) fn legacy_authority() -> Value {
         );
     }
     authority["retirement_projection"] = retirement;
+    authority["resource_metadata_projection"] = resource_metadata;
     authority
 }
 
@@ -172,27 +199,51 @@ pub(super) fn legacy_authority() -> Value {
 fn retired_oracle_projection_rejects_drift_and_forged_authority() {
     let bytes = include_bytes!("legacy-retirement.json");
     let retirement = retirement_manifest(bytes).unwrap();
+    let resource_metadata = resource_metadata_manifest(RESOURCE_METADATA).unwrap();
+    assert!(resource_metadata_manifest(br#"{"owners":{}}"#).is_err());
     assert!(retirement_manifest(br#"{"owners":{}}"#).is_err());
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
     for (path, row) in retirement["owners"].as_object().unwrap() {
         let current = std::fs::read_to_string(root.join(path)).unwrap();
         assert_eq!(
             digest(
-                legacy_source(path, &current, &retirement)
+                projected_legacy_source(path, &current, &retirement, &resource_metadata)
                     .unwrap()
                     .as_bytes()
             ),
             row["previous_sha256"]
         );
-        assert!(legacy_source(path, &(current.clone() + "\n// drift\n"), &retirement).is_err());
+        assert!(
+            projected_legacy_source(
+                path,
+                &(current.clone() + "\n// drift\n"),
+                &retirement,
+                &resource_metadata,
+            )
+            .is_err()
+        );
         let edit = &row["predecessor_reconstruction"][0];
-        let partial = current.replacen(
+        let before_metadata = legacy_source(path, &current, &resource_metadata).unwrap();
+        let partial = before_metadata.replacen(
             edit["current"].as_str().unwrap(),
             edit["previous"].as_str().unwrap(),
             1,
         );
-        assert!(legacy_source(path, &partial, &retirement).is_err());
+        assert!(projected_legacy_source(path, &partial, &retirement, &resource_metadata).is_err());
     }
+    // Every original source digest remains mandatory after both exact stages.
+    let authority = legacy_authority();
+    assert_eq!(authority["files"].as_array().unwrap().len(), 49);
+    let path = "tools/compact-rust-backend/src/recorded/typed_plan/composition.rs";
+    let current = std::fs::read_to_string(root.join(path)).unwrap();
+    let edit = &resource_metadata["owners"][path]["predecessor_reconstruction"][0];
+    let partial = current.replacen(
+        edit["current"].as_str().unwrap(),
+        edit["previous"].as_str().unwrap(),
+        1,
+    );
+    assert_ne!(partial, current);
+    assert!(projected_legacy_source(path, &partial, &retirement, &resource_metadata).is_err());
 }
 
 #[test]

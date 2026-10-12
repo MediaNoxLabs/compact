@@ -163,8 +163,24 @@ OPAQUE_FIELD_TRANSITION = inventory.BASELINE.with_name("recording_admission_inve
 PROVED_SET_SEQUENCE_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-605.json")
 
 
+ORDINARY_INTERFACE_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.ordinary-interface-606.json")
+
+
+def checkpoint_605(root):
+    """Authenticate the complete new ordinary route before historical fixtures."""
+    extension = json.loads(ORDINARY_INTERFACE_EXTENSION.read_text())
+    try:
+        source = (root / inventory.ordinary_interface.OWNER).read_bytes()
+    except FileNotFoundError:
+        return root
+    if inventory.digest(source) == extension['owners'][inventory.ordinary_interface.OWNER]['current_sha256']:
+        return inventory.ordinary_interface.checkpoint(root, extension)
+    return root
+
+
 def checkpoint_604(root):
     """Authenticate exact retirement sources before prior fixture setup."""
+    root = checkpoint_605(root)
     transition = json.loads(PROVED_SET_SEQUENCE_TRANSITION.read_text())
     try:
         source = (root / inventory.proved_set_sequence.RECORDED).read_bytes()
@@ -728,7 +744,8 @@ class InventoryTests(unittest.TestCase):
                                   asset_removal_transition=json.loads(ASSET_REMOVAL_TRANSITION.read_text()),
                                   opaque_boolean_transition=json.loads(OPAQUE_BOOLEAN_TRANSITION.read_text()),
                                   opaque_field_transition=json.loads(OPAQUE_FIELD_TRANSITION.read_text()),
-                                  proved_set_sequence_transition=json.loads(PROVED_SET_SEQUENCE_TRANSITION.read_text()))
+                                  proved_set_sequence_transition=json.loads(PROVED_SET_SEQUENCE_TRANSITION.read_text()),
+                                  ordinary_interface_extension=json.loads(ORDINARY_INTERFACE_EXTENSION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)

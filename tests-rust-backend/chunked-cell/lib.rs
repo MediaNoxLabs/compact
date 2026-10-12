@@ -506,8 +506,9 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (_, bool) = crate::ledger_slots::active.record_read(frame)?;
-            Ok(frame.finish(observed))
+            let (frame, __compact_effect_0): (_, bool) =
+                crate::ledger_slots::active.record_read(frame)?;
+            Ok(frame.finish(__compact_effect_0))
         }
         pub fn assert_active<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -547,9 +548,9 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (_, runtime::Field) =
+            let (frame, __compact_effect_0): (_, runtime::Field) =
                 crate::ledger_slots::amount.record_read(frame)?;
-            Ok(frame.finish(observed))
+            Ok(frame.finish(__compact_effect_0))
         }
         pub fn add_amount<Private>(
             context: runtime::context::CircuitContext<Private>,

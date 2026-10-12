@@ -489,9 +489,10 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (_, bool) =
-                crate::ledger_slots::table.record_member(frame, __compact_param_0)?;
-            Ok(frame.finish(observed))
+            let __compact_effect_0: bool = __compact_param_0;
+            let (frame, __compact_effect_1): (_, bool) =
+                crate::ledger_slots::table.record_member(frame, __compact_effect_0)?;
+            Ok(frame.finish(__compact_effect_1))
         }
         pub fn get<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -501,9 +502,10 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (_, runtime::Field) =
-                crate::ledger_slots::table.record_lookup(frame, __compact_param_0)?;
-            Ok(frame.finish(observed))
+            let __compact_effect_0: bool = __compact_param_0;
+            let (frame, __compact_effect_1): (_, runtime::Field) =
+                crate::ledger_slots::table.record_lookup(frame, __compact_effect_0)?;
+            Ok(frame.finish(__compact_effect_1))
         }
         pub fn remove_key<Private>(
             context: runtime::context::CircuitContext<Private>,

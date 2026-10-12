@@ -105,6 +105,9 @@ pub(super) fn try_run(
         ("--let-return", _) => Some(expressions::let_return(arguments)),
         ("--field-to-bytes32", _) => Some(expressions::field_to_bytes32(arguments)),
         ("--literal-bytes-field", _) => Some(expressions::literal_bytes_field(arguments)),
+        ("--literal-bytes-field-strict", _) => {
+            Some(expressions::literal_bytes_field_strict(arguments))
+        }
         ("--coracle-start", _) => Some(contracts::coracle_start(arguments)),
         ("--coracle-concede", _) => Some(contracts::coracle_concede(arguments)),
         ("--coracle-withdraw", _) => Some(contracts::coracle_withdraw(arguments)),

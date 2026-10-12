@@ -1356,7 +1356,7 @@ fn render_recorded_item(
             return Ok(RecordingOutcome::Unsupported(gap));
         }
     };
-    if steps.is_empty() && return_steps.is_empty() {
+    if !organizer_gate && steps.is_empty() && return_steps.is_empty() {
         return Ok(RecordingOutcome::Unsupported(RecordingGap::no_effect()));
     }
     if circuit

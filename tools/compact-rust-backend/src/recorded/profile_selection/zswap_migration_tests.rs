@@ -244,15 +244,19 @@ fn unsupported_body_refuses_at_last_priority_without_old_fallback() {
     assert!(selected.typed_result.is_none());
     let attempted = attempts(&row);
     assert_eq!(
-        &attempted[attempted.len() - 2..],
-        &["algebra.unit-composition", "algebra.zswap"]
+        &attempted[attempted.len() - 3..],
+        &[
+            "algebra.unit-composition",
+            "algebra.zswap",
+            "algebra.ordinary"
+        ]
     );
     assert!(!attempted.contains(&"selector.zswap"));
     crate::render_with_capabilities(&c).unwrap();
 }
 
 #[test]
-fn former_boolean_inequality_refusal_now_uses_checked_last_domain() {
+fn former_boolean_inequality_refusal_preserves_earlier_checked_unit_owner() {
     let mut c = source();
     c.stateful_circuits
         .iter_mut()
@@ -277,7 +281,7 @@ fn former_boolean_inequality_refusal_now_uses_checked_last_domain() {
     assert!(maps.domain(root(&c, "flow")).unwrap().is_some());
     let (selected, row) = maps.selected(root(&c, "flow"));
     assert!(selected.typed_result.is_some());
-    assert_eq!(row["body_owner"], "algebra.zswap");
+    assert_eq!(row["body_owner"], "algebra.unit-composition");
     let (output, rows) = trace::capture_json(|| crate::render_with_capabilities(&c));
     let output = output.unwrap();
     let capability = output
@@ -296,13 +300,14 @@ fn former_boolean_inequality_refusal_now_uses_checked_last_domain() {
         })
         .collect::<Vec<_>>();
     assert_eq!(rows.len(), 1);
-    assert_eq!(rows[0]["body_owner"], "algebra.zswap");
+    assert_eq!(rows[0]["body_owner"], "algebra.unit-composition");
     assert_eq!(
         attempts(rows[0])
             .iter()
             .filter(|&&r| r == "algebra.zswap")
             .count(),
-        1
+        0
     );
+    assert!(!attempts(rows[0]).contains(&"algebra.ordinary"));
     assert!(!attempts(rows[0]).contains(&"selector.zswap"));
 }

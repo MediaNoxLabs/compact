@@ -147,18 +147,23 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_recorded_value_0): (_, runtime::Field) =
+            let (frame, __compact_effect_0): (_, runtime::Field) =
                 crate::ledger_slots::value.record_read(frame)?;
-            let __compact_recorded_compare_1 =
-                __compact_recorded_value_0 == runtime::Field::from(16961u128);
-            if !(__compact_recorded_compare_1) {
+            let __compact_effect_1: runtime::Field = runtime::Field::from_le_bytes(&[
+                65u8, 66u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_2: bool = __compact_effect_0 == __compact_effect_1;
+            if !__compact_effect_2 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "constructor cast".to_owned(),
                 ));
             }
-            let (frame, observed): (_, runtime::Field) =
+            let __compact_effect_3: () = ();
+            let (frame, __compact_effect_4): (_, runtime::Field) =
                 crate::ledger_slots::value.record_read(frame)?;
-            Ok(frame.finish(observed))
+            Ok(frame.finish(__compact_effect_4))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

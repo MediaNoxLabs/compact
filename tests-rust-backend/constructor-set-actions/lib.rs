@@ -138,10 +138,10 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_key_0 = __compact_param_0;
-            let (frame, __compact_recorded_member_1): (_, bool) =
-                crate::ledger_slots::seen.record_member(frame, __compact_recorded_key_0)?;
-            Ok(frame.finish(__compact_recorded_member_1))
+            let __compact_effect_0: bool = __compact_param_0;
+            let (frame, __compact_effect_1): (_, bool) =
+                crate::ledger_slots::seen.record_member(frame, __compact_effect_0)?;
+            Ok(frame.finish(__compact_effect_1))
         }
         pub fn contains_history<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -149,10 +149,10 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_key_0 = __compact_param_0;
-            let (frame, __compact_recorded_member_1): (_, bool) =
-                crate::ledger_slots::history.record_member(frame, __compact_recorded_key_0)?;
-            Ok(frame.finish(__compact_recorded_member_1))
+            let __compact_effect_0: bool = __compact_param_0;
+            let (frame, __compact_effect_1): (_, bool) =
+                crate::ledger_slots::history.record_member(frame, __compact_effect_0)?;
+            Ok(frame.finish(__compact_effect_1))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

@@ -33,6 +33,11 @@ use super::profile_attempt::ProfileAttempt;
 use super::typed_plan;
 use super::typed_plan::TypedPlan;
 
+#[path = "profile_selection/ordinary_domain.rs"]
+mod ordinary_domain;
+#[cfg(test)]
+#[path = "profile_selection/ordinary_migration_tests.rs"]
+mod ordinary_migration_tests;
 #[path = "profile_selection/unit_domain.rs"]
 mod unit_domain;
 
@@ -625,7 +630,22 @@ pub(super) fn select(
                 checked_zswap_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?
             ),
         };
-        if let Some(plan) = through_zswap {
+        // The general checked interface comes last so existing qualified owners
+        // keep their priority. Unsupported retains explicit legacy dispatch.
+        let through_ordinary = match through_zswap {
+            Some(plan) => Some(plan),
+            None => record_option!(
+                "algebra.ordinary",
+                ordinary_domain::attempt(
+                    circuit,
+                    ledger_fields,
+                    witnesses,
+                    pure_circuits,
+                    circuits
+                )?
+            ),
+        };
+        if let Some(plan) = through_ordinary {
             organizer_steps = Some(plan.steps);
             typed_result = Some(plan.result);
         }

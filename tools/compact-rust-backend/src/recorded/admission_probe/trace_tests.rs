@@ -121,14 +121,17 @@ fn full_compilation_attributes_ordinary_returns_without_changing_output() {
         .iter()
         .find(|row| row.phase == Phase::PublicEmission && !row.helper)
         .unwrap();
-    assert_eq!(row.body_owner, Some("return.dispatch"));
-    assert_eq!(row.return_dispatch, Some("return.dispatch"));
+    assert_eq!(row.body_owner, Some("algebra.ordinary"));
+    assert_eq!(row.return_dispatch, None);
     assert!(matches!(row.outcome, Outcome::Supported));
-    assert!(row.attempts.iter().all(|attempt| {
-        // An actually supported return need not have any admitted named profile.
-        let value = serde_json::to_value(attempt).unwrap();
-        value["produced_candidate"] == false
-    }));
+    let candidates: Vec<_> = row
+        .attempts
+        .iter()
+        .map(|attempt| serde_json::to_value(attempt).unwrap())
+        .filter(|value| value["produced_candidate"] == true)
+        .map(|value| value["route"].clone())
+        .collect();
+    assert_eq!(candidates, vec![serde_json::json!("algebra.ordinary")]);
 }
 
 #[test]
@@ -139,8 +142,24 @@ fn outer_opaque_guard_refusal_is_distinct_from_a_selected_return_dispatch() {
         ty: Type::OpaqueString,
     });
     let (rendered, rows) = capture(&contract);
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert_eq!(rows[0].body_owner, Some("algebra.ordinary"));
+    assert!(matches!(rows[0].outcome, Outcome::Supported));
+
+    // Existing checked layout policy can still decline an otherwise native
+    // interface. This preserves a real final-guard refusal after a selected
+    // generic return, rather than pretending the now-qualified opaque key fails.
+    contract.stateful_circuits[0].parameters.push(Parameter {
+        name: "oversized".into(),
+        ty: Type::Vector {
+            element: Box::new(Type::Field),
+            length: crate::resource_limits::recording_fixed_layout_limit() + 1,
+        },
+    });
+    let (rendered, rows) = capture(&contract);
     assert!(!rendered.capabilities.circuits[0].recorded);
     assert_eq!(rows[0].body_owner, Some("return.dispatch"));
+    assert_eq!(rows[0].return_dispatch, Some("return.dispatch"));
     assert!(matches!(rows[0].outcome, Outcome::Unsupported { .. }));
 }
 

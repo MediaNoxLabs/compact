@@ -7,7 +7,13 @@ fn main() {
     println!("cargo:rerun-if-changed={input}");
     let contract = serde_json::from_slice(&std::fs::read(input).unwrap()).unwrap();
     let rendered = compact_rust_backend::render_with_capabilities(&contract).unwrap();
-    for name in ["hash_echo", "commit_echo", "degrade_hash_echo"] {
+    for name in [
+        "hash_echo",
+        "commit_echo",
+        "degrade_hash_echo",
+        "persistent_hash_echo",
+        "upgrade_echo",
+    ] {
         let circuit = rendered
             .capabilities
             .circuits

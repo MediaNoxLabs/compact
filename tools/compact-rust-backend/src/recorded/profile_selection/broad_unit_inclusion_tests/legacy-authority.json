@@ -1,0 +1,202 @@
+{
+  "baseline_commit": "bee1fa4308da1ce1d02e4396aaaa1397ce100ba6",
+  "scope": "Whole existing typed-plan/audited-local source authority, including test sources; no selector retirement",
+  "files": [
+    {
+      "path": "tools/compact-rust-backend/src/recorded/audited_local.rs",
+      "sha256": "ff0717f8cd31d1b9e092bba2d45f558e06d2cfa7c1fc4ee63fbead1822b0a96d"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/actions.rs",
+      "sha256": "52e64a5f3e98a29736c46c791ef72eb7a631893b4c2c095fd1d139045ff045dd"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/actions/cells.rs",
+      "sha256": "2973b528939db63de51529a2c40af89ce1e7013f87afc3a22042316f8b203d66"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/actions/collections.rs",
+      "sha256": "37d1b99fa1552487795e6581e28df64e283bfd1a02c2d89e2d8c3c187e06f49f"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/actions/counters.rs",
+      "sha256": "4d22fa54377d567e7844311b18eb014a968b3991eefe66e08758113d7d1e0aed"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/actions/unit_effects.rs",
+      "sha256": "8cd4e5b297a0f0465771ba9e0a14505abc117ec35ae6f759b12c657c37129129"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/admission.rs",
+      "sha256": "656254b82f89f77bff1bca3c78b4b3a2bca22680d27550b0e6e1529cf3dc1675"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/aggregates.rs",
+      "sha256": "263cd4903db55951e8cd85b7a6d77d132caf075b40d1a61c3b9a8cc7c813bbda"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/arithmetic.rs",
+      "sha256": "e4e1a6f98263a2b5f663c601e28f18c4616e9116503259de23f381af9034be37"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/composite_reference.rs",
+      "sha256": "3ec633b2b5dc192801131495c53b81c78e05f13e7100ea03ed8c2c07739b9cb6"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/composition.rs",
+      "sha256": "126c7f8922b304828021dc9124bded8729de64c72ccfb96794db9fb6537aa4a0"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/composition/nested_map_preflight.rs",
+      "sha256": "83a10b56aadb0ee06ddfb3b16de192fcf988cee593ec576f5f6c7d30548152c6"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/composition/relation_composition_tests.rs",
+      "sha256": "81826cae6d7f19561880cfddb67fb9e965436d6e6a576482c610e48bc65a229b"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/composition/relation_root_preflight.rs",
+      "sha256": "b6b5c282b6cca3e2d1c26faed94924268b82c732608d392c7f63e4c0df2436f8"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/composition/relation_root_preflight_tests.rs",
+      "sha256": "32d6804d5fe14319bb16fc402bbff1a1c51b0de7a7e4a05f0986c08410204237"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/composition/selected_set_preflight.rs",
+      "sha256": "f1d4a2d580afcaa1f500be7ae498a1b9c2a526fab8aab6bf234a7d36354a8ce1"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/composition/tests.rs",
+      "sha256": "a0765208843e342d7eceb65b118a45a508d37fdd38568f31d4c8ae7b9733aa49"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/context_query_reference.rs",
+      "sha256": "ffd84c7dc45056529847534de9b9337737423bdb2f05a2f8d3a092ce6e1a5d90"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/control.rs",
+      "sha256": "4f9e73e1ee0d070f0a3a2c0e115ec6d0a41d9ca10f39a83412ee815ad0ba4f0d"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/crypto.rs",
+      "sha256": "38a5d00807d56717644b95cf4f6d389381fbab8a1ff321cdf901df9cfbdf0c2e"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/declarations.rs",
+      "sha256": "986288e4b5f6fce6b620421fa2b9a089f3fa8ca36d23707e75b2723be1b902ef"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/effectful_reference.rs",
+      "sha256": "60043664cc8bb00bf96ab5b2eb9341d9c7f778ab525caf5d84987cbd0af8811e"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/effects.rs",
+      "sha256": "9ffb60cb4d315c3d4408642eb978b88ad0c5bb1dded6776fd26a0ff78a73dd02"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/evaluation.rs",
+      "sha256": "5e183182443a44e75bf995cfdd230a807eed3789d336380ca06878a22b3ed427"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/evidence.rs",
+      "sha256": "b835a76820570715992ab13a54e4b47ca8ce0933f227d5a5e46ea44866661c1f"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/field_observations.rs",
+      "sha256": "c001d565438add4b63833c079bdf6f03c1ba227c3f5122410348457be563fd00"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/funded_mint.rs",
+      "sha256": "08047d3c6aa05e3dd06d82c44082c4b6049dad25e4cf06f943cbbb6034c246cc"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/guarded_deposit.rs",
+      "sha256": "a84159f4209a337b8fb5a916ae1416427ee6551f7baca4bc71e27a1ff594cacc"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/immediate_send.rs",
+      "sha256": "02c5b5935b8cd9e141fea22abfd1ef72478107662f64e3481a0d61448ee8e7ae"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/jubjub_reference.rs",
+      "sha256": "b9ffe717ed7b1925978856222c6cdeaa1c71bea01a22783bec72e69ff42e3c13"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/jubjub_values.rs",
+      "sha256": "645ed86c92a952de7454251469c38e8d46b4b3a18a3f4a3436093a471b30b59c"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/jubjub_values/tests.rs",
+      "sha256": "94a2aae57b54186344e78393e5cd1553f18e54e20cb492ab18d9cb2939787f6f"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/leaves.rs",
+      "sha256": "3b1d8a336bfb66d17927a33bb85ea95bb79e5ad459af3a3632c35537614f4385"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/observations.rs",
+      "sha256": "7f77c8e3e0b0babd846e339cac7067150ca4ac920ea6fc1dbb50d187a4285243"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/phase_reset.rs",
+      "sha256": "e90a06b5b772e4f494e54ab2b06a9518ceae10c2ffd35c87e725e92462192227"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/reset_payout.rs",
+      "sha256": "bb690aef2530304937070a9982e4b2ba031d1cda2943b024ffb65d8f609eb037"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/shielded_merge.rs",
+      "sha256": "6f0bf14cb1d3647c0ced6d10e4a7c8bc4f7cbcbc11054cb8a826f68c5599657d"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/shielded_payout.rs",
+      "sha256": "0b9b24f53524b1558f8babece86ed4b96cef1470a5904ba4ac614e2b0f4c46cb"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/shielded_receive_reference.rs",
+      "sha256": "41c96178f50db8a2e1da08a62519e9e9c658f544041ca326607bff7c0ed2d1bc"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/shielded_receive_tests.rs",
+      "sha256": "cd613c72628f52df5e9950e6e37d79a99318b8b2439bad4eece208344d62ef50"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/shielded_send_tests.rs",
+      "sha256": "e22d3f1029e6899ff093ba19391a3ecbf0dba2db268826b8c2507bdb35defc30"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/start_funding.rs",
+      "sha256": "48bae139027a353b2ae462554b7735b839a9a85ba6ce4e4ad376483ceac950b5"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/terminal_returns.rs",
+      "sha256": "5dc883797f1288a9831d68466be184992f8b6fefa3b2fd5fbe00bd203e8e84c7"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/terminal_returns_reference.rs",
+      "sha256": "34ec5d0d20c75db86b1403ae742c9300aa8ced91228d700d096aed363d2ada81"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/tests.rs",
+      "sha256": "a62cf56d3ca3f460272959688df2f6a912800d61a6891c120185c3ca198e0898"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/unit_actions.rs",
+      "sha256": "377f721829bb9c03a9f21fb0be46a0273a6a216506aa33f87af626e00e441377"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/unit_actions_reference.rs",
+      "sha256": "fae3d6fd1bfc657899ceccf5777dc1edf80dca6ead453829b9c10ca38f59e559"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan/voting_commit.rs",
+      "sha256": "7a16bf5d0552c3ba82e680a32978280b68106f8373f2ea0eca63df4ddc8e1a40"
+    },
+    {
+      "path": "tools/compact-rust-backend/src/recorded/typed_plan.rs",
+      "sha256": "c47f5eda8e0577c202690cfac5c6c0cb76c64b827b5ac99e63face9ad5b76017"
+    }
+  ]
+}

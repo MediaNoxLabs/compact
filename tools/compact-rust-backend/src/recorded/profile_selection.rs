@@ -39,6 +39,9 @@ use super::profile_attempt::ProfileAttempt;
 use super::typed_plan::{self, CompositionRejection, TypedPlan};
 
 #[cfg(test)]
+#[path = "profile_selection/broad_unit_inclusion_tests.rs"]
+mod broad_unit_inclusion_tests;
+#[cfg(test)]
 #[path = "profile_selection/composite_migration_tests.rs"]
 mod composite_migration_tests;
 #[cfg(test)]

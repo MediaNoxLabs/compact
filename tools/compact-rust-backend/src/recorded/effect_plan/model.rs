@@ -238,6 +238,19 @@ pub(super) enum Operation {
         slot: MapSlot,
         key: Value,
     },
+    MapInsertDefault {
+        slot: MapSlot,
+        key: Value,
+    },
+    MapReset {
+        slot: MapSlot,
+    },
+    MapSize {
+        slot: MapSlot,
+    },
+    MapIsEmpty {
+        slot: MapSlot,
+    },
     /// Ordinary typed membership/insertion; qualified-coin allocation is separate.
     SetMember {
         slot: SetSlot,

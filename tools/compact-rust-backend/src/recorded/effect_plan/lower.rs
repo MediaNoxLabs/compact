@@ -470,7 +470,10 @@ impl Lowerer<'_> {
                     path,
                 )?;
             }
-            StateAction::MapInsert { .. } | StateAction::MapRemove { .. } => {
+            StateAction::MapInsert { .. }
+            | StateAction::MapRemove { .. }
+            | StateAction::MapInsertDefault { .. }
+            | StateAction::MapReset { .. } => {
                 self.map_action(action, scope, bindings, path)?;
             }
             StateAction::SetInsert {
@@ -539,7 +542,6 @@ impl Lowerer<'_> {
             | StateAction::HistoricMerkleResetHistory { .. } => {
                 self.merkle_action(action, scope, bindings, path)?;
             }
-            _ => return Err(self.unsupported_action(action, path)),
         }
         Ok(())
     }

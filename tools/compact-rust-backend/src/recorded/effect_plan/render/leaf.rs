@@ -320,7 +320,11 @@ pub(super) fn render(
         Operation::MapMember { .. }
         | Operation::MapLookup { .. }
         | Operation::MapInsert { .. }
-        | Operation::MapRemove { .. } => {
+        | Operation::MapRemove { .. }
+        | Operation::MapInsertDefault { .. }
+        | Operation::MapReset { .. }
+        | Operation::MapSize { .. }
+        | Operation::MapIsEmpty { .. } => {
             return maps::render(binding, declarations, steps);
         }
         Operation::SetMember { slot, value: input } => {

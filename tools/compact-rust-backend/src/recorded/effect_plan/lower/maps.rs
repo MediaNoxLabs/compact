@@ -7,6 +7,8 @@ use super::*;
 pub(super) enum MapQuery<'a> {
     Member(&'a str, u8, &'a Expr),
     Lookup(&'a str, u8, &'a Expr),
+    Size(&'a str, u8),
+    IsEmpty(&'a str, u8),
 }
 impl Lowerer<'_> {
     fn map_slot(
@@ -36,6 +38,22 @@ impl Lowerer<'_> {
         }
         Ok(value)
     }
+    /// Share one recursive expression dispatcher temporary across Map queries.
+    pub(super) fn map_expression(
+        &mut self,
+        expression: &Expr,
+        scope: &Scope,
+        bindings: &mut Vec<Binding>,
+        path: &str,
+    ) -> Result<(Operation, Type), RecordingGap> {
+        let query = match expression {
+            Expr::MapMember { field, index, key } => MapQuery::Member(field, *index, key),
+            Expr::MapLookup { field, index, key } => MapQuery::Lookup(field, *index, key),
+            Expr::MapIsEmpty { field, index } => MapQuery::IsEmpty(field, *index),
+            _ => unreachable!("Map expression dispatch"),
+        };
+        self.map_query(query, scope, bindings, path)
+    }
     pub(super) fn map_query(
         &mut self,
         query: MapQuery<'_>,
@@ -43,28 +61,37 @@ impl Lowerer<'_> {
         bindings: &mut Vec<Binding>,
         path: &str,
     ) -> Result<(Operation, Type), RecordingGap> {
-        let lookup = matches!(query, MapQuery::Lookup(..));
-        let (name, index, expression) = match query {
-            MapQuery::Member(name, index, key) | MapQuery::Lookup(name, index, key) => {
-                (name, index, key)
+        match query {
+            MapQuery::Size(name, index) | MapQuery::IsEmpty(name, index) => {
+                // Metadata queries never decode V; nested native Map nodes remain valid.
+                let (slot, _, _) = self.map_slot(name, index, false, path)?;
+                Ok(if matches!(query, MapQuery::Size(..)) {
+                    (Operation::MapSize { slot }, uint("18446744073709551615"))
+                } else {
+                    (Operation::MapIsEmpty { slot }, Type::Boolean)
+                })
             }
-        };
-        let (slot, key_type, value_type) = self.map_slot(name, index, lookup, path)?;
-        let key = self.map_operand(
-            expression,
-            &key_type,
-            scope,
-            bindings,
-            &format!("{path}.key"),
-        )?;
-        Ok(if lookup {
-            (
-                Operation::MapLookup { slot, key },
-                value_type.expect("scalar lookup declaration"),
-            )
-        } else {
-            (Operation::MapMember { slot, key }, Type::Boolean)
-        })
+            MapQuery::Member(name, index, expression)
+            | MapQuery::Lookup(name, index, expression) => {
+                let lookup = matches!(query, MapQuery::Lookup(..));
+                let (slot, key_type, value_type) = self.map_slot(name, index, lookup, path)?;
+                let key = self.map_operand(
+                    expression,
+                    &key_type,
+                    scope,
+                    bindings,
+                    &format!("{path}.key"),
+                )?;
+                Ok(if lookup {
+                    (
+                        Operation::MapLookup { slot, key },
+                        value_type.expect("scalar lookup declaration"),
+                    )
+                } else {
+                    (Operation::MapMember { slot, key }, Type::Boolean)
+                })
+            }
+        }
     }
     pub(super) fn map_action(
         &mut self,
@@ -73,28 +100,48 @@ impl Lowerer<'_> {
         bindings: &mut Vec<Binding>,
         path: &str,
     ) -> Result<(), RecordingGap> {
-        let (name, index, key) = match action {
-            StateAction::MapInsert {
-                field, index, key, ..
-            }
-            | StateAction::MapRemove { field, index, key } => (field, *index, key),
+        let (name, index) = match action {
+            StateAction::MapInsert { field, index, .. }
+            | StateAction::MapRemove { field, index, .. }
+            | StateAction::MapInsertDefault { field, index, .. }
+            | StateAction::MapReset { field, index } => (field, *index),
             _ => unreachable!("Map action dispatch"),
         };
-        // Removal consumes only the key; it does not decode the stored value.
-        let needs_value_codec = matches!(action, StateAction::MapInsert { .. });
-        let (slot, key_type, value_type) = self.map_slot(name, index, needs_value_codec, path)?;
-        let key = self.map_operand(key, &key_type, scope, bindings, &format!("{path}.key"))?;
-        let operation = if let StateAction::MapInsert { value, .. } = action {
-            let value = self.map_operand(
-                value,
-                value_type.as_ref().expect("scalar mutation declaration"),
-                scope,
-                bindings,
-                &format!("{path}.value"),
-            )?;
-            Operation::MapInsert { slot, key, value }
-        } else {
-            Operation::MapRemove { slot, key }
+        // Only removal is key-only. Reset deliberately retains the runtime V:CellValue bound.
+        let scalar = !matches!(action, StateAction::MapRemove { .. });
+        let (slot, key_type, value_type) = self.map_slot(name, index, scalar, path)?;
+        let operation = match action {
+            StateAction::MapReset { .. } => Operation::MapReset { slot },
+            StateAction::MapInsert { key, value, .. } => {
+                let key =
+                    self.map_operand(key, &key_type, scope, bindings, &format!("{path}.key"))?;
+                let value = self.map_operand(
+                    value,
+                    value_type.as_ref().expect("scalar mutation declaration"),
+                    scope,
+                    bindings,
+                    &format!("{path}.value"),
+                )?;
+                Operation::MapInsert { slot, key, value }
+            }
+            StateAction::MapInsertDefault { key, .. } | StateAction::MapRemove { key, .. } => {
+                let key =
+                    self.map_operand(key, &key_type, scope, bindings, &format!("{path}.key"))?;
+                if matches!(action, StateAction::MapInsertDefault { .. }) {
+                    if !super::super::validate::default_value_type(
+                        value_type.as_ref().expect("scalar default declaration"),
+                    ) {
+                        return Err(invalid(
+                            path,
+                            "Map default insertion requires a defaultable value",
+                        ));
+                    }
+                    Operation::MapInsertDefault { slot, key }
+                } else {
+                    Operation::MapRemove { slot, key }
+                }
+            }
+            _ => unreachable!("Map action dispatch"),
         };
         self.emit(operation, Type::Unit, bindings, path);
         Ok(())

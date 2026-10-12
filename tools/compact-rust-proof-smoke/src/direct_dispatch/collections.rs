@@ -26,6 +26,17 @@ use crate::{
     adt_set_vector, check_conditional_set_proof, opaque_string_map, opaque_string_set, vector_map,
 };
 
+pub(super) fn map_remaining_strict(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let usage = "usage: compact-rust-proof-smoke --map-remaining-strict <proof-output>";
+    let root = arguments.next().ok_or(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage.into());
+    }
+    crate::positional_maps::run_remaining(Path::new(&root))
+}
+
 pub(super) fn opaque_string_set(
     arguments: &mut impl Iterator<Item = OsString>,
 ) -> Result<(), Box<dyn Error>> {

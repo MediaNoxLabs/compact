@@ -1,0 +1,166 @@
+{
+  "schema_version": 1,
+  "issue": 609,
+  "new_route_ids": [],
+  "baseline_commit": "a58bd5a11ac2742bb6a826646fae2028a2bdf203",
+  "claim": "Add four remaining typed Map effects with immutable slot, key-only metadata, scalar reset/default-insert and existing Default authority; preserve canonical/resource/default policies, prior selectors and retirement accounting.",
+  "previous_selector": {
+    "ordered_calls": [],
+    "function_sha256": "3960fe663af28139e7e4f584311cf173335d298575a65948a2d2f7009216e33b"
+  },
+  "current_selector": {
+    "ordered_calls": [],
+    "function_sha256": "3960fe663af28139e7e4f584311cf173335d298575a65948a2d2f7009216e33b"
+  },
+  "owners": {
+    "tools/compact-rust-backend/src/recorded/effect_plan/model.rs": {
+      "previous_sha256": "6cc474d41b75127bd8ec1621b43d0eb24ddea476d668a3da76926e1fa5a87c20",
+      "current_sha256": "dda5a62fd4d5295942549e0e1e7e26a017ec3574ef558a7ddc1c17b8b31e7ccc",
+      "predecessor_reconstruction": [
+        {
+          "current": "        slot: MapSlot,\n        key: Value,\n    },\n    MapInsertDefault {\n        slot: MapSlot,\n        key: Value,\n    },\n    MapReset {\n        slot: MapSlot,\n    },\n    MapSize {\n        slot: MapSlot,\n    },\n    MapIsEmpty {\n        slot: MapSlot,\n    },\n    /// Ordinary typed membership/insertion; qualified-coin allocation is separate.\n    SetMember {\n        slot: SetSlot,\n",
+          "previous": "        slot: MapSlot,\n        key: Value,\n    },\n    /// Ordinary typed membership/insertion; qualified-coin allocation is separate.\n    SetMember {\n        slot: SetSlot,\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower.rs": {
+      "previous_sha256": "8b8bd74cc402a44d6298ade209d69ce298e6a983702cc66f90ad7b9b71b01aa5",
+      "current_sha256": "8aca56f33658029b7402ea388a7a14bd8e6121c4d4dd98a47858f31eb55ae0d4",
+      "predecessor_reconstruction": [
+        {
+          "current": "                    path,\n                )?;\n            }\n            StateAction::MapInsert { .. }\n            | StateAction::MapRemove { .. }\n            | StateAction::MapInsertDefault { .. }\n            | StateAction::MapReset { .. } => {\n                self.map_action(action, scope, bindings, path)?;\n            }\n            StateAction::SetInsert {\n",
+          "previous": "                    path,\n                )?;\n            }\n            StateAction::MapInsert { .. } | StateAction::MapRemove { .. } => {\n                self.map_action(action, scope, bindings, path)?;\n            }\n            StateAction::SetInsert {\n"
+        },
+        {
+          "current": "            | StateAction::HistoricMerkleResetHistory { .. } => {\n                self.merkle_action(action, scope, bindings, path)?;\n            }\n        }\n        Ok(())\n    }\n",
+          "previous": "            | StateAction::HistoricMerkleResetHistory { .. } => {\n                self.merkle_action(action, scope, bindings, path)?;\n            }\n            _ => return Err(self.unsupported_action(action, path)),\n        }\n        Ok(())\n    }\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/maps.rs": {
+      "previous_sha256": "98c476dbbd666aecd6caf0b681a6dc86518efbd9c5ceab0874cb1defe5159355",
+      "current_sha256": "c7f3762db72f2f012e6c085ee2ab425042f5f6af9283cf1e03d87f93e2a3328c",
+      "predecessor_reconstruction": [
+        {
+          "current": "pub(super) enum MapQuery<'a> {\n    Member(&'a str, u8, &'a Expr),\n    Lookup(&'a str, u8, &'a Expr),\n    Size(&'a str, u8),\n    IsEmpty(&'a str, u8),\n}\nimpl Lowerer<'_> {\n    fn map_slot(\n",
+          "previous": "pub(super) enum MapQuery<'a> {\n    Member(&'a str, u8, &'a Expr),\n    Lookup(&'a str, u8, &'a Expr),\n}\nimpl Lowerer<'_> {\n    fn map_slot(\n"
+        },
+        {
+          "current": "        }\n        Ok(value)\n    }\n    /// Share one recursive expression dispatcher temporary across Map queries.\n    pub(super) fn map_expression(\n        &mut self,\n        expression: &Expr,\n        scope: &Scope,\n        bindings: &mut Vec<Binding>,\n        path: &str,\n    ) -> Result<(Operation, Type), RecordingGap> {\n        let query = match expression {\n            Expr::MapMember { field, index, key } => MapQuery::Member(field, *index, key),\n            Expr::MapLookup { field, index, key } => MapQuery::Lookup(field, *index, key),\n            Expr::MapIsEmpty { field, index } => MapQuery::IsEmpty(field, *index),\n            _ => unreachable!(\"Map expression dispatch\"),\n        };\n        self.map_query(query, scope, bindings, path)\n    }\n    pub(super) fn map_query(\n        &mut self,\n        query: MapQuery<'_>,\n",
+          "previous": "        }\n        Ok(value)\n    }\n    pub(super) fn map_query(\n        &mut self,\n        query: MapQuery<'_>,\n"
+        },
+        {
+          "current": "        bindings: &mut Vec<Binding>,\n        path: &str,\n    ) -> Result<(Operation, Type), RecordingGap> {\n        match query {\n            MapQuery::Size(name, index) | MapQuery::IsEmpty(name, index) => {\n                // Metadata queries never decode V; nested native Map nodes remain valid.\n                let (slot, _, _) = self.map_slot(name, index, false, path)?;\n                Ok(if matches!(query, MapQuery::Size(..)) {\n                    (Operation::MapSize { slot }, uint(\"18446744073709551615\"))\n                } else {\n                    (Operation::MapIsEmpty { slot }, Type::Boolean)\n                })\n            }\n            MapQuery::Member(name, index, expression)\n            | MapQuery::Lookup(name, index, expression) => {\n                let lookup = matches!(query, MapQuery::Lookup(..));\n                let (slot, key_type, value_type) = self.map_slot(name, index, lookup, path)?;\n                let key = self.map_operand(\n                    expression,\n                    &key_type,\n                    scope,\n                    bindings,\n                    &format!(\"{path}.key\"),\n                )?;\n                Ok(if lookup {\n                    (\n                        Operation::MapLookup { slot, key },\n                        value_type.expect(\"scalar lookup declaration\"),\n                    )\n                } else {\n                    (Operation::MapMember { slot, key }, Type::Boolean)\n                })\n            }\n        }\n    }\n    pub(super) fn map_action(\n        &mut self,\n",
+          "previous": "        bindings: &mut Vec<Binding>,\n        path: &str,\n    ) -> Result<(Operation, Type), RecordingGap> {\n        let lookup = matches!(query, MapQuery::Lookup(..));\n        let (name, index, expression) = match query {\n            MapQuery::Member(name, index, key) | MapQuery::Lookup(name, index, key) => {\n                (name, index, key)\n            }\n        };\n        let (slot, key_type, value_type) = self.map_slot(name, index, lookup, path)?;\n        let key = self.map_operand(\n            expression,\n            &key_type,\n            scope,\n            bindings,\n            &format!(\"{path}.key\"),\n        )?;\n        Ok(if lookup {\n            (\n                Operation::MapLookup { slot, key },\n                value_type.expect(\"scalar lookup declaration\"),\n            )\n        } else {\n            (Operation::MapMember { slot, key }, Type::Boolean)\n        })\n    }\n    pub(super) fn map_action(\n        &mut self,\n"
+        },
+        {
+          "current": "        bindings: &mut Vec<Binding>,\n        path: &str,\n    ) -> Result<(), RecordingGap> {\n        let (name, index) = match action {\n            StateAction::MapInsert { field, index, .. }\n            | StateAction::MapRemove { field, index, .. }\n            | StateAction::MapInsertDefault { field, index, .. }\n            | StateAction::MapReset { field, index } => (field, *index),\n            _ => unreachable!(\"Map action dispatch\"),\n        };\n        // Only removal is key-only. Reset deliberately retains the runtime V:CellValue bound.\n        let scalar = !matches!(action, StateAction::MapRemove { .. });\n        let (slot, key_type, value_type) = self.map_slot(name, index, scalar, path)?;\n        let operation = match action {\n            StateAction::MapReset { .. } => Operation::MapReset { slot },\n            StateAction::MapInsert { key, value, .. } => {\n                let key =\n                    self.map_operand(key, &key_type, scope, bindings, &format!(\"{path}.key\"))?;\n                let value = self.map_operand(\n                    value,\n                    value_type.as_ref().expect(\"scalar mutation declaration\"),\n                    scope,\n                    bindings,\n                    &format!(\"{path}.value\"),\n                )?;\n                Operation::MapInsert { slot, key, value }\n            }\n            StateAction::MapInsertDefault { key, .. } | StateAction::MapRemove { key, .. } => {\n                let key =\n                    self.map_operand(key, &key_type, scope, bindings, &format!(\"{path}.key\"))?;\n                if matches!(action, StateAction::MapInsertDefault { .. }) {\n                    if !super::super::validate::default_value_type(\n                        value_type.as_ref().expect(\"scalar default declaration\"),\n                    ) {\n                        return Err(invalid(\n                            path,\n                            \"Map default insertion requires a defaultable value\",\n                        ));\n                    }\n                    Operation::MapInsertDefault { slot, key }\n                } else {\n                    Operation::MapRemove { slot, key }\n                }\n            }\n            _ => unreachable!(\"Map action dispatch\"),\n        };\n        self.emit(operation, Type::Unit, bindings, path);\n        Ok(())\n",
+          "previous": "        bindings: &mut Vec<Binding>,\n        path: &str,\n    ) -> Result<(), RecordingGap> {\n        let (name, index, key) = match action {\n            StateAction::MapInsert {\n                field, index, key, ..\n            }\n            | StateAction::MapRemove { field, index, key } => (field, *index, key),\n            _ => unreachable!(\"Map action dispatch\"),\n        };\n        // Removal consumes only the key; it does not decode the stored value.\n        let needs_value_codec = matches!(action, StateAction::MapInsert { .. });\n        let (slot, key_type, value_type) = self.map_slot(name, index, needs_value_codec, path)?;\n        let key = self.map_operand(key, &key_type, scope, bindings, &format!(\"{path}.key\"))?;\n        let operation = if let StateAction::MapInsert { value, .. } = action {\n            let value = self.map_operand(\n                value,\n                value_type.as_ref().expect(\"scalar mutation declaration\"),\n                scope,\n                bindings,\n                &format!(\"{path}.value\"),\n            )?;\n            Operation::MapInsert { slot, key, value }\n        } else {\n            Operation::MapRemove { slot, key }\n        };\n        self.emit(operation, Type::Unit, bindings, path);\n        Ok(())\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/expressions.rs": {
+      "previous_sha256": "ce4d59d522ebaf5312d762e4f18309792e5a9e7052328f8e2c89df57a640c696",
+      "current_sha256": "8bb5d3565aeebb69a26bc87530fd55cb1fb62a635c550988ffc0e9276e62c05d",
+      "predecessor_reconstruction": [
+        {
+          "current": "                    },\n                );\n            }\n            Expr::MapMember { .. } | Expr::MapLookup { .. } | Expr::MapIsEmpty { .. } => {\n                self.map_expression(expression, scope, bindings, path)?\n            }\n            Expr::SetMember {\n                field,\n",
+          "previous": "                    },\n                );\n            }\n            Expr::MapMember { field, index, key } | Expr::MapLookup { field, index, key } => {\n                let query = if matches!(expression, Expr::MapLookup { .. }) {\n                    maps::MapQuery::Lookup(field, *index, key)\n                } else {\n                    maps::MapQuery::Member(field, *index, key)\n                };\n                self.map_query(query, scope, bindings, path)?\n            }\n            Expr::SetMember {\n                field,\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/ordinary.rs": {
+      "previous_sha256": "88b80b9fefd28bbc08749e7725cf9b8f40d005dfec544f210ae3ec95084dcf4d",
+      "current_sha256": "3b2536023286adfbc028305c9afcf8402a87f71d62373c420eccc240e4ff3cd6",
+      "predecessor_reconstruction": [
+        {
+          "current": "                let (operation, ty) = self.list_query(field, *index, query, &return_path)?;\n                Ok(self.emit(operation, ty, bindings, &return_path))\n            }\n            StateReturn::MapMember { .. }\n            | StateReturn::MapLookup { .. }\n            | StateReturn::MapSize { .. }\n            | StateReturn::MapIsEmpty { .. } => {\n                self.spend(&return_path)?;\n                let query = match returned {\n                    StateReturn::MapMember { field, index, key } => {\n                        maps::MapQuery::Member(field, *index, key)\n                    }\n                    StateReturn::MapLookup { field, index, key } => {\n                        maps::MapQuery::Lookup(field, *index, key)\n                    }\n                    StateReturn::MapSize { field, index } => maps::MapQuery::Size(field, *index),\n                    StateReturn::MapIsEmpty { field, index } => {\n                        maps::MapQuery::IsEmpty(field, *index)\n                    }\n                    _ => unreachable!(\"Map return dispatch\"),\n                };\n                let (operation, ty) = self.map_query(query, scope, bindings, &return_path)?;\n                Ok(self.emit(operation, ty, bindings, &return_path))\n",
+          "previous": "                let (operation, ty) = self.list_query(field, *index, query, &return_path)?;\n                Ok(self.emit(operation, ty, bindings, &return_path))\n            }\n            StateReturn::MapMember { field, index, key }\n            | StateReturn::MapLookup { field, index, key } => {\n                self.spend(&return_path)?;\n                let query = if matches!(returned, StateReturn::MapLookup { .. }) {\n                    maps::MapQuery::Lookup(field, *index, key)\n                } else {\n                    maps::MapQuery::Member(field, *index, key)\n                };\n                let (operation, ty) = self.map_query(query, scope, bindings, &return_path)?;\n                Ok(self.emit(operation, ty, bindings, &return_path))\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate.rs": {
+      "previous_sha256": "5ed00de42cfeaae3efdd6cc573f67ec23fabcf8bbf97f3d2c9454c42e2341347",
+      "current_sha256": "16706fea10aec2310e90e7e945d7ff4a004e77997fb310c4219ed4c07877f6a2",
+      "predecessor_reconstruction": [
+        {
+          "current": "                    && recipient.ty == crate::coin_shapes::shielded_recipient_type()\n                    && *ty == Type::Unit\n            }\n            Operation::MapMember { .. }\n            | Operation::MapLookup { .. }\n            | Operation::MapInsert { .. }\n            | Operation::MapRemove { .. }\n            | Operation::MapInsertDefault { .. }\n            | Operation::MapReset { .. }\n            | Operation::MapSize { .. }\n            | Operation::MapIsEmpty { .. } => {\n                maps::validate(&binding.operation, ty, declarations, &scope, path)?\n            }\n            Operation::SetMember { slot, value }\n            | Operation::SetInsert { slot, value }\n",
+          "previous": "                    && recipient.ty == crate::coin_shapes::shielded_recipient_type()\n                    && *ty == Type::Unit\n            }\n            Operation::MapMember { slot, key }\n            | Operation::MapLookup { slot, key }\n            | Operation::MapRemove { slot, key } => {\n                use_value(key)?;\n                let needs_value_codec = matches!(binding.operation, Operation::MapLookup { .. });\n                let (declared_key, declared_value) =\n                    maps::types(declarations, *slot, needs_value_codec, path)?;\n                key.ty == *declared_key\n                    && *ty\n                        == match binding.operation {\n                            Operation::MapMember { .. } => Type::Boolean,\n                            Operation::MapLookup { .. } => declared_value.clone(),\n                            _ => Type::Unit,\n                        }\n            }\n            Operation::MapInsert { slot, key, value } => {\n                use_value(key)?;\n                use_value(value)?;\n                let (declared_key, declared_value) = maps::types(declarations, *slot, true, path)?;\n                key.ty == *declared_key && value.ty == *declared_value && *ty == Type::Unit\n            }\n            Operation::SetMember { slot, value }\n            | Operation::SetInsert { slot, value }\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/maps.rs": {
+      "previous_sha256": "fcc2825eee212afaae3d54171dc38ba664bdac9657ae12e4bdf1aea40204a66b",
+      "current_sha256": "38fcc381865ae75c3f3c11554cbaca2d9b3591eb8f593d3c8d9433e568b34375",
+      "predecessor_reconstruction": [
+        {
+          "current": "    }\n    Ok((key, value))\n}\n\n/// Each plan is checked independently of lowering and its inferred annotations.\npub(super) fn validate(\n    operation: &Operation,\n    result: &Type,\n    declarations: &Declarations,\n    scope: &HashMap<usize, Type>,\n    path: &str,\n) -> Result<bool, RecordingGap> {\n    Ok(match operation {\n        Operation::MapMember { slot, key }\n        | Operation::MapLookup { slot, key }\n        | Operation::MapRemove { slot, key }\n        | Operation::MapInsertDefault { slot, key } => {\n            used(key, scope, declarations, path)?;\n            let scalar = matches!(\n                operation,\n                Operation::MapLookup { .. } | Operation::MapInsertDefault { .. }\n            );\n            let (declared_key, declared_value) = types(declarations, *slot, scalar, path)?;\n            let default_valid = !matches!(operation, Operation::MapInsertDefault { .. })\n                || default_value_type(declared_value);\n            key.ty == *declared_key\n                && default_valid\n                && *result\n                    == match operation {\n                        Operation::MapMember { .. } => Type::Boolean,\n                        Operation::MapLookup { .. } => declared_value.clone(),\n                        _ => Type::Unit,\n                    }\n        }\n        Operation::MapInsert { slot, key, value } => {\n            used(key, scope, declarations, path)?;\n            used(value, scope, declarations, path)?;\n            let (declared_key, declared_value) = types(declarations, *slot, true, path)?;\n            key.ty == *declared_key && value.ty == *declared_value && *result == Type::Unit\n        }\n        Operation::MapReset { slot }\n        | Operation::MapSize { slot }\n        | Operation::MapIsEmpty { slot } => {\n            types(\n                declarations,\n                *slot,\n                matches!(operation, Operation::MapReset { .. }),\n                path,\n            )?;\n            *result\n                == match operation {\n                    Operation::MapSize { .. } => uint(\"18446744073709551615\"),\n                    Operation::MapIsEmpty { .. } => Type::Boolean,\n                    _ => Type::Unit,\n                }\n        }\n        _ => unreachable!(\"Map validation dispatch\"),\n    })\n}\n",
+          "previous": "    }\n    Ok((key, value))\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/render/maps.rs": {
+      "previous_sha256": "2ea5cf06b79136c7026c74be9c9851d0ab5714b6bc0a959241f381c58e61cd46",
+      "current_sha256": "70a09d7be01b57f49645043292c3a9d99e1b8f0dc765d4d3119239e1e203bb06",
+      "predecessor_reconstruction": [
+        {
+          "current": "    declarations: &Declarations,\n    steps: &mut Vec<syn::Stmt>,\n) -> Result<(), RecordingGap> {\n    let (slot, arguments, method): (_, Vec<syn::Expr>, _) = match &binding.operation {\n        Operation::MapMember { slot, key } => (slot, vec![value(key)], \"record_member\"),\n        Operation::MapLookup { slot, key } => (slot, vec![value(key)], \"record_lookup\"),\n        Operation::MapInsert {\n            slot,\n            key,\n            value: input,\n        } => (slot, vec![value(key), value(input)], \"record_insert\"),\n        Operation::MapRemove { slot, key } => (slot, vec![value(key)], \"record_remove\"),\n        Operation::MapInsertDefault { slot, key } => {\n            (slot, vec![value(key)], \"record_insert_default\")\n        }\n        Operation::MapReset { slot } => (slot, vec![], \"record_reset\"),\n        Operation::MapSize { slot } => (slot, vec![], \"record_size\"),\n        Operation::MapIsEmpty { slot } => (slot, vec![], \"record_is_empty\"),\n        _ => unreachable!(\"checked Map rendering\"),\n    };\n    let slot = slot_name(declarations, slot.declaration, &binding.path)?;\n    let method = ident(method).map_err(|e| invalid(&binding.path, e.to_string()))?;\n    let output = name(&binding.value);\n    let ty = rust_type(&binding.value.ty).map_err(|e| invalid(&binding.path, e.to_string()))?;\n    match &binding.operation {\n        Operation::MapSize { .. } => {\n            let raw = syn::Ident::new(\n                &format!(\"__compact_map_size_{}\", binding.value.id),\n                Span::call_site(),\n            );\n            steps.push(syn::parse_quote!(let (frame, #raw) = crate::ledger_slots::#slot.record_size(frame)?;));\n            steps.push(syn::parse_quote!(let #output: #ty = <#ty>::new(#raw as u128)?;));\n        }\n        Operation::MapMember { .. }\n        | Operation::MapLookup { .. }\n        | Operation::MapIsEmpty { .. } => {\n            steps.push(syn::parse_quote!(let (frame, #output): (_, #ty) = crate::ledger_slots::#slot.#method(frame #(, #arguments)*)?;));\n        }\n        _ => {\n            steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.#method(frame #(, #arguments)*)?;));\n            steps.push(syn::parse_quote!(let #output: #ty = ();));\n        }\n    }\n",
+          "previous": "    declarations: &Declarations,\n    steps: &mut Vec<syn::Stmt>,\n) -> Result<(), RecordingGap> {\n    let (slot, key, method) = match &binding.operation {\n        Operation::MapMember { slot, key } => (slot, key, \"record_member\"),\n        Operation::MapLookup { slot, key } => (slot, key, \"record_lookup\"),\n        Operation::MapInsert { slot, key, .. } => (slot, key, \"record_insert\"),\n        Operation::MapRemove { slot, key } => (slot, key, \"record_remove\"),\n        _ => unreachable!(\"checked Map rendering\"),\n    };\n    let slot = slot_name(declarations, slot.declaration, &binding.path)?;\n    let method = ident(method).map_err(|e| invalid(&binding.path, e.to_string()))?;\n    let key = value(key);\n    let output = name(&binding.value);\n    let ty = rust_type(&binding.value.ty).map_err(|e| invalid(&binding.path, e.to_string()))?;\n    match &binding.operation {\n        Operation::MapMember { .. } | Operation::MapLookup { .. } => {\n            steps.push(syn::parse_quote!(let (frame, #output): (_, #ty) = crate::ledger_slots::#slot.#method(frame, #key)?;));\n        }\n        operation => {\n            if let Operation::MapInsert { value: input, .. } = operation {\n                let input = value(input);\n                steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.#method(frame, #key, #input)?;));\n            } else {\n                steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.#method(frame, #key)?;));\n            }\n            steps.push(syn::parse_quote!(let #output: #ty = ();));\n        }\n    }\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/render/leaf.rs": {
+      "previous_sha256": "3fe2554680b2483057e8b074887d03c631a61659a85ac1d2c6da68d89a037189",
+      "current_sha256": "33e2a9d45831d80a78434ac81dea2b7cf7deec2a0089fbf74e6e089d6ec3cf1b",
+      "predecessor_reconstruction": [
+        {
+          "current": "        Operation::MapMember { .. }\n        | Operation::MapLookup { .. }\n        | Operation::MapInsert { .. }\n        | Operation::MapRemove { .. }\n        | Operation::MapInsertDefault { .. }\n        | Operation::MapReset { .. }\n        | Operation::MapSize { .. }\n        | Operation::MapIsEmpty { .. } => {\n            return maps::render(binding, declarations, steps);\n        }\n        Operation::SetMember { slot, value: input } => {\n",
+          "previous": "        Operation::MapMember { .. }\n        | Operation::MapLookup { .. }\n        | Operation::MapInsert { .. }\n        | Operation::MapRemove { .. } => {\n            return maps::render(binding, declarations, steps);\n        }\n        Operation::SetMember { slot, value: input } => {\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/public_effects.rs": {
+      "previous_sha256": "80e9170e2f1bf0b85c3cdc40ec2c5f170f4946c9b0a8985cacfb238cd7a78d48",
+      "current_sha256": "f9a8e0ab4481718dcb60a069cb3f3432f3c6e07cb200cafe1932a4136f62dec6",
+      "predecessor_reconstruction": [
+        {
+          "current": "                Operation::KernelSelf | Operation::KernelClaim { .. } | Operation::KernelMintShielded { .. }\n                | Operation::List { .. } | Operation::Merkle { .. } | Operation::CellRead(_) | Operation::CellWrite { .. }\n                | Operation::CellWriteCoin { .. } | Operation::MapMember { .. } | Operation::MapLookup { .. }\n                | Operation::MapInsert { .. } | Operation::MapRemove { .. }\n                | Operation::MapInsertDefault { .. } | Operation::MapReset { .. } | Operation::MapSize { .. } | Operation::MapIsEmpty { .. } | Operation::SetMember { .. }\n                | Operation::SetInsert { .. } | Operation::SetInsertCoin { .. } | Operation::SetRemove { .. }\n                | Operation::SetReset { .. } | Operation::SetSize { .. } | Operation::SetIsEmpty { .. }\n                | Operation::CounterRead { .. } | Operation::CounterIncrement { .. }\n",
+          "previous": "                Operation::KernelSelf | Operation::KernelClaim { .. } | Operation::KernelMintShielded { .. }\n                | Operation::List { .. } | Operation::Merkle { .. } | Operation::CellRead(_) | Operation::CellWrite { .. }\n                | Operation::CellWriteCoin { .. } | Operation::MapMember { .. } | Operation::MapLookup { .. }\n                | Operation::MapInsert { .. } | Operation::MapRemove { .. } | Operation::SetMember { .. }\n                | Operation::SetInsert { .. } | Operation::SetInsertCoin { .. } | Operation::SetRemove { .. }\n                | Operation::SetReset { .. } | Operation::SetSize { .. } | Operation::SetIsEmpty { .. }\n                | Operation::CounterRead { .. } | Operation::CounterIncrement { .. }\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests.rs": {
+      "previous_sha256": "2a99cb2eead823ab90fb2396dc4efdee03a70866938d549805038dc56e271b55",
+      "current_sha256": "dfb5d31e3fbae616ee2f0311733c8b27beac422b024727ed172fff999fe5b313",
+      "predecessor_reconstruction": [
+        {
+          "current": "mod kernel;\n#[path = \"tests/lists.rs\"]\nmod lists;\n#[path = \"tests/map_remaining.rs\"]\nmod map_remaining;\n#[path = \"tests/ordinary.rs\"]\nmod ordinary;\n#[path = \"tests/own_public_key.rs\"]\n",
+          "previous": "mod kernel;\n#[path = \"tests/lists.rs\"]\nmod lists;\n#[path = \"tests/ordinary.rs\"]\nmod ordinary;\n#[path = \"tests/own_public_key.rs\"]\n"
+        }
+      ]
+    }
+  },
+  "new_and_shared_sources": {
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/map_remaining.rs": "939dfa5eb01ec29ff2aa0a693afde6933863ea61164450f8fb118bb4e5a46b38",
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/map_remaining/authority.rs": "9e3a401d371f522621819e94f5d9d26a18281d3dbc5ecd7e013fe53c8529dbd4",
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/map_remaining/composition.rs": "2775d989e3fca56c9500e29c9569b7af40f0e328477ddea77e5fed32cd3beccc",
+    "tools/compact-rust-backend/src/lib.rs": "b5e1abc6d5f9d8cff753c302b2650fa7a845e6560015a3a9f97329ee61359493",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/storage.rs": "7baba1007d829e4f396a1e80fc00f1b1fafdbcaeebc931845d3b0110f992c0f1",
+    "tools/compact-rust-backend/src/recorded/effect_plan/type_environment.rs": "46d7015357ea3d57becb9849e77cbb86d8b500a8c8fd2440dcf9497f9d9c9cdd",
+    "runtime-rs/src/context/map.rs": "e6acc1e7aaceda69a8517ea2c25b3ac728d2472743c406ca4a0670113de03c0b",
+    "runtime-rs/src/ledger/collections.rs": "3c3e36056578589d336d9a2dbbd8739c0b1e78c09abf1780cebbb7afaa54081d",
+    "tools/compact-rust-backend/src/recorded/effect_plan.rs": "fcd70eccbf7f9b133a2a6527a20b631303f129378d4869ec77e58a93c1c480e2",
+    "tools/compact-rust-backend/src/recorded/effect_plan/rejection.rs": "3d41cb4ab13956ee0326ca0e1d2337c71feb16ced42576cc79bfe4564cb8767b",
+    "tools/compact-rust-backend/src/recorded/legacy/actions.rs": "39c576e3e93cc9d098808d9e7303f8e8c64df1d98c1834cbb71e5e70baf93f14",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/collections.rs": "502dd04921b10bfa8ef6bba8ce2c6dbfed5fef7ee715b8e1203f672a925c3ab8",
+    "tools/compact-rust-backend/src/recorded/helpers.rs": "39ab813c3e0c88bdc7955cd3d16f07feee8abc65c711173e24a79ceb7d5517a6",
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_domain.rs": "c00c5f9602d0ef1b5ffa1981be2707996e817be43c7896f4361b710cfa61fde5",
+    "tools/compact-rust-backend/src/resource_limits/policy.rs": "8d1e091410d3f802b1f54654314146ba1615f6c45222645b586099528ed5294f",
+    "runtime-rs/src/slots/map.rs": "a90f19b5603acaacc13b46b93e4b86ef37a39f1292fd00f7e516f9406d58520b",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/assertions.rs": "2111fd862692b4d57075f2fa24a41b93821cde0b3f1d6123bd8ca0c3a0dff9a9",
+    "tools/compact-rust-backend/tests/welcome-schema20-ir.json": "8963572627b26394b74d550ec94e87b7b4848ba7edf8c3b2ffd509e54129d6ea"
+  },
+  "anchor_adaptations": [],
+  "baseline_retired_routes": 34,
+  "baseline_boundaries": 84
+}

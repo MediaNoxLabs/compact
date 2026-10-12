@@ -172,8 +172,24 @@ STORAGE_CODEC_EXTENSION = inventory.BASELINE.with_name("recording_admission_inve
 LIST_EFFECTS_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.list-effects-608.json")
 
 
+MAP_EFFECTS_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.map-effects-609.json")
+
+
+def checkpoint_608(root):
+    """Authenticate remaining Map effects before historical fixtures."""
+    extension = json.loads(MAP_EFFECTS_EXTENSION.read_text())
+    try:
+        source = (root / inventory.map_effects.OWNER).read_bytes()
+    except FileNotFoundError:
+        return root
+    if inventory.digest(source) == extension['owners'][inventory.map_effects.OWNER]['current_sha256']:
+        return inventory.map_effects.checkpoint(root, extension)
+    return root
+
+
 def checkpoint_607(root):
     """Authenticate typed List effects before historical fixtures."""
+    root = checkpoint_608(root)
     extension = json.loads(LIST_EFFECTS_EXTENSION.read_text())
     try:
         source = (root / inventory.list_effects.OWNER).read_bytes()
@@ -779,7 +795,8 @@ class InventoryTests(unittest.TestCase):
                                   proved_set_sequence_transition=json.loads(PROVED_SET_SEQUENCE_TRANSITION.read_text()),
                                   ordinary_interface_extension=json.loads(ORDINARY_INTERFACE_EXTENSION.read_text()),
                                   storage_codec_extension=json.loads(STORAGE_CODEC_EXTENSION.read_text()),
-                                  list_effects_extension=json.loads(LIST_EFFECTS_EXTENSION.read_text()))
+                                  list_effects_extension=json.loads(LIST_EFFECTS_EXTENSION.read_text()),
+                                  map_effects_extension=json.loads(MAP_EFFECTS_EXTENSION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)

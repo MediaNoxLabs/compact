@@ -462,14 +462,23 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_static_0: runtime::FixedVector<runtime::Field, 2> =
-                runtime::FixedVector::new([
-                    runtime::Field::from(0u128),
-                    runtime::Field::from(1u128),
-                ]);
+            let __compact_effect_0: runtime::Field = runtime::Field::from_le_bytes(&[
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_1: runtime::Field = runtime::Field::from_le_bytes(&[
+                1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_2: runtime::FixedVector<runtime::Field, 2> =
+                runtime::FixedVector::new([__compact_effect_0, __compact_effect_1]);
             let frame = crate::ledger_slots::values
-                .record_insert_default(frame, (__compact_recorded_static_0).clone())?;
-            Ok(frame.finish(()))
+                .record_insert_default(frame, (__compact_effect_2).clone())?;
+            let __compact_effect_3: () = ();
+            let __compact_effect_4: () = ();
+            Ok(frame.finish(__compact_effect_4))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

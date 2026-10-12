@@ -26,6 +26,8 @@ mod jubjub_projections;
 mod kernel;
 #[path = "tests/lists.rs"]
 mod lists;
+#[path = "tests/map_remaining.rs"]
+mod map_remaining;
 #[path = "tests/ordinary.rs"]
 mod ordinary;
 #[path = "tests/own_public_key.rs"]

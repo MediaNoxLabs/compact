@@ -38,6 +38,9 @@ use rand::rngs::StdRng;
 
 use super::{check_generated_trace, check_observed_call_parity, check_transaction, make_deploy};
 
+mod remaining;
+pub(crate) use remaining::run as run_remaining;
+
 pub(super) fn check_operations(map_root: &Path, rng: &mut StdRng) -> Result<(), Box<dyn Error>> {
     for circuit in [
         "put",

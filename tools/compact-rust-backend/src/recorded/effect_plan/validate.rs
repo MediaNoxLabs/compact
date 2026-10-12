@@ -472,26 +472,15 @@ fn block(
                     && recipient.ty == crate::coin_shapes::shielded_recipient_type()
                     && *ty == Type::Unit
             }
-            Operation::MapMember { slot, key }
-            | Operation::MapLookup { slot, key }
-            | Operation::MapRemove { slot, key } => {
-                use_value(key)?;
-                let needs_value_codec = matches!(binding.operation, Operation::MapLookup { .. });
-                let (declared_key, declared_value) =
-                    maps::types(declarations, *slot, needs_value_codec, path)?;
-                key.ty == *declared_key
-                    && *ty
-                        == match binding.operation {
-                            Operation::MapMember { .. } => Type::Boolean,
-                            Operation::MapLookup { .. } => declared_value.clone(),
-                            _ => Type::Unit,
-                        }
-            }
-            Operation::MapInsert { slot, key, value } => {
-                use_value(key)?;
-                use_value(value)?;
-                let (declared_key, declared_value) = maps::types(declarations, *slot, true, path)?;
-                key.ty == *declared_key && value.ty == *declared_value && *ty == Type::Unit
+            Operation::MapMember { .. }
+            | Operation::MapLookup { .. }
+            | Operation::MapInsert { .. }
+            | Operation::MapRemove { .. }
+            | Operation::MapInsertDefault { .. }
+            | Operation::MapReset { .. }
+            | Operation::MapSize { .. }
+            | Operation::MapIsEmpty { .. } => {
+                maps::validate(&binding.operation, ty, declarations, &scope, path)?
             }
             Operation::SetMember { slot, value }
             | Operation::SetInsert { slot, value }

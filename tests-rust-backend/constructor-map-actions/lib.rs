@@ -191,11 +191,10 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (_, u64) = crate::ledger_slots::table.record_size(frame)?;
-            Ok(frame.finish(
-                runtime::BoundedUint::<18446744073709551615>::new(observed as u128)
-                    .expect("ledger Map size fits Uint<64>"),
-            ))
+            let (frame, __compact_map_size_0) = crate::ledger_slots::table.record_size(frame)?;
+            let __compact_effect_0: runtime::BoundedUint<18446744073709551615> =
+                <runtime::BoundedUint<18446744073709551615>>::new(__compact_map_size_0 as u128)?;
+            Ok(frame.finish(__compact_effect_0))
         }
         pub fn history_size<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -207,11 +206,10 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (_, u64) = crate::ledger_slots::history.record_size(frame)?;
-            Ok(frame.finish(
-                runtime::BoundedUint::<18446744073709551615>::new(observed as u128)
-                    .expect("ledger Map size fits Uint<64>"),
-            ))
+            let (frame, __compact_map_size_0) = crate::ledger_slots::history.record_size(frame)?;
+            let __compact_effect_0: runtime::BoundedUint<18446744073709551615> =
+                <runtime::BoundedUint<18446744073709551615>>::new(__compact_map_size_0 as u128)?;
+            Ok(frame.finish(__compact_effect_0))
         }
         pub fn get_true<Private>(
             context: runtime::context::CircuitContext<Private>,

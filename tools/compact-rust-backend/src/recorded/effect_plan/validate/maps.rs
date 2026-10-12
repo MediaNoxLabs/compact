@@ -54,3 +54,59 @@ pub(in super::super) fn types<'a>(
     }
     Ok((key, value))
 }
+
+/// Each plan is checked independently of lowering and its inferred annotations.
+pub(super) fn validate(
+    operation: &Operation,
+    result: &Type,
+    declarations: &Declarations,
+    scope: &HashMap<usize, Type>,
+    path: &str,
+) -> Result<bool, RecordingGap> {
+    Ok(match operation {
+        Operation::MapMember { slot, key }
+        | Operation::MapLookup { slot, key }
+        | Operation::MapRemove { slot, key }
+        | Operation::MapInsertDefault { slot, key } => {
+            used(key, scope, declarations, path)?;
+            let scalar = matches!(
+                operation,
+                Operation::MapLookup { .. } | Operation::MapInsertDefault { .. }
+            );
+            let (declared_key, declared_value) = types(declarations, *slot, scalar, path)?;
+            let default_valid = !matches!(operation, Operation::MapInsertDefault { .. })
+                || default_value_type(declared_value);
+            key.ty == *declared_key
+                && default_valid
+                && *result
+                    == match operation {
+                        Operation::MapMember { .. } => Type::Boolean,
+                        Operation::MapLookup { .. } => declared_value.clone(),
+                        _ => Type::Unit,
+                    }
+        }
+        Operation::MapInsert { slot, key, value } => {
+            used(key, scope, declarations, path)?;
+            used(value, scope, declarations, path)?;
+            let (declared_key, declared_value) = types(declarations, *slot, true, path)?;
+            key.ty == *declared_key && value.ty == *declared_value && *result == Type::Unit
+        }
+        Operation::MapReset { slot }
+        | Operation::MapSize { slot }
+        | Operation::MapIsEmpty { slot } => {
+            types(
+                declarations,
+                *slot,
+                matches!(operation, Operation::MapReset { .. }),
+                path,
+            )?;
+            *result
+                == match operation {
+                    Operation::MapSize { .. } => uint("18446744073709551615"),
+                    Operation::MapIsEmpty { .. } => Type::Boolean,
+                    _ => Type::Unit,
+                }
+        }
+        _ => unreachable!("Map validation dispatch"),
+    })
+}

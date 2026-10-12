@@ -19,7 +19,8 @@ pub(in crate::recorded) fn has_public_program(plan: &CheckedPlan) -> bool {
                 Operation::KernelSelf | Operation::KernelClaim { .. } | Operation::KernelMintShielded { .. }
                 | Operation::List { .. } | Operation::Merkle { .. } | Operation::CellRead(_) | Operation::CellWrite { .. }
                 | Operation::CellWriteCoin { .. } | Operation::MapMember { .. } | Operation::MapLookup { .. }
-                | Operation::MapInsert { .. } | Operation::MapRemove { .. } | Operation::SetMember { .. }
+                | Operation::MapInsert { .. } | Operation::MapRemove { .. }
+                | Operation::MapInsertDefault { .. } | Operation::MapReset { .. } | Operation::MapSize { .. } | Operation::MapIsEmpty { .. } | Operation::SetMember { .. }
                 | Operation::SetInsert { .. } | Operation::SetInsertCoin { .. } | Operation::SetRemove { .. }
                 | Operation::SetReset { .. } | Operation::SetSize { .. } | Operation::SetIsEmpty { .. }
                 | Operation::CounterRead { .. } | Operation::CounterIncrement { .. }

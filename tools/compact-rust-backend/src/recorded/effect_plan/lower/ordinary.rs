@@ -67,13 +67,23 @@ impl Lowerer<'_> {
                 let (operation, ty) = self.list_query(field, *index, query, &return_path)?;
                 Ok(self.emit(operation, ty, bindings, &return_path))
             }
-            StateReturn::MapMember { field, index, key }
-            | StateReturn::MapLookup { field, index, key } => {
+            StateReturn::MapMember { .. }
+            | StateReturn::MapLookup { .. }
+            | StateReturn::MapSize { .. }
+            | StateReturn::MapIsEmpty { .. } => {
                 self.spend(&return_path)?;
-                let query = if matches!(returned, StateReturn::MapLookup { .. }) {
-                    maps::MapQuery::Lookup(field, *index, key)
-                } else {
-                    maps::MapQuery::Member(field, *index, key)
+                let query = match returned {
+                    StateReturn::MapMember { field, index, key } => {
+                        maps::MapQuery::Member(field, *index, key)
+                    }
+                    StateReturn::MapLookup { field, index, key } => {
+                        maps::MapQuery::Lookup(field, *index, key)
+                    }
+                    StateReturn::MapSize { field, index } => maps::MapQuery::Size(field, *index),
+                    StateReturn::MapIsEmpty { field, index } => {
+                        maps::MapQuery::IsEmpty(field, *index)
+                    }
+                    _ => unreachable!("Map return dispatch"),
                 };
                 let (operation, ty) = self.map_query(query, scope, bindings, &return_path)?;
                 Ok(self.emit(operation, ty, bindings, &return_path))

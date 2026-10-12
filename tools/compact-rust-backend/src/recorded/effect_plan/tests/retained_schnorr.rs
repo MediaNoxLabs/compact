@@ -4,7 +4,7 @@
 //! Measured next gap shared by retained full DID/crypto source qualifications.
 use super::*;
 
-pub(super) fn assert_multiplication_gap(label: &str, gap: &RecordingGap) {
+pub(super) fn assert_wide_field_cast_gap(label: &str, gap: &RecordingGap) {
     let prefix = match label {
         "crypto-close" | "crypto-verifyOnly" => "actions[0].callee[authorize].actions[1]",
         "did-deactivate" => "actions[0].callee[assertController].actions[1]",
@@ -28,10 +28,10 @@ pub(super) fn assert_multiplication_gap(label: &str, gap: &RecordingGap) {
         }
         _ => panic!("unmeasured retained Schnorr root: {label}"),
     };
-    let suffix = "callee[schnorrVerifyDigest].actions[0].callee[schnorrVerify].actions[0].action.action.action.action.action.action.action.action.actions[1].condition.left.left";
-    assert_eq!(gap.ir_node, "Expr::Multiply", "{label}: {gap:?}");
+    let suffix = "callee[schnorrVerifyDigest].actions[0].callee[schnorrVerify].actions[0].action.action.action.action.action.action.action.action.actions[1].condition.left.right";
+    assert_eq!(gap.ir_node, "RecordedPlan", "{label}: {gap:?}");
     assert_eq!(
-        gap.detail, "Expr::Multiply is not supported in this recorded expression",
+        gap.detail, "Field cast requires unsigned input",
         "{label}: {gap:?}"
     );
     assert_eq!(gap.path, format!("{prefix}.{suffix}"), "{label}: {gap:?}");

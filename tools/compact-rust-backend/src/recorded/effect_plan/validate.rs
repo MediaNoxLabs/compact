@@ -350,7 +350,7 @@ fn block(
                 use_value(value)?;
                 hash_input_type(&value.ty) && *ty == (Type::Bytes { length: 32 })
             }
-            Operation::Add(a, b) => {
+            Operation::Add(a, b) | Operation::Multiply(a, b) => {
                 use_value(a)?;
                 use_value(b)?;
                 a.ty == Type::Field && b.ty == Type::Field && *ty == Type::Field

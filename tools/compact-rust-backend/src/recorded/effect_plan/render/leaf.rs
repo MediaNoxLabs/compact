@@ -145,9 +145,13 @@ pub(super) fn render(
             let input = value(input);
             syn::parse_quote!(runtime::persistent_hash(#input))
         }
-        Operation::Add(a, b) => {
+        Operation::Add(a, b) | Operation::Multiply(a, b) => {
             let (a, b) = (value(a), value(b));
-            syn::parse_quote!(#a + #b)
+            if matches!(binding.operation, Operation::Multiply(..)) {
+                syn::parse_quote!(#a * #b)
+            } else {
+                syn::parse_quote!(#a + #b)
+            }
         }
         Operation::JubjubPointX(input) | Operation::JubjubPointY(input) => {
             let coordinate = if matches!(binding.operation, Operation::JubjubPointX(_)) {

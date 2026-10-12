@@ -525,3 +525,6 @@ mod ordered_comparisons;
 
 #[path = "tests/retained_schnorr.rs"]
 mod retained_schnorr;
+
+#[path = "tests/field_multiply.rs"]
+mod field_multiply;

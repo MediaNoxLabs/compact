@@ -1,0 +1,261 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "calls",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_field_multiply.compact",
+        "line": 5,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "left",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "source": {
+        "file": "effect_plan_field_multiply.compact",
+        "line": 7,
+        "column": 1
+      }
+    },
+    {
+      "name": "right",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "source": {
+        "file": "effect_plan_field_multiply.compact",
+        "line": 8,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "multiply",
+      "parameters": [
+        {
+          "name": "a",
+          "ty": {
+            "kind": "field"
+          }
+        },
+        {
+          "name": "b",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Product",
+        "fields": [
+          {
+            "name": "value",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "struct_literal",
+          "ty": {
+            "kind": "struct",
+            "name": "Product",
+            "fields": [
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          },
+          "fields": [
+            {
+              "kind": "multiply",
+              "left": {
+                "kind": "parameter",
+                "name": "a"
+              },
+              "right": {
+                "kind": "parameter",
+                "name": "b"
+              }
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_7",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_7"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_field_multiply.compact",
+        "line": 9,
+        "column": 1
+      }
+    },
+    {
+      "name": "witnessed",
+      "parameters": [
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Product",
+        "fields": [
+          {
+            "name": "value",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "struct_literal",
+          "ty": {
+            "kind": "struct",
+            "name": "Product",
+            "fields": [
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          },
+          "fields": [
+            {
+              "kind": "if",
+              "condition": {
+                "kind": "parameter",
+                "name": "selected"
+              },
+              "then": {
+                "kind": "coerce",
+                "value": {
+                  "kind": "multiply",
+                  "left": {
+                    "kind": "witness_call",
+                    "name": "left",
+                    "arguments": [
+                    ]
+                  },
+                  "right": {
+                    "kind": "witness_call",
+                    "name": "right",
+                    "arguments": [
+                    ]
+                  }
+                },
+                "ty": {
+                  "kind": "field"
+                }
+              },
+              "otherwise": {
+                "kind": "coerce",
+                "value": {
+                  "kind": "field_literal",
+                  "value": "0"
+                },
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_6",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_6"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_field_multiply.compact",
+        "line": 13,
+        "column": 1
+      }
+    }
+  ]
+}

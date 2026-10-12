@@ -140,6 +140,8 @@ pub(super) enum Operation {
         opening: Value,
     },
     Add(Value, Value),
+    /// Modular multiplication in the official Field domain.
+    Multiply(Value, Value),
     /// Checked small unsigned arithmetic; operand and result bounds are independent.
     UnsignedAdd(Value, Value),
     UnsignedSubtract(Value, Value),

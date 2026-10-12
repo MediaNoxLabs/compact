@@ -15,6 +15,7 @@ impl Lowerer<'_> {
     ) -> Result<(Operation, Type), RecordingGap> {
         let (left, right) = match expression {
             Expr::Add { left, right }
+            | Expr::Multiply { left, right }
             | Expr::Compare { left, right, .. }
             | Expr::Equal { left, right }
             | Expr::NotEqual { left, right }
@@ -26,8 +27,15 @@ impl Lowerer<'_> {
         let a = self.expression(left, scope, bindings, &format!("{path}.left"))?;
         let b = self.expression(right, scope, bindings, &format!("{path}.right"))?;
         Ok(match expression {
-            Expr::Add { .. } if a.ty == Type::Field && b.ty == Type::Field => {
-                (Operation::Add(a, b), Type::Field)
+            Expr::Add { .. } | Expr::Multiply { .. }
+                if a.ty == Type::Field && b.ty == Type::Field =>
+            {
+                let operation = if matches!(expression, Expr::Multiply { .. }) {
+                    Operation::Multiply(a, b)
+                } else {
+                    Operation::Add(a, b)
+                };
+                (operation, Type::Field)
             }
             Expr::Compare { operator, .. }
                 if validate::bound(&a.ty).is_some() && validate::bound(&b.ty).is_some() =>

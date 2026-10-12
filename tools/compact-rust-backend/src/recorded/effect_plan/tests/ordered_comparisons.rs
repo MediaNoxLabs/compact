@@ -53,7 +53,7 @@ fn inspect(source: &str, entry: &str, label: &str, require_old: bool) {
         Ok(plan) => {
             assert!(
                 !require_old,
-                "{label}: update measured full-root multiplication gap deliberately"
+                "{label}: update measured wide Field cast gap deliberately"
             );
             render(&plan).unwrap();
             json!({"status":"supported"})
@@ -63,7 +63,7 @@ fn inspect(source: &str, entry: &str, label: &str, require_old: bool) {
                 require_old,
                 "{label}: genuine ordering source must compose: {gap:?}"
             );
-            super::retained_schnorr::assert_multiplication_gap(label, &gap);
+            super::retained_schnorr::assert_wide_field_cast_gap(label, &gap);
             json!({"status":"unsupported", "ir_node":gap.ir_node,
                 "path":gap.path, "detail":gap.detail})
         }

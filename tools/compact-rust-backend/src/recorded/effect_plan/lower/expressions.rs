@@ -248,6 +248,7 @@ impl Lowerer<'_> {
                 lower(self, expression, scope, bindings, path)?
             }
             Expr::Add { .. }
+            | Expr::Multiply { .. }
             | Expr::Compare { .. }
             | Expr::Equal { .. }
             | Expr::NotEqual { .. }

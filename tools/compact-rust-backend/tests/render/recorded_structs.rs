@@ -331,7 +331,7 @@ fn recorded_struct_pure_guard_composes_typed_calls_and_continuations() {
 }
 
 #[test]
-fn identity_vector_map_recording_requires_closed_literals_and_exact_shape() {
+fn vector_map_recording_composes_nonidentity_bodies_and_keeps_exact_native_shape() {
     let element = Type::Unsigned {
         max: u64::MAX.to_string(),
     };
@@ -371,7 +371,7 @@ fn identity_vector_map_recording_requires_closed_literals_and_exact_shape() {
                     body: Box::new(Expr::Parameter {
                         name: "item".into(),
                     }),
-                    result: element,
+                    result: element.clone(),
                     length: 3,
                 },
             }],
@@ -397,12 +397,28 @@ fn identity_vector_map_recording_requires_closed_literals_and_exact_shape() {
         unreachable!()
     };
     **body = literal();
-    assert!(
-        !render_with_capabilities(&nonidentity)
-            .unwrap()
-            .capabilities
-            .circuits[0]
-            .recorded
+    let mapped = render_with_capabilities(&nonidentity).unwrap();
+    assert!(mapped.capabilities.circuits[0].recorded);
+    assert!(mapped.capabilities.circuits[0].observed_call);
+    let body = super::lifecycle_recording::generated_body(&mapped.source, "recorded", "write_map");
+    assert!(body.find("into_array").unwrap() < body.find("record_write").unwrap());
+
+    // A supported nonidentity body still has to match the declared element type.
+    let mut wrong_result = nonidentity.clone();
+    let StateAction::Let { bindings, .. } = &mut wrong_result.stateful_circuits[0].actions[0]
+    else {
+        unreachable!()
+    };
+    let Expr::VectorMap { body, .. } = &mut bindings[0].value else {
+        unreachable!()
+    };
+    **body = Expr::Boolean { value: true };
+    assert_eq!(
+        render_with_capabilities(&wrong_result).err().unwrap(),
+        RenderError::TypeMismatch {
+            expected: element.clone(),
+            actual: Type::Boolean
+        }
     );
     let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
         unreachable!()
@@ -411,5 +427,16 @@ fn identity_vector_map_recording_requires_closed_literals_and_exact_shape() {
         unreachable!()
     };
     *length = 2;
-    assert!(render_with_capabilities(&contract).is_err());
+    assert_eq!(
+        render_with_capabilities(&contract).err().unwrap(),
+        RenderError::TypeMismatch {
+            expected: Type::Vector {
+                element: Box::new(element.clone()),
+                length: 2
+            },
+            actual: Type::Tuple {
+                elements: vec![element; 3]
+            },
+        }
+    );
 }

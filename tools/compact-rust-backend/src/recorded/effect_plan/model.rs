@@ -122,6 +122,12 @@ pub(super) enum Operation {
     Vector {
         elements: Vec<Value>,
     },
+    /// A lexical, context-free mapping body with fresh formal and outer captures.
+    VectorMap {
+        source: Value,
+        parameter: Value,
+        body: Block,
+    },
     /// Private intent operations delegate allocation and transcript policy to the frame.
     CreateZswapInput {
         coin: Value,

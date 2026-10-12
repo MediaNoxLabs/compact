@@ -2257,6 +2257,7 @@ dependencies = [
 name = "compact-rust-map-fn-oracle-fixture"
 version = "0.1.0"
 dependencies = [
+ "compact-rust-backend",
  "hex",
  "midnight-compact-runtime",
  "midnight-onchain-state",

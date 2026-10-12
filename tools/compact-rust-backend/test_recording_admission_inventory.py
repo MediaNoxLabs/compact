@@ -178,8 +178,24 @@ MAP_EFFECTS_EXTENSION = inventory.BASELINE.with_name("recording_admission_invent
 PERSISTENT_COMMIT_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.persistent-commit-inputs-611.json")
 
 
+VECTOR_MAP_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.vector-map-613.json")
+
+
+def checkpoint_611(root):
+    """Authenticate typed vector maps before historical fixtures."""
+    extension = json.loads(VECTOR_MAP_EXTENSION.read_text())
+    try:
+        source = (root / inventory.vector_map.OWNER).read_bytes()
+    except FileNotFoundError:
+        return root
+    if inventory.digest(source) == extension['owners'][inventory.vector_map.OWNER]['current_sha256']:
+        return inventory.vector_map.checkpoint(root, extension)
+    return root
+
+
 def checkpoint_609(root):
     """Authenticate fixed-aligned commitment inputs before historical fixtures."""
+    root = checkpoint_611(root)
     extension = json.loads(PERSISTENT_COMMIT_EXTENSION.read_text())
     try:
         source = (root / inventory.persistent_commit.OWNER).read_bytes()
@@ -813,7 +829,8 @@ class InventoryTests(unittest.TestCase):
                                   storage_codec_extension=json.loads(STORAGE_CODEC_EXTENSION.read_text()),
                                   list_effects_extension=json.loads(LIST_EFFECTS_EXTENSION.read_text()),
                                   map_effects_extension=json.loads(MAP_EFFECTS_EXTENSION.read_text()),
-                                  persistent_commit_extension=json.loads(PERSISTENT_COMMIT_EXTENSION.read_text()))
+                                  persistent_commit_extension=json.loads(PERSISTENT_COMMIT_EXTENSION.read_text()),
+                                  vector_map_extension=json.loads(VECTOR_MAP_EXTENSION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)

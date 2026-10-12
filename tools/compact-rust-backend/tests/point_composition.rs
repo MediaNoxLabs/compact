@@ -15,6 +15,8 @@
 
 use compact_rust_backend::{ir::Contract, render_with_capabilities};
 use serde_json::{Value, json};
+#[path = "support/recording_refusal.rs"]
+mod recording_refusal;
 fn fixture(name: &str) -> Value {
     serde_json::from_str(match name {
         "store" => include_str!("point-composition/point_store.json"),
@@ -178,6 +180,18 @@ fn helper_scope_type_slot_cycle_and_unselected_effects_stay_checked() {
                 "source":{"kind":"tuple","elements":[{"kind":"field_literal","value":"1"}]},
                 "body":{"kind":"parameter","name":"sentinel_item"},
                 "result":{"kind":"field"},"length":1});
+            assert!(recorded(v.clone(), "check"));
+            let mut complete: Contract = serde_json::from_value(v).unwrap();
+            recording_refusal::register_unsupported_fold(&mut complete);
+            v = serde_json::to_value(complete).unwrap();
+            let actions = circuit(&mut v, "changes")["actions"]
+                .as_array_mut()
+                .unwrap();
+            actions.last_mut().unwrap()["otherwise"]["value"]["value"] =
+                serde_json::to_value(recording_refusal::unsupported_commit_input()).unwrap();
+            // This negative is native-valid, not a swallowed render error.
+            render_with_capabilities(&serde_json::from_value::<Contract>(v.clone()).unwrap())
+                .unwrap();
         }
         assert!(!recorded(v, "check"), "{mutation}");
     }

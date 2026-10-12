@@ -256,6 +256,7 @@ fn point_values_compose_with_fixed_persistent_commit_inputs() {
     let rendered = crate::render_with_capabilities(&contract).unwrap();
     assert!(rendered.capabilities.circuits[0].recorded);
     assert!(rendered.source.contains("persistent_commit"));
+    crate::recorded::test_support::register_unsupported_fold(&mut contract);
     // A genuine unsupported fixed-value operation stays a separate boundary.
     contract.stateful_circuits[0].return_value = StateReturn::Expression {
         value: Expr::HashToCurve {

@@ -630,6 +630,7 @@ fn conditional_assertion_keeps_typed_equality_and_branch_local_observations() {
             opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
         }),
     };
+    super::support::register_unsupported_fold(&mut contract);
     let report = render_with_capabilities(&contract).unwrap().capabilities;
     assert!(!report.circuits[0].recorded);
     let gap = report.circuits[0].recording_unavailable.as_ref().unwrap();

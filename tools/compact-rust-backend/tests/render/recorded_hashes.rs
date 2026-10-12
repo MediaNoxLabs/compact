@@ -472,6 +472,7 @@ fn certified_pure_hash_bridge_records_body_variants_but_direct_hashes_remain_bou
             opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
         }),
     };
+    super::support::register_unsupported_fold(&mut contract);
     let rejected = render_with_capabilities(&contract).unwrap();
     assert!(!rejected.capabilities.circuits[0].recorded);
     assert!(

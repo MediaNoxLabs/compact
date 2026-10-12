@@ -441,7 +441,7 @@ pub(super) fn render(
             let arguments: Vec<_> = arguments.iter().map(value).collect();
             syn::parse_quote!(crate::pure_circuits::#method(#(#arguments),*)?)
         }
-        Operation::Call { .. } | Operation::If { .. } => {
+        Operation::Call { .. } | Operation::If { .. } | Operation::VectorMap { .. } => {
             unreachable!("control operations are rendered by block traversal")
         }
     };

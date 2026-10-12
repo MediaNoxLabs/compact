@@ -217,6 +217,7 @@ fn recording_gaps_follow_the_first_definite_ir_failure() {
             opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
         },
     };
+    super::support::register_unsupported_fold(&mut contract);
     let report = render_with_capabilities(&contract).unwrap().capabilities;
     let gap = report.circuits[0].recording_unavailable.as_ref().unwrap();
     assert_eq!(gap.code.as_str(), "unsupported_action");
@@ -284,6 +285,7 @@ fn conditional_recording_rejects_an_unsupported_unselected_branch() {
             opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
         },
     };
+    super::support::register_unsupported_fold(&mut contract);
     let report = render_with_capabilities(&contract).unwrap().capabilities;
     let capability = &report.circuits[0];
     assert!(!capability.recorded);
@@ -386,7 +388,7 @@ fn recording_gaps_include_unsupported_type_and_called_callee_path() {
     assert!(report.circuits[0].recorded && report.circuits[0].observed_call);
 
     // Preserve the newly supported nested scalar default, then exercise the
-    // same callee diagnostic with a native-valid unsupported VectorMap child.
+    // same callee diagnostic with a native-valid unsupported VectorFoldCall child.
     contract.stateful_circuits[0].actions = vec![StateAction::Expression {
         value: Expr::Default { ty: Type::Boolean },
     }];
@@ -398,6 +400,7 @@ fn recording_gaps_include_unsupported_type_and_called_callee_path() {
             opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
         },
     }];
+    super::support::register_unsupported_fold(&mut contract);
     let report = render_with_capabilities(&contract).unwrap().capabilities;
     let gap = report.circuits[0].recording_unavailable.as_ref().unwrap();
     assert_eq!(gap.code.as_str(), "unsupported_action");

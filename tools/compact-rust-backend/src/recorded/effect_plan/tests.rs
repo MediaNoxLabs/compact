@@ -52,6 +52,8 @@ mod rich_values;
 mod shielded_payout_inclusion;
 #[path = "tests/tuple_equality.rs"]
 mod tuple_equality;
+#[path = "tests/vector_map.rs"]
+mod vector_map;
 #[path = "tests/wide_add.rs"]
 mod wide_add;
 #[path = "tests/wide_casts.rs"]

@@ -118,7 +118,7 @@ fn fixed_member_spellings_are_not_new_semantic_constraints_and_hidden_effects_ar
         "kind":"if","condition":{"kind":"boolean","value":true},"then":{"kind":"sequence","actions":[]},
         "otherwise":{"kind":"expression","value":{"kind":"persistent_commit","value":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),"opening":{"kind":"bytes_literal","bytes":vec![0u8;32]}}}
     }));
-    let c = contract(v);
+    let c = crate::recorded::test_support::with_unsupported_fold(contract(v));
     assert!(old(&c, "add_participant").unwrap().is_none());
     assert!(checked(&c, "add_participant").is_err());
     let rendered = crate::render_with_capabilities(&c).unwrap();

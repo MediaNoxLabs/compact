@@ -1,7 +1,7 @@
 // This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
-// The direct VectorMap child is a native-valid recording refusal; fixed Field
+// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field
 // commitments themselves are supported. Do not replace this with malformed types.
 use super::*;
 
@@ -54,6 +54,7 @@ fn earlier_organizer_composite_and_receive_owners_prevent_voting_attempts() {
 #[test]
 fn unsupported_body_preserves_later_independent_attempt_order() {
     let mut c = source();
+    crate::recorded::test_support::register_unsupported_fold(&mut c);
     let r = root_mut(&mut c);
     r.actions = vec![StateAction::Expression {
         value: Expr::HashToCurve {

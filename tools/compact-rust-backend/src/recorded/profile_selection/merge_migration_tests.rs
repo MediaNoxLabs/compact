@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
 //! Merge is subsumed by earlier composition; ordinary fallback diagnostics stay intact.
-// The direct VectorMap child is a native-valid recording refusal; fixed Field
+// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field
 // commitments themselves are supported. Do not replace this with malformed types.
 use super::*;
 use crate::ir::{Contract, Expr, LocalBinding, StateAction, StateReturn, Type};
@@ -180,6 +180,7 @@ fn unsupported_hash() -> Expr {
 fn rejected_merge_keeps_action_precedence_and_generic_return_diagnostic() {
     for actionful in [false, true] {
         let mut c = source();
+        crate::recorded::test_support::register_unsupported_fold(&mut c);
         let root = root_mut(&mut c);
         let StateReturn::Expression { value } = &mut root.return_value else {
             unreachable!()

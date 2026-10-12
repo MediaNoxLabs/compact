@@ -39,23 +39,7 @@ pub(super) fn identity(result: Type, body: Expr) -> Contract {
     }
 }
 
-/// Native-valid typed IR, still unsupported by the recording algebra. The full
-/// VectorMap sentinel was rendered with the frozen #609 compiler; this helper
-/// is an IR control and makes no additional Compact frontend claim.
-pub fn unsupported_commit_input() -> compact_rust_backend::ir::Expr {
-    use compact_rust_backend::ir::{Expr, Parameter, Type};
-    Expr::VectorMap {
-        parameter: Parameter {
-            name: "sentinel_item".into(),
-            ty: Type::Field,
-        },
-        source: Box::new(Expr::Tuple {
-            elements: vec![Expr::FieldLiteral { value: "1".into() }],
-        }),
-        body: Box::new(Expr::Parameter {
-            name: "sentinel_item".into(),
-        }),
-        result: Type::Field,
-        length: 1,
-    }
-}
+// Real pure declaration is required in each complete refusal fixture.
+#[path = "../support/recording_refusal.rs"]
+mod recording_refusal;
+pub(super) use recording_refusal::{register_unsupported_fold, unsupported_commit_input};

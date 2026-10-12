@@ -155,7 +155,11 @@ fn earlier_root_and_let_failures_do_not_inherit_later_resource_payload() {
                 .unwrap()
                 .insert(0, json!({"kind":"expression","value":persistent_commit()}));
         }
-        let output = render(input);
+        // The unsupported direct fold has a real pure declaration. Native
+        // UnknownCircuit is not evidence about recording resource precedence.
+        let mut contract: ir::Contract = serde_json::from_value(input).unwrap();
+        crate::recorded::test_support::register_unsupported_fold(&mut contract);
+        let output = render_with_capabilities(&contract).unwrap();
         let row = capability(&output.capabilities);
         assert!(!row.recorded && !row.observed_call);
         for gap in [

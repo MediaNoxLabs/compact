@@ -6,6 +6,7 @@
 //! Checking promises this bounded fragment can render, not transaction readiness
 //! or proof validity. Replay, transcript partitioning and proof remain runtime gates.
 
+mod context_free;
 mod declarations;
 mod lower;
 mod model;

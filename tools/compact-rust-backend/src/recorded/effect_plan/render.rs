@@ -12,6 +12,7 @@ mod lists;
 mod maps;
 mod merkle;
 mod qualified_coins;
+mod vector_map;
 mod zswap;
 
 fn name(value: &Value) -> syn::Ident {
@@ -51,6 +52,9 @@ fn block(body: &Block, declarations: &Declarations) -> Result<Vec<syn::Stmt>, Re
         let output = name(&binding.value);
         let ty = rust_type(&binding.value.ty).map_err(|e| invalid(path, e.to_string()))?;
         match &binding.operation {
+            Operation::VectorMap { .. } => {
+                steps.push(vector_map::render(binding, declarations)?);
+            }
             Operation::Call {
                 arguments,
                 parameters,

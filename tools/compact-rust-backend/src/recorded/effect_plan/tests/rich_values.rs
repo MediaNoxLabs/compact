@@ -348,11 +348,11 @@ fn rich_value_support_does_not_authorize_arithmetic_or_unrelated_nodes() {
         opening: Box::new(bytes(0)),
     };
     render(&checked(commitment, bytes_type())).unwrap();
-    let gap = refusal(
-        crate::recorded::test_support::unsupported_commit(),
-        bytes_type(),
-    );
-    assert_eq!(gap.ir_node, "Expr::VectorMap");
+    let mapped_commitment = Expr::PersistentCommit {
+        value: Box::new(crate::recorded::test_support::fixed_map_input()),
+        opening: Box::new(bytes(0)),
+    };
+    render(&checked(mapped_commitment, bytes_type())).unwrap();
 }
 
 #[test]

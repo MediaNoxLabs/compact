@@ -76,13 +76,13 @@ fn malformed_names_layout_and_operand_scopes_fail_before_recording() {
 fn unsupported_first_effect_and_recursive_helper_do_not_skip_to_the_old_permit() {
     let mut v = fixture();
     root(&mut v)["actions"].as_array_mut().unwrap().insert(0,json!({"kind":"expression","value":{"kind":"persistent_commit","value":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),"opening":{"kind":"bytes_literal","bytes":vec![0u8;32]}}}));
-    let c = contract(v);
+    let c = crate::recorded::test_support::with_unsupported_fold(contract(v));
     let cx = Context::new(&c);
     let Err(effect_plan::PlanError::Unsupported(gap)) = cx.checked(cx.circuits["check_in"]) else {
         panic!("unsupported first effect")
     };
     assert_eq!(gap.path, "actions[0].value.value");
-    assert_eq!(gap.ir_node, "Expr::VectorMap");
+    assert_eq!(gap.ir_node, "Expr::VectorFoldCall");
     let output = crate::render_with_capabilities(&c).unwrap();
     assert!(
         output

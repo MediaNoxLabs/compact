@@ -134,7 +134,7 @@ fn public_signature_checks_and_hidden_children_remain_explicit() {
             .as_array_mut()
             .unwrap()
             .push(action);
-        let c = contract(value);
+        let c = crate::recorded::test_support::with_unsupported_fold(contract(value));
         assert!(old(&c).unwrap().is_none());
         assert!(checked(&c).is_err());
         let rendered = crate::render_with_capabilities(&c).unwrap();

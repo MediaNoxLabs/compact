@@ -205,6 +205,7 @@ pub(super) fn try_run(
         ("--merkle-verify", _) => Some(merkle::merkle_verify(arguments)),
         ("--merkle-reset", _) => Some(merkle::merkle_reset(arguments)),
         ("--vector-map", _) => Some(collections::vector_map(arguments)),
+        ("--vector-map-strict", _) => Some(collections::vector_map_strict(arguments)),
         ("--merkle-root", _) => Some(merkle::merkle_root(arguments)),
         ("--zerocash-spend", _) => Some(contracts::zerocash_spend(arguments)),
         ("--bboard", _) => Some(contracts::bboard(arguments)),

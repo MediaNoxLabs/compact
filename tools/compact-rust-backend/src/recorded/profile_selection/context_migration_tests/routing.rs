@@ -1,7 +1,7 @@
 // This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
-// The direct VectorMap child is a native-valid recording refusal; fixed Field
+// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field
 // commitments themselves are supported. Do not replace this with malformed types.
 use super::*;
 use crate::recorded::admission_probe::trace;
@@ -55,7 +55,7 @@ fn earlier_point_route_keeps_priority() {
 }
 #[test]
 fn unsupported_continues_independent_suffix_but_invariant_is_fatal() {
-    let contract = subject(Expr::FieldToBytes32 {
+    let mut contract = subject(Expr::FieldToBytes32 {
         value: Box::new(Expr::JubjubPointX {
             value: Box::new(Expr::HashToCurve {
                 value: Box::new(Expr::PersistentCommit {
@@ -67,6 +67,7 @@ fn unsupported_continues_independent_suffix_but_invariant_is_fatal() {
             }),
         }),
     });
+    crate::recorded::test_support::register_unsupported_fold(&mut contract);
     assert!(
         Context::new(&contract)
             .domain(&contract.stateful_circuits[0])

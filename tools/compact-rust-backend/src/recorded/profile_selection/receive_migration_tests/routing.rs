@@ -1,7 +1,7 @@
 // This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
-// The direct VectorMap child is a native-valid recording refusal; fixed Field
+// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field
 // commitments themselves are supported. Do not replace this with malformed types.
 use super::*;
 fn selected_trace(c: &Contract, r: &StatefulCircuit) -> serde_json::Value {
@@ -72,6 +72,7 @@ fn earlier_organizer_and_composite_owner_prevent_receive_attempts() {
 #[test]
 fn unsupported_body_continues_independent_suffix_and_invariant_stays_fatal() {
     let mut c = source();
+    crate::recorded::test_support::register_unsupported_fold(&mut c);
     root_mut(&mut c).actions = vec![StateAction::Expression {
         value: Expr::HashToCurve {
             value: Box::new(Expr::PersistentCommit {

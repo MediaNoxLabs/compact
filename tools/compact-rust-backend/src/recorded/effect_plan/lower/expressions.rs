@@ -71,6 +71,7 @@ impl Lowerer<'_> {
             | Expr::TupleIndex { .. }
             | Expr::Tuple { .. }
             | Expr::Vector { .. } => self.aggregate(expression, scope, bindings, path)?,
+            Expr::VectorMap { .. } => self.vector_map(expression, scope, bindings, path)?,
             Expr::CreateZswapInput { .. } | Expr::CreateZswapOutput { .. } => {
                 self.zswap(expression, scope, bindings, path)?
             }

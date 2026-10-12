@@ -354,7 +354,7 @@ fn nested_call_exposes_a_trace_only_when_every_step_is_supported() {
     let defaulted = render_with_capabilities(&contract).unwrap();
     assert!(defaulted.capabilities.circuits[0].recorded);
     assert!(defaulted.capabilities.circuits[0].observed_call);
-    // A native-valid unsupported VectorMap child refuses a later nested step.
+    // A native-valid unsupported VectorFoldCall child refuses a later nested step.
     contract.stateful_circuits[0]
         .actions
         .push(StateAction::Expression {
@@ -363,6 +363,7 @@ fn nested_call_exposes_a_trace_only_when_every_step_is_supported() {
                 opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
             },
         });
+    super::support::register_unsupported_fold(&mut contract);
     let rendered = render_with_capabilities(&contract).unwrap();
     assert!(!rendered.capabilities.circuits[0].recorded);
     assert!(!rendered.capabilities.circuits[0].observed_call);
@@ -518,6 +519,7 @@ fn pure_field_calls_preserve_unit_and_record_ordinary_hashed_returns() {
             }),
         },
     };
+    super::support::register_unsupported_fold(&mut contract);
     let rejected = render_with_capabilities(&contract).unwrap();
     assert!(!rejected.capabilities.circuits[0].recorded);
     assert_eq!(

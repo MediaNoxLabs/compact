@@ -16,6 +16,8 @@
 //! Discovery, stable naming and emission planning for shared recorded helpers.
 use super::*;
 
+#[cfg(test)]
+mod naming_tests;
 mod reachability;
 pub(crate) use reachability::retain_reachable_helpers;
 

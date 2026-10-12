@@ -70,7 +70,7 @@ fn complete_helper_discovery_distinguishes_supported_and_unsupported_bodies() {
     }
     let mut v = isolated();
     named(&mut v, "recordWrite")["actions"] = json!([{"kind":"expression","value":{"kind":"persistent_commit","value":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),"opening":{"kind":"bytes_literal","bytes":vec![0u8;32]}}}]);
-    let c = contract(v);
+    let c = crate::recorded::test_support::with_unsupported_fold(contract(v));
     let cx = Context::new(&c);
     assert!(cx.prefix(), "the permit alone ignores helper bodies");
     assert!(!cx.old_complete().unwrap());

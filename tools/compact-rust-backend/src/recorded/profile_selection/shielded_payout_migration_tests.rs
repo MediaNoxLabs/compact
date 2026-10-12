@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
 //! Shielded payout is subsumed by existing generic composition; no new route is added.
-// The direct VectorMap child is a native-valid recording refusal; fixed Field
+// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field
 // commitments themselves are supported. Do not replace this with malformed types.
 use super::*;
 use crate::ir::{Contract, Expr, StateAction, StateReturn, Type};
@@ -164,7 +164,8 @@ fn unsupported_action_keeps_fallback_order_and_first_action_diagnostic() {
     );
     assert!(Context::new(&c).old(root(&c)).is_none());
     assert!(Context::new(&c).domain(root(&c)).unwrap().is_some());
-    // Keep the positive default above, then exercise the unchanged commitment boundary.
+    crate::recorded::test_support::register_unsupported_fold(&mut c);
+    // Keep the positive default above, then exercise the direct fold boundary.
     root_mut(&mut c).actions[0] = StateAction::Expression {
         value: Expr::PersistentCommit {
             value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),

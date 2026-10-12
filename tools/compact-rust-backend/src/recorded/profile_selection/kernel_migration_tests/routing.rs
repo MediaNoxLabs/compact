@@ -1,7 +1,7 @@
 // This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
-// The direct VectorMap child is a native-valid recording refusal; fixed Field
+// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field
 // commitments themselves are supported. Do not replace this with malformed types.
 use super::*;
 use crate::recorded::admission_probe::trace;
@@ -113,6 +113,7 @@ fn rollout_excludes_internal_field_parameter_and_explicit_return_plan() {
 #[test]
 fn unsupported_body_continues_suffix_but_invariant_is_fatal() {
     let mut contract = subject();
+    crate::recorded::test_support::register_unsupported_fold(&mut contract);
     contract.stateful_circuits[0].actions = vec![action(Expr::HashToCurve {
         value: Box::new(Expr::PersistentCommit {
             value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),

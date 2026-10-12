@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //! Declared membership interfaces, actual ownership and ordered refusal behavior.
 //! Finite whole-old inclusion is covered separately by membership_inclusion tests.
-// The direct VectorMap child is a native-valid recording refusal; fixed Field
+// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field
 // commitments themselves are supported. Do not replace this with malformed types.
 use super::*;
 use crate::ir::{Contract, Expr, Parameter, StateAction, StateReturn, StructField, Type};
@@ -317,6 +317,7 @@ fn unsupported_body_declines_and_preserves_later_attempts() {
             .unwrap()
             .is_some()
     );
+    crate::recorded::test_support::register_unsupported_fold(&mut c);
     c.stateful_circuits[0].actions[0] = StateAction::Expression {
         value: Expr::PersistentCommit {
             value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),

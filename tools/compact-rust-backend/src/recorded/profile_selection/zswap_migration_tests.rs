@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
 //! The carrier domain is an interface boundary, not a whole-body recognizer.
-// The direct VectorMap child is a native-valid recording refusal; fixed Field
+// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field
 // commitments themselves are supported. Do not replace this with malformed types.
 use super::*;
 use crate::ir::{Contract, Expr, Parameter, ReturnPlan, StateAction, StateReturn, Type};
@@ -205,13 +205,14 @@ fn earlier_winners_never_attempt_the_final_zswap_domain() {
 #[test]
 fn unsupported_body_refuses_at_last_priority_without_old_fallback() {
     let mut c = source();
+    crate::recorded::test_support::register_unsupported_fold(&mut c);
     let r = c
         .stateful_circuits
         .iter_mut()
         .find(|r| r.name == "flow")
         .unwrap();
     r.actions = vec![StateAction::Expression {
-        // The checked persistent-commit input remains a Bytes32 pair, not Field.
+        // The direct fold is unsupported; Field commitments remain supported.
         value: Expr::Equal {
             left: Box::new(Expr::HashToCurve {
                 value: Box::new(Expr::PersistentCommit {

@@ -3,11 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! Explicit refusal controls for compiler tests. Their domains are intentionally
-//! different: VectorMap is a valid source construct not yet recorded directly;
+//! different: direct VectorFoldCall is source-valid but not yet recorded directly;
 //! opaque persistent commitments are native-IR-only source-policy controls.
-use crate::ir::{Expr, Parameter, Type};
+use crate::ir::{Contract, Expr, Parameter, PureCircuit, Type};
 
-pub(crate) fn unsupported_fixed_input() -> Expr {
+pub(crate) fn fixed_map_input() -> Expr {
     Expr::VectorMap {
         parameter: Parameter {
             name: "sentinel_item".into(),
@@ -23,6 +23,48 @@ pub(crate) fn unsupported_fixed_input() -> Expr {
         result: Type::Field,
         length: 1,
     }
+}
+
+/// Genuine source-qualified direct fold. Each complete contract must include
+/// the exact declaration below; a missing callee is not a refusal control.
+const FOLD_STEP: &str = "recording_refusal_fold_step";
+pub(crate) fn unsupported_fixed_input() -> Expr {
+    Expr::VectorFoldCall {
+        name: FOLD_STEP.into(),
+        initial: Box::new(Expr::FieldLiteral { value: "0".into() }),
+        source: Box::new(Expr::Tuple {
+            elements: vec![Expr::FieldLiteral { value: "1".into() }],
+        }),
+        accumulator: Type::Field,
+        element: Type::Field,
+        length: 1,
+    }
+}
+pub(crate) fn register_unsupported_fold(contract: &mut Contract) {
+    assert!(!contract.circuits.iter().any(|c| c.name == FOLD_STEP));
+    contract.circuits.push(PureCircuit {
+        source: None,
+        name: FOLD_STEP.into(),
+        internal: true,
+        parameters: ["acc", "item"]
+            .into_iter()
+            .map(|name| Parameter {
+                name: name.into(),
+                ty: Type::Field,
+            })
+            .collect(),
+        result: Type::Field,
+        body: Expr::Add {
+            left: Box::new(Expr::Parameter { name: "acc".into() }),
+            right: Box::new(Expr::Parameter {
+                name: "item".into(),
+            }),
+        },
+    });
+}
+pub(crate) fn with_unsupported_fold(mut contract: Contract) -> Contract {
+    register_unsupported_fold(&mut contract);
+    contract
 }
 
 pub(crate) fn unsupported_commit() -> Expr {
@@ -49,6 +91,7 @@ fn unsupported_control_is_native_valid_and_checked_refused_at_the_actual_child()
         "../../tests/opaque-string-map-schema20-ir.json"
     ))
     .unwrap();
+    register_unsupported_fold(&mut contract);
     let root = contract
         .stateful_circuits
         .iter_mut()
@@ -76,13 +119,19 @@ fn unsupported_control_is_native_valid_and_checked_refused_at_the_actual_child()
         .iter()
         .find(|c| c.name == "ensure")
         .unwrap();
-    let Err(super::effect_plan::PlanError::Unsupported(gap)) = super::effect_plan::check(
+    let Err(super::effect_plan::PlanError::Unsupported(gap)) = super::effect_plan::check_with_calls(
         root,
         &std::collections::HashMap::new(),
         &std::collections::HashMap::new(),
+        &contract
+            .circuits
+            .iter()
+            .map(|c| (c.name.as_str(), c))
+            .collect(),
+        &std::collections::HashMap::new(),
     ) else {
-        panic!("direct VectorMap must remain explicitly unsupported")
+        panic!("direct VectorFoldCall must remain explicitly unsupported")
     };
-    assert_eq!(gap.ir_node, "Expr::VectorMap");
+    assert_eq!(gap.ir_node, "Expr::VectorFoldCall");
     assert_eq!(gap.path, "return_value.value.value");
 }

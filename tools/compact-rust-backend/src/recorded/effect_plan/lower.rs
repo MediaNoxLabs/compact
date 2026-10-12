@@ -27,6 +27,7 @@ mod pure;
 mod qualified_coins;
 mod sets;
 mod transient;
+mod vector_map;
 mod zswap;
 use super::pure_certification::{Certificates, Certifier};
 use super::rejection::{ConcreteNode, FailurePhase, LoweringRejection, Precision};

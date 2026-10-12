@@ -11,7 +11,7 @@ pub(in crate::recorded) fn has_public_program(plan: &CheckedPlan) -> bool {
     while let Some(block) = blocks.pop() {
         for binding in &block.bindings {
             match &binding.operation {
-                Operation::Call { body, .. } => blocks.push(body),
+                Operation::Call { body, .. } | Operation::VectorMap { body, .. } => blocks.push(body),
                 Operation::If { then, otherwise, .. } => {
                     blocks.push(otherwise);
                     blocks.push(then);

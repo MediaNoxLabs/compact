@@ -131,7 +131,7 @@ fn whole_helpers_and_empty_private_execution_are_qualified_beyond_prefix() {
         json!([{"kind":"expression","value":{"kind":"persistent_commit","value":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),"opening":{"kind":"bytes_literal","bytes":vec![0u8;32]}}}]),
     );
     root(&mut v)["actions"][1] = call("finish");
-    let c = contract(v);
+    let c = crate::recorded::test_support::with_unsupported_fold(contract(v));
     assert!(old_prefix(&c, "recordFreshEnough").unwrap().is_some());
     assert!(
         !old_complete(&c, "recordFreshEnough").unwrap(),

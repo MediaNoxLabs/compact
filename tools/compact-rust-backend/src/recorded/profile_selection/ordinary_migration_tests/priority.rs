@@ -1,7 +1,7 @@
 // This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
-// The direct VectorMap child is a native-valid recording refusal; fixed Field
+// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field
 // commitments themselves are supported. Do not replace this with malformed types.
 use super::*;
 
@@ -39,6 +39,7 @@ fn ordinary_preserves_earlier_declared_and_effectful_owners() {
 #[test]
 fn ordinary_preserves_unsupported_operation_and_native_error_priority() {
     let mut c = identity(Type::Bytes { length: 32 });
+    crate::recorded::test_support::register_unsupported_fold(&mut c);
     c.stateful_circuits[0].return_value = StateReturn::Expression {
         value: Expr::PersistentCommit {
             value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),

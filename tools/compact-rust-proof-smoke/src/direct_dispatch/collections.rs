@@ -398,3 +398,23 @@ pub(super) fn map_value_products(
         Err(_) => Err("map-value-products proof thread panicked".into()),
     }
 }
+
+/// Exact original map source with proof verification and strict funded application.
+pub(super) fn vector_map_strict(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let usage = "usage: compact-rust-proof-smoke --vector-map-strict <proof-output>";
+    let root = arguments.next().ok_or(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("vector-map-strict-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || vector_map::strict::run(Path::new(&root)).map_err(|e| e.to_string()))?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("vector map strict proof thread panicked".into()),
+    }
+}

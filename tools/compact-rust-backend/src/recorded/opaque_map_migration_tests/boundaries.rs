@@ -63,7 +63,7 @@ fn map_write_declaration_argument_and_class_authority_remain_independent() {
 fn unsupported_or_recursive_helpers_never_count_as_complete_old_admission() {
     let mut v = fixture();
     named(&mut v, "recordWrite")["actions"] = json!([{"kind":"expression","value":{"kind":"persistent_commit","value":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),"opening":{"kind":"bytes_literal","bytes":vec![0u8;32]}}}]);
-    let c = contract(v);
+    let c = crate::recorded::test_support::with_unsupported_fold(contract(v));
     for name in ROOTS {
         let cx = Context::new(&c, name);
         assert!(!cx.discovered().unwrap().contains("recordWrite"));

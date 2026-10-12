@@ -182,7 +182,7 @@ fn opaque_set_check_in_composes_typed_effects_and_preserves_witness_order() {
     let defaulted = render_with_capabilities(&contract).unwrap();
     assert!(defaulted.capabilities.circuits[0].recorded);
     assert!(defaulted.capabilities.circuits[0].observed_call);
-    // Keep the now-supported default callback value. A commitment with an unsupported VectorMap child
+    // Keep the now-supported default callback value. A commitment with an unsupported VectorFoldCall child
     // in its local prefix still refuses recording at that exact argument path.
     let StateAction::Expression {
         value: Expr::WitnessCall { arguments, .. },
@@ -201,9 +201,10 @@ fn opaque_set_check_in_composes_typed_effects_and_preserves_witness_order() {
         }],
         body: Box::new(Expr::Default { ty: opaque.clone() }),
     };
+    super::support::register_unsupported_fold(&mut contract);
     let rejected = render_with_capabilities(&contract).unwrap();
     assert!(!rejected.capabilities.circuits[0].recorded);
-    // The checked domain refuses the VectorMap child, then the retained witness
+    // The checked domain refuses the VectorFoldCall child, then the retained witness
     // fallback's cell_source rejects the enclosing Let argument atomically.
     let gap = rejected.capabilities.circuits[0]
         .recording_unavailable
@@ -603,15 +604,16 @@ fn enum_set_locals_record_typed_keys_in_source_order() {
             },
         },
     );
+    super::support::register_unsupported_fold(&mut contract);
     let defaulted = render_with_capabilities(&contract).unwrap();
     assert!(!defaulted.capabilities.circuits[0].recorded);
-    // The retained commitment-binding fallback refuses the VectorMap operand
+    // The retained commitment-binding fallback refuses the VectorFoldCall operand
     // before opening evaluation or the later enum binding.
     let gap = defaulted.capabilities.circuits[0]
         .recording_unavailable
         .as_ref()
         .unwrap();
-    assert_eq!(gap.ir_node, "Expr::VectorMap");
+    assert_eq!(gap.ir_node, "Expr::VectorFoldCall");
     assert_eq!(gap.path, "actions[0].bindings[0].value.value");
 }
 

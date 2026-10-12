@@ -178,38 +178,55 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_static_0: runtime::FixedVector<
+            let __compact_effect_0: runtime::BoundedUint<18446744073709551615> =
+                <runtime::BoundedUint<18446744073709551615>>::new(0u128)?;
+            let __compact_effect_1: runtime::BoundedUint<0> =
+                <runtime::BoundedUint<0>>::new(0u128)?;
+            let __compact_effect_2: runtime::BoundedUint<0> =
+                <runtime::BoundedUint<0>>::new(0u128)?;
+            let __compact_effect_3: (
+                runtime::BoundedUint<18446744073709551615>,
+                runtime::BoundedUint<0>,
+                runtime::BoundedUint<0>,
+            ) = (__compact_effect_0, __compact_effect_1, __compact_effect_2);
+            let __compact_effect_4: runtime::FixedVector<
                 runtime::BoundedUint<18446744073709551615>,
                 3,
             > = {
-                let __compact_map_source = {
-                    let __compact_cast_source_0 = (
-                        runtime::BoundedUint::<18446744073709551615>::new(0u128)
-                            .expect("Compact Uint literal fits its maximum"),
-                        runtime::BoundedUint::<0>::new(0u128)
-                            .expect("Compact Uint literal fits its maximum"),
-                        runtime::BoundedUint::<0>::new(0u128)
-                            .expect("Compact Uint literal fits its maximum"),
-                    );
-                    let (__compact_cast_item_0_0, __compact_cast_item_0_1, __compact_cast_item_0_2) =
-                        __compact_cast_source_0;
-                    runtime::FixedVector::new([
-                        __compact_cast_item_0_0,
-                        runtime::cast_unsigned::<0, 18446744073709551615>(__compact_cast_item_0_1)?,
-                        runtime::cast_unsigned::<0, 18446744073709551615>(__compact_cast_item_0_2)?,
-                    ])
-                };
+                let __compact_cast_source_0 = __compact_effect_3;
+                let (__compact_cast_item_0_0, __compact_cast_item_0_1, __compact_cast_item_0_2) =
+                    __compact_cast_source_0;
+                runtime::FixedVector::new([
+                    __compact_cast_item_0_0,
+                    runtime::cast_unsigned::<0, 18446744073709551615>(__compact_cast_item_0_1)?,
+                    runtime::cast_unsigned::<0, 18446744073709551615>(__compact_cast_item_0_2)?,
+                ])
+            };
+            let (frame, __compact_effect_6): (
+                _,
+                runtime::FixedVector<runtime::BoundedUint<18446744073709551615>, 3>,
+            ) = {
+                let __compact_map_source = (__compact_effect_4).clone();
                 let mut __compact_mapped = Vec::with_capacity(3);
-                for x in __compact_map_source.into_array() {
-                    __compact_mapped.push(x);
+                let mut __compact_map_frame = frame;
+                for __compact_effect_5 in __compact_map_source.into_array() {
+                    let frame = __compact_map_frame;
+                    __compact_mapped.push(__compact_effect_5);
+                    __compact_map_frame = frame;
                 }
-                runtime::FixedVector::new(
-                    <[_; 3]>::try_from(__compact_mapped).expect("Vector map preserves its length"),
+                (
+                    __compact_map_frame,
+                    runtime::FixedVector::new(
+                        <[_; 3]>::try_from(__compact_mapped)
+                            .expect("Vector map preserves its length"),
+                    ),
                 )
             };
-            let frame = crate::ledger_slots::doubled
-                .record_write(frame, (__compact_recorded_static_0).clone())?;
-            Ok(frame.finish(()))
+            let frame =
+                crate::ledger_slots::doubled.record_write(frame, (__compact_effect_6).clone())?;
+            let __compact_effect_7: () = ();
+            let __compact_effect_8: () = ();
+            Ok(frame.finish(__compact_effect_8))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

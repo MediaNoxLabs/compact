@@ -19,106 +19,13 @@ use compact_rust_backend::ir::{
 };
 use compact_rust_backend::{RenderError, render, render_with_capabilities};
 
-fn contract(helper_name: &str, caller: bool, collide: bool) -> Contract {
-    let seed = Expr::Parameter {
-        name: "seed".into(),
-    };
-    let helper = StatefulCircuit {
-        source: None,
-        internal: true,
-        name: helper_name.into(),
-        parameters: vec![Parameter {
-            name: "seed".into(),
-            ty: Type::Field,
-        }],
-        actions: vec![StateAction::Let {
-            bindings: vec![LocalBinding {
-                name: "value".into(),
-                ty: Type::Field,
-                value: Expr::WitnessCall {
-                    name: "secret".into(),
-                    arguments: vec![seed.clone()],
-                },
-            }],
-            action: Box::new(StateAction::CellWrite {
-                field: "cell".into(),
-                index: 0,
-                value: Expr::Parameter {
-                    name: "value".into(),
-                },
-            }),
-        }],
-        result: Type::Unit,
-        return_value: StateReturn::Unit,
-    };
-    let caller_circuit = StatefulCircuit {
-        source: None,
-        internal: false,
-        name: "outer".into(),
-        parameters: vec![Parameter {
-            name: "seed".into(),
-            ty: Type::Field,
-        }],
-        actions: vec![StateAction::CircuitCall {
-            name: helper_name.into(),
-            arguments: vec![seed],
-        }],
-        result: Type::Unsigned {
-            max: u64::MAX.to_string(),
-        },
-        return_value: StateReturn::CounterRead {
-            field: "count".into(),
-            index: 1,
-        },
-    };
-    let mut stateful_circuits = vec![helper];
-    if caller {
-        stateful_circuits.push(caller_circuit.clone());
-    }
-    if collide {
-        let mut collision = caller_circuit;
-        let normalized = helper_name.strip_prefix("r#").unwrap_or(helper_name);
-        collision.name = format!("__compact_recorded_body_{normalized}");
-        stateful_circuits.push(collision);
-    }
-    Contract {
-        schema_version: SCHEMA_VERSION,
-        type_aliases: vec![],
-        ledger_fields: vec![
-            LedgerField {
-                source: None,
-                id: "cell".into(),
-                index: 0,
-                path: vec![],
-                declaration: LedgerFieldKind::Cell { ty: Type::Field },
-            },
-            LedgerField {
-                source: None,
-                id: "count".into(),
-                index: 1,
-                path: vec![],
-                declaration: LedgerFieldKind::Counter,
-            },
-        ],
-        constructor: None,
-        witnesses: vec![WitnessDeclaration {
-            source: None,
-            name: "secret".into(),
-            parameters: vec![Parameter {
-                name: "seed".into(),
-                ty: Type::Field,
-            }],
-            result: Type::Field,
-        }],
-        circuits: vec![],
-        stateful_circuits,
-    }
-}
+#[path = "support/recorded_helper_contract.rs"]
+mod helper_contract;
+use helper_contract::contract;
 
-// Ordinary checked returns now inline CounterRead callers. These naming laws
-// need a real legacy call: the existing unsigned identity VectorMap binding is
-// independently native-valid and legacy-supported, but not yet checked.
-fn legacy_contract(helper_name: &str, caller: bool, collide: bool) -> Contract {
+// Keep the former legacy identity-map caller as a checked composition positive.
+// Private name allocation is tested against the real planner before filtering.
+fn mapped_contract(helper_name: &str, caller: bool, collide: bool) -> Contract {
     let mut fixture = contract(helper_name, caller, collide);
     let scalar = Type::Unsigned { max: "255".into() };
     for circuit in &mut fixture.stateful_circuits {
@@ -159,14 +66,20 @@ fn legacy_contract(helper_name: &str, caller: bool, collide: bool) -> Contract {
 
 #[test]
 fn raw_spelled_helper_records_without_changing_native_name() {
-    let native = render(&legacy_contract("r#type", false, false)).unwrap();
+    let native = render(&mapped_contract("r#type", false, false)).unwrap();
     syn::parse_file(&native).unwrap();
     assert!(native.contains("pub(crate) fn r#type<"));
 
-    let recorded = render_with_capabilities(&legacy_contract("r#type", true, false)).unwrap();
+    let recorded = render_with_capabilities(&mapped_contract("r#type", true, false)).unwrap();
     syn::parse_file(&recorded.source).unwrap();
     assert!(recorded.source.contains("pub(crate) fn r#type<"));
-    assert!(recorded.source.contains("fn __compact_recorded_body_type<"));
+    assert_no_private_helpers(&recorded.source);
+    assert_one_witness_then_write(
+        recorded_functions(&recorded.source)
+            .iter()
+            .find(|f| f.sig.ident == "outer")
+            .unwrap(),
+    );
     assert!(
         recorded
             .capabilities
@@ -178,54 +91,73 @@ fn raw_spelled_helper_records_without_changing_native_name() {
 
 #[test]
 fn compact_dollar_normalization_retains_existing_helper_spelling() {
-    let source = render(&legacy_contract("a$b", true, false)).unwrap();
+    let source = render(&mapped_contract("a$b", true, false)).unwrap();
     syn::parse_file(&source).unwrap();
     assert!(source.contains("pub(crate) fn a_b<"));
-    assert!(source.contains("fn __compact_recorded_body_a_b<"));
+    assert_no_private_helpers(&source);
 }
 
 #[test]
-fn helper_collision_uses_stable_fallback_for_normal_and_raw_spelling() {
+fn helper_collision_preserves_public_names_while_checked_callers_inline() {
     for helper_name in ["inner", "r#type"] {
-        // The complete identity-map binding keeps a real legacy action call;
-        // CounterRead by itself is now covered by checked ordinary returns.
-        let fixture = legacy_contract(helper_name, true, true);
+        let fixture = mapped_contract(helper_name, true, true);
         let source = render(&fixture).unwrap();
         syn::parse_file(&source).unwrap();
-        let suffix = helper_name
-            .bytes()
-            .map(|byte| format!("{byte:02x}"))
-            .collect::<String>();
-        let index = if helper_name.starts_with("r#") { 2 } else { 1 };
-        let fallback = format!("__compact_recorded_body_{index}_x{suffix}");
-        assert!(source.contains(&format!("fn {fallback}<")), "{helper_name}");
+        assert_no_private_helpers(&source);
+        let functions = recorded_functions(&source);
+        let public_name = format!(
+            "__compact_recorded_body_{}",
+            helper_name.strip_prefix("r#").unwrap_or(helper_name)
+        );
         assert!(
-            source.contains(&format!("let (frame, _) = {fallback}(")),
-            "{helper_name}"
+            functions
+                .iter()
+                .any(|function| function.sig.ident == public_name
+                    && matches!(function.vis, syn::Visibility::Public(_)))
+        );
+        assert_one_witness_then_write(
+            functions
+                .iter()
+                .find(|function| function.sig.ident == "outer")
+                .unwrap(),
         );
     }
 }
 
 #[test]
 fn raw_spelled_sibling_occupies_the_preferred_helper_name() {
-    let mut contract = legacy_contract("r#type", true, true);
+    let mut contract = mapped_contract("r#type", true, true);
     contract.stateful_circuits[2].name = "r#__compact_recorded_body_type".into();
     let source = render(&contract).unwrap();
     syn::parse_file(&source).unwrap();
-    assert!(source.contains("fn __compact_recorded_body_2_x722374797065<"));
-    assert!(!source.contains("fn __compact_recorded_body_type<"));
+    assert_no_private_helpers(&source);
+    assert!(
+        recorded_functions(&source)
+            .iter()
+            .any(
+                |function| function.sig.ident == "r#__compact_recorded_body_type"
+                    && matches!(function.vis, syn::Visibility::Public(_))
+            )
+    );
 }
 
 #[test]
 fn raw_spelled_sibling_also_occupies_the_fallback_name() {
-    let mut contract = legacy_contract("inner", true, true);
+    let mut contract = mapped_contract("inner", true, true);
     let mut fallback_collision = contract.stateful_circuits[1].clone();
     fallback_collision.name = "r#__compact_recorded_body_1_x696e6e6572".into();
     contract.stateful_circuits.push(fallback_collision);
     let source = render(&contract).unwrap();
     syn::parse_file(&source).unwrap();
-    assert!(source.contains("fn __compact_recorded_body_1_x696e6e6572_<"));
-    assert!(!source.contains("fn __compact_recorded_body_1_x696e6e6572<"));
+    assert_no_private_helpers(&source);
+    assert!(
+        recorded_functions(&source)
+            .iter()
+            .any(
+                |function| function.sig.ident == "r#__compact_recorded_body_1_x696e6e6572"
+                    && matches!(function.vis, syn::Visibility::Public(_))
+            )
+    );
 }
 
 #[test]
@@ -263,8 +195,8 @@ fn checked_only_call_inlines_without_emitting_an_unused_helper() {
 }
 
 #[test]
-fn mixed_callers_keep_the_used_helper_and_validate_its_transitive_body() {
-    let mut fixture = legacy_contract("inner", true, false);
+fn mapped_and_plain_callers_inline_and_validate_their_transitive_body() {
+    let mut fixture = mapped_contract("inner", true, false);
     let mut leaf = fixture.stateful_circuits[0].clone();
     leaf.name = "leaf".into();
     fixture.stateful_circuits[0].actions = vec![StateAction::CircuitCall {
@@ -278,8 +210,8 @@ fn mixed_callers_keep_the_used_helper_and_validate_its_transitive_body() {
     checked.name = "checked".into();
     checked.result = Type::Unit;
     checked.return_value = StateReturn::Unit;
-    // Keep the second caller genuinely checked; only the first has the legacy
-    // identity-map binding. Preserve its original transitive helper call.
+    // Exercise both mapped and plain callers; both now compose checked effects.
+    // Preserve their original transitive helper call.
     let StateAction::Let { action, .. } = checked.actions.remove(0) else {
         unreachable!()
     };
@@ -297,31 +229,11 @@ fn mixed_callers_keep_the_used_helper_and_validate_its_transitive_body() {
             .all(|c| c.recorded && c.observed_call)
     );
     let functions = recorded_functions(&rendered.source);
-    let inner = functions
-        .iter()
-        .find(|f| f.sig.ident == "__compact_recorded_body_inner")
-        .unwrap();
+    assert_no_private_helpers(&rendered.source);
     let outer = functions.iter().find(|f| f.sig.ident == "outer").unwrap();
     let checked = functions.iter().find(|f| f.sig.ident == "checked").unwrap();
-    assert!(
-        quote::quote!(#outer)
-            .to_string()
-            .contains("__compact_recorded_body_inner")
-    );
-    assert!(
-        !quote::quote!(#checked)
-            .to_string()
-            .contains("__compact_recorded_body_inner")
-    );
-    assert_one_witness_then_write(inner);
+    assert_one_witness_then_write(outer);
     assert_one_witness_then_write(checked);
-    // The retained helper itself inlines its checked child, so only its live
-    // out-of-line definition is necessary. The child is still fully validated.
-    assert!(
-        !functions
-            .iter()
-            .any(|f| f.sig.ident == "__compact_recorded_body_leaf")
-    );
     fixture.stateful_circuits[2].actions = vec![StateAction::CircuitCall {
         name: "inner".into(),
         arguments: vec![Expr::Parameter {
@@ -393,4 +305,15 @@ fn assert_one_witness_then_write(function: &syn::ItemFn) {
         "{} must retain one metered witness callback before one Cell write",
         function.sig.ident
     );
+}
+
+fn assert_no_private_helpers(source: &str) {
+    assert!(recorded_functions(source).iter().all(|function| {
+        !function
+            .sig
+            .ident
+            .to_string()
+            .starts_with("__compact_recorded_body_")
+            || !matches!(function.vis, syn::Visibility::Inherited)
+    }));
 }

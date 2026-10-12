@@ -1,7 +1,7 @@
 // This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
-// The direct VectorMap child is a native-valid recording refusal; fixed Field
+// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field
 // commitments themselves are supported. Do not replace this with malformed types.
 use super::*;
 #[test]
@@ -73,6 +73,7 @@ fn neighboring_interfaces_and_unsupported_compositions_keep_distinct_boundaries(
         crate::render_with_capabilities(&c).unwrap();
     }
     let mut c = fixture();
+    crate::recorded::test_support::register_unsupported_fold(&mut c);
     root(&mut c, "hasName").actions = vec![StateAction::Expression {
         value: Expr::PersistentCommit {
             value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),

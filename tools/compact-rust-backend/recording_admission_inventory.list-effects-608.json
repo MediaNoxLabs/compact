@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "issue": 608,
+  "new_route_ids": [],
+  "baseline_commit": "4e01c5d0f22081455f8ea6e7848e7d8113d7b929",
+  "claim": "Add six typed List effects with immutable slot, element, result and native Maybe authority; preserve canonical/resource/default policies, prior selectors and retirement accounting.",
+  "previous_selector": {
+    "ordered_calls": [],
+    "function_sha256": "3960fe663af28139e7e4f584311cf173335d298575a65948a2d2f7009216e33b"
+  },
+  "current_selector": {
+    "ordered_calls": [],
+    "function_sha256": "3960fe663af28139e7e4f584311cf173335d298575a65948a2d2f7009216e33b"
+  },
+  "owners": {
+    "tools/compact-rust-backend/src/recorded/effect_plan/model.rs": {
+      "previous_sha256": "d3a0d73bc7e18acfece4b99dde430143930052b0eac36f7474fee6b9325f735c",
+      "current_sha256": "6cc474d41b75127bd8ec1621b43d0eb24ddea476d668a3da76926e1fa5a87c20",
+      "predecessor_reconstruction": [
+        {
+          "current": "pub(super) struct CounterSlot {\n    pub declaration: LedgerId,\n    pub index: u8,\n}\n#[derive(Clone, Copy, Debug)]\npub(super) struct ListSlot {\n    pub declaration: LedgerId,\n    pub index: u8,\n}\n/// Ordered List effects share declaration authority and existing runtime codecs.\n#[derive(Clone, Debug)]\npub(super) enum ListOperation {\n    PushFront(Value),\n    PopFront,\n    Reset,\n    Length,\n    IsEmpty,\n    Head,\n}\n/// Tree identity is checked against the immutable declaration registry.\n#[derive(Clone, Copy, Debug)]\n",
+          "previous": "pub(super) struct CounterSlot {\n    pub declaration: LedgerId,\n    pub index: u8,\n}\n/// Tree identity is checked against the immutable declaration registry.\n#[derive(Clone, Copy, Debug)]\n"
+        },
+        {
+          "current": "        slot: MerkleSlot,\n        operation: MerkleOperation,\n    },\n    List {\n        slot: ListSlot,\n        operation: ListOperation,\n    },\n    CellRead(CellSlot),\n    CellWrite {\n        slot: CellSlot,\n",
+          "previous": "        slot: MerkleSlot,\n        operation: MerkleOperation,\n    },\n    CellRead(CellSlot),\n    CellWrite {\n        slot: CellSlot,\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower.rs": {
+      "previous_sha256": "e7c92a1335f332310c15677c05012dd2ae9a02b271d46d53f00f2ed6e2584e02",
+      "current_sha256": "8b8bd74cc402a44d6298ade209d69ce298e6a983702cc66f90ad7b9b71b01aa5",
+      "predecessor_reconstruction": [
+        {
+          "current": "mod expressions;\nmod jubjub;\nmod kernel;\nmod lists;\nmod maps;\nmod merkle;\nmod ordinary;\n",
+          "previous": "mod expressions;\nmod jubjub;\nmod kernel;\nmod maps;\nmod merkle;\nmod ordinary;\n"
+        },
+        {
+          "current": "                }\n                self.returned(body, scope, bindings, &format!(\"{returned_path}.body\"))?\n            }\n            returned => self.ordinary(\n                &circuit.actions,\n                returned,\n                &circuit.result,\n                scope,\n                bindings,\n                base,\n            )?,\n        };\n        self.coerce(value, &circuit.result, bindings, &returned_path)\n    }\n",
+          "previous": "                }\n                self.returned(body, scope, bindings, &format!(\"{returned_path}.body\"))?\n            }\n            returned => self.ordinary(&circuit.actions, returned, scope, bindings, base)?,\n        };\n        self.coerce(value, &circuit.result, bindings, &returned_path)\n    }\n"
+        },
+        {
+          "current": "            | StateAction::CounterReset { .. } => {\n                self.counter_action(action, scope, bindings, path)?;\n            }\n            StateAction::ListPushFront { .. }\n            | StateAction::ListPopFront { .. }\n            | StateAction::ListReset { .. } => self.list_action(action, scope, bindings, path)?,\n            StateAction::MerkleInsert { .. }\n            | StateAction::MerkleInsertIndex { .. }\n            | StateAction::MerkleInsertIndexDefault { .. }\n",
+          "previous": "            | StateAction::CounterReset { .. } => {\n                self.counter_action(action, scope, bindings, path)?;\n            }\n            StateAction::MerkleInsert { .. }\n            | StateAction::MerkleInsertIndex { .. }\n            | StateAction::MerkleInsertIndexDefault { .. }\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/expressions.rs": {
+      "previous_sha256": "7bc5bd1930907c5b485c4e3083e84002ca3ae769450bc5a7425b9469c676a95a",
+      "current_sha256": "ce4d59d522ebaf5312d762e4f18309792e5a9e7052328f8e2c89df57a640c696",
+      "predecessor_reconstruction": [
+        {
+          "current": "                let (slot, _) = self.set(field, *index, path)?;\n                (Operation::SetIsEmpty { slot }, Type::Boolean)\n            }\n            Expr::ListLength { .. } | Expr::ListIsEmpty { .. } | Expr::ListHead { .. } => {\n                self.list_expression(expression, path)?\n            }\n            Expr::CellRead { field, index } => {\n                let (slot, ty) = self.cell(field, *index, path)?;\n                (Operation::CellRead(slot), ty)\n",
+          "previous": "                let (slot, _) = self.set(field, *index, path)?;\n                (Operation::SetIsEmpty { slot }, Type::Boolean)\n            }\n            Expr::CellRead { field, index } => {\n                let (slot, ty) = self.cell(field, *index, path)?;\n                (Operation::CellRead(slot), ty)\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/ordinary.rs": {
+      "previous_sha256": "97a9bac2f54a8d3d808b51fe0a796839b6d4db559af71cce47629d3d8a1fea44",
+      "current_sha256": "88b80b9fefd28bbc08749e7725cf9b8f40d005dfec544f210ae3ec95084dcf4d",
+      "predecessor_reconstruction": [
+        {
+          "current": "        &mut self,\n        actions: &[StateAction],\n        returned: &StateReturn,\n        declared_result: &Type,\n        scope: &Scope,\n        bindings: &mut Vec<Binding>,\n        base: &str,\n",
+          "previous": "        &mut self,\n        actions: &[StateAction],\n        returned: &StateReturn,\n        scope: &Scope,\n        bindings: &mut Vec<Binding>,\n        base: &str,\n"
+        },
+        {
+          "current": "                bindings,\n                &return_path,\n            ),\n            StateReturn::ListLength { field, index }\n            | StateReturn::ListIsEmpty { field, index }\n            | StateReturn::ListHead { field, index } => {\n                self.spend(&return_path)?;\n                let query = match returned {\n                    StateReturn::ListLength { .. } => lists::Query::Length,\n                    StateReturn::ListIsEmpty { .. } => lists::Query::IsEmpty,\n                    _ => lists::Query::Head(declared_result),\n                };\n                let (operation, ty) = self.list_query(field, *index, query, &return_path)?;\n                Ok(self.emit(operation, ty, bindings, &return_path))\n            }\n            StateReturn::MapMember { field, index, key }\n            | StateReturn::MapLookup { field, index, key } => {\n                self.spend(&return_path)?;\n",
+          "previous": "                bindings,\n                &return_path,\n            ),\n            StateReturn::MapMember { field, index, key }\n            | StateReturn::MapLookup { field, index, key } => {\n                self.spend(&return_path)?;\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate.rs": {
+      "previous_sha256": "8dcecda90cca2ff68c642010d3a67b64edec9c9b43def0dee2ecfb4359a76676",
+      "current_sha256": "5ed00de42cfeaae3efdd6cc573f67ec23fabcf8bbf97f3d2c9454c42e2341347",
+      "predecessor_reconstruction": [
+        {
+          "current": "mod fab;\npub(super) use fab::{aligned_fab_type, fixed_aligned_fab_type, keccak_input_type};\nmod domain;\npub(super) mod lists;\npub(super) mod maps;\nmod merkle;\npub(super) use merkle::root_type;\nmod pure;\nmod sets;\nmod storage;\npub(super) use storage::{list_element_type, map_key_type, merkle_leaf_type, set_element_type};\n\nstruct Validation {\n    allocated: HashSet<usize>,\n",
+          "previous": "mod fab;\npub(super) use fab::{aligned_fab_type, fixed_aligned_fab_type, keccak_input_type};\nmod domain;\npub(super) mod maps;\nmod merkle;\npub(super) use merkle::root_type;\nmod pure;\nmod sets;\nmod storage;\npub(super) use storage::{map_key_type, merkle_leaf_type, set_element_type};\n\nstruct Validation {\n    allocated: HashSet<usize>,\n"
+        },
+        {
+          "current": "            Operation::Merkle { slot, operation } => {\n                merkle::validate(*slot, operation, ty, declarations, &scope, path)?\n            }\n            Operation::List { slot, operation } => {\n                lists::validate(*slot, operation, ty, declarations, &scope, path)?\n            }\n            Operation::CellRead(slot) => {\n                cell(declarations, *slot, path)? == ty && *ty != Type::Unit\n            }\n",
+          "previous": "            Operation::Merkle { slot, operation } => {\n                merkle::validate(*slot, operation, ty, declarations, &scope, path)?\n            }\n            Operation::CellRead(slot) => {\n                cell(declarations, *slot, path)? == ty && *ty != Type::Unit\n            }\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/storage.rs": {
+      "previous_sha256": "ccdf77cd9e53b5ad516b6489b0b5ba08719e77ce0033865c7f632cc5b20b3e98",
+      "current_sha256": "7baba1007d829e4f396a1e80fc00f1b1fafdbcaeebc931845d3b0110f992c0f1",
+      "predecessor_reconstruction": [
+        {
+          "current": "}\n\npub(super) fn cell_value_type(ty: &Type) -> bool {\n    stored_value(ty)\n}\npub(in super::super) fn list_element_type(ty: &Type) -> bool {\n    stored_value(ty)\n}\npub(in super::super) fn set_element_type(ty: &Type) -> bool {\n",
+          "previous": "}\n\npub(super) fn cell_value_type(ty: &Type) -> bool {\n    stored_value(ty)\n}\npub(in super::super) fn set_element_type(ty: &Type) -> bool {\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/render.rs": {
+      "previous_sha256": "42341a1efaf92e0c76811d9c99cabd369c96a280e3ce6c715c3ab8d513dc1d50",
+      "current_sha256": "18e6f629025855f74266b6d68a435e5a46596e0b927c5b31a7695c5b41c3d024",
+      "predecessor_reconstruction": [
+        {
+          "current": "use crate::{ident, rust_type};\nuse proc_macro2::Span;\nmod leaf;\nmod lists;\nmod maps;\nmod merkle;\nmod qualified_coins;\n",
+          "previous": "use crate::{ident, rust_type};\nuse proc_macro2::Span;\nmod leaf;\nmod maps;\nmod merkle;\nmod qualified_coins;\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/render/leaf.rs": {
+      "previous_sha256": "d44fd2cc4d31a482434e1b10de9c1cc5bd9e8cc41e12cc58b1f40b7149ba8a65",
+      "current_sha256": "3fe2554680b2483057e8b074887d03c631a61659a85ac1d2c6da68d89a037189",
+      "predecessor_reconstruction": [
+        {
+          "current": "        Operation::Merkle { slot, operation } => {\n            return merkle::render(binding, *slot, operation, declarations, steps);\n        }\n        Operation::List { slot, operation } => {\n            return lists::render(binding, *slot, operation, declarations, steps);\n        }\n        Operation::CellRead(slot) => {\n            let slot = slot_name(declarations, slot.declaration, path)?;\n            steps.push(syn::parse_quote!(let (frame,#output): (_,#ty) = crate::ledger_slots::#slot.record_read(frame)?;));\n",
+          "previous": "        Operation::Merkle { slot, operation } => {\n            return merkle::render(binding, *slot, operation, declarations, steps);\n        }\n        Operation::CellRead(slot) => {\n            let slot = slot_name(declarations, slot.declaration, path)?;\n            steps.push(syn::parse_quote!(let (frame,#output): (_,#ty) = crate::ledger_slots::#slot.record_read(frame)?;));\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/public_effects.rs": {
+      "previous_sha256": "af25cd3bb4c95900cedd6e8aaff94bf092fa4f4fcc061b12e3dd33502380fdb2",
+      "current_sha256": "80e9170e2f1bf0b85c3cdc40ec2c5f170f4946c9b0a8985cacfb238cd7a78d48",
+      "predecessor_reconstruction": [
+        {
+          "current": "                    blocks.push(then);\n                }\n                Operation::KernelSelf | Operation::KernelClaim { .. } | Operation::KernelMintShielded { .. }\n                | Operation::List { .. } | Operation::Merkle { .. } | Operation::CellRead(_) | Operation::CellWrite { .. }\n                | Operation::CellWriteCoin { .. } | Operation::MapMember { .. } | Operation::MapLookup { .. }\n                | Operation::MapInsert { .. } | Operation::MapRemove { .. } | Operation::SetMember { .. }\n                | Operation::SetInsert { .. } | Operation::SetInsertCoin { .. } | Operation::SetRemove { .. }\n",
+          "previous": "                    blocks.push(then);\n                }\n                Operation::KernelSelf | Operation::KernelClaim { .. } | Operation::KernelMintShielded { .. }\n                | Operation::Merkle { .. } | Operation::CellRead(_) | Operation::CellWrite { .. }\n                | Operation::CellWriteCoin { .. } | Operation::MapMember { .. } | Operation::MapLookup { .. }\n                | Operation::MapInsert { .. } | Operation::MapRemove { .. } | Operation::SetMember { .. }\n                | Operation::SetInsert { .. } | Operation::SetInsertCoin { .. } | Operation::SetRemove { .. }\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests.rs": {
+      "previous_sha256": "27c854d94f1b3fa3275c75bba7967e47f28b04d10597d92bde399a9e0120e4df",
+      "current_sha256": "2a99cb2eead823ab90fb2396dc4efdee03a70866938d549805038dc56e271b55",
+      "predecessor_reconstruction": [
+        {
+          "current": "mod jubjub_projections;\n#[path = \"tests/kernel.rs\"]\nmod kernel;\n#[path = \"tests/lists.rs\"]\nmod lists;\n#[path = \"tests/ordinary.rs\"]\nmod ordinary;\n#[path = \"tests/own_public_key.rs\"]\n",
+          "previous": "mod jubjub_projections;\n#[path = \"tests/kernel.rs\"]\nmod kernel;\n#[path = \"tests/ordinary.rs\"]\nmod ordinary;\n#[path = \"tests/own_public_key.rs\"]\n"
+        }
+      ]
+    }
+  },
+  "new_and_shared_sources": {
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/lists.rs": "20fdb887ba36e71fc33edf70f16f4451c9e4c2c6ec01dd043a57858269a72a2a",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/lists.rs": "e1d9252b33be4f79e1b86f6b30bfda76d498fbd3f1743edff3d722835d740ebf",
+    "tools/compact-rust-backend/src/recorded/effect_plan/render/lists.rs": "263706de8c7d1543c2c355b596c522a18fc7a05f28996f46552cd46a2cfe1655",
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/lists.rs": "37a2d3b1f06bbbccbe92b11860250fc55163030e10524847a5c1982a7dd1209b",
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/lists/authority.rs": "6fb4bfef3649d6154598c63252164716471fd339e5e66e90138825d98291bafd",
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/lists/composition.rs": "f0b8b03df00e3d5ca906d37a29e66b6444199e917cee744422af3e789499a21e",
+    "tools/compact-rust-backend/src/lib.rs": "b5e1abc6d5f9d8cff753c302b2650fa7a845e6560015a3a9f97329ee61359493",
+    "tools/compact-rust-backend/src/recorded/effect_plan/type_environment.rs": "46d7015357ea3d57becb9849e77cbb86d8b500a8c8fd2440dcf9497f9d9c9cdd",
+    "runtime-rs/src/slots/list.rs": "dfa393ff49233570fcda0640f9ba5bdc8bf4fc6d06a7af307837c7a0e5061ea0",
+    "runtime-rs/src/context/list.rs": "147b686be1c174d76862a82f99ceafbb88d2d32504583bc9140a98b83ff4c27f",
+    "runtime-rs/src/ledger/collections.rs": "3c3e36056578589d336d9a2dbbd8739c0b1e78c09abf1780cebbb7afaa54081d",
+    "tools/compact-rust-backend/src/recorded/effect_plan.rs": "fcd70eccbf7f9b133a2a6527a20b631303f129378d4869ec77e58a93c1c480e2",
+    "tools/compact-rust-backend/src/recorded/effect_plan/rejection.rs": "3d41cb4ab13956ee0326ca0e1d2337c71feb16ced42576cc79bfe4564cb8767b",
+    "tools/compact-rust-backend/src/recorded/legacy/actions.rs": "39c576e3e93cc9d098808d9e7303f8e8c64df1d98c1834cbb71e5e70baf93f14",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/collections.rs": "502dd04921b10bfa8ef6bba8ce2c6dbfed5fef7ee715b8e1203f672a925c3ab8",
+    "tools/compact-rust-backend/src/recorded/helpers.rs": "39ab813c3e0c88bdc7955cd3d16f07feee8abc65c711173e24a79ceb7d5517a6",
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_domain.rs": "c00c5f9602d0ef1b5ffa1981be2707996e817be43c7896f4361b710cfa61fde5",
+    "tools/compact-rust-backend/src/resource_limits/policy.rs": "8d1e091410d3f802b1f54654314146ba1615f6c45222645b586099528ed5294f",
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/maps.rs": "98c476dbbd666aecd6caf0b681a6dc86518efbd9c5ceab0874cb1defe5159355",
+    "runtime-rs/src/slots/map.rs": "a90f19b5603acaacc13b46b93e4b86ef37a39f1292fd00f7e516f9406d58520b",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/assertions.rs": "2111fd862692b4d57075f2fa24a41b93821cde0b3f1d6123bd8ca0c3a0dff9a9",
+    "tools/compact-rust-backend/tests/welcome-schema20-ir.json": "8963572627b26394b74d550ec94e87b7b4848ba7edf8c3b2ffd509e54129d6ea"
+  },
+  "anchor_adaptations": [],
+  "baseline_retired_routes": 34,
+  "baseline_boundaries": 84
+}

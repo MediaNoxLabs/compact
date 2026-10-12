@@ -3598,6 +3598,7 @@ dependencies = [
 name = "compact-rust-witness-ledger-list-fixture"
 version = "0.1.0"
 dependencies = [
+ "compact-rust-backend",
  "hex",
  "midnight-compact-runtime",
  "midnight-onchain-state",

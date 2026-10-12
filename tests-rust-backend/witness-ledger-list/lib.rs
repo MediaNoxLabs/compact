@@ -154,8 +154,11 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame = crate::ledger_slots::items.record_push_front(frame, __compact_param_0)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: runtime::Field = __compact_param_0;
+            let frame = crate::ledger_slots::items.record_push_front(frame, __compact_effect_0)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn drop_first<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -163,7 +166,9 @@ pub mod ledger_contract {
         {
             let frame = runtime::recording::RecordingFrame::new(context);
             let frame = crate::ledger_slots::items.record_pop_front(frame)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: () = ();
+            let __compact_effect_1: () = ();
+            Ok(frame.finish(__compact_effect_1))
         }
         pub fn private_first_is_42<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,

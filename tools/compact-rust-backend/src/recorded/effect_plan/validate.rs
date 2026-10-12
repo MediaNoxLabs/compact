@@ -11,13 +11,14 @@ mod calls;
 mod fab;
 pub(super) use fab::{aligned_fab_type, fixed_aligned_fab_type, keccak_input_type};
 mod domain;
+pub(super) mod lists;
 pub(super) mod maps;
 mod merkle;
 pub(super) use merkle::root_type;
 mod pure;
 mod sets;
 mod storage;
-pub(super) use storage::{map_key_type, merkle_leaf_type, set_element_type};
+pub(super) use storage::{list_element_type, map_key_type, merkle_leaf_type, set_element_type};
 
 struct Validation {
     allocated: HashSet<usize>,
@@ -434,6 +435,9 @@ fn block(
             }
             Operation::Merkle { slot, operation } => {
                 merkle::validate(*slot, operation, ty, declarations, &scope, path)?
+            }
+            Operation::List { slot, operation } => {
+                lists::validate(*slot, operation, ty, declarations, &scope, path)?
             }
             Operation::CellRead(slot) => {
                 cell(declarations, *slot, path)? == ty && *ty != Type::Unit

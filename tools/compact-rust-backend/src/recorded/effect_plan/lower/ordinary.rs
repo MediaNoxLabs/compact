@@ -10,6 +10,7 @@ impl Lowerer<'_> {
         &mut self,
         actions: &[StateAction],
         returned: &StateReturn,
+        declared_result: &Type,
         scope: &Scope,
         bindings: &mut Vec<Binding>,
         base: &str,
@@ -54,6 +55,18 @@ impl Lowerer<'_> {
                 bindings,
                 &return_path,
             ),
+            StateReturn::ListLength { field, index }
+            | StateReturn::ListIsEmpty { field, index }
+            | StateReturn::ListHead { field, index } => {
+                self.spend(&return_path)?;
+                let query = match returned {
+                    StateReturn::ListLength { .. } => lists::Query::Length,
+                    StateReturn::ListIsEmpty { .. } => lists::Query::IsEmpty,
+                    _ => lists::Query::Head(declared_result),
+                };
+                let (operation, ty) = self.list_query(field, *index, query, &return_path)?;
+                Ok(self.emit(operation, ty, bindings, &return_path))
+            }
             StateReturn::MapMember { field, index, key }
             | StateReturn::MapLookup { field, index, key } => {
                 self.spend(&return_path)?;

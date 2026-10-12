@@ -38,6 +38,21 @@ pub(super) struct CounterSlot {
     pub declaration: LedgerId,
     pub index: u8,
 }
+#[derive(Clone, Copy, Debug)]
+pub(super) struct ListSlot {
+    pub declaration: LedgerId,
+    pub index: u8,
+}
+/// Ordered List effects share declaration authority and existing runtime codecs.
+#[derive(Clone, Debug)]
+pub(super) enum ListOperation {
+    PushFront(Value),
+    PopFront,
+    Reset,
+    Length,
+    IsEmpty,
+    Head,
+}
 /// Tree identity is checked against the immutable declaration registry.
 #[derive(Clone, Copy, Debug)]
 pub(super) struct MerkleSlot {
@@ -189,6 +204,10 @@ pub(super) enum Operation {
     Merkle {
         slot: MerkleSlot,
         operation: MerkleOperation,
+    },
+    List {
+        slot: ListSlot,
+        operation: ListOperation,
     },
     CellRead(CellSlot),
     CellWrite {

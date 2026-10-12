@@ -218,6 +218,9 @@ impl Lowerer<'_> {
                 let (slot, _) = self.set(field, *index, path)?;
                 (Operation::SetIsEmpty { slot }, Type::Boolean)
             }
+            Expr::ListLength { .. } | Expr::ListIsEmpty { .. } | Expr::ListHead { .. } => {
+                self.list_expression(expression, path)?
+            }
             Expr::CellRead { field, index } => {
                 let (slot, ty) = self.cell(field, *index, path)?;
                 (Operation::CellRead(slot), ty)

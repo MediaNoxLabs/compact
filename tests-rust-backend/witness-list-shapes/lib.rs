@@ -497,8 +497,11 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame = crate::ledger_slots::flags.record_push_front(frame, __compact_param_0)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: bool = __compact_param_0;
+            let frame = crate::ledger_slots::flags.record_push_front(frame, __compact_effect_0)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn push_count<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -506,8 +509,11 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame = crate::ledger_slots::counts.record_push_front(frame, __compact_param_0)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: runtime::BoundedUint<65535> = __compact_param_0;
+            let frame = crate::ledger_slots::counts.record_push_front(frame, __compact_effect_0)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn push_tag<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -515,8 +521,11 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame = crate::ledger_slots::tags.record_push_front(frame, __compact_param_0)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: runtime::FixedBytes<3> = __compact_param_0;
+            let frame = crate::ledger_slots::tags.record_push_front(frame, __compact_effect_0)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn push_choice<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -524,8 +533,12 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame = crate::ledger_slots::choices.record_push_front(frame, __compact_param_0)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: crate::types::Choice = __compact_param_0;
+            let frame =
+                crate::ledger_slots::choices.record_push_front(frame, __compact_effect_0)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn push_packet<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -533,9 +546,12 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: crate::types::Packet = __compact_param_0;
             let frame = crate::ledger_slots::packets
-                .record_push_front(frame, (__compact_param_0).clone())?;
-            Ok(frame.finish(()))
+                .record_push_front(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn first_packet<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -544,9 +560,10 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (_, crate::types::MaybeCompact1) = crate::ledger_slots::packets
-                .record_head::<crate::types::MaybeCompact1, _, _>(frame)?;
-            Ok(frame.finish(observed))
+            let (frame, __compact_effect_0): (_, crate::types::MaybeCompact1) =
+                crate::ledger_slots::packets
+                    .record_head::<crate::types::MaybeCompact1, _, _>(frame)?;
+            Ok(frame.finish((__compact_effect_0).clone()))
         }
         pub fn first_choice<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -555,9 +572,9 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (_, crate::types::Maybe) =
+            let (frame, __compact_effect_0): (_, crate::types::Maybe) =
                 crate::ledger_slots::choices.record_head::<crate::types::Maybe, _, _>(frame)?;
-            Ok(frame.finish(observed))
+            Ok(frame.finish((__compact_effect_0).clone()))
         }
         pub fn read_flags<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,

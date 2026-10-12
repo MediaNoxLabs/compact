@@ -20,6 +20,9 @@ fn stored_value(ty: &Type) -> bool {
 pub(super) fn cell_value_type(ty: &Type) -> bool {
     stored_value(ty)
 }
+pub(in super::super) fn list_element_type(ty: &Type) -> bool {
+    stored_value(ty)
+}
 pub(in super::super) fn set_element_type(ty: &Type) -> bool {
     stored_value(ty)
 }

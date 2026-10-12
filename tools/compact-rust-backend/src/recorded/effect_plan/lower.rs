@@ -19,6 +19,7 @@ mod counters;
 mod expressions;
 mod jubjub;
 mod kernel;
+mod lists;
 mod maps;
 mod merkle;
 mod ordinary;
@@ -182,7 +183,14 @@ impl Lowerer<'_> {
                 }
                 self.returned(body, scope, bindings, &format!("{returned_path}.body"))?
             }
-            returned => self.ordinary(&circuit.actions, returned, scope, bindings, base)?,
+            returned => self.ordinary(
+                &circuit.actions,
+                returned,
+                &circuit.result,
+                scope,
+                bindings,
+                base,
+            )?,
         };
         self.coerce(value, &circuit.result, bindings, &returned_path)
     }
@@ -513,6 +521,9 @@ impl Lowerer<'_> {
             | StateAction::CounterReset { .. } => {
                 self.counter_action(action, scope, bindings, path)?;
             }
+            StateAction::ListPushFront { .. }
+            | StateAction::ListPopFront { .. }
+            | StateAction::ListReset { .. } => self.list_action(action, scope, bindings, path)?,
             StateAction::MerkleInsert { .. }
             | StateAction::MerkleInsertIndex { .. }
             | StateAction::MerkleInsertIndexDefault { .. }

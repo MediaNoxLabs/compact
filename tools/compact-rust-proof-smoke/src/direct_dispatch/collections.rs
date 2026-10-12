@@ -178,6 +178,20 @@ pub(super) fn adt_list_field(
     adt_list_field::run(Path::new(&root))
 }
 
+pub(super) fn adt_list_field_strict(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let root = arguments
+        .next()
+        .ok_or("usage: compact-rust-proof-smoke --adt-list-field-strict <proof-output>")?;
+    if arguments.next().is_some() {
+        return Err(
+            "usage: compact-rust-proof-smoke --adt-list-field-strict <proof-output>".into(),
+        );
+    }
+    adt_list_field::run_strict(Path::new(&root))
+}
+
 pub(super) fn vector_map(
     arguments: &mut impl Iterator<Item = OsString>,
 ) -> Result<(), Box<dyn Error>> {

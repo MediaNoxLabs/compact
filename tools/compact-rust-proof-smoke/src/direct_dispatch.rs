@@ -97,6 +97,7 @@ pub(super) fn try_run(
         ("--adt-list-bytes", _) => Some(collections::adt_list_bytes(arguments)),
         ("--adt-list-enum", _) => Some(collections::adt_list_enum(arguments)),
         ("--adt-list-field", _) => Some(collections::adt_list_field(arguments)),
+        ("--adt-list-field-strict", _) => Some(collections::adt_list_field_strict(arguments)),
         ("--closed-pure-field", _) => Some(expressions::closed_pure_field(arguments)),
         ("--struct-constructor-cell", _) => Some(expressions::struct_constructor_cell(arguments)),
         ("--pure-assert-call", _) => Some(expressions::pure_assert_call(arguments)),

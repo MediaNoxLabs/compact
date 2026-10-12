@@ -57,7 +57,9 @@ fn state_hex(state: StateValue<DefaultDB>) -> String {
     hex::encode(bytes)
 }
 
-fn shape(call: &RecordedCircuitResult<(), impl std::fmt::Debug>) -> serde_json::Value {
+fn shape<Private>(
+    call: &RecordedCircuitResult<Private, impl std::fmt::Debug>,
+) -> serde_json::Value {
     let actual = serde_json::to_value(call.public.verify_ops()).unwrap();
     serde_json::Value::Array(actual.as_array().unwrap().iter().map(|operation| {
         if let Some(kind) = operation.as_str() {
@@ -258,3 +260,7 @@ fn chunked_list_calls_match_typescript_and_replay() {
         Some(Field::from(1_u64))
     );
 }
+
+#[cfg(feature = "ledger-transaction")]
+#[path = "observed/preparation.rs"]
+mod preparation;

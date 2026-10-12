@@ -318,6 +318,142 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
+        pub fn combine<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::Field,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, runtime::JubjubPoint>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: runtime::Field = __compact_param_0;
+            let (frame, __compact_effect_1): (_, runtime::JubjubPoint) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.secret_point(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_effect_0,
+                    )
+                })?;
+            let (frame, __compact_effect_2): (_, runtime::JubjubPoint) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.secret_point(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_effect_0,
+                    )
+                })?;
+            let __compact_effect_3: runtime::JubjubPoint =
+                runtime::ec_add(__compact_effect_1, __compact_effect_2);
+            Ok(frame.finish(__compact_effect_3))
+        }
+        pub fn scale<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::Field,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, runtime::JubjubPoint>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: runtime::Field = __compact_param_0;
+            let (frame, __compact_effect_1): (_, runtime::JubjubPoint) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.secret_point(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_effect_0,
+                    )
+                })?;
+            let (frame, __compact_effect_2): (_, runtime::Field) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.secret_scalar(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_effect_0,
+                    )
+                })?;
+            let __compact_effect_3: runtime::JubjubPoint =
+                runtime::ec_mul(__compact_effect_1, __compact_effect_2)?;
+            Ok(frame.finish(__compact_effect_3))
+        }
+        pub fn point_x<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::Field,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: runtime::Field = __compact_param_0;
+            let (frame, __compact_effect_1): (_, runtime::JubjubPoint) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.secret_point(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_effect_0,
+                    )
+                })?;
+            let __compact_effect_2: runtime::Field = runtime::jubjub_point_x(__compact_effect_1);
+            Ok(frame.finish(__compact_effect_2))
+        }
+        pub fn point_y<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::Field,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: runtime::Field = __compact_param_0;
+            let (frame, __compact_effect_1): (_, runtime::JubjubPoint) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.secret_point(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_effect_0,
+                    )
+                })?;
+            let __compact_effect_2: runtime::Field = runtime::jubjub_point_y(__compact_effect_1);
+            Ok(frame.finish(__compact_effect_2))
+        }
+        pub fn reveal<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::Field,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, runtime::JubjubPoint>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: runtime::Field = __compact_param_0;
+            let (frame, __compact_effect_1): (_, runtime::JubjubPoint) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.secret_point(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_effect_0,
+                    )
+                })?;
+            Ok(frame.finish(__compact_effect_1))
+        }
         pub fn generator<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
@@ -352,6 +488,166 @@ pub mod ledger_contract {
             pub(super) witnesses: &'a W,
         }
         impl<W> BorrowedContract<'_, W> {
+            pub fn combine<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                seed: runtime::Field,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::JubjubPoint>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                combine(context, self.witnesses, seed)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn combine_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                seed: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, runtime::JubjubPoint>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(seed);
+                let recorded = self.combine(observed.circuit_context(private_state), seed)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "combine", input,
+                ))
+            }
+            pub fn scale<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                seed: runtime::Field,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::JubjubPoint>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                scale(context, self.witnesses, seed)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn scale_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                seed: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, runtime::JubjubPoint>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(seed);
+                let recorded = self.scale(observed.circuit_context(private_state), seed)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "scale", input,
+                ))
+            }
+            pub fn point_x<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                seed: runtime::Field,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                point_x(context, self.witnesses, seed)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn point_x_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                seed: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, runtime::Field>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(seed);
+                let recorded = self.point_x(observed.circuit_context(private_state), seed)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "point_x", input,
+                ))
+            }
+            pub fn point_y<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                seed: runtime::Field,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                point_y(context, self.witnesses, seed)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn point_y_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                seed: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, runtime::Field>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(seed);
+                let recorded = self.point_y(observed.circuit_context(private_state), seed)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "point_y", input,
+                ))
+            }
+            pub fn reveal<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                seed: runtime::Field,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::JubjubPoint>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                reveal(context, self.witnesses, seed)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn reveal_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                seed: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, runtime::JubjubPoint>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(seed);
+                let recorded = self.reveal(observed.circuit_context(private_state), seed)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "reveal", input,
+                ))
+            }
             pub fn generator<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,

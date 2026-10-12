@@ -20,6 +20,8 @@ mod immediate_send_inclusion;
 mod inequality;
 #[path = "tests/jubjub.rs"]
 mod jubjub;
+#[path = "tests/jubjub_projections.rs"]
+mod jubjub_projections;
 #[path = "tests/kernel.rs"]
 mod kernel;
 #[path = "tests/ordinary.rs"]

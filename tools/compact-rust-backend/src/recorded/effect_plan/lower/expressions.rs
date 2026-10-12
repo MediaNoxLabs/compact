@@ -5,6 +5,15 @@
 //! Value expression lowering, preserving evaluation and source-path order.
 use super::super::validate;
 use super::*;
+
+/// A selected operation lowerer with one shared result slot in recursive dispatch.
+type OperationLowerer<'env> = fn(
+    &mut Lowerer<'env>,
+    &Expr,
+    &Scope,
+    &mut Vec<Binding>,
+    &str,
+) -> Result<(Operation, Type), RecordingGap>;
 impl Lowerer<'_> {
     pub(super) fn expression(
         &mut self,
@@ -221,10 +230,23 @@ impl Lowerer<'_> {
                     uint("18446744073709551615"),
                 )
             }
-            Expr::JubjubScalarFromNative { .. }
+            Expr::JubjubPointX { .. }
+            | Expr::JubjubPointY { .. }
+            | Expr::JubjubScalarFromNative { .. }
             | Expr::EcMulGenerator { .. }
             | Expr::EcMul { .. }
-            | Expr::EcAdd { .. } => self.jubjub(expression, scope, bindings, path)?,
+            | Expr::EcAdd { .. } => {
+                // One result temporary keeps this recursive dispatch frame bounded.
+                let lower: OperationLowerer<'_> = if matches!(
+                    expression,
+                    Expr::JubjubPointX { .. } | Expr::JubjubPointY { .. }
+                ) {
+                    Self::jubjub_coordinate
+                } else {
+                    Self::jubjub
+                };
+                lower(self, expression, scope, bindings, path)?
+            }
             Expr::Add { left, right }
             | Expr::Equal { left, right }
             | Expr::NotEqual { left, right }

@@ -47,3 +47,34 @@ impl Lowerer<'_> {
         })
     }
 }
+
+// Keep coordinate-only temporaries off each recursive arithmetic lowering frame.
+impl Lowerer<'_> {
+    pub(super) fn jubjub_coordinate(
+        &mut self,
+        expression: &Expr,
+        scope: &Scope,
+        bindings: &mut Vec<Binding>,
+        path: &str,
+    ) -> Result<(Operation, Type), RecordingGap> {
+        let (input, x_coordinate) = match expression {
+            Expr::JubjubPointX { value } => (value, true),
+            Expr::JubjubPointY { value } => (value, false),
+            _ => return Err(RecordingGap::expression(expression, path.into())),
+        };
+        let operand_path = format!("{path}.value");
+        let value = self.expression(input, scope, bindings, &operand_path)?;
+        if value.ty != Type::JubjubPoint {
+            return Err(invalid(
+                &operand_path,
+                "expected JubjubPoint Jubjub operand",
+            ));
+        }
+        let operation = if x_coordinate {
+            Operation::JubjubPointX(value)
+        } else {
+            Operation::JubjubPointY(value)
+        };
+        Ok((operation, Type::Field))
+    }
+}

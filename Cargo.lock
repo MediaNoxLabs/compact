@@ -1325,6 +1325,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-effect-plan-jubjub-projections-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-storage",
+ "midnight-transient-crypto",
+ "rand 0.8.6",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-effect-plan-jubjub-source-fixture"
 version = "0.1.0"
 dependencies = [
@@ -3287,7 +3300,9 @@ version = "0.1.0"
 dependencies = [
  "hex",
  "midnight-compact-runtime",
+ "midnight-onchain-state",
  "midnight-serialize",
+ "midnight-transient-crypto",
  "serde_json",
 ]
 

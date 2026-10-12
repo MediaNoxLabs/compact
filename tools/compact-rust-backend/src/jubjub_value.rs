@@ -69,6 +69,24 @@ impl Operation {
     }
 }
 
+/// Coordinate syntax is separate from the arithmetic helper used at each depth
+/// of native expression lowering. Keep its quote temporaries off that path.
+pub(crate) enum Coordinate {
+    X,
+    Y,
+}
+
+impl Coordinate {
+    pub(crate) fn lower(self, point: Operand) -> Result<Operand, RenderError> {
+        let point = expect(point, Type::JubjubPoint)?;
+        let syntax = match self {
+            Self::X => syn::parse_quote!(runtime::jubjub_point_x(#point)),
+            Self::Y => syn::parse_quote!(runtime::jubjub_point_y(#point)),
+        };
+        Ok((syntax, Type::Field))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -111,6 +129,23 @@ mod tests {
             Operation::Add(operand(Type::JubjubPoint), operand(Type::Field)),
         ] {
             assert!(matches!(op.lower(), Err(RenderError::TypeMismatch { .. })));
+        }
+    }
+    #[test]
+    fn coordinates_require_points_and_produce_infallible_fields() {
+        for coordinate in [Coordinate::X, Coordinate::Y] {
+            let (expression, actual) = coordinate.lower(operand(Type::JubjubPoint)).unwrap();
+            assert_eq!(actual, Type::Field);
+            assert!(!matches!(expression, syn::Expr::Try(_)));
+        }
+        for coordinate in [Coordinate::X, Coordinate::Y] {
+            assert!(matches!(
+                coordinate.lower(operand(Type::Field)),
+                Err(RenderError::TypeMismatch {
+                    expected: Type::JubjubPoint,
+                    actual: Type::Field,
+                })
+            ));
         }
     }
 }

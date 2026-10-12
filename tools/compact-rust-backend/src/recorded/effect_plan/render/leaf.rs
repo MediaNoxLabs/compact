@@ -149,6 +149,17 @@ pub(super) fn render(
             let (a, b) = (value(a), value(b));
             syn::parse_quote!(#a + #b)
         }
+        Operation::JubjubPointX(input) | Operation::JubjubPointY(input) => {
+            let coordinate = if matches!(binding.operation, Operation::JubjubPointX(_)) {
+                crate::jubjub_value::Coordinate::X
+            } else {
+                crate::jubjub_value::Coordinate::Y
+            };
+            coordinate
+                .lower(operand(input))
+                .map(|(syntax, _)| syntax)
+                .map_err(|e| invalid(path, e.to_string()))?
+        }
         Operation::JubjubScalarFromNative(input) => {
             jubjub(crate::jubjub_value::Operation::Reduce(operand(input)), path)?
         }

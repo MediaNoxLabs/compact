@@ -370,6 +370,10 @@ fn block(
                 use_value(b)?;
                 equality_type(&a.ty) && a.ty == b.ty && *ty == Type::Boolean
             }
+            Operation::JubjubPointX(value) | Operation::JubjubPointY(value) => {
+                use_value(value)?;
+                value.ty == Type::JubjubPoint && *ty == Type::Field
+            }
             Operation::JubjubScalarFromNative(value) => {
                 use_value(value)?;
                 value.ty == Type::Field && *ty == Type::Field

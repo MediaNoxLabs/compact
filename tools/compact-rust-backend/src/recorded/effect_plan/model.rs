@@ -146,6 +146,9 @@ pub(super) enum Operation {
     UnsignedMultiply(Value, Value),
     Equal(Value, Value),
     NotEqual(Value, Value),
+    /// Coordinates of an already validated official embedded-curve point.
+    JubjubPointX(Value),
+    JubjubPointY(Value),
     JubjubScalarFromNative(Value),
     EcMulGenerator(Value),
     EcMul {

@@ -1,0 +1,166 @@
+{
+  "schema_version": 1,
+  "issue": 617,
+  "retired_route_ids": [
+    "effectful.start-funding"
+  ],
+  "baseline_commit": "014b06b483e4cb53f03304e6bad6c30edb6593f4",
+  "claim": "Retire the exclusive StartFunding fallback after checked inclusion qualification. Preserve checked Unsupported and fatal Invalid, original test oracle bodies and existing resource limits. Shared carrier extraction has zero additional retirement count.",
+  "qualification_limits": [
+    "Finite complete-old/native/current laws and retained genuine source; not universal language coverage.",
+    "Oversized fixed layouts remain bounded checked refusals despite historical unbounded old-plan admission.",
+    "Native-rendered named tuple9 is not a Rust-compilable trait-domain claim.",
+    "Opaque persistent hash inside a pure helper is an explicitly source-excluded synthetic control."
+  ],
+  "previous_selector": {
+    "ordered_calls": [],
+    "function_sha256": "4366b00d6d11571bbab2ef9cf8dbbd14efd95f1a1af027ddc6d466558fa93ab7"
+  },
+  "current_selector": {
+    "ordered_calls": [],
+    "function_sha256": "8c56b5686b5000bfaaffe1bc1d94ad772c374cc88e9bd175ebf11356d6bcc245"
+  },
+  "owners": {
+    "tools/compact-rust-backend/src/recorded.rs": {
+      "previous_sha256": "3677ff81e93a26343aae39baa5fb187d8b5b444ad8a65dc044c3382e69e09ebb",
+      "current_sha256": "a107949f71109ffe4b16ee406c8ea3385e7fdf7ccec825ef7f1592f4d1b8d491",
+      "predecessor_reconstruction": [
+        {
+          "current": "mod effect_plan;\n#[cfg(test)]\nmod effectful_migration_tests;\n#[cfg(test)]\nmod intent_effect;\n#[cfg(test)]\nmod kernel_plan;\nmod recording_plan;\n#[cfg(test)]\nmod start_funding_migration_tests;\n#[cfg(test)]\nmod typed_plan;\n#[cfg(test)]\nmod zswap_plan;\n",
+          "previous": "mod effect_plan;\n#[cfg(test)]\nmod effectful_migration_tests;\nmod intent_effect;\n#[cfg(test)]\nmod kernel_plan;\nmod typed_plan;\n#[cfg(test)]\nmod zswap_plan;\n"
+        },
+        {
+          "current": "use proc_macro2::Span;\nuse std::collections::{HashMap, HashSet};\n\n#[cfg(test)]\nuse crate::expression_with_calls;\n#[cfg(test)]\nuse crate::ir::{CounterAmount, LocalBinding};\nuse crate::ir::{\n    Expr, LedgerField, LedgerFieldKind, PureCircuit, StateAction, StateReturn, StatefulCircuit,\n    Type, WitnessDeclaration,\n};\n#[cfg(test)]\nuse crate::retained_value;\nuse crate::stateful::circuit_uses_witness;\nuse crate::{RenderError, ident, rust_type};\n\n#[cfg(test)]\nmod audited_local;\n",
+          "previous": "use proc_macro2::Span;\nuse std::collections::{HashMap, HashSet};\n\nuse crate::ir::{\n    CounterAmount, Expr, LedgerField, LedgerFieldKind, LocalBinding, PureCircuit, StateAction,\n    StateReturn, StatefulCircuit, Type, WitnessDeclaration,\n};\n#[cfg(test)]\nuse crate::retained_value;\nuse crate::stateful::circuit_uses_witness;\nuse crate::{RenderError, expression_with_calls, ident, rust_type};\n\n#[cfg(test)]\nmod audited_local;\n"
+        },
+        {
+          "current": "    witnesses: &HashMap<&str, &WitnessDeclaration>,\n    pure_circuits: &HashMap<&str, &PureCircuit>,\n    circuits: &HashMap<&str, &StatefulCircuit>,\n) -> Result<RecordingOutcome<recording_plan::TypedPlan>, RenderError> {\n    let algebra_gap =\n        match checked_effectful_return(circuit, ledger_fields, witnesses, pure_circuits, circuits)?\n        {\n",
+          "previous": "    witnesses: &HashMap<&str, &WitnessDeclaration>,\n    pure_circuits: &HashMap<&str, &PureCircuit>,\n    circuits: &HashMap<&str, &StatefulCircuit>,\n) -> Result<RecordingOutcome<typed_plan::TypedPlan>, RenderError> {\n    let algebra_gap =\n        match checked_effectful_return(circuit, ledger_fields, witnesses, pure_circuits, circuits)?\n        {\n"
+        },
+        {
+          "current": "            RecordingOutcome::Unsupported(gap) => gap,\n        };\n\n    #[cfg(test)]\n    admission_probe::observe(admission_probe::Route::Unsupported);\n    Ok(RecordingOutcome::Unsupported(algebra_gap))\n",
+          "previous": "            RecordingOutcome::Unsupported(gap) => gap,\n        };\n\n    // Independent family, retained until its operations have checked lowering.\n    // Only Unsupported reaches this attempt; invariant failures propagate above.\n    if let Some(plan) =\n        typed_plan::lower_start_funding(circuit, ledger_fields, witnesses, pure_circuits, circuits)\n    {\n        #[cfg(test)]\n        {\n            admission_probe::observe(admission_probe::Route::LegacyStartFunding);\n            admission_probe::trace::handled(\"effectful.start-funding\");\n        }\n        return Ok(RecordingOutcome::Supported(plan));\n    }\n    #[cfg(test)]\n    admission_probe::observe(admission_probe::Route::Unsupported);\n    Ok(RecordingOutcome::Unsupported(algebra_gap))\n"
+        },
+        {
+          "current": "    witnesses: &HashMap<&str, &WitnessDeclaration>,\n    pure_circuits: &HashMap<&str, &PureCircuit>,\n    circuits: &HashMap<&str, &StatefulCircuit>,\n) -> Result<RecordingOutcome<recording_plan::TypedPlan>, RenderError> {\n    match effect_plan::lower_with_calls(circuit, ledger_fields, witnesses, pure_circuits, circuits)\n    {\n        Ok(plan) => Ok(RecordingOutcome::Supported(plan)),\n",
+          "previous": "    witnesses: &HashMap<&str, &WitnessDeclaration>,\n    pure_circuits: &HashMap<&str, &PureCircuit>,\n    circuits: &HashMap<&str, &StatefulCircuit>,\n) -> Result<RecordingOutcome<typed_plan::TypedPlan>, RenderError> {\n    match effect_plan::lower_with_calls(circuit, ledger_fields, witnesses, pure_circuits, circuits)\n    {\n        Ok(plan) => Ok(RecordingOutcome::Supported(plan)),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/admission_probe.rs": {
+      "previous_sha256": "be56f6b9c8a718224d8ba6e4251088d33f0341cc30e3e73b1a55f7be0acd69ce",
+      "current_sha256": "9928f7354a3789057b7449856c2a85846b8c11b248f4fe92ae9bdc3bf0cf4559",
+      "predecessor_reconstruction": [
+        {
+          "current": "#[serde(rename_all = \"snake_case\")]\npub(super) enum Route {\n    Algebra,\n    Unsupported,\n}\n\n",
+          "previous": "#[serde(rename_all = \"snake_case\")]\npub(super) enum Route {\n    Algebra,\n    LegacyStartFunding,\n    Unsupported,\n}\n\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan.rs": {
+      "previous_sha256": "debbd3b153173b4c7f0ac94bb9f1c5fe7a4f5ba08e5f425df56ef966aa17f69c",
+      "current_sha256": "6468e42a8ad002c1bf22ab92ba94e472cd051b4abb96fdc2cec96cf5031f5431",
+      "predecessor_reconstruction": [
+        {
+          "current": "mod type_environment;\nmod validate;\n\nuse super::{RecordingGap, RecordingGapCode, recording_plan::TypedPlan};\nuse crate::ir::{LedgerField, PureCircuit, StatefulCircuit, WitnessDeclaration};\npub(super) use model::CheckedPlan;\n#[cfg(test)]\n",
+          "previous": "mod type_environment;\nmod validate;\n\nuse super::{RecordingGap, RecordingGapCode, typed_plan::TypedPlan};\nuse crate::ir::{LedgerField, PureCircuit, StatefulCircuit, WitnessDeclaration};\npub(super) use model::CheckedPlan;\n#[cfg(test)]\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/render.rs": {
+      "previous_sha256": "defe38e67016dfc9145d943db189157d3974da74a4bbd94596706c53610f6624",
+      "current_sha256": "acd709c9264afb7d06559f19010812ec9b86172fc282451bd85e0c23503f3720",
+      "predecessor_reconstruction": [
+        {
+          "current": "// SPDX-License-Identifier: Apache-2.0\n\n//! Rust syntax is created only after semantic plan validation.\nuse super::super::recording_plan::TypedPlan;\nuse super::{RecordingGap, declarations::Declarations, invalid, model::*};\nuse crate::{ident, rust_type};\nuse proc_macro2::Span;\n",
+          "previous": "// SPDX-License-Identifier: Apache-2.0\n\n//! Rust syntax is created only after semantic plan validation.\nuse super::super::typed_plan::TypedPlan;\nuse super::{RecordingGap, declarations::Declarations, invalid, model::*};\nuse crate::{ident, rust_type};\nuse proc_macro2::Span;\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": {
+      "previous_sha256": "5e4b072379aabb6ed1360b2aabec08e102f652af57650cf696f2ca2ae03aa09b",
+      "current_sha256": "c74fe184e8832817ad035fe584c82ae0390e04cd19e6bfa55c7267478e373873",
+      "predecessor_reconstruction": [
+        {
+          "current": "use super::effect_plan;\n#[cfg(test)]\nuse super::profile_attempt::ProfileAttempt;\nuse super::recording_plan::{self, TypedPlan};\n#[cfg(test)]\nuse super::typed_plan;\n\n#[cfg(test)]\n#[path = \"profile_selection/ordinary_domain.rs\"]\n",
+          "previous": "use super::effect_plan;\n#[cfg(test)]\nuse super::profile_attempt::ProfileAttempt;\nuse super::typed_plan;\nuse super::typed_plan::TypedPlan;\n\n#[cfg(test)]\n#[path = \"profile_selection/ordinary_domain.rs\"]\n"
+        },
+        {
+          "current": "                        // The old send domain is a subset of this Struct/Expression\n                        // interface. Preserve its useful failure through later\n                        // alternatives without rerunning any legacy body recognizer.\n                        if recording_plan::shielded_send_result(&circuit.result) {\n                            shielded_send_rejection = Some(gap);\n                        }\n                        None\n",
+          "previous": "                        // The old send domain is a subset of this Struct/Expression\n                        // interface. Preserve its useful failure through later\n                        // alternatives without rerunning any legacy body recognizer.\n                        if typed_plan::shielded_send_result(&circuit.result) {\n                            shielded_send_rejection = Some(gap);\n                        }\n                        None\n"
+        },
+        {
+          "current": "}\n\n/// Ordinary support has one authority. Effectful plans were already checked by\n/// the caller; every Effectful root now uses checked composition.\npub(super) fn select(\n    circuit: &StatefulCircuit,\n    ledger_fields: &HashMap<&str, &LedgerField>,\n",
+          "previous": "}\n\n/// Ordinary support has one authority. Effectful plans were already checked by\n/// the caller; its independent StartFunding compatibility path is unchanged.\npub(super) fn select(\n    circuit: &StatefulCircuit,\n    ledger_fields: &HashMap<&str, &LedgerField>,\n"
+        },
+        {
+          "current": "        selection.unit_composition_rejection = Some(rejection);\n    } else if matches!(circuit.result, Type::Struct { .. })\n        && matches!(circuit.return_value, StateReturn::Expression { .. })\n        && recording_plan::shielded_send_result(&circuit.result)\n    {\n        // Exactly the former composite-interface diagnostic projection. This\n        // consumes only the public gap; its later use is still refusal-only.\n",
+          "previous": "        selection.unit_composition_rejection = Some(rejection);\n    } else if matches!(circuit.result, Type::Struct { .. })\n        && matches!(circuit.return_value, StateReturn::Expression { .. })\n        && typed_plan::shielded_send_result(&circuit.result)\n    {\n        // Exactly the former composite-interface diagnostic projection. This\n        // consumes only the public gap; its later use is still refusal-only.\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/inputs.rs": {
+      "previous_sha256": "ea9c198df183e37bd1073a45426662925a7d8a4947fe08ce9c0363c7ac5a3cc2",
+      "current_sha256": "13bf170e58d8d237900752d1b1d8ee0a1f0c86d74810c9cbfd83b6ae47aef78f",
+      "predecessor_reconstruction": [
+        {
+          "current": "    serde_json::from_slice(bytes).map_err(|error| error.to_string())\n}\n\n// #617 extracts the two live shared definitions from the frozen Plan oracle.\n// Authenticate their new owner and restore the exact signed predecessor first.\nconst START_FUNDING_SHA256: &str =\n    \"adfbe698a69f9a31e0bc36bdfc0260099cdfd6daf43d222d97a49811042ebfed\";\nconst START_FUNDING: &[u8] = include_bytes!(\"legacy-start-funding-617.json\");\n\nfn start_funding_manifest(bytes: &[u8]) -> Result<Value, String> {\n    if digest(bytes) != START_FUNDING_SHA256 {\n        return Err(\"unreviewed StartFunding extraction checkpoint\".into());\n    }\n    serde_json::from_slice(bytes).map_err(|error| error.to_string())\n}\n\nfn shared_source(manifest: &Value, path: &str, bytes: &[u8]) -> Result<(), String> {\n    let expected = manifest[\"shared_sources\"]\n        .get(path)\n        .and_then(Value::as_str)\n        .ok_or(\"unreviewed shared oracle source\")?;\n    if digest(bytes) != expected {\n        return Err(format!(\"shared oracle source drift: {path}\"));\n    }\n    Ok(())\n}\n\nfn projected_legacy_source(\n    path: &str,\n    current: &str,\n",
+          "previous": "    serde_json::from_slice(bytes).map_err(|error| error.to_string())\n}\n\nfn projected_legacy_source(\n    path: &str,\n    current: &str,\n"
+        },
+        {
+          "current": ") -> Result<String, String> {\n    let commit_inputs = commit_inputs_manifest(COMMIT_INPUTS)?;\n    let audited_local = audited_local_manifest(AUDITED_LOCAL)?;\n    let start_funding = start_funding_manifest(START_FUNDING)?;\n    let before_start_funding = legacy_source(path, current, &start_funding)?;\n    let before_audited_local = legacy_source(path, &before_start_funding, &audited_local)?;\n    let before_commit = legacy_source(path, &before_audited_local, &commit_inputs)?;\n    let before_metadata = legacy_source(path, &before_commit, resource_metadata)?;\n    legacy_source(path, &before_metadata, retirement)\n",
+          "previous": ") -> Result<String, String> {\n    let commit_inputs = commit_inputs_manifest(COMMIT_INPUTS)?;\n    let audited_local = audited_local_manifest(AUDITED_LOCAL)?;\n    let before_audited_local = legacy_source(path, current, &audited_local)?;\n    let before_commit = legacy_source(path, &before_audited_local, &commit_inputs)?;\n    let before_metadata = legacy_source(path, &before_commit, resource_metadata)?;\n    legacy_source(path, &before_metadata, retirement)\n"
+        },
+        {
+          "current": "    let retirement = retirement_manifest(include_bytes!(\"legacy-retirement.json\")).unwrap();\n    let resource_metadata = resource_metadata_manifest(RESOURCE_METADATA).unwrap();\n    let repository = Path::new(env!(\"CARGO_MANIFEST_DIR\")).join(\"../..\");\n    let start_funding = start_funding_manifest(START_FUNDING).unwrap();\n    for path in start_funding[\"shared_sources\"].as_object().unwrap().keys() {\n        assert!(relative_path(path));\n        shared_source(\n            &start_funding,\n            path,\n            &std::fs::read(repository.join(path)).unwrap(),\n        )\n        .unwrap();\n    }\n    for row in authority[\"files\"].as_array().unwrap() {\n        let path = row[\"path\"].as_str().unwrap();\n        assert!(relative_path(path));\n",
+          "previous": "    let retirement = retirement_manifest(include_bytes!(\"legacy-retirement.json\")).unwrap();\n    let resource_metadata = resource_metadata_manifest(RESOURCE_METADATA).unwrap();\n    let repository = Path::new(env!(\"CARGO_MANIFEST_DIR\")).join(\"../..\");\n    for row in authority[\"files\"].as_array().unwrap() {\n        let path = row[\"path\"].as_str().unwrap();\n        assert!(relative_path(path));\n"
+        },
+        {
+          "current": "    authority[\"resource_metadata_projection\"] = resource_metadata;\n    authority[\"commit_input_test_projection\"] = commit_inputs_manifest(COMMIT_INPUTS).unwrap();\n    authority[\"audited_local_projection\"] = audited_local_manifest(AUDITED_LOCAL).unwrap();\n    authority[\"start_funding_projection\"] = start_funding_manifest(START_FUNDING).unwrap();\n    authority\n}\n\n",
+          "previous": "    authority[\"resource_metadata_projection\"] = resource_metadata;\n    authority[\"commit_input_test_projection\"] = commit_inputs_manifest(COMMIT_INPUTS).unwrap();\n    authority[\"audited_local_projection\"] = audited_local_manifest(AUDITED_LOCAL).unwrap();\n    authority\n}\n\n"
+        },
+        {
+          "current": "    let commit_inputs = commit_inputs_manifest(COMMIT_INPUTS).unwrap();\n    assert!(commit_inputs_manifest(br#\"{\"owners\":{}}\"#).is_err());\n    let root = Path::new(env!(\"CARGO_MANIFEST_DIR\")).join(\"../..\");\n    let start_funding = start_funding_manifest(START_FUNDING).unwrap();\n    assert!(start_funding_manifest(br#\"{\"owners\":{}}\"#).is_err());\n    let mut forged = start_funding.clone();\n    forged[\"scope\"] = Value::String(\"unreviewed\".into());\n    assert!(start_funding_manifest(&serde_json::to_vec(&forged).unwrap()).is_err());\n    assert_eq!(start_funding[\"owners\"].as_object().unwrap().len(), 1);\n    assert_eq!(\n        start_funding[\"shared_sources\"].as_object().unwrap().len(),\n        1\n    );\n    for path in start_funding[\"shared_sources\"].as_object().unwrap().keys() {\n        let bytes = std::fs::read(root.join(path)).unwrap();\n        shared_source(&start_funding, path, &bytes).unwrap();\n        let mut changed = bytes.clone();\n        changed.extend_from_slice(b\"\\n// drift\\n\");\n        assert!(shared_source(&start_funding, path, &changed).is_err());\n        assert!(shared_source(&start_funding, \"unreviewed.rs\", &bytes).is_err());\n    }\n\n    for (path, row) in start_funding[\"owners\"].as_object().unwrap() {\n        let current = std::fs::read_to_string(root.join(path)).unwrap();\n        let previous = legacy_source(path, &current, &start_funding).unwrap();\n        assert_eq!(digest(previous.as_bytes()), row[\"previous_sha256\"]);\n        assert!(legacy_source(path, &(current.clone() + \"\\n// drift\\n\"), &start_funding).is_err());\n        for edit in row[\"predecessor_reconstruction\"].as_array().unwrap() {\n            let partial = current.replacen(\n                edit[\"current\"].as_str().unwrap(),\n                edit[\"previous\"].as_str().unwrap(),\n                1,\n            );\n            assert_ne!(partial, current);\n            assert!(\n                projected_legacy_source(path, &partial, &retirement, &resource_metadata).is_err()\n            );\n        }\n    }\n    let audited_local = audited_local_manifest(AUDITED_LOCAL).unwrap();\n    assert!(audited_local_manifest(br#\"{\"owners\":{}}\"#).is_err());\n    for (path, row) in audited_local[\"owners\"].as_object().unwrap() {\n",
+          "previous": "    let commit_inputs = commit_inputs_manifest(COMMIT_INPUTS).unwrap();\n    assert!(commit_inputs_manifest(br#\"{\"owners\":{}}\"#).is_err());\n    let root = Path::new(env!(\"CARGO_MANIFEST_DIR\")).join(\"../..\");\n    let audited_local = audited_local_manifest(AUDITED_LOCAL).unwrap();\n    assert!(audited_local_manifest(br#\"{\"owners\":{}}\"#).is_err());\n    for (path, row) in audited_local[\"owners\"].as_object().unwrap() {\n"
+        },
+        {
+          "current": "            .is_err()\n        );\n        let edit = &row[\"predecessor_reconstruction\"][0];\n        let before_start = legacy_source(path, &current, &start_funding).unwrap();\n        let before_audited = legacy_source(path, &before_start, &audited_local).unwrap();\n        let before_commit = legacy_source(path, &before_audited, &commit_inputs).unwrap();\n        let before_metadata = legacy_source(path, &before_commit, &resource_metadata).unwrap();\n        let partial = before_metadata.replacen(\n            edit[\"current\"].as_str().unwrap(),\n",
+          "previous": "            .is_err()\n        );\n        let edit = &row[\"predecessor_reconstruction\"][0];\n        let before_commit = legacy_source(path, &current, &commit_inputs).unwrap();\n        let before_metadata = legacy_source(path, &before_commit, &resource_metadata).unwrap();\n        let partial = before_metadata.replacen(\n            edit[\"current\"].as_str().unwrap(),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/typed_plan.rs": {
+      "previous_sha256": "c78a853183deb5c6292d8067e35e630abcf8688a36809bd8f1cf2b73e4771144",
+      "current_sha256": "fe7584e81ba9c616c04e3c5fb248596bfb3ff14ac37c6b414bdb68df9ecf6966",
+      "predecessor_reconstruction": [
+        {
+          "current": "    ) || optional_string(ty)\n}\n\npub(super) use super::recording_plan::{TypedPlan, shielded_send_result};\n\n// Read-only assertion bodies have their own admission boundary. General calls,\n// writes, cryptographic effects and non-Boolean witness results remain outside it.\n",
+          "previous": "    ) || optional_string(ty)\n}\n\npub(super) struct TypedPlan {\n    pub steps: Vec<syn::Stmt>,\n    pub result: syn::Expr,\n}\n\n// Read-only assertion bodies have their own admission boundary. General calls,\n// writes, cryptographic effects and non-Boolean witness results remain outside it.\n"
+        },
+        {
+          "current": "\n// A send result is a typed pair of the sent coin and optional change. The\n// admission predicate describes the public type, not a helper/source name.\n\n// Inspect every expression, including unused locals, arguments and unselected\n// branches. The Plan verifies the exact types and evaluates the ordered body;\n",
+          "previous": "\n// A send result is a typed pair of the sent coin and optional change. The\n// admission predicate describes the public type, not a helper/source name.\npub(super) fn shielded_send_result(ty: &Type) -> bool {\n    let Type::Struct { fields, .. } = ty else {\n        return false;\n    };\n    let [change, sent] = fields.as_slice() else {\n        return false;\n    };\n    if change.name != \"change\" || sent.name != \"sent\" || sent.ty != shielded_coin_type() {\n        return false;\n    }\n    matches!(&change.ty, Type::Struct { fields, .. }\n        if matches!(fields.as_slice(), [present, value]\n            if present.name == \"is_some\" && present.ty == Type::Boolean\n                && value.name == \"value\" && value.ty == sent.ty))\n}\n\n// Inspect every expression, including unused locals, arguments and unselected\n// branches. The Plan verifies the exact types and evaluates the ordered body;\n"
+        }
+      ]
+    }
+  },
+  "new_and_shared_sources": {
+    "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-start-funding-617.json": "adfbe698a69f9a31e0bc36bdfc0260099cdfd6daf43d222d97a49811042ebfed",
+    "tools/compact-rust-backend/src/recorded/recording_plan.rs": "95e5be74fbf697cd2d0e735f21d9744eba93152ee65e1f5e6e2b770719d1b8ed",
+    "tools/compact-rust-backend/src/recorded/start_funding_migration_tests.rs": "b9b2d78303b5fed8936116244bf3db799c295937e5c657ebd110532047366209",
+    "tools/compact-rust-backend/src/recorded/start_funding_migration_tests/boundaries.rs": "052f122e50ce50bb83355977faf7e54a1249a94612be26bbaaad5fed2e389860",
+    "tools/compact-rust-backend/src/recorded/start_funding_migration_tests/inclusion.rs": "375dbf0b312f92045c583d3db4d911f0470d3929e2d47fc57ad0c3246b033943",
+    "tools/compact-rust-backend/src/recorded/typed_plan/start_funding.rs": "48bae139027a353b2ae462554b7735b839a9a85ba6ce4e4ad376483ceac950b5",
+    "tools/compact-rust-backend/src/recorded/typed_plan/effects.rs": "9ffb60cb4d315c3d4408642eb978b88ad0c5bb1dded6776fd26a0ff78a73dd02",
+    "tools/compact-rust-backend/src/recorded/typed_plan/observations.rs": "7f77c8e3e0b0babd846e339cac7067150ca4ac920ea6fc1dbb50d187a4285243",
+    "tools/compact-rust-backend/src/recorded/typed_plan/actions/cells.rs": "2973b528939db63de51529a2c40af89ce1e7013f87afc3a22042316f8b203d66",
+    "tools/compact-rust-backend/src/recorded/intent_effect.rs": "f42d8ca4de9362eddb5e9315b92acad092c2be1d8370b9546cb7847af7441adc",
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower.rs": "15e39beaa5504e59deb329bdc05f90a93cfb1a6fa88990b18202a9337f5068df",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate.rs": "62afdcc3aba0083a79072878e0e7a835743b0ce741304f6fe860e6526264eff8",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/storage.rs": "7baba1007d829e4f396a1e80fc00f1b1fafdbcaeebc931845d3b0110f992c0f1",
+    "tools/compact-rust-backend/src/recorded/effect_plan/rejection.rs": "25afc644216887ad5900cb8d49143e12cad30a93fe87e85877337d059a558d5b",
+    "tools/compact-rust-backend/src/recorded/admission_probe/trace.rs": "bb667c50715acfae371d050de7ad833de3e8dbd34ee1de0ad1be496b3cf8041b"
+  },
+  "baseline_boundaries": 84,
+  "baseline_retired_routes": 36
+}

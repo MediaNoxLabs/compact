@@ -20,7 +20,6 @@ use std::{cell::Cell, path::Path};
 #[serde(rename_all = "snake_case")]
 pub(super) enum Route {
     Algebra,
-    LegacyStartFunding,
     Unsupported,
 }
 

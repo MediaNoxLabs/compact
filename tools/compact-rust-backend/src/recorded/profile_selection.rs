@@ -31,8 +31,9 @@ use super::RecordingGap;
 use super::effect_plan;
 #[cfg(test)]
 use super::profile_attempt::ProfileAttempt;
+use super::recording_plan::{self, TypedPlan};
+#[cfg(test)]
 use super::typed_plan;
-use super::typed_plan::TypedPlan;
 
 #[cfg(test)]
 #[path = "profile_selection/ordinary_domain.rs"]
@@ -561,7 +562,7 @@ pub(super) fn legacy_select(
                         // The old send domain is a subset of this Struct/Expression
                         // interface. Preserve its useful failure through later
                         // alternatives without rerunning any legacy body recognizer.
-                        if typed_plan::shielded_send_result(&circuit.result) {
+                        if recording_plan::shielded_send_result(&circuit.result) {
                             shielded_send_rejection = Some(gap);
                         }
                         None
@@ -679,7 +680,7 @@ pub(super) fn legacy_select(
 }
 
 /// Ordinary support has one authority. Effectful plans were already checked by
-/// the caller; its independent StartFunding compatibility path is unchanged.
+/// the caller; every Effectful root now uses checked composition.
 pub(super) fn select(
     circuit: &StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,
@@ -745,7 +746,7 @@ fn compatibility_rejection(
         selection.unit_composition_rejection = Some(rejection);
     } else if matches!(circuit.result, Type::Struct { .. })
         && matches!(circuit.return_value, StateReturn::Expression { .. })
-        && typed_plan::shielded_send_result(&circuit.result)
+        && recording_plan::shielded_send_result(&circuit.result)
     {
         // Exactly the former composite-interface diagnostic projection. This
         // consumes only the public gap; its later use is still refusal-only.

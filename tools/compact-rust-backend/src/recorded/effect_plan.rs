@@ -24,7 +24,7 @@ mod tests;
 mod type_environment;
 mod validate;
 
-use super::{RecordingGap, RecordingGapCode, typed_plan::TypedPlan};
+use super::{RecordingGap, RecordingGapCode, recording_plan::TypedPlan};
 use crate::ir::{LedgerField, PureCircuit, StatefulCircuit, WitnessDeclaration};
 pub(super) use model::CheckedPlan;
 #[cfg(test)]

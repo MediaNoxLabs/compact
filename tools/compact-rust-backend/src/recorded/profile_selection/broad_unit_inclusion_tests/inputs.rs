@@ -164,6 +164,30 @@ fn audited_local_manifest(bytes: &[u8]) -> Result<Value, String> {
     serde_json::from_slice(bytes).map_err(|error| error.to_string())
 }
 
+// #617 extracts the two live shared definitions from the frozen Plan oracle.
+// Authenticate their new owner and restore the exact signed predecessor first.
+const START_FUNDING_SHA256: &str =
+    "adfbe698a69f9a31e0bc36bdfc0260099cdfd6daf43d222d97a49811042ebfed";
+const START_FUNDING: &[u8] = include_bytes!("legacy-start-funding-617.json");
+
+fn start_funding_manifest(bytes: &[u8]) -> Result<Value, String> {
+    if digest(bytes) != START_FUNDING_SHA256 {
+        return Err("unreviewed StartFunding extraction checkpoint".into());
+    }
+    serde_json::from_slice(bytes).map_err(|error| error.to_string())
+}
+
+fn shared_source(manifest: &Value, path: &str, bytes: &[u8]) -> Result<(), String> {
+    let expected = manifest["shared_sources"]
+        .get(path)
+        .and_then(Value::as_str)
+        .ok_or("unreviewed shared oracle source")?;
+    if digest(bytes) != expected {
+        return Err(format!("shared oracle source drift: {path}"));
+    }
+    Ok(())
+}
+
 fn projected_legacy_source(
     path: &str,
     current: &str,
@@ -172,7 +196,9 @@ fn projected_legacy_source(
 ) -> Result<String, String> {
     let commit_inputs = commit_inputs_manifest(COMMIT_INPUTS)?;
     let audited_local = audited_local_manifest(AUDITED_LOCAL)?;
-    let before_audited_local = legacy_source(path, current, &audited_local)?;
+    let start_funding = start_funding_manifest(START_FUNDING)?;
+    let before_start_funding = legacy_source(path, current, &start_funding)?;
+    let before_audited_local = legacy_source(path, &before_start_funding, &audited_local)?;
     let before_commit = legacy_source(path, &before_audited_local, &commit_inputs)?;
     let before_metadata = legacy_source(path, &before_commit, resource_metadata)?;
     legacy_source(path, &before_metadata, retirement)
@@ -208,6 +234,16 @@ pub(super) fn legacy_authority() -> Value {
     let retirement = retirement_manifest(include_bytes!("legacy-retirement.json")).unwrap();
     let resource_metadata = resource_metadata_manifest(RESOURCE_METADATA).unwrap();
     let repository = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let start_funding = start_funding_manifest(START_FUNDING).unwrap();
+    for path in start_funding["shared_sources"].as_object().unwrap().keys() {
+        assert!(relative_path(path));
+        shared_source(
+            &start_funding,
+            path,
+            &std::fs::read(repository.join(path)).unwrap(),
+        )
+        .unwrap();
+    }
     for row in authority["files"].as_array().unwrap() {
         let path = row["path"].as_str().unwrap();
         assert!(relative_path(path));
@@ -224,6 +260,7 @@ pub(super) fn legacy_authority() -> Value {
     authority["resource_metadata_projection"] = resource_metadata;
     authority["commit_input_test_projection"] = commit_inputs_manifest(COMMIT_INPUTS).unwrap();
     authority["audited_local_projection"] = audited_local_manifest(AUDITED_LOCAL).unwrap();
+    authority["start_funding_projection"] = start_funding_manifest(START_FUNDING).unwrap();
     authority
 }
 
@@ -237,6 +274,42 @@ fn retired_oracle_projection_rejects_drift_and_forged_authority() {
     let commit_inputs = commit_inputs_manifest(COMMIT_INPUTS).unwrap();
     assert!(commit_inputs_manifest(br#"{"owners":{}}"#).is_err());
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let start_funding = start_funding_manifest(START_FUNDING).unwrap();
+    assert!(start_funding_manifest(br#"{"owners":{}}"#).is_err());
+    let mut forged = start_funding.clone();
+    forged["scope"] = Value::String("unreviewed".into());
+    assert!(start_funding_manifest(&serde_json::to_vec(&forged).unwrap()).is_err());
+    assert_eq!(start_funding["owners"].as_object().unwrap().len(), 1);
+    assert_eq!(
+        start_funding["shared_sources"].as_object().unwrap().len(),
+        1
+    );
+    for path in start_funding["shared_sources"].as_object().unwrap().keys() {
+        let bytes = std::fs::read(root.join(path)).unwrap();
+        shared_source(&start_funding, path, &bytes).unwrap();
+        let mut changed = bytes.clone();
+        changed.extend_from_slice(b"\n// drift\n");
+        assert!(shared_source(&start_funding, path, &changed).is_err());
+        assert!(shared_source(&start_funding, "unreviewed.rs", &bytes).is_err());
+    }
+
+    for (path, row) in start_funding["owners"].as_object().unwrap() {
+        let current = std::fs::read_to_string(root.join(path)).unwrap();
+        let previous = legacy_source(path, &current, &start_funding).unwrap();
+        assert_eq!(digest(previous.as_bytes()), row["previous_sha256"]);
+        assert!(legacy_source(path, &(current.clone() + "\n// drift\n"), &start_funding).is_err());
+        for edit in row["predecessor_reconstruction"].as_array().unwrap() {
+            let partial = current.replacen(
+                edit["current"].as_str().unwrap(),
+                edit["previous"].as_str().unwrap(),
+                1,
+            );
+            assert_ne!(partial, current);
+            assert!(
+                projected_legacy_source(path, &partial, &retirement, &resource_metadata).is_err()
+            );
+        }
+    }
     let audited_local = audited_local_manifest(AUDITED_LOCAL).unwrap();
     assert!(audited_local_manifest(br#"{"owners":{}}"#).is_err());
     for (path, row) in audited_local["owners"].as_object().unwrap() {
@@ -312,7 +385,9 @@ fn retired_oracle_projection_rejects_drift_and_forged_authority() {
             .is_err()
         );
         let edit = &row["predecessor_reconstruction"][0];
-        let before_commit = legacy_source(path, &current, &commit_inputs).unwrap();
+        let before_start = legacy_source(path, &current, &start_funding).unwrap();
+        let before_audited = legacy_source(path, &before_start, &audited_local).unwrap();
+        let before_commit = legacy_source(path, &before_audited, &commit_inputs).unwrap();
         let before_metadata = legacy_source(path, &before_commit, &resource_metadata).unwrap();
         let partial = before_metadata.replacen(
             edit["current"].as_str().unwrap(),

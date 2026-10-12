@@ -74,9 +74,14 @@ mod admission_probe;
 mod effect_plan;
 #[cfg(test)]
 mod effectful_migration_tests;
+#[cfg(test)]
 mod intent_effect;
 #[cfg(test)]
 mod kernel_plan;
+mod recording_plan;
+#[cfg(test)]
+mod start_funding_migration_tests;
+#[cfg(test)]
 mod typed_plan;
 #[cfg(test)]
 mod zswap_plan;
@@ -89,14 +94,18 @@ pub(crate) use facade::{
 use proc_macro2::Span;
 use std::collections::{HashMap, HashSet};
 
+#[cfg(test)]
+use crate::expression_with_calls;
+#[cfg(test)]
+use crate::ir::{CounterAmount, LocalBinding};
 use crate::ir::{
-    CounterAmount, Expr, LedgerField, LedgerFieldKind, LocalBinding, PureCircuit, StateAction,
-    StateReturn, StatefulCircuit, Type, WitnessDeclaration,
+    Expr, LedgerField, LedgerFieldKind, PureCircuit, StateAction, StateReturn, StatefulCircuit,
+    Type, WitnessDeclaration,
 };
 #[cfg(test)]
 use crate::retained_value;
 use crate::stateful::circuit_uses_witness;
-use crate::{RenderError, expression_with_calls, ident, rust_type};
+use crate::{RenderError, ident, rust_type};
 
 #[cfg(test)]
 mod audited_local;
@@ -625,7 +634,7 @@ fn lower_effectful_return(
     witnesses: &HashMap<&str, &WitnessDeclaration>,
     pure_circuits: &HashMap<&str, &PureCircuit>,
     circuits: &HashMap<&str, &StatefulCircuit>,
-) -> Result<RecordingOutcome<typed_plan::TypedPlan>, RenderError> {
+) -> Result<RecordingOutcome<recording_plan::TypedPlan>, RenderError> {
     let algebra_gap =
         match checked_effectful_return(circuit, ledger_fields, witnesses, pure_circuits, circuits)?
         {
@@ -640,18 +649,6 @@ fn lower_effectful_return(
             RecordingOutcome::Unsupported(gap) => gap,
         };
 
-    // Independent family, retained until its operations have checked lowering.
-    // Only Unsupported reaches this attempt; invariant failures propagate above.
-    if let Some(plan) =
-        typed_plan::lower_start_funding(circuit, ledger_fields, witnesses, pure_circuits, circuits)
-    {
-        #[cfg(test)]
-        {
-            admission_probe::observe(admission_probe::Route::LegacyStartFunding);
-            admission_probe::trace::handled("effectful.start-funding");
-        }
-        return Ok(RecordingOutcome::Supported(plan));
-    }
     #[cfg(test)]
     admission_probe::observe(admission_probe::Route::Unsupported);
     Ok(RecordingOutcome::Unsupported(algebra_gap))
@@ -663,7 +660,7 @@ fn checked_effectful_return(
     witnesses: &HashMap<&str, &WitnessDeclaration>,
     pure_circuits: &HashMap<&str, &PureCircuit>,
     circuits: &HashMap<&str, &StatefulCircuit>,
-) -> Result<RecordingOutcome<typed_plan::TypedPlan>, RenderError> {
+) -> Result<RecordingOutcome<recording_plan::TypedPlan>, RenderError> {
     match effect_plan::lower_with_calls(circuit, ledger_fields, witnesses, pure_circuits, circuits)
     {
         Ok(plan) => Ok(RecordingOutcome::Supported(plan)),

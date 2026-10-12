@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! Rust syntax is created only after semantic plan validation.
-use super::super::typed_plan::TypedPlan;
+use super::super::recording_plan::TypedPlan;
 use super::{RecordingGap, declarations::Declarations, invalid, model::*};
 use crate::{ident, rust_type};
 use proc_macro2::Span;

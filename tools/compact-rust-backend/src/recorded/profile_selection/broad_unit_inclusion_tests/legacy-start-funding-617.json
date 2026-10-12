@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "issue": 617,
+  "baseline_commit": "014b06b483e4cb53f03304e6bad6c30edb6593f4",
+  "scope": "Exact extraction of TypedPlan carrier and shielded_send_result into one shared implementation. Both definitions are byte-identical to signed616. Restore the old typed_plan.rs definitions before prior original49 stages; authenticate the live shared dependency separately. inputs.rs excluded to avoid self-reference.",
+  "shared_sources": {
+    "tools/compact-rust-backend/src/recorded/recording_plan.rs": "95e5be74fbf697cd2d0e735f21d9744eba93152ee65e1f5e6e2b770719d1b8ed"
+  },
+  "owners": {
+    "tools/compact-rust-backend/src/recorded/typed_plan.rs": {
+      "previous_sha256": "c78a853183deb5c6292d8067e35e630abcf8688a36809bd8f1cf2b73e4771144",
+      "current_sha256": "fe7584e81ba9c616c04e3c5fb248596bfb3ff14ac37c6b414bdb68df9ecf6966",
+      "predecessor_reconstruction": [
+        {
+          "current": "    ) || optional_string(ty)\n}\n\npub(super) use super::recording_plan::{TypedPlan, shielded_send_result};\n\n// Read-only assertion bodies have their own admission boundary. General calls,\n// writes, cryptographic effects and non-Boolean witness results remain outside it.\n",
+          "previous": "    ) || optional_string(ty)\n}\n\npub(super) struct TypedPlan {\n    pub steps: Vec<syn::Stmt>,\n    pub result: syn::Expr,\n}\n\n// Read-only assertion bodies have their own admission boundary. General calls,\n// writes, cryptographic effects and non-Boolean witness results remain outside it.\n"
+        },
+        {
+          "current": "\n// A send result is a typed pair of the sent coin and optional change. The\n// admission predicate describes the public type, not a helper/source name.\n\n// Inspect every expression, including unused locals, arguments and unselected\n// branches. The Plan verifies the exact types and evaluates the ordered body;\n",
+          "previous": "\n// A send result is a typed pair of the sent coin and optional change. The\n// admission predicate describes the public type, not a helper/source name.\npub(super) fn shielded_send_result(ty: &Type) -> bool {\n    let Type::Struct { fields, .. } = ty else {\n        return false;\n    };\n    let [change, sent] = fields.as_slice() else {\n        return false;\n    };\n    if change.name != \"change\" || sent.name != \"sent\" || sent.ty != shielded_coin_type() {\n        return false;\n    }\n    matches!(&change.ty, Type::Struct { fields, .. }\n        if matches!(fields.as_slice(), [present, value]\n            if present.name == \"is_some\" && present.ty == Type::Boolean\n                && value.name == \"value\" && value.ty == sent.ty))\n}\n\n// Inspect every expression, including unused locals, arguments and unselected\n// branches. The Plan verifies the exact types and evaluates the ordered body;\n"
+        }
+      ]
+    }
+  }
+}

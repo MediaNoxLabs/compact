@@ -19,7 +19,7 @@ class ObservationTestExtensionTests(unittest.TestCase):
         prior_tests.SendTransitionTests.setUp(self)
         self.extension = json.loads(previous.OBSERVATION_TEST_EXTENSION.read_text())
         self.probe = self.root / observation.OWNER
-        self.probe.write_bytes((inventory.ROOT / observation.OWNER).read_bytes())
+        self.probe.write_bytes((previous.checkpoint_616(inventory.ROOT) / observation.OWNER).read_bytes())
 
     def report(self):
         return inventory.verify(

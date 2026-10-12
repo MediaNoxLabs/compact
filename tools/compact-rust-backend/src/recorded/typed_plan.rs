@@ -1192,10 +1192,7 @@ fn cell_type(ty: &Type) -> bool {
     ) || optional_string(ty)
 }
 
-pub(super) struct TypedPlan {
-    pub steps: Vec<syn::Stmt>,
-    pub result: syn::Expr,
-}
+pub(super) use super::recording_plan::{TypedPlan, shielded_send_result};
 
 // Read-only assertion bodies have their own admission boundary. General calls,
 // writes, cryptographic effects and non-Boolean witness results remain outside it.
@@ -1461,21 +1458,6 @@ pub(super) fn lower_terminal_returns<'a>(
 
 // A send result is a typed pair of the sent coin and optional change. The
 // admission predicate describes the public type, not a helper/source name.
-pub(super) fn shielded_send_result(ty: &Type) -> bool {
-    let Type::Struct { fields, .. } = ty else {
-        return false;
-    };
-    let [change, sent] = fields.as_slice() else {
-        return false;
-    };
-    if change.name != "change" || sent.name != "sent" || sent.ty != shielded_coin_type() {
-        return false;
-    }
-    matches!(&change.ty, Type::Struct { fields, .. }
-        if matches!(fields.as_slice(), [present, value]
-            if present.name == "is_some" && present.ty == Type::Boolean
-                && value.name == "value" && value.ty == sent.ty))
-}
 
 // Inspect every expression, including unused locals, arguments and unselected
 // branches. The Plan verifies the exact types and evaluates the ordered body;

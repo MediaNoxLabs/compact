@@ -45,13 +45,14 @@ use legacy::expressions::{boolean_expression, field_expression};
 use legacy::guarded_map::closed_guarded_struct_map_read_steps;
 use legacy::guarded_pure::closed_guarded_struct_pure_steps;
 use legacy::opaque_map::closed_typed_opaque_map_write_steps;
-use legacy::opaque_set::closed_guarded_opaque_set_mutation_steps;
 
 mod facade;
 #[cfg(test)]
 mod guarded_mutations;
 mod helpers;
 mod item;
+#[cfg(test)]
+mod opaque_set_migration_tests;
 mod profile_attempt;
 mod profile_selection;
 mod pure_calls;
@@ -737,17 +738,6 @@ fn render_recorded_item(
         )?
     );
     let typed_map_write_gate = typed_map_write_steps.is_some();
-    let guarded_set_mutation_steps = record_option!(
-        "guard.opaque-set-mutation",
-        closed_guarded_opaque_set_mutation_steps(
-            circuit,
-            &parameters,
-            ledger_fields,
-            circuits,
-            shared_callees,
-        )?
-    );
-    let guarded_set_mutation_gate = guarded_set_mutation_steps.is_some();
     let guarded_pure_steps = record_option!(
         "guard.guarded-struct-pure",
         closed_guarded_struct_pure_steps(circuit, &parameters, pure_circuits, circuits)?
@@ -756,7 +746,6 @@ fn render_recorded_item(
     let mut steps = organizer_steps
         .or(guarded_map_read_steps)
         .or(typed_map_write_steps)
-        .or(guarded_set_mutation_steps)
         .or(guarded_pure_steps)
         .unwrap_or_default();
     let mut next_temp = 0;
@@ -764,53 +753,47 @@ fn render_recorded_item(
     // A root Let encloses both its ordered actions and its final return.
     // Capture this exact Field Cell read once, before the nested actions,
     // so the returned value cannot accidentally observe the post-write state.
-    let root_field_return = if !organizer_gate
-        && !guarded_map_read_gate
-        && !typed_map_write_gate
-        && !guarded_set_mutation_gate
-        && !guarded_pure_call
-    {
-        match (circuit.actions.as_slice(), &circuit.return_value) {
-            (
-                [StateAction::Let { bindings, action }],
-                StateReturn::Expression {
-                    value: Expr::Parameter { name },
-                },
-            ) if circuit.result == Type::Field => match bindings.as_slice() {
-                [binding]
-                    if binding.name == *name
-                        && binding.ty == Type::Field
-                        && matches!(&binding.value, Expr::CellRead { .. }) =>
-                {
-                    if let Expr::CellRead { field, index } = &binding.value {
-                        let declaration = ledger_fields
-                            .get(field.as_str())
-                            .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-                        if declaration.declaration != (LedgerFieldKind::Cell { ty: Type::Field })
-                            || declaration.index != *index
-                        {
-                            return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                                &circuit.return_value,
-                            )));
+    let root_field_return =
+        if !organizer_gate && !guarded_map_read_gate && !typed_map_write_gate && !guarded_pure_call
+        {
+            match (circuit.actions.as_slice(), &circuit.return_value) {
+                (
+                    [StateAction::Let { bindings, action }],
+                    StateReturn::Expression {
+                        value: Expr::Parameter { name },
+                    },
+                ) if circuit.result == Type::Field => match bindings.as_slice() {
+                    [binding]
+                        if binding.name == *name
+                            && binding.ty == Type::Field
+                            && matches!(&binding.value, Expr::CellRead { .. }) =>
+                    {
+                        if let Expr::CellRead { field, index } = &binding.value {
+                            let declaration = ledger_fields
+                                .get(field.as_str())
+                                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                            if declaration.declaration
+                                != (LedgerFieldKind::Cell { ty: Type::Field })
+                                || declaration.index != *index
+                            {
+                                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                                    &circuit.return_value,
+                                )));
+                            }
+                            Some((binding.name.as_str(), field.as_str(), action.as_ref()))
+                        } else {
+                            None
                         }
-                        Some((binding.name.as_str(), field.as_str(), action.as_ref()))
-                    } else {
-                        None
                     }
-                }
+                    _ => None,
+                },
                 _ => None,
-            },
-            _ => None,
-        }
-    } else {
-        None
-    };
+            }
+        } else {
+            None
+        };
     let mut recorded_root_return: Option<(&str, syn::Expr)> = None;
-    if !organizer_gate
-        && !guarded_map_read_gate
-        && !typed_map_write_gate
-        && !guarded_set_mutation_gate
-    {
+    if !organizer_gate && !guarded_map_read_gate && !typed_map_write_gate {
         if let Some((name, field, action)) = root_field_return {
             #[cfg(test)]
             admission_probe::trace::action("guard.root-let-snapshot");
@@ -881,7 +864,6 @@ fn render_recorded_item(
     if !organizer_gate
         && !guarded_map_read_gate
         && !typed_map_write_gate
-        && !guarded_set_mutation_gate
         && !guarded_pure_call
         && circuit.actions.is_empty()
         && steps.is_empty()
@@ -1445,7 +1427,6 @@ fn render_recorded_item(
         && !opaque_asset_removal
         && !guarded_map_read_gate
         && !typed_map_write_gate
-        && !guarded_set_mutation_gate
         && !organizer_gate
     {
         return Ok(RecordingOutcome::Unsupported(

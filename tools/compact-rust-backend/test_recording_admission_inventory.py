@@ -121,8 +121,24 @@ ORGANIZER_TRANSITION = inventory.BASELINE.with_name("recording_admission_invento
 UNSIGNED_PRODUCT_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-591.json")
 
 
+OPAQUE_SET_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-592.json")
+
+
+def checkpoint_591(root):
+    """Historical fixtures use the authenticated signed guarded unsigned-product checkpoint."""
+    transition = json.loads(OPAQUE_SET_TRANSITION.read_text())
+    try:
+        source = (root / inventory.RECORDED).read_bytes()
+    except FileNotFoundError:
+        return root
+    if inventory.digest(source) == transition['owners'][inventory.RECORDED]['current_sha256']:
+        return inventory.opaque_set.checkpoint(root, transition)
+    return root
+
+
 def checkpoint_590(root):
     """Historical fixtures use the authenticated signed final-organizer checkpoint."""
+    root = checkpoint_591(root)
     transition = json.loads(UNSIGNED_PRODUCT_TRANSITION.read_text())
     try:
         source = (root / inventory.RECORDED).read_bytes()
@@ -490,7 +506,8 @@ class InventoryTests(unittest.TestCase):
                                   enum_advance_transition=json.loads(ENUM_ADVANCE_TRANSITION.read_text()),
                                   witness_merkle_transition=json.loads(WITNESS_MERKLE_TRANSITION.read_text()),
                                   organizer_transition=json.loads(ORGANIZER_TRANSITION.read_text()),
-                                  unsigned_product_transition=json.loads(UNSIGNED_PRODUCT_TRANSITION.read_text()))
+                                  unsigned_product_transition=json.loads(UNSIGNED_PRODUCT_TRANSITION.read_text()),
+                                  opaque_set_transition=json.loads(OPAQUE_SET_TRANSITION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)

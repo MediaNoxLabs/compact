@@ -306,34 +306,42 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_plan_0: runtime::JubjubPoint = __compact_param_0;
-            let __compact_plan_1: runtime::Field = crate::pure_circuits::digest(__compact_plan_0)?;
-            let __compact_plan_2: runtime::Field = __compact_plan_1;
-            let (frame, __compact_plan_3): (_, bool) =
-                crate::ledger_slots::active.record_read(frame)?;
-            if !__compact_plan_3 {
-                return Err(runtime::CompactError::AssertionFailed(
-                    "inactive".to_owned(),
-                ));
-            }
-            let __compact_plan_4: runtime::Field = __compact_plan_2;
-            let (frame, __compact_plan_5): (_, bool) =
-                frame.try_witness_metered(|context, meter| {
-                    witnesses.authorize(
-                        context.witness_context_with(super::LedgerView {
-                            state: context.query.state.get_ref(),
-                            meter,
-                        }),
-                        __compact_plan_4,
-                    )
-                })?;
-            if !__compact_plan_5 {
-                return Err(runtime::CompactError::AssertionFailed(
-                    "unauthorized".to_owned(),
-                ));
-            }
-            let frame = crate::ledger_slots::key.record_write(frame, __compact_param_0)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: runtime::JubjubPoint = __compact_param_0;
+            let __compact_effect_1: runtime::Field =
+                crate::pure_circuits::digest(__compact_effect_0)?;
+            let (frame, __compact_effect_8): (_, ()) = {
+                let __compact_effect_2: runtime::Field = __compact_effect_1;
+                let (frame, __compact_effect_3): (_, bool) =
+                    crate::ledger_slots::active.record_read(frame)?;
+                if !__compact_effect_3 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "inactive".to_owned(),
+                    ));
+                }
+                let __compact_effect_4: () = ();
+                let (frame, __compact_effect_5): (_, bool) =
+                    frame.try_witness_metered(|context, meter| {
+                        witnesses.authorize(
+                            context.witness_context_with(super::LedgerView {
+                                state: context.query.state.get_ref(),
+                                meter,
+                            }),
+                            __compact_effect_2,
+                        )
+                    })?;
+                if !__compact_effect_5 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "unauthorized".to_owned(),
+                    ));
+                }
+                let __compact_effect_6: () = ();
+                let __compact_effect_7: () = ();
+                (frame, __compact_effect_7)
+            };
+            let frame = crate::ledger_slots::key.record_write(frame, __compact_effect_0)?;
+            let __compact_effect_9: () = ();
+            let __compact_effect_10: () = ();
+            Ok(frame.finish(__compact_effect_10))
         }
         pub fn scalar_control<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -388,33 +396,45 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_plan_0: runtime::Field = runtime::Field::from(1u128);
-            let __compact_plan_1: runtime::Field = __compact_plan_0;
-            let (frame, __compact_plan_2): (_, bool) =
-                crate::ledger_slots::active.record_read(frame)?;
-            if !__compact_plan_2 {
-                return Err(runtime::CompactError::AssertionFailed(
-                    "inactive".to_owned(),
-                ));
-            }
-            let __compact_plan_3: runtime::Field = __compact_plan_1;
-            let (frame, __compact_plan_4): (_, bool) =
-                frame.try_witness_metered(|context, meter| {
-                    witnesses.authorize(
-                        context.witness_context_with(super::LedgerView {
-                            state: context.query.state.get_ref(),
-                            meter,
-                        }),
-                        __compact_plan_3,
-                    )
-                })?;
-            if !__compact_plan_4 {
-                return Err(runtime::CompactError::AssertionFailed(
-                    "unauthorized".to_owned(),
-                ));
-            }
-            let frame = crate::ledger_slots::key.record_write(frame, __compact_param_0)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: runtime::JubjubPoint = __compact_param_0;
+            let __compact_effect_1: runtime::Field = runtime::Field::from_le_bytes(&[
+                1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let (frame, __compact_effect_8): (_, ()) = {
+                let __compact_effect_2: runtime::Field = __compact_effect_1;
+                let (frame, __compact_effect_3): (_, bool) =
+                    crate::ledger_slots::active.record_read(frame)?;
+                if !__compact_effect_3 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "inactive".to_owned(),
+                    ));
+                }
+                let __compact_effect_4: () = ();
+                let (frame, __compact_effect_5): (_, bool) =
+                    frame.try_witness_metered(|context, meter| {
+                        witnesses.authorize(
+                            context.witness_context_with(super::LedgerView {
+                                state: context.query.state.get_ref(),
+                                meter,
+                            }),
+                            __compact_effect_2,
+                        )
+                    })?;
+                if !__compact_effect_5 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "unauthorized".to_owned(),
+                    ));
+                }
+                let __compact_effect_6: () = ();
+                let __compact_effect_7: () = ();
+                (frame, __compact_effect_7)
+            };
+            let frame = crate::ledger_slots::key.record_write(frame, __compact_effect_0)?;
+            let __compact_effect_9: () = ();
+            let __compact_effect_10: () = ();
+            Ok(frame.finish(__compact_effect_10))
         }
         pub fn pure_projection_only<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -423,35 +443,43 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_plan_0: runtime::JubjubPoint = __compact_param_0;
-            let __compact_plan_1: runtime::Field = crate::pure_circuits::digest(__compact_plan_0)?;
-            let __compact_plan_2: runtime::Field = __compact_plan_1;
-            let (frame, __compact_plan_3): (_, bool) =
-                crate::ledger_slots::active.record_read(frame)?;
-            if !__compact_plan_3 {
-                return Err(runtime::CompactError::AssertionFailed(
-                    "inactive".to_owned(),
-                ));
-            }
-            let __compact_plan_4: runtime::Field = __compact_plan_2;
-            let (frame, __compact_plan_5): (_, bool) =
-                frame.try_witness_metered(|context, meter| {
-                    witnesses.authorize(
-                        context.witness_context_with(super::LedgerView {
-                            state: context.query.state.get_ref(),
-                            meter,
-                        }),
-                        __compact_plan_4,
-                    )
-                })?;
-            if !__compact_plan_5 {
-                return Err(runtime::CompactError::AssertionFailed(
-                    "unauthorized".to_owned(),
-                ));
-            }
-            let __compact_plan_6: bool = false;
-            let frame = crate::ledger_slots::active.record_write(frame, __compact_plan_6)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: runtime::JubjubPoint = __compact_param_0;
+            let __compact_effect_1: runtime::Field =
+                crate::pure_circuits::digest(__compact_effect_0)?;
+            let (frame, __compact_effect_8): (_, ()) = {
+                let __compact_effect_2: runtime::Field = __compact_effect_1;
+                let (frame, __compact_effect_3): (_, bool) =
+                    crate::ledger_slots::active.record_read(frame)?;
+                if !__compact_effect_3 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "inactive".to_owned(),
+                    ));
+                }
+                let __compact_effect_4: () = ();
+                let (frame, __compact_effect_5): (_, bool) =
+                    frame.try_witness_metered(|context, meter| {
+                        witnesses.authorize(
+                            context.witness_context_with(super::LedgerView {
+                                state: context.query.state.get_ref(),
+                                meter,
+                            }),
+                            __compact_effect_2,
+                        )
+                    })?;
+                if !__compact_effect_5 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "unauthorized".to_owned(),
+                    ));
+                }
+                let __compact_effect_6: () = ();
+                let __compact_effect_7: () = ();
+                (frame, __compact_effect_7)
+            };
+            let __compact_effect_9: bool = false;
+            let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_9)?;
+            let __compact_effect_10: () = ();
+            let __compact_effect_11: () = ();
+            Ok(frame.finish(__compact_effect_11))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

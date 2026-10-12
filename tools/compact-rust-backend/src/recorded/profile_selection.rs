@@ -36,7 +36,11 @@ use super::guarded_mutations::{
     closed_organizer_gate_steps, closed_witness_admitted_merkle_insert_steps,
 };
 use super::profile_attempt::ProfileAttempt;
-use super::typed_plan::{self, CompositionRejection, TypedPlan};
+use super::typed_plan;
+use super::typed_plan::TypedPlan;
+
+#[path = "profile_selection/unit_domain.rs"]
+mod unit_domain;
 
 #[cfg(test)]
 #[path = "profile_selection/broad_unit_inclusion_tests.rs"]
@@ -104,7 +108,7 @@ pub(super) struct ProfileSelection {
     pub(super) organizer_steps: Option<Vec<syn::Stmt>>,
     pub(super) typed_result: Option<syn::Expr>,
     pub(super) shielded_send_rejection: Option<RecordingGap>,
-    pub(super) composition_rejection: Option<CompositionRejection>,
+    pub(super) unit_composition_rejection: Option<effect_plan::LoweringRejection>,
 }
 
 /// Membership interfaces enter at the old first typed priority, including helpers.
@@ -445,7 +449,7 @@ pub(super) fn select(
     // profile can still admit the same circuit. Retain it only for a coarse
     // generic return gap after every existing profile has declined.
     let mut shielded_send_rejection = None;
-    let mut composition_rejection = None;
+    let mut unit_composition_rejection = None;
     let mut organizer_steps = if let Some(plan) = effectful_plan {
         typed_result = Some(plan.result);
         Some(plan.steps)
@@ -588,26 +592,27 @@ pub(super) fn select(
                 checked_unit_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?
             ),
         };
-        let through_composition = through_unit.or_else(|| {
-            match typed_plan::lower_unit_composition_checked(
+        let through_composition = match through_unit {
+            Some(plan) => Some(plan),
+            None => match unit_domain::attempt(
                 circuit,
                 ledger_fields,
                 witnesses,
                 pure_circuits,
                 circuits,
-            ) {
+            )? {
                 ProfileAttempt::Admitted(plan) => {
-                    record_option!("selector.unit-composition", Some(plan))
+                    record_option!("algebra.unit-composition", Some(plan))
                 }
                 ProfileAttempt::Rejected(rejection) => {
-                    composition_rejection = Some(rejection);
-                    record_option!("selector.unit-composition", None)
+                    unit_composition_rejection = Some(rejection);
+                    record_option!("algebra.unit-composition", None)
                 }
                 ProfileAttempt::NotApplicable => {
-                    record_option!("selector.unit-composition", None)
+                    record_option!("algebra.unit-composition", None)
                 }
-            }
-        });
+            },
+        };
         // A checked invariant failure must escape before any emission fallback.
         let through_zswap = match through_composition {
             Some(plan) => Some(plan),
@@ -625,6 +630,6 @@ pub(super) fn select(
         organizer_steps,
         typed_result,
         shielded_send_rejection,
-        composition_rejection,
+        unit_composition_rejection,
     })
 }

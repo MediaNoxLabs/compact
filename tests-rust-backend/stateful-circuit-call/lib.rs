@@ -167,9 +167,12 @@ pub mod ledger_contract {
             __compact_param_0: runtime::BoundedUint<65535>,
         ) -> Result<(runtime::recording::RecordingFrame<Private>, ()), runtime::CompactError>
         {
+            let __compact_effect_0: runtime::BoundedUint<65535> = __compact_param_0;
             let frame = crate::ledger_slots::count
-                .record_increment(frame, __compact_param_0.value() as u16)?;
-            Ok((frame, ()))
+                .record_increment(frame, (__compact_effect_0).value() as u16)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok((frame, __compact_effect_2))
         }
         pub fn bump<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -220,13 +223,25 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_plan_0: runtime::BoundedUint<65535> = __compact_param_0;
-            let frame = crate::ledger_slots::count
-                .record_increment(frame, (__compact_plan_0).value() as u16)?;
-            let __compact_plan_1: runtime::BoundedUint<65535> = __compact_param_0;
-            let frame = crate::ledger_slots::count
-                .record_increment(frame, (__compact_plan_1).value() as u16)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: runtime::BoundedUint<65535> = __compact_param_0;
+            let (frame, __compact_effect_4): (_, ()) = {
+                let __compact_effect_1: runtime::BoundedUint<65535> = __compact_effect_0;
+                let frame = crate::ledger_slots::count
+                    .record_increment(frame, (__compact_effect_1).value() as u16)?;
+                let __compact_effect_2: () = ();
+                let __compact_effect_3: () = ();
+                (frame, __compact_effect_3)
+            };
+            let (frame, __compact_effect_8): (_, ()) = {
+                let __compact_effect_5: runtime::BoundedUint<65535> = __compact_effect_0;
+                let frame = crate::ledger_slots::count
+                    .record_increment(frame, (__compact_effect_5).value() as u16)?;
+                let __compact_effect_6: () = ();
+                let __compact_effect_7: () = ();
+                (frame, __compact_effect_7)
+            };
+            let __compact_effect_9: () = ();
+            Ok(frame.finish(__compact_effect_9))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

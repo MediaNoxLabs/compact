@@ -17,6 +17,7 @@ pub(in crate::recorded) struct LoweringRejection {
     pub(super) gap: RecordingGap,
     pub(super) root_action: Option<usize>,
     pub(super) precision: Precision,
+    pub(super) concrete_node: Option<Box<str>>,
 }
 
 impl From<RecordingGap> for LoweringRejection {
@@ -25,18 +26,23 @@ impl From<RecordingGap> for LoweringRejection {
             gap,
             root_action: None,
             precision: Precision::Unclassified,
+            concrete_node: None,
         }
     }
 }
 
 impl LoweringRejection {
     /// Existing callers intentionally discard provenance without running lowering again.
-    pub(super) fn into_parts(self) -> (RecordingGap, Option<usize>, Precision) {
-        (self.gap, self.root_action, self.precision)
+    pub(super) fn into_parts(self) -> (RecordingGap, Option<usize>, Precision, Option<Box<str>>) {
+        (
+            self.gap,
+            self.root_action,
+            self.precision,
+            self.concrete_node,
+        )
     }
 
-    // The Unit route has not migrated yet; its existing diagnostic oracle stays live.
-    #[cfg(test)]
+    // Production Unit admission refines diagnostics using typed lowering provenance.
     pub(in crate::recorded) fn refine_action(
         &self,
         ordinal: usize,
@@ -48,7 +54,11 @@ impl LoweringRejection {
             && legacy_precision == crate::recorded::LegacyActionPrecision::Coarse
             && gap.code == super::RecordingGapCode::UnsupportedAction
         {
-            self.gap.clone()
+            let mut refined = self.gap.clone();
+            if let Some(node) = &self.concrete_node {
+                refined.ir_node = node.to_string();
+            }
+            refined
         } else {
             gap
         }

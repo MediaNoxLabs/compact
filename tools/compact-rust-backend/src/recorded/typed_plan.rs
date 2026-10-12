@@ -41,7 +41,14 @@ mod evidence;
 mod leaves;
 mod observations;
 use admission::AdmissionPolicy;
+#[cfg(test)]
 pub(super) use composition::CompositionRejection;
+
+#[cfg(test)]
+pub(super) fn unit_composition_parameter_type(ty: &Type) -> bool {
+    composition::value_type(ty)
+}
+
 use declarations::Declarations;
 use evaluation::EvaluationState;
 use evidence::EffectEvidence;
@@ -111,6 +118,8 @@ enum CompositeDomain {
     FieldObservations,
     TerminalReturns,
     JubjubValues,
+    // Constructed only by the retained whole-Unit oracle.
+    #[cfg_attr(not(test), allow(dead_code))]
     UnitComposition,
 }
 impl CompositeDomain {
@@ -2214,6 +2223,7 @@ pub(super) fn lower_voting_commit<'a>(
     voting_commit::lower(circuit, ledger, witnesses, pure, circuits)
 }
 
+#[cfg(test)]
 pub(super) fn lower_unit_composition_checked<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,

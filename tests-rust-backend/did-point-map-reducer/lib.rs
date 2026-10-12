@@ -307,71 +307,74 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_plan_0: crate::types::PointMethod = (__compact_param_0).clone();
-            let __compact_plan_1: bool = __compact_param_1;
-            #[allow(
-                clippy::let_and_return,
-                reason = "uniform branch frames preserve ordered recording steps"
-            )]
-            let frame = if __compact_plan_1 {
-                let __compact_plan_2: runtime::OpaqueString =
-                    (((__compact_plan_0).clone()).id).clone();
-                let __compact_plan_3: runtime::OpaqueString = __compact_plan_2;
-                let (frame, __compact_plan_4): (_, bool) = crate::ledger_slots::pointMethods
-                    .record_member(frame, (__compact_plan_3).clone())?;
-                if !__compact_plan_4 {
+            let __compact_effect_0: crate::types::PointMethod = __compact_param_0;
+            let __compact_effect_1: bool = __compact_param_1;
+            let (frame, __compact_effect_20): (_, ()) = if __compact_effect_1 {
+                let __compact_effect_2: runtime::OpaqueString = (__compact_effect_0.id).clone();
+                let (frame, __compact_effect_3): (_, bool) = crate::ledger_slots::pointMethods
+                    .record_member(frame, (__compact_effect_2).clone())?;
+                if !__compact_effect_3 {
                     return Err(runtime::CompactError::AssertionFailed("missing".to_owned()));
                 }
-                let __compact_plan_5: runtime::OpaqueString =
-                    (((__compact_plan_0).clone()).id).clone();
-                let __compact_plan_6: runtime::OpaqueString = __compact_plan_5;
+                let __compact_effect_4: () = ();
+                let __compact_effect_5: runtime::OpaqueString = (__compact_effect_0.id).clone();
                 let frame = crate::ledger_slots::pointMethods
-                    .record_remove(frame, (__compact_plan_6).clone())?;
-                frame
+                    .record_remove(frame, (__compact_effect_5).clone())?;
+                let __compact_effect_6: () = ();
+                let __compact_effect_7: () = ();
+                (frame, __compact_effect_7)
             } else {
-                let __compact_plan_7: runtime::OpaqueString =
-                    (((__compact_plan_0).clone()).id).clone();
-                let __compact_plan_8: runtime::OpaqueString = __compact_plan_7;
-                let (frame, __compact_plan_9): (_, bool) = crate::ledger_slots::nestedMethods
-                    .record_member(frame, (__compact_plan_8).clone())?;
-                let (frame, __compact_plan_12): (_, bool) = if __compact_plan_9 {
-                    let __compact_plan_10: bool = true;
-                    (frame, __compact_plan_10)
-                } else {
-                    let (frame, __compact_plan_11): (_, bool) =
-                        crate::ledger_slots::pointMethods
-                            .record_member(frame, (__compact_plan_8).clone())?;
-                    (frame, __compact_plan_11)
+                let __compact_effect_8: runtime::OpaqueString = (__compact_effect_0.id).clone();
+                let (frame, __compact_effect_14): (_, bool) = {
+                    let __compact_effect_9: runtime::OpaqueString = (__compact_effect_8).clone();
+                    let (frame, __compact_effect_10): (_, bool) =
+                        crate::ledger_slots::nestedMethods
+                            .record_member(frame, (__compact_effect_9).clone())?;
+                    let (frame, __compact_effect_13): (_, bool) = if __compact_effect_10 {
+                        let __compact_effect_11: bool = true;
+                        (frame, __compact_effect_11)
+                    } else {
+                        let (frame, __compact_effect_12): (_, bool) =
+                            crate::ledger_slots::pointMethods
+                                .record_member(frame, (__compact_effect_9).clone())?;
+                        (frame, __compact_effect_12)
+                    };
+                    (frame, __compact_effect_13)
                 };
-                let (frame, __compact_plan_15): (_, bool) = if __compact_plan_12 {
-                    let __compact_plan_13: bool = false;
-                    (frame, __compact_plan_13)
+                let (frame, __compact_effect_17): (_, bool) = if __compact_effect_14 {
+                    let __compact_effect_15: bool = false;
+                    (frame, __compact_effect_15)
                 } else {
-                    let __compact_plan_14: bool = true;
-                    (frame, __compact_plan_14)
+                    let __compact_effect_16: bool = true;
+                    (frame, __compact_effect_16)
                 };
-                if !__compact_plan_15 {
+                if !__compact_effect_17 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "duplicate".to_owned(),
                     ));
                 }
-                frame
+                let __compact_effect_18: () = ();
+                let __compact_effect_19: () = ();
+                (frame, __compact_effect_19)
             };
-            let __compact_plan_16: runtime::OpaqueString =
-                (((__compact_plan_0).clone()).id).clone();
-            let __compact_plan_17: runtime::OpaqueString = __compact_plan_16;
+            let __compact_effect_21: runtime::OpaqueString = (__compact_effect_0.id).clone();
             let frame = crate::ledger_slots::pointMethods.record_insert(
                 frame,
-                (__compact_plan_17).clone(),
-                (__compact_plan_0).clone(),
+                (__compact_effect_21).clone(),
+                (__compact_effect_0).clone(),
             )?;
-            let __compact_plan_18: runtime::BoundedUint<65535> =
-                runtime::BoundedUint::<65535>::new(1u128)
-                    .expect("Compact Uint literal fits its maximum");
-            let __compact_plan_19: runtime::BoundedUint<65535> = __compact_plan_18;
-            let frame = crate::ledger_slots::count
-                .record_increment(frame, (__compact_plan_19).value() as u16)?;
-            Ok(frame.finish(()))
+            let __compact_effect_22: () = ();
+            let (frame, __compact_effect_26): (_, ()) = {
+                let __compact_effect_23: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
+                let frame = crate::ledger_slots::count
+                    .record_increment(frame, (__compact_effect_23).value() as u16)?;
+                let __compact_effect_24: () = ();
+                let __compact_effect_25: () = ();
+                (frame, __compact_effect_25)
+            };
+            let __compact_effect_27: () = ();
+            Ok(frame.finish(__compact_effect_27))
         }
         pub fn remove<Private>(
             context: runtime::context::CircuitContext<Private>,

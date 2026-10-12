@@ -182,58 +182,143 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
+        fn __compact_recorded_body_changes<Private>(
+            frame: runtime::recording::RecordingFrame<Private>,
+            __compact_param_0: runtime::JubjubPoint,
+        ) -> Result<(runtime::recording::RecordingFrame<Private>, ()), runtime::CompactError>
+        {
+            let __compact_effect_0: runtime::JubjubPoint = __compact_param_0;
+            let __compact_effect_1: runtime::Field = runtime::jubjub_point_x(__compact_effect_0);
+            let (frame, __compact_effect_2): (_, runtime::JubjubPoint) =
+                crate::ledger_slots::controller.record_read(frame)?;
+            let __compact_effect_3: runtime::Field = runtime::jubjub_point_x(__compact_effect_2);
+            let __compact_effect_4: bool = __compact_effect_1 != __compact_effect_3;
+            let (frame, __compact_effect_10): (_, bool) = if __compact_effect_4 {
+                let __compact_effect_5: bool = true;
+                (frame, __compact_effect_5)
+            } else {
+                let __compact_effect_6: runtime::Field =
+                    runtime::jubjub_point_y(__compact_effect_0);
+                let (frame, __compact_effect_7): (_, runtime::JubjubPoint) =
+                    crate::ledger_slots::controller.record_read(frame)?;
+                let __compact_effect_8: runtime::Field =
+                    runtime::jubjub_point_y(__compact_effect_7);
+                let __compact_effect_9: bool = __compact_effect_6 != __compact_effect_8;
+                (frame, __compact_effect_9)
+            };
+            if !__compact_effect_10 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "same controller".to_owned(),
+                ));
+            }
+            let __compact_effect_11: () = ();
+            let __compact_effect_12: () = ();
+            Ok((frame, __compact_effect_12))
+        }
+        fn __compact_recorded_body_distinct<Private>(
+            frame: runtime::recording::RecordingFrame<Private>,
+            __compact_param_0: runtime::JubjubPoint,
+        ) -> Result<(runtime::recording::RecordingFrame<Private>, ()), runtime::CompactError>
+        {
+            let __compact_effect_0: runtime::JubjubPoint = __compact_param_0;
+            let __compact_effect_1: runtime::Field = runtime::jubjub_point_x(__compact_effect_0);
+            let (frame, __compact_effect_2): (_, runtime::JubjubPoint) =
+                crate::ledger_slots::recovery.record_read(frame)?;
+            let __compact_effect_3: runtime::Field = runtime::jubjub_point_x(__compact_effect_2);
+            let __compact_effect_4: bool = __compact_effect_1 != __compact_effect_3;
+            let (frame, __compact_effect_10): (_, bool) = if __compact_effect_4 {
+                let __compact_effect_5: bool = true;
+                (frame, __compact_effect_5)
+            } else {
+                let __compact_effect_6: runtime::Field =
+                    runtime::jubjub_point_y(__compact_effect_0);
+                let (frame, __compact_effect_7): (_, runtime::JubjubPoint) =
+                    crate::ledger_slots::recovery.record_read(frame)?;
+                let __compact_effect_8: runtime::Field =
+                    runtime::jubjub_point_y(__compact_effect_7);
+                let __compact_effect_9: bool = __compact_effect_6 != __compact_effect_8;
+                (frame, __compact_effect_9)
+            };
+            if !__compact_effect_10 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "same recovery".to_owned(),
+                ));
+            }
+            let __compact_effect_11: () = ();
+            let __compact_effect_12: () = ();
+            Ok((frame, __compact_effect_12))
+        }
         pub fn check<Private>(
             context: runtime::context::CircuitContext<Private>,
             __compact_param_0: runtime::JubjubPoint,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_plan_0: runtime::JubjubPoint = __compact_param_0;
-            let __compact_plan_1: runtime::JubjubPoint = __compact_plan_0;
-            let __compact_plan_2: runtime::Field = runtime::jubjub_point_x(__compact_plan_1);
-            let (frame, __compact_plan_3): (_, runtime::JubjubPoint) =
-                crate::ledger_slots::controller.record_read(frame)?;
-            let __compact_plan_4: runtime::Field = runtime::jubjub_point_x(__compact_plan_3);
-            let __compact_plan_5: bool = __compact_plan_2 != __compact_plan_4;
-            let (frame, __compact_plan_11): (_, bool) = if __compact_plan_5 {
-                let __compact_plan_6: bool = true;
-                (frame, __compact_plan_6)
-            } else {
-                let __compact_plan_7: runtime::Field = runtime::jubjub_point_y(__compact_plan_1);
-                let (frame, __compact_plan_8): (_, runtime::JubjubPoint) =
+            let __compact_effect_0: runtime::JubjubPoint = __compact_param_0;
+            let (frame, __compact_effect_14): (_, ()) = {
+                let __compact_effect_1: runtime::JubjubPoint = __compact_effect_0;
+                let __compact_effect_2: runtime::Field =
+                    runtime::jubjub_point_x(__compact_effect_1);
+                let (frame, __compact_effect_3): (_, runtime::JubjubPoint) =
                     crate::ledger_slots::controller.record_read(frame)?;
-                let __compact_plan_9: runtime::Field = runtime::jubjub_point_y(__compact_plan_8);
-                let __compact_plan_10: bool = __compact_plan_7 != __compact_plan_9;
-                (frame, __compact_plan_10)
+                let __compact_effect_4: runtime::Field =
+                    runtime::jubjub_point_x(__compact_effect_3);
+                let __compact_effect_5: bool = __compact_effect_2 != __compact_effect_4;
+                let (frame, __compact_effect_11): (_, bool) = if __compact_effect_5 {
+                    let __compact_effect_6: bool = true;
+                    (frame, __compact_effect_6)
+                } else {
+                    let __compact_effect_7: runtime::Field =
+                        runtime::jubjub_point_y(__compact_effect_1);
+                    let (frame, __compact_effect_8): (_, runtime::JubjubPoint) =
+                        crate::ledger_slots::controller.record_read(frame)?;
+                    let __compact_effect_9: runtime::Field =
+                        runtime::jubjub_point_y(__compact_effect_8);
+                    let __compact_effect_10: bool = __compact_effect_7 != __compact_effect_9;
+                    (frame, __compact_effect_10)
+                };
+                if !__compact_effect_11 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "same controller".to_owned(),
+                    ));
+                }
+                let __compact_effect_12: () = ();
+                let __compact_effect_13: () = ();
+                (frame, __compact_effect_13)
             };
-            if !__compact_plan_11 {
-                return Err(runtime::CompactError::AssertionFailed(
-                    "same controller".to_owned(),
-                ));
-            }
-            let __compact_plan_12: runtime::JubjubPoint = __compact_plan_0;
-            let __compact_plan_13: runtime::Field = runtime::jubjub_point_x(__compact_plan_12);
-            let (frame, __compact_plan_14): (_, runtime::JubjubPoint) =
-                crate::ledger_slots::recovery.record_read(frame)?;
-            let __compact_plan_15: runtime::Field = runtime::jubjub_point_x(__compact_plan_14);
-            let __compact_plan_16: bool = __compact_plan_13 != __compact_plan_15;
-            let (frame, __compact_plan_22): (_, bool) = if __compact_plan_16 {
-                let __compact_plan_17: bool = true;
-                (frame, __compact_plan_17)
-            } else {
-                let __compact_plan_18: runtime::Field = runtime::jubjub_point_y(__compact_plan_12);
-                let (frame, __compact_plan_19): (_, runtime::JubjubPoint) =
+            let (frame, __compact_effect_28): (_, ()) = {
+                let __compact_effect_15: runtime::JubjubPoint = __compact_effect_0;
+                let __compact_effect_16: runtime::Field =
+                    runtime::jubjub_point_x(__compact_effect_15);
+                let (frame, __compact_effect_17): (_, runtime::JubjubPoint) =
                     crate::ledger_slots::recovery.record_read(frame)?;
-                let __compact_plan_20: runtime::Field = runtime::jubjub_point_y(__compact_plan_19);
-                let __compact_plan_21: bool = __compact_plan_18 != __compact_plan_20;
-                (frame, __compact_plan_21)
+                let __compact_effect_18: runtime::Field =
+                    runtime::jubjub_point_x(__compact_effect_17);
+                let __compact_effect_19: bool = __compact_effect_16 != __compact_effect_18;
+                let (frame, __compact_effect_25): (_, bool) = if __compact_effect_19 {
+                    let __compact_effect_20: bool = true;
+                    (frame, __compact_effect_20)
+                } else {
+                    let __compact_effect_21: runtime::Field =
+                        runtime::jubjub_point_y(__compact_effect_15);
+                    let (frame, __compact_effect_22): (_, runtime::JubjubPoint) =
+                        crate::ledger_slots::recovery.record_read(frame)?;
+                    let __compact_effect_23: runtime::Field =
+                        runtime::jubjub_point_y(__compact_effect_22);
+                    let __compact_effect_24: bool = __compact_effect_21 != __compact_effect_23;
+                    (frame, __compact_effect_24)
+                };
+                if !__compact_effect_25 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "same recovery".to_owned(),
+                    ));
+                }
+                let __compact_effect_26: () = ();
+                let __compact_effect_27: () = ();
+                (frame, __compact_effect_27)
             };
-            if !__compact_plan_22 {
-                return Err(runtime::CompactError::AssertionFailed(
-                    "same recovery".to_owned(),
-                ));
-            }
-            Ok(frame.finish(()))
+            let __compact_effect_29: () = ();
+            Ok(frame.finish(__compact_effect_29))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

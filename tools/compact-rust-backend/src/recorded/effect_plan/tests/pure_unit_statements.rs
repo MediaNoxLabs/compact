@@ -78,7 +78,7 @@ fn probe(source: &str, entry: &str, label: &str, require_old: bool) {
     let expected_owner = if label.starts_with("retained-guard-") || !require_old {
         "algebra.membership"
     } else {
-        "selector.unit-composition"
+        "algebra.unit-composition"
     };
     assert_eq!(rows[0]["body_owner"], expected_owner);
     assert_eq!(rows[0]["outcome"]["status"], "supported");

@@ -283,8 +283,11 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame = crate::ledger_slots::t.record_insert(frame, __compact_param_0)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: runtime::BoundedUint<255> = __compact_param_0;
+            let frame = crate::ledger_slots::t.record_insert(frame, __compact_effect_0)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn replace<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -292,13 +295,17 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: runtime::BoundedUint<255> = __compact_param_0;
+            let __compact_effect_1: runtime::BoundedUint<18446744073709551615> =
+                <runtime::BoundedUint<18446744073709551615>>::new(0u128)?;
             let frame = crate::ledger_slots::t.record_insert_index(
                 frame,
-                __compact_param_0,
-                runtime::BoundedUint::<18446744073709551615>::new(0u128)
-                    .expect("Compact Uint literal fits its maximum"),
+                __compact_effect_0,
+                __compact_effect_1,
             )?;
-            Ok(frame.finish(()))
+            let __compact_effect_2: () = ();
+            let __compact_effect_3: () = ();
+            Ok(frame.finish(__compact_effect_3))
         }
         pub fn verify<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,

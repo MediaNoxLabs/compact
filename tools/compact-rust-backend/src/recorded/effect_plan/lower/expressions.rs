@@ -147,6 +147,7 @@ impl Lowerer<'_> {
                     || opening.ty != (Type::Bytes { length: 32 })
                 {
                     return Err(self.unsupported_expression_reason(
+                        expression,
                         path,
                         "persistent commitment requires a Bytes32 pair and Bytes32 opening",
                     ));

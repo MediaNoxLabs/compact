@@ -165,10 +165,15 @@ fn generic_lowering_failures_stay_unclassified_and_adapters_preserve_gap() {
 fn refinement_requires_explicit_origin_not_display_strings() {
     let mut rejection = refusal(&[circuit("root", vec![empty(), unsupported()])]);
     let coarse = RecordingGap::action(&unsupported(), "arbitrary display path".into());
+    let refined = rejection.refine_action(1, LegacyActionPrecision::Coarse, coarse.clone());
     assert_eq!(
-        rejection.refine_action(1, LegacyActionPrecision::Coarse, coarse.clone()),
-        rejection.gap
+        rejection.gap.ir_node, "RecordedPlan",
+        "ordinary error remains unchanged"
     );
+    assert_eq!(refined.ir_node, "Expr::PersistentCommit");
+    assert_eq!(refined.path, rejection.gap.path);
+    assert_eq!(refined.detail, rejection.gap.detail);
+    assert_eq!(refined.code, rejection.gap.code);
     assert_eq!(
         rejection.refine_action(0, LegacyActionPrecision::Coarse, coarse.clone()),
         coarse

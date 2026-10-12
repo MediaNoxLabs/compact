@@ -310,62 +310,65 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_plan_0: runtime::OpaqueString = (__compact_param_0).clone();
-            let __compact_plan_1: crate::types::Mutation = __compact_param_1;
-            let __compact_plan_2: crate::types::Mutation = __compact_plan_1;
-            crate::pure_circuits::defined(__compact_plan_2)?;
-            let __compact_plan_3: crate::types::Mutation = crate::types::Mutation::Insert;
-            let __compact_plan_4: bool = __compact_plan_1 == __compact_plan_3;
-            #[allow(
-                clippy::let_and_return,
-                reason = "uniform branch frames preserve ordered recording steps"
-            )]
-            let frame = if __compact_plan_4 {
-                let (frame, __compact_plan_5): (_, bool) = crate::ledger_slots::aliases
-                    .record_member(frame, (__compact_plan_0).clone())?;
-                let (frame, __compact_plan_8): (_, bool) = if __compact_plan_5 {
-                    let __compact_plan_6: bool = false;
-                    (frame, __compact_plan_6)
+            let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
+            let __compact_effect_1: crate::types::Mutation = __compact_param_1;
+            let __compact_effect_2: () = crate::pure_circuits::defined(__compact_effect_1)?;
+            let __compact_effect_3: crate::types::Mutation = crate::types::Mutation::Insert;
+            let __compact_effect_4: bool = __compact_effect_1 == __compact_effect_3;
+            let (frame, __compact_effect_21): (_, ()) = if __compact_effect_4 {
+                let (frame, __compact_effect_5): (_, bool) = crate::ledger_slots::aliases
+                    .record_member(frame, (__compact_effect_0).clone())?;
+                let (frame, __compact_effect_8): (_, bool) = if __compact_effect_5 {
+                    let __compact_effect_6: bool = false;
+                    (frame, __compact_effect_6)
                 } else {
-                    let __compact_plan_7: bool = true;
-                    (frame, __compact_plan_7)
+                    let __compact_effect_7: bool = true;
+                    (frame, __compact_effect_7)
                 };
-                if !__compact_plan_8 {
+                if !__compact_effect_8 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "already present".to_owned(),
                     ));
                 }
+                let __compact_effect_9: () = ();
                 let frame = crate::ledger_slots::aliases
-                    .record_insert(frame, (__compact_plan_0).clone())?;
-                frame
+                    .record_insert(frame, (__compact_effect_0).clone())?;
+                let __compact_effect_10: () = ();
+                let __compact_effect_11: () = ();
+                (frame, __compact_effect_11)
             } else {
-                let __compact_plan_9: crate::types::Mutation = crate::types::Mutation::Remove;
-                let __compact_plan_10: bool = __compact_plan_1 == __compact_plan_9;
-                #[allow(
-                    clippy::let_and_return,
-                    reason = "uniform branch frames preserve ordered recording steps"
-                )]
-                let frame = if __compact_plan_10 {
-                    let (frame, __compact_plan_11): (_, bool) = crate::ledger_slots::aliases
-                        .record_member(frame, (__compact_plan_0).clone())?;
-                    if !__compact_plan_11 {
+                let __compact_effect_12: crate::types::Mutation = crate::types::Mutation::Remove;
+                let __compact_effect_13: bool = __compact_effect_1 == __compact_effect_12;
+                let (frame, __compact_effect_19): (_, ()) = if __compact_effect_13 {
+                    let (frame, __compact_effect_14): (_, bool) = crate::ledger_slots::aliases
+                        .record_member(frame, (__compact_effect_0).clone())?;
+                    if !__compact_effect_14 {
                         return Err(runtime::CompactError::AssertionFailed("absent".to_owned()));
                     }
+                    let __compact_effect_15: () = ();
                     let frame = crate::ledger_slots::aliases
-                        .record_remove(frame, (__compact_plan_0).clone())?;
-                    frame
+                        .record_remove(frame, (__compact_effect_0).clone())?;
+                    let __compact_effect_16: () = ();
+                    let __compact_effect_17: () = ();
+                    (frame, __compact_effect_17)
                 } else {
-                    frame
+                    let __compact_effect_18: () = ();
+                    (frame, __compact_effect_18)
                 };
-                frame
+                let __compact_effect_20: () = ();
+                (frame, __compact_effect_20)
             };
-            let __compact_plan_12: runtime::BoundedUint<65535> =
-                runtime::BoundedUint::<65535>::new(1u128)
-                    .expect("Compact Uint literal fits its maximum");
-            let __compact_plan_13: runtime::BoundedUint<65535> = __compact_plan_12;
-            let frame = crate::ledger_slots::count
-                .record_increment(frame, (__compact_plan_13).value() as u16)?;
-            Ok(frame.finish(()))
+            let (frame, __compact_effect_25): (_, ()) = {
+                let __compact_effect_22: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
+                let frame = crate::ledger_slots::count
+                    .record_increment(frame, (__compact_effect_22).value() as u16)?;
+                let __compact_effect_23: () = ();
+                let __compact_effect_24: () = ();
+                (frame, __compact_effect_24)
+            };
+            let __compact_effect_26: () = ();
+            Ok(frame.finish(__compact_effect_26))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

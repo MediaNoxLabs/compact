@@ -233,29 +233,33 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_plan_0: crate::types::Container = (__compact_param_0).clone();
-            let __compact_plan_1: crate::types::Leaf =
-                (((__compact_plan_0).clone()).nested).clone();
-            let __compact_plan_2: crate::types::Kind = (__compact_plan_1).curve;
-            let __compact_plan_3: crate::types::Kind = crate::types::Kind::C;
-            let __compact_plan_4: bool = __compact_plan_2 != __compact_plan_3;
-            if !__compact_plan_4 {
+            let __compact_effect_0: crate::types::Container = __compact_param_0;
+            let __compact_effect_1: crate::types::Leaf = (__compact_effect_0.nested).clone();
+            let __compact_effect_2: crate::types::Kind = __compact_effect_1.curve;
+            let __compact_effect_3: crate::types::Kind = crate::types::Kind::C;
+            let __compact_effect_4: bool = __compact_effect_2 != __compact_effect_3;
+            if !__compact_effect_4 {
                 return Err(runtime::CompactError::AssertionFailed("curve".to_owned()));
             }
-            let __compact_plan_5: runtime::OpaqueString = (((__compact_plan_0).clone()).id).clone();
-            let __compact_plan_6: runtime::OpaqueString = __compact_plan_5;
+            let __compact_effect_5: () = ();
+            let __compact_effect_6: runtime::OpaqueString = (__compact_effect_0.id).clone();
             let frame = crate::ledger_slots::entries.record_insert(
                 frame,
-                (__compact_plan_6).clone(),
-                (__compact_plan_0).clone(),
+                (__compact_effect_6).clone(),
+                (__compact_effect_0).clone(),
             )?;
-            let __compact_plan_7: runtime::BoundedUint<65535> =
-                runtime::BoundedUint::<65535>::new(1u128)
-                    .expect("Compact Uint literal fits its maximum");
-            let __compact_plan_8: runtime::BoundedUint<65535> = __compact_plan_7;
-            let frame = crate::ledger_slots::count
-                .record_increment(frame, (__compact_plan_8).value() as u16)?;
-            Ok(frame.finish(()))
+            let __compact_effect_7: () = ();
+            let (frame, __compact_effect_11): (_, ()) = {
+                let __compact_effect_8: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
+                let frame = crate::ledger_slots::count
+                    .record_increment(frame, (__compact_effect_8).value() as u16)?;
+                let __compact_effect_9: () = ();
+                let __compact_effect_10: () = ();
+                (frame, __compact_effect_10)
+            };
+            let __compact_effect_12: () = ();
+            Ok(frame.finish(__compact_effect_12))
         }
         pub fn drop<Private>(
             context: runtime::context::CircuitContext<Private>,

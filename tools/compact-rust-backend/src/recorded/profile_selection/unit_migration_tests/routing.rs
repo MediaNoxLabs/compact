@@ -51,7 +51,7 @@ fn actual_unit_owner_runs_once_without_old_shape_or_later_profiles() {
         1
     );
     assert!(!attempted.contains(&"selector.unit-actions"));
-    assert!(!attempted.contains(&"selector.unit-composition"));
+    assert!(!attempted.contains(&"algebra.unit-composition"));
 }
 
 #[test]
@@ -87,8 +87,8 @@ fn unsupported_unit_body_continues_independent_suffix_and_invalid_is_fatal() {
     let (_, row) = selected_trace(&contract);
     let attempted = attempts(&row);
     let at = |name| attempted.iter().position(|r| *r == name).unwrap();
-    assert!(at("algebra.unit-actions") < at("selector.unit-composition"));
-    assert!(at("selector.unit-composition") < at("algebra.zswap"));
+    assert!(at("algebra.unit-actions") < at("algebra.unit-composition"));
+    assert!(at("algebra.unit-composition") < at("algebra.zswap"));
     assert!(!attempted.contains(&"selector.unit-actions"));
     let gap = crate::recorded::RecordingGap {
         code: crate::recorded::RecordingGapCode::UnsupportedExpression,
@@ -152,7 +152,7 @@ fn ordinary_unit_return_enters_composition_without_an_operation_shape_gate() {
     );
     let (_, row) = selected_trace(&contract);
     assert_eq!(row["body_owner"], "algebra.unit-actions");
-    assert!(!attempts(&row).contains(&"selector.unit-composition"));
+    assert!(!attempts(&row).contains(&"algebra.unit-composition"));
     let rendered = crate::render_with_capabilities(&contract).unwrap();
     let capability = rendered
         .capabilities
@@ -177,7 +177,7 @@ fn real_set_lifecycle_has_public_unit_composition_and_existing_direct_queries_st
     contract.stateful_circuits.swap(0, index);
     let (_, row) = selected_trace(&contract);
     assert_eq!(row["body_owner"], "algebra.unit-actions");
-    assert!(!attempts(&row).contains(&"selector.unit-composition"));
+    assert!(!attempts(&row).contains(&"algebra.unit-composition"));
 
     // Member's specialized return is not emitted by this source; exercise it as
     // an explicitly IR-only public control alongside the real size/empty roots.

@@ -504,8 +504,10 @@ fn direct_root_call_argument_keeps_effects_and_unsupported_nested_audit_reason()
         .unwrap();
     assert!(!capability.recorded && !capability.observed_call);
     let gap = capability.recording_unavailable.as_ref().unwrap();
-    assert_eq!(gap.path, still_rejected.gap.path);
-    assert_eq!(gap.ir_node, "Expr::TransientHash");
+    // The frozen Audit stops at its enclosing hash shape. Checked lowering
+    // identifies the actual unsupported commitment inside that operand.
+    assert_eq!(gap.path, format!("{}.value", still_rejected.gap.path));
+    assert_eq!(gap.ir_node, "Expr::PersistentCommit");
 }
 
 #[test]

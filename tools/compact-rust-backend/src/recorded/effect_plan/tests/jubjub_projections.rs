@@ -85,7 +85,7 @@ fn inspect(source: &str, entry: &str, label: &str, require_old: bool, y_first: b
         .collect::<Vec<_>>();
     assert_eq!(rows.len(), 1, "{label}: actual public emission");
     if require_old {
-        assert_eq!(rows[0]["body_owner"], "selector.unit-composition");
+        assert_eq!(rows[0]["body_owner"], "algebra.unit-composition");
         assert_eq!(rows[0]["outcome"]["status"], "supported");
     } else {
         assert_eq!(rows[0]["body_owner"], "algebra.composite-values");

@@ -115,19 +115,84 @@ pub(super) fn load(path: &Path) -> Result<Vec<Input>, String> {
     Ok(inputs)
 }
 
+const RETIREMENT_SHA256: &str = "eda751f75344d765430226e2651201e947c1d1d584818c43fe024424df65df0c";
+
+fn retirement_manifest(bytes: &[u8]) -> Result<Value, String> {
+    if digest(bytes) != RETIREMENT_SHA256 {
+        return Err("unreviewed legacy retirement manifest".into());
+    }
+    serde_json::from_slice(bytes).map_err(|error| error.to_string())
+}
+
+fn legacy_source(path: &str, current: &str, retirement: &Value) -> Result<String, String> {
+    let Some(owner) = retirement["owners"].get(path) else {
+        return Ok(current.to_owned());
+    };
+    if digest(current.as_bytes()) != owner["current_sha256"] {
+        return Err(format!("retired oracle owner drift: {path}"));
+    }
+    let mut previous = current.to_owned();
+    for edit in owner["predecessor_reconstruction"]
+        .as_array()
+        .ok_or("missing retirement edits")?
+    {
+        let current = edit["current"].as_str().ok_or("missing current edit")?;
+        let old = edit["previous"].as_str().ok_or("missing previous edit")?;
+        if current.is_empty() || previous.matches(current).count() != 1 {
+            return Err(format!("nonunique retirement edit: {path}"));
+        }
+        previous = previous.replacen(current, old, 1);
+    }
+    if digest(previous.as_bytes()) != owner["previous_sha256"] {
+        return Err(format!("signed oracle reconstruction differs: {path}"));
+    }
+    Ok(previous)
+}
+
 pub(super) fn legacy_authority() -> Value {
-    let authority: Value = serde_json::from_str(include_str!("legacy-authority.json")).unwrap();
+    let mut authority: Value = serde_json::from_str(include_str!("legacy-authority.json")).unwrap();
+    let retirement = retirement_manifest(include_bytes!("legacy-retirement.json")).unwrap();
     let repository = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
     for row in authority["files"].as_array().unwrap() {
         let path = row["path"].as_str().unwrap();
         assert!(relative_path(path));
+        let current = std::fs::read_to_string(repository.join(path)).unwrap();
+        let previous = legacy_source(path, &current, &retirement).unwrap();
         assert_eq!(
-            digest(&std::fs::read(repository.join(path)).unwrap()),
+            digest(previous.as_bytes()),
             row["sha256"],
             "old source drift: {path}"
         );
     }
+    authority["retirement_projection"] = retirement;
     authority
+}
+
+#[test]
+fn retired_oracle_projection_rejects_drift_and_forged_authority() {
+    let bytes = include_bytes!("legacy-retirement.json");
+    let retirement = retirement_manifest(bytes).unwrap();
+    assert!(retirement_manifest(br#"{"owners":{}}"#).is_err());
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    for (path, row) in retirement["owners"].as_object().unwrap() {
+        let current = std::fs::read_to_string(root.join(path)).unwrap();
+        assert_eq!(
+            digest(
+                legacy_source(path, &current, &retirement)
+                    .unwrap()
+                    .as_bytes()
+            ),
+            row["previous_sha256"]
+        );
+        assert!(legacy_source(path, &(current.clone() + "\n// drift\n"), &retirement).is_err());
+        let edit = &row["predecessor_reconstruction"][0];
+        let partial = current.replacen(
+            edit["current"].as_str().unwrap(),
+            edit["previous"].as_str().unwrap(),
+            1,
+        );
+        assert!(legacy_source(path, &partial, &retirement).is_err());
+    }
 }
 
 #[test]

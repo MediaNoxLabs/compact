@@ -1,0 +1,51 @@
+{
+  "format": "compact-reviewed-rust-binding/v1",
+  "scope": "Unit effect-algebra production routing. Original TypeScript capture bytes remain unchanged; current Rust generation and provenance assertions are reviewed separately. No fresh TS execution or added proof claim.",
+  "captures": [
+    {
+      "file": "lifecycle.json",
+      "sha256": "cf05647f226dc2d7bbad7191d38858ac315629cb38a5cb3dea93407abfe00273"
+    },
+    {
+      "file": "pure.json",
+      "sha256": "f0634240c2c621651e81d597fc6599d131d4519599345f65e8c412ee0675e108"
+    },
+    {
+      "file": "point-lifecycle.json",
+      "sha256": "bdc3401d4a8a8764eca570b5c8cc63590e432c7f3b2d8362fb78819798692fb1"
+    },
+    {
+      "file": "alias-lifecycle.json",
+      "sha256": "557796e7f83983359503fef7a56d3e23aac1166c2ef2cde3e95d9d1ca9c7edad"
+    },
+    {
+      "file": "service-lifecycle.json",
+      "sha256": "d976d448e1ae0296776ee963750fce87d0eb0ae34790b222f1cd48c7ad0433e6"
+    },
+    {
+      "file": "schnorr-method-lifecycle.json",
+      "sha256": "d0fa7c4e3377723edcfe102406425c948e49dc5402c0d5951ad0c28ebdfe53b8"
+    },
+    {
+      "file": "jwk-method-lifecycle.json",
+      "sha256": "56df9bcd03854ba683cf13e3ae9693e01e2f1b77521fb6f58a57a81856a6e1ed"
+    }
+  ],
+  "replacements": [
+    {
+      "path": "tests-rust-backend/did-adoption/lib.rs",
+      "captured_sha256": "c3ae6d09f37cf421a2fd2bbe7209894b395edd4a03052e5cd912573f115a5d8e",
+      "current_sha256": "806b7b5578a2221fb29c2d2d09b3b10aaf09ea04c0ff68531eb02e973daa33ef"
+    }
+  ],
+  "reviewed_artifacts": [
+    {
+      "path": "tests-rust-backend/support/reviewed_capture.rs",
+      "sha256": "482cea8e2806f220a939e02f459ffad9c7ff25c685e7bf6aab051f2bc528217b"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/tests/provenance.rs",
+      "sha256": "9f58adc080ead6dd610f6aa052c179589b0e1c6f56c382e5bf05a5471acbd9a6"
+    }
+  ]
+}

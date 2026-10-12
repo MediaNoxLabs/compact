@@ -103,7 +103,23 @@ NEGATION_TEST_EXTENSION = inventory.BASELINE.with_name("recording_admission_inve
 VALUE_TEST_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.value-test-586.json")
 
 
+UNIT_COMPOSITION_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-580.json")
+
+
+def checkpoint_586(root):
+    """Historical fixtures reconstruct the authenticated pre-retirement source."""
+    transition = json.loads(UNIT_COMPOSITION_TRANSITION.read_text())
+    try:
+        source = (root / inventory.SELECTOR).read_bytes()
+    except FileNotFoundError:
+        return root
+    if inventory.digest(source) == transition['owners'][inventory.SELECTOR]['current_sha256']:
+        return inventory.unit_composition.checkpoint(root, transition)
+    return root
+
+
 def checkpoint_585(root):
+    root = checkpoint_586(root)
     owner = next(iter(inventory.value_test.OWNERS))
     try:
         current = (root / owner).read_bytes()
@@ -388,7 +404,8 @@ class InventoryTests(unittest.TestCase):
                                   aligned_test_extension=json.loads(ALIGNED_TEST_EXTENSION.read_text()),
                                   encoding_extension=json.loads(ENCODING_EXTENSION.read_text()),
                                   negation_test_extension=json.loads(NEGATION_TEST_EXTENSION.read_text()),
-                                  value_test_extension=json.loads(VALUE_TEST_EXTENSION.read_text()))
+                                  value_test_extension=json.loads(VALUE_TEST_EXTENSION.read_text()),
+                                  unit_composition_transition=json.loads(UNIT_COMPOSITION_TRANSITION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)

@@ -3556,7 +3556,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/tests/provenance.rs",
-      "sha256": "28a3d1bb62c115661400db2962ad8b0fe8c4b0e63e9910e4af78e2d9ac03d4db"
+      "sha256": "9f58adc080ead6dd610f6aa052c179589b0e1c6f56c382e5bf05a5471acbd9a6"
     },
     {
       "path": "tests-rust-backend/did-adoption/tests/digest_recording.rs",
@@ -3565,6 +3565,14 @@
     {
       "path": "tests-rust-backend/did-adoption/tests/relation_recording.rs",
       "sha256": "6d874bc9bf9f99d3e5dcdacfdecf9d0ee82a1f10a623a1bccb88292f8af072d6"
+    },
+    {
+      "path": "tests-rust-backend/support/reviewed_capture.rs",
+      "sha256": "482cea8e2806f220a939e02f459ffad9c7ff25c685e7bf6aab051f2bc528217b"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/oracle/reviewed-rust-binding.json",
+      "sha256": "6c385b9ec443f9c92b07e5c2bdd706d9f39158c804b6415221c52ed161076517"
     }
   ],
   "amendment_0259": {
@@ -3725,5 +3733,10 @@
     "runtime_version": "0.16.101",
     "onchain_runtime_v3_version": "3.0.0",
     "limitation": "Rebuilt runtime JavaScript is not byte-identical to the historical build; unchanged runtime source hashes and full semantic recapture equality are recorded separately. No new proof or branch coverage claim."
+  },
+  "unit_algebra_generation_review": {
+    "scope": "Original TS captures are immutable. The separate reviewed Rust binding authenticates their complete hashes, historical Rust hashes and current generated consumer. Unchanged provenance stays strict.",
+    "binding": "tests-rust-backend/did-adoption/oracle/reviewed-rust-binding.json",
+    "new_ts_execution": false
   }
 }

@@ -23,7 +23,7 @@ use compact_rust_backend::ir::{
 use compact_rust_backend::{render, render_with_capabilities};
 
 #[test]
-fn recorded_mixed_width_guard_requires_exact_public_widths_and_pure_operands() {
+fn recorded_mixed_width_guard_composes_typed_widths_and_public_reads() {
     let mut contract = Contract {
         schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
@@ -95,17 +95,14 @@ fn recorded_mixed_width_guard_requires_exact_public_widths_and_pure_operands() {
             .recorded
     };
     assert!(recorded(&contract));
-    assert!(
-        render_with_capabilities(&contract)
-            .unwrap()
-            .source
-            .contains("__compact_recorded_widened_0")
-    );
+    let source = render_with_capabilities(&contract).unwrap().source;
+    let body = super::lifecycle_recording::generated_body(&source, "recorded", "matching");
+    assert!(body.contains("record_increment"));
 
     contract.stateful_circuits[0].parameters[0].ty = Type::Unsigned {
         max: "65535".into(),
     };
-    assert!(!recorded(&contract));
+    assert!(recorded(&contract));
     contract.stateful_circuits[0].parameters[0].ty = Type::Unsigned { max: "255".into() };
     let StateAction::Assert { condition, .. } = &mut contract.stateful_circuits[0].actions[0]
     else {
@@ -121,11 +118,20 @@ fn recorded_mixed_width_guard_requires_exact_public_widths_and_pure_operands() {
         field: "stored".into(),
         index: 1,
     };
-    assert!(!recorded(&contract));
+    assert!(recorded(&contract));
+    let source = render_with_capabilities(&contract).unwrap().source;
+    let body = super::lifecycle_recording::generated_body(&source, "recorded", "matching");
+    assert!(body.find("record_read").unwrap() < body.find("record_increment").unwrap());
+    let StateAction::CounterIncrement { index, .. } = &mut contract.stateful_circuits[0].actions[1]
+    else {
+        unreachable!()
+    };
+    *index = 99;
+    assert!(render_with_capabilities(&contract).is_err());
 }
 
 #[test]
-fn recorded_product_guard_requires_closed_pure_body_and_counter_one() {
+fn recorded_product_guard_composes_typed_pure_bodies_and_counter_amounts() {
     let uint32 = Type::Unsigned {
         max: "4294967295".into(),
     };
@@ -255,7 +261,7 @@ fn recorded_product_guard_requires_closed_pure_body_and_counter_one() {
     if let Expr::Sequence { steps, .. } = &mut contract.circuits[0].body {
         steps.push(Expr::Unit);
     }
-    assert!(!recorded(&contract));
+    assert!(recorded(&contract));
     contract = pristine.clone();
     if let Expr::Sequence { steps, .. } = &mut contract.circuits[0].body
         && let Expr::Assert { condition, .. } = &mut steps[0]
@@ -267,7 +273,7 @@ fn recorded_product_guard_requires_closed_pure_body_and_counter_one() {
             max: "17179869180".into(),
         };
     }
-    assert!(!recorded(&contract));
+    assert!(recorded(&contract));
     contract = pristine.clone();
     if let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[1] {
         bindings[0].value = Expr::UnsignedLiteral {
@@ -275,12 +281,19 @@ fn recorded_product_guard_requires_closed_pure_body_and_counter_one() {
             max: "65535".into(),
         };
     }
-    assert!(!recorded(&contract));
+    assert!(recorded(&contract));
     contract = pristine;
     if let StateAction::PureCall { arguments, .. } = &mut contract.stateful_circuits[0].actions[0] {
         arguments.swap(0, 1);
     }
-    assert!(!recorded(&contract));
+    assert!(recorded(&contract));
+    let source = render_with_capabilities(&contract).unwrap().source;
+    let body = super::lifecycle_recording::generated_body(&source, "recorded", "record");
+    assert!(body.contains("record_increment") && body.contains("guard"));
+    if let StateAction::PureCall { arguments, .. } = &mut contract.stateful_circuits[0].actions[0] {
+        arguments.pop();
+    }
+    assert!(render_with_capabilities(&contract).is_err());
 }
 
 #[test]

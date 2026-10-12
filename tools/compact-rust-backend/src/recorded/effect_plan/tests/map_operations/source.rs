@@ -57,7 +57,7 @@ fn inspect(source: &'static str, roots: &'static [&'static str], old_required: b
                     (
                         match *name {
                             "remove_service" | "drop" | "remove" => "algebra.membership",
-                            _ => "selector.unit-composition",
+                            _ => "algebra.unit-composition",
                         },
                         "supported",
                     )

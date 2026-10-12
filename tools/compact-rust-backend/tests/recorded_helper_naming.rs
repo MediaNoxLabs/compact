@@ -133,12 +133,14 @@ fn helper_collision_uses_stable_fallback_for_normal_and_raw_spelling() {
     for helper_name in ["inner", "r#type"] {
         let mut fixture = contract(helper_name, true, true);
         // The scalar Unit algebra inlines this helper. Keep this naming test on
-        // the existing shared-helper route using an unused Uint8 public input,
-        // outside that rollout's Field/Boolean parameter domain.
+        // the existing shared-helper route using an unused Uint128 public input,
+        // outside both scalar and composed Unit public parameter domains.
         for caller in fixture.stateful_circuits.iter_mut().filter(|c| !c.internal) {
             caller.parameters.push(Parameter {
                 name: "unused".into(),
-                ty: Type::Unsigned { max: "255".into() },
+                ty: Type::Unsigned {
+                    max: u128::MAX.to_string(),
+                },
             });
         }
         let source = render(&fixture).unwrap();

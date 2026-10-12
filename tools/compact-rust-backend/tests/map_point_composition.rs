@@ -93,7 +93,7 @@ fn nested_string_product_records_and_empty_product_remains_outside_domain() {
 }
 
 #[test]
-fn boolean_helper_rejects_hidden_witness_queries_and_effects() {
+fn boolean_helper_composes_typed_effects_but_rejects_cycles_and_wrong_results() {
     for mutation in ["witness", "counter", "effect", "recursive", "wrong_result"] {
         let mut value = fixture();
         let helper = circuit(&mut value, "exists");
@@ -120,12 +120,47 @@ fn boolean_helper_rejects_hidden_witness_queries_and_effects() {
             "wrong_result" => helper["result"] = json!({"kind":"field"}),
             _ => unreachable!(),
         }
-        assert!(!recorded(value, "upsert"), "{mutation}");
+        if matches!(mutation, "witness" | "counter" | "effect") {
+            let output =
+                render_with_capabilities(&serde_json::from_value::<Contract>(value).unwrap())
+                    .unwrap();
+            assert!(
+                output
+                    .capabilities
+                    .circuits
+                    .iter()
+                    .any(|c| c.name == "upsert" && c.recorded && c.observed_call)
+            );
+            let body = output.source.split("pub mod recorded").nth(1).unwrap();
+            let operation = match mutation {
+                "witness" => "witnesses.hidden(",
+                "counter" => "record_read(",
+                _ => "record_remove(",
+            };
+            let baseline =
+                render_with_capabilities(&serde_json::from_value::<Contract>(fixture()).unwrap())
+                    .unwrap();
+            let before = baseline.source.split("pub mod recorded").nth(1).unwrap();
+            assert!(
+                body.split_whitespace()
+                    .collect::<String>()
+                    .matches(operation)
+                    .count()
+                    > before
+                        .split_whitespace()
+                        .collect::<String>()
+                        .matches(operation)
+                        .count(),
+                "{mutation}"
+            );
+        } else {
+            assert!(!recorded(value, "upsert"), "{mutation}");
+        }
     }
 }
 
 #[test]
-fn nested_value_membership_is_bounded_to_an_audited_boolean_helper() {
+fn nested_value_membership_composes_direct_and_unselected_but_keeps_slot_authority() {
     for unselected in [false, true] {
         let mut value = fixture();
         let root = circuit(&mut value, "upsert");
@@ -146,7 +181,34 @@ fn nested_value_membership_is_bounded_to_an_audited_boolean_helper() {
             hidden["action"] = original;
             json!([hidden])
         };
-        assert!(!recorded(value, "upsert"), "unselected={unselected}");
+        let output =
+            render_with_capabilities(&serde_json::from_value::<Contract>(value.clone()).unwrap())
+                .unwrap();
+        assert!(
+            output
+                .capabilities
+                .circuits
+                .iter()
+                .any(|c| c.name == "upsert" && c.recorded && c.observed_call)
+        );
+        let body = output.source.split("pub mod recorded").nth(1).unwrap();
+        let baseline =
+            render_with_capabilities(&serde_json::from_value::<Contract>(fixture()).unwrap())
+                .unwrap();
+        let before = baseline.source.split("pub mod recorded").nth(1).unwrap();
+        assert!(body.matches("record_member(").count() > before.matches("record_member(").count());
+        // The same reachable or unselected read still requires the declared slot.
+        let first = &mut circuit(&mut value, "upsert")["actions"][0];
+        let binding = if unselected {
+            &mut first["then"]["bindings"][0]
+        } else {
+            &mut first["bindings"][0]
+        };
+        binding["value"]["index"] = json!(99);
+        assert!(
+            !recorded(value, "upsert"),
+            "invalid slot, unselected={unselected}"
+        );
     }
 }
 

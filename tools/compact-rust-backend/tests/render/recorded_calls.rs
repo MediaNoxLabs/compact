@@ -652,7 +652,10 @@ fn typed_pair_hash_call_composes_certified_bodies_and_rejects_invalid_calls() {
             .contains("fn __compact_recorded_body_storeVector")
     );
     assert!(rendered.source.contains("pure_circuits::hashVector("));
-    assert!(rendered.source.contains("__compact_recorded_pair_arg_"));
+    let body =
+        super::lifecycle_recording::generated_body(&rendered.source, "recorded", "conditional");
+    assert!(body.contains("record_read") && body.contains("record_write"));
+    assert!(body.contains("hashVector"));
 
     contract.circuits[0].body = Expr::TransientHash {
         value: Box::new(Expr::FieldLiteral { value: "7".into() }),

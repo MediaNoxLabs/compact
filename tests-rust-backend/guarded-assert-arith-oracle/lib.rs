@@ -246,19 +246,21 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_guard_arg_0: crate::types::VerifierPolicy =
-                (__compact_param_0).clone();
-            let __compact_recorded_guard_arg_1: crate::types::Attestation =
-                (__compact_param_1).clone();
-            let __compact_recorded_guard_arg_2: runtime::BoundedUint<18446744073709551615> =
-                __compact_param_2;
-            crate::pure_circuits::assertFreshEnough(
-                __compact_recorded_guard_arg_0,
-                __compact_recorded_guard_arg_1,
-                __compact_recorded_guard_arg_2,
+            let __compact_effect_0: crate::types::VerifierPolicy = __compact_param_0;
+            let __compact_effect_1: crate::types::Attestation = __compact_param_1;
+            let __compact_effect_2: runtime::BoundedUint<18446744073709551615> = __compact_param_2;
+            let __compact_effect_3: () = crate::pure_circuits::assertFreshEnough(
+                (__compact_effect_0).clone(),
+                (__compact_effect_1).clone(),
+                __compact_effect_2,
             )?;
-            let frame = crate::ledger_slots::accepted.record_increment(frame, 1u16)?;
-            Ok(frame.finish(()))
+            let __compact_effect_4: runtime::BoundedUint<65535> =
+                <runtime::BoundedUint<65535>>::new(1u128)?;
+            let frame = crate::ledger_slots::accepted
+                .record_increment(frame, (__compact_effect_4).value() as u16)?;
+            let __compact_effect_5: () = ();
+            let __compact_effect_6: () = ();
+            Ok(frame.finish(__compact_effect_6))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

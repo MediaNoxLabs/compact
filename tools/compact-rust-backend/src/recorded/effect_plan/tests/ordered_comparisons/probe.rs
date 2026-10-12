@@ -30,7 +30,7 @@ pub(super) fn export(
     assert_eq!(
         rows[0]["body_owner"],
         if require_old {
-            "selector.unit-composition"
+            "algebra.unit-composition"
         } else {
             "algebra.composite-values"
         }

@@ -104,8 +104,8 @@ fn unsupported_in_domain_body_keeps_independent_later_attempts() {
     let position = |name| attempted.iter().position(|id| *id == name).unwrap();
     assert!(position("algebra.terminal-returns") < position("algebra.unit-actions"));
     assert!(!attempted.contains(&"selector.phase-reset"));
-    assert!(position("algebra.unit-actions") < position("selector.unit-composition"));
-    assert!(position("selector.unit-composition") < position("algebra.zswap"));
+    assert!(position("algebra.unit-actions") < position("algebra.unit-composition"));
+    assert!(position("algebra.unit-composition") < position("algebra.zswap"));
     assert!(!attempted.contains(&"selector.terminal-returns"));
 }
 
@@ -153,7 +153,7 @@ fn later_unit_family_still_wins_outside_declared_field_domain() {
     assert_eq!(row["body_owner"], "algebra.unit-actions");
     let attempted = attempts(&row);
     assert!(attempted.contains(&"algebra.terminal-returns"));
-    assert!(!attempted.contains(&"selector.unit-composition"));
+    assert!(!attempted.contains(&"algebra.unit-composition"));
 }
 
 #[test]

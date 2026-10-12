@@ -57,6 +57,7 @@ mod profile_attempt;
 mod profile_selection;
 mod pure_calls;
 pub(crate) use helpers::plan_recorded_helpers;
+#[cfg(test)]
 use profile_attempt::ProfileAttempt;
 use pure_calls::closed_pure_field_call;
 #[cfg(test)]
@@ -698,7 +699,7 @@ fn render_recorded_item(
         organizer_steps,
         typed_result,
         shielded_send_rejection,
-        composition_rejection,
+        unit_composition_rejection,
     } = profile_selection::select(
         circuit,
         ledger_fields,
@@ -866,7 +867,7 @@ fn render_recorded_item(
                     &mut visiting,
                     &mut legacy_precision,
                 )? {
-                    let gap = composition_rejection.as_ref().map_or_else(
+                    let gap = unit_composition_rejection.as_ref().map_or_else(
                         || gap.clone(),
                         |rejection| rejection.refine_action(index, legacy_precision, gap.clone()),
                     );

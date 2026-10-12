@@ -245,7 +245,7 @@ fn unsupported_body_refuses_at_last_priority_without_old_fallback() {
     let attempted = attempts(&row);
     assert_eq!(
         &attempted[attempted.len() - 2..],
-        &["selector.unit-composition", "algebra.zswap"]
+        &["algebra.unit-composition", "algebra.zswap"]
     );
     assert!(!attempted.contains(&"selector.zswap"));
     crate::render_with_capabilities(&c).unwrap();

@@ -153,6 +153,30 @@ fn string_set_slot_key_and_enum_identity_stay_typed() {
             }
             _ => unreachable!(),
         }
+        if kind == "hidden_map" {
+            let output =
+                render_with_capabilities(&serde_json::from_value::<Contract>(v.clone()).unwrap())
+                    .unwrap();
+            assert!(
+                output
+                    .capabilities
+                    .circuits
+                    .iter()
+                    .any(|c| c.name == "mutate" && c.recorded && c.observed_call)
+            );
+            let body = output.source.split("pub mod recorded").nth(1).unwrap();
+            assert!(
+                body.split_whitespace()
+                    .collect::<String>()
+                    .contains("other_map.record_remove(")
+            );
+            // Typed mutation composition does not admit an unsupported Map reset.
+            let actions = declaration(&mut v, "stateful_circuits", "mutate")["actions"]
+                .as_array_mut()
+                .unwrap();
+            actions.last_mut().unwrap()["otherwise"] =
+                json!({"kind":"map_reset","field":"other_map","index":2});
+        }
         assert!(!recorded(v, "mutate"), "{kind}");
     }
 }

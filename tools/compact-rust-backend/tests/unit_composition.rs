@@ -225,7 +225,7 @@ fn crypto() -> Value {
     serde_json::from_str(include_str!("unit-composition/crypto.json")).unwrap()
 }
 #[test]
-fn native_crypto_helpers_cannot_hide_a_public_read_and_fall_back_to_recorded() {
+fn stateful_crypto_helpers_record_public_reads_and_reject_invalid_slots() {
     assert!(recorded(crypto()));
     for unused_binding in [false, true] {
         let mut v = crypto();
@@ -239,7 +239,36 @@ fn native_crypto_helpers_cannot_hide_a_public_read_and_fall_back_to_recorded() {
             .as_array_mut()
             .unwrap()
             .push(json!({"kind":"assert","condition":hidden,"message":"hidden public effect"}));
-        assert!(!recorded(v), "unused_binding={unused_binding}");
+        let output =
+            render_with_capabilities(&serde_json::from_value::<Contract>(v.clone()).unwrap())
+                .unwrap();
+        assert!(
+            output
+                .capabilities
+                .circuits
+                .iter()
+                .any(|c| c.name == "close" && c.recorded && c.observed_call)
+        );
+        let body = output.source.split("pub mod recorded").nth(1).unwrap();
+        let baseline =
+            render_with_capabilities(&serde_json::from_value::<Contract>(crypto()).unwrap())
+                .unwrap();
+        let before = baseline.source.split("pub mod recorded").nth(1).unwrap();
+        assert!(body.matches("record_read(").count() > before.matches("record_read(").count());
+        let actions = circuit(&mut v, "schnorrVerify")["actions"]
+            .as_array_mut()
+            .unwrap();
+        let condition = &mut actions.last_mut().unwrap()["condition"];
+        let read = if unused_binding {
+            &mut condition["bindings"][0]["value"]
+        } else {
+            &mut condition["otherwise"]
+        };
+        read["index"] = json!(99);
+        assert!(
+            !recorded(v),
+            "invalid read slot, unused_binding={unused_binding}"
+        );
     }
 }
 #[test]

@@ -124,7 +124,7 @@ fn complete_old_buy_in_keeps_actual_composite_owner_without_funded_fallback() {
     public_owner(&c, "buy_in");
     let row = selected_trace(&c, r);
     assert!(!attempts(&row).contains(&"selector.funded-mint"));
-    assert!(!attempts(&row).contains(&"selector.unit-composition"));
+    assert!(!attempts(&row).contains(&"algebra.unit-composition"));
 }
 
 #[test]

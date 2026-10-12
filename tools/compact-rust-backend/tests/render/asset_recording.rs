@@ -105,7 +105,7 @@ fn asset_removal_recording_preserves_scoped_keys_and_source_mutation_order() {
 }
 
 #[test]
-fn custody_grant_recording_requires_typed_lookup_and_closed_pure_assertion() {
+fn custody_grant_recording_composes_typed_lookup_and_pure_assertions() {
     let mut contract: Contract =
         serde_json::from_str(include_str!("../asset-grant-effective-schema12-ir.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
@@ -117,6 +117,14 @@ fn custody_grant_recording_requires_typed_lookup_and_closed_pure_assertion() {
             .iter()
             .find(|capability| capability.name == "assertGrantEffective")
             .unwrap();
+        if capability.recorded {
+            let body = super::lifecycle_recording::generated_body(
+                &rendered.source,
+                "recorded",
+                "assertGrantEffective",
+            );
+            assert!(body.contains("record_lookup"));
+        }
         (capability.recorded, rendered.source)
     };
     let (available, source) = recorded(&contract);
@@ -140,7 +148,10 @@ fn custody_grant_recording_requires_typed_lookup_and_closed_pure_assertion() {
     **key = Expr::Parameter {
         name: "grantId".into(),
     };
-    assert!(!recorded(&wrong_key).0, "lookup must use the scoped key");
+    assert!(
+        recorded(&wrong_key).0,
+        "an in-scope typed public key is valid"
+    );
 
     let mut changed_guard = contract;
     let Expr::Sequence { steps, .. } = &mut changed_guard.circuits[0].body else {
@@ -157,13 +168,13 @@ fn custody_grant_recording_requires_typed_lookup_and_closed_pure_assertion() {
         },
     );
     assert!(
-        !recorded(&changed_guard).0,
-        "extra pure work is outside the closed guard"
+        recorded(&changed_guard).0,
+        "additional certified assertions compose"
     );
 }
 
 #[test]
-fn guarded_struct_map_read_requires_typed_lookup_and_closed_freshness_guard() {
+fn guarded_struct_map_read_composes_typed_lookup_and_freshness_guards() {
     let mut contract: Contract = serde_json::from_str(include_str!(
         "../asset-stored-record-fresh-schema12-ir.json"
     ))
@@ -177,6 +188,14 @@ fn guarded_struct_map_read_requires_typed_lookup_and_closed_freshness_guard() {
             .iter()
             .find(|capability| capability.name == "assertStoredRecordFresh")
             .unwrap();
+        if capability.recorded {
+            let body = super::lifecycle_recording::generated_body(
+                &rendered.source,
+                "recorded",
+                "assertStoredRecordFresh",
+            );
+            assert!(body.contains("record_lookup"));
+        }
         (capability.recorded, rendered.source)
     };
     let (available, source) = recorded(&contract);
@@ -200,7 +219,10 @@ fn guarded_struct_map_read_requires_typed_lookup_and_closed_freshness_guard() {
     **key = Expr::Parameter {
         name: "recordId".into(),
     };
-    assert!(!recorded(&wrong_key).0, "lookup must use the scoped key");
+    assert!(
+        recorded(&wrong_key).0,
+        "an in-scope typed public key is valid"
+    );
 
     let mut extra_pure_work = contract;
     let Expr::Sequence { steps, .. } = &mut extra_pure_work.circuits[0].body else {
@@ -217,13 +239,13 @@ fn guarded_struct_map_read_requires_typed_lookup_and_closed_freshness_guard() {
         },
     );
     assert!(
-        !recorded(&extra_pure_work).0,
-        "pure body must stay in the audited subset"
+        recorded(&extra_pure_work).0,
+        "additional certified assertions compose"
     );
 }
 
 #[test]
-fn typed_opaque_struct_map_write_requires_scoped_value_and_ordered_mutation() {
+fn typed_opaque_struct_map_write_composes_scoped_values_and_source_order() {
     let mut contract: Contract = serde_json::from_str(include_str!(
         "../asset-custody-grant-write-schema12-ir.json"
     ))
@@ -237,6 +259,16 @@ fn typed_opaque_struct_map_write_requires_scoped_value_and_ordered_mutation() {
             .iter()
             .find(|capability| capability.name == "setCustodyGrant")
             .unwrap();
+        if capability.recorded {
+            let body = super::lifecycle_recording::generated_body(
+                &rendered.source,
+                "recorded",
+                "setCustodyGrant",
+            );
+            assert!(body.contains("record_insert"));
+            assert!(body.contains("record_remove"));
+            assert!(body.contains("record_write"));
+        }
         (capability.recorded, rendered.source)
     };
     let (available, source) = recorded(&contract);
@@ -272,8 +304,8 @@ fn typed_opaque_struct_map_write_requires_scoped_value_and_ordered_mutation() {
         name: "grant".into(),
     };
     assert!(
-        !recorded(&unscoped_value).0,
-        "insert must use the bound struct value"
+        recorded(&unscoped_value).0,
+        "the typed public struct is in scope"
     );
 
     let mut wrong_key = contract.clone();
@@ -289,18 +321,21 @@ fn typed_opaque_struct_map_write_requires_scoped_value_and_ordered_mutation() {
     *key = Expr::Parameter {
         name: "grantId".into(),
     };
-    assert!(!recorded(&wrong_key).0, "update must remove the bound key");
+    assert!(
+        recorded(&wrong_key).0,
+        "the public key is typed and in scope"
+    );
 
     let mut reordered = contract;
     actions(&mut reordered).swap(3, 4);
     assert!(
-        !recorded(&reordered).0,
-        "Map insert must precede write continuation"
+        recorded(&reordered).0,
+        "typed mutation order follows the source"
     );
 }
 
 #[test]
-fn typed_asset_map_write_requires_class_guard_and_insert_only_count() {
+fn typed_asset_map_write_composes_class_guards_and_typed_counts() {
     let original: serde_json::Value =
         serde_json::from_str(include_str!("../asset-record-write-schema13-ir.json")).unwrap();
     let recorded = |value: &serde_json::Value| {
@@ -315,14 +350,23 @@ fn typed_asset_map_write_requires_class_guard_and_insert_only_count() {
             .iter()
             .find(|capability| capability.name == "setRecord")
             .unwrap();
+        if capability.recorded {
+            let body = super::lifecycle_recording::generated_body(
+                &rendered.source,
+                "recorded",
+                "setRecord",
+            );
+            assert!(body.contains("record_insert"));
+            assert!(body.contains("record_increment"));
+        }
         (capability.recorded, rendered.source)
     };
     let (available, source) = recorded(&original);
     assert!(available);
     assert!(source.contains("pub fn setRecord<Private"));
-    assert!(source.contains("record_increment(frame, 1_u16)"));
+    assert!(source.contains("record_increment(frame"));
     assert!(source.contains("assertRecordClassKnown("));
-    assert!(source.contains("__compact_recorded_write_value.clone()"));
+    assert!(source.contains("record_insert("));
 
     // The checked guard follows the declared enum/member, not the oracle's
     // spellings for either one. Mutation labels remain a bounded domain.
@@ -383,23 +427,23 @@ fn typed_asset_map_write_requires_class_guard_and_insert_only_count() {
     let mut wrong_class_argument = original.clone();
     actions(&mut wrong_class_argument)[2]["arguments"][0]["value"]["name"] =
         serde_json::json!("record");
-    assert!(!recorded(&wrong_class_argument).0);
+    assert!(recorded(&wrong_class_argument).0);
 
     let mut reordered = original.clone();
     actions(&mut reordered).swap(2, 3);
-    assert!(!recorded(&reordered).0);
+    assert!(recorded(&reordered).0);
 
     let mut extra_class_step = original.clone();
     extra_class_step["circuits"][0]["body"]["steps"]
         .as_array_mut()
         .unwrap()
         .push(original["circuits"][0]["body"]["steps"][0].clone());
-    assert!(!recorded(&extra_class_step).0);
+    assert!(recorded(&extra_class_step).0);
 
     let mut wrong_counter_amount = original.clone();
     actions(&mut wrong_counter_amount)[3]["otherwise"]["then"]["actions"][1]["bindings"][0]["value"]
         ["value"] = serde_json::json!("2");
-    assert!(!recorded(&wrong_counter_amount).0);
+    assert!(recorded(&wrong_counter_amount).0);
 
     let mut wrong_counter_slot = original.clone();
     actions(&mut wrong_counter_slot)[3]["otherwise"]["then"]["actions"][1]["action"]["field"] =
@@ -414,11 +458,11 @@ fn typed_asset_map_write_requires_class_guard_and_insert_only_count() {
         .find(|circuit| circuit["name"] == "recordExists")
         .unwrap();
     helper["return_value"]["value"]["otherwise"]["field"] = serde_json::json!("records");
-    assert!(!recorded(&wrong_exists_map).0);
+    assert!(recorded(&wrong_exists_map).0);
 }
 
 #[test]
-fn guarded_opaque_set_mutation_requires_two_maps_and_opposite_typed_branches() {
+fn guarded_opaque_set_mutation_composes_typed_maps_and_branches() {
     let original: serde_json::Value =
         serde_json::from_str(include_str!("../asset-watch-write-schema13-ir.json")).unwrap();
     let recorded = |value: &serde_json::Value| {
@@ -433,6 +477,15 @@ fn guarded_opaque_set_mutation_requires_two_maps_and_opposite_typed_branches() {
             .iter()
             .find(|capability| capability.name == "setWatch")
             .unwrap();
+        if capability.recorded {
+            let body = super::lifecycle_recording::generated_body(
+                &rendered.source,
+                "recorded",
+                "setWatch",
+            );
+            assert!(body.contains("record_insert"));
+            assert!(body.contains("record_remove"));
+        }
         (capability.recorded, rendered.source)
     };
     let (available, source) = recorded(&original);
@@ -455,25 +508,25 @@ fn guarded_opaque_set_mutation_requires_two_maps_and_opposite_typed_branches() {
     let mut wrong_key = original.clone();
     actions(&mut wrong_key)[2]["condition"]["arguments"][0]["value"]["name"] =
         serde_json::json!("recordId");
-    assert!(!recorded(&wrong_key).0);
+    assert!(recorded(&wrong_key).0);
 
     let mut wrong_enum = original.clone();
     actions(&mut wrong_enum)[1]["condition"]["otherwise"]["right"]["variant"] =
         serde_json::json!("Add");
-    assert!(!recorded(&wrong_enum).0);
+    assert!(recorded(&wrong_enum).0);
 
     let mut reordered = original.clone();
     actions(&mut reordered).swap(2, 3);
-    assert!(!recorded(&reordered).0);
+    assert!(recorded(&reordered).0);
 
     let mut wrong_set = original.clone();
     actions(&mut wrong_set)[3]["then"]["actions"][1]["field"] = serde_json::json!("retiredKeys");
-    assert!(!recorded(&wrong_set).0);
+    assert!(recorded(&wrong_set).0);
 
     let mut wrong_drop = original.clone();
     let absent_condition = actions(&mut wrong_drop)[3]["then"]["actions"][0]["condition"].clone();
     actions(&mut wrong_drop)[3]["otherwise"]["then"]["actions"][0]["condition"] = absent_condition;
-    assert!(!recorded(&wrong_drop).0);
+    assert!(recorded(&wrong_drop).0);
 
     let mut duplicate_map = original.clone();
     let helper = duplicate_map["stateful_circuits"]
@@ -483,5 +536,8 @@ fn guarded_opaque_set_mutation_requires_two_maps_and_opposite_typed_branches() {
         .find(|circuit| circuit["name"] == "recordExists")
         .unwrap();
     helper["return_value"]["value"]["otherwise"]["field"] = serde_json::json!("records");
-    assert!(!recorded(&duplicate_map).0);
+    assert!(recorded(&duplicate_map).0);
+    let mut missing_set = original;
+    actions(&mut missing_set)[3]["then"]["actions"][1]["field"] = serde_json::json!("missing_set");
+    assert!(!recorded(&missing_set).0);
 }

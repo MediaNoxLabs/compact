@@ -38,6 +38,9 @@ Aligned hash test adaptation requires --aligned-test-extension after #581 and
 reconstructs five test owners before the immutable three-owner Keccak checkpoint.
 Encoding correction requires --encoding-extension after #582; authenticate the live
 shared renderer and unchanged admission prefix before reconstructing its prior fingerprint.
+Final Unit composition retirement requires --unit-composition-transition after #586.
+It authenticates live owners, reconstructs the signed historical checkpoint, and
+checks current selector/anchors separately; no historical manifest is rewritten.
 Human review must classify new/changed routes before a future baseline update.
 """
 from __future__ import annotations
@@ -49,6 +52,7 @@ from pathlib import Path
 import re
 import sys
 
+import recording_admission_inventory_unit_composition as unit_composition
 import recording_admission_inventory_jubjub as jubjub
 import recording_admission_inventory_calls as calls
 import recording_admission_inventory_terminal as terminal
@@ -288,7 +292,16 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
            aligned_test_extension: dict | None = None,
            encoding_extension: dict | None = None,
            negation_test_extension: dict | None = None,
-           value_test_extension: dict | None = None) -> dict:
+           value_test_extension: dict | None = None,
+           unit_composition_transition: dict | None = None) -> dict:
+    if unit_composition_transition is not None:
+        arguments = locals().copy()
+        arguments['unit_composition_transition'] = None
+        def historical_verify(checkpoint):
+            return verify(**{**arguments, 'root': checkpoint})
+        return unit_composition.verify_transition(
+            root, baseline, unit_composition_transition, historical_verify, selector_signature)
+
     errors = validate_baseline(baseline)
     report = {'schema_version': 1, 'baseline_commit': baseline.get('baseline_commit'),
               'claim': 'source route inventory; not language or behavioral coverage',
@@ -1140,6 +1153,7 @@ def main(argv=None) -> int:
     parser.add_argument('--negation-test-extension', type=Path, help='explicit #585 test-only EcNeg adaptation; no retirement')
     parser.add_argument('--aligned-test-extension', type=Path, help='explicit #582 test-only aligned hash adaptation; no retirement')
     parser.add_argument('--keccak-test-extension', type=Path, help='explicit #581 test-only Keccak operand adaptation; no retirement')
+    parser.add_argument('--unit-composition-transition', type=Path, help='explicit #580 final Unit selector retirement with signed predecessor reconstruction')
     args = parser.parse_args(argv)
     protected = [args.baseline] + ([args.transition] if args.transition else []) + ([args.instrumentation] if args.instrumentation else []) + ([args.jubjub_transition] if args.jubjub_transition else []) + ([args.call_extension] if args.call_extension else []) + ([args.terminal_transition] if args.terminal_transition else []) + ([args.unit_actions_transition] if args.unit_actions_transition else []) + ([args.context_query_transition] if args.context_query_transition else []) + ([args.kernel_transition] if args.kernel_transition else []) + ([args.composite_transition] if args.composite_transition else []) + ([args.receive_transition] if args.receive_transition else [])
     protected += [args.unit_domain_extension] if args.unit_domain_extension else []
@@ -1162,6 +1176,7 @@ def main(argv=None) -> int:
     protected += [args.negation_test_extension] if args.negation_test_extension else []
     protected += [args.aligned_test_extension] if args.aligned_test_extension else []
     protected += [args.keccak_test_extension] if args.keccak_test_extension else []
+    protected += [args.unit_composition_transition] if args.unit_composition_transition else []
     if args.output and any(args.output.resolve() == path.resolve() for path in protected):
         parser.error('--output cannot overwrite baseline, transition, instrumentation, or call-extension evidence')
     try:
@@ -1197,7 +1212,8 @@ def main(argv=None) -> int:
         negation_test_extension = json.loads(args.negation_test_extension.read_text()) if args.negation_test_extension else None
         aligned_test_extension = json.loads(args.aligned_test_extension.read_text()) if args.aligned_test_extension else None
         keccak_test_extension = json.loads(args.keccak_test_extension.read_text()) if args.keccak_test_extension else None
-        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension, voting_transition, phase_reset_transition, immediate_send_transition, zswap_transition, membership_transition, send_transition, observation_test_extension, merge_transition, guarded_deposit_transition, routing_test_extension, reset_payout_transition, shielded_payout_transition, inequality_test_extension, funded_mint_transition, keccak_test_extension, aligned_test_extension, encoding_extension, negation_test_extension, value_test_extension)
+        unit_composition_transition = json.loads(args.unit_composition_transition.read_text()) if args.unit_composition_transition else None
+        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension, voting_transition, phase_reset_transition, immediate_send_transition, zswap_transition, membership_transition, send_transition, observation_test_extension, merge_transition, guarded_deposit_transition, routing_test_extension, reset_payout_transition, shielded_payout_transition, inequality_test_extension, funded_mint_transition, keccak_test_extension, aligned_test_extension, encoding_extension, negation_test_extension, value_test_extension, unit_composition_transition)
     except (OSError, ValueError, TypeError, KeyError) as error:
         parser.exit(2, f'inventory error: {error}\n')
     rendered = json.dumps(report, indent=2) + '\n'

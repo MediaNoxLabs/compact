@@ -591,7 +591,7 @@ fn closed_unsigned_ternary_comparison_records_only_matching_literal_arms() {
 }
 
 #[test]
-fn closed_ternary_struct_member_records_only_literal_field_values() {
+fn ternary_struct_member_records_typed_literal_and_parameter_values() {
     let box_ty = Type::Struct {
         name: "Box".into(),
         fields: vec![StructField {
@@ -668,7 +668,9 @@ fn closed_ternary_struct_member_records_only_literal_field_values() {
     }];
     let rendered = render_with_capabilities(&contract).unwrap();
     assert!(rendered.capabilities.circuits[0].recorded);
-    assert!(rendered.source.contains("__compact_recorded_struct_"));
+    let body = super::lifecycle_recording::generated_body(&rendered.source, "recorded", "test");
+    assert!(body.contains("record_write") && body.contains("if "));
+    let literal_body = body;
 
     let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
         unreachable!()
@@ -689,5 +691,13 @@ fn closed_ternary_struct_member_records_only_literal_field_values() {
         ty: uint,
     };
     let rendered = render_with_capabilities(&contract).unwrap();
-    assert!(!rendered.capabilities.circuits[0].recorded);
+    assert!(
+        rendered.capabilities.circuits[0].recorded
+            && rendered.capabilities.circuits[0].observed_call
+    );
+    let body = super::lifecycle_recording::generated_body(&rendered.source, "recorded", "test");
+    // Generated parameters use positional Rust identifiers, not source names.
+    // Only the branch input changed: require the emitted body to reflect it.
+    assert_ne!(body, literal_body);
+    assert!(body.contains("if ") && body.contains("record_write"));
 }

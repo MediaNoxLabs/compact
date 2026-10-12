@@ -152,12 +152,26 @@ fn nested_product_helper_audit_rejects_hidden_effects_cycle_and_wrong_enum_type(
 }
 
 #[test]
-fn nested_product_domain_does_not_admit_unreviewed_unsigned_or_empty_values() {
-    for source in [
-        include_str!("map-composition/mixed_map.json"),
-        include_str!("map-composition/empty_map.json"),
-    ] {
-        let value: Value = serde_json::from_str(source).unwrap();
-        assert!(!recorded(value, "put"));
-    }
+fn nested_product_domain_uses_scalar_codecs_and_rejects_empty_values() {
+    let mixed: Contract =
+        serde_json::from_str(include_str!("map-composition/mixed_map.json")).unwrap();
+    let output = render_with_capabilities(&mixed).unwrap();
+    assert!(
+        output
+            .capabilities
+            .circuits
+            .iter()
+            .any(|c| c.name == "put" && c.recorded && c.observed_call)
+    );
+    assert!(
+        output
+            .source
+            .split("pub mod recorded")
+            .nth(1)
+            .unwrap()
+            .contains("record_insert(")
+    );
+    let empty: Value =
+        serde_json::from_str(include_str!("map-composition/empty_map.json")).unwrap();
+    assert!(!recorded(empty, "put"));
 }

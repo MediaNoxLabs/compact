@@ -328,8 +328,11 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame = crate::ledger_slots::t.record_insert(frame, __compact_param_0)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: runtime::BoundedUint<255> = __compact_param_0;
+            let frame = crate::ledger_slots::t.record_insert(frame, __compact_effect_0)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn get_path<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -354,8 +357,11 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame = crate::ledger_slots::h.record_insert(frame, __compact_param_0)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: runtime::BoundedUint<255> = __compact_param_0;
+            let frame = crate::ledger_slots::h.record_insert(frame, __compact_effect_0)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn get_historic_path<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,

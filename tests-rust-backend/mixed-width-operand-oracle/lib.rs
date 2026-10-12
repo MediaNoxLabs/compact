@@ -348,16 +348,17 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_product_arg_0: runtime::BoundedUint<4294967295> =
-                __compact_param_0;
-            let __compact_recorded_product_arg_1: runtime::BoundedUint<4294967295> =
-                __compact_param_1;
-            crate::pure_circuits::assertProductLE(
-                __compact_recorded_product_arg_0,
-                __compact_recorded_product_arg_1,
-            )?;
-            let frame = crate::ledger_slots::mixedOps.record_increment(frame, 1u16)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: runtime::BoundedUint<4294967295> = __compact_param_0;
+            let __compact_effect_1: runtime::BoundedUint<4294967295> = __compact_param_1;
+            let __compact_effect_2: () =
+                crate::pure_circuits::assertProductLE(__compact_effect_0, __compact_effect_1)?;
+            let __compact_effect_3: runtime::BoundedUint<65535> =
+                <runtime::BoundedUint<65535>>::new(1u128)?;
+            let frame = crate::ledger_slots::mixedOps
+                .record_increment(frame, (__compact_effect_3).value() as u16)?;
+            let __compact_effect_4: () = ();
+            let __compact_effect_5: () = ();
+            Ok(frame.finish(__compact_effect_5))
         }
         pub fn recordMatching<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -366,15 +367,24 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_widened_0: runtime::BoundedUint<4294967295> =
-                runtime::cast_unsigned::<255, 4294967295>(__compact_param_0)?;
-            if !(__compact_recorded_widened_0 == __compact_param_1) {
+            let __compact_effect_0: runtime::BoundedUint<255> = __compact_param_0;
+            let __compact_effect_1: runtime::BoundedUint<4294967295> = __compact_param_1;
+            let __compact_effect_2: runtime::BoundedUint<4294967295> =
+                runtime::cast_unsigned::<255, 4294967295>(__compact_effect_0)?;
+            let __compact_effect_3: bool = __compact_effect_2 == __compact_effect_1;
+            if !__compact_effect_3 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "values must match across widths".to_owned(),
                 ));
             }
-            let frame = crate::ledger_slots::mixedOps.record_increment(frame, 1u16)?;
-            Ok(frame.finish(()))
+            let __compact_effect_4: () = ();
+            let __compact_effect_5: runtime::BoundedUint<65535> =
+                <runtime::BoundedUint<65535>>::new(1u128)?;
+            let frame = crate::ledger_slots::mixedOps
+                .record_increment(frame, (__compact_effect_5).value() as u16)?;
+            let __compact_effect_6: () = ();
+            let __compact_effect_7: () = ();
+            Ok(frame.finish(__compact_effect_7))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

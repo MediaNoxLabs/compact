@@ -42,6 +42,7 @@ struct Lowerer<'a> {
     next: usize,
     root_action: Option<usize>,
     failure_precision: Precision,
+    concrete_node: Option<Box<str>>,
 }
 
 #[cfg(test)]
@@ -79,6 +80,7 @@ pub(super) fn lower_with_pure_calls<'a>(
         next: 0,
         root_action: None,
         failure_precision: Precision::Unclassified,
+        concrete_node: None,
     };
     let mut scope = Scope::new();
     let mut parameters = Vec::new();
@@ -103,6 +105,7 @@ pub(super) fn lower_with_pure_calls<'a>(
             gap,
             root_action: lower.root_action,
             precision: lower.failure_precision,
+            concrete_node: lower.concrete_node.take(),
         })?;
     let plan = Plan {
         parameters,
@@ -128,8 +131,19 @@ impl Lowerer<'_> {
         self.concrete_failure(RecordingGap::action(action, path.into()))
     }
 
-    fn unsupported_expression_reason(&mut self, path: &str, detail: &str) -> RecordingGap {
-        // Keep the existing gap byte-for-byte; provenance is additive metadata.
+    fn unsupported_expression_reason(
+        &mut self,
+        expression: &Expr,
+        path: &str,
+        detail: &str,
+    ) -> RecordingGap {
+        // Keep the ordinary gap byte-for-byte. Only Unit diagnostic refinement
+        // consumes this actual node label; no display text is parsed.
+        self.concrete_node = Some(
+            RecordingGap::expression(expression, String::new())
+                .ir_node
+                .into_boxed_str(),
+        );
         self.concrete_failure(invalid(path, detail))
     }
 

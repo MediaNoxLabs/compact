@@ -224,16 +224,36 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_plan_0: runtime::OpaqueString = (__compact_param_0).clone();
-            let __compact_plan_1: crate::types::Mutation = __compact_param_1;
-            let __compact_plan_2: runtime::Field =
-                crate::pure_circuits::digest(__compact_plan_0, __compact_plan_1)?;
-            let __compact_plan_3: runtime::Field = __compact_plan_2;
-            let (frame, ()) =
-                frame.call_local(|context| super::checked(context, witnesses, __compact_plan_3))?;
-            let __compact_plan_4: bool = true;
-            let frame = crate::ledger_slots::active.record_write(frame, __compact_plan_4)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
+            let __compact_effect_1: crate::types::Mutation = __compact_param_1;
+            let __compact_effect_2: runtime::Field =
+                crate::pure_circuits::digest((__compact_effect_0).clone(), __compact_effect_1)?;
+            let (frame, __compact_effect_7): (_, ()) = {
+                let __compact_effect_3: runtime::Field = __compact_effect_2;
+                let (frame, __compact_effect_4): (_, bool) =
+                    frame.try_witness_metered(|context, meter| {
+                        witnesses.authorize(
+                            context.witness_context_with(super::LedgerView {
+                                state: context.query.state.get_ref(),
+                                meter,
+                            }),
+                            __compact_effect_3,
+                        )
+                    })?;
+                if !__compact_effect_4 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "unauthorized".to_owned(),
+                    ));
+                }
+                let __compact_effect_5: () = ();
+                let __compact_effect_6: () = ();
+                (frame, __compact_effect_6)
+            };
+            let __compact_effect_8: bool = true;
+            let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_8)?;
+            let __compact_effect_9: () = ();
+            let __compact_effect_10: () = ();
+            Ok(frame.finish(__compact_effect_10))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

@@ -21,7 +21,7 @@ class ValueTestExtensionTests(unittest.TestCase):
         for owner in value.OWNERS:
             path = self.root / owner
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes((inventory.ROOT / owner).read_bytes())
+            path.write_bytes((previous.checkpoint_586(inventory.ROOT) / owner).read_bytes())
 
     def report(self):
         return prior_tests.FundedMintTransitionTests.report(
@@ -68,7 +68,7 @@ class ValueTestExtensionTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             value._TestCheckpoint(self.root, {inventory.SELECTOR: 'forged'})
         # The checkpoint never supplies production content.
-        snapshots = value.predecessor_sources(inventory.ROOT, json.loads(previous.VALUE_TEST_EXTENSION.read_text()))
+        snapshots = value.predecessor_sources(previous.checkpoint_586(inventory.ROOT), json.loads(previous.VALUE_TEST_EXTENSION.read_text()))
         checkpoint = value._TestCheckpoint(self.root, snapshots)
         self.assertEqual(checkpoint / inventory.SELECTOR, self.root / inventory.SELECTOR)
 

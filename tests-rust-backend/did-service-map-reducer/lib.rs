@@ -284,79 +284,75 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_plan_0: crate::types::Service = (__compact_param_0).clone();
-            let __compact_plan_1: crate::types::Mutation = __compact_param_1;
-            let __compact_plan_2: crate::types::Mutation = __compact_plan_1;
-            crate::pure_circuits::defined(__compact_plan_2)?;
-            let __compact_plan_3: crate::types::Mutation = crate::types::Mutation::Update;
-            let __compact_plan_4: bool = __compact_plan_1 == __compact_plan_3;
-            #[allow(
-                clippy::let_and_return,
-                reason = "uniform branch frames preserve ordered recording steps"
-            )]
-            let frame = if __compact_plan_4 {
-                let __compact_plan_5: runtime::OpaqueString =
-                    (((__compact_plan_0).clone()).id).clone();
-                let __compact_plan_6: runtime::OpaqueString = __compact_plan_5;
-                let (frame, __compact_plan_7): (_, bool) = crate::ledger_slots::services
-                    .record_member(frame, (__compact_plan_6).clone())?;
-                if !__compact_plan_7 {
+            let __compact_effect_0: crate::types::Service = __compact_param_0;
+            let __compact_effect_1: crate::types::Mutation = __compact_param_1;
+            let __compact_effect_2: () = crate::pure_circuits::defined(__compact_effect_1)?;
+            let __compact_effect_3: crate::types::Mutation = crate::types::Mutation::Update;
+            let __compact_effect_4: bool = __compact_effect_1 == __compact_effect_3;
+            let (frame, __compact_effect_23): (_, ()) = if __compact_effect_4 {
+                let __compact_effect_5: runtime::OpaqueString = (__compact_effect_0.id).clone();
+                let (frame, __compact_effect_6): (_, bool) = crate::ledger_slots::services
+                    .record_member(frame, (__compact_effect_5).clone())?;
+                if !__compact_effect_6 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "missing service".to_owned(),
                     ));
                 }
-                let __compact_plan_8: runtime::OpaqueString =
-                    (((__compact_plan_0).clone()).id).clone();
-                let __compact_plan_9: runtime::OpaqueString = __compact_plan_8;
+                let __compact_effect_7: () = ();
+                let __compact_effect_8: runtime::OpaqueString = (__compact_effect_0.id).clone();
                 let frame = crate::ledger_slots::services
-                    .record_remove(frame, (__compact_plan_9).clone())?;
-                frame
+                    .record_remove(frame, (__compact_effect_8).clone())?;
+                let __compact_effect_9: () = ();
+                let __compact_effect_10: () = ();
+                (frame, __compact_effect_10)
             } else {
-                let __compact_plan_10: crate::types::Mutation = crate::types::Mutation::Insert;
-                let __compact_plan_11: bool = __compact_plan_1 == __compact_plan_10;
-                #[allow(
-                    clippy::let_and_return,
-                    reason = "uniform branch frames preserve ordered recording steps"
-                )]
-                let frame = if __compact_plan_11 {
-                    let __compact_plan_12: runtime::OpaqueString =
-                        (((__compact_plan_0).clone()).id).clone();
-                    let __compact_plan_13: runtime::OpaqueString = __compact_plan_12;
-                    let (frame, __compact_plan_14): (_, bool) = crate::ledger_slots::services
-                        .record_member(frame, (__compact_plan_13).clone())?;
-                    let (frame, __compact_plan_17): (_, bool) = if __compact_plan_14 {
-                        let __compact_plan_15: bool = false;
-                        (frame, __compact_plan_15)
+                let __compact_effect_11: crate::types::Mutation = crate::types::Mutation::Insert;
+                let __compact_effect_12: bool = __compact_effect_1 == __compact_effect_11;
+                let (frame, __compact_effect_21): (_, ()) = if __compact_effect_12 {
+                    let __compact_effect_13: runtime::OpaqueString =
+                        (__compact_effect_0.id).clone();
+                    let (frame, __compact_effect_14): (_, bool) = crate::ledger_slots::services
+                        .record_member(frame, (__compact_effect_13).clone())?;
+                    let (frame, __compact_effect_17): (_, bool) = if __compact_effect_14 {
+                        let __compact_effect_15: bool = false;
+                        (frame, __compact_effect_15)
                     } else {
-                        let __compact_plan_16: bool = true;
-                        (frame, __compact_plan_16)
+                        let __compact_effect_16: bool = true;
+                        (frame, __compact_effect_16)
                     };
-                    if !__compact_plan_17 {
+                    if !__compact_effect_17 {
                         return Err(runtime::CompactError::AssertionFailed(
                             "duplicate service".to_owned(),
                         ));
                     }
-                    frame
+                    let __compact_effect_18: () = ();
+                    let __compact_effect_19: () = ();
+                    (frame, __compact_effect_19)
                 } else {
-                    frame
+                    let __compact_effect_20: () = ();
+                    (frame, __compact_effect_20)
                 };
-                frame
+                let __compact_effect_22: () = ();
+                (frame, __compact_effect_22)
             };
-            let __compact_plan_18: runtime::OpaqueString =
-                (((__compact_plan_0).clone()).id).clone();
-            let __compact_plan_19: runtime::OpaqueString = __compact_plan_18;
+            let __compact_effect_24: runtime::OpaqueString = (__compact_effect_0.id).clone();
             let frame = crate::ledger_slots::services.record_insert(
                 frame,
-                (__compact_plan_19).clone(),
-                (__compact_plan_0).clone(),
+                (__compact_effect_24).clone(),
+                (__compact_effect_0).clone(),
             )?;
-            let __compact_plan_20: runtime::BoundedUint<65535> =
-                runtime::BoundedUint::<65535>::new(1u128)
-                    .expect("Compact Uint literal fits its maximum");
-            let __compact_plan_21: runtime::BoundedUint<65535> = __compact_plan_20;
-            let frame = crate::ledger_slots::count
-                .record_increment(frame, (__compact_plan_21).value() as u16)?;
-            Ok(frame.finish(()))
+            let __compact_effect_25: () = ();
+            let (frame, __compact_effect_29): (_, ()) = {
+                let __compact_effect_26: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
+                let frame = crate::ledger_slots::count
+                    .record_increment(frame, (__compact_effect_26).value() as u16)?;
+                let __compact_effect_27: () = ();
+                let __compact_effect_28: () = ();
+                (frame, __compact_effect_28)
+            };
+            let __compact_effect_30: () = ();
+            Ok(frame.finish(__compact_effect_30))
         }
         pub fn remove_service<Private>(
             context: runtime::context::CircuitContext<Private>,

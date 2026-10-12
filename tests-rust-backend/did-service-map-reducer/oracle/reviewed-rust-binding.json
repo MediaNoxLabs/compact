@@ -1,0 +1,32 @@
+{
+  "format": "compact-reviewed-rust-binding/v1",
+  "scope": "Unit effect-algebra production routing. Original TypeScript capture bytes remain unchanged; current Rust generation and provenance assertions are reviewed separately. No fresh TS execution or added proof claim.",
+  "captures": [
+    {
+      "file": "cases.json",
+      "sha256": "03f48d18d3a55ae675cc462cc082fba2a0384419e2cdeba8d727da6d5f227c8b"
+    }
+  ],
+  "replacements": [
+    {
+      "path": "tests-rust-backend/did-service-map-reducer/lib.rs",
+      "captured_sha256": "f44b858f151fdea903507ebd044eeeb5d620ff0c587dfce44c9d7ac819fbf1bb",
+      "current_sha256": "83191da4fcd60bad60bf01017aea6109935e854d2c58e70ff09273d6624318bb"
+    },
+    {
+      "path": "tests-rust-backend/did-service-map-reducer/tests/provenance.rs",
+      "captured_sha256": "55c3c5de4e8fde099446d868df2bcdf21387ad573d839ecc234964f65b14709c",
+      "current_sha256": "c1ec88f7aff3d89b066d09d900778afbc183227067654d9d04add5bcb21de1e8"
+    }
+  ],
+  "reviewed_artifacts": [
+    {
+      "path": "tests-rust-backend/support/reviewed_capture.rs",
+      "sha256": "482cea8e2806f220a939e02f459ffad9c7ff25c685e7bf6aab051f2bc528217b"
+    },
+    {
+      "path": "tests-rust-backend/did-service-map-reducer/tests/provenance.rs",
+      "sha256": "c1ec88f7aff3d89b066d09d900778afbc183227067654d9d04add5bcb21de1e8"
+    }
+  ]
+}

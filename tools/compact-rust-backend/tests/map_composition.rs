@@ -81,10 +81,24 @@ fn service_and_arbitrary_nonempty_flat_string_products_record() {
 }
 
 #[test]
-fn empty_and_unsupported_mixed_map_values_remain_native_only() {
-    for name in ["empty", "mixed"] {
-        assert!(!recorded(fixture(name), "put"), "{name}");
-    }
+fn mixed_scalar_map_values_compose_while_empty_values_stay_outside_codec() {
+    assert!(!recorded(fixture("empty"), "put"));
+    let output = render(fixture("mixed"));
+    assert!(
+        output
+            .capabilities
+            .circuits
+            .iter()
+            .any(|c| c.name == "put" && c.recorded && c.observed_call)
+    );
+    assert!(
+        output
+            .source
+            .split("pub mod recorded")
+            .nth(1)
+            .unwrap()
+            .contains("record_insert(")
+    );
 }
 
 #[test]

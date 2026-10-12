@@ -137,9 +137,12 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: runtime::BoundedUint<65535> = __compact_param_0;
             let frame = crate::ledger_slots::round
-                .record_increment(frame, __compact_param_0.value() as u16)?;
-            Ok(frame.finish(()))
+                .record_increment(frame, (__compact_effect_0).value() as u16)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn decrement_by<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -147,9 +150,12 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: runtime::BoundedUint<65535> = __compact_param_0;
             let frame = crate::ledger_slots::round
-                .record_decrement(frame, __compact_param_0.value() as u16)?;
-            Ok(frame.finish(()))
+                .record_decrement(frame, (__compact_effect_0).value() as u16)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn reset_round<Private>(
             context: runtime::context::CircuitContext<Private>,

@@ -120,7 +120,7 @@ fn recorded_distinct_struct_constructor_calls_preserve_identity_and_typed_compos
 }
 
 #[test]
-fn recorded_struct_pure_guard_requires_closed_typed_call_and_continuation() {
+fn recorded_struct_pure_guard_composes_typed_calls_and_continuations() {
     let policy = Type::Struct {
         name: "Policy".into(),
         fields: vec![StructField {
@@ -245,19 +245,19 @@ fn recorded_struct_pure_guard_requires_closed_typed_call_and_continuation() {
             index: 0,
             value: Expr::FieldLiteral { value: "2".into() },
         });
-    assert!(!recorded(&contract));
+    assert!(recorded(&contract));
     contract = closed.clone();
     if let StateAction::PureCall { arguments, .. } = &mut contract.stateful_circuits[1].actions[0] {
         arguments[0] = Expr::Default {
             ty: parameters[0].ty.clone(),
         };
     }
-    assert!(!recorded(&contract));
+    assert!(recorded(&contract));
     contract = closed.clone();
     if let Expr::Sequence { steps, .. } = &mut contract.circuits[0].body {
         steps.push(Expr::Unit);
     }
-    assert!(!recorded(&contract));
+    assert!(recorded(&contract));
     contract = closed.clone();
     contract.stateful_circuits[0].parameters.push(Parameter {
         name: "extra".into(),
@@ -268,11 +268,10 @@ fn recorded_struct_pure_guard_requires_closed_typed_call_and_continuation() {
     {
         arguments.push(Expr::FieldLiteral { value: "3".into() });
     }
-    assert!(!recorded(&contract));
+    assert!(recorded(&contract));
 
-    // The same guard may precede precisely one compiler-emitted Uint<16>
-    // literal-one Let/Counter increment. Different amounts and extra actions
-    // cannot be admitted by this shortcut.
+    // The checked effect sequence also supports different typed amounts and
+    // additional public operations after the same guard.
     contract = closed;
     contract.ledger_fields.push(LedgerField {
         source: None,
@@ -306,7 +305,7 @@ fn recorded_struct_pure_guard_requires_closed_typed_call_and_continuation() {
             max: "65535".into(),
         };
     }
-    assert!(!recorded(&contract));
+    assert!(recorded(&contract));
     contract = counter.clone();
     contract.stateful_circuits[1]
         .actions
@@ -314,14 +313,21 @@ fn recorded_struct_pure_guard_requires_closed_typed_call_and_continuation() {
             field: "accepted".into(),
             index: 1,
         });
-    assert!(!recorded(&contract));
+    assert!(recorded(&contract));
     contract = counter;
     if let StateAction::PureCall { arguments, .. } = &mut contract.stateful_circuits[1].actions[0] {
         arguments[1] = Expr::Default {
             ty: parameters[1].ty.clone(),
         };
     }
-    assert!(!recorded(&contract));
+    assert!(recorded(&contract));
+    let source = render_with_capabilities(&contract).unwrap().source;
+    let body = super::lifecycle_recording::generated_body(&source, "recorded", "caller");
+    assert!(body.contains("guard") && body.contains("record_increment"));
+    if let StateAction::PureCall { arguments, .. } = &mut contract.stateful_circuits[1].actions[0] {
+        arguments.pop();
+    }
+    assert!(render_with_capabilities(&contract).is_err());
 }
 
 #[test]

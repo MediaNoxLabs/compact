@@ -27,14 +27,6 @@ macro_rules! record_option {
         value
     }};
 }
-macro_rules! record_guard {
-    ($route:literal, $value:expr) => {{
-        let value = $value;
-        #[cfg(test)]
-        $crate::recorded::admission_probe::trace::guard($route, value);
-        value
-    }};
-}
 
 mod diagnostics;
 pub(crate) use diagnostics::RecordingOutcome;
@@ -63,6 +55,8 @@ mod opaque_map_migration_tests;
 mod opaque_set_migration_tests;
 mod profile_attempt;
 mod profile_selection;
+#[cfg(test)]
+mod proved_set_sequence_migration_tests;
 mod pure_calls;
 #[cfg(test)]
 mod unsigned_product_migration_tests;
@@ -247,6 +241,7 @@ fn recordable_cell_type(ty: &Type) -> bool {
 /// Opaque string recording is admitted for the proved assertion → insertion
 /// → Unit witness sequence. Other opaque APIs need their own TS/ledger proof
 /// parity before the capability report can advertise them.
+#[cfg(test)]
 fn proved_opaque_set_sequence(circuit: &StatefulCircuit) -> bool {
     let [parameter] = circuit.parameters.as_slice() else {
         return false;
@@ -1368,10 +1363,6 @@ fn render_recorded_item(
         .parameters
         .iter()
         .any(|parameter| parameter.ty == Type::OpaqueString)
-        && !record_guard!(
-            "guard.proved-opaque-set-sequence",
-            proved_opaque_set_sequence(circuit)
-        )
         && !organizer_gate
     {
         return Ok(RecordingOutcome::Unsupported(

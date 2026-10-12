@@ -52,6 +52,20 @@ pub(super) fn test_center_welcome(
     test_center_welcome::run(Path::new(&root))
 }
 
+pub(super) fn test_center_welcome_check_in(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let root = arguments
+        .next()
+        .ok_or("usage: compact-rust-proof-smoke --test-center-welcome-check-in <proof-output>")?;
+    if arguments.next().is_some() {
+        return Err(
+            "usage: compact-rust-proof-smoke --test-center-welcome-check-in <proof-output>".into(),
+        );
+    }
+    test_center_welcome::run_check_in(Path::new(&root))
+}
+
 pub(super) fn test_center_welcome_organizers(
     arguments: &mut impl Iterator<Item = OsString>,
 ) -> Result<(), Box<dyn Error>> {

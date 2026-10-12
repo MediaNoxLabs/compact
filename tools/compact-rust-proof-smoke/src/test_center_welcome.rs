@@ -18,6 +18,10 @@
 
 //! Prove the original Welcome source's recorded check-in and organizer paths.
 
+mod check_in;
+
+pub(super) use check_in::run as run_check_in;
+
 use super::*;
 use compact_rust_test_center_welcome_fixture::ledger_contract as contract;
 use compact_rust_test_center_welcome_fixture::types::Maybe;

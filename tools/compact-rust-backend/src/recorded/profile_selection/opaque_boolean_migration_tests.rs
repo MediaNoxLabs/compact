@@ -147,9 +147,8 @@ fn current(c: &Contract, name: &str) -> String {
         Some("guard.closed-opaque-set-operation" | "guard.closed-opaque-map-operation")
     )));
     assert!(
-        guards
-            .iter()
-            .any(|g| g["route"] == "guard.proved-opaque-set-sequence")
+        guards.is_empty(),
+        "all explicit opaque shape permits retired"
     );
     text
 }

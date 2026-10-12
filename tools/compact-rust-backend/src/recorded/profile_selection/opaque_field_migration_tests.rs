@@ -163,11 +163,8 @@ fn current(c: &Contract, name: &str, owner: &str) -> String {
             .any(|g| g["route"] == "guard.closed-opaque-map-operation")
     );
     assert!(
-        row["guards"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .any(|g| g["route"] == "guard.proved-opaque-set-sequence")
+        row["guards"].as_array().unwrap().is_empty(),
+        "all explicit opaque shape permits retired"
     );
     if owner == "algebra.terminal-returns" {
         assert!(cx.terminal(r).unwrap().is_some());

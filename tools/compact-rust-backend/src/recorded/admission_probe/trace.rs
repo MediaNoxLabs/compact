@@ -225,7 +225,3 @@ pub(in crate::recorded) fn returned() {
         row.body_owner.get_or_insert("return.dispatch");
     });
 }
-
-pub(in crate::recorded) fn guard(route: &'static str, passed: bool) {
-    current(|row| row.guards.push(Guard { route, passed }));
-}

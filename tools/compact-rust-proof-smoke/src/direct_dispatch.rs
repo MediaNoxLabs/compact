@@ -56,6 +56,7 @@ pub(super) fn try_run(
         ("--opaque-string-set", _) => Some(collections::opaque_string_set(arguments)),
         ("--opaque-string-set-member", _) => Some(collections::opaque_string_set_member(arguments)),
         ("--opaque-string-map", _) => Some(collections::opaque_string_map(arguments)),
+        ("--opaque-string-map-ensure", _) => Some(collections::opaque_string_map_ensure(arguments)),
         ("--map-effects", _) => Some(collections::map_effects(arguments)),
         ("--map-value-products", _) => Some(collections::map_value_products(arguments)),
         ("--unit-composition", _) => Some(collections::unit_composition(arguments)),

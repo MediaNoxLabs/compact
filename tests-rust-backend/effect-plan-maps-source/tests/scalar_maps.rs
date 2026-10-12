@@ -200,7 +200,7 @@ fn scalar_membership_lookup_insert_overwrite_and_remove_match_official_ts() {
     }
 }
 #[test]
-fn direct_membership_is_recorded_and_direct_lookup_retains_native_ts_controls() {
+fn direct_membership_and_lookup_match_recorded_observed_and_typescript_controls() {
     let (state, _) = setup();
     let contract = c::Contract::from(Witness::new([false, false], None));
     let native = c::lookup(state.circuit_context(5), "missing".into())
@@ -234,8 +234,7 @@ fn direct_membership_is_recorded_and_direct_lookup_retains_native_ts_controls() 
     assert_eq!(missing["status"], "refused");
     assert_eq!(missing["args"], serde_json::json!(["missing"]));
     assert_eq!(missing["events"], serde_json::json!([]));
-    // The String-to-Boolean interface now delegates direct membership to checked
-    // composition. String-to-Field lookup remains a native-only control.
+    // Both declared String interfaces delegate direct returns to checked composition.
     for (key, present) in [("seed", true), ("missing", false)] {
         let (state, verifier) = setup();
         let result = c::direct_member(state.circuit_context(5), key.into()).unwrap();
@@ -272,9 +271,36 @@ fn direct_membership_is_recorded_and_direct_lookup_retains_native_ts_controls() 
             &result,
         );
     }
+    let (state, verifier) = setup();
     let result = c::direct_lookup(state.circuit_context(5), "seed".into()).unwrap();
+    let recorded = c::recorded::direct_lookup(state.circuit_context(5), "seed".into()).unwrap();
+    let (frame, value) = slots::table
+        .record_lookup(RecordingFrame::new(state.circuit_context(5)), "seed".into())
+        .unwrap();
+    let manual = frame.finish(value);
+    let call = contract
+        .recording()
+        .direct_lookup_call(&state, 5, "seed".into())
+        .unwrap();
+    compare(&result, &recorded, &manual);
+    compare(&result, call.recorded(), &manual);
+    let prepared = call.prepare(verifier, r::Field::from(0_u64)).unwrap();
+    assert_eq!(
+        prepared.input,
+        r::fab::AlignedValue::from(r::OpaqueString::from("seed"))
+    );
+    assert_eq!(
+        prepared.output,
+        r::fab::AlignedValue::from(r::Field::from(7_u64))
+    );
+    inspect(&result, &[("seed", 7)], 0);
     assert_eq!(result.result, r::Field::from(7_u64));
     let reference = row("direct-lookup-seed");
+    assert_eq!(reference["circuit"], "direct_lookup");
+    assert_eq!(reference["args"], serde_json::json!(["seed"]));
+    assert_eq!(reference["seed"], "seed");
+    assert_eq!(reference["choices"], serde_json::json!([false, false]));
+    assert!(reference["fail"].is_null());
     assert_eq!(reference["result"], "7");
     assert_ts(
         &reference,
@@ -288,7 +314,22 @@ fn direct_membership_is_recorded_and_direct_lookup_retains_native_ts_controls() 
             .unwrap(),
         native
     );
+    assert_eq!(
+        c::recorded::direct_lookup(state.circuit_context(5), "missing".into())
+            .err()
+            .unwrap(),
+        native
+    );
+    assert_eq!(
+        contract
+            .recording()
+            .direct_lookup_call(&state, 5, "missing".into())
+            .err()
+            .unwrap(),
+        native
+    );
     let reference = row("direct-lookup-missing");
+    assert_eq!(reference["circuit"], "direct_lookup");
     assert_eq!(reference["status"], "refused");
     assert_eq!(reference["args"], serde_json::json!(["missing"]));
     // Safe collection APIs refuse noncanonical keys before trailing-NUL normalization.
@@ -309,6 +350,24 @@ fn direct_membership_is_recorded_and_direct_lookup_retains_native_ts_controls() 
                 .err()
                 .unwrap(),
             refusal
+        );
+        let lookup_error = c::direct_lookup(state.circuit_context(5), key.into())
+            .err()
+            .unwrap();
+        assert_eq!(lookup_error, refusal);
+        assert_eq!(
+            c::recorded::direct_lookup(state.circuit_context(5), key.into())
+                .err()
+                .unwrap(),
+            lookup_error
+        );
+        assert_eq!(
+            contract
+                .recording()
+                .direct_lookup_call(&state, 5, key.into())
+                .err()
+                .unwrap(),
+            lookup_error
         );
         assert!(c::member(state.circuit_context(5), key.into()).is_err());
         assert!(c::recorded::member(state.circuit_context(5), key.into()).is_err());

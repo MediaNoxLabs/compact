@@ -72,6 +72,7 @@ import recording_admission_inventory_reachable_helpers as reachable_helpers
 import recording_admission_inventory_key_only_map_removal as key_only_map_removal
 import recording_admission_inventory_asset_removal as asset_removal
 import recording_admission_inventory_opaque_boolean as opaque_boolean
+import recording_admission_inventory_opaque_field as opaque_field
 import recording_admission_inventory_jubjub as jubjub
 import recording_admission_inventory_calls as calls
 import recording_admission_inventory_terminal as terminal
@@ -329,7 +330,15 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
            reachable_helpers_extension: dict | None = None,
            key_only_map_removal_extension: dict | None = None,
            asset_removal_transition: dict | None = None,
-           opaque_boolean_transition: dict | None = None) -> dict:
+           opaque_boolean_transition: dict | None = None,
+           opaque_field_transition: dict | None = None) -> dict:
+    if opaque_field_transition is not None:
+        arguments = locals().copy()
+        arguments['opaque_field_transition'] = None
+        def historical_verify(prior_root):
+            return verify(**{**arguments, 'root': prior_root})
+        return opaque_field.verify_transition(
+            root, baseline, opaque_field_transition, historical_verify, selector_signature)
     if opaque_boolean_transition is not None:
         arguments = locals().copy()
         arguments['opaque_boolean_transition'] = None
@@ -1332,6 +1341,7 @@ def main(argv=None) -> int:
     parser.add_argument('--key-only-map-removal-extension', type=Path, help='explicit #602 key-only Map removal; no retirement')
     parser.add_argument('--asset-removal-transition', type=Path, help='explicit #601 closed opaque asset removal retirement after #602')
     parser.add_argument('--opaque-boolean-transition', type=Path, help='explicit #603 opaque Boolean interface and closed Set permit retirement')
+    parser.add_argument('--opaque-field-transition', type=Path, help='explicit #604 opaque Field interface and closed Map permit/emitter retirement')
     args = parser.parse_args(argv)
     protected = [args.baseline] + ([args.transition] if args.transition else []) + ([args.instrumentation] if args.instrumentation else []) + ([args.jubjub_transition] if args.jubjub_transition else []) + ([args.call_extension] if args.call_extension else []) + ([args.terminal_transition] if args.terminal_transition else []) + ([args.unit_actions_transition] if args.unit_actions_transition else []) + ([args.context_query_transition] if args.context_query_transition else []) + ([args.kernel_transition] if args.kernel_transition else []) + ([args.composite_transition] if args.composite_transition else []) + ([args.receive_transition] if args.receive_transition else [])
     protected += [args.unit_domain_extension] if args.unit_domain_extension else []
@@ -1370,6 +1380,7 @@ def main(argv=None) -> int:
     protected += [args.key_only_map_removal_extension] if args.key_only_map_removal_extension else []
     protected += [args.asset_removal_transition] if args.asset_removal_transition else []
     protected += [args.opaque_boolean_transition] if args.opaque_boolean_transition else []
+    protected += [args.opaque_field_transition] if args.opaque_field_transition else []
     protected += [args.optional_write_transition] if args.optional_write_transition else []
     protected += [args.unit_composition_transition] if args.unit_composition_transition else []
     if args.output and any(args.output.resolve() == path.resolve() for path in protected):
@@ -1423,9 +1434,10 @@ def main(argv=None) -> int:
         key_only_map_removal_extension = json.loads(args.key_only_map_removal_extension.read_text()) if args.key_only_map_removal_extension else None
         asset_removal_transition = json.loads(args.asset_removal_transition.read_text()) if args.asset_removal_transition else None
         opaque_boolean_transition = json.loads(args.opaque_boolean_transition.read_text()) if args.opaque_boolean_transition else None
+        opaque_field_transition = json.loads(args.opaque_field_transition.read_text()) if args.opaque_field_transition else None
         optional_write_transition = json.loads(args.optional_write_transition.read_text()) if args.optional_write_transition else None
         unit_composition_transition = json.loads(args.unit_composition_transition.read_text()) if args.unit_composition_transition else None
-        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension, voting_transition, phase_reset_transition, immediate_send_transition, zswap_transition, membership_transition, send_transition, observation_test_extension, merge_transition, guarded_deposit_transition, routing_test_extension, reset_payout_transition, shielded_payout_transition, inequality_test_extension, funded_mint_transition, keccak_test_extension, aligned_test_extension, encoding_extension, negation_test_extension, value_test_extension, unit_composition_transition, optional_write_transition, enum_advance_transition, witness_merkle_transition, organizer_transition, unsigned_product_transition, opaque_set_transition, unit_interface_extension, map_value_extension, guarded_map_transition, opaque_map_transition, resource_diagnostics_extension, empty_recording_extension, guarded_pure_transition, reachable_helpers_extension, key_only_map_removal_extension, asset_removal_transition, opaque_boolean_transition)
+        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension, voting_transition, phase_reset_transition, immediate_send_transition, zswap_transition, membership_transition, send_transition, observation_test_extension, merge_transition, guarded_deposit_transition, routing_test_extension, reset_payout_transition, shielded_payout_transition, inequality_test_extension, funded_mint_transition, keccak_test_extension, aligned_test_extension, encoding_extension, negation_test_extension, value_test_extension, unit_composition_transition, optional_write_transition, enum_advance_transition, witness_merkle_transition, organizer_transition, unsigned_product_transition, opaque_set_transition, unit_interface_extension, map_value_extension, guarded_map_transition, opaque_map_transition, resource_diagnostics_extension, empty_recording_extension, guarded_pure_transition, reachable_helpers_extension, key_only_map_removal_extension, asset_removal_transition, opaque_boolean_transition, opaque_field_transition)
     except (OSError, ValueError, TypeError, KeyError) as error:
         parser.exit(2, f'inventory error: {error}\n')
     rendered = json.dumps(report, indent=2) + '\n'

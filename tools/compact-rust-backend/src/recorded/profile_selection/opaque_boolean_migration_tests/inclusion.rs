@@ -145,12 +145,13 @@ fn boolean_interface_composes_helpers_lazy_queries_and_non_set_direct_returns() 
     assert!(current(&c, "direct_member").contains("record_member"));
     let cx = Context::new(&c);
     assert!(cx.domain(cx.circuits["direct_lookup"]).unwrap().is_none());
+    // Still outside the Boolean interface; the separate Field rollout owns it.
     let output = crate::render_with_capabilities(&c).unwrap();
     assert!(
         output
             .capabilities
             .circuits
             .iter()
-            .any(|r| r.name == "direct_lookup" && !r.recorded && !r.observed_call)
+            .any(|r| r.name == "direct_lookup" && r.recorded && r.observed_call)
     );
 }

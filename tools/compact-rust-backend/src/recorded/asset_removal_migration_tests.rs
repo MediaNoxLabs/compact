@@ -176,17 +176,17 @@ fn assert_current(c: &Contract) -> String {
     let guards = row["guards"].as_array().unwrap();
     assert!(!guards.iter().any(|g| matches!(
         g["route"].as_str(),
-        Some("guard.closed-opaque-asset-removal" | "guard.closed-opaque-set-operation")
+        Some(
+            "guard.closed-opaque-asset-removal"
+                | "guard.closed-opaque-set-operation"
+                | "guard.closed-opaque-map-operation"
+        )
     )));
-    for route in [
-        "guard.closed-opaque-map-operation",
-        "guard.proved-opaque-set-sequence",
-    ] {
-        assert!(
-            guards.iter().any(|g| g["route"] == route),
-            "remaining guard {route}"
-        );
-    }
+    assert!(
+        guards
+            .iter()
+            .any(|g| g["route"] == "guard.proved-opaque-set-sequence")
+    );
     text
 }
 fn assert_old_positive(c: &Contract, label: &str) -> String {

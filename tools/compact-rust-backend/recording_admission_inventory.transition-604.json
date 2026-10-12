@@ -1,0 +1,137 @@
+{
+  "schema_version": 1,
+  "issue": 604,
+  "retired_route_ids": [
+    "guard.closed-opaque-map-operation",
+    "return.opaque-map-ensure"
+  ],
+  "baseline_commit": "1d5abc514d3a2776011e2f065009e52846dcf4c4",
+  "claim": "Admit exactly one OpaqueString to Field through complete checked lowering; retire closed opaque Map permit and special Ensure return emitter after complete Put/Ensure qualification. Preserve native, codec and resource authority.",
+  "previous_selector": {
+    "ordered_calls": [],
+    "function_sha256": "39edd1256e89f088a942088f357a48bd920afd3a413d932a8296c36fb8894085"
+  },
+  "current_selector": {
+    "ordered_calls": [],
+    "function_sha256": "39edd1256e89f088a942088f357a48bd920afd3a413d932a8296c36fb8894085"
+  },
+  "owners": {
+    "tools/compact-rust-backend/src/recorded.rs": {
+      "previous_sha256": "4a62867d145b2ee26e4b4bf15c520d388b7fdc39a7c3dda9bb9ca7e16812ad4e",
+      "current_sha256": "057e33de088ec00c58ff9ca56fac1a84a35812629115cdd81d18be70279230b3",
+      "predecessor_reconstruction": [
+        {
+          "current": "\n/// The original opaque-key Map oracle has two closed shapes. The Map key is\n/// only encoded as an input; the lookup result is the fixed-width Field value.\n#[cfg(test)]\nenum ClosedOpaqueMapOperation {\n    Put,\n    Ensure { field: String, key: String },\n}\n\n#[cfg(test)]\nfn closed_opaque_map_operation(\n    circuit: &StatefulCircuit,\n    ledger_fields: &HashMap<&str, &LedgerField>,\n",
+          "previous": "\n/// The original opaque-key Map oracle has two closed shapes. The Map key is\n/// only encoded as an input; the lookup result is the fixed-width Field value.\nenum ClosedOpaqueMapOperation {\n    Put,\n    Ensure { field: String, key: String },\n}\n\nfn closed_opaque_map_operation(\n    circuit: &StatefulCircuit,\n    ledger_fields: &HashMap<&str, &LedgerField>,\n"
+        },
+        {
+          "current": "        effectful_plan,\n    )?;\n    let organizer_gate = organizer_steps.is_some();\n    let mut steps = organizer_steps.unwrap_or_default();\n    let mut next_temp = 0;\n    let mut visiting = HashSet::from([circuit.name.clone()]);\n",
+          "previous": "        effectful_plan,\n    )?;\n    let organizer_gate = organizer_steps.is_some();\n    let opaque_map_operation = closed_opaque_map_operation(circuit, ledger_fields);\n    #[cfg(test)]\n    admission_probe::trace::guard(\n        \"guard.closed-opaque-map-operation\",\n        opaque_map_operation.is_some(),\n    );\n    let mut steps = organizer_steps.unwrap_or_default();\n    let mut next_temp = 0;\n    let mut visiting = HashSet::from([circuit.name.clone()]);\n"
+        },
+        {
+          "current": "            };\n            (return_steps, result)\n        }\n        StateReturn::Expression { value }\n            if contains_cell_read(value)\n                && circuit.result == Type::Boolean\n",
+          "previous": "            };\n            (return_steps, result)\n        }\n        StateReturn::Expression { .. }\n            if matches!(\n                opaque_map_operation,\n                Some(ClosedOpaqueMapOperation::Ensure { .. })\n            ) =>\n        {\n            let Some(ClosedOpaqueMapOperation::Ensure { field, key }) =\n                opaque_map_operation.as_ref()\n            else {\n                unreachable!()\n            };\n            let slot = ident(field)?;\n            let (_, key_ident) = parameters\n                .get(key.as_str())\n                .expect(\"closed Map key is a declared parameter\");\n            (\n                vec![syn::parse_quote!(\n                    let (frame, observed): (_, runtime::Field) =\n                        crate::ledger_slots::#slot.record_lookup(frame, (#key_ident).clone())?;\n                )],\n                syn::parse_quote!(observed),\n            )\n        }\n        StateReturn::Expression { value }\n            if contains_cell_read(value)\n                && circuit.result == Type::Boolean\n"
+        },
+        {
+          "current": "            \"guard.proved-opaque-set-sequence\",\n            proved_opaque_set_sequence(circuit)\n        )\n        && !organizer_gate\n    {\n        return Ok(RecordingOutcome::Unsupported(\n",
+          "previous": "            \"guard.proved-opaque-set-sequence\",\n            proved_opaque_set_sequence(circuit)\n        )\n        && opaque_map_operation.is_none()\n        && !organizer_gate\n    {\n        return Ok(RecordingOutcome::Unsupported(\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": {
+      "previous_sha256": "64d3ad9d523ff764aac37f3b1fc740ed7942c3854bd812fa5c26479bbad6fd7c",
+      "current_sha256": "7f2e2f49805c8b680e99e9b24ca6603d0fc37f5aabea670bbf1bc89a228f910e",
+      "predecessor_reconstruction": [
+        {
+          "current": "#[cfg(test)]\n#[path = \"profile_selection/membership_migration_tests.rs\"]\nmod membership_migration_tests;\n#[cfg(test)]\n#[path = \"profile_selection/opaque_field_migration_tests.rs\"]\nmod opaque_field_migration_tests;\n\n#[cfg(test)]\n#[path = \"profile_selection/opaque_boolean_migration_tests.rs\"]\nmod opaque_boolean_migration_tests;\n",
+          "previous": "#[cfg(test)]\n#[path = \"profile_selection/membership_migration_tests.rs\"]\nmod membership_migration_tests;\n#[cfg(test)]\n#[path = \"profile_selection/opaque_boolean_migration_tests.rs\"]\nmod opaque_boolean_migration_tests;\n"
+        },
+        {
+          "current": "    circuits: &HashMap<&str, &StatefulCircuit>,\n) -> Result<Option<TypedPlan>, RenderError> {\n    use crate::ir::{StateReturn, Type};\n    // A declared interface delegates all return representations to the same\n    // typed composition; no Map/Let/assert shape is an admission authority.\n    if circuit.result == Type::Field\n        && matches!(circuit.parameters.as_slice(), [p] if p.ty == Type::OpaqueString)\n    {\n        return resolve_checked_plan(effect_plan::lower_with_calls(\n            circuit, ledger, witnesses, pure, circuits,\n        ));\n    }\n    if circuit.result != Type::Field\n        || !matches!(circuit.return_value, StateReturn::Expression { .. })\n        || !circuit\n",
+          "previous": "    circuits: &HashMap<&str, &StatefulCircuit>,\n) -> Result<Option<TypedPlan>, RenderError> {\n    use crate::ir::{StateReturn, Type};\n    if circuit.result != Type::Field\n        || !matches!(circuit.return_value, StateReturn::Expression { .. })\n        || !circuit\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/asset_removal_migration_tests.rs": {
+      "previous_sha256": "0eab15453e93d0b514802222caf380b33439d5c768cf75c5b2c5728c7c324eff",
+      "current_sha256": "38f369c0d74672b1cd42fbfae9b549ac5bfe72fc02f715edcb6f1803c587042d",
+      "predecessor_reconstruction": [
+        {
+          "current": "    let guards = row[\"guards\"].as_array().unwrap();\n    assert!(!guards.iter().any(|g| matches!(\n        g[\"route\"].as_str(),\n        Some(\n            \"guard.closed-opaque-asset-removal\"\n                | \"guard.closed-opaque-set-operation\"\n                | \"guard.closed-opaque-map-operation\"\n        )\n    )));\n    assert!(\n        guards\n            .iter()\n            .any(|g| g[\"route\"] == \"guard.proved-opaque-set-sequence\")\n    );\n    text\n}\nfn assert_old_positive(c: &Contract, label: &str) -> String {\n",
+          "previous": "    let guards = row[\"guards\"].as_array().unwrap();\n    assert!(!guards.iter().any(|g| matches!(\n        g[\"route\"].as_str(),\n        Some(\"guard.closed-opaque-asset-removal\" | \"guard.closed-opaque-set-operation\")\n    )));\n    for route in [\n        \"guard.closed-opaque-map-operation\",\n        \"guard.proved-opaque-set-sequence\",\n    ] {\n        assert!(\n            guards.iter().any(|g| g[\"route\"] == route),\n            \"remaining guard {route}\"\n        );\n    }\n    text\n}\nfn assert_old_positive(c: &Contract, label: &str) -> String {\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/opaque_boolean_migration_tests.rs": {
+      "previous_sha256": "5ce6961a9c0d863b1d5551d297e6104ec4e5ec368ce14f84871c921ba2b7f340",
+      "current_sha256": "f98eb06f3401845af5678affa246e7e3016042ec21c64e05b8eb20dbe93f3fcd",
+      "predecessor_reconstruction": [
+        {
+          "current": "        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.membership\");\n    let guards = row[\"guards\"].as_array().unwrap();\n    assert!(!guards.iter().any(|g| matches!(\n        g[\"route\"].as_str(),\n        Some(\"guard.closed-opaque-set-operation\" | \"guard.closed-opaque-map-operation\")\n    )));\n    assert!(\n        guards\n            .iter()\n            .any(|g| g[\"route\"] == \"guard.proved-opaque-set-sequence\")\n    );\n    text\n}\nfn included(c: &Contract, name: &str) {\n",
+          "previous": "        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.membership\");\n    let guards = row[\"guards\"].as_array().unwrap();\n    assert!(\n        !guards\n            .iter()\n            .any(|g| g[\"route\"] == \"guard.closed-opaque-set-operation\")\n    );\n    for route in [\n        \"guard.closed-opaque-map-operation\",\n        \"guard.proved-opaque-set-sequence\",\n    ] {\n        assert!(\n            guards.iter().any(|g| g[\"route\"] == route),\n            \"preserved {route}\"\n        );\n    }\n    text\n}\nfn included(c: &Contract, name: &str) {\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/opaque_boolean_migration_tests/inclusion.rs": {
+      "previous_sha256": "993ab1c49ebeab9d68393579d25e0624e37dde543caf4ffb5f11837621a2d538",
+      "current_sha256": "b18fe356ae3eca46e790766611458991197c5f3e607ea06e30a808a348b7346b",
+      "predecessor_reconstruction": [
+        {
+          "current": "    assert!(current(&c, \"direct_member\").contains(\"record_member\"));\n    let cx = Context::new(&c);\n    assert!(cx.domain(cx.circuits[\"direct_lookup\"]).unwrap().is_none());\n    // Still outside the Boolean interface; the separate Field rollout owns it.\n    let output = crate::render_with_capabilities(&c).unwrap();\n    assert!(\n        output\n            .capabilities\n            .circuits\n            .iter()\n            .any(|r| r.name == \"direct_lookup\" && r.recorded && r.observed_call)\n    );\n}\n",
+          "previous": "    assert!(current(&c, \"direct_member\").contains(\"record_member\"));\n    let cx = Context::new(&c);\n    assert!(cx.domain(cx.circuits[\"direct_lookup\"]).unwrap().is_none());\n    let output = crate::render_with_capabilities(&c).unwrap();\n    assert!(\n        output\n            .capabilities\n            .circuits\n            .iter()\n            .any(|r| r.name == \"direct_lookup\" && !r.recorded && !r.observed_call)\n    );\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/map_operations/source.rs": {
+      "previous_sha256": "78f3dcae0c3065610553083169bb74c6dd6d065698359e23773aa38d24f309ca",
+      "current_sha256": "19a525483c438176e1c4d733c9c51dbcfe448bca50ce95f0c614b351440ca139",
+      "predecessor_reconstruction": [
+        {
+          "current": "                        \"supported\",\n                    )\n                } else if *name == \"direct_member\" {\n                    // The one-string Boolean interface owns direct membership.\n                    (\"algebra.membership\", \"supported\")\n                } else if *name == \"direct_lookup\" {\n                    (\"algebra.terminal-returns\", \"supported\")\n                } else {\n                    (\"algebra.composite-values\", \"supported\")\n                };\n",
+          "previous": "                        \"supported\",\n                    )\n                } else if *name == \"direct_member\" {\n                    // The one-string Boolean interface now admits direct Map\n                    // membership; the separate Field lookup interface does not.\n                    (\"algebra.membership\", \"supported\")\n                } else if *name == \"direct_lookup\" {\n                    (\"return.dispatch\", \"unsupported\")\n                } else {\n                    (\"algebra.composite-values\", \"supported\")\n                };\n"
+        }
+      ]
+    }
+  },
+  "new_and_shared_sources": {
+    "tools/compact-rust-backend/src/recorded/profile_selection/opaque_field_migration_tests.rs": "dc4e9a3488e436a407b8dcdb6f13b2ad8afa6b2a1bd170726960c9a497740f43",
+    "tools/compact-rust-backend/src/recorded/profile_selection/opaque_field_migration_tests/boundaries.rs": "b0bcb7f60faf2b16838340be7472df2d6716254e8bf13ef3a11e5f7118164845",
+    "tools/compact-rust-backend/src/recorded/profile_selection/opaque_field_migration_tests/inclusion.rs": "447d94788a22cb142edef95c255f01104b52af3c386da2e8fd6b9c9bbcffb80b",
+    "tools/compact-rust-backend/src/recorded/legacy/actions.rs": "39c576e3e93cc9d098808d9e7303f8e8c64df1d98c1834cbb71e5e70baf93f14",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/collections.rs": "502dd04921b10bfa8ef6bba8ce2c6dbfed5fef7ee715b8e1203f672a925c3ab8",
+    "tools/compact-rust-backend/src/recorded/helpers.rs": "39ab813c3e0c88bdc7955cd3d16f07feee8abc65c711173e24a79ceb7d5517a6",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/maps.rs": "107e2d37884c3c9417e31ebd0f2237d5c927c94394e22f449261d95ae0556c01",
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_domain.rs": "c00c5f9602d0ef1b5ffa1981be2707996e817be43c7896f4361b710cfa61fde5",
+    "tools/compact-rust-backend/src/resource_limits/policy.rs": "8d1e091410d3f802b1f54654314146ba1615f6c45222645b586099528ed5294f",
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/maps.rs": "98c476dbbd666aecd6caf0b681a6dc86518efbd9c5ceab0874cb1defe5159355",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate.rs": "7729b2cc66fa3597d8573dfeac783af60cedf5b46b8e1ee3e75cbc1300f48a1c",
+    "runtime-rs/src/slots/map.rs": "a90f19b5603acaacc13b46b93e4b86ef37a39f1292fd00f7e516f9406d58520b",
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/sets.rs": "bc492e473efdf8abab77f67f3f24310ab0ec6c5a8aedb920f7518ae9efa568a2",
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/ordinary.rs": "97a9bac2f54a8d3d808b51fe0a796839b6d4db559af71cce47629d3d8a1fea44",
+    "tools/compact-rust-backend/tests/effect-plan-maps-schema20-ir.json": "7e14aa7979314f761a7b3433aae02dbe2a7f69affa8fca9ef107468a16d9cc57",
+    "tools/compact-rust-backend/tests/opaque-string-map-schema20-ir.json": "7a53016123c7ca78d89e2d40d3863200d11be8215742eabc393849ba0a5471f8"
+  },
+  "anchor_adaptations": [
+    {
+      "route": "final.shielded-gap-precedence",
+      "previous": {
+        "source": "tools/compact-rust-backend/src/recorded.rs",
+        "text": "if !organizer_gate\n        && !guarded_map_read_gate",
+        "baseline_occurrences": 3
+      },
+      "current": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "if !organizer_gate {",
+          "occurrences": 2
+        },
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "if !organizer_gate\n        && circuit.actions.is_empty()",
+          "occurrences": 1
+        }
+      ],
+      "reason": "Remove only retired guarded Struct flag from existing assembly and diagnostic precedence; exact signed whole-owner reconstruction authenticates all surrounding code."
+    }
+  ]
+}

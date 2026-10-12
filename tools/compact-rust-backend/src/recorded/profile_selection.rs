@@ -87,6 +87,10 @@ mod zswap_migration_tests;
 #[path = "profile_selection/membership_migration_tests.rs"]
 mod membership_migration_tests;
 #[cfg(test)]
+#[path = "profile_selection/opaque_field_migration_tests.rs"]
+mod opaque_field_migration_tests;
+
+#[cfg(test)]
 #[path = "profile_selection/opaque_boolean_migration_tests.rs"]
 mod opaque_boolean_migration_tests;
 
@@ -200,6 +204,15 @@ fn checked_terminal_domain(
     circuits: &HashMap<&str, &StatefulCircuit>,
 ) -> Result<Option<TypedPlan>, RenderError> {
     use crate::ir::{StateReturn, Type};
+    // A declared interface delegates all return representations to the same
+    // typed composition; no Map/Let/assert shape is an admission authority.
+    if circuit.result == Type::Field
+        && matches!(circuit.parameters.as_slice(), [p] if p.ty == Type::OpaqueString)
+    {
+        return resolve_checked_plan(effect_plan::lower_with_calls(
+            circuit, ledger, witnesses, pure, circuits,
+        ));
+    }
     if circuit.result != Type::Field
         || !matches!(circuit.return_value, StateReturn::Expression { .. })
         || !circuit

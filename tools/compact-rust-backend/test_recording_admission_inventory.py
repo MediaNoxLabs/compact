@@ -157,8 +157,24 @@ ASSET_REMOVAL_TRANSITION = inventory.BASELINE.with_name("recording_admission_inv
 OPAQUE_BOOLEAN_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-603.json")
 
 
+OPAQUE_FIELD_TRANSITION = inventory.BASELINE.with_name("recording_admission_inventory.transition-604.json")
+
+
+def checkpoint_603(root):
+    """Authenticate exact interface/retirement sources before prior fixture setup."""
+    transition = json.loads(OPAQUE_FIELD_TRANSITION.read_text())
+    try:
+        source = (root / inventory.opaque_field.RECORDED).read_bytes()
+    except FileNotFoundError:
+        return root
+    if inventory.digest(source) == transition['owners'][inventory.opaque_field.RECORDED]['current_sha256']:
+        return inventory.opaque_field.checkpoint(root, transition)
+    return root
+
+
 def checkpoint_601(root):
     """Authenticate exact interface/retirement sources before prior fixture setup."""
+    root = checkpoint_603(root)
     transition = json.loads(OPAQUE_BOOLEAN_TRANSITION.read_text())
     try:
         source = (root / inventory.opaque_boolean.RECORDED).read_bytes()
@@ -694,7 +710,8 @@ class InventoryTests(unittest.TestCase):
                                   reachable_helpers_extension=json.loads(REACHABLE_HELPERS_EXTENSION.read_text()),
                                   key_only_map_removal_extension=json.loads(KEY_ONLY_MAP_REMOVAL_EXTENSION.read_text()),
                                   asset_removal_transition=json.loads(ASSET_REMOVAL_TRANSITION.read_text()),
-                                  opaque_boolean_transition=json.loads(OPAQUE_BOOLEAN_TRANSITION.read_text()))
+                                  opaque_boolean_transition=json.loads(OPAQUE_BOOLEAN_TRANSITION.read_text()),
+                                  opaque_field_transition=json.loads(OPAQUE_FIELD_TRANSITION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)

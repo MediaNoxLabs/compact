@@ -64,6 +64,20 @@ pub(super) fn opaque_string_map(
     opaque_string_map::run(Path::new(&root))
 }
 
+pub(super) fn opaque_string_map_ensure(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let root = arguments
+        .next()
+        .ok_or("usage: compact-rust-proof-smoke --opaque-string-map-ensure <proof-output>")?;
+    if arguments.next().is_some() {
+        return Err(
+            "usage: compact-rust-proof-smoke --opaque-string-map-ensure <proof-output>".into(),
+        );
+    }
+    opaque_string_map::run_ensure(Path::new(&root))
+}
+
 pub(super) fn conditional_set(
     arguments: &mut impl Iterator<Item = OsString>,
 ) -> Result<(), Box<dyn Error>> {

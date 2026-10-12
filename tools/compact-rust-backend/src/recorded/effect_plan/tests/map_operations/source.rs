@@ -62,11 +62,10 @@ fn inspect(source: &'static str, roots: &'static [&'static str], old_required: b
                         "supported",
                     )
                 } else if *name == "direct_member" {
-                    // The one-string Boolean interface now admits direct Map
-                    // membership; the separate Field lookup interface does not.
+                    // The one-string Boolean interface owns direct membership.
                     ("algebra.membership", "supported")
                 } else if *name == "direct_lookup" {
-                    ("return.dispatch", "unsupported")
+                    ("algebra.terminal-returns", "supported")
                 } else {
                     ("algebra.composite-values", "supported")
                 };

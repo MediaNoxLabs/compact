@@ -336,11 +336,13 @@ fn closed_opaque_set_operation(
 
 /// The original opaque-key Map oracle has two closed shapes. The Map key is
 /// only encoded as an input; the lookup result is the fixed-width Field value.
+#[cfg(test)]
 enum ClosedOpaqueMapOperation {
     Put,
     Ensure { field: String, key: String },
 }
 
+#[cfg(test)]
 fn closed_opaque_map_operation(
     circuit: &StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,
@@ -730,12 +732,6 @@ fn render_recorded_item(
         effectful_plan,
     )?;
     let organizer_gate = organizer_steps.is_some();
-    let opaque_map_operation = closed_opaque_map_operation(circuit, ledger_fields);
-    #[cfg(test)]
-    admission_probe::trace::guard(
-        "guard.closed-opaque-map-operation",
-        opaque_map_operation.is_some(),
-    );
     let mut steps = organizer_steps.unwrap_or_default();
     let mut next_temp = 0;
     let mut visiting = HashSet::from([circuit.name.clone()]);
@@ -1096,29 +1092,6 @@ fn render_recorded_item(
             };
             (return_steps, result)
         }
-        StateReturn::Expression { .. }
-            if matches!(
-                opaque_map_operation,
-                Some(ClosedOpaqueMapOperation::Ensure { .. })
-            ) =>
-        {
-            let Some(ClosedOpaqueMapOperation::Ensure { field, key }) =
-                opaque_map_operation.as_ref()
-            else {
-                unreachable!()
-            };
-            let slot = ident(field)?;
-            let (_, key_ident) = parameters
-                .get(key.as_str())
-                .expect("closed Map key is a declared parameter");
-            (
-                vec![syn::parse_quote!(
-                    let (frame, observed): (_, runtime::Field) =
-                        crate::ledger_slots::#slot.record_lookup(frame, (#key_ident).clone())?;
-                )],
-                syn::parse_quote!(observed),
-            )
-        }
         StateReturn::Expression { value }
             if contains_cell_read(value)
                 && circuit.result == Type::Boolean
@@ -1399,7 +1372,6 @@ fn render_recorded_item(
             "guard.proved-opaque-set-sequence",
             proved_opaque_set_sequence(circuit)
         )
-        && opaque_map_operation.is_none()
         && !organizer_gate
     {
         return Ok(RecordingOutcome::Unsupported(

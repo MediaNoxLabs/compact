@@ -158,16 +158,18 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_recorded_member_0): (_, bool) =
-                crate::ledger_slots::entries.record_member(frame, (__compact_param_0).clone())?;
-            if !(__compact_recorded_member_0) {
+            let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
+            let (frame, __compact_effect_1): (_, bool) =
+                crate::ledger_slots::entries.record_member(frame, (__compact_effect_0).clone())?;
+            if !__compact_effect_1 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "missing key".to_owned(),
                 ));
             }
-            let (frame, observed): (_, runtime::Field) =
-                crate::ledger_slots::entries.record_lookup(frame, (__compact_param_0).clone())?;
-            Ok(frame.finish(observed))
+            let __compact_effect_2: () = ();
+            let (frame, __compact_effect_3): (_, runtime::Field) =
+                crate::ledger_slots::entries.record_lookup(frame, (__compact_effect_0).clone())?;
+            Ok(frame.finish(__compact_effect_3))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

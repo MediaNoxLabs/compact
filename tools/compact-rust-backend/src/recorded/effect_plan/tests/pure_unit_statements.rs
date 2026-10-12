@@ -49,29 +49,13 @@ fn probe(source: &str, entry: &str, label: &str, require_old: bool) {
             "{label}: complete old root premise FIRST"
         );
     }
-    let needs_map = matches!(
-        label,
-        "retained-service-set-service" | "retained-nested-upsert"
-    );
     let checked = match check_with_calls(root, &ledger, &witnesses, &pure, &stateful) {
         Ok(plan) => {
-            assert!(
-                !needs_map,
-                "{label}: update the measured next-gap control deliberately"
-            );
             render(&plan).unwrap();
             json!({"status":"supported"})
         }
         Err(PlanError::Unsupported(gap)) => {
-            assert!(needs_map, "{label}: {gap:?}");
-            assert!(
-                matches!(
-                    gap.ir_node.as_str(),
-                    "Expr::MapMember" | "StateAction::MapInsert"
-                ),
-                "{label}: expected next Map primitive, got {gap:?}"
-            );
-            json!({"status":"unsupported","ir_node":gap.ir_node,"path":gap.path,"detail":gap.detail})
+            panic!("{label}: complete pure-statement and Map source must compose: {gap:?}");
         }
         Err(PlanError::Invalid(gap)) => panic!("{label}: invalid plan: {gap:?}"),
     };
@@ -89,7 +73,7 @@ fn probe(source: &str, entry: &str, label: &str, require_old: bool) {
         .collect::<Vec<_>>();
     assert_eq!(rows.len(), 1, "{label}: one actual public emission");
     // Existing membership priority covers one Enum formal and Boolean-only
-    // roots. A String+Enum signature and the two still-refused Map roots keep
+    // roots. A String+Enum signature and the two now-composing Map roots keep
     // their existing unit-composition owner; candidate success is independent.
     let expected_owner = if label.starts_with("retained-guard-") || !require_old {
         "algebra.membership"

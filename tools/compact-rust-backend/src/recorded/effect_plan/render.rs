@@ -8,6 +8,7 @@ use super::{RecordingGap, declarations::Declarations, invalid, model::*};
 use crate::{ident, rust_type};
 use proc_macro2::Span;
 mod leaf;
+mod maps;
 mod merkle;
 mod qualified_coins;
 mod zswap;

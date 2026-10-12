@@ -116,13 +116,20 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_key_0 = true;
+            let __compact_effect_0: runtime::Field = runtime::Field::from_le_bytes(&[
+                42u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_1: bool = true;
             let frame = crate::ledger_slots::table.record_insert(
                 frame,
-                __compact_recorded_key_0,
-                runtime::Field::from(42u128),
+                __compact_effect_1,
+                __compact_effect_0,
             )?;
-            Ok(frame.finish(()))
+            let __compact_effect_2: () = ();
+            let __compact_effect_3: () = ();
+            Ok(frame.finish(__compact_effect_3))
         }
         pub fn lookup_true<Private>(
             context: runtime::context::CircuitContext<Private>,

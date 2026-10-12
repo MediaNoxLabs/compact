@@ -19,6 +19,7 @@ mod counters;
 mod expressions;
 mod jubjub;
 mod kernel;
+mod maps;
 mod merkle;
 mod ordinary;
 mod pure;
@@ -415,6 +416,9 @@ impl Lowerer<'_> {
                     bindings,
                     path,
                 )?;
+            }
+            StateAction::MapInsert { .. } | StateAction::MapRemove { .. } => {
+                self.map_action(action, scope, bindings, path)?;
             }
             StateAction::SetInsert {
                 field,

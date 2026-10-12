@@ -528,3 +528,9 @@ mod retained_schnorr;
 
 #[path = "tests/field_multiply.rs"]
 mod field_multiply;
+
+#[path = "tests/retained_map_family.rs"]
+mod retained_map_family;
+
+#[path = "tests/map_operations.rs"]
+mod map_operations;

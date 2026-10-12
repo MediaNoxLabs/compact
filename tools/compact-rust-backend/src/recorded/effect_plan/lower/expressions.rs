@@ -187,6 +187,14 @@ impl Lowerer<'_> {
                     },
                 );
             }
+            Expr::MapMember { field, index, key } | Expr::MapLookup { field, index, key } => {
+                let query = if matches!(expression, Expr::MapLookup { .. }) {
+                    maps::MapQuery::Lookup(field, *index, key)
+                } else {
+                    maps::MapQuery::Member(field, *index, key)
+                };
+                self.map_query(query, scope, bindings, path)?
+            }
             Expr::SetMember {
                 field,
                 index,

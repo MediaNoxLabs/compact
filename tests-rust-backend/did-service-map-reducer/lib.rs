@@ -267,8 +267,13 @@ pub mod ledger_contract {
             frame: runtime::recording::RecordingFrame<Private>,
         ) -> Result<(runtime::recording::RecordingFrame<Private>, ()), runtime::CompactError>
         {
-            let frame = crate::ledger_slots::count.record_increment(frame, 1u16)?;
-            Ok((frame, ()))
+            let __compact_effect_0: runtime::BoundedUint<65535> =
+                <runtime::BoundedUint<65535>>::new(1u128)?;
+            let frame = crate::ledger_slots::count
+                .record_increment(frame, (__compact_effect_0).value() as u16)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok((frame, __compact_effect_2))
         }
         pub fn set_service<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -357,23 +362,29 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_plan_0: runtime::OpaqueString = (__compact_param_0).clone();
-            let (frame, __compact_plan_1): (_, bool) =
-                crate::ledger_slots::services.record_member(frame, (__compact_plan_0).clone())?;
-            if !__compact_plan_1 {
+            let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
+            let (frame, __compact_effect_1): (_, bool) =
+                crate::ledger_slots::services.record_member(frame, (__compact_effect_0).clone())?;
+            if !__compact_effect_1 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "missing service".to_owned(),
                 ));
             }
+            let __compact_effect_2: () = ();
             let frame =
-                crate::ledger_slots::services.record_remove(frame, (__compact_plan_0).clone())?;
-            let __compact_plan_2: runtime::BoundedUint<65535> =
-                runtime::BoundedUint::<65535>::new(1u128)
-                    .expect("Compact Uint literal fits its maximum");
-            let __compact_plan_3: runtime::BoundedUint<65535> = __compact_plan_2;
-            let frame = crate::ledger_slots::count
-                .record_increment(frame, (__compact_plan_3).value() as u16)?;
-            Ok(frame.finish(()))
+                crate::ledger_slots::services.record_remove(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_3: () = ();
+            let (frame, __compact_effect_7): (_, ()) = {
+                let __compact_effect_4: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
+                let frame = crate::ledger_slots::count
+                    .record_increment(frame, (__compact_effect_4).value() as u16)?;
+                let __compact_effect_5: () = ();
+                let __compact_effect_6: () = ();
+                (frame, __compact_effect_6)
+            };
+            let __compact_effect_8: () = ();
+            Ok(frame.finish(__compact_effect_8))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
@@ -398,6 +409,9 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
+                runtime::ledger::CellValue::validate_cell_value(&(service).id)?;
+                runtime::ledger::CellValue::validate_cell_value(&(service).typ)?;
+                runtime::ledger::CellValue::validate_cell_value(&(service).serviceEndpoint)?;
                 let input = runtime::fab::AlignedValue::from(((service).clone(), m));
                 let recorded =
                     self.set_service(observed.circuit_context(private_state), service, m)?;
@@ -426,6 +440,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
+                runtime::ledger::CellValue::validate_cell_value(&id)?;
                 let input = runtime::fab::AlignedValue::from((id).clone());
                 let recorded = self.remove_service(observed.circuit_context(private_state), id)?;
                 Ok(runtime::transaction::RecordedCall::new(

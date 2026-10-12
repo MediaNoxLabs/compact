@@ -138,13 +138,16 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_key_0 = true;
+            let __compact_effect_0: runtime::Field = __compact_param_0;
+            let __compact_effect_1: bool = true;
             let frame = crate::ledger_slots::table.record_insert(
                 frame,
-                __compact_recorded_key_0,
-                __compact_param_0,
+                __compact_effect_1,
+                __compact_effect_0,
             )?;
-            Ok(frame.finish(()))
+            let __compact_effect_2: () = ();
+            let __compact_effect_3: () = ();
+            Ok(frame.finish(__compact_effect_3))
         }
         pub fn private_has<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,

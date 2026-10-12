@@ -80,6 +80,7 @@ mod inline_type_scope;
 mod kernel_shielded_effects;
 mod let_return;
 mod literal_bytes_field;
+mod map_effects;
 mod merkle_hash;
 mod merkle_indexed;
 mod merkle_reset;

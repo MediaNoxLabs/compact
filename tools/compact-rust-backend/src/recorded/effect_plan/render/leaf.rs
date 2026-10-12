@@ -293,6 +293,12 @@ pub(super) fn render(
             steps.push(qualified_coins::insert(&slot, coin, recipient));
             syn::parse_quote!(())
         }
+        Operation::MapMember { .. }
+        | Operation::MapLookup { .. }
+        | Operation::MapInsert { .. }
+        | Operation::MapRemove { .. } => {
+            return maps::render(binding, declarations, steps);
+        }
         Operation::SetMember { slot, value: input } => {
             let slot = slot_name(declarations, slot.declaration, path)?;
             let input = value(input);

@@ -24,7 +24,7 @@ fn retained_set_root_has_complete_old_admission_before_checked_composition() {
     );
 }
 #[test]
-fn retained_service_root_preserves_full_old_premise_without_claiming_map_support() {
+fn retained_service_root_composes_maps_after_complete_old_admission() {
     probe(
         include_str!("../../../../../tests/map-composition/service_mutation.json"),
         "set_service",
@@ -33,7 +33,7 @@ fn retained_service_root_preserves_full_old_premise_without_claiming_map_support
     );
 }
 #[test]
-fn retained_nested_root_preserves_full_old_premise_without_claiming_map_support() {
+fn retained_nested_root_composes_maps_after_complete_old_admission() {
     probe(
         include_str!("../../../../../tests/map-nested-product/nested-enum.json"),
         "upsert",

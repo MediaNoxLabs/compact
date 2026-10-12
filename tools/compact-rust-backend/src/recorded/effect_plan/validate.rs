@@ -9,6 +9,7 @@ use std::collections::{HashMap, HashSet};
 mod aggregates;
 mod calls;
 mod domain;
+pub(super) mod maps;
 mod merkle;
 pub(super) use merkle::root_type;
 mod persistent;
@@ -445,6 +446,27 @@ fn block(
                     && coin.ty == crate::coin_shapes::shielded_coin_type()
                     && recipient.ty == crate::coin_shapes::shielded_recipient_type()
                     && *ty == Type::Unit
+            }
+            Operation::MapMember { slot, key }
+            | Operation::MapLookup { slot, key }
+            | Operation::MapRemove { slot, key } => {
+                use_value(key)?;
+                let member = matches!(binding.operation, Operation::MapMember { .. });
+                let (declared_key, declared_value) =
+                    maps::types(declarations, *slot, !member, path)?;
+                key.ty == *declared_key
+                    && *ty
+                        == match binding.operation {
+                            Operation::MapMember { .. } => Type::Boolean,
+                            Operation::MapLookup { .. } => declared_value.clone(),
+                            _ => Type::Unit,
+                        }
+            }
+            Operation::MapInsert { slot, key, value } => {
+                use_value(key)?;
+                use_value(value)?;
+                let (declared_key, declared_value) = maps::types(declarations, *slot, true, path)?;
+                key.ty == *declared_key && value.ty == *declared_value && *ty == Type::Unit
             }
             Operation::SetMember { slot, value }
             | Operation::SetInsert { slot, value }

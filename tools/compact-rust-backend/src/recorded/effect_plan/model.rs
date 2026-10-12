@@ -29,6 +29,11 @@ pub(super) struct SetSlot {
     pub index: u8,
 }
 #[derive(Clone, Copy, Debug)]
+pub(super) struct MapSlot {
+    pub declaration: LedgerId,
+    pub index: u8,
+}
+#[derive(Clone, Copy, Debug)]
 pub(super) struct CounterSlot {
     pub declaration: LedgerId,
     pub index: u8,
@@ -185,6 +190,24 @@ pub(super) enum Operation {
         slot: CellSlot,
         coin: Value,
         recipient: Value,
+    },
+    /// Map identity comes from declarations; structural values never become SSA.
+    MapMember {
+        slot: MapSlot,
+        key: Value,
+    },
+    MapInsert {
+        slot: MapSlot,
+        key: Value,
+        value: Value,
+    },
+    MapRemove {
+        slot: MapSlot,
+        key: Value,
+    },
+    MapLookup {
+        slot: MapSlot,
+        key: Value,
     },
     /// Ordinary typed membership/insertion; qualified-coin allocation is separate.
     SetMember {

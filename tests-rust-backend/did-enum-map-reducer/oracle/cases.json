@@ -2,7 +2,7 @@
   "format": "compact-did-primitive-reducer-capture/v1",
   "kind": "enum-map",
   "generatedJavaScriptSha256": "680b60dc279142f818e0916b90d37d470f6a649305776c70c36d4c0bdfdf5019",
-  "runtimeJavaScriptSha256": "f6b1b8b0d4ecfd6458706fd3969babbb988879dd9c39618cc137c463a151781b",
+  "runtimeJavaScriptSha256": "db88e0bf0c11d081fcd8ba05ee7390cad8238be4c17dddc7da092219585c7cb7",
   "captureSha256": "97e2ed2b889abc091417a436025d909afbe232ce84031ff6c781e864579b2507",
   "runtimeVersion": "0.16.101",
   "provenance": [
@@ -12,7 +12,7 @@
     },
     {
       "path": "tests-rust-backend/did-enum-map-reducer/lib.rs",
-      "sha256": "3aab8fb11870e5730b4939ca7469258ad808e2c4025ed3007ac646d625a2cece"
+      "sha256": "257d7839a4ded074ae89a1f0bc24f8390ed1082b23ced18dfc27bd453eab458e"
     },
     {
       "path": "tests-rust-backend/did-enum-map-reducer/tests/behavior.rs",

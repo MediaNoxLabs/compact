@@ -62,21 +62,13 @@ fn inspect(source: &str, entry: &str, label: &str, require_old: bool, y_first: b
     let checked = match check_with_calls(root, &ledger, &witnesses, &pure, &stateful) {
         Ok(plan) => {
             if retained_schnorr {
-                assert!(
-                    super::retained_schnorr::remaining_map_member_path(label).is_none(),
-                    "{label}: update the measured MapMember gap deliberately"
-                );
+                super::retained_schnorr::assert_retained_root_label(label);
             }
             render(&plan).unwrap();
             json!({"status":"supported"})
         }
         Err(PlanError::Unsupported(gap)) => {
-            assert!(
-                retained_schnorr,
-                "{label}: projection source must compose: {gap:?}"
-            );
-            super::retained_schnorr::assert_map_member_gap(label, &gap);
-            json!({"status":"unsupported","ir_node":gap.ir_node,"path":gap.path,"detail":gap.detail})
+            panic!("{label}: complete source must compose: {gap:?}");
         }
         Err(PlanError::Invalid(gap)) => panic!("{label}: invariant failure {gap:?}"),
     };

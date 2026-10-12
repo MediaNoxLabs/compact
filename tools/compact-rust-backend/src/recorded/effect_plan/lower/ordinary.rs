@@ -49,6 +49,17 @@ impl Lowerer<'_> {
                 bindings,
                 &return_path,
             ),
+            StateReturn::MapMember { field, index, key }
+            | StateReturn::MapLookup { field, index, key } => {
+                self.spend(&return_path)?;
+                let query = if matches!(returned, StateReturn::MapLookup { .. }) {
+                    maps::MapQuery::Lookup(field, *index, key)
+                } else {
+                    maps::MapQuery::Member(field, *index, key)
+                };
+                let (operation, ty) = self.map_query(query, scope, bindings, &return_path)?;
+                Ok(self.emit(operation, ty, bindings, &return_path))
+            }
             StateReturn::SetMember {
                 field,
                 index,

@@ -94,15 +94,15 @@ pub mod ledger_contract {
         __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let state = runtime::ledger::contract_state(vec![
-            runtime::ledger::constructor_cell::<bool, runtime::ledger::DefaultDB>(
+            runtime::ledger::try_constructor_cell::<bool, runtime::ledger::DefaultDB>(
                 Default::default(),
-            ),
-            runtime::ledger::constructor_cell::<bool, runtime::ledger::DefaultDB>(
+            )?,
+            runtime::ledger::try_constructor_cell::<bool, runtime::ledger::DefaultDB>(
                 Default::default(),
-            ),
-            runtime::ledger::constructor_cell::<bool, runtime::ledger::DefaultDB>(
+            )?,
+            runtime::ledger::try_constructor_cell::<bool, runtime::ledger::DefaultDB>(
                 Default::default(),
-            ),
+            )?,
             runtime::ledger::constructor_set(),
             runtime::ledger::constructor_map(),
         ]);
@@ -253,14 +253,17 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame = crate::ledger_slots::seen.record_insert(frame, __compact_param_0)?;
-            let __compact_recorded_key_0 = __compact_param_0;
+            let __compact_effect_0: runtime::Field = __compact_param_0;
+            let frame = crate::ledger_slots::seen.record_insert(frame, __compact_effect_0)?;
+            let __compact_effect_1: () = ();
             let frame = crate::ledger_slots::table.record_insert(
                 frame,
-                __compact_recorded_key_0,
-                __compact_param_0,
+                __compact_effect_0,
+                __compact_effect_0,
             )?;
-            Ok(frame.finish(()))
+            let __compact_effect_2: () = ();
+            let __compact_effect_3: () = ();
+            Ok(frame.finish(__compact_effect_3))
         }
         pub fn check_member<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -268,23 +271,26 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_key_0 = __compact_param_0;
-            let (frame, __compact_recorded_member_1): (_, bool) =
-                crate::ledger_slots::seen.record_member(frame, __compact_recorded_key_0)?;
-            let frame =
-                crate::ledger_slots::memberFlag.record_write(frame, __compact_recorded_member_1)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: runtime::Field = __compact_param_0;
+            let (frame, __compact_effect_1): (_, bool) =
+                crate::ledger_slots::seen.record_member(frame, __compact_effect_0)?;
+            let frame = crate::ledger_slots::memberFlag.record_write(frame, __compact_effect_1)?;
+            let __compact_effect_2: () = ();
+            let __compact_effect_3: () = ();
+            Ok(frame.finish(__compact_effect_3))
         }
         pub fn check_set_empty<Private>(
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_recorded_empty_0): (_, bool) =
+            let (frame, __compact_effect_0): (_, bool) =
                 crate::ledger_slots::seen.record_is_empty(frame)?;
-            let frame = crate::ledger_slots::setEmptyFlag
-                .record_write(frame, __compact_recorded_empty_0)?;
-            Ok(frame.finish(()))
+            let frame =
+                crate::ledger_slots::setEmptyFlag.record_write(frame, __compact_effect_0)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn check_map_empty<Private>(
             context: runtime::context::CircuitContext<Private>,

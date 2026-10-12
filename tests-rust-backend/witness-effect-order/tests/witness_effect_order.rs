@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Native effect ordering and current recorded Set membership qualification.
+//! Native and recorded Set/Map effect ordering against captured TypeScript rows.
 //! The independent captured query programs belong to TypeScript.
 
 use compact_rust_witness_effect_order_fixture::ledger_contract as contract;
@@ -402,3 +402,7 @@ fn new_set_recording_preserves_callback_before_query_and_ts_results() {
         }
     }
 }
+
+#[cfg(feature = "ledger-transaction")]
+#[path = "recording/maps.rs"]
+mod map_recording;

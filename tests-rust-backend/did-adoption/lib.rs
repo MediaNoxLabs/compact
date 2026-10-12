@@ -27,6 +27,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct ContractAddress {
         pub bytes: ::midnight_compact_runtime::FixedBytes<32>,
@@ -39,6 +40,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct ControllerAuthorizationDomain {
         pub domain: ::midnight_compact_runtime::FixedBytes<32>,
@@ -51,6 +53,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct ControllerAuthorizationNoArgs {
         pub domain: ::midnight_compact_runtime::FixedBytes<32>,
@@ -63,6 +66,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct ControllerAuthorizationOperation {
         pub name: ::midnight_compact_runtime::FixedBytes<32>,
@@ -75,6 +79,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct ControllerAuthorizationState {
         pub contractId: crate::types::ContractAddress,
@@ -88,6 +93,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct PublicKeyJwk {
         pub kty: crate::types::KeyType,
@@ -103,6 +109,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct RecoverControllerKeyArgs {
         pub publicKeyX: ::midnight_compact_runtime::Field,
@@ -116,6 +123,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct RemoveSchnorrJubjubVerificationMethodArgs {
         pub id: ::midnight_compact_runtime::OpaqueString,
@@ -128,6 +136,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct RemoveServiceArgs {
         pub id: ::midnight_compact_runtime::OpaqueString,
@@ -140,6 +149,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct RemoveVerificationMethodArgs {
         pub id: ::midnight_compact_runtime::OpaqueString,
@@ -152,6 +162,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct RotateControllerKeyArgs {
         pub publicKeyX: ::midnight_compact_runtime::Field,
@@ -165,6 +176,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct SchnorrHashInput {
         pub ann_x: ::midnight_compact_runtime::Field,
@@ -181,6 +193,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct SchnorrJubjubVerificationMethod {
         pub id: ::midnight_compact_runtime::OpaqueString,
@@ -194,6 +207,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct SchnorrSignature {
         pub announcement: ::midnight_compact_runtime::JubjubPoint,
@@ -207,6 +221,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct Service {
         pub id: ::midnight_compact_runtime::OpaqueString,
@@ -221,6 +236,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct SetAlsoKnownAsArgs {
         pub value: ::midnight_compact_runtime::OpaqueString,
@@ -234,6 +250,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct SetSchnorrJubjubVerificationMethodArgs {
         pub id: ::midnight_compact_runtime::OpaqueString,
@@ -249,6 +266,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct SetServiceArgs {
         pub service: crate::types::Service,
@@ -262,6 +280,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct SetVerificationMethodArgs {
         pub verificationMethod: crate::types::VerificationMethod,
@@ -275,6 +294,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct SetVerificationMethodRelationArgs {
         pub relation: crate::types::VerificationMethodRelation,
@@ -289,6 +309,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct VerificationMethod {
         pub id: ::midnight_compact_runtime::OpaqueString,
@@ -304,6 +325,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactEnum,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub enum CurveType {
         Ed25519,
@@ -323,6 +345,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactEnum,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub enum KeyType {
         EC,
@@ -339,6 +362,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactEnum,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub enum MapMutation {
         Undefined,
@@ -354,6 +378,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactEnum,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub enum SetMutation {
         Undefined,
@@ -369,6 +394,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactEnum,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub enum VerificationMethodRelation {
         Undefined,
@@ -387,6 +413,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactEnum,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub enum VerificationMethodType {
         Undefined,
@@ -399,7 +426,7 @@ pub use types::Schnorr_SchnorrSignature;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 51);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub(crate) fn controllerOperationHash(
         name: runtime::FixedBytes<32>,
     ) -> Result<runtime::Field, runtime::CompactError> {
@@ -492,10 +519,12 @@ pub mod pure_circuits {
                 65u8, 115u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                 0u8, 0u8, 0u8, 0u8,
             ]))?,
-            runtime::transient_hash(crate::types::SetAlsoKnownAsArgs {
-                value: value.clone(),
-                mutation,
-            }),
+            runtime::transient_hash(runtime::exact_hash_input(
+                crate::types::SetAlsoKnownAsArgs {
+                    value: value.clone(),
+                    mutation,
+                },
+            )),
         )
     }
     pub fn setVerificationMethodAuthorizationDigest(
@@ -512,10 +541,12 @@ pub mod pure_circuits {
                 105u8, 111u8, 110u8, 77u8, 101u8, 116u8, 104u8, 111u8, 100u8, 0u8, 0u8, 0u8, 0u8,
                 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             ]))?,
-            runtime::transient_hash(crate::types::SetVerificationMethodArgs {
-                verificationMethod: verificationMethod.clone(),
-                mutation,
-            }),
+            runtime::transient_hash(runtime::exact_hash_input(
+                crate::types::SetVerificationMethodArgs {
+                    verificationMethod: verificationMethod.clone(),
+                    mutation,
+                },
+            )),
         )
     }
     pub fn removeVerificationMethodAuthorizationDigest(
@@ -531,7 +562,9 @@ pub mod pure_circuits {
                 99u8, 97u8, 116u8, 105u8, 111u8, 110u8, 77u8, 101u8, 116u8, 104u8, 111u8, 100u8,
                 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             ]))?,
-            runtime::transient_hash(crate::types::RemoveVerificationMethodArgs { id: id.clone() }),
+            runtime::transient_hash(runtime::exact_hash_input(
+                crate::types::RemoveVerificationMethodArgs { id: id.clone() },
+            )),
         )
     }
     pub fn setSchnorrJubjubVerificationMethodAuthorizationDigest(
@@ -548,12 +581,14 @@ pub mod pure_circuits {
                 98u8, 106u8, 117u8, 98u8, 86u8, 77u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                 0u8, 0u8, 0u8, 0u8, 0u8,
             ]))?,
-            runtime::transient_hash(crate::types::SetSchnorrJubjubVerificationMethodArgs {
-                id: ((verificationMethod.clone()).id).clone(),
-                publicKeyX: runtime::jubjub_point_x((verificationMethod.clone()).publicKey),
-                publicKeyY: runtime::jubjub_point_y((verificationMethod.clone()).publicKey),
-                mutation,
-            }),
+            runtime::transient_hash(runtime::exact_hash_input(
+                crate::types::SetSchnorrJubjubVerificationMethodArgs {
+                    id: ((verificationMethod.clone()).id).clone(),
+                    publicKeyX: runtime::jubjub_point_x((verificationMethod.clone()).publicKey),
+                    publicKeyY: runtime::jubjub_point_y((verificationMethod.clone()).publicKey),
+                    mutation,
+                },
+            )),
         )
     }
     pub fn removeSchnorrJubjubVerificationMethodAuthorizationDigest(
@@ -569,9 +604,9 @@ pub mod pure_circuits {
                 114u8, 74u8, 117u8, 98u8, 106u8, 117u8, 98u8, 86u8, 77u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             ]))?,
-            runtime::transient_hash(crate::types::RemoveSchnorrJubjubVerificationMethodArgs {
-                id: id.clone(),
-            }),
+            runtime::transient_hash(runtime::exact_hash_input(
+                crate::types::RemoveSchnorrJubjubVerificationMethodArgs { id: id.clone() },
+            )),
         )
     }
     pub fn setVerificationMethodRelationAuthorizationDigest(
@@ -589,11 +624,13 @@ pub mod pure_circuits {
                 110u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                 0u8, 0u8, 0u8, 0u8,
             ]))?,
-            runtime::transient_hash(crate::types::SetVerificationMethodRelationArgs {
-                relation,
-                methodId: methodId.clone(),
-                mutation,
-            }),
+            runtime::transient_hash(runtime::exact_hash_input(
+                crate::types::SetVerificationMethodRelationArgs {
+                    relation,
+                    methodId: methodId.clone(),
+                    mutation,
+                },
+            )),
         )
     }
     pub fn setServiceAuthorizationDigest(
@@ -610,10 +647,10 @@ pub mod pure_circuits {
                 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                 0u8, 0u8, 0u8,
             ]))?,
-            runtime::transient_hash(crate::types::SetServiceArgs {
+            runtime::transient_hash(runtime::exact_hash_input(crate::types::SetServiceArgs {
                 service: service.clone(),
                 mutation,
-            }),
+            })),
         )
     }
     pub fn removeServiceAuthorizationDigest(
@@ -629,7 +666,9 @@ pub mod pure_circuits {
                 101u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                 0u8, 0u8, 0u8, 0u8,
             ]))?,
-            runtime::transient_hash(crate::types::RemoveServiceArgs { id: id.clone() }),
+            runtime::transient_hash(runtime::exact_hash_input(crate::types::RemoveServiceArgs {
+                id: id.clone(),
+            })),
         )
     }
     pub fn deactivateAuthorizationDigest(
@@ -804,7 +843,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 51);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,

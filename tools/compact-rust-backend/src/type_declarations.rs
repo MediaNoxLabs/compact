@@ -92,7 +92,8 @@ pub(crate) fn render(
             #[derive(::core::clone::Clone, ::core::fmt::Debug, ::core::default::Default,
                 ::core::cmp::PartialEq, ::core::cmp::Eq,
                 ::midnight_compact_runtime::CompactCellValue,
-                ::midnight_compact_runtime::CompactStructRepr)]
+                ::midnight_compact_runtime::CompactStructRepr,
+                ::midnight_compact_runtime::CompactHashInput)]
             pub struct #name { #(#fields),* }
         };
         if let Some(conversion) = conversion {
@@ -113,7 +114,8 @@ pub(crate) fn render(
             #[derive(::core::clone::Clone, ::core::marker::Copy, ::core::fmt::Debug,
                 ::core::cmp::PartialEq, ::core::cmp::Eq,
                 ::midnight_compact_runtime::CompactCellValue,
-                ::midnight_compact_runtime::CompactEnum)]
+                ::midnight_compact_runtime::CompactEnum,
+                ::midnight_compact_runtime::CompactHashInput)]
             pub enum #name { #(#variants),* }
         });
     }

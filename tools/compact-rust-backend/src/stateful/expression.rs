@@ -1163,8 +1163,10 @@ fn render_call_operation(
             statements.push(syn::parse_quote!(context.private_state = #private_name;));
             let transcript_value =
                 retained_value(syn::parse_quote!(#value_name), &declaration.result);
+            let transcript_value =
+                crate::hash_input::private_output(transcript_value, &declaration.result);
             statements.push(syn::parse_quote! {
-                private_transcript_outputs.push(runtime::fab::AlignedValue::from(#transcript_value));
+                private_transcript_outputs.push(#transcript_value);
             });
             Ok((
                 syn::parse_quote!(#value_name),
@@ -1896,6 +1898,12 @@ fn render_crypto_operation(
                 }
                 _ => unreachable!(),
             };
+            let rendered = if matches!(value, Expr::TransientHash { .. } | Expr::HashToCurve { .. })
+            {
+                crate::hash_input::syntax(rendered, &actual)
+            } else {
+                rendered
+            };
             Ok((syn::parse_quote!(#operation(#rendered)), result, effect))
         }
         Expr::TransientCommit {
@@ -1906,7 +1914,7 @@ fn render_crypto_operation(
             value: input,
             opening,
         } => {
-            let (input, _, input_effect) = render_state_expression(
+            let (input, input_type, input_effect) = render_state_expression(
                 input,
                 parameters,
                 witnesses,
@@ -1950,8 +1958,13 @@ fn render_crypto_operation(
             if actual != expected {
                 return Err(RenderError::TypeMismatch { expected, actual });
             }
+            let input = if matches!(value, Expr::TransientCommit { .. }) {
+                crate::hash_input::syntax(syn::parse_quote!(#input_name), &input_type)
+            } else {
+                syn::parse_quote!(#input_name)
+            };
             Ok((
-                syn::parse_quote!(#operation(#input_name, #opening)),
+                syn::parse_quote!(#operation(#input, #opening)),
                 result,
                 input_effect || opening_effect,
             ))

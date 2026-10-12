@@ -14,8 +14,11 @@ moves from the legacy shape planner to the compositional effect plan.
   migration. It is an intentionally frozen reference, not a regeneration target.
 - `tests/effectful_return_oracle.rs` retains the two TypeScript oracle tests and
   now runs them against fresh default output.
-- `tests/migration.rs` includes the frozen output at its own integration-test crate
-  root and compares it with the fresh fixture: results, public and private state,
+- `tests/migration.rs` includes an authenticated build-output copy at its own integration-test crate
+  root. The test-only adapter verifies the complete frozen source SHA256 and projects only
+  its two ABI51 guards to ABI52; the original file and legacy implementation stay unchanged.
+  The actual runtime must be ABI52. The test compares the legacy and fresh fixtures:
+  results, public and private state,
   ordered witness observations, effects, private outputs, public transcript, all
   execution gas dimensions, replay state/effects/gas, and witness error prefixes.
   Its 120 success cases include field wraparound and both selected branches; four

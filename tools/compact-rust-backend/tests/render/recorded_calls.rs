@@ -247,7 +247,9 @@ fn recorded_field_returning_helpers_compose_once_in_each_caller() {
     };
     let multiplied = render(&contract).unwrap();
     assert!(multiplied.contains("pub mod recorded"));
-    assert!(multiplied.contains("__compact_recorded_product_"));
+    let body = recorded_function(&multiplied, "outerNested");
+    assert_eq!(body.matches(" * ").count(), 1);
+    assert!(body.contains("record_write"));
 
     contract.stateful_circuits[0].return_value = StateReturn::Expression {
         value: Expr::Add {
@@ -341,14 +343,12 @@ fn nested_call_exposes_a_trace_only_when_every_step_is_supported() {
         1
     );
 
-    // Direct hashing is still outside the checked recording operation domain.
-    // Keep a real nested-step refusal: native Keccak remains outside the checked algebra.
+    // Scalar default is native-valid but not yet a checked algebra operation.
+    // Keep the nested-step refusal independent of already-supported hashes.
     contract.stateful_circuits[0]
         .actions
         .push(StateAction::Expression {
-            value: Expr::Keccak256 {
-                value: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
-            },
+            value: Expr::Default { ty: Type::Boolean },
         });
     let rendered = render_with_capabilities(&contract).unwrap();
     assert!(!rendered.capabilities.circuits[0].recorded);

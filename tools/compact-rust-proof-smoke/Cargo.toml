@@ -27,6 +27,7 @@ experimental-recording-plan = ["dep:compact-rust-recording-effect-plan-prototype
 
 [dependencies]
 compact-rust-effect-plan-aligned-hashes-source-fixture = { path = "../../tests-rust-backend/effect-plan-aligned-hashes-source", features = ["ledger-transaction"] }
+compact-rust-effect-plan-exact-hash-input-source-fixture = { path = "../../tests-rust-backend/effect-plan-exact-hash-input-source", features = ["ledger-transaction"] }
 compact-rust-effect-plan-unit-composition-source-fixture = { path = "../../tests-rust-backend/effect-plan-unit-composition-source", features = ["ledger-transaction"] }
 compact-rust-effect-plan-wide-add-source-fixture = { path = "../../tests-rust-backend/effect-plan-wide-add-source", features = ["ledger-transaction"] }
 compact-rust-effect-plan-wide-casts-source-fixture = { path = "../../tests-rust-backend/effect-plan-wide-casts-source", features = ["ledger-transaction"] }

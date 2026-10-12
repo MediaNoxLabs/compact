@@ -9,6 +9,7 @@ mod resource_limits;
 pub use capabilities::{
     RUST_CAPABILITY_SCHEMA_VERSION, RecordingStatus, RustCapabilityReport, RustCircuitCapability,
 };
+mod hash_input;
 mod implicit_types;
 mod jubjub_value;
 mod naming;
@@ -20,7 +21,7 @@ mod type_declarations;
 mod value_lowering;
 mod witness;
 
-const RUNTIME_ABI_VERSION: u32 = 51;
+const RUNTIME_ABI_VERSION: u32 = 52;
 
 const GENERATED_HEADER: &str = r#"// This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
@@ -1779,14 +1780,16 @@ fn pure_crypto_expression(
 ) -> Result<(syn::Expr, Type), RenderError> {
     match expr {
         Expr::TransientHash { value } => {
-            let (value, _) = expression_with_calls(value, parameters, circuits)?;
+            let (value, value_type) = expression_with_calls(value, parameters, circuits)?;
+            let value = hash_input::syntax(value, &value_type);
             Ok((
                 syn::parse_quote!(runtime::transient_hash(#value)),
                 Type::Field,
             ))
         }
         Expr::TransientCommit { value, opening } => {
-            let (value, _) = expression_with_calls(value, parameters, circuits)?;
+            let (value, value_type) = expression_with_calls(value, parameters, circuits)?;
+            let value = hash_input::syntax(value, &value_type);
             let (opening, actual) = expression_with_calls(opening, parameters, circuits)?;
             if actual != Type::Field {
                 return Err(RenderError::TypeMismatch {
@@ -1854,7 +1857,8 @@ fn pure_crypto_expression(
             ))
         }
         Expr::HashToCurve { value } => {
-            let (value, _) = expression_with_calls(value, parameters, circuits)?;
+            let (value, value_type) = expression_with_calls(value, parameters, circuits)?;
+            let value = hash_input::syntax(value, &value_type);
             Ok((
                 syn::parse_quote!(runtime::hash_to_curve(#value)),
                 Type::JubjubPoint,

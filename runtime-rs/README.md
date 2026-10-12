@@ -337,3 +337,42 @@ node admission remains responsible for those checks. The existing
 state locally. Offline differential tests compare both policies' allocations,
 recorded effects/gas and serialized prepared transactions; generated receive and
 qualified-send strict proofs are separate from any live acceptance claim.
+
+
+## Exact opaque hash inputs (runtime ABI 52)
+
+Generated code adapts values containing `OpaqueBytes` or `OpaqueString` before
+`hash_to_curve`, `transient_hash`, and `transient_commit`. Trailing zero bytes
+are part of a Compact opaque value and must contribute to its hash. Fixed-size
+fields keep their existing encoding. Nested structs, tuples, and vectors retain
+their declared field order.
+
+For handwritten runtime calls, opt into the same encoding explicitly:
+
+```rust,ignore
+use midnight_compact_runtime::{exact_hash_input, transient_hash, OpaqueBytes};
+let hash = transient_hash(exact_hash_input(OpaqueBytes(vec![1, 0])));
+```
+
+`HashInputValue` describes this encoding; the separate `CompactHashInput` derive
+implements it for generated named types. `ExactHashInput<T>` consumes the value
+once and adapts it to the official aligned-value hashing interfaces. Existing
+generic hash functions and ordinary ledger `Into<Value>` conversions keep their
+signatures and behavior. A direct call without the adapter still uses that
+ordinary conversion. This change does not extend the Compact source domain of
+`persistentHash` or change Keccak byte input handling.
+
+Opaque witness results are also retained exactly in the in-memory private
+transcript. Generated recording uses `try_witness_metered_exact`, preserving
+callback ordering, metering, and adoption of private state only on success.
+Handwritten transcript construction can use `exact_private_output`.
+
+Exact execution and proof transport are different boundaries. The pinned
+ledger8 serialized proof interface requires canonical atoms. Call preparation
+returns `PrepareCallError::NonCanonicalPrivateOutput { output_index, atom_index }`
+for a private atom with trailing zero bytes, before replay or proving. Public
+input validation retains its existing refusal behavior. The error preserves the
+witness value; it does not silently trim it to make a proof possible. An interior
+zero such as `[1, 0, 2]` is canonical and is covered by the source-bound opaque
+witness proof fixture. Support for noncanonical in-memory proof transport is not
+claimed by this adapter.

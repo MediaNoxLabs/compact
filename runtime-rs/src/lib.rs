@@ -22,6 +22,7 @@
 #![forbid(unsafe_code)]
 
 pub mod context;
+mod hash_input;
 pub mod ledger;
 mod natives;
 mod opaque;
@@ -34,8 +35,9 @@ pub use zswap::{CircuitZswapOutput, CircuitZswapPlan};
 #[cfg(feature = "ledger-transaction")]
 pub mod transaction;
 
+pub use hash_input::{ExactHashInput, HashInputValue, exact_hash_input, exact_private_output};
 pub use midnight_compact_runtime_macros::{
-    CompactCellValue, CompactEnum, CompactMerklePath, CompactMerklePathEntry,
+    CompactCellValue, CompactEnum, CompactHashInput, CompactMerklePath, CompactMerklePathEntry,
     CompactMerkleTreeDigest, CompactStructRepr, compact_witness_bridge,
 };
 pub use natives::{
@@ -57,7 +59,7 @@ pub mod fab {
 }
 
 /// Increment when generated Rust and the runtime's public contract change.
-pub const RUST_RUNTIME_ABI: u32 = 51;
+pub const RUST_RUNTIME_ABI: u32 = 52;
 /// The ledger line selected by this Compact branch's `flake.nix`.
 pub const LEDGER_VERSION: &str = "ledger-8.0.3";
 

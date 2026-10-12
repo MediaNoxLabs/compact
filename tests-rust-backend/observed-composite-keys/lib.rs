@@ -27,6 +27,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct CompositeKey {
         pub vector: ::midnight_compact_runtime::FixedVector<::midnight_compact_runtime::Field, 2>,
@@ -36,7 +37,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 51);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -53,7 +54,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 51);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -359,30 +360,33 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_sum_0: runtime::Field = __compact_param_0 + __compact_param_1;
-            let __compact_recorded_sum_1: runtime::Field =
-                __compact_recorded_sum_0 + __compact_param_2;
-            let __compact_recorded_sum_2: runtime::Field =
-                __compact_recorded_sum_1 + __compact_param_3;
-            let __compact_recorded_sum_3: runtime::Field =
-                __compact_recorded_sum_2 + __compact_param_4;
-            let __compact_recorded_sum_4: runtime::Field =
-                __compact_recorded_sum_3 + __compact_param_5;
-            let __compact_recorded_sum_5: runtime::Field =
-                __compact_recorded_sum_4 + __compact_param_6;
-            let __compact_recorded_sum_6: runtime::Field =
-                __compact_recorded_sum_5 + __compact_param_7;
-            let __compact_recorded_sum_7: runtime::Field =
-                __compact_recorded_sum_6 + __compact_param_8;
-            let __compact_recorded_sum_8: runtime::Field =
-                __compact_recorded_sum_7 + __compact_param_9;
-            let __compact_recorded_sum_9: runtime::Field =
-                __compact_recorded_sum_8 + __compact_param_10;
-            let __compact_recorded_sum_10: runtime::Field =
-                __compact_recorded_sum_9 + __compact_param_11;
-            let frame =
-                crate::ledger_slots::sums.record_insert(frame, __compact_recorded_sum_10)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: runtime::Field = __compact_param_0;
+            let __compact_effect_1: runtime::Field = __compact_param_1;
+            let __compact_effect_2: runtime::Field = __compact_param_2;
+            let __compact_effect_3: runtime::Field = __compact_param_3;
+            let __compact_effect_4: runtime::Field = __compact_param_4;
+            let __compact_effect_5: runtime::Field = __compact_param_5;
+            let __compact_effect_6: runtime::Field = __compact_param_6;
+            let __compact_effect_7: runtime::Field = __compact_param_7;
+            let __compact_effect_8: runtime::Field = __compact_param_8;
+            let __compact_effect_9: runtime::Field = __compact_param_9;
+            let __compact_effect_10: runtime::Field = __compact_param_10;
+            let __compact_effect_11: runtime::Field = __compact_param_11;
+            let __compact_effect_12: runtime::Field = __compact_effect_0 + __compact_effect_1;
+            let __compact_effect_13: runtime::Field = __compact_effect_12 + __compact_effect_2;
+            let __compact_effect_14: runtime::Field = __compact_effect_13 + __compact_effect_3;
+            let __compact_effect_15: runtime::Field = __compact_effect_14 + __compact_effect_4;
+            let __compact_effect_16: runtime::Field = __compact_effect_15 + __compact_effect_5;
+            let __compact_effect_17: runtime::Field = __compact_effect_16 + __compact_effect_6;
+            let __compact_effect_18: runtime::Field = __compact_effect_17 + __compact_effect_7;
+            let __compact_effect_19: runtime::Field = __compact_effect_18 + __compact_effect_8;
+            let __compact_effect_20: runtime::Field = __compact_effect_19 + __compact_effect_9;
+            let __compact_effect_21: runtime::Field = __compact_effect_20 + __compact_effect_10;
+            let __compact_effect_22: runtime::Field = __compact_effect_21 + __compact_effect_11;
+            let frame = crate::ledger_slots::sums.record_insert(frame, __compact_effect_22)?;
+            let __compact_effect_23: () = ();
+            let __compact_effect_24: () = ();
+            Ok(frame.finish(__compact_effect_24))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

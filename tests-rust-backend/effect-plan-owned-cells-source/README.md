@@ -43,22 +43,31 @@ frontend and `--target rust --skip-zk`, then compare the complete
 `contract/compact-rust-ir.json` before replacing
 `tools/compact-rust-backend/tests/effect-plan-owned-cells-schema20-ir.json`.
 
-## Checked opaque inputs (runtime ABI 51)
+## Checked opaque inputs (introduced in runtime ABI 51)
 
 A second complete source, `examples/rust_backend/opaque_cell_inputs.compact`,
 is built into the `opaque_inputs` integration-test crate. Its constructor and
 three native setters accept raw opaque inputs and nested aggregate children.
-Their recording capabilities remain unavailable; this intentionally preserves
-the existing interface policy.
+The build pins measured production admission from signed #582: `setText` is
+recorded and observed through `algebra.membership`; `setBytes` and `setEnvelope`
+remain unavailable through their legacy source routes. All three have supported
+algebra candidates, which is distinct from generated public API availability.
+The earlier all-unavailable build assertion was stale; this fixture correction
+does not introduce a compiler capability.
 
 The added tests require constructors and native setters to reject trailing-zero
 bytes and NUL-tail strings with the fixed `InvalidLedgerCell` error before
 normalizing conversion. Empty and embedded-zero canonical values must roundtrip.
 Separate tests call official native/recorded CellSlot adapters with invalid raw
 payloads, including nested aggregates. A valid but absent nested path distinguishes
-encoding rejection from a later VM-query error. These adapter tests are not
-presented as generated recorded source executions; that source input interface
-is not supported. The previous legacy-infallible-constructor normalization
+encoding rejection from a later VM-query error. Those adapter tests are separate from source execution. One generated `setText`
+test now compares native, recorded, observed and manual slot execution for four
+canonical values (empty, interior NUL, Unicode and longer strings), including
+exact stored values, state/effects, gas, verifier operations and replay. Three
+trailing-NUL inputs must return the same typed refusal in all generated paths;
+the supplied observed state remains unchanged. No preparation or proof claim is
+made by this setter test. Native and adapter controls for bytes/nested payloads
+remain separate from their unavailable generated recording routes. The previous legacy-infallible-constructor normalization
 characterization remains explicit.
 
 The additional `opaque_constructor_order.compact` source pins assignment order:

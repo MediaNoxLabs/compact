@@ -94,8 +94,24 @@ KECCAK_TEST_EXTENSION = inventory.BASELINE.with_name("recording_admission_invent
 ALIGNED_TEST_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.aligned-test-582.json")
 
 
+ENCODING_EXTENSION = inventory.BASELINE.with_name("recording_admission_inventory.encoding-583.json")
+
+
+def checkpoint_582(root):
+    # Historical fixtures may already contain the exact preceding bytes.
+    try:
+        current = (root / inventory.encoding.OWNER).read_bytes()
+    except FileNotFoundError:
+        return root
+    if inventory.digest(current) == inventory.encoding.CURRENT_SHA:
+        source = inventory.encoding.predecessor_source(root, json.loads(ENCODING_EXTENSION.read_text()))
+        return inventory.encoding._EncodingCheckpoint(root, source)
+    return root
+
+
 def checkpoint_581(root):
     """Only reconstruct the fully authenticated current #582 snapshot."""
+    root = checkpoint_582(root)
     owner = inequality_test.OWNER
     if inventory.digest((root / owner).read_bytes()) == inventory.aligned_test.OWNERS[owner][1]:
         return inventory.aligned_test.checkpoint(root, json.loads(ALIGNED_TEST_EXTENSION.read_text()),
@@ -337,7 +353,8 @@ class InventoryTests(unittest.TestCase):
                                   inequality_test_extension=json.loads(INEQUALITY_TEST_EXTENSION.read_text()),
                                   funded_mint_transition=json.loads(FUNDED_MINT_TRANSITION.read_text()),
                                   keccak_test_extension=json.loads(KECCAK_TEST_EXTENSION.read_text()),
-                                  aligned_test_extension=json.loads(ALIGNED_TEST_EXTENSION.read_text()))
+                                  aligned_test_extension=json.loads(ALIGNED_TEST_EXTENSION.read_text()),
+                                  encoding_extension=json.loads(ENCODING_EXTENSION.read_text()))
         self.assertTrue(report['passed'], report['errors'])
         self.assertEqual(len(baseline['main_selector']['ordered_calls']), 19)
         self.assertEqual(sum(row['family'] == 'eager-organizer-selection' for row in baseline['routes']), 4)

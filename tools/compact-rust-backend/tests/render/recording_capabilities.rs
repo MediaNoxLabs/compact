@@ -151,7 +151,9 @@ fn certified_pure_call_and_field_arithmetic_have_exact_capabilities() {
     };
     let rendered = render_with_capabilities(&contract).unwrap();
     assert!(rendered.source.contains("pub mod recorded"));
-    assert!(rendered.source.contains("__compact_recorded_difference_0"));
+    let body = super::lifecycle_recording::generated_body(&rendered.source, "recorded", "write");
+    assert_eq!(body.matches(" - ").count(), 1);
+    assert!(body.find(" - ").unwrap() < body.find("record_write").unwrap());
     assert!(rendered.capabilities.circuits[0].recorded);
     assert!(rendered.capabilities.circuits[0].observed_call);
     let StateAction::CellWrite { value, .. } = &mut contract.stateful_circuits[0].actions[0] else {
@@ -159,7 +161,9 @@ fn certified_pure_call_and_field_arithmetic_have_exact_capabilities() {
     };
     *value = Expr::Multiply { left, right };
     let rendered = render_with_capabilities(&contract).unwrap();
-    assert!(rendered.source.contains("__compact_recorded_product_0"));
+    let body = super::lifecycle_recording::generated_body(&rendered.source, "recorded", "write");
+    assert_eq!(body.matches(" * ").count(), 1);
+    assert!(body.find(" * ").unwrap() < body.find("record_write").unwrap());
     assert!(rendered.capabilities.circuits[0].recorded);
     assert!(rendered.capabilities.circuits[0].observed_call);
 }
@@ -193,9 +197,7 @@ fn recording_gaps_follow_the_first_definite_ir_failure() {
                         index: 0,
                     },
                     StateAction::Expression {
-                        value: Expr::Keccak256 {
-                            value: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
-                        },
+                        value: Expr::Default { ty: Type::Boolean },
                     },
                     StateAction::Expression {
                         value: Expr::Boolean { value: false },
@@ -255,9 +257,7 @@ fn conditional_recording_rejects_an_unsupported_unselected_branch() {
                     index: 0,
                 }),
                 otherwise: Box::new(StateAction::Expression {
-                    value: Expr::Keccak256 {
-                        value: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
-                    },
+                    value: Expr::Default { ty: Type::Boolean },
                 }),
             }],
         }],
@@ -333,11 +333,9 @@ fn recording_gaps_include_unsupported_type_and_called_callee_path() {
     assert!(report.circuits[0].recorded && report.circuits[0].observed_call);
 
     // Preserve the nested callee-path objective with an actually unsupported
-    // direct Keccak operation (native hashing still renders successfully).
+    // scalar default expression (native default still renders successfully).
     contract.stateful_circuits[0].actions = vec![StateAction::Expression {
-        value: Expr::Keccak256 {
-            value: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
-        },
+        value: Expr::Default { ty: Type::Boolean },
     }];
     let report = render_with_capabilities(&contract).unwrap().capabilities;
     let gap = report.circuits[0].recording_unavailable.as_ref().unwrap();

@@ -22,7 +22,7 @@ use compact_rust_backend::ir::{
 use compact_rust_backend::render_with_capabilities;
 
 #[test]
-fn recorded_pair_hash_bindings_require_closed_typed_field_literals() {
+fn recorded_pair_hash_bindings_accept_typed_literals_and_recorded_reads() {
     let pair = || Expr::Tuple {
         elements: vec![
             Expr::FieldLiteral { value: "0".into() },
@@ -129,7 +129,11 @@ fn recorded_pair_hash_bindings_require_closed_typed_field_literals() {
         }),
     };
     let rendered = render_with_capabilities(&contract).unwrap();
-    assert!(!rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].recorded);
+    let body =
+        super::lifecycle_recording::generated_body(&rendered.source, "recorded", "persistent");
+    assert_eq!(body.matches("record_read").count(), 1);
+    assert!(body.find("record_read").unwrap() < body.find("persistent_hash").unwrap());
     assert!(rendered.capabilities.circuits[1].recorded);
 
     let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[1].actions[0] else {
@@ -141,7 +145,7 @@ fn recorded_pair_hash_bindings_require_closed_typed_field_literals() {
         }),
     };
     let rendered = render_with_capabilities(&contract).unwrap();
-    assert!(!rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].recorded);
     assert!(rendered.capabilities.circuits[1].recorded);
 }
 

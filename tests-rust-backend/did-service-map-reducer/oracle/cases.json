@@ -12,7 +12,7 @@
     },
     {
       "path": "tests-rust-backend/did-service-map-reducer/lib.rs",
-      "sha256": "d44f4e7950d9823bf0e47d963f30bc1da59e8c8f8d386941ca81b7bff74f95c6"
+      "sha256": "f44b858f151fdea903507ebd044eeeb5d620ff0c587dfce44c9d7ac819fbf1bb"
     },
     {
       "path": "tests-rust-backend/did-service-map-reducer/tests/behavior.rs",

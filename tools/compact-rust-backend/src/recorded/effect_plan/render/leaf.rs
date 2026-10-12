@@ -146,7 +146,7 @@ pub(super) fn render(
             syn::parse_quote!(runtime::persistent_hash(#input))
         }
         Operation::HashToCurve(input) => {
-            let input = value(input);
+            let input = crate::hash_input::syntax(value(input), &input.ty);
             syn::parse_quote!(runtime::hash_to_curve(#input))
         }
         Operation::Keccak256(input) => {
@@ -220,14 +220,17 @@ pub(super) fn render(
             syn::parse_quote!(runtime::upgrade_from_transient(#input))
         }
         Operation::TransientHash(input) => {
-            let input = value(input);
+            let input = crate::hash_input::syntax(value(input), &input.ty);
             syn::parse_quote!(runtime::transient_hash(#input))
         }
         Operation::TransientCommit {
             value: input,
             opening,
         } => {
-            let (input, opening) = (value(input), value(opening));
+            let (input, opening) = (
+                crate::hash_input::syntax(value(input), &input.ty),
+                value(opening),
+            );
             syn::parse_quote!(runtime::transient_commit(#input, #opening))
         }
         Operation::UnsignedAdd(a, b)
@@ -394,8 +397,9 @@ pub(super) fn render(
                 .ok_or_else(|| invalid(path, "unknown checked witness"))?;
             let method = ident(&witness.name).map_err(|e| invalid(path, e.to_string()))?;
             let args: Vec<_> = arguments.iter().map(value).collect();
+            let frame_method = crate::hash_input::witness_method(&witness.result);
             steps.push(syn::parse_quote! {
-                let (frame,#output): (_,#ty) = frame.try_witness_metered(|context,meter| {
+                let (frame,#output): (_,#ty) = frame.#frame_method(|context,meter| {
                     witnesses.#method(context.witness_context_with(super::LedgerView {
                         state: context.query.state.get_ref(),meter,
                     }),#(#args),*)

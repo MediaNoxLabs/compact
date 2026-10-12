@@ -67,3 +67,7 @@ fn generated_witness_receives_typed_argument_and_records_result() {
         oracle["privateTranscriptOutputs"][0]["alignment"]
     );
 }
+
+#[cfg(feature = "ledger-transaction")]
+#[path = "recording/mod.rs"]
+mod recording;

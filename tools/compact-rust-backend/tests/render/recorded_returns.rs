@@ -303,13 +303,11 @@ fn discarded_field_binding_keeps_reads_but_rejects_wrong_slot_type_and_nonunit_b
             value: Box::new(Expr::Parameter { name: "b".into() }),
         },
     });
-    assert!(
-        !render_with_capabilities(&unsupported)
-            .unwrap()
-            .capabilities
-            .circuits[0]
-            .recorded
-    );
+    // Aligned persistent hashing composes with discarded reads; malformed slot
+    // authority and result types below remain independent rejection controls.
+    let hashed = render_with_capabilities(&unsupported).unwrap();
+    assert!(hashed.capabilities.circuits[0].recorded);
+    assert!(hashed.capabilities.circuits[0].observed_call);
     let mut wrong_index = contract.clone();
     wrong_index.ledger_fields[0].index = 1;
     assert!(render(&wrong_index).is_err());

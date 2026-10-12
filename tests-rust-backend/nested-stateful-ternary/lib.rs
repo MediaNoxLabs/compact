@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 51);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -33,7 +33,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 51);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -79,10 +79,10 @@ pub mod ledger_contract {
         __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let state = runtime::ledger::contract_state(vec![
-            runtime::ledger::constructor_cell::<
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
+            >(Default::default())?,
             runtime::ledger::constructor_counter(),
         ]);
         {
@@ -150,22 +150,45 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_nested_uint4_0: runtime::BoundedUint<4> =
-                runtime::BoundedUint::<4>::new(
-                    (if __compact_param_0 {
-                        if __compact_param_0 { 1u64 } else { 2u64 }
+            let __compact_effect_0: bool = __compact_param_0;
+            let (frame, __compact_effect_8): (_, runtime::BoundedUint<4>) = if __compact_effect_0 {
+                let (frame, __compact_effect_3): (_, runtime::BoundedUint<2>) =
+                    if __compact_effect_0 {
+                        let __compact_effect_1: runtime::BoundedUint<2> =
+                            <runtime::BoundedUint<2>>::new(1u128)?;
+                        (frame, __compact_effect_1)
                     } else {
-                        if __compact_param_0 { 3u64 } else { 4u64 }
-                    }) as u128,
-                )?;
-            let __compact_recorded_nested_uint64_1: runtime::BoundedUint<18446744073709551615> =
-                runtime::cast_unsigned::<4, 18446744073709551615>(
-                    __compact_recorded_nested_uint4_0,
-                )?;
-            let frame = crate::ledger_slots::stored
-                .record_write(frame, __compact_recorded_nested_uint64_1)?;
-            let frame = crate::ledger_slots::ops.record_increment(frame, 1u16)?;
-            Ok(frame.finish(()))
+                        let __compact_effect_2: runtime::BoundedUint<2> =
+                            <runtime::BoundedUint<2>>::new(2u128)?;
+                        (frame, __compact_effect_2)
+                    };
+                let __compact_effect_4: runtime::BoundedUint<4> =
+                    runtime::cast_unsigned::<2, 4>(__compact_effect_3)?;
+                (frame, __compact_effect_4)
+            } else {
+                let (frame, __compact_effect_7): (_, runtime::BoundedUint<4>) =
+                    if __compact_effect_0 {
+                        let __compact_effect_5: runtime::BoundedUint<4> =
+                            <runtime::BoundedUint<4>>::new(3u128)?;
+                        (frame, __compact_effect_5)
+                    } else {
+                        let __compact_effect_6: runtime::BoundedUint<4> =
+                            <runtime::BoundedUint<4>>::new(4u128)?;
+                        (frame, __compact_effect_6)
+                    };
+                (frame, __compact_effect_7)
+            };
+            let __compact_effect_9: runtime::BoundedUint<18446744073709551615> =
+                runtime::cast_unsigned::<4, 18446744073709551615>(__compact_effect_8)?;
+            let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_9)?;
+            let __compact_effect_10: () = ();
+            let __compact_effect_11: runtime::BoundedUint<65535> =
+                <runtime::BoundedUint<65535>>::new(1u128)?;
+            let frame = crate::ledger_slots::ops
+                .record_increment(frame, (__compact_effect_11).value() as u16)?;
+            let __compact_effect_12: () = ();
+            let __compact_effect_13: () = ();
+            Ok(frame.finish(__compact_effect_13))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

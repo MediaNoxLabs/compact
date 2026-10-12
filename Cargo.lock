@@ -1305,6 +1305,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-effect-plan-exact-hash-input-source-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-rust-backend",
+ "midnight-base-crypto",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-storage",
+ "rand 0.8.6",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-effect-plan-field-multiply-source-fixture"
 version = "0.1.0"
 dependencies = [
@@ -1758,6 +1771,7 @@ dependencies = [
  "midnight-serialize",
  "midnight-storage",
  "serde_json",
+ "sha2",
 ]
 
 [[package]]
@@ -2567,6 +2581,7 @@ dependencies = [
  "compact-rust-effect-plan-aligned-hashes-source-fixture",
  "compact-rust-effect-plan-counter-only-source-fixture",
  "compact-rust-effect-plan-counter-source-fixture",
+ "compact-rust-effect-plan-exact-hash-input-source-fixture",
  "compact-rust-effect-plan-jubjub-source-fixture",
  "compact-rust-effect-plan-maps-source-fixture",
  "compact-rust-effect-plan-merkle-source-fixture",
@@ -3360,6 +3375,8 @@ name = "compact-rust-witness-argument-fixture"
 version = "0.1.0"
 dependencies = [
  "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
  "serde_json",
 ]
 
@@ -3380,6 +3397,8 @@ name = "compact-rust-witness-conditional-fixture"
 version = "0.1.0"
 dependencies = [
  "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
  "serde_json",
 ]
 
@@ -3400,6 +3419,8 @@ name = "compact-rust-witness-field-expression-fixture"
 version = "0.1.0"
 dependencies = [
  "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
  "serde_json",
 ]
 
@@ -3497,6 +3518,8 @@ name = "compact-rust-witness-minimal-fixture"
 version = "0.1.0"
 dependencies = [
  "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
  "serde_json",
 ]
 

@@ -116,8 +116,9 @@ impl Plan<'_> {
                 self.evidence.witness_calls += 1;
                 let observed = self.fresh();
                 let ty = rust_type(&declaration.result).ok()?;
+                let frame_method = crate::hash_input::witness_method(&declaration.result);
                 steps.push(syn::parse_quote! {
-                    let (frame, #observed): (_, #ty) = frame.try_witness_metered(|context, meter| {
+                    let (frame, #observed): (_, #ty) = frame.#frame_method(|context, meter| {
                         witnesses.#method(context.witness_context_with(super::LedgerView {
                             state: context.query.state.get_ref(), meter,
                         }), #(#args),*)

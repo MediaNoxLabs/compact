@@ -199,6 +199,22 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         Ok((self, value))
     }
 
+    /// Record exact opaque-bearing witness bytes, retaining ordinary callback
+    /// ordering and success-only adoption. Preparation checks transport validity.
+    pub fn try_witness_metered_exact<T, F>(self, call: F) -> Result<(Self, T), CompactError>
+    where
+        T: Clone + crate::HashInputValue,
+        F: FnOnce(
+            &CircuitContext<Private, D>,
+            &WitnessReadMeter<'_, D>,
+        ) -> Result<(Private, T), CompactError>,
+    {
+        let (frame, value) = self.try_witness_metered(|context, meter| {
+            call(context, meter).map(|(private, value)| (private, crate::exact_hash_input(value)))
+        })?;
+        Ok((frame, value.into_inner()))
+    }
+
     /// Adopt a generated helper that has been statically audited as local.
     ///
     /// The helper may change private state, emit private witness values, and

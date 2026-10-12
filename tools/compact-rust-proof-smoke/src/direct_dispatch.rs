@@ -52,6 +52,7 @@ pub(super) fn try_run(
         ("--map-effects", _) => Some(collections::map_effects(arguments)),
         ("--unit-composition", _) => Some(collections::unit_composition(arguments)),
         ("--aligned-hashes", _) => Some(collections::aligned_hashes(arguments)),
+        ("--exact-hash-input", _) => Some(collections::exact_hash_input(arguments)),
         ("--conditional-set", _) => Some(collections::conditional_set(arguments)),
         ("--adt-set-enum", _) => Some(collections::adt_set_enum(arguments)),
         ("--guarded-recording", _) => Some(expressions::guarded_recording(arguments)),

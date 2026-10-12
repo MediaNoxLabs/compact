@@ -5,6 +5,9 @@
 #[path = "build_support/wide_values.rs"]
 mod wide_values;
 
+#[path = "build_support/legacy_abi.rs"]
+mod legacy_abi;
+
 fn main() {
     let input = "../../tools/compact-rust-backend/tests/effectful-return-schema20-ir.json";
     println!("cargo:rerun-if-changed={input}");
@@ -20,6 +23,11 @@ fn main() {
     assert!(choose.recorded && choose.observed_call);
     let output = std::path::PathBuf::from(std::env::var_os("OUT_DIR").unwrap());
     std::fs::write(output.join("contract.rs"), rendered.source).unwrap();
+    println!("cargo:rerun-if-changed=legacy_reference.rs");
+    println!("cargo:rerun-if-changed=build_support/legacy_abi.rs");
+    let frozen = std::fs::read_to_string("legacy_reference.rs").unwrap();
+    let projected = legacy_abi::project(&frozen).expect("authenticated legacy test ABI projection");
+    std::fs::write(output.join("legacy_reference_abi52.rs"), projected).unwrap();
 
     // The standalone original fixture remains unchanged. Retain the real wide
     // source's choose body in this separate output, then append IR-only probes.

@@ -250,7 +250,7 @@ fn recorded_annotated_uint8_composes_recorded_predicates_and_arms() {
 }
 
 #[test]
-fn recorded_closed_curve_argument_rejects_effectful_predicates_and_arms() {
+fn recorded_curve_argument_composes_effectful_predicates_and_lazy_witness_arms() {
     let mut contract: Contract = serde_json::from_str(include_str!(
         "../../fixtures/recorded-closed-curve-argument.json"
     ))
@@ -278,13 +278,16 @@ fn recorded_closed_curve_argument_rejects_effectful_predicates_and_arms() {
         field: "flag".into(),
         index: 0,
     };
-    assert!(
-        !render_with_capabilities(&contract)
-            .unwrap()
-            .capabilities
-            .circuits[0]
-            .recorded
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].observed_call);
+    let body = super::lifecycle_recording::generated_body(
+        &rendered.source,
+        "recorded",
+        &contract.stateful_circuits[0].name,
     );
+    assert_eq!(body.matches("record_read").count(), 1);
+    assert!(body.find("record_read").unwrap() < body.find("hash_to_curve").unwrap());
 
     let mut contract = closed;
     contract.witnesses.push(WitnessDeclaration {
@@ -312,12 +315,48 @@ fn recorded_closed_curve_argument_rejects_effectful_predicates_and_arms() {
         }),
         ty: Type::Unsigned { max: "2".into() },
     };
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].observed_call);
+    use syn::visit_mut::VisitMut;
+    #[derive(Default)]
+    struct WitnessBranch {
+        depth: usize,
+        calls: usize,
+    }
+    impl VisitMut for WitnessBranch {
+        fn visit_expr_if_mut(&mut self, node: &mut syn::ExprIf) {
+            self.visit_expr_mut(&mut node.cond);
+            self.depth += 1;
+            self.visit_block_mut(&mut node.then_branch);
+            if let Some((_, otherwise)) = &mut node.else_branch {
+                self.visit_expr_mut(otherwise);
+            }
+            self.depth -= 1;
+        }
+        fn visit_expr_method_call_mut(&mut self, node: &mut syn::ExprMethodCall) {
+            if node.method == "dynamicArm" {
+                assert!(self.depth > 0);
+                self.calls += 1;
+            }
+            syn::visit_mut::visit_expr_method_call_mut(self, node);
+        }
+    }
+    let body = super::lifecycle_recording::generated_body(
+        &rendered.source,
+        "recorded",
+        &contract.stateful_circuits[0].name,
+    );
+    let mut visitor = WitnessBranch::default();
+    visitor.visit_block_mut(&mut syn::parse_str::<syn::Block>(&body).unwrap());
+    assert_eq!(
+        visitor.calls, 1,
+        "the witness remains once inside the selected branch"
+    );
+    contract.witnesses[0].result = Type::Boolean;
     assert!(
-        !render_with_capabilities(&contract)
-            .unwrap()
-            .capabilities
-            .circuits[0]
-            .recorded
+        render_with_capabilities(&contract).is_err(),
+        "witness result types remain authoritative"
     );
 }
 

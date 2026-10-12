@@ -27,6 +27,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct BlindedSecretHolderBinding {
         pub blindedHolderSecretCommitment: ::midnight_compact_runtime::FixedBytes<32>,
@@ -41,6 +42,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct ContractAddress {
         pub bytes: ::midnight_compact_runtime::FixedBytes<32>,
@@ -53,6 +55,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct Credential {
         pub version: ::midnight_compact_runtime::BoundedUint<65535>,
@@ -75,6 +78,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct CredentialProtocolFeatures {
         pub supportsSelectiveDisclosure: ::core::primitive::bool,
@@ -90,6 +94,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct DigitalPassportCivilDate {
         pub year: ::midnight_compact_runtime::BoundedUint<4294967295>,
@@ -108,6 +113,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct DigitalPassportClaimCommitments {
         pub firstNameCommitment: ::midnight_compact_runtime::FixedBytes<32>,
@@ -124,6 +130,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct DigitalPassportClaimValues {
         pub firstNameValuePadded: ::midnight_compact_runtime::FixedBytes<64>,
@@ -140,6 +147,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct DigitalPassportCredentialPrivateParts {
         pub claimValues: crate::types::DigitalPassportClaimValues,
@@ -153,6 +161,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct DigitalPassportDisclosures {
         pub revealFirstName: ::core::primitive::bool,
@@ -178,6 +187,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct DigitalPassportIssuanceOfferBody {
         pub supportsExpiration: ::core::primitive::bool,
@@ -192,6 +202,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct DigitalPassportIssuanceRequestBody {
         pub holderBinding: crate::types::ExplicitHolderBinding,
@@ -208,6 +219,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct DigitalPassportIssuanceResultBody {
         pub credential: crate::types::Credential,
@@ -224,6 +236,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct DigitalPassportOpenings {
         pub firstNameOpening: ::midnight_compact_runtime::FixedBytes<32>,
@@ -240,6 +253,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct DigitalPassportPresentationRequest {
         pub version: ::midnight_compact_runtime::BoundedUint<65535>,
@@ -261,6 +275,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct DigitalPassportVerificationRequestBody {
         pub requireFirstNameDisclosure: ::core::primitive::bool,
@@ -278,6 +293,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct DigitalPassportVerificationResultBody {
         pub credentialRoot: ::midnight_compact_runtime::FixedBytes<32>,
@@ -291,6 +307,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct DigitalPassportVerificationSubmissionBody {
         pub credential: crate::types::Credential,
@@ -306,6 +323,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct ExplicitHolderBinding {
         pub holderVerificationMethodRef: crate::types::VerificationMethodRef,
@@ -318,6 +336,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct JubjubHolderBinding {
         pub holderPublicKey: ::midnight_compact_runtime::JubjubPoint,
@@ -330,6 +349,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct NoPublicClaims {}
     #[derive(
@@ -340,6 +360,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct NoStatusBinding {}
     #[derive(
@@ -350,6 +371,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct OffchainMidnightHolderBinding {
         pub holderDidStateHash: ::midnight_compact_runtime::FixedBytes<32>,
@@ -364,6 +386,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct OfferMessage {
         pub envelope: crate::types::ProtocolMessageEnvelope,
@@ -381,6 +404,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct Presentation {
         pub version: ::midnight_compact_runtime::BoundedUint<65535>,
@@ -398,6 +422,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct Proof {
         pub signerVerificationMethodRef: crate::types::VerificationMethodRef,
@@ -414,6 +439,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct ProtocolMessageEnvelope {
         pub version: ::midnight_compact_runtime::BoundedUint<65535>,
@@ -433,6 +459,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct RegistryBoundStatusBinding {
         pub statusType: crate::types::StatusType,
@@ -447,6 +474,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct RequestMessage {
         pub envelope: crate::types::ProtocolMessageEnvelope,
@@ -465,6 +493,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct RequestMessageCompact1 {
         pub envelope: crate::types::ProtocolMessageEnvelope,
@@ -481,6 +510,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct ResultMessage {
         pub envelope: crate::types::ProtocolMessageEnvelope,
@@ -495,6 +525,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct ResultMessageCompact1 {
         pub envelope: crate::types::ProtocolMessageEnvelope,
@@ -511,6 +542,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct SchemaCapabilities {
         pub supportsSelectiveDisclosure: ::core::primitive::bool,
@@ -526,6 +558,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct SchemaDescriptor {
         pub schema: crate::types::SchemaRef,
@@ -540,6 +573,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct SchemaFamilyResolutionHint {
         pub hasResolverHint: ::core::primitive::bool,
@@ -553,6 +587,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct SchemaRef {
         pub packageId: ::midnight_compact_runtime::FixedBytes<32>,
@@ -568,6 +603,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct SecretHolderBinding {
         pub holderSecretCommitment: ::midnight_compact_runtime::FixedBytes<32>,
@@ -581,6 +617,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct Signature {
         pub r: ::midnight_compact_runtime::JubjubPoint,
@@ -594,6 +631,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct StatusRegistryRef {
         pub registryId: ::midnight_compact_runtime::FixedBytes<32>,
@@ -607,6 +645,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct SubmissionMessage {
         pub envelope: crate::types::ProtocolMessageEnvelope,
@@ -624,6 +663,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct VerificationMethodRef {
         pub didContractAddress: crate::types::ContractAddress,
@@ -638,6 +678,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactEnum,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub enum HolderBindingProfile {
         explicitDid,
@@ -653,6 +694,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactEnum,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub enum StatusType {
         revocationRegistry,
@@ -682,7 +724,7 @@ pub use types::{
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 51);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub fn noSchemaFamilyResolverHint() -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
         Ok(runtime::FixedBytes::new([
             109u8, 105u8, 100u8, 110u8, 105u8, 103u8, 104u8, 116u8, 58u8, 118u8, 99u8, 58u8, 115u8,

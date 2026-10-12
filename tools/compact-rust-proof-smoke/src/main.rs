@@ -71,6 +71,7 @@ mod election_commit;
 mod election_membership_support;
 mod election_reveal;
 mod election_topic;
+mod exact_hash_input;
 mod field_observation;
 mod field_pair_hash;
 mod field_to_bytes32;

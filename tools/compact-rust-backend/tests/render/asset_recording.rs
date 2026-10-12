@@ -19,7 +19,7 @@ use compact_rust_backend::ir::{Contract, Expr, SCHEMA_VERSION, StateAction};
 use compact_rust_backend::render_with_capabilities;
 
 #[test]
-fn asset_removal_recording_requires_scoped_opaque_key_and_exact_order() {
+fn asset_removal_recording_preserves_scoped_keys_and_source_mutation_order() {
     let mut contract: Contract =
         serde_json::from_str(include_str!("../asset-removal-schema13-ir.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
@@ -51,7 +51,13 @@ fn asset_removal_recording_requires_scoped_opaque_key_and_exact_order() {
         unreachable!()
     };
     actions.swap(3, 4);
-    assert!(!recorded(&swapped).0, "mutation order is part of the gate");
+    let (available, swapped_source) = recorded(&swapped);
+    assert!(available);
+    let original = super::lifecycle_recording::generated_body(&source, "recorded", "removeRecord");
+    let swapped =
+        super::lifecycle_recording::generated_body(&swapped_source, "recorded", "removeRecord");
+    assert!(original.find("record_remove").unwrap() < original.find("record_insert").unwrap());
+    assert!(swapped.find("record_insert").unwrap() < swapped.find("record_remove").unwrap());
 
     let circuit = contract
         .stateful_circuits
@@ -70,7 +76,32 @@ fn asset_removal_recording_requires_scoped_opaque_key_and_exact_order() {
     *key = Expr::Parameter {
         name: "recordId".into(),
     };
-    assert!(!recorded(&contract).0, "Map removal must use the bound key");
+    assert!(
+        recorded(&contract).0,
+        "the in-scope typed parameter is also a valid key"
+    );
+    let StateAction::Let { action, .. } = &mut contract
+        .stateful_circuits
+        .iter_mut()
+        .find(|c| c.name == "removeRecord")
+        .unwrap()
+        .actions[0]
+    else {
+        unreachable!()
+    };
+    let StateAction::Sequence { actions } = action.as_mut() else {
+        unreachable!()
+    };
+    let StateAction::MapRemove { key, .. } = &mut actions[3] else {
+        unreachable!()
+    };
+    *key = Expr::Parameter {
+        name: "missing_key".into(),
+    };
+    assert!(
+        render_with_capabilities(&contract).is_err(),
+        "out-of-scope keys remain invalid"
+    );
 }
 
 #[test]

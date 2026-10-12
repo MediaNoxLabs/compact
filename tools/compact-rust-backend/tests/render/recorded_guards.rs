@@ -409,7 +409,7 @@ fn boolean_pair_and_scalar_hash_assertions_record_read_before_counter_write() {
 }
 
 #[test]
-fn recorded_pure_assert_call_rejects_extra_pure_steps() {
+fn recorded_pure_assert_call_preserves_multiple_typed_assertion_steps() {
     let assertion = Expr::Assert {
         condition: Box::new(Expr::NotEqual {
             left: Box::new(Expr::Parameter {
@@ -456,7 +456,22 @@ fn recorded_pure_assert_call_rejects_extra_pure_steps() {
     };
     steps.push(assertion);
     let rendered = render_with_capabilities(&contract).unwrap();
-    assert!(!rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].observed_call);
+    let body = super::lifecycle_recording::generated_body(
+        &rendered.source,
+        "pure_circuits",
+        "require_positive",
+    );
+    assert_eq!(body.matches("\"positive\"").count(), 2);
+    let Expr::Sequence { steps, .. } = &mut contract.circuits[0].body else {
+        unreachable!()
+    };
+    let Expr::Assert { condition, .. } = &mut steps[1] else {
+        unreachable!()
+    };
+    **condition = Expr::FieldLiteral { value: "1".into() };
+    assert!(render_with_capabilities(&contract).is_err());
 }
 
 #[test]

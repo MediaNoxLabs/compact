@@ -37,11 +37,11 @@ fn main() {
         .circuits
         .iter()
         .map(|circuit| {
-            assert!(
-                !circuit.recorded && !circuit.observed_call,
-                "opaque input interfaces must not expand: {:?}",
-                circuit
-            );
+            // Measured signed #582 production ownership: only setText reaches
+            // algebra.membership; candidate support is not public admission.
+            let admitted = circuit.name == "setText";
+            assert_eq!(circuit.recorded, admitted, "{circuit:?}");
+            assert_eq!(circuit.observed_call, admitted, "{circuit:?}");
             circuit.name.as_str()
         })
         .collect::<std::collections::BTreeSet<_>>();

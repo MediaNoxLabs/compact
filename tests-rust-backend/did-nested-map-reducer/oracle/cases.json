@@ -12,7 +12,7 @@
     },
     {
       "path": "tests-rust-backend/did-nested-map-reducer/lib.rs",
-      "sha256": "72e1c004b35e4e11462c0f9d5261b1cd50883ef934c34ec686e6901f67f5f5c5"
+      "sha256": "e9931ad7908246ff414e96d07ed0a5b7089a8ec54d48519164a97db62e5afad2"
     },
     {
       "path": "tests-rust-backend/did-nested-map-reducer/tests/behavior.rs",

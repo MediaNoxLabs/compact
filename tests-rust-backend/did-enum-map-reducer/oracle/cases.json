@@ -12,7 +12,7 @@
     },
     {
       "path": "tests-rust-backend/did-enum-map-reducer/lib.rs",
-      "sha256": "257d7839a4ded074ae89a1f0bc24f8390ed1082b23ced18dfc27bd453eab458e"
+      "sha256": "df5651cc8d834118e208c6b45c427bd7b8deab308348733e5b53b788292813e6"
     },
     {
       "path": "tests-rust-backend/did-enum-map-reducer/tests/behavior.rs",

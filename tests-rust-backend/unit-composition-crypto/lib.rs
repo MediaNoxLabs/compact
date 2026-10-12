@@ -27,6 +27,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct Binding {
         pub version: ::midnight_compact_runtime::BoundedUint<18446744073709551615>,
@@ -39,6 +40,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct SchnorrHashInput {
         pub ann_x: ::midnight_compact_runtime::Field,
@@ -55,6 +57,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct SchnorrSignature {
         pub announcement: ::midnight_compact_runtime::JubjubPoint,
@@ -67,7 +70,7 @@ pub use types::Verify_SchnorrSignature;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 51);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub(crate) fn digest(
         expected: runtime::BoundedUint<18446744073709551615>,
     ) -> Result<runtime::FixedVector<runtime::Field, 4>, runtime::CompactError> {
@@ -93,7 +96,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 51);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -185,19 +188,22 @@ pub mod ledger_contract {
         __compact_constructor_param_0: runtime::JubjubPoint,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let __compact_constructor_value_0 = __compact_constructor_param_0;
+        runtime::ledger::CellValue::validate_cell_value(&__compact_constructor_value_0)?;
         let __compact_constructor_value_1 = true;
+        runtime::ledger::CellValue::validate_cell_value(&__compact_constructor_value_1)?;
         let state = runtime::ledger::contract_state(vec![
-            runtime::ledger::constructor_cell::<runtime::JubjubPoint, runtime::ledger::DefaultDB>(
-                __compact_constructor_value_0,
-            ),
-            runtime::ledger::constructor_cell::<bool, runtime::ledger::DefaultDB>(
+            runtime::ledger::try_constructor_cell::<
+                runtime::JubjubPoint,
+                runtime::ledger::DefaultDB,
+            >(__compact_constructor_value_0)?,
+            runtime::ledger::try_constructor_cell::<bool, runtime::ledger::DefaultDB>(
                 __compact_constructor_value_1,
-            ),
+            )?,
             runtime::ledger::constructor_counter(),
-            runtime::ledger::constructor_cell::<
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
+            >(Default::default())?,
         ]);
         Ok(runtime::context::ConstructorResult::new(
             __compact_context,
@@ -539,15 +545,22 @@ pub mod ledger_contract {
             witnesses: &W,
         ) -> Result<(runtime::recording::RecordingFrame<Private>, ()), runtime::CompactError>
         {
-            let frame = crate::ledger_slots::version.record_increment(frame, 1u16)?;
-            let (frame, __compact_witness_0) = frame.try_witness_metered(|context, meter| {
-                witnesses.now(context.witness_context_with(super::LedgerView {
-                    state: context.query.state.get_ref(),
-                    meter,
-                }))
-            })?;
-            let frame = crate::ledger_slots::updated.record_write(frame, __compact_witness_0)?;
-            Ok((frame, ()))
+            let __compact_effect_0: runtime::BoundedUint<65535> =
+                <runtime::BoundedUint<65535>>::new(1u128)?;
+            let frame = crate::ledger_slots::version
+                .record_increment(frame, (__compact_effect_0).value() as u16)?;
+            let __compact_effect_1: () = ();
+            let (frame, __compact_effect_2): (_, runtime::BoundedUint<18446744073709551615>) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.now(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            let frame = crate::ledger_slots::updated.record_write(frame, __compact_effect_2)?;
+            let __compact_effect_3: () = ();
+            let __compact_effect_4: () = ();
+            Ok((frame, __compact_effect_4))
         }
         pub fn close<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,

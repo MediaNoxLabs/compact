@@ -24,7 +24,7 @@
     "runtime_abi": 50,
     "compiler_sha256": "e6d066d5e52b2381b82a070be6ffb5592f728974d49e968cef7bf7b0022be5b2",
     "generated_js_sha256": "e22bb7771e98272e4e3fba0f45e584c893194e81ed7b23d2d05679cb5c01a638",
-    "checked_in_generated_rust_sha256": "758c3c1bbd1f87eda347c9912fe5b95ad03d9f165f05f7f2ab0440b2ad34062d",
+    "checked_in_generated_rust_sha256": "b1eda742784a2bcef6e0ea7c1995c3181fdd9836f05267c9b5043c3daae0f3b6",
     "runtime_package_json_sha256": "38f113eeb408c9b7d51fc67c5688f3b9fcceff4bba0047b79413bbe0ad1d45b0",
     "runtime_js_tree_sha256": "f419a43fde542e38f8c50bc77f4cf8a02688c8588e32868e05a0d9b3d64b7af1"
   },
@@ -114,5 +114,17 @@
     "ledger_fields": 0,
     "witnesses": 0,
     "ir_sha256": "fd506d53ea5747fb7f63252c0c6338f62dbdc66be4f2b5df3a3734336d3bddc8"
+  },
+  "rust_consumer_refresh_0434": {
+    "scope": "Current checked-in Rust consumer freshly rendered from the unchanged retained full frontend IR with ABI52 and CompactHashInput derives. Historical TypeScript/compiler identities above remain unchanged; the checked_in_generated_rust_sha256 pointer binds the current consumer, not an output attributed to the historical compiler.",
+    "historical_checked_in_generated_rust_sha256": "758c3c1bbd1f87eda347c9912fe5b95ad03d9f165f05f7f2ab0440b2ad34062d",
+    "current_checked_in_generated_rust_sha256": "b1eda742784a2bcef6e0ea7c1995c3181fdd9836f05267c9b5043c3daae0f3b6",
+    "backend_sha256": "0fe65d2c637784aa6df8908bebe82be81d0f7200b1e665cdfd46a7caa7c04bcd",
+    "full_ir_sha256": "fd506d53ea5747fb7f63252c0c6338f62dbdc66be4f2b5df3a3734336d3bddc8",
+    "runtime_abi": 52,
+    "source_sha256": "c2db910878fa3b8e86d2fd1be129401e42db9100ccfa3c229acb9b59b4241624",
+    "typescript_capture_files_unchanged": true,
+    "typescript_recaptured": false,
+    "limitation": "This refresh authenticates current Rust generation and unchanged retained independent TypeScript captures. Runtime test receipts are separate; it does not claim a new run of the historical upstream/branch TypeScript replay toolchains."
   }
 }

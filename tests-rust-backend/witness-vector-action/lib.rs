@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 51);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -32,7 +32,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 51);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -75,10 +75,10 @@ pub mod ledger_contract {
     pub fn initial_state<Private>(
         __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
-        let state = runtime::ledger::contract_state(vec![runtime::ledger::constructor_cell::<
+        let state = runtime::ledger::contract_state(vec![runtime::ledger::try_constructor_cell::<
             runtime::Field,
             runtime::ledger::DefaultDB,
-        >(Default::default())]);
+        >(Default::default())?]);
         {
             let mut context = runtime::context::ConstructorResult::new(__compact_context, state)
                 .into_circuit_context(runtime::ledger::ContractAddress::default());
@@ -217,23 +217,37 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_arg_0 = {
-                let __compact_cast_source_0 =
-                    (runtime::Field::from(0u128), runtime::Field::from(1u128));
+            let __compact_effect_0: runtime::Field = runtime::Field::from_le_bytes(&[
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_1: runtime::Field = runtime::Field::from_le_bytes(&[
+                1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_2: (runtime::Field, runtime::Field) =
+                (__compact_effect_0, __compact_effect_1);
+            let __compact_effect_3: runtime::FixedVector<runtime::Field, 2> = {
+                let __compact_cast_source_0 = __compact_effect_2;
                 let (__compact_cast_item_0_0, __compact_cast_item_0_1) = __compact_cast_source_0;
                 runtime::FixedVector::new([__compact_cast_item_0_0, __compact_cast_item_0_1])
             };
-            let (frame, __compact_witness_1) = frame.try_witness_metered(|context, meter| {
-                witnesses.sumWitness(
-                    context.witness_context_with(super::LedgerView {
-                        state: context.query.state.get_ref(),
-                        meter,
-                    }),
-                    __compact_recorded_arg_0,
-                )
-            })?;
-            let frame = crate::ledger_slots::stored.record_write(frame, __compact_witness_1)?;
-            Ok(frame.finish(()))
+            let (frame, __compact_effect_4): (_, runtime::Field) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.sumWitness(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        (__compact_effect_3).clone(),
+                    )
+                })?;
+            let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_4)?;
+            let __compact_effect_5: () = ();
+            let __compact_effect_6: () = ();
+            Ok(frame.finish(__compact_effect_6))
         }
         pub fn discardResult<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -241,24 +255,42 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_witness_arg_0: runtime::FixedVector<runtime::Field, 2> = {
-                let __compact_cast_source_0 =
-                    (runtime::Field::from(0u128), runtime::Field::from(1u128));
+            let __compact_effect_0: runtime::Field = runtime::Field::from_le_bytes(&[
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_1: runtime::Field = runtime::Field::from_le_bytes(&[
+                1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_2: (runtime::Field, runtime::Field) =
+                (__compact_effect_0, __compact_effect_1);
+            let __compact_effect_3: runtime::FixedVector<runtime::Field, 2> = {
+                let __compact_cast_source_0 = __compact_effect_2;
                 let (__compact_cast_item_0_0, __compact_cast_item_0_1) = __compact_cast_source_0;
                 runtime::FixedVector::new([__compact_cast_item_0_0, __compact_cast_item_0_1])
             };
-            let (frame, _) = frame.try_witness_metered(|context, meter| {
-                witnesses.sumWitness(
-                    context.witness_context_with(super::LedgerView {
-                        state: context.query.state.get_ref(),
-                        meter,
-                    }),
-                    __compact_recorded_witness_arg_0,
-                )
-            })?;
-            let frame =
-                crate::ledger_slots::stored.record_write(frame, runtime::Field::from(7u128))?;
-            Ok(frame.finish(()))
+            let (frame, __compact_effect_4): (_, runtime::Field) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.sumWitness(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        (__compact_effect_3).clone(),
+                    )
+                })?;
+            let __compact_effect_5: runtime::Field = runtime::Field::from_le_bytes(&[
+                7u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_5)?;
+            let __compact_effect_6: () = ();
+            let __compact_effect_7: () = ();
+            Ok(frame.finish(__compact_effect_7))
         }
         pub fn reuseResult<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -266,27 +298,45 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_arg_0 = {
-                let __compact_cast_source_0 =
-                    (runtime::Field::from(0u128), runtime::Field::from(1u128));
+            let __compact_effect_0: runtime::Field = runtime::Field::from_le_bytes(&[
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_1: runtime::Field = runtime::Field::from_le_bytes(&[
+                1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_2: (runtime::Field, runtime::Field) =
+                (__compact_effect_0, __compact_effect_1);
+            let __compact_effect_3: runtime::FixedVector<runtime::Field, 2> = {
+                let __compact_cast_source_0 = __compact_effect_2;
                 let (__compact_cast_item_0_0, __compact_cast_item_0_1) = __compact_cast_source_0;
                 runtime::FixedVector::new([__compact_cast_item_0_0, __compact_cast_item_0_1])
             };
-            let (frame, __compact_witness_1) = frame.try_witness_metered(|context, meter| {
-                witnesses.sumWitness(
-                    context.witness_context_with(super::LedgerView {
-                        state: context.query.state.get_ref(),
-                        meter,
-                    }),
-                    __compact_recorded_arg_0,
-                )
-            })?;
-            let frame = crate::ledger_slots::stored.record_write(frame, __compact_witness_1)?;
-            let __compact_recorded_sum_2: runtime::Field =
-                __compact_witness_1 + runtime::Field::from(1u128);
-            let frame =
-                crate::ledger_slots::stored.record_write(frame, __compact_recorded_sum_2)?;
-            Ok(frame.finish(()))
+            let (frame, __compact_effect_4): (_, runtime::Field) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.sumWitness(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        (__compact_effect_3).clone(),
+                    )
+                })?;
+            let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_4)?;
+            let __compact_effect_5: () = ();
+            let __compact_effect_6: runtime::Field = runtime::Field::from_le_bytes(&[
+                1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_7: runtime::Field = __compact_effect_4 + __compact_effect_6;
+            let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_7)?;
+            let __compact_effect_8: () = ();
+            let __compact_effect_9: () = ();
+            Ok(frame.finish(__compact_effect_9))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

@@ -21,7 +21,7 @@ fn expected(reference: &serde_json::Value) -> Output {
     }
 }
 /// A separately captured official TS answer for normalized input. This is
-/// intentionally not the original-source answer and is never counted as parity.
+/// historical negative control: the exact-input backend must differ from it.
 fn normalized_expected(reference: &serde_json::Value) -> Output {
     let data: serde_json::Value =
         serde_json::from_str(include_str!("../oracle/normalized-reference.json")).unwrap();
@@ -83,16 +83,15 @@ fn check(
         "native/recorded case {}",
         reference["id"]
     );
-    let output = if trailing_zero {
+    let output = original_output;
+    if trailing_zero {
         assert_ne!(
-            x.native.result, original_output,
-            "expected documented TS divergence for {} input {}",
-            reference["id"], reference["input"]
+            x.native.result,
+            normalized_expected(reference),
+            "exact input must differ from historical normalized hash for {}",
+            reference["id"]
         );
-        normalized_expected(reference)
-    } else {
-        original_output
-    };
+    }
     assert_eq!(
         x.native.result, output,
         "case {} input {}",
@@ -115,7 +114,7 @@ fn check(
     );
     assert_eq!(x.native.context.private_state, 5);
     assert!(x.native.private_transcript_outputs.is_empty());
-    assert_ts_context(reference, &x.native);
+    assert_ts_execution(reference, &output.clone().into(), &x.native);
     if trailing_zero {
         assert_eq!(
             reference["rustObservedExpectation"],
@@ -144,7 +143,7 @@ fn check(
     );
 }
 #[test]
-fn opaque_strings_qualify_canonical_parity_and_characterize_normalization() {
+fn opaque_strings_preserve_exact_hashes_and_observed_input_boundary() {
     for op in ["curve", "transient", "commit"] {
         for (index, value) in ["", "a", "λ\0key", "a\0"].iter().enumerate() {
             let (state, verifier) = setup();
@@ -197,7 +196,7 @@ fn opaque_strings_qualify_canonical_parity_and_characterize_normalization() {
     }
 }
 #[test]
-fn opaque_bytes_qualify_canonical_parity_and_characterize_normalization() {
+fn opaque_bytes_preserve_exact_hashes_and_observed_input_boundary() {
     for op in ["curve", "transient", "commit"] {
         for (index, value) in [vec![], vec![0], vec![1, 0, 2], vec![1, 0]]
             .iter()

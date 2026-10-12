@@ -4,7 +4,9 @@
 
 // A separate integration-test crate root keeps the frozen generated code's
 // `crate::ledger_slots` paths intact, independently of the fresh fixture crate.
-include!("../legacy_reference.rs");
+// The build authenticates every original byte and projects only the two ABI
+// assertions; the historical body stays frozen and the actual runtime must be52.
+include!(concat!(env!("OUT_DIR"), "/legacy_reference_abi52.rs"));
 
 use compact_rust_effectful_return_oracle_fixture::ledger_contract as fresh;
 use ledger_contract as legacy;

@@ -131,3 +131,7 @@ fn local_binding_preserves_single_witness_evaluation() {
     assert_eq!(local.result, Field::from(10_u64));
     assert_oracle(&local, &oracle["local"]);
 }
+
+#[cfg(feature = "ledger-transaction")]
+#[path = "recording/mod.rs"]
+mod recording;

@@ -1,71 +1,60 @@
-# Opaque inputs for aligned curve and transient hashes
+# Exact opaque inputs for curve and transient hashes
 
-This separate default-ZKIRv2 source qualifies `hashToCurve`, `transientHash` and
+This genuine default-ZKIRv2 source qualifies `hashToCurve`, `transientHash` and
 `transientCommit` over opaque strings and bytes. Each of six exports increments
-a Counter and returns a named `Output { x, y, value }`. Both curve coordinates are
-observable; the other primitives return their complete Field output. The commit
-opening is seven. There are no witnesses or unrelated witness-domain changes.
+a Counter and returns `Output { x, y, value }`. Both curve coordinates are
+observable; the other operations return their complete Field output. Commitment
+uses opening seven. There are no witnesses or witness-domain changes.
 
 Opaque **PersistentHash is excluded**: the official source frontend rejects its
 opaque operands. Rust alignment traits alone do not establish Compact language
-eligibility. This fixture does not widen persistent hashing or ledger input
-validation, and it does not change the separate fixed-input proof source.
+eligibility. This fixture does not change the separate fixed-input proof source.
 
-## Exact test surfaces
+## Twenty-four original TypeScript answers
 
-The fresh TypeScript capture contains 24 successful executions: four strings and
-four byte arrays for each of three operations. Strings cover empty, ASCII,
-Unicode with an interior NUL, and trailing NUL. Bytes cover empty, zero-only,
-interior zero, and trailing zero. Each row has a unique circuit/index ID and
-asserted input. Its output is checked against a separate call to the official
-TypeScript primitive, including both curve coordinates.
+The original fresh TS capture remains unchanged. It contains four strings and
+four byte arrays for each operation: empty, ASCII/Unicode, interior zero and
+trailing-zero controls. Every circuit/index ID is unique and binds its original
+input. Independent official TS primitive calls check the generated source's
+complete output.
 
-Two Rust tests compare native and recorded execution with a manual Counter trace.
-The 15 canonical-input cases compare the original frozen TS output. The nine
-trailing-zero cases explicitly assert divergence from that original output and
-use a separate official TS primitive reference for the normalized bytes. Those
-nine are characterization tests, not native or recorded parity successes.
+After #583, **all 24 native and recorded executions must match the original TS
+hashes exactly**. Tests also compare independent manual Counter recording,
+state/effects, unchanged private state, empty private transcript, execution gas,
+verifier program and replay. Replay gas is compared against manual replay.
 
-All cases compare native versus recorded result, state/effects, private state,
-empty private transcript, execution gas, verifier instructions and manual replay.
-Replay gas is compared against manual replay, independently of execution gas.
+The observed input boundary remains narrower:
 
-The observed API has a narrower existing input boundary:
-
-- **15 canonical-input cases** execute and prepare successfully, including original
-  input/output FAB and exact alignment comparisons against TypeScript.
-- **Nine trailing-zero cases** are explicit refusal controls. TypeScript succeeds;
-  Rust observed calls must return `InvalidLedgerCell` with the established
-  trailing-zero message before changing the borrowed observed state. They are
-  not counted as observed/prepared parity successes. The capture's
+- **15 canonical inputs** execute and prepare, including original input/output FAB
+  and alignment comparisons.
+- **Nine trailing-zero inputs** receive the established `InvalidLedgerCell`
+  observed-input refusal. They are native/recorded hash parity successes but are
+  not observed/prepared parity successes. The original capture's
   `rustObservedExpectation` is a Rust expectation label, not a TS refusal.
 
-The cause is the existing conversion from Rust opaque carriers through official
-`Vec<u8> → ValueAtom`: it strips trailing zeros. The TS opaque type descriptors
-preserve the original bytes, whose length contributes to aligned hashing. Thus
-Rust hashes `"a\0"` like `"a"`, and `[0]` like `[]`, while TypeScript distinguishes
-them. Native and recorded Rust agree with each other but differ from TypeScript
-on these nine values. Observed validation blocks the ambiguous public input.
+## Historical negative control
 
-`oracle/typescript.json` remains the original 24-case source execution capture.
-`normalized-capture.mjs` produces the separately labeled
-`normalized-reference.json`, calling the official TS primitives on explicitly
-trimmed inputs. Tests verify exact row identity, original/normalized input, the
-expected divergence, and the independently captured normalized answer. They
-never call Rust hashing to manufacture expected answers. No runtime behavior is
-changed by this fixture.
+Before #583, ordinary Rust `Vec<u8> → ValueAtom` conversion stripped trailing
+zeros before hashing. Native and recorded Rust hashed `"a\0"` like `"a"`, and `[0]`
+like `[]`, while TypeScript preserved the exact byte length.
 
-## Boundaries and provenance
+`normalized-reference.json` retains separately captured official TS answers for
+those explicitly trimmed inputs. Tests now assert that the nine corrected hash
+outputs **differ** from those historical normalized answers. They do not use the
+normalized references as success expectations. `normalized-capture.mjs` remains
+available to reproduce the historical comparison, separately from original-source
+execution. No original TS result was rewritten to match Rust.
 
-The capture hashes the exact licensed source, full retained IR, generated
-JavaScript, capture script, runtime build/lock and official WASM package. The
-source was freshly generated after adding its repository filename and license
-header; the earlier research revisions remain separate evidence. Build-time
-rendering requires all six recorded and observed APIs.
+The additive exact hash-input conversion preserves bytes locally for hashing.
+Ordinary ledger input validation remains unchanged, so observed calls still
+reject ambiguous trailing-zero public inputs. Private witness handling is
+qualified separately by the exact-hash-input sibling fixture.
 
-This is a native/recording/observed qualification fixture, **not an opaque proof
-qualification**. Proof support remains a separate gate. The sibling fixed-input
-fixture and its selected strict proof have their own source and artifact identity.
+## Provenance and limits
+
+The capture binds the source, full retained IR, generated JavaScript, script,
+runtime build/lock and WASM files. Build-time generation requires all six recorded
+and observed APIs. This fixture does **not** claim opaque proof qualification.
 
 ```sh
 compactc --target rust --target ts --skip-zk \

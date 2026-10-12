@@ -2,7 +2,7 @@
   "format": "compact-did-primitive-reducer-capture/v1",
   "kind": "alias-set",
   "generatedJavaScriptSha256": "51a6ab11f251ed305d40e7521af957cd511d488f874e6bf35b758abe50fa1e19",
-  "runtimeJavaScriptSha256": "f6b1b8b0d4ecfd6458706fd3969babbb988879dd9c39618cc137c463a151781b",
+  "runtimeJavaScriptSha256": "db88e0bf0c11d081fcd8ba05ee7390cad8238be4c17dddc7da092219585c7cb7",
   "captureSha256": "97e2ed2b889abc091417a436025d909afbe232ce84031ff6c781e864579b2507",
   "runtimeVersion": "0.16.101",
   "provenance": [
@@ -12,7 +12,7 @@
     },
     {
       "path": "tests-rust-backend/did-alias-set-reducer/lib.rs",
-      "sha256": "d90efa39629745abaf5c9a5a140d7d7353af16b5b0019dbb5cedad04068562a5"
+      "sha256": "940fc875f9e46fbc96a7b032f3fed103aed5888e42820227de3c3bd30554fc1c"
     },
     {
       "path": "tests-rust-backend/did-alias-set-reducer/tests/behavior.rs",

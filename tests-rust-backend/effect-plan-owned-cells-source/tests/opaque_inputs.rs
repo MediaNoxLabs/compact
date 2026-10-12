@@ -151,8 +151,9 @@ mod tests {
     }
     #[test]
     fn recorded_runtime_adapters_reject_raw_direct_and_nested_values() {
-        // These call official runtime adapters directly. Source setters above
-        // intentionally remain non-recordable under the existing interface policy.
+        // These direct official-runtime controls also cover setBytes/setEnvelope,
+        // whose production source routes remain non-recordable. setText's
+        // generated recorded/observed boundary is exercised below.
         reject_at_slot(ledger_slots::text, OpaqueString::from("bad\0"));
         reject_at_slot(ledger_slots::blob, OpaqueBytes::from(vec![0, 1, 255, 0]));
         reject_at_slot(ledger_slots::envelope, envelope("bad\0", &[1]));
@@ -173,5 +174,100 @@ mod tests {
         assert_eq!(native, recorded);
         assert_ne!(native, error());
         reject_at_slot(missing, OpaqueBytes::from(vec![1, 0]));
+    }
+
+    #[cfg(feature = "ledger-transaction")]
+    #[test]
+    fn generated_text_recording_preserves_values_and_observed_input_refusals() {
+        use r::transaction::{Observation, ObservedContractState};
+        // This fixture tests observed execution, not preparation or proof keys.
+        let state = ObservedContractState::new(
+            Default::default(),
+            r::ledger::ContractState::new(
+                context().query.state.get_ref().clone(),
+                r::ledger::LedgerHashMap::new(),
+                Default::default(),
+            ),
+            Observation {
+                transaction_hash: [0; 32],
+                block_hash: [0; 32],
+                block_height: 0,
+            },
+        );
+        let original = state.contract().data.get_ref().clone();
+        for text in [
+            "",
+            "a\0b",
+            "stored ✓",
+            "a canonical message longer than thirty-one bytes",
+        ] {
+            let value = OpaqueString::from(text);
+            let native = c::setText(state.circuit_context(7), value.clone()).unwrap();
+            let recorded = c::recorded::setText(state.circuit_context(7), value.clone()).unwrap();
+            let manual = ledger_slots::text
+                .record_write(RecordingFrame::new(state.circuit_context(7)), value.clone())
+                .unwrap()
+                .finish(());
+            let call = c::recorded::Contract
+                .setText_call(&state, 7, value.clone())
+                .unwrap();
+            for actual in [&recorded, &manual, call.recorded()] {
+                assert_eq!(
+                    actual.execution.context.query.state,
+                    native.context.query.state
+                );
+                assert_eq!(
+                    actual.execution.context.query.effects,
+                    native.context.query.effects
+                );
+                assert_eq!(
+                    actual.execution.context.private_state,
+                    native.context.private_state
+                );
+                assert_eq!(
+                    actual.execution.private_transcript_outputs,
+                    native.private_transcript_outputs
+                );
+                assert_eq!(actual.execution.gas_cost, native.gas_cost);
+                assert_eq!(actual.public.verify_ops(), manual.public.verify_ops());
+                assert_eq!(
+                    ledger_slots::text
+                        .inspect(actual.execution.context.query.state.get_ref())
+                        .unwrap(),
+                    value
+                );
+                let replay = actual
+                    .public
+                    .initial()
+                    .query(actual.public.verify_ops(), None, &native.context.cost_model)
+                    .unwrap();
+                assert_eq!(replay.context.state, native.context.query.state);
+                assert_eq!(replay.context.effects, native.context.query.effects);
+            }
+            assert_eq!(state.contract().data.get_ref(), &original);
+        }
+        for text in ["\0", "a\0", "é文\0\0"] {
+            let value = OpaqueString::from(text);
+            assert_eq!(
+                c::setText(state.circuit_context(7), value.clone())
+                    .err()
+                    .unwrap(),
+                error()
+            );
+            assert_eq!(
+                c::recorded::setText(state.circuit_context(7), value.clone())
+                    .err()
+                    .unwrap(),
+                error()
+            );
+            assert_eq!(
+                c::recorded::Contract
+                    .setText_call(&state, 7, value)
+                    .err()
+                    .unwrap(),
+                error()
+            );
+            assert_eq!(state.contract().data.get_ref(), &original);
+        }
     }
 }

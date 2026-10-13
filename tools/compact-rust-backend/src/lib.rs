@@ -15,6 +15,7 @@ mod jubjub_value;
 mod naming;
 mod native_frame;
 mod native_representation;
+mod pure_semantics;
 mod recorded;
 pub use recorded::{
     RecordingGap, RecordingGapCode, RecordingResource, RecordingResourceKind,

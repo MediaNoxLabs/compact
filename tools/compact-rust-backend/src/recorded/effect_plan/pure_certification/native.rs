@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! Temporary bridge: reuse native pure typing, immediately discard its syntax.
+//! Signature carriers use the shared syntax-free checker. Body typing and its
+//! binding symbols still construct syntax until the complete Expr fold cutover.
 //! No whole-circuit recorded profile or shape recognizer participates.
 use crate::RenderError;
 use crate::ir::{PureCircuit, Type};
@@ -12,15 +14,15 @@ pub(super) fn check(
     source: &PureCircuit,
     pure: &HashMap<&str, &PureCircuit>,
 ) -> Result<(), RenderError> {
-    crate::ident(&source.name)?;
+    crate::pure_semantics::identifier::check_name(&source.name)?;
     let mut scope = HashMap::new();
     for (parameter, name) in source
         .parameters
         .iter()
         .zip(crate::naming::parameter_idents(&source.parameters, &[]))
     {
-        crate::ident(&parameter.name)?;
-        crate::rust_type(&parameter.ty)?;
+        crate::pure_semantics::identifier::check_name(&parameter.name)?;
+        crate::pure_semantics::carrier::check_carrier(&parameter.ty)?;
         if scope
             .insert(parameter.name.as_str(), (&parameter.ty, name))
             .is_some()
@@ -28,7 +30,7 @@ pub(super) fn check(
             return Err(RenderError::DuplicateParameter(parameter.name.clone()));
         }
     }
-    crate::rust_type(&source.result)?;
+    crate::pure_semantics::carrier::check_carrier(&source.result)?;
     let (_, actual) = crate::expression_with_calls(&source.body, &scope, pure)?;
     if actual != source.result {
         return Err(RenderError::TypeMismatch {

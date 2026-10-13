@@ -9,6 +9,7 @@ import json
 import unittest
 
 import recording_admission_inventory as inventory
+import recording_admission_inventory_shared_pure as shared_pure
 import recording_admission_inventory_generic_qualification as qualification
 import recording_admission_inventory_generic_retirement as retirement
 import recording_admission_inventory_helper_discovery as helpers
@@ -43,7 +44,8 @@ class GenericQualificationTests(unittest.TestCase):
     def setUp(self):
         self.extension = json.loads(MANIFEST.read_text())
         newest = inventory.BASELINE.with_name('recording_admission_inventory.helper-discovery-620.json')
-        current_root = native_tuple.latest_checkpoint(inventory.ROOT, inventory.BASELINE)
+        current_root = shared_pure.latest_checkpoint(inventory.ROOT, inventory.BASELINE)
+        current_root = native_tuple.latest_checkpoint(current_root, inventory.BASELINE)
         latest_root = (helpers.checkpoint(current_root, json.loads(newest.read_text()))
                        if newest.exists() else current_root)
         outer = inventory.BASELINE.with_name('recording_admission_inventory.generic-retirement-618.json')

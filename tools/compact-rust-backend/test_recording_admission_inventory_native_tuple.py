@@ -11,6 +11,7 @@ import unittest
 from unittest import mock
 
 import recording_admission_inventory as inventory
+import recording_admission_inventory_shared_pure as shared_pure
 import recording_admission_inventory_native_tuple as native
 from test_recording_admission_inventory_generic_qualification import _Overlay
 
@@ -20,7 +21,8 @@ MANIFEST = inventory.BASELINE.with_name('recording_admission_inventory.native-tu
 class NativeTupleTests(unittest.TestCase):
     def setUp(self):
         self.extension = json.loads(MANIFEST.read_text())
-        self.root = _Overlay(inventory.ROOT)
+        self.source_root = shared_pure.latest_checkpoint(inventory.ROOT, inventory.BASELINE)
+        self.root = _Overlay(self.source_root)
         self.baseline_bytes = inventory.BASELINE.read_bytes()
         self.baseline = json.loads(self.baseline_bytes)
         self.previous = {
@@ -65,7 +67,7 @@ class NativeTupleTests(unittest.TestCase):
         for label in ('owners', 'new_and_shared_sources', 'historical_manifests', 'oracle_authorities'):
             for owner in self.extension[label]:
                 with self.subTest(label=label, owner=owner):
-                    self.root.changes[owner] = (inventory.ROOT / owner).read_bytes() + b'\n'
+                    self.root.changes[owner] = (self.source_root / owner).read_bytes() + b'\n'
                     self.assertFalse(self.report()['passed'])
                     self.root.changes.clear()
 
@@ -109,7 +111,7 @@ class NativeTupleTests(unittest.TestCase):
         ]
         for owner, before, after in mutations:
             with self.subTest(owner=owner, anchor=before):
-                source = (inventory.ROOT / owner).read_text()
+                source = (self.source_root / owner).read_text()
                 self.assertEqual(source.count(before), 1)
                 self.root.changes[owner] = source.replace(before, after, 1).encode()
                 with self.assertRaises(ValueError):
@@ -118,7 +120,7 @@ class NativeTupleTests(unittest.TestCase):
                 self.root.changes.clear()
 
     def test_operand_type_and_opening_error_order_cannot_move_after_trait_guard(self):
-        source = (inventory.ROOT / native.OWNER).read_text()
+        source = (self.source_root / native.OWNER).read_text()
         before = '''            let (opening, actual) = expression_with_calls(opening, parameters, circuits)?;
             if actual != Type::Field {
                 return Err(RenderError::TypeMismatch {
@@ -152,7 +154,7 @@ class NativeTupleTests(unittest.TestCase):
                 self.root.changes.clear()
 
     def test_unrelated_recording_compiler_drift_is_not_hidden(self):
-        self.root.changes[native.SELECTOR] = (inventory.ROOT / native.SELECTOR).read_bytes() + b'\n'
+        self.root.changes[native.SELECTOR] = (self.source_root / native.SELECTOR).read_bytes() + b'\n'
         self.assertFalse(self.report()['passed'])
 
     def test_cli_cannot_overwrite_any_transitive_source_or_authority(self):

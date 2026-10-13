@@ -11,6 +11,7 @@ import unittest
 from unittest import mock
 
 import recording_admission_inventory as inventory
+import recording_admission_inventory_shared_pure as shared_pure
 import recording_admission_inventory_stateful_tuple as stateful
 from test_recording_admission_inventory_generic_qualification import _Overlay
 
@@ -20,7 +21,8 @@ MANIFEST = inventory.BASELINE.with_name('recording_admission_inventory.stateful-
 class StatefulTupleTests(unittest.TestCase):
     def setUp(self):
         self.extension = json.loads(MANIFEST.read_text())
-        self.root = _Overlay(inventory.ROOT)
+        self.source_root = shared_pure.latest_checkpoint(inventory.ROOT, inventory.BASELINE)
+        self.root = _Overlay(self.source_root)
         self.baseline_bytes = inventory.BASELINE.read_bytes()
         self.baseline = json.loads(self.baseline_bytes)
         self.previous = {key: json.loads((inventory.ROOT / path).read_text())
@@ -62,7 +64,7 @@ class StatefulTupleTests(unittest.TestCase):
         for label in ('owners', 'new_and_shared_sources', 'historical_manifests', 'oracle_authorities'):
             for owner in self.extension[label]:
                 with self.subTest(label=label, owner=owner):
-                    self.root.changes[owner] = (inventory.ROOT / owner).read_bytes() + b'\n'
+                    self.root.changes[owner] = (self.source_root / owner).read_bytes() + b'\n'
                     self.assertFalse(self.report()['passed'])
                     self.root.changes.clear()
 
@@ -89,7 +91,7 @@ class StatefulTupleTests(unittest.TestCase):
             self.assertFalse(self.report(stateful_tuple_extension=forged)['passed'])
 
     def test_each_shared_operation_guard_and_test_only_boundary_reject_mutation(self):
-        source = (inventory.ROOT / stateful.OWNER).read_text()
+        source = (self.source_root / stateful.OWNER).read_text()
         mutations = [('use crate::native_representation;', '// bypassed shared policy'),
                      ('native_representation::check_tuple_traits(operation, &left_ty)?;', '// unchecked equality'),
                      ('native_representation::check_tuple_traits(tuple_operation, &input_type)?;', '// unchecked commitment'),
@@ -107,7 +109,7 @@ class StatefulTupleTests(unittest.TestCase):
                 self.root.changes.clear()
 
     def test_opening_validation_and_evaluation_temporaries_cannot_be_reordered(self):
-        source = (inventory.ROOT / stateful.OWNER).read_text()
+        source = (self.source_root / stateful.OWNER).read_text()
         before = '''            if actual != expected {
                 return Err(RenderError::TypeMismatch { expected, actual });
             }
@@ -143,7 +145,7 @@ class StatefulTupleTests(unittest.TestCase):
         self.assertEqual(len(original), 49)
         for owner in [row['path'] for row in original] + [stateful.SELECTOR]:
             with self.subTest(owner=owner):
-                self.root.changes[owner] = (inventory.ROOT / owner).read_bytes() + b'\n'
+                self.root.changes[owner] = (self.source_root / owner).read_bytes() + b'\n'
                 self.assertFalse(self.report()['passed'])
                 self.root.changes.clear()
 

@@ -1,0 +1,305 @@
+{
+  "schema_version": 1,
+  "issue": 622,
+  "slice": "A",
+  "baseline_commit": "807bed34aa0937883cfc085aa060b41b3ba825b7",
+  "claim": "Shared syntax-free identifier/numeric/carrier policies and signature CheckSink, consumed by native adapters. Body expression_with_calls and binding-symbol Syn bridge remain pending. No new recording retirement/profile, full622closure, language coverage or ledger/dependency cohort upgrade.",
+  "new_retired_route_ids": [],
+  "previous_selector": {
+    "ordered_calls": [],
+    "function_sha256": "044d74fe33d021c3f42643e37511b46a60f1d5b6ccd530965bade6f246175f83"
+  },
+  "current_selector": {
+    "ordered_calls": [],
+    "function_sha256": "044d74fe33d021c3f42643e37511b46a60f1d5b6ccd530965bade6f246175f83"
+  },
+  "owners": {
+    "Cargo.lock": {
+      "previous_sha256": "f13848f5ce46bc477ee18cb0b99f372d34ec7ad49dd62183aaf29b0cbe2f15b2",
+      "current_sha256": "2c6b83ac10ea66080165a5350f9988e94ee0989656a99e96c17ef295e5d06855",
+      "predecessor_reconstruction": [
+        {
+          "current": " \"quote 1.0.45\",\n \"serde\",\n \"serde_json\",\n \"sha2\",\n \"syn 2.0.117\",\n \"toml_edit\",\n \"unicode-ident\",\n]\n\n[[package]]\nname = \"compact-rust-boolean-logic-fixture\"\nversion = \"0.1.0\"\ndependencies = [\n",
+          "previous": " \"quote 1.0.45\",\n \"serde\",\n \"serde_json\",\n \"sha2\",\n \"syn 2.0.117\",\n \"toml_edit\",\n]\n\n[[package]]\nname = \"compact-rust-boolean-logic-fixture\"\nversion = \"0.1.0\"\ndependencies = [\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/Cargo.lock": {
+      "previous_sha256": "80ed8a3bee346a2e4d7da7ae29cd84a63e84b43eb9dec4849d5aac396e6ad622",
+      "current_sha256": "1fe7271e7ae066e916282830f9974013b5b7fceb36c16d0048a1b32b1b418333",
+      "predecessor_reconstruction": [
+        {
+          "current": " \"quote\",\n \"serde\",\n \"serde_json\",\n \"sha2\",\n \"syn 2.0.117\",\n \"toml_edit\",\n \"unicode-ident\",\n]\n\n[[package]]\nname = \"const-hex\"\nversion = \"1.19.3\"\nsource = \"registry+https://github.com/rust-lang/crates.io-index\"\n",
+          "previous": " \"quote\",\n \"serde\",\n \"serde_json\",\n \"sha2\",\n \"syn 2.0.117\",\n \"toml_edit\",\n]\n\n[[package]]\nname = \"const-hex\"\nversion = \"1.19.3\"\nsource = \"registry+https://github.com/rust-lang/crates.io-index\"\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/Cargo.toml": {
+      "previous_sha256": "ed3a081e59a4711daea09ad727b4dac32145af02c02fe90962cefe19c627dd29",
+      "current_sha256": "703e02228a569328a0809db7a493ccd6f1543b73a260c9ea5bb3eddbfee62327",
+      "predecessor_reconstruction": [
+        {
+          "current": "serde = { version = \"1\", features = [\"derive\"] }\nserde_json = \"1\"\nsha2 = \"0.10\"\nsyn = { version = \"2\", features = [\"full\", \"parsing\", \"printing\", \"visit-mut\"] }\ntoml_edit = \"0.22\"\nmidnight-transient-crypto = \"=2.0.1\"\n\n# Use the exact identifier tables already present in the locked syntax stack.\nunicode-ident = \"=1.0.24\"\n",
+          "previous": "serde = { version = \"1\", features = [\"derive\"] }\nserde_json = \"1\"\nsha2 = \"0.10\"\nsyn = { version = \"2\", features = [\"full\", \"parsing\", \"printing\", \"visit-mut\"] }\ntoml_edit = \"0.22\"\nmidnight-transient-crypto = \"=2.0.1\"\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/lib.rs": {
+      "previous_sha256": "51b93ebc83a8faf0542482fc88f38244070c42e8e8cd34a3cb73d221e87cb42c",
+      "current_sha256": "de82ad9c59b2bf9a4a70882f72bfe182adf52c5526326c4500bf2541a3455d1b",
+      "predecessor_reconstruction": [
+        {
+          "current": "mod hash_input;\nmod implicit_types;\nmod jubjub_value;\nmod naming;\nmod native_frame;\nmod native_representation;\nmod pure_semantics;\nmod recorded;\npub use recorded::{\n    RecordingGap, RecordingGapCode, RecordingResource, RecordingResourceKind,\n    RecordingResourcePhase,\n};\nmod stateful;\n",
+          "previous": "mod hash_input;\nmod implicit_types;\nmod jubjub_value;\nmod naming;\nmod native_frame;\nmod native_representation;\nmod recorded;\npub use recorded::{\n    RecordingGap, RecordingGapCode, RecordingResource, RecordingResourceKind,\n    RecordingResourcePhase,\n};\nmod stateful;\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/naming.rs": {
+      "previous_sha256": "195add310b477edb75df58abb91ac7cc5ede949d399429cce04815bbd02683c0",
+      "current_sha256": "ba5a245974e45af8807a0999094f248e41c117f08e1a1dfc6b483a305c34eb20",
+      "predecessor_reconstruction": [
+        {
+          "current": "\nuse std::collections::HashMap;\n\nuse crate::ir::{SourceLocation, StatefulCircuit};\nuse crate::{RenderError, located};\n\n/// Output adapter: no lexical or name-support decisions occur here.\npub(crate) fn checked_ident(name: &crate::pure_semantics::identifier::CheckedName) -> syn::Ident {\n    let span = proc_macro2::Span::call_site();\n    if name.is_raw() {\n        syn::Ident::new_raw(name.text(), span)\n    } else {\n        syn::Ident::new(name.text(), span)\n    }\n}\n\npub(crate) fn ident(name: &str) -> Result<syn::Ident, RenderError> {\n    crate::pure_semantics::identifier::check_name(name).map(|name| checked_ident(&name))\n}\n\n/// The name by which Rust resolves an identifier, without its optional raw prefix.\npub(crate) fn semantic_identifier(name: &str) -> Result<String, RenderError> {\n    crate::pure_semantics::identifier::check_name(name).map(|name| name.into_text())\n}\n\npub(crate) fn validate_circuit_function_namespace<'a>(\n    declarations: impl IntoIterator<Item = (&'a str, Option<&'a SourceLocation>)>,\n) -> Result<(), RenderError> {\n    let mut emitted = HashMap::<String, &'a str>::new();\n",
+          "previous": "\nuse std::collections::HashMap;\n\nuse crate::ir::{SourceLocation, StatefulCircuit};\nuse crate::{RenderError, located};\n\npub(crate) fn ident(name: &str) -> Result<syn::Ident, RenderError> {\n    let rust_name = name.replace('$', \"_\");\n    syn::parse_str::<syn::Ident>(&rust_name)\n        .or_else(|_| syn::parse_str::<syn::Ident>(&format!(\"r#{rust_name}\")))\n        .map_err(|_| RenderError::InvalidIdentifier(name.to_owned()))\n}\n\n/// The name by which Rust resolves an identifier, without its optional raw prefix.\npub(crate) fn semantic_identifier(name: &str) -> Result<String, RenderError> {\n    let rendered = ident(name)?.to_string();\n    Ok(rendered.strip_prefix(\"r#\").unwrap_or(&rendered).to_owned())\n}\n\npub(crate) fn validate_circuit_function_namespace<'a>(\n    declarations: impl IntoIterator<Item = (&'a str, Option<&'a SourceLocation>)>,\n) -> Result<(), RenderError> {\n    let mut emitted = HashMap::<String, &'a str>::new();\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/value_lowering.rs": {
+      "previous_sha256": "bcd00c3cdc385fab6180a8deb8e37ced35d0c04a9b31898cdbfe1f37a06ce813",
+      "current_sha256": "9ad723285694ef489775214425f2680dce3ab443a7bea38a48e9d97fb57fb302",
+      "predecessor_reconstruction": [
+        {
+          "current": "//! Maps Compact types and bounds to Rust carriers and checked conversion syntax.\n//! Runtime operations remain authoritative; this module neither executes ledger\n//! queries nor decides whole-circuit purity or recording admission.\n\nuse crate::RenderError;\nuse crate::ir::{Expr, Type};\nuse proc_macro2::Span;\n\nuse crate::pure_semantics::numeric::{\n    ArithmeticKind, UnsignedArithmeticStrategy, UnsignedCastStrategy, checked_unsigned_arithmetic,\n    checked_unsigned_cast,\n};\npub(crate) use crate::pure_semantics::numeric::{\n    UnsignedMaximum, field_literal_bytes, unsigned_maximum,\n};\n\npub(crate) fn wide_uint_type(high: u128, low: u128) -> syn::Type {\n    let high = syn::LitInt::new(&format!(\"{high}u128\"), Span::call_site());\n    let low = syn::LitInt::new(&format!(\"{low}u128\"), Span::call_site());\n    syn::parse_quote!(runtime::WideUint<#high, #low>)\n}\n",
+          "previous": "//! Maps Compact types and bounds to Rust carriers and checked conversion syntax.\n//! Runtime operations remain authoritative; this module neither executes ledger\n//! queries nor decides whole-circuit purity or recording admission.\n\nuse crate::RenderError;\nuse crate::ir::{Expr, Type};\nuse crate::naming::ident;\nuse proc_macro2::Span;\n\npub(crate) fn field_literal_bytes(value: &str) -> Result<[u8; 32], RenderError> {\n    let invalid = || RenderError::InvalidFieldLiteral(value.to_owned());\n    if value.is_empty()\n        || (value.len() > 1 && value.starts_with('0'))\n        || !value.bytes().all(|byte| byte.is_ascii_digit())\n    {\n        return Err(invalid());\n    }\n    let mut bytes = [0_u8; 32];\n    for digit in value.bytes() {\n        let mut carry = u16::from(digit - b'0');\n        for byte in &mut bytes {\n            let expanded = u16::from(*byte) * 10 + carry;\n            *byte = expanded as u8;\n            carry = expanded >> 8;\n        }\n        if carry != 0 {\n            return Err(invalid());\n        }\n    }\n    if midnight_transient_crypto::curve::Fr::from_le_bytes(&bytes).is_none() {\n        return Err(invalid());\n    }\n    Ok(bytes)\n}\n\n#[derive(Clone, Copy, Debug, PartialEq, Eq)]\npub(crate) enum UnsignedMaximum {\n    Small(u128),\n    Wide { high: u128, low: u128 },\n}\n\npub(crate) fn unsigned_maximum(value: &str) -> Result<UnsignedMaximum, RenderError> {\n    let bytes = field_literal_bytes(value)\n        .map_err(|_| RenderError::InvalidUnsignedMaximum(value.to_owned()))?;\n    if bytes[31] != 0 {\n        return Err(RenderError::InvalidUnsignedMaximum(value.to_owned()));\n    }\n    let low = u128::from_le_bytes(bytes[..16].try_into().expect(\"low limb\"));\n    let high = u128::from_le_bytes(bytes[16..].try_into().expect(\"high limb\"));\n    if high == 0 {\n        Ok(UnsignedMaximum::Small(low))\n    } else {\n        Ok(UnsignedMaximum::Wide { high, low })\n    }\n}\n\npub(crate) fn wide_uint_type(high: u128, low: u128) -> syn::Type {\n    let high = syn::LitInt::new(&format!(\"{high}u128\"), Span::call_site());\n    let low = syn::LitInt::new(&format!(\"{low}u128\"), Span::call_site());\n    syn::parse_quote!(runtime::WideUint<#high, #low>)\n}\n"
+        },
+        {
+          "current": "\npub(crate) fn unsigned_cast_syntax(\n    value: syn::Expr,\n    source_max: &str,\n    target_max: &str,\n) -> Result<syn::Expr, RenderError> {\n    Ok(match checked_unsigned_cast(source_max, target_max)? {\n        UnsignedCastStrategy::SmallToSmall { source, target } => {\n            let source = syn::LitInt::new(&source.to_string(), Span::call_site());\n            let target = syn::LitInt::new(&target.to_string(), Span::call_site());\n            syn::parse_quote!(runtime::cast_unsigned::<#source, #target>(#value)?)\n        }\n        UnsignedCastStrategy::SmallToWide { high, low } => {\n            let target = wide_uint_type(high, low);\n            syn::parse_quote!(<#target>::from_le_bytes(&(#value).value().to_le_bytes())?)\n        }\n        UnsignedCastStrategy::WideToSmall { high, low, target } => {\n            let target = syn::LitInt::new(&target.to_string(), Span::call_site());\n            let high = syn::LitInt::new(&high.to_string(), Span::call_site());\n            let low = syn::LitInt::new(&low.to_string(), Span::call_site());\n            syn::parse_quote!(runtime::narrow_wide_uint::<#target, #high, #low>(#value)?)\n        }\n        UnsignedCastStrategy::WideToWide { high, low } => {\n            let target = wide_uint_type(high, low);\n            syn::parse_quote!(<#target>::from_le_bytes((#value).as_le_bytes())?)\n        }\n    })\n}\n\n/// Both expression emitters consume the same checked runtime arithmetic strategy.\npub(crate) fn unsigned_arithmetic_syntax(\n    operation: &Expr,\n    left: syn::Expr,\n    right: syn::Expr,\n    left_max: &str,\n    right_max: &str,\n    result_max: &str,\n) -> Result<syn::Expr, RenderError> {\n    let kind = match operation {\n        Expr::UnsignedAdd { .. } => ArithmeticKind::Add,\n        Expr::UnsignedSubtract { .. } => ArithmeticKind::Subtract,\n        Expr::UnsignedMultiply { .. } => ArithmeticKind::Multiply,\n        _ => unreachable!(\"unsigned arithmetic caller\"),\n    };\n    Ok(\n        match checked_unsigned_arithmetic(kind, left_max, right_max, result_max)? {\n            UnsignedArithmeticStrategy::WideAdd { high, low } => {\n                let high = syn::LitInt::new(&format!(\"{high}u128\"), Span::call_site());\n                let low = syn::LitInt::new(&format!(\"{low}u128\"), Span::call_site());\n                syn::parse_quote!(runtime::add_wide_unsigned::<#high,#low,_,_>(#left,#right)?)\n            }\n            UnsignedArithmeticStrategy::Small {\n                kind,\n                left: left_bound,\n                right: right_bound,\n                result,\n            } => {\n                let left_max = syn::LitInt::new(&left_bound.to_string(), Span::call_site());\n                let right_max = syn::LitInt::new(&right_bound.to_string(), Span::call_site());\n                let result_max = syn::LitInt::new(&result.to_string(), Span::call_site());\n                let helper: syn::Path = match kind {\n                    ArithmeticKind::Add => syn::parse_quote!(runtime::add_unsigned),\n                    ArithmeticKind::Subtract => syn::parse_quote!(runtime::subtract_unsigned),\n                    ArithmeticKind::Multiply => syn::parse_quote!(runtime::multiply_unsigned),\n                };\n                syn::parse_quote!(#helper::<#left_max,#right_max,#result_max>(#left,#right)?)\n            }\n        },\n    )\n}\n\npub(crate) fn rust_type(ty: &Type) -> Result<syn::Type, RenderError> {\n    crate::pure_semantics::carrier::fold_carrier(ty, &mut carrier::NativeCarrierSink)\n}\n\nfn map_slot_value_type(value: &Type) -> Result<Option<syn::Type>, RenderError> {\n    if let Type::LedgerMap { key, value } = value {\n        let Some((key, value)) = map_slot_types(key, value)? else {\n            return Ok(None);\n",
+          "previous": "\npub(crate) fn unsigned_cast_syntax(\n    value: syn::Expr,\n    source_max: &str,\n    target_max: &str,\n) -> Result<syn::Expr, RenderError> {\n    let source = unsigned_maximum(source_max)?;\n    let target = unsigned_maximum(target_max)?;\n    Ok(match (source, target) {\n        (UnsignedMaximum::Small(source), UnsignedMaximum::Small(target)) => {\n            let source = syn::LitInt::new(&source.to_string(), Span::call_site());\n            let target = syn::LitInt::new(&target.to_string(), Span::call_site());\n            syn::parse_quote!(runtime::cast_unsigned::<#source, #target>(#value)?)\n        }\n        (UnsignedMaximum::Small(_), UnsignedMaximum::Wide { high, low }) => {\n            let target = wide_uint_type(high, low);\n            syn::parse_quote!(<#target>::from_le_bytes(&(#value).value().to_le_bytes())?)\n        }\n        (UnsignedMaximum::Wide { high, low }, UnsignedMaximum::Small(target)) => {\n            let target = syn::LitInt::new(&target.to_string(), Span::call_site());\n            let high = syn::LitInt::new(&high.to_string(), Span::call_site());\n            let low = syn::LitInt::new(&low.to_string(), Span::call_site());\n            syn::parse_quote!(runtime::narrow_wide_uint::<#target, #high, #low>(#value)?)\n        }\n        (UnsignedMaximum::Wide { .. }, UnsignedMaximum::Wide { high, low }) => {\n            let target = wide_uint_type(high, low);\n            syn::parse_quote!(<#target>::from_le_bytes((#value).as_le_bytes())?)\n        }\n    })\n}\n\n/// Both expression emitters share admission and exact runtime arithmetic selection.\npub(crate) fn unsigned_arithmetic_syntax(\n    operation: &Expr,\n    left: syn::Expr,\n    right: syn::Expr,\n    left_max: &str,\n    right_max: &str,\n    result_max: &str,\n) -> Result<syn::Expr, RenderError> {\n    let left_bound = unsigned_maximum(left_max)?;\n    let right_bound = unsigned_maximum(right_max)?;\n    let result_bound = unsigned_maximum(result_max)?;\n    if matches!(operation, Expr::UnsignedAdd { .. })\n        && let UnsignedMaximum::Wide { high, low } = result_bound\n    {\n        let high = syn::LitInt::new(&format!(\"{high}u128\"), Span::call_site());\n        let low = syn::LitInt::new(&format!(\"{low}u128\"), Span::call_site());\n        return Ok(syn::parse_quote!(runtime::add_wide_unsigned::<#high,#low,_,_>(#left,#right)?));\n    }\n    for (bound, text) in [\n        (left_bound, left_max),\n        (right_bound, right_max),\n        (result_bound, result_max),\n    ] {\n        if matches!(bound, UnsignedMaximum::Wide { .. }) {\n            let operation = match operation {\n                Expr::UnsignedAdd { .. } => \"addition\",\n                Expr::UnsignedSubtract { .. } => \"subtraction\",\n                Expr::UnsignedMultiply { .. } => \"multiplication\",\n                _ => unreachable!(\"unsigned arithmetic caller\"),\n            };\n            return Err(RenderError::UnsupportedWideUnsignedOperation {\n                operation,\n                max: text.to_owned(),\n            });\n        }\n    }\n    let left_max = syn::LitInt::new(left_max, Span::call_site());\n    let right_max = syn::LitInt::new(right_max, Span::call_site());\n    let result_max = syn::LitInt::new(result_max, Span::call_site());\n    let helper: syn::Path = match operation {\n        Expr::UnsignedAdd { .. } => syn::parse_quote!(runtime::add_unsigned),\n        Expr::UnsignedSubtract { .. } => syn::parse_quote!(runtime::subtract_unsigned),\n        Expr::UnsignedMultiply { .. } => syn::parse_quote!(runtime::multiply_unsigned),\n        _ => unreachable!(\"unsigned arithmetic caller\"),\n    };\n    Ok(syn::parse_quote!(#helper::<#left_max,#right_max,#result_max>(#left,#right)?))\n}\n\npub(crate) fn rust_type(ty: &Type) -> Result<syn::Type, RenderError> {\n    Ok(match ty {\n        Type::Unit => syn::parse_quote!(()),\n        Type::Boolean => syn::parse_quote!(bool),\n        Type::Field => syn::parse_quote!(runtime::Field),\n        Type::JubjubPoint => syn::parse_quote!(runtime::JubjubPoint),\n        Type::OpaqueString => syn::parse_quote!(runtime::OpaqueString),\n        Type::OpaqueBytes => syn::parse_quote!(runtime::OpaqueBytes),\n        Type::Bytes { length } => {\n            let length = syn::LitInt::new(&length.to_string(), Span::call_site());\n            syn::parse_quote!(runtime::FixedBytes<#length>)\n        }\n        Type::Struct { name, .. } | Type::Enum { name, .. } => {\n            let name = ident(name)?;\n            syn::parse_quote!(crate::types::#name)\n        }\n        Type::Unsigned { max } => match unsigned_maximum(max)? {\n            UnsignedMaximum::Small(_) => {\n                let max = syn::LitInt::new(max, Span::call_site());\n                syn::parse_quote!(runtime::BoundedUint<#max>)\n            }\n            UnsignedMaximum::Wide { high, low } => wide_uint_type(high, low),\n        },\n        Type::Tuple { elements } => {\n            let elements: Vec<syn::Type> =\n                elements.iter().map(rust_type).collect::<Result<_, _>>()?;\n            let mut tuple = syn::TypeTuple {\n                paren_token: syn::token::Paren::default(),\n                elems: syn::punctuated::Punctuated::new(),\n            };\n            for element in elements {\n                tuple.elems.push_value(element);\n                tuple.elems.push_punct(syn::token::Comma::default());\n            }\n            if tuple.elems.len() > 1 {\n                tuple.elems.pop_punct();\n            }\n            syn::Type::Tuple(tuple)\n        }\n        Type::Vector { element, length } => {\n            let element = rust_type(element)?;\n            let length = syn::LitInt::new(&length.to_string(), Span::call_site());\n            syn::parse_quote!(runtime::FixedVector<#element, #length>)\n        }\n        Type::LedgerMap { .. } => return Err(RenderError::UnsupportedLedgerValueType(ty.clone())),\n    })\n}\n\nfn map_slot_value_type(value: &Type) -> Result<Option<syn::Type>, RenderError> {\n    if let Type::LedgerMap { key, value } = value {\n        let Some((key, value)) = map_slot_types(key, value)? else {\n            return Ok(None);\n"
+        },
+        {
+          "current": "        syn::parse_quote!((#value).clone())\n    }\n}\n\n#[cfg(test)]\nmod tests;\n\npub(crate) mod carrier;\n",
+          "previous": "        syn::parse_quote!((#value).clone())\n    }\n}\n\n#[cfg(test)]\nmod tests;\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/pure_certification/native.rs": {
+      "previous_sha256": "07ddafe698c483a8347880dfbb26d8fe1c6eb68b8e16d7f1624667286e6b3fc4",
+      "current_sha256": "55de2819245cbef5bc6c52a79384e209fed0876adb825b5f715337e0dc3be504",
+      "predecessor_reconstruction": [
+        {
+          "current": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n\n//! Temporary bridge: reuse native pure typing, immediately discard its syntax.\n//! Signature carriers use the shared syntax-free checker. Body typing and its\n//! binding symbols still construct syntax until the complete Expr fold cutover.\n//! No whole-circuit recorded profile or shape recognizer participates.\nuse crate::RenderError;\nuse crate::ir::{PureCircuit, Type};\nuse std::collections::HashMap;\n\npub(super) fn check(\n    source: &PureCircuit,\n    pure: &HashMap<&str, &PureCircuit>,\n) -> Result<(), RenderError> {\n    crate::pure_semantics::identifier::check_name(&source.name)?;\n    let mut scope = HashMap::new();\n    for (parameter, name) in source\n        .parameters\n        .iter()\n        .zip(crate::naming::parameter_idents(&source.parameters, &[]))\n    {\n        crate::pure_semantics::identifier::check_name(&parameter.name)?;\n        crate::pure_semantics::carrier::check_carrier(&parameter.ty)?;\n        if scope\n            .insert(parameter.name.as_str(), (&parameter.ty, name))\n            .is_some()\n        {\n            return Err(RenderError::DuplicateParameter(parameter.name.clone()));\n        }\n    }\n    crate::pure_semantics::carrier::check_carrier(&source.result)?;\n    let (_, actual) = crate::expression_with_calls(&source.body, &scope, pure)?;\n    if actual != source.result {\n        return Err(RenderError::TypeMismatch {\n            expected: source.result.clone(),\n            actual,\n        });\n",
+          "previous": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n\n//! Temporary bridge: reuse native pure typing, immediately discard its syntax.\n//! No whole-circuit recorded profile or shape recognizer participates.\nuse crate::RenderError;\nuse crate::ir::{PureCircuit, Type};\nuse std::collections::HashMap;\n\npub(super) fn check(\n    source: &PureCircuit,\n    pure: &HashMap<&str, &PureCircuit>,\n) -> Result<(), RenderError> {\n    crate::ident(&source.name)?;\n    let mut scope = HashMap::new();\n    for (parameter, name) in source\n        .parameters\n        .iter()\n        .zip(crate::naming::parameter_idents(&source.parameters, &[]))\n    {\n        crate::ident(&parameter.name)?;\n        crate::rust_type(&parameter.ty)?;\n        if scope\n            .insert(parameter.name.as_str(), (&parameter.ty, name))\n            .is_some()\n        {\n            return Err(RenderError::DuplicateParameter(parameter.name.clone()));\n        }\n    }\n    crate::rust_type(&source.result)?;\n    let (_, actual) = crate::expression_with_calls(&source.body, &scope, pure)?;\n    if actual != source.result {\n        return Err(RenderError::TypeMismatch {\n            expected: source.result.clone(),\n            actual,\n        });\n"
+        }
+      ]
+    }
+  },
+  "new_and_shared_sources": {
+    "tools/compact-rust-backend/src/pure_semantics.rs": "b2620338dc2574c4caa2964e29907881e502cce74a31a92dd5115eec5f41fc81",
+    "tools/compact-rust-backend/src/pure_semantics/carrier.rs": "0cac0806615ef4a8379c5e031788a6b5a0a00d32713149896393a6d79d54fd24",
+    "tools/compact-rust-backend/src/pure_semantics/carrier/reference.rs": "69fc05134a92146003d88f25a1a7d48cefd46a541a67ea29b4abb733ab63a885",
+    "tools/compact-rust-backend/src/pure_semantics/carrier/tests.rs": "b8a26fc06fbae2d18bf4cb2f2d110c7ef84930ed2a5e584e5e7d755a38872354",
+    "tools/compact-rust-backend/src/pure_semantics/identifier.rs": "586a51b10b469b14ed127b040b121d5fddd54688e7a9f129919f647ed00a2fa6",
+    "tools/compact-rust-backend/src/pure_semantics/identifier/reference.rs": "29b538c4affe7f8ea73ec42168c0545082fac9359a8651556ee296afd95976fd",
+    "tools/compact-rust-backend/src/pure_semantics/identifier/tests.rs": "7c488858654335f8b28b60194ed415d9cb8e120d2c083b7df1d2420ab0bec211",
+    "tools/compact-rust-backend/src/pure_semantics/numeric.rs": "92745029f87f14a651813ed7fa5641c6486135dc663fdcd7cd6c81e3a395468b",
+    "tools/compact-rust-backend/src/pure_semantics/numeric/old_reference.rs": "b108ea48f4c9e118475e67162feaafed9d8e8d1cc3e90b7efed24cd09170783e",
+    "tools/compact-rust-backend/src/pure_semantics/numeric/tests.rs": "60610eb79d93d06fd8443234a9bb953be3bbc88ed965428dafe5d31b4419b8f9",
+    "tools/compact-rust-backend/src/value_lowering/carrier.rs": "010ae928202724ec5a31fff99f72b76428ad6fd0c11912e582bd29762b430873",
+    "tools/compact-rust-backend/src/native_representation.rs": "727fd91b67ea7fe4a12b1bf0e213752e2b0598fe32646d8e6b369b55c4c8e979",
+    "tools/compact-rust-backend/src/resource_limits/borrowed_types.rs": "701b17d7ad93aa1e8f2e660b7636ca6228eb8265db219626fddc23d2ccf796c4",
+    "tools/compact-rust-backend/src/resource_limits/policy.rs": "8d1e091410d3f802b1f54654314146ba1615f6c45222645b586099528ed5294f"
+  },
+  "historical_manifests": {
+    "tools/compact-rust-backend/recording_admission_inventory.aligned-test-582.json": "37f77eb423c5fc376c5d1617cf38e9292e5f9d29e7c4048da9944b949611ace4",
+    "tools/compact-rust-backend/recording_admission_inventory.audited-local-614.json": "e6cbf5fc5fea53f8e5677191d14b77bd241b247573a46d0dd388bdfb2e43cf62",
+    "tools/compact-rust-backend/recording_admission_inventory.baseline.json": "ef69a6ea6faa03d3bc5fd13a8176a4b1dcd5c1caf7ea602eed4b5aa5aac56e9e",
+    "tools/compact-rust-backend/recording_admission_inventory.calls-519.json": "f44eaa757c58bc1ed31dd8b31485270148cf79762cb468f3a0e96acc5ed43c00",
+    "tools/compact-rust-backend/recording_admission_inventory.empty-recording-598.json": "9add6f3b7af78856707e6fc2735d86a7e3ce98e26cff6ebc14efd9ce823b1876",
+    "tools/compact-rust-backend/recording_admission_inventory.encoding-583.json": "e6905af2f56e6a81df5f39c5db309eddee66af5a4fd99255dea5bddf31a5f54c",
+    "tools/compact-rust-backend/recording_admission_inventory.generic-qualification-619.json": "f3f1bb230f291fb234ad8be23db5f4b1274bec413880568a75811743296dd34a",
+    "tools/compact-rust-backend/recording_admission_inventory.generic-retirement-618.json": "29fd2fd89bf107adae4c543481d49be76b9ee6d574490268660ad022bd495510",
+    "tools/compact-rust-backend/recording_admission_inventory.helper-discovery-620.json": "7ef7b579963aa5cbb349c3ab7081d383f1afb58c5013dc363aae25e1d0be3f99",
+    "tools/compact-rust-backend/recording_admission_inventory.inequality-test-571.json": "3d3b619c4175d99f586abe1adffac2a2889547907f0870acfbfd17d3affac3f6",
+    "tools/compact-rust-backend/recording_admission_inventory.instrumentation-515.json": "7643d54832ddcc9d25df9607ad7c6f7356132a5d1c56195a0e0451140d1888bb",
+    "tools/compact-rust-backend/recording_admission_inventory.keccak-test-581.json": "57fe81ffbe2009557df148a78d29dd3de451d96a4c5e86a586bc8e9dee67c288",
+    "tools/compact-rust-backend/recording_admission_inventory.key-only-map-removal-602.json": "eb8eab632bbb18cc667f47d173f98cb5ef7338a6292491cdacca919d08fa7cdf",
+    "tools/compact-rust-backend/recording_admission_inventory.list-effects-608.json": "a6243d8845df24b08042d16b799a9de21a75d5a7801966c53913cc72779bab54",
+    "tools/compact-rust-backend/recording_admission_inventory.map-effects-609.json": "b1702d8f322da3edc71c4a8aea4044df0ead1fbecb7bb8c028b7db2b87826968",
+    "tools/compact-rust-backend/recording_admission_inventory.map-values-595.json": "82388a62ad3b867ceb39816d55a54471b1c6e75b8077dd982efff9db915beb74",
+    "tools/compact-rust-backend/recording_admission_inventory.native-tuple-621.json": "b953fad599da7b2e192ed1e49e75ae46d2e002642b386dff2e7d1bc6b94f814f",
+    "tools/compact-rust-backend/recording_admission_inventory.negation-test-585.json": "a9ca3590dfe958a25b5f99ae5373a2a5c851962f645ee3cc52a58c9021035e82",
+    "tools/compact-rust-backend/recording_admission_inventory.observation-test-564.json": "7cb2096ee32cd3fe07bc01d9359948ec840c690c06871eccd69522f510f6d54b",
+    "tools/compact-rust-backend/recording_admission_inventory.ordinary-interface-606.json": "af77a7584cb76b5b63795578b7a83c4c3c9aa5c076ee80fb977a9b1547d6be04",
+    "tools/compact-rust-backend/recording_admission_inventory.persistent-commit-inputs-611.json": "d1ffeb82d6514e184b8921ceb98fe7d6fb5b8eaee08f769d0e6ecc5ca8e735eb",
+    "tools/compact-rust-backend/recording_admission_inventory.reachable-helpers-599.json": "68fa18ab62ae676873586a02e1eace175a318ada1f93b51a58173c499a88e58d",
+    "tools/compact-rust-backend/recording_admission_inventory.read-only-615.json": "2c6eae6dd47caa2bfbf935096daef59c15d139b92938469803e909eb0df6a9da",
+    "tools/compact-rust-backend/recording_admission_inventory.resource-diagnostics-597.json": "a4d3559923d732989a8245bb1984f131479feba07554a2e5006dec16b89f8145",
+    "tools/compact-rust-backend/recording_admission_inventory.routing-test-568.json": "627cedbf268cdb6e53006fc6d1778604a53f8e676095042f107393e97356ab8f",
+    "tools/compact-rust-backend/recording_admission_inventory.single-admission-616.json": "d67b2cc703de3ac93a7a4d01ccb884b0ad571927b0784401008fc7595eeb11f4",
+    "tools/compact-rust-backend/recording_admission_inventory.start-funding-617.json": "cc5cde950e7f6f696acd6ab846b68d90a78319d60e58115b56db4a1f6fa24cf2",
+    "tools/compact-rust-backend/recording_admission_inventory.stateful-tuple-624.json": "9127373f0baf663c9635107ac99a98b7899f70d4970ca0064bde456754883e26",
+    "tools/compact-rust-backend/recording_admission_inventory.storage-codecs-607.json": "06e2fc20429f3782f50d078075d96c9a3907b289e1ca0a147dbe30073437c71b",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-511.json": "09d6cd8545012c54f9445d112c459a9af982073cdd9e163c22746b2fc7b3f396",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-517.json": "bbf66c692db93531609d4517dcd96dbbf607ad76724b69fbde0a93873560ab00",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-521.json": "38920475549f1664b1f206a186f1ff71d5a994b4fab6bd7542b629b1d925d8f6",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-525.json": "f017f7ff1a7a0a942fc842238f83fd049aee1b114e4e261c4d52ec6c0973b99e",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-526.json": "e15599f5588a00cd6471cb255ce96bc44a7a89f451fdc006a0165b7030483703",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-527.json": "273b0554b1b35139a0a9e306d0f675015aa2fd6120c6d4d5e9a827861865ddbf",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-529.json": "9bd01cfc79f34fe9fd957f4f4c5147f8900a84bc7b76346fad113e8e0938f002",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-536.json": "c4cd774b92e0d06ec8fe48e8595afc5e24c7eea2af311db71efc51e180dc68c4",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-547.json": "ea0341026c5fd4085dfc6a67ca1b444a97c6b8b765aa7592859d3c563deba2fb",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-549.json": "c7f2b0366b405c67a7e9226b2e7fe44364e47bcb66d6001e27aca23c9e81b259",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-550.json": "2d35621b15e729edaf9d5c98b09b960c22296f13e63e0de1f2d24962cb2f1a22",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-553.json": "6f7d1c96df82dcc85d847f1a4df5546ea99ecf0f82cee5340150080e06d72e73",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-560.json": "c3eb19b5bdb37ebf013f3f990988c2959c389324728afaae6a23a6fe501d6b2e",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-561.json": "d31d1fdfb4586df9bb02bd387f8e18a1d2c9bd0c04ca52c270631fea22b85f80",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-565.json": "2819417c7b2c3222444627a0a9716cc392f3b5ca797df17919845778623c7dfa",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-566.json": "be2b63dec8ce2dbcba3d641032bc79eddd2d166c5bc940b54fe29b2c5dbcad26",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-569.json": "b09f390c8d30e3310cb9fe58a59319a7a61c4615d18718ecacf958ef5ef30647",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-570.json": "1ac02976ac663a99ca761f562de840879823100d72d038b08d000cbf3a625bb8",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-572.json": "909ab4af3988d9544201eda3e71c82861e651acc9f1c7895a43af1983b7c5379",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-580.json": "8da209575f8e93345e23449e144e7b966d099394c1a6f7e22512173be2a2bc5f",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-587.json": "e6c18b3a0d417c0b06a663545e790c8e60e5ab95f7a8a1d4e3cd54e38d49f796",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-588.json": "c135b2c14703803d1cdce746a958d26f4383dc01d162b8dde7d98f9f902c8953",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-589.json": "c064b62d9030d4c00cf0ee9748866fafccb847e932a133de7c9fe1ed472c0172",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-590.json": "7171213d00b32f7870d387e9046ec4029f0a2f52b046f69ce5476251aca742ca",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-591.json": "c01018aeb3436e90bdd73dd25b699ae1bb1ead1d798034b8eb50daaa5c6d2305",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-592.json": "06ae91053575e134acf08136436560ef0e27b9b2ce5727cdd7a4d6f6cc488ec3",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-594.json": "65683de7d5af1f648474c864fd7f989198ee5da398cbfa4997b2f80350c63586",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-596.json": "25fb661f31e18ac420b5ad838814fc70bcadd9d168a36d4237da068c69d47104",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-600.json": "3e88356bfc539c466e7a3a935da0eb5e4feb16cb4b8f76c40dbd5d0e4623cc45",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-601.json": "8ad0e89bdcb92e5eb69fd9a5e93af9305a8bfb55967965189b93504764351d2c",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-603.json": "69e86e790fa15a76c45a417d7e29c9f9ffbe638f474daee13eb1ee68f6868dc2",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-604.json": "86f622bdcb009f0b1912f769258af157497877855c664442cd78024b77e97963",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-605.json": "c2f9444eba2e7de7da19e1f93a92debbd31a2b644e930f2443b790206f3ece28",
+    "tools/compact-rust-backend/recording_admission_inventory.unit-domain-540.json": "b91bed20247bd0e513ebabaf845764bce43599c3f9c0d39c8e55584e5d0b26d9",
+    "tools/compact-rust-backend/recording_admission_inventory.unit-interface-593.json": "f7e0d5bededbf7e2a57d30da2b5c3673d13242a5eabe4d62b9dfa74d7f2f6cd0",
+    "tools/compact-rust-backend/recording_admission_inventory.value-test-586.json": "0bac8e290d255cf3ad503f6661048dd4ae09419ccafc0b3b312e8e1d328b8e59",
+    "tools/compact-rust-backend/recording_admission_inventory.vector-map-613.json": "fce9d30228aaf6cd70defe683c743a1eb2589dd67f4553bfa86962a1838da898",
+    "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-generic-retirement-618.json": "b2093ad98a8d8a3e4d087f52e05c15d9bb2780ccc329ea284cdaff63ac40fcd4"
+  },
+  "oracle_authorities": {
+    "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-generic-retirement-618.json": "b2093ad98a8d8a3e4d087f52e05c15d9bb2780ccc329ea284cdaff63ac40fcd4",
+    "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-start-funding-617.json": "adfbe698a69f9a31e0bc36bdfc0260099cdfd6daf43d222d97a49811042ebfed",
+    "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-audited-local-614.json": "3e433671c8b8c9086350ccbbe2f9898385a258a6482b5c97ac378f28014c9bcf",
+    "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-commit-inputs-611.json": "4feeb870cede6548b17cc870c6d67f545274f9c98c73923e691acca665c45caf",
+    "tools/compact-rust-backend/recording_admission_inventory.resource-diagnostics-597.json": "a4d3559923d732989a8245bb1984f131479feba07554a2e5006dec16b89f8145",
+    "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-retirement.json": "eda751f75344d765430226e2651201e947c1d1d584818c43fe024424df65df0c",
+    "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-authority.json": "00445f0e9e4c42af6b8dda3a33912542ed46ad7c671f56daa55a160ce8f32b19"
+  },
+  "predecessor_options": {
+    "transition": "tools/compact-rust-backend/recording_admission_inventory.transition-511.json",
+    "instrumentation": "tools/compact-rust-backend/recording_admission_inventory.instrumentation-515.json",
+    "jubjub_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-517.json",
+    "call_extension": "tools/compact-rust-backend/recording_admission_inventory.calls-519.json",
+    "terminal_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-521.json",
+    "unit_actions_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-525.json",
+    "context_query_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-526.json",
+    "kernel_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-527.json",
+    "composite_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-529.json",
+    "receive_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-536.json",
+    "unit_domain_extension": "tools/compact-rust-backend/recording_admission_inventory.unit-domain-540.json",
+    "voting_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-547.json",
+    "phase_reset_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-549.json",
+    "immediate_send_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-550.json",
+    "zswap_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-553.json",
+    "membership_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-560.json",
+    "send_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-561.json",
+    "observation_test_extension": "tools/compact-rust-backend/recording_admission_inventory.observation-test-564.json",
+    "merge_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-565.json",
+    "guarded_deposit_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-566.json",
+    "routing_test_extension": "tools/compact-rust-backend/recording_admission_inventory.routing-test-568.json",
+    "reset_payout_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-569.json",
+    "shielded_payout_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-570.json",
+    "inequality_test_extension": "tools/compact-rust-backend/recording_admission_inventory.inequality-test-571.json",
+    "funded_mint_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-572.json",
+    "keccak_test_extension": "tools/compact-rust-backend/recording_admission_inventory.keccak-test-581.json",
+    "aligned_test_extension": "tools/compact-rust-backend/recording_admission_inventory.aligned-test-582.json",
+    "encoding_extension": "tools/compact-rust-backend/recording_admission_inventory.encoding-583.json",
+    "negation_test_extension": "tools/compact-rust-backend/recording_admission_inventory.negation-test-585.json",
+    "value_test_extension": "tools/compact-rust-backend/recording_admission_inventory.value-test-586.json",
+    "unit_composition_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-580.json",
+    "optional_write_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-587.json",
+    "enum_advance_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-588.json",
+    "witness_merkle_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-589.json",
+    "organizer_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-590.json",
+    "unsigned_product_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-591.json",
+    "opaque_set_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-592.json",
+    "unit_interface_extension": "tools/compact-rust-backend/recording_admission_inventory.unit-interface-593.json",
+    "map_value_extension": "tools/compact-rust-backend/recording_admission_inventory.map-values-595.json",
+    "guarded_map_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-594.json",
+    "opaque_map_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-596.json",
+    "resource_diagnostics_extension": "tools/compact-rust-backend/recording_admission_inventory.resource-diagnostics-597.json",
+    "empty_recording_extension": "tools/compact-rust-backend/recording_admission_inventory.empty-recording-598.json",
+    "guarded_pure_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-600.json",
+    "reachable_helpers_extension": "tools/compact-rust-backend/recording_admission_inventory.reachable-helpers-599.json",
+    "key_only_map_removal_extension": "tools/compact-rust-backend/recording_admission_inventory.key-only-map-removal-602.json",
+    "asset_removal_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-601.json",
+    "opaque_boolean_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-603.json",
+    "opaque_field_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-604.json",
+    "proved_set_sequence_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-605.json",
+    "ordinary_interface_extension": "tools/compact-rust-backend/recording_admission_inventory.ordinary-interface-606.json",
+    "storage_codec_extension": "tools/compact-rust-backend/recording_admission_inventory.storage-codecs-607.json",
+    "list_effects_extension": "tools/compact-rust-backend/recording_admission_inventory.list-effects-608.json",
+    "map_effects_extension": "tools/compact-rust-backend/recording_admission_inventory.map-effects-609.json",
+    "persistent_commit_extension": "tools/compact-rust-backend/recording_admission_inventory.persistent-commit-inputs-611.json",
+    "vector_map_extension": "tools/compact-rust-backend/recording_admission_inventory.vector-map-613.json",
+    "audited_local_transition": "tools/compact-rust-backend/recording_admission_inventory.audited-local-614.json",
+    "read_only_transition": "tools/compact-rust-backend/recording_admission_inventory.read-only-615.json",
+    "single_admission_transition": "tools/compact-rust-backend/recording_admission_inventory.single-admission-616.json",
+    "start_funding_transition": "tools/compact-rust-backend/recording_admission_inventory.start-funding-617.json",
+    "generic_qualification_extension": "tools/compact-rust-backend/recording_admission_inventory.generic-qualification-619.json",
+    "generic_retirement_transition": "tools/compact-rust-backend/recording_admission_inventory.generic-retirement-618.json",
+    "helper_discovery_transition": "tools/compact-rust-backend/recording_admission_inventory.helper-discovery-620.json",
+    "native_tuple_extension": "tools/compact-rust-backend/recording_admission_inventory.native-tuple-621.json",
+    "stateful_tuple_extension": "tools/compact-rust-backend/recording_admission_inventory.stateful-tuple-624.json"
+  },
+  "original_oracle_preservation": {
+    "authority": "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-authority.json",
+    "original_files": 49,
+    "stages": [
+      "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-generic-retirement-618.json",
+      "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-start-funding-617.json",
+      "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-audited-local-614.json",
+      "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-commit-inputs-611.json",
+      "tools/compact-rust-backend/recording_admission_inventory.resource-diagnostics-597.json",
+      "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-retirement.json",
+      "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-authority.json"
+    ],
+    "new_owner_overlap": []
+  },
+  "source_freeze_sha256": "cd9314bba6b10d526cf0f0501a8ab9234480ededfbb9d35357a15a3114935284",
+  "qualification_limits": [
+    "Exact source/inverse authority is not semantic proof.",
+    "Signature carrier checking is syntax-free; complete pure body fold and binding symbols still construct syntax.",
+    "Both lockfiles compared independently to their own signed807 predecessor; only backend direct edge to alreadylocked unicode-ident1.0.24 added.",
+    "No Midnight ledger/zk dependency upgrade; operation tuple traits remain unchanged.",
+    "Native output/capability census, source qualification, consumers and proof binding are separate evidence."
+  ],
+  "production_closure": {
+    "neutral_policies": {
+      "tools/compact-rust-backend/src/pure_semantics/identifier.rs": "586a51b10b469b14ed127b040b121d5fddd54688e7a9f129919f647ed00a2fa6",
+      "tools/compact-rust-backend/src/pure_semantics/numeric.rs": "92745029f87f14a651813ed7fa5641c6486135dc663fdcd7cd6c81e3a395468b",
+      "tools/compact-rust-backend/src/pure_semantics/carrier.rs": "0cac0806615ef4a8379c5e031788a6b5a0a00d32713149896393a6d79d54fd24"
+    },
+    "carrier_fold_resource_preflight": true,
+    "sink_refusal_authority": false,
+    "signature_carrier_consumer": "CheckSink",
+    "native_carrier_consumer": "NativeCarrierSink",
+    "body_syntax_bridge": "still pending; existing expression_with_calls and binding symbols retained",
+    "locks": {
+      "Cargo.lock": {
+        "package_count": 719,
+        "unicode_version": "1.0.24",
+        "packages_and_cohort_unchanged": true
+      },
+      "tools/compact-rust-backend/Cargo.lock": {
+        "package_count": 303,
+        "unicode_version": "1.0.24",
+        "packages_and_cohort_unchanged": true
+      }
+    },
+    "new_retired_routes": [],
+    "claim": "slice A shared neutral policies/signatures; not full pure body typing or epic closure"
+  }
+}

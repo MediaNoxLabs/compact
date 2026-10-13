@@ -92,6 +92,7 @@ import recording_admission_inventory_generic_retirement as generic_retirement
 import recording_admission_inventory_helper_discovery as helper_discovery
 import recording_admission_inventory_native_tuple as native_tuple
 import recording_admission_inventory_stateful_tuple as stateful_tuple
+import recording_admission_inventory_shared_pure as shared_pure
 import recording_admission_inventory_jubjub as jubjub
 import recording_admission_inventory_calls as calls
 import recording_admission_inventory_terminal as terminal
@@ -366,7 +367,15 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
            generic_retirement_transition: dict | None = None,
            helper_discovery_transition: dict | None = None,
            native_tuple_extension: dict | None = None,
-           stateful_tuple_extension: dict | None = None) -> dict:
+           stateful_tuple_extension: dict | None = None,
+           shared_pure_semantics_extension: dict | None = None) -> dict:
+    if shared_pure_semantics_extension is not None:
+        arguments = dict(locals())
+        arguments['shared_pure_semantics_extension'] = None
+        def historical_verify(checkpoint):
+            return verify(**{**arguments, 'root': checkpoint})
+        return shared_pure.verify_extension(
+            root, baseline, shared_pure_semantics_extension, historical_verify, selector_signature)
     if stateful_tuple_extension is not None:
         arguments = dict(locals())
         arguments['stateful_tuple_extension'] = None
@@ -1543,6 +1552,7 @@ def main(argv=None) -> int:
     parser.add_argument('--helper-discovery-transition', type=Path, help='explicit #620 bounded semantic helper discovery and checked eligibility')
     parser.add_argument('--native-tuple-extension', type=Path, help='explicit #621 native tuple operation traits; zero new recording retirements')
     parser.add_argument('--stateful-tuple-extension', type=Path, help='explicit #624 stateful/constructor tuple obligations; zero recording retirements')
+    parser.add_argument('--shared-pure-semantics-extension', type=Path, help='explicit #622 slice A neutral policies/signature carriers; pure body bridge remains pending')
     args = parser.parse_args(argv)
     protected = [args.baseline] + ([args.transition] if args.transition else []) + ([args.instrumentation] if args.instrumentation else []) + ([args.jubjub_transition] if args.jubjub_transition else []) + ([args.call_extension] if args.call_extension else []) + ([args.terminal_transition] if args.terminal_transition else []) + ([args.unit_actions_transition] if args.unit_actions_transition else []) + ([args.context_query_transition] if args.context_query_transition else []) + ([args.kernel_transition] if args.kernel_transition else []) + ([args.composite_transition] if args.composite_transition else []) + ([args.receive_transition] if args.receive_transition else [])
     protected += [args.unit_domain_extension] if args.unit_domain_extension else []
@@ -1598,6 +1608,7 @@ def main(argv=None) -> int:
     protected += [args.helper_discovery_transition] if args.helper_discovery_transition else []
     protected += [args.native_tuple_extension] if args.native_tuple_extension else []
     protected += [args.stateful_tuple_extension] if args.stateful_tuple_extension else []
+    protected += [args.shared_pure_semantics_extension] if args.shared_pure_semantics_extension else []
     protected += [args.optional_write_transition] if args.optional_write_transition else []
     protected += [args.unit_composition_transition] if args.unit_composition_transition else []
     if args.output and any(args.output.resolve() == path.resolve() for path in protected):
@@ -1677,7 +1688,8 @@ def main(argv=None) -> int:
         unit_composition_transition = json.loads(args.unit_composition_transition.read_text()) if args.unit_composition_transition else None
         native_tuple_extension = json.loads(args.native_tuple_extension.read_text()) if args.native_tuple_extension else None
         stateful_tuple_extension = json.loads(args.stateful_tuple_extension.read_text()) if args.stateful_tuple_extension else None
-        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension, voting_transition, phase_reset_transition, immediate_send_transition, zswap_transition, membership_transition, send_transition, observation_test_extension, merge_transition, guarded_deposit_transition, routing_test_extension, reset_payout_transition, shielded_payout_transition, inequality_test_extension, funded_mint_transition, keccak_test_extension, aligned_test_extension, encoding_extension, negation_test_extension, value_test_extension, unit_composition_transition, optional_write_transition, enum_advance_transition, witness_merkle_transition, organizer_transition, unsigned_product_transition, opaque_set_transition, unit_interface_extension, map_value_extension, guarded_map_transition, opaque_map_transition, resource_diagnostics_extension, empty_recording_extension, guarded_pure_transition, reachable_helpers_extension, key_only_map_removal_extension, asset_removal_transition, opaque_boolean_transition, opaque_field_transition, proved_set_sequence_transition, ordinary_interface_extension, storage_codec_extension, list_effects_extension, map_effects_extension, persistent_commit_extension, vector_map_extension, audited_local_transition, read_only_transition, single_admission_transition, start_funding_transition, generic_qualification_extension, generic_retirement_transition, helper_discovery_transition, native_tuple_extension, stateful_tuple_extension)
+        shared_pure_semantics_extension = json.loads(args.shared_pure_semantics_extension.read_text()) if args.shared_pure_semantics_extension else None
+        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension, voting_transition, phase_reset_transition, immediate_send_transition, zswap_transition, membership_transition, send_transition, observation_test_extension, merge_transition, guarded_deposit_transition, routing_test_extension, reset_payout_transition, shielded_payout_transition, inequality_test_extension, funded_mint_transition, keccak_test_extension, aligned_test_extension, encoding_extension, negation_test_extension, value_test_extension, unit_composition_transition, optional_write_transition, enum_advance_transition, witness_merkle_transition, organizer_transition, unsigned_product_transition, opaque_set_transition, unit_interface_extension, map_value_extension, guarded_map_transition, opaque_map_transition, resource_diagnostics_extension, empty_recording_extension, guarded_pure_transition, reachable_helpers_extension, key_only_map_removal_extension, asset_removal_transition, opaque_boolean_transition, opaque_field_transition, proved_set_sequence_transition, ordinary_interface_extension, storage_codec_extension, list_effects_extension, map_effects_extension, persistent_commit_extension, vector_map_extension, audited_local_transition, read_only_transition, single_admission_transition, start_funding_transition, generic_qualification_extension, generic_retirement_transition, helper_discovery_transition, native_tuple_extension, stateful_tuple_extension, shared_pure_semantics_extension)
     except (OSError, ValueError, TypeError, KeyError) as error:
         parser.exit(2, f'inventory error: {error}\n')
     rendered = json.dumps(report, indent=2) + '\n'

@@ -41,3 +41,6 @@ sha2 = "0.10"
 syn = { version = "2", features = ["full", "parsing", "printing", "visit-mut"] }
 toml_edit = "0.22"
 midnight-transient-crypto = "=2.0.1"
+
+# Use the exact identifier tables already present in the locked syntax stack.
+unicode-ident = "=1.0.24"

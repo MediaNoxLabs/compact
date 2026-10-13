@@ -3,8 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! Internal lowering provenance; display strings never decide diagnostic priority.
-use super::{PlanError, RecordingGap};
+#[cfg(test)]
+use super::PlanError;
+use super::RecordingGap;
 
+#[cfg(test)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub(super) enum Precision {
     ConcreteNode,
@@ -12,6 +15,7 @@ pub(super) enum Precision {
     Unclassified,
 }
 
+#[cfg(test)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub(super) enum FailurePhase {
     #[default]
@@ -28,8 +32,11 @@ pub(super) struct ConcreteNode {
 #[derive(Debug)]
 pub(in crate::recorded) struct LoweringRejection {
     pub(super) gap: RecordingGap,
+    #[cfg(test)]
     pub(super) root_action: Option<usize>,
+    #[cfg(test)]
     pub(super) precision: Precision,
+    #[cfg(test)]
     pub(super) phase: FailurePhase,
     pub(super) concrete_node: Option<Box<ConcreteNode>>,
 }
@@ -38,8 +45,11 @@ impl From<RecordingGap> for LoweringRejection {
     fn from(gap: RecordingGap) -> Self {
         Self {
             gap,
+            #[cfg(test)]
             root_action: None,
+            #[cfg(test)]
             precision: Precision::Unclassified,
+            #[cfg(test)]
             phase: FailurePhase::OutsideBody,
             concrete_node: None,
         }
@@ -47,12 +57,24 @@ impl From<RecordingGap> for LoweringRejection {
 }
 
 impl LoweringRejection {
-    /// Consume the public gap for a refusal-only diagnostic projection.
+    /// Publish the checked compiler's actual failed node without parsing paths
+    /// or rerunning lowering. Resource and outside-body failures retain their
+    /// original typed gap when no concrete expression label was captured.
+    pub(in crate::recorded) fn into_checked_gap(mut self) -> RecordingGap {
+        if let Some(node) = self.concrete_node {
+            self.gap.ir_node = node.name;
+        }
+        self.gap
+    }
+
+    /// Consume the historical gap for a test-only diagnostic projection.
+    #[cfg(test)]
     pub(in crate::recorded) fn into_gap(self) -> RecordingGap {
         self.gap
     }
 
-    /// Existing callers intentionally discard provenance without running lowering again.
+    /// Historical callers discard provenance without lowering again.
+    #[cfg(test)]
     pub(super) fn into_parts(
         self,
     ) -> (
@@ -69,7 +91,8 @@ impl LoweringRejection {
         )
     }
 
-    // Production Unit admission refines diagnostics using typed lowering provenance.
+    // Historical Unit projection remains solely for diagnostic oracle tests.
+    #[cfg(test)]
     pub(in crate::recorded) fn refine_action(
         &self,
         ordinal: usize,
@@ -109,6 +132,7 @@ impl LoweringRejection {
     }
 }
 
+#[cfg(test)]
 fn encloses(parent: &str, child: &str) -> bool {
     child.strip_prefix(parent).is_some_and(|suffix| {
         suffix.is_empty() || suffix.starts_with('.') || suffix.starts_with('[')
@@ -121,6 +145,7 @@ pub(in crate::recorded) enum DiagnosticPlanError {
     Invalid(RecordingGap),
 }
 
+#[cfg(test)]
 impl From<DiagnosticPlanError> for PlanError {
     fn from(error: DiagnosticPlanError) -> Self {
         match error {

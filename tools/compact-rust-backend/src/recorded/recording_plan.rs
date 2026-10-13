@@ -3,7 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0
 //! Lowered Rust syntax shared by checked recording and frozen test oracles.
 
+#[cfg(test)]
 use crate::coin_shapes::shielded_coin_type;
+#[cfg(test)]
 use crate::ir::Type;
 
 pub(super) struct TypedPlan {
@@ -11,7 +13,8 @@ pub(super) struct TypedPlan {
     pub result: syn::Expr,
 }
 
-// Public result-shape classification supplies diagnostics, never admission.
+// Historical diagnostic classification, never production admission.
+#[cfg(test)]
 pub(super) fn shielded_send_result(ty: &Type) -> bool {
     let Type::Struct { fields, .. } = ty else {
         return false;

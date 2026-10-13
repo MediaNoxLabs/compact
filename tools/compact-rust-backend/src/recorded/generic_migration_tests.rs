@@ -11,6 +11,8 @@ use serde_json::json;
 mod boundaries;
 #[path = "generic_migration_tests/calls.rs"]
 mod calls;
+#[path = "generic_migration_tests/diagnostics.rs"]
+mod diagnostics;
 #[path = "generic_migration_tests/execution_results.rs"]
 mod execution_results;
 #[path = "generic_migration_tests/leaves.rs"]

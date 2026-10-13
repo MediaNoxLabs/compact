@@ -258,13 +258,17 @@ fn unselected_checked_effect_is_supported_but_unsupported_effect_keeps_legacy_pr
             .unwrap();
         assert!(!capability.recorded && !capability.observed_call);
         let gap = capability.recording_unavailable.as_ref().unwrap();
-        if retain_earlier_guard {
-            // Legacy lowering already refused its Counter-reading assertion.
-            // The newer domain's later, prettier path must not replace it.
-            assert_eq!(gap.path, "callee[guard].actions[0]");
-        } else {
-            assert_eq!(gap.path, "callee[guard].actions[0].otherwise");
-        }
+        // The historical shape refusal above is retained; publication names
+        // the actual unsupported commitment inside the checked callee.
+        assert_eq!(
+            gap.code,
+            crate::recorded::RecordingGapCode::UnsupportedExpression
+        );
+        assert_eq!(gap.ir_node, "Expr::PersistentCommit");
+        assert_eq!(
+            gap.path,
+            format!("actions[0].callee[guard].actions[{index}].otherwise.value.left.value")
+        );
     }
 }
 

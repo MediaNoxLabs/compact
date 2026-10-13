@@ -528,7 +528,15 @@ fn pure_field_calls_preserve_unit_and_record_ordinary_hashed_returns() {
             .as_ref()
             .unwrap()
             .ir_node,
-        "StateReturn::Expression"
+        "Expr::VectorFoldCall"
+    );
+    assert_eq!(
+        rejected.capabilities.circuits[0]
+            .recording_unavailable
+            .as_ref()
+            .unwrap()
+            .path,
+        "return_value.value.value.value"
     );
 }
 

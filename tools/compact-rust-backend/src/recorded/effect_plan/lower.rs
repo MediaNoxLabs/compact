@@ -30,7 +30,9 @@ mod transient;
 mod vector_map;
 mod zswap;
 use super::pure_certification::{Certificates, Certifier};
-use super::rejection::{ConcreteNode, FailurePhase, LoweringRejection, Precision};
+use super::rejection::{ConcreteNode, LoweringRejection};
+#[cfg(test)]
+use super::rejection::{FailurePhase, Precision};
 
 type Scope = HashMap<String, Value>;
 struct Lowerer<'a> {
@@ -42,7 +44,9 @@ struct Lowerer<'a> {
     max_call_depth: usize,
     max_expanded_steps: usize,
     next: usize,
+    #[cfg(test)]
     root_action: Option<usize>,
+    #[cfg(test)]
     failure_precision: Precision,
     concrete_node: Option<Box<ConcreteNode>>,
 }
@@ -80,7 +84,9 @@ pub(super) fn lower_with_pure_calls<'a>(
         max_call_depth,
         max_expanded_steps,
         next: 0,
+        #[cfg(test)]
         root_action: None,
+        #[cfg(test)]
         failure_precision: Precision::Unclassified,
         concrete_node: None,
     };
@@ -105,8 +111,11 @@ pub(super) fn lower_with_pure_calls<'a>(
         .circuit_body(circuit, &scope, &mut bindings, "")
         .map_err(|gap| LoweringRejection {
             gap,
+            #[cfg(test)]
             root_action: lower.root_action,
+            #[cfg(test)]
             phase: FailurePhase::CircuitBody,
+            #[cfg(test)]
             precision: lower.failure_precision,
             concrete_node: lower.concrete_node.take(),
         })?;
@@ -122,7 +131,10 @@ impl Lowerer<'_> {
     // Errors propagate immediately; no alternative production catches a failure.
     // Mark provenance only at an explicit refusal producer, never from gap text.
     fn concrete_failure(&mut self, gap: RecordingGap) -> RecordingGap {
-        self.failure_precision = Precision::ConcreteNode;
+        #[cfg(test)]
+        {
+            self.failure_precision = Precision::ConcreteNode;
+        }
         gap
     }
 
@@ -140,8 +152,8 @@ impl Lowerer<'_> {
         path: &str,
         detail: &str,
     ) -> RecordingGap {
-        // Keep the ordinary gap byte-for-byte. Only Unit diagnostic refinement
-        // consumes this actual node label; no display text is parsed.
+        // Preserve the internal gap and capture the actual typed node separately.
+        // Checked publication consumes this label without parsing display text.
         // A sized box keeps this rare-error label to one pointer in recursive
         // error carriers; boxing a str would retain a two-word fat pointer.
         self.concrete_node = Some(Box::new(ConcreteNode {

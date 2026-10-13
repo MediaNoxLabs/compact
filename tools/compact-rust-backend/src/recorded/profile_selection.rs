@@ -15,9 +15,8 @@
 
 //! One checked ordinary admission; the old staged selector is a test-only oracle.
 //!
-//! A validated plan owns success. Unsupported explicitly retains the existing
-//! legacy compatibility renderer; Invalid is fatal. Diagnostic projection below
-//! preserves prior error precedence without authorizing a different plan.
+//! A validated plan owns success; its typed refusal owns unavailability.
+//! Invalid is fatal. Historical diagnostic projections are test-only oracles.
 //!
 //! Effectful-return admission is performed earlier by the caller, before helper
 //! routing and parameter validation. Keep that ordering outside this selector.
@@ -27,11 +26,14 @@ use std::collections::HashMap;
 use crate::RenderError;
 use crate::ir::{LedgerField, PureCircuit, StatefulCircuit, WitnessDeclaration};
 
+#[cfg(test)]
 use super::RecordingGap;
 use super::effect_plan;
 #[cfg(test)]
 use super::profile_attempt::ProfileAttempt;
-use super::recording_plan::{self, TypedPlan};
+#[cfg(test)]
+use super::recording_plan;
+use super::recording_plan::TypedPlan;
 #[cfg(test)]
 use super::typed_plan;
 
@@ -133,6 +135,7 @@ mod funded_mint_migration_tests;
 /// An admitted step sequence and the evidence retained from declined profiles.
 /// Absence of checked steps permits legacy action lowering. The caller owns
 /// whether a retained gap can refine a failure.
+#[cfg(test)]
 pub(super) struct ProfileSelection {
     pub(super) organizer_steps: Option<Vec<syn::Stmt>>,
     pub(super) typed_result: Option<syn::Expr>,
@@ -679,7 +682,7 @@ pub(super) fn legacy_select(
     })
 }
 
-/// Complete checked outcome before the unchanged legacy diagnostic projection.
+/// Complete checked outcome and sole production ordinary admission authority.
 /// Unsupported retains every provenance field, regardless of public signature.
 pub(super) enum CheckedSelection {
     Admitted(TypedPlan),
@@ -688,6 +691,7 @@ pub(super) enum CheckedSelection {
 
 /// Compatibility adapter: keep existing fallback and public diagnostics intact.
 /// This wrapper never lowers again and never emits a fallback itself.
+#[cfg(test)]
 pub(super) fn select(
     circuit: &StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,
@@ -748,6 +752,7 @@ pub(super) fn select_checked(
     }
 }
 
+#[cfg(test)]
 fn admitted(plan: TypedPlan) -> ProfileSelection {
     ProfileSelection {
         organizer_steps: Some(plan.steps),
@@ -759,6 +764,7 @@ fn admitted(plan: TypedPlan) -> ProfileSelection {
 
 /// Preserve the existing diagnostic consumers while legacy support is still
 /// explicit in render_recorded_item. These predicates cannot authorize output.
+#[cfg(test)]
 fn compatibility_rejection(
     circuit: &StatefulCircuit,
     rejection: effect_plan::LoweringRejection,

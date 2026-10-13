@@ -38,8 +38,11 @@ pub use diagnostics::{
     RecordingGap, RecordingGapCode, RecordingResource, RecordingResourceKind,
     RecordingResourcePhase,
 };
+#[cfg(test)]
 mod legacy;
+#[cfg(test)]
 use legacy::actions::append_steps;
+#[cfg(test)]
 use legacy::expressions::{boolean_expression, field_expression};
 
 #[cfg(test)]
@@ -62,12 +65,14 @@ mod profile_attempt;
 mod profile_selection;
 #[cfg(test)]
 mod proved_set_sequence_migration_tests;
+#[cfg(test)]
 mod pure_calls;
 #[cfg(test)]
 mod unsigned_product_migration_tests;
 pub(crate) use helpers::{plan_recorded_helpers, retain_reachable_helpers};
 #[cfg(test)]
 use profile_attempt::ProfileAttempt;
+#[cfg(test)]
 use pure_calls::closed_pure_field_call;
 #[cfg(test)]
 mod admission_probe;
@@ -101,10 +106,12 @@ use std::collections::{HashMap, HashSet};
 #[cfg(test)]
 use crate::expression_with_calls;
 #[cfg(test)]
+use crate::ir::LedgerFieldKind;
+#[cfg(test)]
 use crate::ir::{CounterAmount, LocalBinding};
 use crate::ir::{
-    Expr, LedgerField, LedgerFieldKind, PureCircuit, StateAction, StateReturn, StatefulCircuit,
-    Type, WitnessDeclaration,
+    Expr, LedgerField, PureCircuit, StateAction, StateReturn, StatefulCircuit, Type,
+    WitnessDeclaration,
 };
 #[cfg(test)]
 use crate::retained_value;
@@ -125,6 +132,7 @@ mod read_only_verification;
 // Direct call refusals and exact failed binding ordinals are distinct provenance.
 // Only binding provenance propagates through recursive legacy action boundaries;
 // ordinary concrete/call diagnostics retain their previous priority.
+#[cfg(test)]
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum LegacyActionPrecision {
     Concrete,
@@ -132,6 +140,7 @@ enum LegacyActionPrecision {
     BindingValue(usize),
 }
 
+#[cfg(test)]
 impl LegacyActionPrecision {
     fn inherit_binding(&mut self, child: Self) {
         if matches!(child, Self::BindingValue(_)) {
@@ -140,10 +149,12 @@ impl LegacyActionPrecision {
     }
 }
 
+#[cfg(test)]
 fn unavailable_action(action: &StateAction, path: &str) -> RecordingOutcome<()> {
     RecordingOutcome::Unsupported(RecordingGap::action(action, path.to_owned()))
 }
 
+#[cfg(test)]
 fn set_size_operand(value: &Expr) -> Option<(&str, u8)> {
     match value {
         Expr::SetSize { field, index } => Some((field, *index)),
@@ -159,6 +170,7 @@ fn set_size_operand(value: &Expr) -> Option<(&str, u8)> {
     }
 }
 
+#[cfg(test)]
 fn list_length_operand(value: &Expr) -> Option<(&str, u8)> {
     match value {
         Expr::ListLength { field, index } => Some((field, *index)),
@@ -174,6 +186,7 @@ fn list_length_operand(value: &Expr) -> Option<(&str, u8)> {
     }
 }
 
+#[cfg(test)]
 fn list_head_field<'a>(
     value: &'a Expr,
     expected_field: &str,
@@ -196,6 +209,7 @@ fn list_head_field<'a>(
     Some((field, *index, ty))
 }
 
+#[cfg(test)]
 fn uint64_literal(value: &Expr) -> Option<u64> {
     match value {
         Expr::UnsignedLiteral { value, max } => {
@@ -216,6 +230,7 @@ fn uint64_literal(value: &Expr) -> Option<u64> {
 
 /// Keep exported scalar-expression recording tied to a ledger read. Other
 /// action-free expressions may still be lowered as private shared helpers.
+#[cfg(test)]
 fn contains_cell_read(value: &Expr) -> bool {
     match value {
         Expr::CellRead { .. } => true,
@@ -249,6 +264,7 @@ fn contains_cell_read(value: &Expr) -> bool {
 
 /// These generated Rust types implement the runtime's existing `CellValue`
 /// contract, including aligned FAB encoding and checked readback.
+#[cfg(test)]
 fn recordable_cell_type(ty: &Type) -> bool {
     match ty {
         Type::Boolean
@@ -665,17 +681,28 @@ fn checked_effectful_return(
     pure_circuits: &HashMap<&str, &PureCircuit>,
     circuits: &HashMap<&str, &StatefulCircuit>,
 ) -> Result<RecordingOutcome<recording_plan::TypedPlan>, RenderError> {
-    match effect_plan::lower_with_calls(circuit, ledger_fields, witnesses, pure_circuits, circuits)
-    {
+    match effect_plan::lower_with_calls_diagnostic(
+        circuit,
+        ledger_fields,
+        witnesses,
+        pure_circuits,
+        circuits,
+    ) {
         Ok(plan) => Ok(RecordingOutcome::Supported(plan)),
-        Err(effect_plan::PlanError::Unsupported(gap)) => Ok(RecordingOutcome::Unsupported(gap)),
-        Err(effect_plan::PlanError::Invalid(gap)) => Err(RenderError::RecordingPlanInvariant {
-            path: gap.path,
-            detail: gap.detail,
-        }),
+        Err(effect_plan::DiagnosticPlanError::Unsupported(rejection)) => {
+            Ok(RecordingOutcome::Unsupported(rejection.into_checked_gap()))
+        }
+        Err(effect_plan::DiagnosticPlanError::Invalid(gap)) => {
+            Err(RenderError::RecordingPlanInvariant {
+                path: gap.path,
+                detail: gap.detail,
+            })
+        }
     }
 }
 
+/// Assemble one independently checked plan. Refusal cannot enter a legacy
+/// emitter; the frozen generic implementation is available only to tests.
 fn render_recorded_item(
     circuit: &StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,
@@ -685,7 +712,7 @@ fn render_recorded_item(
     shared_callees: &HashSet<String>,
     helper: bool,
 ) -> Result<RecordingOutcome<syn::Item>, RenderError> {
-    // Audit the complete ordered plan before any ordinary specialized gate.
+    // Preserve Effectful validation before helper routing and parameters.
     let effectful_plan = if matches!(circuit.return_value, StateReturn::Effectful { .. }) {
         match lower_effectful_return(circuit, ledger_fields, witnesses, pure_circuits, circuits)? {
             RecordingOutcome::Supported(plan) => Some(plan),
@@ -699,681 +726,32 @@ fn render_recorded_item(
     }
 
     let name = ident(&circuit.name)?;
-    let mut parameters = HashMap::new();
+    let mut parameters = HashSet::new();
     let mut args = Vec::<syn::FnArg>::new();
     for (index, parameter) in circuit.parameters.iter().enumerate() {
         ident(&parameter.name)?;
         let rust_name = syn::Ident::new(&format!("__compact_param_{index}"), Span::call_site());
-        if parameters
-            .insert(parameter.name.as_str(), (&parameter.ty, rust_name.clone()))
-            .is_some()
-        {
+        if !parameters.insert(parameter.name.as_str()) {
             return Err(RenderError::DuplicateParameter(parameter.name.clone()));
         }
         let arg_ty = rust_type(&parameter.ty)?;
         args.push(syn::parse_quote!(#rust_name: #arg_ty));
     }
 
-    let profile_selection::ProfileSelection {
-        organizer_steps,
-        typed_result,
-        shielded_send_rejection,
-        unit_composition_rejection,
-    } = profile_selection::select(
+    let plan = match profile_selection::select_checked(
         circuit,
         ledger_fields,
         witnesses,
         pure_circuits,
         circuits,
         effectful_plan,
-    )?;
-    let organizer_gate = organizer_steps.is_some();
-    let mut steps = organizer_steps.unwrap_or_default();
-    let mut next_temp = 0;
-    let mut visiting = HashSet::from([circuit.name.clone()]);
-    // A root Let encloses both its ordered actions and its final return.
-    // Capture this exact Field Cell read once, before the nested actions,
-    // so the returned value cannot accidentally observe the post-write state.
-    let root_field_return = if !organizer_gate {
-        match (circuit.actions.as_slice(), &circuit.return_value) {
-            (
-                [StateAction::Let { bindings, action }],
-                StateReturn::Expression {
-                    value: Expr::Parameter { name },
-                },
-            ) if circuit.result == Type::Field => match bindings.as_slice() {
-                [binding]
-                    if binding.name == *name
-                        && binding.ty == Type::Field
-                        && matches!(&binding.value, Expr::CellRead { .. }) =>
-                {
-                    if let Expr::CellRead { field, index } = &binding.value {
-                        let declaration = ledger_fields
-                            .get(field.as_str())
-                            .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-                        if declaration.declaration != (LedgerFieldKind::Cell { ty: Type::Field })
-                            || declaration.index != *index
-                        {
-                            return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                                &circuit.return_value,
-                            )));
-                        }
-                        Some((binding.name.as_str(), field.as_str(), action.as_ref()))
-                    } else {
-                        None
-                    }
-                }
-                _ => None,
-            },
-            _ => None,
+    )? {
+        profile_selection::CheckedSelection::Admitted(plan) => plan,
+        profile_selection::CheckedSelection::Refused(rejection) => {
+            return Ok(RecordingOutcome::Unsupported(rejection.into_checked_gap()));
         }
-    } else {
-        None
     };
-    let mut recorded_root_return: Option<(&str, syn::Expr)> = None;
-    if !organizer_gate {
-        if let Some((name, field, action)) = root_field_return {
-            #[cfg(test)]
-            admission_probe::trace::action("guard.root-let-snapshot");
-            let slot = ident(field)?;
-            let saved = syn::Ident::new("__compact_recorded_root_return", Span::call_site());
-            steps.push(syn::parse_quote! {
-                let (frame, #saved): (_, runtime::Field) =
-                    crate::ledger_slots::#slot.record_read(frame)?;
-            });
-            let locals = HashMap::from([(name.to_owned(), syn::parse_quote!(#saved))]);
-            if let RecordingOutcome::Unsupported(gap) = append_steps(
-                action,
-                "actions[0].action",
-                &locals,
-                &parameters,
-                ledger_fields,
-                witnesses,
-                pure_circuits,
-                circuits,
-                shared_callees,
-                &mut steps,
-                &mut next_temp,
-                &mut visiting,
-                &mut LegacyActionPrecision::Concrete,
-            )? {
-                return Ok(RecordingOutcome::Unsupported(gap));
-            }
-            recorded_root_return = Some((name, syn::parse_quote!(#saved)));
-        } else {
-            #[cfg(test)]
-            if !circuit.actions.is_empty() {
-                admission_probe::trace::action("legacy.action-dispatch");
-            }
-            for (index, action) in circuit.actions.iter().enumerate() {
-                let mut legacy_precision = LegacyActionPrecision::Concrete;
-                if let RecordingOutcome::Unsupported(gap) = append_steps(
-                    action,
-                    &format!("actions[{index}]"),
-                    &HashMap::new(),
-                    &parameters,
-                    ledger_fields,
-                    witnesses,
-                    pure_circuits,
-                    circuits,
-                    shared_callees,
-                    &mut steps,
-                    &mut next_temp,
-                    &mut visiting,
-                    &mut legacy_precision,
-                )? {
-                    let gap = unit_composition_rejection.as_ref().map_or_else(
-                        || gap.clone(),
-                        |rejection| rejection.refine_action(index, legacy_precision, gap.clone()),
-                    );
-                    return Ok(RecordingOutcome::Unsupported(gap));
-                }
-            }
-        }
-    }
-    // Checked composition has inspected the entire value tree. With no
-    // accepted typed or legacy profile (and no actions), the generic return
-    // arms cannot record a ShieldedSendResult. Keep the first concrete nested
-    // composition failure instead of collapsing it to UnsupportedReturn for an outer If
-    // or Call. Action diagnostics above still take precedence.
-    if !organizer_gate
-        && circuit.actions.is_empty()
-        && steps.is_empty()
-        && let Some(gap) = shielded_send_rejection.as_ref()
-        && gap.code == RecordingGapCode::UnsupportedExpression
-    {
-        return Ok(RecordingOutcome::Unsupported(gap.clone()));
-    }
     let result_ty = rust_type(&circuit.result)?;
-    #[cfg(test)]
-    if typed_result.is_none() {
-        admission_probe::trace::returned();
-    }
-    let (return_steps, result): (Vec<syn::Stmt>, syn::Expr) = match &circuit.return_value {
-        _ if typed_result.is_some() => (
-            Vec::new(),
-            typed_result.expect("typed plan result was checked"),
-        ),
-        StateReturn::Expression {
-            value: Expr::Let { bindings, body },
-        } if circuit.result == Type::Unit
-            && circuit.actions.is_empty()
-            && matches!(body.as_ref(), Expr::Unit)
-            && bindings.iter().all(|binding| binding.ty == Type::Field)
-            && bindings
-                .iter()
-                .any(|binding| contains_cell_read(&binding.value)) =>
-        {
-            // An unused value may still perform a public ledger read. Evaluate
-            // each binding in lexical order before discarding the unit result.
-            let mut return_steps = Vec::new();
-            let mut locals = HashMap::new();
-            for (index, binding) in bindings.iter().enumerate() {
-                let Some(value) = field_expression(
-                    &binding.value,
-                    &locals,
-                    &parameters,
-                    ledger_fields,
-                    witnesses,
-                    circuits,
-                    shared_callees,
-                    &mut return_steps,
-                    &mut next_temp,
-                    &mut visiting,
-                )?
-                else {
-                    return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
-                        &binding.value,
-                        format!("return_value.value.bindings[{index}].value"),
-                    )));
-                };
-                let local = syn::Ident::new(
-                    &format!("__compact_recorded_discarded_field_{next_temp}"),
-                    Span::call_site(),
-                );
-                next_temp += 1;
-                return_steps.push(syn::parse_quote!(let #local: runtime::Field = #value;));
-                locals.insert(binding.name.clone(), syn::parse_quote!(#local));
-            }
-            (return_steps, syn::parse_quote!(()))
-        }
-        StateReturn::Expression {
-            value: Expr::Parameter { name },
-        } if recorded_root_return
-            .as_ref()
-            .is_some_and(|(bound_name, _)| *bound_name == name.as_str()) =>
-        {
-            (
-                Vec::new(),
-                recorded_root_return.expect("matching root local").1,
-            )
-        }
-        StateReturn::Unit if circuit.result == Type::Unit => {
-            if steps.is_empty() {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::no_effect()));
-            }
-            (Vec::new(), syn::parse_quote!(()))
-        }
-        StateReturn::Expression {
-            value: Expr::FieldToBytes32 { value },
-        } if circuit.actions.is_empty() && circuit.result == (Type::Bytes { length: 32 }) => {
-            let Expr::FieldCast { value } = value.as_ref() else {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                    &circuit.return_value,
-                )));
-            };
-            let Expr::CounterRead { field, index } = value.as_ref() else {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                    &circuit.return_value,
-                )));
-            };
-            let declaration = ledger_fields
-                .get(field.as_str())
-                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-            if declaration.declaration != LedgerFieldKind::Counter || declaration.index != *index {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                    &circuit.return_value,
-                )));
-            }
-            let slot = ident(field)?;
-            let converted =
-                crate::field_to_bytes_32_syntax(syn::parse_quote!(runtime::Field::from(observed)));
-            (
-                vec![syn::parse_quote!(
-                    let (frame, observed): (_, u64) =
-                        crate::ledger_slots::#slot.record_read(frame)?;
-                )],
-                converted,
-            )
-        }
-        StateReturn::CounterRead { field, index }
-            if circuit.result
-                == (Type::Unsigned {
-                    max: u64::MAX.to_string(),
-                }) =>
-        {
-            let declaration = ledger_fields
-                .get(field.as_str())
-                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-            if declaration.declaration != LedgerFieldKind::Counter || declaration.index != *index {
-                return Err(RenderError::UnknownLedgerField(field.clone()));
-            }
-            let slot = ident(field)?;
-            (
-                vec![syn::parse_quote!(
-                    let (frame, observed): (_, u64) =
-                        crate::ledger_slots::#slot.record_read(frame)?;
-                )],
-                syn::parse_quote!(
-                    runtime::BoundedUint::<18446744073709551615>::new(observed as u128)
-                        .expect("ledger Counter fits Uint<64>")
-                ),
-            )
-        }
-        StateReturn::CellRead { field, index } if recordable_cell_type(&circuit.result) => {
-            let declaration = ledger_fields
-                .get(field.as_str())
-                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-            if declaration.declaration
-                != (LedgerFieldKind::Cell {
-                    ty: circuit.result.clone(),
-                })
-                || declaration.index != *index
-            {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                    &circuit.return_value,
-                )));
-            }
-            let slot = ident(field)?;
-            (
-                vec![syn::parse_quote!(
-                    let (frame, observed): (_, #result_ty) =
-                        crate::ledger_slots::#slot.record_read(frame)?;
-                )],
-                syn::parse_quote!(observed),
-            )
-        }
-        StateReturn::Expression {
-            value: Expr::Call { name, arguments },
-        } if circuit.result == Type::Field && !circuit.actions.is_empty() => {
-            let Some(callee) = pure_circuits.get(name.as_str()) else {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                    &circuit.return_value,
-                )));
-            };
-            if callee.result != Type::Field
-                || !closed_pure_field_call(name, pure_circuits, &mut HashSet::new())
-            {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                    &circuit.return_value,
-                )));
-            }
-            if arguments.len() != callee.parameters.len() {
-                return Err(RenderError::ArgumentCount {
-                    circuit: name.clone(),
-                    expected: callee.parameters.len(),
-                    actual: arguments.len(),
-                });
-            }
-            let mut return_steps = Vec::new();
-            let mut args = Vec::new();
-            for (index, (argument, parameter)) in
-                arguments.iter().zip(&callee.parameters).enumerate()
-            {
-                if parameter.ty != Type::Field {
-                    return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
-                        argument,
-                        format!("return_value.value.arguments[{index}]"),
-                    )));
-                }
-                let Some(value) = field_expression(
-                    argument,
-                    &HashMap::new(),
-                    &parameters,
-                    ledger_fields,
-                    witnesses,
-                    circuits,
-                    shared_callees,
-                    &mut return_steps,
-                    &mut next_temp,
-                    &mut visiting,
-                )?
-                else {
-                    return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
-                        argument,
-                        format!("return_value.value.arguments[{index}]"),
-                    )));
-                };
-                let arg = syn::Ident::new(
-                    &format!("__compact_recorded_arg_{}", next_temp),
-                    Span::call_site(),
-                );
-                next_temp += 1;
-                return_steps.push(syn::parse_quote!(let #arg: runtime::Field = #value;));
-                args.push(arg);
-            }
-            let method = ident(name)?;
-            let result = syn::Ident::new(
-                &format!("__compact_recorded_pure_return_{}", next_temp),
-                Span::call_site(),
-            );
-            return_steps.push(syn::parse_quote! {
-                let #result: runtime::Field = crate::pure_circuits::#method(#(#args),*)?;
-            });
-            (return_steps, syn::parse_quote!(#result))
-        }
-        StateReturn::Expression { value }
-            if circuit.result == Type::Field
-                && circuit.actions.is_empty()
-                && (helper || (contains_cell_read(value) && !matches!(value, Expr::If { .. }))) =>
-        {
-            let mut return_steps = Vec::new();
-            let Some(result) = field_expression(
-                value,
-                &HashMap::new(),
-                &parameters,
-                ledger_fields,
-                witnesses,
-                circuits,
-                shared_callees,
-                &mut return_steps,
-                &mut next_temp,
-                &mut visiting,
-            )?
-            else {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
-                    value,
-                    "return_value.value".to_owned(),
-                )));
-            };
-            (return_steps, result)
-        }
-        StateReturn::Expression { value }
-            if contains_cell_read(value)
-                && circuit.result == Type::Boolean
-                && circuit.actions.is_empty()
-                && !matches!(value, Expr::If { .. }) =>
-        {
-            let mut return_steps = Vec::new();
-            let Some(result) = boolean_expression(
-                value,
-                &HashMap::new(),
-                &parameters,
-                ledger_fields,
-                witnesses,
-                circuits,
-                &mut return_steps,
-                &mut next_temp,
-                &mut visiting,
-            )?
-            else {
-                return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
-                    value,
-                    "return_value.value".to_owned(),
-                )));
-            };
-            (return_steps, result)
-        }
-        StateReturn::Expression {
-            value:
-                Expr::If {
-                    condition,
-                    then,
-                    otherwise,
-                },
-        } => {
-            match legacy::returns::conditional::lower(
-                condition,
-                then,
-                otherwise,
-                &circuit.result,
-                &circuit.return_value,
-                &result_ty,
-                &parameters,
-                ledger_fields,
-                witnesses,
-                pure_circuits,
-                circuits,
-                &mut next_temp,
-                &mut visiting,
-            )? {
-                RecordingOutcome::Supported(result) => result,
-                RecordingOutcome::Unsupported(gap) => {
-                    return Ok(RecordingOutcome::Unsupported(gap));
-                }
-            }
-        }
-        StateReturn::SetMember {
-            field,
-            index,
-            value,
-        } if circuit.result == Type::Boolean => {
-            match legacy::returns::collections::set::member(
-                field,
-                *index,
-                value,
-                &circuit.return_value,
-                &parameters,
-                ledger_fields,
-                witnesses,
-                circuits,
-                &mut next_temp,
-                &mut visiting,
-            )? {
-                RecordingOutcome::Supported(result) => result,
-                RecordingOutcome::Unsupported(gap) => {
-                    return Ok(RecordingOutcome::Unsupported(gap));
-                }
-            }
-        }
-        StateReturn::SetSize { field, index }
-            if circuit.result
-                == (Type::Unsigned {
-                    max: u64::MAX.to_string(),
-                }) =>
-        {
-            match legacy::returns::collections::set::size(
-                field,
-                *index,
-                &circuit.return_value,
-                ledger_fields,
-            )? {
-                RecordingOutcome::Supported(result) => result,
-                RecordingOutcome::Unsupported(gap) => {
-                    return Ok(RecordingOutcome::Unsupported(gap));
-                }
-            }
-        }
-        StateReturn::SetIsEmpty { field, index } if circuit.result == Type::Boolean => {
-            match legacy::returns::collections::set::is_empty(
-                field,
-                *index,
-                &circuit.return_value,
-                ledger_fields,
-            )? {
-                RecordingOutcome::Supported(result) => result,
-                RecordingOutcome::Unsupported(gap) => {
-                    return Ok(RecordingOutcome::Unsupported(gap));
-                }
-            }
-        }
-        StateReturn::ListLength { field, index }
-            if circuit.result
-                == (Type::Unsigned {
-                    max: u64::MAX.to_string(),
-                }) =>
-        {
-            match legacy::returns::collections::list::length(
-                field,
-                *index,
-                &circuit.return_value,
-                ledger_fields,
-            )? {
-                RecordingOutcome::Supported(result) => result,
-                RecordingOutcome::Unsupported(gap) => {
-                    return Ok(RecordingOutcome::Unsupported(gap));
-                }
-            }
-        }
-        StateReturn::ListIsEmpty { field, index } if circuit.result == Type::Boolean => {
-            match legacy::returns::collections::list::is_empty(
-                field,
-                *index,
-                &circuit.return_value,
-                ledger_fields,
-            )? {
-                RecordingOutcome::Supported(result) => result,
-                RecordingOutcome::Unsupported(gap) => {
-                    return Ok(RecordingOutcome::Unsupported(gap));
-                }
-            }
-        }
-        StateReturn::ListHead { field, index } => {
-            match legacy::returns::collections::list::head(
-                field,
-                *index,
-                &circuit.return_value,
-                &circuit.result,
-                &result_ty,
-                ledger_fields,
-            )? {
-                RecordingOutcome::Supported(result) => result,
-                RecordingOutcome::Unsupported(gap) => {
-                    return Ok(RecordingOutcome::Unsupported(gap));
-                }
-            }
-        }
-        StateReturn::MapMember { field, index, key }
-        | StateReturn::MapLookup { field, index, key } => {
-            match legacy::returns::collections::map::member_or_lookup(
-                field,
-                *index,
-                key,
-                &circuit.return_value,
-                &circuit.result,
-                &result_ty,
-                &parameters,
-                ledger_fields,
-                witnesses,
-                circuits,
-                &mut next_temp,
-                &mut visiting,
-            )? {
-                RecordingOutcome::Supported(result) => result,
-                RecordingOutcome::Unsupported(gap) => {
-                    return Ok(RecordingOutcome::Unsupported(gap));
-                }
-            }
-        }
-        StateReturn::MapSize { field, index }
-            if circuit.result
-                == (Type::Unsigned {
-                    max: u64::MAX.to_string(),
-                }) =>
-        {
-            match legacy::returns::collections::map::size(
-                field,
-                *index,
-                &circuit.return_value,
-                ledger_fields,
-            )? {
-                RecordingOutcome::Supported(result) => result,
-                RecordingOutcome::Unsupported(gap) => {
-                    return Ok(RecordingOutcome::Unsupported(gap));
-                }
-            }
-        }
-        StateReturn::MapIsEmpty { field, index } if circuit.result == Type::Boolean => {
-            match legacy::returns::collections::map::is_empty(
-                field,
-                *index,
-                &circuit.return_value,
-                ledger_fields,
-            )? {
-                RecordingOutcome::Supported(result) => result,
-                RecordingOutcome::Unsupported(gap) => {
-                    return Ok(RecordingOutcome::Unsupported(gap));
-                }
-            }
-        }
-        StateReturn::MerkleCheckRoot { field, index, root }
-        | StateReturn::HistoricMerkleCheckRoot { field, index, root }
-            if circuit.result == Type::Boolean && circuit.actions.is_empty() =>
-        {
-            match legacy::returns::merkle::check_root(
-                field,
-                *index,
-                root,
-                &circuit.return_value,
-                &parameters,
-                ledger_fields,
-            )? {
-                RecordingOutcome::Supported(result) => result,
-                RecordingOutcome::Unsupported(gap) => {
-                    return Ok(RecordingOutcome::Unsupported(gap));
-                }
-            }
-        }
-        StateReturn::MerkleIsFull { field, index }
-        | StateReturn::HistoricMerkleIsFull { field, index }
-            if circuit.result == Type::Boolean && circuit.actions.is_empty() =>
-        {
-            match legacy::returns::merkle::is_full(
-                field,
-                *index,
-                &circuit.return_value,
-                ledger_fields,
-            )? {
-                RecordingOutcome::Supported(result) => result,
-                RecordingOutcome::Unsupported(gap) => {
-                    return Ok(RecordingOutcome::Unsupported(gap));
-                }
-            }
-        }
-        StateReturn::Expression {
-            value: Expr::Let { bindings, body },
-        } if circuit.result == Type::Boolean
-            && circuit.actions.is_empty()
-            && bindings.len() == 1
-            && matches!(body.as_ref(), Expr::MerkleCheckRoot { .. }) =>
-        {
-            match legacy::returns::merkle::witnessed_path_root(
-                bindings,
-                body,
-                ledger_fields,
-                pure_circuits,
-                witnesses,
-            )? {
-                RecordingOutcome::Supported(result) => result,
-                RecordingOutcome::Unsupported(gap) => {
-                    return Ok(RecordingOutcome::Unsupported(gap));
-                }
-            }
-        }
-        _ => {
-            let gap = shielded_send_rejection
-                .filter(|gap| gap.code == RecordingGapCode::UnsupportedExpression)
-                .unwrap_or_else(|| RecordingGap::returned(&circuit.return_value));
-            return Ok(RecordingOutcome::Unsupported(gap));
-        }
-    };
-    if !organizer_gate && steps.is_empty() && return_steps.is_empty() {
-        return Ok(RecordingOutcome::Unsupported(RecordingGap::no_effect()));
-    }
-    if circuit
-        .parameters
-        .iter()
-        .any(|parameter| parameter.ty == Type::OpaqueString)
-        && !organizer_gate
-    {
-        return Ok(RecordingOutcome::Unsupported(
-            match circuit.actions.first() {
-                Some(action) => RecordingGap::action(action, "actions[0]".to_owned()),
-                None => RecordingGap::returned(&circuit.return_value),
-            },
-        ));
-    }
-
     let uses_witness = circuit_uses_witness(circuit, circuits, &mut HashSet::new())?;
     let item = item::assemble(
         circuit,
@@ -1383,9 +761,9 @@ fn render_recorded_item(
         uses_witness,
         &name,
         &args,
-        &steps,
-        &return_steps,
-        &result,
+        &plan.steps,
+        &[],
+        &plan.result,
         &result_ty,
     )?;
     Ok(RecordingOutcome::Supported(item))

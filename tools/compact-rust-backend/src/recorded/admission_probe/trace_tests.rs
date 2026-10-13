@@ -135,7 +135,7 @@ fn full_compilation_attributes_ordinary_returns_without_changing_output() {
 }
 
 #[test]
-fn outer_opaque_guard_refusal_is_distinct_from_a_selected_return_dispatch() {
+fn checked_interface_refusal_has_no_fallback_body_or_return_dispatch() {
     let mut contract = fixtures::counter();
     contract.stateful_circuits[0].parameters.push(Parameter {
         name: "unused_key".into(),
@@ -147,8 +147,8 @@ fn outer_opaque_guard_refusal_is_distinct_from_a_selected_return_dispatch() {
     assert!(matches!(rows[0].outcome, Outcome::Supported));
 
     // Existing checked layout policy can still decline an otherwise native
-    // interface. This preserves a real final-guard refusal after a selected
-    // generic return, rather than pretending the now-qualified opaque key fails.
+    // interface. Refusal now exits the sole checked route before any body
+    // or return dispatcher is selected.
     contract.stateful_circuits[0].parameters.push(Parameter {
         name: "oversized".into(),
         ty: Type::Vector {
@@ -158,8 +158,14 @@ fn outer_opaque_guard_refusal_is_distinct_from_a_selected_return_dispatch() {
     });
     let (rendered, rows) = capture(&contract);
     assert!(!rendered.capabilities.circuits[0].recorded);
-    assert_eq!(rows[0].body_owner, Some("return.dispatch"));
-    assert_eq!(rows[0].return_dispatch, Some("return.dispatch"));
+    assert_eq!(rows[0].body_owner, None);
+    assert_eq!(rows[0].return_dispatch, None);
+    assert!(
+        rows[0]
+            .attempts
+            .iter()
+            .all(|a| serde_json::to_value(a).unwrap()["route"] == "algebra.ordinary")
+    );
     assert!(matches!(rows[0].outcome, Outcome::Unsupported { .. }));
 }
 

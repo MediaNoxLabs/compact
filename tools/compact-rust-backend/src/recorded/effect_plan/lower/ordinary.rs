@@ -166,20 +166,31 @@ impl Lowerer<'_> {
         let Some((last, prefix)) = actions.split_last() else {
             return Ok(scope.clone());
         };
+        #[cfg(not(test))]
+        let _ = root_boundary;
+        #[cfg(test)]
         let outer = self.root_action;
         for (i, action) in prefix.iter().enumerate() {
+            #[cfg(test)]
             if root_boundary {
                 self.root_action = Some(i);
             }
             self.action(action, scope, bindings, &format!("{path}[{i}]"))?;
-            self.root_action = outer;
+            #[cfg(test)]
+            {
+                self.root_action = outer;
+            }
         }
+        #[cfg(test)]
         if root_boundary {
             self.root_action = Some(prefix.len());
         }
         let result =
             self.terminal_action(last, scope, bindings, &format!("{path}[{}]", prefix.len()))?;
-        self.root_action = outer;
+        #[cfg(test)]
+        {
+            self.root_action = outer;
+        }
         Ok(result)
     }
 

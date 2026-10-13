@@ -199,8 +199,10 @@ fn unsupported_action_keeps_fallback_order_and_first_action_diagnostic() {
         .find(|r| r.name == "withdraw")
         .unwrap();
     assert!(!cap.recorded && !cap.observed_call);
-    assert_eq!(
-        cap.recording_unavailable.as_ref().unwrap(),
-        &RecordingGap::action(&root(&c).actions[0], "actions[0]".into())
+    crate::recorded::test_support::assert_checked_fold_refusal(
+        &c,
+        root(&c),
+        RecordingGap::action(&root(&c).actions[0], "actions[0]".into()),
+        "actions[0].value.value",
     );
 }

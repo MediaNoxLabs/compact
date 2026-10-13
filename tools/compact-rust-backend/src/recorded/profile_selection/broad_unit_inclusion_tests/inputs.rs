@@ -177,12 +177,25 @@ fn start_funding_manifest(bytes: &[u8]) -> Result<Value, String> {
     serde_json::from_slice(bytes).map_err(|error| error.to_string())
 }
 
+// #618 makes the old result-shape diagnostic classifier test-only. Authenticate
+// its exact source and changed producer assertions before earlier authorities.
+const GENERIC_RETIREMENT: &[u8] = include_bytes!("legacy-generic-retirement-618.json");
+fn generic_retirement_manifest(bytes: &[u8]) -> Result<Value, String> {
+    if digest(bytes) != "b2093ad98a8d8a3e4d087f52e05c15d9bb2780ccc329ea284cdaff63ac40fcd4" {
+        return Err("unreviewed generic retirement checkpoint".into());
+    }
+    serde_json::from_slice(bytes).map_err(|e| e.to_string())
+}
+
 fn shared_source(manifest: &Value, path: &str, bytes: &[u8]) -> Result<(), String> {
     let expected = manifest["shared_sources"]
         .get(path)
         .and_then(Value::as_str)
         .ok_or("unreviewed shared oracle source")?;
-    if digest(bytes) != expected {
+    let current = std::str::from_utf8(bytes).map_err(|e| e.to_string())?;
+    let checkpoint = generic_retirement_manifest(GENERIC_RETIREMENT)?;
+    let previous = legacy_source(path, current, &checkpoint)?;
+    if digest(previous.as_bytes()) != expected {
         return Err(format!("shared oracle source drift: {path}"));
     }
     Ok(())
@@ -197,7 +210,9 @@ fn projected_legacy_source(
     let commit_inputs = commit_inputs_manifest(COMMIT_INPUTS)?;
     let audited_local = audited_local_manifest(AUDITED_LOCAL)?;
     let start_funding = start_funding_manifest(START_FUNDING)?;
-    let before_start_funding = legacy_source(path, current, &start_funding)?;
+    let generic = generic_retirement_manifest(GENERIC_RETIREMENT)?;
+    let before_generic = legacy_source(path, current, &generic)?;
+    let before_start_funding = legacy_source(path, &before_generic, &start_funding)?;
     let before_audited_local = legacy_source(path, &before_start_funding, &audited_local)?;
     let before_commit = legacy_source(path, &before_audited_local, &commit_inputs)?;
     let before_metadata = legacy_source(path, &before_commit, resource_metadata)?;
@@ -273,6 +288,8 @@ fn retired_oracle_projection_rejects_drift_and_forged_authority() {
     assert!(retirement_manifest(br#"{"owners":{}}"#).is_err());
     let commit_inputs = commit_inputs_manifest(COMMIT_INPUTS).unwrap();
     assert!(commit_inputs_manifest(br#"{"owners":{}}"#).is_err());
+    assert!(generic_retirement_manifest(br#"{"owners":{}}"#).is_err());
+    generic_retirement_manifest(GENERIC_RETIREMENT).unwrap();
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
     let start_funding = start_funding_manifest(START_FUNDING).unwrap();
     assert!(start_funding_manifest(br#"{"owners":{}}"#).is_err());
@@ -346,7 +363,10 @@ fn retired_oracle_projection_rejects_drift_and_forged_authority() {
         }
     }
     for (path, row) in commit_inputs["owners"].as_object().unwrap() {
-        let current = std::fs::read_to_string(root.join(path)).unwrap();
+        let live = std::fs::read_to_string(root.join(path)).unwrap();
+        let generic = generic_retirement_manifest(GENERIC_RETIREMENT).unwrap();
+        let current = legacy_source(path, &live, &generic).unwrap();
+        assert!(legacy_source(path, &(live + "\n// drift\n"), &generic).is_err());
         assert_eq!(
             digest(
                 legacy_source(path, &current, &commit_inputs)
@@ -385,7 +405,9 @@ fn retired_oracle_projection_rejects_drift_and_forged_authority() {
             .is_err()
         );
         let edit = &row["predecessor_reconstruction"][0];
-        let before_start = legacy_source(path, &current, &start_funding).unwrap();
+        let generic = generic_retirement_manifest(GENERIC_RETIREMENT).unwrap();
+        let before_generic = legacy_source(path, &current, &generic).unwrap();
+        let before_start = legacy_source(path, &before_generic, &start_funding).unwrap();
         let before_audited = legacy_source(path, &before_start, &audited_local).unwrap();
         let before_commit = legacy_source(path, &before_audited, &commit_inputs).unwrap();
         let before_metadata = legacy_source(path, &before_commit, &resource_metadata).unwrap();

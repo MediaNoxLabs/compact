@@ -634,8 +634,8 @@ fn conditional_assertion_keeps_typed_equality_and_branch_local_observations() {
     let report = render_with_capabilities(&contract).unwrap().capabilities;
     assert!(!report.circuits[0].recorded);
     let gap = report.circuits[0].recording_unavailable.as_ref().unwrap();
-    assert_eq!(gap.ir_node, "StateAction::Assert");
-    assert_eq!(gap.path, "actions[0]");
+    assert_eq!(gap.ir_node, "Expr::VectorFoldCall");
+    assert_eq!(gap.path, "actions[0].condition.then.left.value.value");
 }
 
 #[test]

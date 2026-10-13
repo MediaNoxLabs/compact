@@ -19,7 +19,9 @@
 //! Constructors preserve existing codes, IR paths and details; the renderer
 //! retains responsibility for selecting and refining the reported cause.
 
-use crate::ir::{Expr, StateAction, StateReturn, Type};
+#[cfg(test)]
+use crate::ir::Type;
+use crate::ir::{Expr, StateAction, StateReturn};
 use serde::Serialize;
 
 mod resource;
@@ -98,6 +100,7 @@ impl RecordingGap {
         }
     }
 
+    #[cfg(test)]
     pub(super) fn unsupported_type(action: &StateAction, ty: &Type, path: String) -> Self {
         Self {
             resource: None,

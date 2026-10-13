@@ -101,8 +101,9 @@ fn action_gap_keeps_precedence_over_return_profile_diagnostic() {
         }], "body": original
     });
     let gap = send_gap(admit_defaults_then_replace_with_source_rejected_opaque_commit(value));
-    assert_eq!(gap.code, RecordingGapCode::UnsupportedAction);
-    assert_eq!(gap.path, "actions[0]");
+    assert_eq!(gap.code, RecordingGapCode::UnsupportedExpression);
+    assert_eq!(gap.ir_node, "Expr::PersistentCommit");
+    assert_eq!(gap.path, "actions[0].value.value");
 }
 
 #[test]
@@ -119,7 +120,7 @@ fn supported_default_and_rejected_commit_keep_exact_unused_binding() {
     });
     let gap = send_gap(admit_defaults_then_replace_with_source_rejected_opaque_commit(value));
     assert_eq!(gap.code, RecordingGapCode::UnsupportedExpression);
-    assert_eq!(gap.ir_node, "RecordedPlan");
+    assert_eq!(gap.ir_node, "Expr::PersistentCommit");
     assert!(
         gap.detail.contains(
             "persistent commitment requires a fixed aligned FAB value and Bytes32 opening"
@@ -158,7 +159,7 @@ fn defaults_and_rejected_commits_keep_unselected_and_nested_source_paths() {
     });
     let gap = send_gap(admit_defaults_then_replace_with_source_rejected_opaque_commit(argument));
     assert_eq!(gap.code, RecordingGapCode::UnsupportedExpression);
-    assert_eq!(gap.ir_node, "RecordedPlan");
+    assert_eq!(gap.ir_node, "Expr::PersistentCommit");
     assert!(
         gap.detail.contains(
             "persistent commitment requires a fixed aligned FAB value and Bytes32 opening"

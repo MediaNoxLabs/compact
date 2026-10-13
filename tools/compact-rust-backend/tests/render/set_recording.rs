@@ -204,14 +204,17 @@ fn opaque_set_check_in_composes_typed_effects_and_preserves_witness_order() {
     super::support::register_unsupported_fold(&mut contract);
     let rejected = render_with_capabilities(&contract).unwrap();
     assert!(!rejected.capabilities.circuits[0].recorded);
-    // The checked domain refuses the VectorFoldCall child, then the retained witness
-    // fallback's cell_source rejects the enclosing Let argument atomically.
+    // Checked publication identifies the actual unsupported Fold in the witness
+    // argument; the historical enclosing Let diagnostic is retired.
     let gap = rejected.capabilities.circuits[0]
         .recording_unavailable
         .as_ref()
         .unwrap();
-    assert_eq!(gap.ir_node, "Expr::Let");
-    assert_eq!(gap.path, "actions[2].value.arguments[0]");
+    assert_eq!(gap.ir_node, "Expr::VectorFoldCall");
+    assert_eq!(
+        gap.path,
+        "actions[2].value.arguments[0].bindings[0].value.value"
+    );
 
     contract.stateful_circuits[0].actions[2] = StateAction::SetRemove {
         field: "checked".into(),

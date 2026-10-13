@@ -164,7 +164,7 @@ fn whole_resource_cause_matches_candidate_public_and_dependency() {
 }
 
 #[test]
-fn earlier_legacy_binding_failure_is_not_replaced_by_later_checked_resource() {
+fn checked_resource_refusal_replaces_earlier_legacy_only_binding_failure() {
     let mut value = crate::capabilities::resource_diagnostic_tests::oversized();
     let root = value["stateful_circuits"]
         .as_array_mut()
@@ -221,12 +221,41 @@ fn earlier_legacy_binding_failure_is_not_replaced_by_later_checked_resource() {
         .find(|v| v.name == "assertStoredRecordFresh")
         .unwrap();
     let gap = cap.recording_unavailable.as_ref().unwrap();
+    assert_eq!(gap, &rejection.into_checked_gap());
     assert!(
-        gap.resource.is_none(),
-        "earlier legacy binding owns refusal"
+        gap.resource.is_some(),
+        "actual checked layout limit owns refusal"
     );
-    assert_eq!(gap.path, "actions[0].action.actions[1]");
-    assert_eq!(gap.ir_node, "StateAction::Let");
+    assert_eq!(gap.path, "actions[0].action.actions[1].bindings[1].value");
+    // The complete old support oracle retains the historical earlier refusal.
+    let ledger = c.ledger_fields.iter().map(|v| (v.id.as_str(), v)).collect();
+    let witnesses = c.witnesses.iter().map(|v| (v.name.as_str(), v)).collect();
+    let pure = c.circuits.iter().map(|v| (v.name.as_str(), v)).collect();
+    let calls = c
+        .stateful_circuits
+        .iter()
+        .map(|v| (v.name.as_str(), v))
+        .collect();
+    let root = c
+        .stateful_circuits
+        .iter()
+        .find(|v| v.name == "assertStoredRecordFresh")
+        .unwrap();
+    let old = crate::recorded::generic_reference::render_recorded_circuit(
+        root,
+        &ledger,
+        &witnesses,
+        &pure,
+        &calls,
+        &std::collections::HashSet::new(),
+    )
+    .unwrap();
+    let crate::recorded::RecordingOutcome::Unsupported(old) = old else {
+        panic!("complete historical renderer must reject earlier tuple binding");
+    };
+    assert!(old.resource.is_none());
+    assert_eq!(old.path, "actions[0].action.actions[1]");
+    assert_eq!(old.ir_node, "StateAction::Let");
 }
 
 #[test]

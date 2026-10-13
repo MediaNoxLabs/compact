@@ -250,15 +250,17 @@ fn rejected_merge_keeps_action_precedence_and_generic_return_diagnostic() {
             .unwrap();
         assert!(!capability.recorded && !capability.observed_call);
         let gap = capability.recording_unavailable.as_ref().unwrap();
-        assert_eq!(
-            gap.code,
+        assert_eq!(gap.code, RecordingGapCode::UnsupportedExpression);
+        crate::recorded::test_support::assert_checked_fold_refusal(
+            &c,
+            root,
+            expected,
             if actionful {
-                RecordingGapCode::UnsupportedAction
+                "actions[0].value.value.value"
             } else {
-                RecordingGapCode::UnsupportedReturn
-            }
+                "return_value.value.bindings[0].value.value.value"
+            },
         );
-        assert_eq!(gap, &expected);
         no_old_attempt(&rows);
     }
 }

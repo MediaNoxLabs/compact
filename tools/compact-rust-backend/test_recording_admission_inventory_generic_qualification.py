@@ -10,6 +10,7 @@ import unittest
 
 import recording_admission_inventory as inventory
 import recording_admission_inventory_generic_qualification as qualification
+import recording_admission_inventory_generic_retirement as retirement
 
 MANIFEST = inventory.BASELINE.with_name('recording_admission_inventory.generic-qualification-619.json')
 
@@ -39,7 +40,12 @@ class _Overlay:
 class GenericQualificationTests(unittest.TestCase):
     def setUp(self):
         self.extension = json.loads(MANIFEST.read_text())
-        self.root = _Overlay(inventory.ROOT)
+        outer = inventory.BASELINE.with_name('recording_admission_inventory.generic-retirement-618.json')
+        # Historical qualification laws explicitly consume the authenticated
+        # signed #619 snapshot; the outer gate checks all live retirement edits.
+        self.source_root = (retirement.checkpoint(inventory.ROOT, json.loads(outer.read_text()))
+                            if outer.exists() else inventory.ROOT)
+        self.root = _Overlay(self.source_root)
         self.baseline_bytes = inventory.BASELINE.read_bytes()
         self.baseline = json.loads(self.baseline_bytes)
         self.previous = {
@@ -71,7 +77,7 @@ class GenericQualificationTests(unittest.TestCase):
     def test_every_current_owner_and_new_source_rejects_drift(self):
         for owner in [*self.extension['owners'], *self.extension['new_and_shared_sources']]:
             with self.subTest(owner=owner):
-                self.root.changes[owner] = (inventory.ROOT / owner).read_bytes() + b'\n// drift\n'
+                self.root.changes[owner] = (self.source_root / owner).read_bytes() + b'\n// drift\n'
                 self.assertFalse(self.report()['passed'])
                 self.root.changes.clear()
 
@@ -99,7 +105,7 @@ class GenericQualificationTests(unittest.TestCase):
             (qualification.BASE + '/effect_plan/validate.rs', 'if !root_interface_type(&value.ty, internal)', 'if !execution_result_type(&value.ty)'),
         ]
         for owner, before, after in mutations:
-            original = (inventory.ROOT / owner).read_text()
+            original = (self.source_root / owner).read_text()
             self.assertEqual(original.count(before), 1)
             self.root.changes[owner] = original.replace(before, after, 1).encode()
             self.assertFalse(self.report()['passed'])
@@ -107,7 +113,7 @@ class GenericQualificationTests(unittest.TestCase):
 
     def test_unrelated_production_drift_is_not_hidden(self):
         owner = qualification.BASE + '/helpers.rs'
-        self.root.changes[owner] = (inventory.ROOT / owner).read_bytes() + b'\n// drift\n'
+        self.root.changes[owner] = (self.source_root / owner).read_bytes() + b'\n// drift\n'
         self.assertFalse(self.report()['passed'])
 
     def test_cli_cannot_overwrite_the_transition(self):

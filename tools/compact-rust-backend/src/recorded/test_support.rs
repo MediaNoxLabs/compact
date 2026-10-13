@@ -135,3 +135,70 @@ fn unsupported_control_is_native_valid_and_checked_refused_at_the_actual_child()
     assert_eq!(gap.ir_node, "Expr::VectorFoldCall");
     assert_eq!(gap.path, "return_value.value.value");
 }
+
+/// Deliberate CoPS030 diagnostic migration: preserve a complete historical
+/// refusal and check the actual public failure's code, node, path and dependency.
+pub(crate) fn assert_checked_fold_refusal(
+    contract: &Contract,
+    root: &crate::ir::StatefulCircuit,
+    historical: crate::recorded::RecordingGap,
+    expected_path: &str,
+) {
+    use crate::recorded::{RecordingGap, RecordingOutcome, effect_plan, generic_reference};
+    use std::collections::{HashMap, HashSet};
+    let ledger = contract
+        .ledger_fields
+        .iter()
+        .map(|v| (v.id.as_str(), v))
+        .collect::<HashMap<_, _>>();
+    let witnesses = contract
+        .witnesses
+        .iter()
+        .map(|v| (v.name.as_str(), v))
+        .collect();
+    let pure = contract
+        .circuits
+        .iter()
+        .map(|v| (v.name.as_str(), v))
+        .collect();
+    let calls = contract
+        .stateful_circuits
+        .iter()
+        .map(|v| (v.name.as_str(), v))
+        .collect();
+    let old = generic_reference::render_recorded_circuit(
+        root,
+        &ledger,
+        &witnesses,
+        &pure,
+        &calls,
+        &HashSet::new(),
+    )
+    .unwrap();
+    assert!(matches!(old, RecordingOutcome::Unsupported(gap) if gap == historical));
+    let Err(effect_plan::DiagnosticPlanError::Unsupported(rejection)) =
+        effect_plan::lower_with_calls_diagnostic(root, &ledger, &witnesses, &pure, &calls)
+    else {
+        panic!("expected checked Fold refusal")
+    };
+    let expected = rejection.into_checked_gap();
+    assert_eq!(
+        expected.code,
+        crate::recorded::RecordingGapCode::UnsupportedExpression
+    );
+    assert_eq!(expected.ir_node, "Expr::VectorFoldCall");
+    assert_eq!(expected.path, expected_path);
+    let output = crate::render_with_capabilities(contract).unwrap();
+    let cap = output
+        .capabilities
+        .circuits
+        .iter()
+        .find(|v| v.name == root.name)
+        .unwrap();
+    assert!(!cap.recorded && !cap.observed_call);
+    assert_eq!(cap.recording_unavailable.as_ref(), Some(&expected));
+    let dependency: &RecordingGap = cap.observed_call_unavailable.as_ref().unwrap();
+    assert_eq!(dependency.path, expected.path);
+    assert_eq!(dependency.ir_node, expected.ir_node);
+    assert_eq!(dependency.resource, expected.resource);
+}

@@ -220,9 +220,9 @@ fn recording_gaps_follow_the_first_definite_ir_failure() {
     super::support::register_unsupported_fold(&mut contract);
     let report = render_with_capabilities(&contract).unwrap().capabilities;
     let gap = report.circuits[0].recording_unavailable.as_ref().unwrap();
-    assert_eq!(gap.code.as_str(), "unsupported_action");
-    assert_eq!(gap.ir_node, "StateAction::Expression");
-    assert_eq!(gap.path, "actions[0].actions[1]");
+    assert_eq!(gap.code.as_str(), "unsupported_expression");
+    assert_eq!(gap.ir_node, "Expr::VectorFoldCall");
+    assert_eq!(gap.path, "actions[0].actions[1].value.value");
 
     contract.stateful_circuits[0].actions.clear();
     let report = render_with_capabilities(&contract).unwrap().capabilities;
@@ -291,9 +291,9 @@ fn conditional_recording_rejects_an_unsupported_unselected_branch() {
     assert!(!capability.recorded);
     assert!(!capability.observed_call);
     let gap = capability.recording_unavailable.as_ref().unwrap();
-    assert_eq!(gap.code.as_str(), "unsupported_action");
-    assert_eq!(gap.ir_node, "StateAction::Expression");
-    assert_eq!(gap.path, "actions[0].otherwise");
+    assert_eq!(gap.code.as_str(), "unsupported_expression");
+    assert_eq!(gap.ir_node, "Expr::VectorFoldCall");
+    assert_eq!(gap.path, "actions[0].otherwise.value.value");
 }
 
 #[test]
@@ -363,9 +363,10 @@ fn recording_gaps_include_unsupported_type_and_called_callee_path() {
     };
     let report = render_with_capabilities(&contract).unwrap().capabilities;
     let gap = report.circuits[0].recording_unavailable.as_ref().unwrap();
-    assert_eq!(gap.code.as_str(), "unsupported_type");
-    assert_eq!(gap.ir_node, "StateAction::CellWrite");
-    assert_eq!(gap.path, "actions[0].value");
+    assert_eq!(gap.code.as_str(), "unsupported_expression");
+    assert_eq!(gap.ir_node, "RecordedPlan");
+    assert_eq!(gap.path, "actions[0]");
+    assert!(gap.detail.contains("unsupported Cell value type"));
 
     contract.ledger_fields[0].declaration = LedgerFieldKind::Counter;
     contract.stateful_circuits[0].name = "inner".into();
@@ -403,9 +404,9 @@ fn recording_gaps_include_unsupported_type_and_called_callee_path() {
     super::support::register_unsupported_fold(&mut contract);
     let report = render_with_capabilities(&contract).unwrap().capabilities;
     let gap = report.circuits[0].recording_unavailable.as_ref().unwrap();
-    assert_eq!(gap.code.as_str(), "unsupported_action");
-    assert_eq!(gap.path, "callee[inner].actions[0]");
-    assert_eq!(gap.ir_node, "StateAction::Expression");
+    assert_eq!(gap.code.as_str(), "unsupported_expression");
+    assert_eq!(gap.path, "actions[0].callee[inner].actions[0].value.value");
+    assert_eq!(gap.ir_node, "Expr::VectorFoldCall");
     for circuit in report.circuits {
         assert_eq!(circuit.recorded, circuit.recording_unavailable.is_none());
         assert_eq!(

@@ -32,8 +32,9 @@ pub(super) use public_effects::has_public_program;
 pub(super) use rejection::{DiagnosticPlanError, LoweringRejection};
 use std::collections::HashMap;
 
-/// Only Unsupported is eligible for a legacy attempt. Invalid represents a
-/// violated compiler invariant after lowering and must abort generation.
+/// Historical gap-only adapter used by test oracles. Production retains typed
+/// refusal provenance; Invalid always aborts generation.
+#[cfg(test)]
 #[derive(Debug)]
 pub(super) enum PlanError {
     Unsupported(RecordingGap),
@@ -81,6 +82,7 @@ pub(super) fn check_with_calls_diagnostic(
     validate::check(plan, declarations).map_err(DiagnosticPlanError::Invalid)
 }
 
+#[cfg(test)]
 pub(super) fn lower_with_calls(
     circuit: &StatefulCircuit,
     ledger: &HashMap<&str, &LedgerField>,

@@ -10,6 +10,8 @@ mod context_queries;
 mod counter;
 #[path = "tests/declarations.rs"]
 mod declaration_tests;
+#[path = "tests/execution_results.rs"]
+mod execution_results;
 #[path = "tests/funded_mint_inclusion.rs"]
 mod funded_mint_inclusion;
 #[path = "tests/funded_mint_probe.rs"]

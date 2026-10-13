@@ -13,6 +13,8 @@ use serde_json::Value;
 
 #[path = "single_attempt_tests/diagnostics.rs"]
 mod diagnostics;
+#[path = "single_attempt_tests/general_selection.rs"]
+mod general_selection;
 #[path = "single_attempt_tests/interfaces.rs"]
 mod interfaces;
 #[path = "single_attempt_tests/pipeline.rs"]

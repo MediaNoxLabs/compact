@@ -75,6 +75,10 @@ mod effect_plan;
 #[cfg(test)]
 mod effectful_migration_tests;
 #[cfg(test)]
+mod generic_migration_tests;
+#[cfg(test)]
+mod generic_reference;
+#[cfg(test)]
 mod intent_effect;
 #[cfg(test)]
 mod kernel_plan;

@@ -109,12 +109,26 @@ fn internal_interfaces_use_local_values_without_widening_public_fab() {
 
 #[test]
 fn root_visibility_comes_from_retained_authority_not_the_candidate() {
-    // Parameter-only and result-only tests prevent one refusal from hiding the other.
+    // Visibility controls parameter encoding, independently of result eligibility.
     let mut parameter = root(tuple(12), true);
     parameter.result = Type::Boolean;
     parameter.return_value = StateReturn::Expression {
         value: Expr::Boolean { value: true },
     };
+    let plan = checked(&parameter);
+    let mut public = parameter.clone();
+    public.internal = false;
+    let public_env = authority(&public);
+    assert!(!public_env.root().unwrap().internal);
+    assert!(validate::check(plan.plan().clone(), public_env).is_err());
+    let absent =
+        declarations::Declarations::default().with_type_environment(environment(&parameter));
+    assert!(validate::check(plan.plan().clone(), absent).is_err());
+    validate::check(plan.plan().clone(), authority(&parameter)).unwrap();
+}
+
+#[test]
+fn execution_results_use_local_values_independently_of_root_visibility() {
     let mut result = root(
         Type::Tuple {
             elements: vec![Type::Field; 12],
@@ -127,18 +141,17 @@ fn root_visibility_comes_from_retained_authority_not_the_candidate() {
             elements: vec![Expr::FieldLiteral { value: "1".into() }; 12],
         },
     };
-    for local in [parameter, result] {
-        let plan = checked(&local);
-        let mut public = local.clone();
-        public.internal = false;
-        let public_env = authority(&public);
-        assert!(!public_env.root().unwrap().internal);
-        assert!(validate::check(plan.plan().clone(), public_env).is_err());
-        let absent =
-            declarations::Declarations::default().with_type_environment(environment(&local));
-        assert!(validate::check(plan.plan().clone(), absent).is_err());
-        validate::check(plan.plan().clone(), authority(&local)).unwrap();
+    let plan = checked(&result);
+    for internal in [false, true] {
+        let mut source = result.clone();
+        source.internal = internal;
+        validate::check(plan.plan().clone(), authority(&source)).unwrap();
+        checked(&source);
     }
+    // Standalone validation also accepts local results without granting public
+    // parameter encoding. Declared result and SSA identity have separate guards.
+    let absent = declarations::Declarations::default().with_type_environment(environment(&result));
+    validate::check(plan.plan().clone(), absent).unwrap();
 }
 
 #[test]

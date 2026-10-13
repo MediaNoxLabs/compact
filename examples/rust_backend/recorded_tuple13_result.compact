@@ -1,0 +1,13 @@
+pragma language_version >= 0.20;
+import CompactStandardLibrary;
+export ledger flag: Boolean;
+constructor(selected: Boolean) { flag = disclose(selected); }
+pure circuit first(): [Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Opaque<"string">] {
+  return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, default<Opaque<"string">>];
+}
+pure circuit second(): [Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Opaque<"string">] {
+  return [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, default<Opaque<"string">>];
+}
+export circuit read(): [Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Opaque<"string">] {
+  return flag ? first() : second();
+}

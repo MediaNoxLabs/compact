@@ -679,8 +679,15 @@ pub(super) fn legacy_select(
     })
 }
 
-/// Ordinary support has one authority. Effectful plans were already checked by
-/// the caller; every Effectful root now uses checked composition.
+/// Complete checked outcome before the unchanged legacy diagnostic projection.
+/// Unsupported retains every provenance field, regardless of public signature.
+pub(super) enum CheckedSelection {
+    Admitted(TypedPlan),
+    Refused(effect_plan::LoweringRejection),
+}
+
+/// Compatibility adapter: keep existing fallback and public diagnostics intact.
+/// This wrapper never lowers again and never emits a fallback itself.
 pub(super) fn select(
     circuit: &StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,
@@ -689,8 +696,31 @@ pub(super) fn select(
     circuits: &HashMap<&str, &StatefulCircuit>,
     effectful_plan: Option<TypedPlan>,
 ) -> Result<ProfileSelection, RenderError> {
+    match select_checked(
+        circuit,
+        ledger_fields,
+        witnesses,
+        pure_circuits,
+        circuits,
+        effectful_plan,
+    )? {
+        CheckedSelection::Admitted(plan) => Ok(admitted(plan)),
+        CheckedSelection::Refused(rejection) => Ok(compatibility_rejection(circuit, rejection)),
+    }
+}
+
+/// Ordinary support has one authority. Effectful plans were already checked by
+/// the caller; every Effectful root now uses checked composition.
+pub(super) fn select_checked(
+    circuit: &StatefulCircuit,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure_circuits: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+    effectful_plan: Option<TypedPlan>,
+) -> Result<CheckedSelection, RenderError> {
     if let Some(plan) = effectful_plan {
-        return Ok(admitted(plan));
+        return Ok(CheckedSelection::Admitted(plan));
     }
     match effect_plan::lower_with_calls_diagnostic(
         circuit,
@@ -702,12 +732,12 @@ pub(super) fn select(
         Ok(plan) => {
             #[cfg(test)]
             super::admission_probe::trace::option("algebra.ordinary", true);
-            Ok(admitted(plan))
+            Ok(CheckedSelection::Admitted(plan))
         }
         Err(effect_plan::DiagnosticPlanError::Unsupported(rejection)) => {
             #[cfg(test)]
             super::admission_probe::trace::option("algebra.ordinary", false);
-            Ok(compatibility_rejection(circuit, rejection))
+            Ok(CheckedSelection::Refused(rejection))
         }
         Err(effect_plan::DiagnosticPlanError::Invalid(gap)) => {
             Err(RenderError::RecordingPlanInvariant {

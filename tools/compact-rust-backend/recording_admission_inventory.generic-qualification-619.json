@@ -1,0 +1,236 @@
+{
+  "schema_version": 1,
+  "issue": 619,
+  "related_issue": 618,
+  "baseline_commit": "b0924903f1e05baa2fcad7cb89415212d89d7839",
+  "claim": "Prepare whole generic qualification and separate execution-result eligibility from parameter FAB; retain production generic support/public diagnostic policy and84/37 route accounting.",
+  "retired_route_ids": [],
+  "previous_selector": {
+    "ordered_calls": [],
+    "function_sha256": "8c56b5686b5000bfaaffe1bc1d94ad772c374cc88e9bd175ebf11356d6bcc245"
+  },
+  "current_selector": {
+    "ordered_calls": [],
+    "function_sha256": "e5879729be6bafbbb9f7a6b7be36f4ba928feadafdbe4fdf4581712f020f45e1"
+  },
+  "owners": {
+    "tools/compact-rust-backend/src/recorded.rs": {
+      "previous_sha256": "a107949f71109ffe4b16ee406c8ea3385e7fdf7ccec825ef7f1592f4d1b8d491",
+      "current_sha256": "e0017a2b91e06e4ee34ba600a3d7a66e1f919dd44642430b2d1dbcf5570d7805",
+      "predecessor_reconstruction": [
+        {
+          "current": "mod effect_plan;\n#[cfg(test)]\nmod effectful_migration_tests;\n#[cfg(test)]\nmod generic_migration_tests;\n#[cfg(test)]\nmod generic_reference;\n#[cfg(test)]\nmod intent_effect;\n#[cfg(test)]\n",
+          "previous": "mod effect_plan;\n#[cfg(test)]\nmod effectful_migration_tests;\n#[cfg(test)]\nmod intent_effect;\n#[cfg(test)]\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower.rs": {
+      "previous_sha256": "15e39beaa5504e59deb329bdc05f90a93cfb1a6fa88990b18202a9337f5068df",
+      "current_sha256": "412ad906ca4cf430ebebb234338fe579e1590ff1e929453788400b2c1d4588fd",
+      "predecessor_reconstruction": [
+        {
+          "current": "    declarations::Declarations,\n    invalid,\n    model::*,\n    validate::{cell_type, execution_result_type, root_interface_type, uint},\n};\nuse crate::ir::*;\nuse std::collections::HashMap;\n",
+          "previous": "    declarations::Declarations,\n    invalid,\n    model::*,\n    validate::{cell_type, root_interface_type, uint},\n};\nuse crate::ir::*;\nuse std::collections::HashMap;\n"
+        },
+        {
+          "current": "    declarations\n        .types()\n        .validate_at(&circuit.result, \"return_value\")?;\n    if !execution_result_type(&circuit.result) {\n        return Err(invalid(\"return_value\", \"unsupported circuit result type\").into());\n    }\n    let (max_call_depth, max_expanded_steps) = crate::resource_limits::recording_call_limits();\n",
+          "previous": "    declarations\n        .types()\n        .validate_at(&circuit.result, \"return_value\")?;\n    if !root_interface_type(&circuit.result, circuit.internal) {\n        return Err(invalid(\"return_value\", \"unsupported circuit result type\").into());\n    }\n    let (max_call_depth, max_expanded_steps) = crate::resource_limits::recording_call_limits();\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests.rs": {
+      "previous_sha256": "6b54374e8727227e5290095fff5e4dced026b9fbe177d71390e00f10d45897ec",
+      "current_sha256": "ef1d67a9a32c50e4d49a4aa37a27113a3f682392229ca528dec78c5251a4361c",
+      "predecessor_reconstruction": [
+        {
+          "current": "mod counter;\n#[path = \"tests/declarations.rs\"]\nmod declaration_tests;\n#[path = \"tests/execution_results.rs\"]\nmod execution_results;\n#[path = \"tests/funded_mint_inclusion.rs\"]\nmod funded_mint_inclusion;\n#[path = \"tests/funded_mint_probe.rs\"]\n",
+          "previous": "mod counter;\n#[path = \"tests/declarations.rs\"]\nmod declaration_tests;\n#[path = \"tests/funded_mint_inclusion.rs\"]\nmod funded_mint_inclusion;\n#[path = \"tests/funded_mint_probe.rs\"]\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/internal_interfaces.rs": {
+      "previous_sha256": "32018764e42e05e7c8326551b2fae9a2ffaa38364c248cf9d4b70c2f4bc6d06b",
+      "current_sha256": "692eb314e607133ac32189f4f370111605ce0650fd01b8e3e7faba974f49e6d9",
+      "predecessor_reconstruction": [
+        {
+          "current": "\n#[test]\nfn root_visibility_comes_from_retained_authority_not_the_candidate() {\n    // Visibility controls parameter encoding, independently of result eligibility.\n    let mut parameter = root(tuple(12), true);\n    parameter.result = Type::Boolean;\n    parameter.return_value = StateReturn::Expression {\n        value: Expr::Boolean { value: true },\n    };\n    let plan = checked(&parameter);\n    let mut public = parameter.clone();\n    public.internal = false;\n    let public_env = authority(&public);\n    assert!(!public_env.root().unwrap().internal);\n    assert!(validate::check(plan.plan().clone(), public_env).is_err());\n    let absent =\n        declarations::Declarations::default().with_type_environment(environment(&parameter));\n    assert!(validate::check(plan.plan().clone(), absent).is_err());\n    validate::check(plan.plan().clone(), authority(&parameter)).unwrap();\n}\n\n#[test]\nfn execution_results_use_local_values_independently_of_root_visibility() {\n    let mut result = root(\n        Type::Tuple {\n            elements: vec![Type::Field; 12],\n",
+          "previous": "\n#[test]\nfn root_visibility_comes_from_retained_authority_not_the_candidate() {\n    // Parameter-only and result-only tests prevent one refusal from hiding the other.\n    let mut parameter = root(tuple(12), true);\n    parameter.result = Type::Boolean;\n    parameter.return_value = StateReturn::Expression {\n        value: Expr::Boolean { value: true },\n    };\n    let mut result = root(\n        Type::Tuple {\n            elements: vec![Type::Field; 12],\n"
+        },
+        {
+          "current": "            elements: vec![Expr::FieldLiteral { value: \"1\".into() }; 12],\n        },\n    };\n    let plan = checked(&result);\n    for internal in [false, true] {\n        let mut source = result.clone();\n        source.internal = internal;\n        validate::check(plan.plan().clone(), authority(&source)).unwrap();\n        checked(&source);\n    }\n    // Standalone validation also accepts local results without granting public\n    // parameter encoding. Declared result and SSA identity have separate guards.\n    let absent = declarations::Declarations::default().with_type_environment(environment(&result));\n    validate::check(plan.plan().clone(), absent).unwrap();\n}\n\n#[test]\n",
+          "previous": "            elements: vec![Expr::FieldLiteral { value: \"1\".into() }; 12],\n        },\n    };\n    for local in [parameter, result] {\n        let plan = checked(&local);\n        let mut public = local.clone();\n        public.internal = false;\n        let public_env = authority(&public);\n        assert!(!public_env.root().unwrap().internal);\n        assert!(validate::check(plan.plan().clone(), public_env).is_err());\n        let absent =\n            declarations::Declarations::default().with_type_environment(environment(&local));\n        assert!(validate::check(plan.plan().clone(), absent).is_err());\n        validate::check(plan.plan().clone(), authority(&local)).unwrap();\n    }\n}\n\n#[test]\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate.rs": {
+      "previous_sha256": "62afdcc3aba0083a79072878e0e7a835743b0ce741304f6fe860e6526264eff8",
+      "current_sha256": "b9e545eb9d7706bdc40252cd05f1f0aa2b067faf0ea5a730d626c92313e62f38",
+      "predecessor_reconstruction": [
+        {
+          "current": "pub(super) fn public_interface_type(ty: &Type) -> bool {\n    domain::public_interface_type(ty)\n}\n/// Root parameters exchange local Rust values internally, or public FAB inputs.\n/// Validation obtains this boundary only from the independent source declaration.\npub(super) fn root_interface_type(ty: &Type, internal: bool) -> bool {\n    if internal {\n",
+          "previous": "pub(super) fn public_interface_type(ty: &Type) -> bool {\n    domain::public_interface_type(ty)\n}\n/// Internal roots exchange local Rust values; exported roots require public FAB.\n/// Validation obtains this boundary only from the independent source declaration.\npub(super) fn root_interface_type(ty: &Type, internal: bool) -> bool {\n    if internal {\n"
+        },
+        {
+          "current": "    } else {\n        public_interface_type(ty)\n    }\n}\n/// Execution returns local Rust values. Transaction preparation independently\n/// requires output FAB conversion; canonical and resource checks run first.\npub(super) fn execution_result_type(ty: &Type) -> bool {\n    value_type(ty)\n}\n/// Declared Cell storage may own opaque values without widening interfaces.\npub(super) fn cell_type(ty: &Type) -> bool {\n",
+          "previous": "    } else {\n        public_interface_type(ty)\n    }\n}\n/// Declared Cell storage may own opaque values without widening interfaces.\npub(super) fn cell_type(ty: &Type) -> bool {\n"
+        },
+        {
+          "current": "        declarations.types().validate_at(&value.ty, \"parameters\")?;\n    }\n    let internal = declarations.root().is_some_and(|root| root.internal);\n    if !execution_result_type(&plan.result_type) {\n        return Err(invalid(\"return_value\", \"unsupported circuit result type\"));\n    }\n    let mut scope = HashMap::new();\n",
+          "previous": "        declarations.types().validate_at(&value.ty, \"parameters\")?;\n    }\n    let internal = declarations.root().is_some_and(|root| root.internal);\n    if !root_interface_type(&plan.result_type, internal) {\n        return Err(invalid(\"return_value\", \"unsupported circuit result type\"));\n    }\n    let mut scope = HashMap::new();\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": {
+      "previous_sha256": "c74fe184e8832817ad035fe584c82ae0390e04cd19e6bfa55c7267478e373873",
+      "current_sha256": "8618e067917275ff1aaa117c1142cdd7bfbed056ed273fee82e4b182264bb1f9",
+      "predecessor_reconstruction": [
+        {
+          "current": "    })\n}\n\n/// Complete checked outcome before the unchanged legacy diagnostic projection.\n/// Unsupported retains every provenance field, regardless of public signature.\npub(super) enum CheckedSelection {\n    Admitted(TypedPlan),\n    Refused(effect_plan::LoweringRejection),\n}\n\n/// Compatibility adapter: keep existing fallback and public diagnostics intact.\n/// This wrapper never lowers again and never emits a fallback itself.\npub(super) fn select(\n    circuit: &StatefulCircuit,\n    ledger_fields: &HashMap<&str, &LedgerField>,\n",
+          "previous": "    })\n}\n\n/// Ordinary support has one authority. Effectful plans were already checked by\n/// the caller; every Effectful root now uses checked composition.\npub(super) fn select(\n    circuit: &StatefulCircuit,\n    ledger_fields: &HashMap<&str, &LedgerField>,\n"
+        },
+        {
+          "current": "    circuits: &HashMap<&str, &StatefulCircuit>,\n    effectful_plan: Option<TypedPlan>,\n) -> Result<ProfileSelection, RenderError> {\n    match select_checked(\n        circuit,\n        ledger_fields,\n        witnesses,\n        pure_circuits,\n        circuits,\n        effectful_plan,\n    )? {\n        CheckedSelection::Admitted(plan) => Ok(admitted(plan)),\n        CheckedSelection::Refused(rejection) => Ok(compatibility_rejection(circuit, rejection)),\n    }\n}\n\n/// Ordinary support has one authority. Effectful plans were already checked by\n/// the caller; every Effectful root now uses checked composition.\npub(super) fn select_checked(\n    circuit: &StatefulCircuit,\n    ledger_fields: &HashMap<&str, &LedgerField>,\n    witnesses: &HashMap<&str, &WitnessDeclaration>,\n    pure_circuits: &HashMap<&str, &PureCircuit>,\n    circuits: &HashMap<&str, &StatefulCircuit>,\n    effectful_plan: Option<TypedPlan>,\n) -> Result<CheckedSelection, RenderError> {\n    if let Some(plan) = effectful_plan {\n        return Ok(CheckedSelection::Admitted(plan));\n    }\n    match effect_plan::lower_with_calls_diagnostic(\n        circuit,\n",
+          "previous": "    circuits: &HashMap<&str, &StatefulCircuit>,\n    effectful_plan: Option<TypedPlan>,\n) -> Result<ProfileSelection, RenderError> {\n    if let Some(plan) = effectful_plan {\n        return Ok(admitted(plan));\n    }\n    match effect_plan::lower_with_calls_diagnostic(\n        circuit,\n"
+        },
+        {
+          "current": "        Ok(plan) => {\n            #[cfg(test)]\n            super::admission_probe::trace::option(\"algebra.ordinary\", true);\n            Ok(CheckedSelection::Admitted(plan))\n        }\n        Err(effect_plan::DiagnosticPlanError::Unsupported(rejection)) => {\n            #[cfg(test)]\n            super::admission_probe::trace::option(\"algebra.ordinary\", false);\n            Ok(CheckedSelection::Refused(rejection))\n        }\n        Err(effect_plan::DiagnosticPlanError::Invalid(gap)) => {\n            Err(RenderError::RecordingPlanInvariant {\n",
+          "previous": "        Ok(plan) => {\n            #[cfg(test)]\n            super::admission_probe::trace::option(\"algebra.ordinary\", true);\n            Ok(admitted(plan))\n        }\n        Err(effect_plan::DiagnosticPlanError::Unsupported(rejection)) => {\n            #[cfg(test)]\n            super::admission_probe::trace::option(\"algebra.ordinary\", false);\n            Ok(compatibility_rejection(circuit, rejection))\n        }\n        Err(effect_plan::DiagnosticPlanError::Invalid(gap)) => {\n            Err(RenderError::RecordingPlanInvariant {\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/single_attempt_tests.rs": {
+      "previous_sha256": "3d742c7bc66c1ac57a0395579246be37707a9ee19be090f894d90b90612bb99b",
+      "current_sha256": "ab212d24c52a1d8d4aa92b7ff7a01f62932573da41bf7fe741cf5384c7885888",
+      "predecessor_reconstruction": [
+        {
+          "current": "\n#[path = \"single_attempt_tests/diagnostics.rs\"]\nmod diagnostics;\n#[path = \"single_attempt_tests/general_selection.rs\"]\nmod general_selection;\n#[path = \"single_attempt_tests/interfaces.rs\"]\nmod interfaces;\n#[path = \"single_attempt_tests/pipeline.rs\"]\n",
+          "previous": "\n#[path = \"single_attempt_tests/diagnostics.rs\"]\nmod diagnostics;\n#[path = \"single_attempt_tests/interfaces.rs\"]\nmod interfaces;\n#[path = \"single_attempt_tests/pipeline.rs\"]\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/did_digest_recording.rs": {
+      "previous_sha256": "e6da29a32d8528c22f2a1aba344b7debfade511546b82fed4e6dad6dad5db387",
+      "current_sha256": "680f160094b591c54765b231ba0d6b50415d6b6e6c6cb54bbd70a5988d6b5166",
+      "predecessor_reconstruction": [
+        {
+          "current": "            .source\n            .contains(\"pub fn verifySchnorrJubjubDigestSignature<\")\n    );\n    // Check the declared map operation, independently of emitter temporaries.\n    // This is a syntax regression guard; execution is covered by DID consumers.\n    struct DigestLookup(usize);\n    impl syn::visit_mut::VisitMut for DigestLookup {\n        fn visit_expr_method_call_mut(&mut self, call: &mut syn::ExprMethodCall) {\n            if call.method == \"record_lookup\"\n                && let syn::Expr::Path(receiver) = call.receiver.as_ref()\n                && receiver\n                    .path\n                    .segments\n                    .iter()\n                    .map(|s| s.ident.to_string())\n                    .eq([\"crate\", \"ledger_slots\", \"schnorrJubjubVerificationMethods\"])\n            {\n                assert_eq!(call.args.len(), 2);\n                assert!(\n                    matches!(call.args.first(), Some(syn::Expr::Path(arg)) if arg.path.is_ident(\"frame\"))\n                );\n                self.0 += 1;\n            }\n            syn::visit_mut::visit_expr_method_call_mut(self, call);\n        }\n    }\n    let mut syntax = syn::parse_file(&rendered.source).unwrap();\n    let mut lookup = DigestLookup(0);\n    syn::visit_mut::VisitMut::visit_file_mut(&mut lookup, &mut syntax);\n    assert_eq!(\n        lookup.0, 1,\n        \"recorded digest lookup must use its declared map\"\n    );\n}\n",
+          "previous": "            .source\n            .contains(\"pub fn verifySchnorrJubjubDigestSignature<\")\n    );\n    assert!(\n        rendered\n            .source\n            .contains(\"record_lookup(frame, __compact_recorded_map_key)\")\n    );\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/render/membership_recording.rs": {
+      "previous_sha256": "bd6e049b0bf52410d9cc797f1e5686d9d6010c1573dd94a4066362f44c95321c",
+      "current_sha256": "dca3af92501a11c280113334a6e4a670db77138996b3482b3b968fd7f99acdec",
+      "predecessor_reconstruction": [
+        {
+          "current": "}\n\n#[test]\nfn schnorr_helpers_compose_typed_public_effects_and_validate_declared_sources() {\n    let mut contract: Contract =\n        serde_json::from_str(include_str!(\"../schnorr-attestation-schema13-ir.json\")).unwrap();\n    contract.schema_version = SCHEMA_VERSION;\n",
+          "previous": "}\n\n#[test]\nfn audited_schnorr_local_helper_requires_transitive_public_purity_and_typed_sources() {\n    let mut contract: Contract =\n        serde_json::from_str(include_str!(\"../schnorr-attestation-schema13-ir.json\")).unwrap();\n    contract.schema_version = SCHEMA_VERSION;\n"
+        },
+        {
+          "current": "                .recorded\n        );\n    }\n    let verification = generated_body(&reported.source, \"recorded\", \"verifyAttestation\");\n    for operation in [\n        \"ledger_slots :: open . record_read\",\n        \"ledger_slots :: attestorKey . record_read\",\n        \"runtime :: transient_hash\",\n        \"try_witness_metered\",\n        \"runtime :: ec_mul_generator\",\n        \"runtime :: ec_mul\",\n        \"runtime :: ec_add\",\n    ] {\n        assert!(verification.contains(operation), \"missing {operation}\");\n    }\n\n    let mut effectful = contract.clone();\n    let helper = effectful\n",
+          "previous": "                .recorded\n        );\n    }\n    assert!(reported.source.contains(\".call_local(|context|\"));\n\n    let mut effectful = contract.clone();\n    let helper = effectful\n"
+        },
+        {
+          "current": "        index: 1,\n        amount: CounterAmount::Literal { value: 1 },\n    });\n    // The changed source adds a real public effect. Checked composition must\n    // retain it; this is no longer an unsupported local-helper shape.\n    let effectful = render_with_capabilities(&effectful).unwrap();\n    assert!(\n        effectful\n            .capabilities\n            .circuits\n            .iter()\n            .find(|c| c.name == \"verifyAttestation\")\n            .unwrap()\n            .recorded\n    );\n    assert!(\n        generated_body(&effectful.source, \"recorded\", \"verifyAttestation\")\n            .contains(\"ledger_slots :: acceptedCount . record_increment\")\n    );\n\n    let mut read_opening = contract.clone();\n",
+          "previous": "        index: 1,\n        amount: CounterAmount::Literal { value: 1 },\n    });\n    assert!(\n        !render_with_capabilities(&effectful)\n            .unwrap()\n            .capabilities\n            .circuits\n            .iter()\n            .find(|c| c.name == \"verifyAttestation\")\n            .unwrap()\n            .recorded\n    );\n\n    let mut read_opening = contract.clone();\n"
+        },
+        {
+          "current": "            }),\n        },\n    });\n    let read_opening = render_with_capabilities(&read_opening).unwrap();\n    assert!(\n        read_opening\n            .capabilities\n            .circuits\n            .iter()\n",
+          "previous": "            }),\n        },\n    });\n    assert!(\n        !render_with_capabilities(&read_opening)\n            .unwrap()\n            .capabilities\n            .circuits\n            .iter()\n"
+        },
+        {
+          "current": "            .unwrap()\n            .recorded\n    );\n    let verification = generated_body(&read_opening.source, \"recorded\", \"verifyAttestation\");\n    assert!(verification.contains(\"ledger_slots :: hidden . record_read\"));\n    assert!(verification.contains(\"runtime :: transient_commit\"));\n\n    let mut wrong_key = contract.clone();\n    let key = wrong_key\n",
+          "previous": "            .unwrap()\n            .recorded\n    );\n\n    let mut wrong_key = contract.clone();\n    let key = wrong_key\n"
+        },
+        {
+          "current": "        .actions\n        .remove(0);\n    // The legacy audited-local profile still refuses this shape (its module test).\n    // Checked composition admits the actual key read and local verifier,\n    // without inventing the removed source guard.\n    assert!(\n        render_with_capabilities(&missing_guard)\n",
+          "previous": "        .actions\n        .remove(0);\n    // The legacy audited-local profile still refuses this shape (its module test).\n    // Unit composition admits the actual key read and audited local verifier,\n    // without inventing the removed source guard.\n    assert!(\n        render_with_capabilities(&missing_guard)\n"
+        }
+      ]
+    }
+  },
+  "new_and_shared_sources": {
+    "examples/rust_backend/recorded_tuple12_result.compact": "3aa29231e12dcdff65d7fbd4647490cce678493a4198132b006285553931a2bd",
+    "examples/rust_backend/recorded_tuple13_result.compact": "7f36e0d12d22b1231f37ec00d54d908d13459d70697f867699bccdf795710985",
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/execution_results.rs": "570c7324e06c5170ef91698ab1e1b244e4ddd043f7370474510a0a004c1ddc30",
+    "tools/compact-rust-backend/src/recorded/generic_migration_tests.rs": "615539b73a02314fe8a4de76193a4a35e8491a68609b0f6969b358eb6d162884",
+    "tools/compact-rust-backend/src/recorded/generic_migration_tests/boundaries.rs": "f9034137021b45f9bb9a1d2853f2fe73e098743524239b1e166595b64e4afa67",
+    "tools/compact-rust-backend/src/recorded/generic_migration_tests/calls.rs": "622388b3fff1c0c02852bce87f36cc50ddac40b469db0de4f3da49b0e4cdeeb0",
+    "tools/compact-rust-backend/src/recorded/generic_migration_tests/execution_results.rs": "e1fcfe90b4c3a6b2a81af8530564b09dab1fd6b6f1dd0ecce6391c18daddef8d",
+    "tools/compact-rust-backend/src/recorded/generic_migration_tests/leaves.rs": "71b054d1d4120860a2127cd5626f8df8b9d1cc78e4f0705768bc0a0d1d8e816b",
+    "tools/compact-rust-backend/src/recorded/generic_migration_tests/lexical.rs": "c2559d7e9842800fdaa15bc745deae26a48f908b3294a06bcfd60384b794cef8",
+    "tools/compact-rust-backend/src/recorded/generic_migration_tests/merkle.rs": "7d26c1e57909a68e51599d92cc95ccfee11d1b3ed8e24d89b6a2d6f9aeefc866",
+    "tools/compact-rust-backend/src/recorded/generic_migration_tests/storage.rs": "896d9ce2f3f59b61c6cce9d999acd858193d8862b24c77db3d19d894b68c7ace",
+    "tools/compact-rust-backend/src/recorded/generic_reference.rs": "9a04be0e592b3e6530775363bfd12d2f3a29b93d1e1e8ddfc2c5f7ddbd955a0a",
+    "tools/compact-rust-backend/src/recorded/profile_selection/single_attempt_tests/general_selection.rs": "adbb51566bc18c49924624e492d7e89a4dd5c8271ff6af0f7feb925e81710aaf",
+    "tools/compact-rust-backend/tests/tuple12-result-ir.json": "674210c425451d4d6fcdefc9344f781fd7e748262c26d43bf7023aeaff3c2733",
+    "tools/compact-rust-backend/tests/tuple13-result-ir.json": "b638ea13297abc2da67ee3925af207f844d4966419e4bb1b43fca8df8f2ccbd1"
+  },
+  "predecessor_options": {
+    "transition": "tools/compact-rust-backend/recording_admission_inventory.transition-511.json",
+    "instrumentation": "tools/compact-rust-backend/recording_admission_inventory.instrumentation-515.json",
+    "jubjub_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-517.json",
+    "call_extension": "tools/compact-rust-backend/recording_admission_inventory.calls-519.json",
+    "terminal_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-521.json",
+    "unit_actions_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-525.json",
+    "context_query_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-526.json",
+    "kernel_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-527.json",
+    "composite_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-529.json",
+    "receive_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-536.json",
+    "unit_domain_extension": "tools/compact-rust-backend/recording_admission_inventory.unit-domain-540.json",
+    "voting_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-547.json",
+    "phase_reset_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-549.json",
+    "immediate_send_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-550.json",
+    "zswap_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-553.json",
+    "membership_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-560.json",
+    "send_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-561.json",
+    "observation_test_extension": "tools/compact-rust-backend/recording_admission_inventory.observation-test-564.json",
+    "merge_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-565.json",
+    "guarded_deposit_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-566.json",
+    "routing_test_extension": "tools/compact-rust-backend/recording_admission_inventory.routing-test-568.json",
+    "reset_payout_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-569.json",
+    "shielded_payout_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-570.json",
+    "inequality_test_extension": "tools/compact-rust-backend/recording_admission_inventory.inequality-test-571.json",
+    "funded_mint_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-572.json",
+    "keccak_test_extension": "tools/compact-rust-backend/recording_admission_inventory.keccak-test-581.json",
+    "aligned_test_extension": "tools/compact-rust-backend/recording_admission_inventory.aligned-test-582.json",
+    "encoding_extension": "tools/compact-rust-backend/recording_admission_inventory.encoding-583.json",
+    "negation_test_extension": "tools/compact-rust-backend/recording_admission_inventory.negation-test-585.json",
+    "value_test_extension": "tools/compact-rust-backend/recording_admission_inventory.value-test-586.json",
+    "unit_composition_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-580.json",
+    "optional_write_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-587.json",
+    "enum_advance_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-588.json",
+    "witness_merkle_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-589.json",
+    "organizer_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-590.json",
+    "unsigned_product_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-591.json",
+    "opaque_set_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-592.json",
+    "unit_interface_extension": "tools/compact-rust-backend/recording_admission_inventory.unit-interface-593.json",
+    "map_value_extension": "tools/compact-rust-backend/recording_admission_inventory.map-values-595.json",
+    "guarded_map_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-594.json",
+    "opaque_map_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-596.json",
+    "resource_diagnostics_extension": "tools/compact-rust-backend/recording_admission_inventory.resource-diagnostics-597.json",
+    "empty_recording_extension": "tools/compact-rust-backend/recording_admission_inventory.empty-recording-598.json",
+    "guarded_pure_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-600.json",
+    "reachable_helpers_extension": "tools/compact-rust-backend/recording_admission_inventory.reachable-helpers-599.json",
+    "key_only_map_removal_extension": "tools/compact-rust-backend/recording_admission_inventory.key-only-map-removal-602.json",
+    "asset_removal_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-601.json",
+    "opaque_boolean_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-603.json",
+    "opaque_field_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-604.json",
+    "proved_set_sequence_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-605.json",
+    "ordinary_interface_extension": "tools/compact-rust-backend/recording_admission_inventory.ordinary-interface-606.json",
+    "storage_codec_extension": "tools/compact-rust-backend/recording_admission_inventory.storage-codecs-607.json",
+    "list_effects_extension": "tools/compact-rust-backend/recording_admission_inventory.list-effects-608.json",
+    "map_effects_extension": "tools/compact-rust-backend/recording_admission_inventory.map-effects-609.json",
+    "persistent_commit_extension": "tools/compact-rust-backend/recording_admission_inventory.persistent-commit-inputs-611.json",
+    "vector_map_extension": "tools/compact-rust-backend/recording_admission_inventory.vector-map-613.json",
+    "audited_local_transition": "tools/compact-rust-backend/recording_admission_inventory.audited-local-614.json",
+    "read_only_transition": "tools/compact-rust-backend/recording_admission_inventory.read-only-615.json",
+    "single_admission_transition": "tools/compact-rust-backend/recording_admission_inventory.single-admission-616.json",
+    "start_funding_transition": "tools/compact-rust-backend/recording_admission_inventory.start-funding-617.json"
+  },
+  "qualification_limits": [
+    "Standalone execution outputs do not acquire transaction-preparation FAB support.",
+    "Finite complete-old/native/checked/runtime laws are not universal Compact conformance.",
+    "Generic support and exact public diagnostic projection remain live pending #618."
+  ]
+}

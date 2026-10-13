@@ -94,7 +94,7 @@ pub(super) fn surface_type(ty: &Type) -> bool {
 pub(super) fn public_interface_type(ty: &Type) -> bool {
     domain::public_interface_type(ty)
 }
-/// Internal roots exchange local Rust values; exported roots require public FAB.
+/// Root parameters exchange local Rust values internally, or public FAB inputs.
 /// Validation obtains this boundary only from the independent source declaration.
 pub(super) fn root_interface_type(ty: &Type, internal: bool) -> bool {
     if internal {
@@ -102,6 +102,11 @@ pub(super) fn root_interface_type(ty: &Type, internal: bool) -> bool {
     } else {
         public_interface_type(ty)
     }
+}
+/// Execution returns local Rust values. Transaction preparation independently
+/// requires output FAB conversion; canonical and resource checks run first.
+pub(super) fn execution_result_type(ty: &Type) -> bool {
+    value_type(ty)
 }
 /// Declared Cell storage may own opaque values without widening interfaces.
 pub(super) fn cell_type(ty: &Type) -> bool {
@@ -179,7 +184,7 @@ pub(super) fn validate(plan: &Plan, declarations: &Declarations) -> Result<(), R
         declarations.types().validate_at(&value.ty, "parameters")?;
     }
     let internal = declarations.root().is_some_and(|root| root.internal);
-    if !root_interface_type(&plan.result_type, internal) {
+    if !execution_result_type(&plan.result_type) {
         return Err(invalid("return_value", "unsupported circuit result type"));
     }
     let mut scope = HashMap::new();

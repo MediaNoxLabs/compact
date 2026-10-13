@@ -501,7 +501,7 @@ fn typed_historic_spend_audits_path_helpers_and_slot_provenance() {
 }
 
 #[test]
-fn audited_schnorr_local_helper_requires_transitive_public_purity_and_typed_sources() {
+fn schnorr_helpers_compose_typed_public_effects_and_validate_declared_sources() {
     let mut contract: Contract =
         serde_json::from_str(include_str!("../schnorr-attestation-schema13-ir.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
@@ -517,7 +517,18 @@ fn audited_schnorr_local_helper_requires_transitive_public_purity_and_typed_sour
                 .recorded
         );
     }
-    assert!(reported.source.contains(".call_local(|context|"));
+    let verification = generated_body(&reported.source, "recorded", "verifyAttestation");
+    for operation in [
+        "ledger_slots :: open . record_read",
+        "ledger_slots :: attestorKey . record_read",
+        "runtime :: transient_hash",
+        "try_witness_metered",
+        "runtime :: ec_mul_generator",
+        "runtime :: ec_mul",
+        "runtime :: ec_add",
+    ] {
+        assert!(verification.contains(operation), "missing {operation}");
+    }
 
     let mut effectful = contract.clone();
     let helper = effectful
@@ -530,15 +541,21 @@ fn audited_schnorr_local_helper_requires_transitive_public_purity_and_typed_sour
         index: 1,
         amount: CounterAmount::Literal { value: 1 },
     });
+    // The changed source adds a real public effect. Checked composition must
+    // retain it; this is no longer an unsupported local-helper shape.
+    let effectful = render_with_capabilities(&effectful).unwrap();
     assert!(
-        !render_with_capabilities(&effectful)
-            .unwrap()
+        effectful
             .capabilities
             .circuits
             .iter()
             .find(|c| c.name == "verifyAttestation")
             .unwrap()
             .recorded
+    );
+    assert!(
+        generated_body(&effectful.source, "recorded", "verifyAttestation")
+            .contains("ledger_slots :: acceptedCount . record_increment")
     );
 
     let mut read_opening = contract.clone();
@@ -563,9 +580,9 @@ fn audited_schnorr_local_helper_requires_transitive_public_purity_and_typed_sour
             }),
         },
     });
+    let read_opening = render_with_capabilities(&read_opening).unwrap();
     assert!(
-        !render_with_capabilities(&read_opening)
-            .unwrap()
+        read_opening
             .capabilities
             .circuits
             .iter()
@@ -573,6 +590,9 @@ fn audited_schnorr_local_helper_requires_transitive_public_purity_and_typed_sour
             .unwrap()
             .recorded
     );
+    let verification = generated_body(&read_opening.source, "recorded", "verifyAttestation");
+    assert!(verification.contains("ledger_slots :: hidden . record_read"));
+    assert!(verification.contains("runtime :: transient_commit"));
 
     let mut wrong_key = contract.clone();
     let key = wrong_key
@@ -592,7 +612,7 @@ fn audited_schnorr_local_helper_requires_transitive_public_purity_and_typed_sour
         .actions
         .remove(0);
     // The legacy audited-local profile still refuses this shape (its module test).
-    // Unit composition admits the actual key read and audited local verifier,
+    // Checked composition admits the actual key read and local verifier,
     // without inventing the removed source guard.
     assert!(
         render_with_capabilities(&missing_guard)

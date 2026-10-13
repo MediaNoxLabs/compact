@@ -11,6 +11,7 @@ import unittest
 from unittest import mock
 
 import recording_admission_inventory as inventory
+import recording_admission_inventory_unit_fragment as unit_fragment
 import recording_admission_inventory_shared_coercion as shared_coercion
 import recording_admission_inventory_target_edition as target_edition
 import recording_admission_inventory_shared_pure as shared_pure
@@ -26,7 +27,8 @@ class GenericRetirementTests(unittest.TestCase):
     def setUp(self):
         self.transition = json.loads(MANIFEST.read_text())
         newest = inventory.BASELINE.with_name('recording_admission_inventory.helper-discovery-620.json')
-        latest_root = shared_coercion.latest_checkpoint(inventory.ROOT, inventory.BASELINE)
+        latest_root = unit_fragment.latest_checkpoint(inventory.ROOT, inventory.BASELINE)
+        latest_root = shared_coercion.latest_checkpoint(latest_root, inventory.BASELINE)
         latest_root = target_edition.latest_checkpoint(latest_root, inventory.BASELINE)
         latest_root = shared_pure.latest_checkpoint(latest_root, inventory.BASELINE)
         latest_root = native_tuple.latest_checkpoint(latest_root, inventory.BASELINE)

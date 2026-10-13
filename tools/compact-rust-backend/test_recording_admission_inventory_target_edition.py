@@ -11,6 +11,7 @@ import unittest
 from unittest import mock
 
 import recording_admission_inventory as inventory
+import recording_admission_inventory_unit_fragment as unit_fragment
 import recording_admission_inventory_shared_coercion as shared_coercion
 import recording_admission_inventory_target_edition as edition
 from test_recording_admission_inventory_generic_qualification import _Overlay
@@ -21,7 +22,8 @@ MANIFEST = inventory.BASELINE.with_name('recording_admission_inventory.target-ed
 class TargetEditionTests(unittest.TestCase):
     def setUp(self):
         self.extension = json.loads(MANIFEST.read_text())
-        self.source_root = shared_coercion.latest_checkpoint(inventory.ROOT, inventory.BASELINE)
+        latest_root = unit_fragment.latest_checkpoint(inventory.ROOT, inventory.BASELINE)
+        self.source_root = shared_coercion.latest_checkpoint(latest_root, inventory.BASELINE)
         self.root = _Overlay(self.source_root)
         self.baseline_bytes = inventory.BASELINE.read_bytes()
         self.baseline = json.loads(self.baseline_bytes)

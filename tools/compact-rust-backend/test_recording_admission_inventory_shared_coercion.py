@@ -10,6 +10,7 @@ from pathlib import Path
 import unittest
 from unittest import mock
 import recording_admission_inventory as inventory
+import recording_admission_inventory_unit_fragment as unit_fragment
 import recording_admission_inventory_shared_coercion as coercion
 from test_recording_admission_inventory_generic_qualification import _Overlay
 MANIFEST = inventory.BASELINE.with_name('recording_admission_inventory.shared-coercion-627.json')
@@ -18,7 +19,8 @@ MANIFEST = inventory.BASELINE.with_name('recording_admission_inventory.shared-co
 class SharedCoercionTests(unittest.TestCase):
     def setUp(self):
         self.extension = json.loads(MANIFEST.read_text())
-        self.root = _Overlay(inventory.ROOT)
+        self.source_root = unit_fragment.latest_checkpoint(inventory.ROOT, inventory.BASELINE)
+        self.root = _Overlay(self.source_root)
         self.bytes = inventory.BASELINE.read_bytes()
         self.baseline = json.loads(self.bytes)
         self.previous = {key: json.loads((inventory.ROOT / path).read_text())

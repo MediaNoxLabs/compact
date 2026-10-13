@@ -3,8 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! Temporary bridge: reuse native pure typing, immediately discard its syntax.
-//! Signature carriers use the shared syntax-free checker. Body typing and its
-//! binding symbols still construct syntax until the complete Expr fold cutover.
+//! Signature carriers use the shared syntax-free checker. Body typing consumes
+//! one native fragment; its binding symbols and both output views still construct
+//! syntax until the complete Expr fold cutover.
 //! No whole-circuit recorded profile or shape recognizer participates.
 use crate::RenderError;
 use crate::ir::{PureCircuit, Type};
@@ -31,15 +32,12 @@ pub(super) fn check(
         }
     }
     crate::pure_semantics::carrier::check_carrier(&source.result)?;
-    let (_, actual) = crate::expression_with_calls(&source.body, &scope, pure)?;
+    let (_, actual) = crate::native_fragment_with_calls(&source.body, &scope, pure)?;
     if actual != source.result {
         return Err(RenderError::TypeMismatch {
             expected: source.result.clone(),
             actual,
         });
-    }
-    if source.result == Type::Unit {
-        let _ = crate::unit_statements(&source.body, &scope, pure)?;
     }
     Ok(())
 }

@@ -15,6 +15,7 @@ mod jubjub_value;
 mod naming;
 mod native_frame;
 mod native_representation;
+mod pure_native;
 mod pure_semantics;
 mod recorded;
 pub use recorded::{
@@ -55,6 +56,7 @@ use ir::{
 };
 use naming::{ident, semantic_identifier, validate_circuit_function_namespace};
 use proc_macro2::Span;
+use pure_native::fragment::NativeFragment;
 use quote::quote;
 use serde_json::Value;
 use syn::visit_mut::{self, VisitMut};
@@ -1004,43 +1006,6 @@ pub(crate) fn condition_needs_statement(condition: &Expr) -> bool {
     !matches!(condition, Expr::Boolean { .. } | Expr::Parameter { .. })
 }
 
-fn lift_block_condition(
-    condition: syn::Expr,
-    parameters: &HashMap<&str, (&Type, syn::Ident)>,
-) -> (Vec<syn::Stmt>, syn::Expr) {
-    fn contains_local(expression: &syn::Expr) -> bool {
-        match expression {
-            syn::Expr::Block(block) => block
-                .block
-                .stmts
-                .iter()
-                .any(|statement| matches!(statement, syn::Stmt::Local(_))),
-            syn::Expr::Paren(paren) => contains_local(&paren.expr),
-            syn::Expr::Group(group) => contains_local(&group.expr),
-            _ => false,
-        }
-    }
-    if !contains_local(&condition) {
-        return (Vec::new(), condition);
-    }
-    let mut suffix = 0;
-    let name = loop {
-        let candidate = if suffix == 0 {
-            "__compact_condition".to_owned()
-        } else {
-            format!("__compact_condition_{suffix}")
-        };
-        if parameters.values().all(|(_, name)| *name != candidate) {
-            break syn::Ident::new(&candidate, Span::call_site());
-        }
-        suffix += 1;
-    };
-    (
-        vec![syn::parse_quote!(let #name: bool = #condition;)],
-        syn::parse_quote!(#name),
-    )
-}
-
 #[cfg(test)]
 mod discarded_expression_tests {
     use super::{Type, discard_expression};
@@ -1072,214 +1037,69 @@ mod discarded_expression_tests {
     }
 }
 
-fn unit_statements(
+/// One exhaustive variant map calls each existing semantic family directly.
+/// Result projection runs after child checking, without another recursive frame.
+fn native_fragment_with_calls(
     expr: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
     circuits: &HashMap<&str, &PureCircuit>,
-) -> Result<Vec<syn::Stmt>, RenderError> {
-    match expr {
-        Expr::Unit | Expr::Default { ty: Type::Unit } => Ok(Vec::new()),
-        Expr::Sequence { steps, value } => {
-            let mut statements = Vec::new();
-            for step in steps {
-                statements.extend(unit_statements(step, parameters, circuits)?);
-            }
-            statements.extend(unit_statements(value, parameters, circuits)?);
-            Ok(statements)
-        }
-        Expr::Assert { condition, message } => {
-            let (condition, actual) = expression_with_calls(condition, parameters, circuits)?;
-            if actual != Type::Boolean {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Boolean,
-                    actual,
-                });
-            }
-            let (mut statements, condition) = lift_block_condition(condition, parameters);
-            statements.push(syn::parse_quote!(if !(#condition) {
-                return Err(runtime::CompactError::AssertionFailed(#message.to_owned()));
-            }));
-            Ok(statements)
-        }
-        Expr::If {
-            condition,
-            then,
-            otherwise,
-        } => {
-            let evaluate_condition = condition_needs_statement(condition);
-            let (condition, actual) = expression_with_calls(condition, parameters, circuits)?;
-            if actual != Type::Boolean {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Boolean,
-                    actual,
-                });
-            }
-            let (mut statements, condition) = lift_block_condition(condition, parameters);
-            if then == otherwise {
-                if evaluate_condition && statements.is_empty() {
-                    statements.push(syn::parse_quote!(let _ = #condition;));
-                }
-                statements.extend(unit_statements(then, parameters, circuits)?);
-                return Ok(statements);
-            }
-            let then = unit_statements(then, parameters, circuits)?;
-            let otherwise = unit_statements(otherwise, parameters, circuits)?;
-            if otherwise.is_empty()
-                && let [syn::Stmt::Expr(syn::Expr::If(inner), _)] = then.as_slice()
-                && inner.else_branch.is_none()
-            {
-                let inner_condition = &inner.cond;
-                let inner_body = &inner.then_branch;
-                statements
-                    .push(syn::parse_quote!(if (#condition) && (#inner_condition) #inner_body));
-                return Ok(statements);
-            }
-            if otherwise.is_empty() && then.is_empty() {
-                if statements.is_empty() && evaluate_condition {
-                    statements.push(syn::parse_quote!(let _ = #condition;));
-                }
-            } else if otherwise.is_empty() {
-                statements.push(syn::parse_quote!(if #condition { #(#then)* }));
-            } else if then.is_empty() {
-                statements.push(syn::parse_quote!(if !(#condition) { #(#otherwise)* }));
-            } else {
-                statements.push(syn::parse_quote!(if #condition {
-                    #(#then)*
-                } else {
-                    #(#otherwise)*
-                }));
-            }
-            Ok(statements)
-        }
-        Expr::Let { bindings, body } => {
-            let mut locals = parameters.clone();
-            let mut statements = Vec::<syn::Stmt>::new();
-            for binding in bindings {
-                ident(&binding.name)?;
-                let (value, actual) = expression_with_calls(&binding.value, &locals, circuits)?;
-                if actual != binding.ty {
-                    return Err(RenderError::TypeMismatch {
-                        expected: binding.ty.clone(),
-                        actual,
-                    });
-                }
-                let local_ty = rust_type(&binding.ty)?;
-                let local_name = syn::Ident::new(
-                    &format!("__compact_local_{}", binding.name),
-                    Span::call_site(),
-                );
-                statements.push(syn::parse_quote!(let #local_name: #local_ty = #value;));
-                locals.insert(binding.name.as_str(), (&binding.ty, local_name));
-            }
-            let body = unit_statements(body, &locals, circuits)?;
-            if statements.is_empty() {
-                Ok(body)
-            } else {
-                statements.extend(body);
-                Ok(vec![syn::parse_quote!({ #(#statements)* })])
-            }
-        }
-        _ => {
-            let (rendered, actual) = expression_with_calls(expr, parameters, circuits)?;
-            if actual != Type::Unit {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Unit,
-                    actual,
-                });
-            }
-            Ok(vec![syn::parse_quote!(#rendered;)])
-        }
-    }
+) -> Result<(NativeFragment, Type), RenderError> {
+    #[cfg(test)]
+    pure_native::visitation::record(expr);
+    pure_native::dispatch::dispatch!(expr, parameters, circuits; keep_fragment, fragment_from_expression)
 }
 
-// Recursive dispatch owns selection only; families retain exact original arms.
-// Keep recursive dispatch small; each helper retains one operation family.
 fn expression_with_calls(
     expr: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
     circuits: &HashMap<&str, &PureCircuit>,
 ) -> Result<(syn::Expr, Type), RenderError> {
-    match expr {
-        Expr::Unit => pure_leaf_expression(expr, parameters, circuits),
-        Expr::Default { .. } => pure_leaf_expression(expr, parameters, circuits),
-        Expr::Boolean { .. } => pure_leaf_expression(expr, parameters, circuits),
-        Expr::FieldLiteral { .. } => pure_leaf_expression(expr, parameters, circuits),
-        Expr::BytesLiteral { .. } => pure_leaf_expression(expr, parameters, circuits),
-        Expr::UnsignedLiteral { .. } => pure_leaf_expression(expr, parameters, circuits),
-        Expr::Parameter { .. } => pure_leaf_expression(expr, parameters, circuits),
-        Expr::EnumVariant { .. } => pure_leaf_expression(expr, parameters, circuits),
-        Expr::StructField { .. } => pure_aggregate_expression(expr, parameters, circuits),
-        Expr::TupleIndex { .. } => pure_aggregate_expression(expr, parameters, circuits),
-        Expr::StructLiteral { .. } => pure_aggregate_expression(expr, parameters, circuits),
-        Expr::Assert { .. } => pure_control_expression(expr, parameters, circuits),
-        Expr::Sequence { .. } => pure_control_expression(expr, parameters, circuits),
-        Expr::Tuple { .. } => pure_aggregate_expression(expr, parameters, circuits),
-        Expr::Vector { .. } => pure_aggregate_expression(expr, parameters, circuits),
-        Expr::VectorMap { .. } => pure_aggregate_expression(expr, parameters, circuits),
-        Expr::VectorFoldCall { .. } => pure_aggregate_expression(expr, parameters, circuits),
-        Expr::If { .. } => pure_control_expression(expr, parameters, circuits),
-        Expr::Let { .. } => pure_control_expression(expr, parameters, circuits),
-        Expr::Call { .. } => pure_aggregate_expression(expr, parameters, circuits),
-        Expr::TransientHash { .. } => pure_crypto_expression(expr, parameters, circuits),
-        Expr::TransientCommit { .. } => pure_crypto_expression(expr, parameters, circuits),
-        Expr::PersistentHash { .. } => pure_crypto_expression(expr, parameters, circuits),
-        Expr::Keccak256 { .. } => pure_crypto_expression(expr, parameters, circuits),
-        Expr::PersistentCommit { .. } => pure_crypto_expression(expr, parameters, circuits),
-        Expr::DegradeToTransient { .. } => pure_crypto_expression(expr, parameters, circuits),
-        Expr::UpgradeFromTransient { .. } => pure_crypto_expression(expr, parameters, circuits),
-        Expr::HashToCurve { .. } => pure_crypto_expression(expr, parameters, circuits),
-        Expr::JubjubPointX { .. } | Expr::JubjubPointY { .. } => {
-            pure_crypto_expression(expr, parameters, circuits)
-        }
-        Expr::EcAdd { .. } => pure_crypto_expression(expr, parameters, circuits),
-        Expr::ConstructJubjubPoint { .. } => pure_crypto_expression(expr, parameters, circuits),
-        Expr::EcNeg { .. } => pure_crypto_expression(expr, parameters, circuits),
-        Expr::EcMul { .. } => pure_crypto_expression(expr, parameters, circuits),
-        Expr::EcMulGenerator { .. } => pure_crypto_expression(expr, parameters, circuits),
-        Expr::JubjubScalarFromNative { .. } => pure_crypto_expression(expr, parameters, circuits),
-        Expr::WitnessCall { .. }
-        | Expr::KernelClaim { .. }
-        | Expr::KernelMintShielded { .. }
-        | Expr::CreateZswapInput { .. }
-        | Expr::CreateZswapOutput { .. }
-        | Expr::NativeWitnessCall { .. }
-        | Expr::SetMember { .. }
-        | Expr::MapMember { .. }
-        | Expr::MapLookup { .. }
-        | Expr::MerkleCheckRoot { .. }
-        | Expr::HistoricMerkleCheckRoot { .. }
-        | Expr::SetIsEmpty { .. }
-        | Expr::SetSize { .. }
-        | Expr::MapIsEmpty { .. }
-        | Expr::ListLength { .. }
-        | Expr::ListIsEmpty { .. }
-        | Expr::ListHead { .. }
-        | Expr::CellRead { .. }
-        | Expr::CounterRead { .. }
-        | Expr::CounterLessThan { .. }
-        | Expr::KernelSelf { .. } => pure_leaf_expression(expr, parameters, circuits),
-        Expr::FieldCast { .. } => pure_conversion_expression(expr, parameters, circuits),
-        Expr::FieldToBytes32 { .. } => pure_conversion_expression(expr, parameters, circuits),
-        Expr::Coerce { .. } => pure_conversion_expression(expr, parameters, circuits),
-        Expr::UnsignedCast { .. } => pure_conversion_expression(expr, parameters, circuits),
-        Expr::UnsignedAdd { .. }
-        | Expr::UnsignedSubtract { .. }
-        | Expr::UnsignedMultiply { .. } => pure_arithmetic_expression(expr, parameters, circuits),
-        Expr::Add { .. } | Expr::Subtract { .. } | Expr::Multiply { .. } => {
-            pure_arithmetic_expression(expr, parameters, circuits)
-        }
-        Expr::Equal { .. } | Expr::NotEqual { .. } => {
-            pure_arithmetic_expression(expr, parameters, circuits)
-        }
-        Expr::Compare { .. } => pure_arithmetic_expression(expr, parameters, circuits),
-    }
+    #[cfg(test)]
+    pure_native::visitation::record(expr);
+    pure_native::dispatch::dispatch!(expr, parameters, circuits; expression_from_fragment, keep_expression)
 }
 
-fn pure_control_expression(
+fn keep_expression(
+    _expr: &Expr,
+    result: Result<(syn::Expr, Type), RenderError>,
+) -> Result<(syn::Expr, Type), RenderError> {
+    result
+}
+fn keep_fragment(
+    _expr: &Expr,
+    result: Result<(NativeFragment, Type), RenderError>,
+) -> Result<(NativeFragment, Type), RenderError> {
+    result
+}
+fn expression_from_fragment(
+    _expr: &Expr,
+    result: Result<(NativeFragment, Type), RenderError>,
+) -> Result<(syn::Expr, Type), RenderError> {
+    result.map(|(fragment, ty)| (fragment.into_expression(), ty))
+}
+fn fragment_from_expression(
+    expr: &Expr,
+    result: Result<(syn::Expr, Type), RenderError>,
+) -> Result<(NativeFragment, Type), RenderError> {
+    result.map(|(expression, actual)| {
+        let fragment = if actual == Type::Unit {
+            let statements = match expr {
+                Expr::Unit | Expr::Default { ty: Type::Unit } => Vec::new(),
+                _ => vec![syn::parse_quote!(#expression;)],
+            };
+            NativeFragment::unit(expression, statements)
+        } else {
+            NativeFragment::Value(expression)
+        };
+        (fragment, actual)
+    })
+}
+
+fn pure_control_fragment(
     expr: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
     circuits: &HashMap<&str, &PureCircuit>,
-) -> Result<(syn::Expr, Type), RenderError> {
+) -> Result<(NativeFragment, Type), RenderError> {
     match expr {
         Expr::Assert { condition, message } => {
             let (condition, actual) = expression_with_calls(condition, parameters, circuits)?;
@@ -1289,76 +1109,66 @@ fn pure_control_expression(
                     actual,
                 });
             }
-            let (prefix, condition) = lift_block_condition(condition, parameters);
             Ok((
-                syn::parse_quote!({
-                    #(#prefix)*
-                    if !(#condition) {
-                        return Err(runtime::CompactError::AssertionFailed(#message.to_owned()));
-                    }
-                }),
+                pure_native::control::assertion(
+                    condition,
+                    message,
+                    parameters.values().map(|(_, name)| name),
+                ),
                 Type::Unit,
             ))
         }
         Expr::Sequence { steps, value } => {
-            let mut statements = Vec::<syn::Stmt>::new();
+            let mut statements = Vec::new();
             for step in steps {
-                let (_, actual) = expression_with_calls(step, parameters, circuits)?;
+                let (fragment, actual) = native_fragment_with_calls(step, parameters, circuits)?;
                 if actual != Type::Unit {
                     return Err(RenderError::TypeMismatch {
                         expected: Type::Unit,
                         actual,
                     });
                 }
-                statements.extend(unit_statements(step, parameters, circuits)?);
+                statements.extend(fragment.into_views().1);
             }
-            let (value, ty) = expression_with_calls(value, parameters, circuits)?;
-            Ok((syn::parse_quote!({ #(#statements)* #value }), ty))
+            let (value, ty) = native_fragment_with_calls(value, parameters, circuits)?;
+            Ok((pure_native::fragment::sequence(statements, value), ty))
         }
         Expr::If {
             condition,
             then,
             otherwise,
         } => {
-            let evaluate_condition = condition_needs_statement(condition);
-            let (condition, condition_ty) = expression_with_calls(condition, parameters, circuits)?;
-            if condition_ty != Type::Boolean {
+            let (condition_value, actual) = expression_with_calls(condition, parameters, circuits)?;
+            if actual != Type::Boolean {
                 return Err(RenderError::TypeMismatch {
                     expected: Type::Boolean,
-                    actual: condition_ty,
+                    actual,
                 });
             }
-            let (mut prefix, condition) = lift_block_condition(condition, parameters);
-            if then == otherwise {
-                let (value, ty) = expression_with_calls(then, parameters, circuits)?;
-                if evaluate_condition && prefix.is_empty() {
-                    prefix.push(syn::parse_quote!(let _ = #condition;));
-                }
-                return Ok((
-                    if prefix.is_empty() {
-                        value
-                    } else {
-                        syn::parse_quote!({ #(#prefix)* #value })
-                    },
-                    ty,
-                ));
-            }
-            let (then, then_ty) = expression_with_calls(then, parameters, circuits)?;
-            let (otherwise, otherwise_ty) = expression_with_calls(otherwise, parameters, circuits)?;
+            // Validate both source occurrences before coalescing output. Equal
+            // arms remain separate semantic visits, with no statement retyping.
+            let (then_value, then_ty) = native_fragment_with_calls(then, parameters, circuits)?;
+            let (otherwise_value, otherwise_ty) =
+                native_fragment_with_calls(otherwise, parameters, circuits)?;
             if then_ty != otherwise_ty {
                 return Err(RenderError::TypeMismatch {
                     expected: then_ty,
                     actual: otherwise_ty,
                 });
             }
-            let conditional: syn::Expr =
-                syn::parse_quote!(if #condition { #then } else { #otherwise });
+            let facts = pure_native::control::IfFacts {
+                equal_arms: then == otherwise,
+                evaluate_condition: condition_needs_statement(condition),
+                unit_result: then_ty == Type::Unit,
+            };
             Ok((
-                if prefix.is_empty() {
-                    conditional
-                } else {
-                    syn::parse_quote!({ #(#prefix)* #conditional })
-                },
+                pure_native::control::conditional(
+                    facts,
+                    condition_value,
+                    then_value,
+                    otherwise_value,
+                    parameters.values().map(|(_, name)| name),
+                ),
                 then_ty,
             ))
         }
@@ -1382,10 +1192,10 @@ fn pure_control_expression(
                 statements.push(syn::parse_quote!(let #local_name: #local_ty = #value;));
                 locals.insert(binding.name.as_str(), (&binding.ty, local_name));
             }
-            let (body, body_ty) = expression_with_calls(body, &locals, circuits)?;
-            Ok((syn::parse_quote!({ #(#statements)* #body }), body_ty))
+            let (body, body_ty) = native_fragment_with_calls(body, &locals, circuits)?;
+            Ok((pure_native::fragment::lexical(statements, body), body_ty))
         }
-        _ => unreachable!("private pure-expression dispatcher selects this family"),
+        _ => unreachable!("private native fragment dispatch selects control family"),
     }
 }
 
@@ -3160,7 +2970,7 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
                 args.push(arg);
             }
             let (body, actual) =
-                expression_with_calls(&circuit.body, &parameters, &callable_circuits)?;
+                native_fragment_with_calls(&circuit.body, &parameters, &callable_circuits)?;
             if actual != circuit.result {
                 return Err(RenderError::TypeMismatch {
                     expected: circuit.result.clone(),
@@ -3168,11 +2978,7 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
                 });
             }
             let result = rust_type(&circuit.result)?;
-            let unit_body = if actual == Type::Unit {
-                unit_statements(&circuit.body, &parameters, &callable_circuits)?
-            } else {
-                Vec::new()
-            };
+            let (body, unit_body) = body.into_views();
             let value_tail: syn::Expr = if let syn::Expr::Try(fallible) = &body {
                 (*fallible.expr).clone()
             } else {

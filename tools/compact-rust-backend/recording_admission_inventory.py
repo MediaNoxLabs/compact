@@ -96,6 +96,7 @@ import recording_admission_inventory_shared_pure as shared_pure
 import recording_admission_inventory_target_edition as target_edition
 import recording_admission_inventory_shared_coercion as shared_coercion
 import recording_admission_inventory_unit_fragment as unit_fragment
+import recording_admission_inventory_shared_leaf as shared_leaf
 import recording_admission_inventory_jubjub as jubjub
 import recording_admission_inventory_calls as calls
 import recording_admission_inventory_terminal as terminal
@@ -374,7 +375,15 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
            shared_pure_semantics_extension: dict | None = None,
            target_edition_identifiers_extension: dict | None = None,
            shared_coercion_extension: dict | None = None,
-           unit_fragment_extension: dict | None = None) -> dict:
+           unit_fragment_extension: dict | None = None,
+           shared_leaf_extension: dict | None = None) -> dict:
+    if shared_leaf_extension is not None:
+        arguments = dict(locals())
+        arguments['shared_leaf_extension'] = None
+        def historical_verify(checkpoint):
+            return verify(**{**arguments, 'root': checkpoint})
+        return shared_leaf.verify_extension(
+            root, baseline, shared_leaf_extension, historical_verify, selector_signature)
     if unit_fragment_extension is not None:
         arguments = dict(locals())
         arguments['unit_fragment_extension'] = None
@@ -1583,6 +1592,7 @@ def main(argv=None) -> int:
     parser.add_argument('--target-edition-identifiers-extension', type=Path, help='explicit #626 accepted gen escaping for fixed Rust2024; no retirement')
     parser.add_argument('--shared-coercion-extension', type=Path, help='explicit #622B/#627 conversion facts and per-conversion compiler work; no retirement')
     parser.add_argument('--unit-fragment-extension', type=Path, help='explicit #622C1+C2 native Unit views; syntax-free body fold remains pending')
+    parser.add_argument('--shared-leaf-extension', type=Path, help='explicit #622D1a complete shared leaf owner; syntax-free body fold remains pending')
     args = parser.parse_args(argv)
     protected = [args.baseline] + ([args.transition] if args.transition else []) + ([args.instrumentation] if args.instrumentation else []) + ([args.jubjub_transition] if args.jubjub_transition else []) + ([args.call_extension] if args.call_extension else []) + ([args.terminal_transition] if args.terminal_transition else []) + ([args.unit_actions_transition] if args.unit_actions_transition else []) + ([args.context_query_transition] if args.context_query_transition else []) + ([args.kernel_transition] if args.kernel_transition else []) + ([args.composite_transition] if args.composite_transition else []) + ([args.receive_transition] if args.receive_transition else [])
     protected += [args.unit_domain_extension] if args.unit_domain_extension else []
@@ -1642,6 +1652,7 @@ def main(argv=None) -> int:
     protected += [args.target_edition_identifiers_extension] if args.target_edition_identifiers_extension else []
     protected += [args.shared_coercion_extension] if args.shared_coercion_extension else []
     protected += [args.unit_fragment_extension] if args.unit_fragment_extension else []
+    protected += [args.shared_leaf_extension] if args.shared_leaf_extension else []
     protected += [args.optional_write_transition] if args.optional_write_transition else []
     protected += [args.unit_composition_transition] if args.unit_composition_transition else []
     if args.output and any(args.output.resolve() == path.resolve() for path in protected):
@@ -1725,7 +1736,8 @@ def main(argv=None) -> int:
         target_edition_identifiers_extension = json.loads(args.target_edition_identifiers_extension.read_text()) if args.target_edition_identifiers_extension else None
         shared_coercion_extension = json.loads(args.shared_coercion_extension.read_text()) if args.shared_coercion_extension else None
         unit_fragment_extension = json.loads(args.unit_fragment_extension.read_text()) if args.unit_fragment_extension else None
-        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension, voting_transition, phase_reset_transition, immediate_send_transition, zswap_transition, membership_transition, send_transition, observation_test_extension, merge_transition, guarded_deposit_transition, routing_test_extension, reset_payout_transition, shielded_payout_transition, inequality_test_extension, funded_mint_transition, keccak_test_extension, aligned_test_extension, encoding_extension, negation_test_extension, value_test_extension, unit_composition_transition, optional_write_transition, enum_advance_transition, witness_merkle_transition, organizer_transition, unsigned_product_transition, opaque_set_transition, unit_interface_extension, map_value_extension, guarded_map_transition, opaque_map_transition, resource_diagnostics_extension, empty_recording_extension, guarded_pure_transition, reachable_helpers_extension, key_only_map_removal_extension, asset_removal_transition, opaque_boolean_transition, opaque_field_transition, proved_set_sequence_transition, ordinary_interface_extension, storage_codec_extension, list_effects_extension, map_effects_extension, persistent_commit_extension, vector_map_extension, audited_local_transition, read_only_transition, single_admission_transition, start_funding_transition, generic_qualification_extension, generic_retirement_transition, helper_discovery_transition, native_tuple_extension, stateful_tuple_extension, shared_pure_semantics_extension, target_edition_identifiers_extension, shared_coercion_extension, unit_fragment_extension)
+        shared_leaf_extension = json.loads(args.shared_leaf_extension.read_text()) if args.shared_leaf_extension else None
+        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension, voting_transition, phase_reset_transition, immediate_send_transition, zswap_transition, membership_transition, send_transition, observation_test_extension, merge_transition, guarded_deposit_transition, routing_test_extension, reset_payout_transition, shielded_payout_transition, inequality_test_extension, funded_mint_transition, keccak_test_extension, aligned_test_extension, encoding_extension, negation_test_extension, value_test_extension, unit_composition_transition, optional_write_transition, enum_advance_transition, witness_merkle_transition, organizer_transition, unsigned_product_transition, opaque_set_transition, unit_interface_extension, map_value_extension, guarded_map_transition, opaque_map_transition, resource_diagnostics_extension, empty_recording_extension, guarded_pure_transition, reachable_helpers_extension, key_only_map_removal_extension, asset_removal_transition, opaque_boolean_transition, opaque_field_transition, proved_set_sequence_transition, ordinary_interface_extension, storage_codec_extension, list_effects_extension, map_effects_extension, persistent_commit_extension, vector_map_extension, audited_local_transition, read_only_transition, single_admission_transition, start_funding_transition, generic_qualification_extension, generic_retirement_transition, helper_discovery_transition, native_tuple_extension, stateful_tuple_extension, shared_pure_semantics_extension, target_edition_identifiers_extension, shared_coercion_extension, unit_fragment_extension, shared_leaf_extension)
     except (OSError, ValueError, TypeError, KeyError) as error:
         parser.exit(2, f'inventory error: {error}\n')
     rendered = json.dumps(report, indent=2) + '\n'

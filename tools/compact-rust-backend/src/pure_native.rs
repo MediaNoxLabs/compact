@@ -9,6 +9,7 @@
 pub(crate) mod control;
 pub(crate) mod dispatch;
 pub(crate) mod fragment;
+pub(crate) mod leaf;
 
 #[cfg(test)]
 mod tests;

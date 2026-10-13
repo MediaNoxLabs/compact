@@ -11,6 +11,7 @@ import unittest
 from unittest import mock
 
 import recording_admission_inventory as inventory
+import recording_admission_inventory_shared_leaf as shared_leaf
 import recording_admission_inventory_unit_fragment as unit_fragment
 import recording_admission_inventory_shared_coercion as shared_coercion
 import recording_admission_inventory_target_edition as target_edition
@@ -24,7 +25,8 @@ MANIFEST = inventory.BASELINE.with_name('recording_admission_inventory.stateful-
 class StatefulTupleTests(unittest.TestCase):
     def setUp(self):
         self.extension = json.loads(MANIFEST.read_text())
-        latest_root = unit_fragment.latest_checkpoint(inventory.ROOT, inventory.BASELINE)
+        latest_root = unit_fragment.latest_checkpoint(
+            shared_leaf.latest_checkpoint(inventory.ROOT, inventory.BASELINE), inventory.BASELINE)
         latest_root = shared_coercion.latest_checkpoint(latest_root, inventory.BASELINE)
         latest_root = target_edition.latest_checkpoint(latest_root, inventory.BASELINE)
         self.source_root = shared_pure.latest_checkpoint(latest_root, inventory.BASELINE)

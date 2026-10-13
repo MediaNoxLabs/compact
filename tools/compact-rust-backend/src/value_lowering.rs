@@ -166,21 +166,7 @@ fn coercion(
 }
 
 pub(crate) fn copy_type(ty: &Type) -> bool {
-    match ty {
-        Type::Struct { .. }
-        | Type::Vector { .. }
-        | Type::LedgerMap { .. }
-        | Type::OpaqueString
-        | Type::OpaqueBytes => false,
-        Type::Tuple { elements } => elements.iter().all(copy_type),
-        Type::Unit
-        | Type::Boolean
-        | Type::Field
-        | Type::JubjubPoint
-        | Type::Bytes { .. }
-        | Type::Enum { .. }
-        | Type::Unsigned { .. } => true,
-    }
+    crate::pure_semantics::ownership::copy_type(ty)
 }
 
 /// Keep an owned value available at an emission boundary without cloning Copy types.

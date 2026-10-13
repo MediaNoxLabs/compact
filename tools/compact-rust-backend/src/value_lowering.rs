@@ -24,8 +24,7 @@ use crate::ir::{Expr, Type};
 use proc_macro2::Span;
 
 use crate::pure_semantics::numeric::{
-    ArithmeticKind, UnsignedArithmeticStrategy, UnsignedCastStrategy, checked_unsigned_arithmetic,
-    checked_unsigned_cast,
+    ArithmeticKind, UnsignedArithmeticStrategy, checked_unsigned_arithmetic, checked_unsigned_cast,
 };
 pub(crate) use crate::pure_semantics::numeric::{
     UnsignedMaximum, field_literal_bytes, unsigned_maximum,
@@ -50,27 +49,10 @@ pub(crate) fn unsigned_cast_syntax(
     source_max: &str,
     target_max: &str,
 ) -> Result<syn::Expr, RenderError> {
-    Ok(match checked_unsigned_cast(source_max, target_max)? {
-        UnsignedCastStrategy::SmallToSmall { source, target } => {
-            let source = syn::LitInt::new(&source.to_string(), Span::call_site());
-            let target = syn::LitInt::new(&target.to_string(), Span::call_site());
-            syn::parse_quote!(runtime::cast_unsigned::<#source, #target>(#value)?)
-        }
-        UnsignedCastStrategy::SmallToWide { high, low } => {
-            let target = wide_uint_type(high, low);
-            syn::parse_quote!(<#target>::from_le_bytes(&(#value).value().to_le_bytes())?)
-        }
-        UnsignedCastStrategy::WideToSmall { high, low, target } => {
-            let target = syn::LitInt::new(&target.to_string(), Span::call_site());
-            let high = syn::LitInt::new(&high.to_string(), Span::call_site());
-            let low = syn::LitInt::new(&low.to_string(), Span::call_site());
-            syn::parse_quote!(runtime::narrow_wide_uint::<#target, #high, #low>(#value)?)
-        }
-        UnsignedCastStrategy::WideToWide { high, low } => {
-            let target = wide_uint_type(high, low);
-            syn::parse_quote!(<#target>::from_le_bytes((#value).as_le_bytes())?)
-        }
-    })
+    Ok(coercion::render_unsigned_cast(
+        value,
+        checked_unsigned_cast(source_max, target_max)?,
+    ))
 }
 
 /// Both expression emitters consume the same checked runtime arithmetic strategy.
@@ -151,222 +133,36 @@ pub(crate) fn map_slot_types(
     Ok(Some((key, value)))
 }
 
-/// Whether conversion syntax needs an enclosing Result owner, including checked
-/// operations whose valid input bounds guarantee success. The source expression
-/// is evaluated outside element closures and is not included in this property.
-struct Coercion {
-    expression: syn::Expr,
-    may_fail: bool,
-}
-
-impl Coercion {
-    fn infallible(expression: syn::Expr) -> Self {
-        Self {
-            expression,
-            may_fail: false,
-        }
-    }
-}
-
-struct AggregateCoercion {
-    items: Vec<syn::Ident>,
-    expressions: Vec<syn::Expr>,
-    may_fail: bool,
-}
-
-fn coerce_aggregate_fields(
-    sources: &[Type],
-    targets: &[Type],
-    depth: usize,
-) -> Result<AggregateCoercion, RenderError> {
-    debug_assert_eq!(sources.len(), targets.len());
-    let items = (0..sources.len())
-        .map(|index| {
-            syn::Ident::new(
-                &format!("__compact_cast_item_{depth}_{index}"),
-                Span::call_site(),
-            )
-        })
-        .collect::<Vec<_>>();
-    let mapped = items
-        .iter()
-        .zip(sources.iter().zip(targets))
-        .map(|(item, (source_ty, target_ty))| {
-            coercion(syn::parse_quote!(#item), source_ty, target_ty, depth + 1)
-        })
-        .collect::<Result<Vec<_>, _>>()?;
-    let may_fail = mapped.iter().any(|child| child.may_fail);
-    Ok(AggregateCoercion {
-        items,
-        expressions: mapped.into_iter().map(|child| child.expression).collect(),
-        may_fail,
-    })
-}
-
 pub(crate) fn coerce_expression(
     value: syn::Expr,
     actual: &Type,
     target: &Type,
     depth: usize,
 ) -> Result<syn::Expr, RenderError> {
-    Ok(coercion(value, actual, target, depth)?.expression)
+    let plan = crate::pure_semantics::coercion::plan_coercion(actual, target)?;
+    Ok(coercion::render(&plan, value, depth))
 }
 
+// Existing output contracts inspect conversion fallibility independently of
+// source-expression evaluation. Production support belongs to the neutral plan.
+#[cfg(test)]
+struct Coercion {
+    expression: syn::Expr,
+    may_fail: bool,
+}
+
+#[cfg(test)]
 fn coercion(
     value: syn::Expr,
     actual: &Type,
     target: &Type,
     depth: usize,
 ) -> Result<Coercion, RenderError> {
-    if actual == target {
-        return Ok(Coercion::infallible(value));
-    }
-    match (actual, target) {
-        (Type::Unsigned { max }, Type::Field) => match unsigned_maximum(max)? {
-            UnsignedMaximum::Small(_) => Ok(Coercion::infallible(
-                syn::parse_quote!(runtime::Field::from((#value).value())),
-            )),
-            UnsignedMaximum::Wide { .. } => {
-                Ok(Coercion::infallible(syn::parse_quote!((#value).as_field())))
-            }
-        },
-        (Type::Unsigned { max: source_max }, Type::Unsigned { max: target_max }) => {
-            let bounds = |value: UnsignedMaximum| match value {
-                UnsignedMaximum::Small(low) => (0, low),
-                UnsignedMaximum::Wide { high, low } => (high, low),
-            };
-            if bounds(unsigned_maximum(source_max)?) > bounds(unsigned_maximum(target_max)?) {
-                return Err(RenderError::TypeMismatch {
-                    expected: target.clone(),
-                    actual: actual.clone(),
-                });
-            }
-            Ok(Coercion {
-                expression: unsigned_cast_syntax(value, source_max, target_max)?,
-                may_fail: true,
-            })
-        }
-        (
-            Type::Vector {
-                element: source_element,
-                length: source_length,
-            },
-            Type::Vector {
-                element: target_element,
-                length: target_length,
-            },
-        ) if source_length == target_length => {
-            let source =
-                syn::Ident::new(&format!("__compact_cast_source_{depth}"), Span::call_site());
-            let item = syn::Ident::new(&format!("__compact_cast_item_{depth}"), Span::call_site());
-            let Coercion {
-                expression: mapped,
-                may_fail,
-            } = coercion(
-                syn::parse_quote!(#item),
-                source_element,
-                target_element,
-                depth + 1,
-            )?;
-            let expression = if may_fail {
-                // A Result-returning conversion must run in the enclosing owner,
-                // not an infallible array.map closure. Keep one loop per vector
-                // level: unrolling would multiply output by nested dimensions.
-                let converted =
-                    syn::Ident::new(&format!("__compact_cast_values_{depth}"), Span::call_site());
-                let length = syn::LitInt::new(&source_length.to_string(), Span::call_site());
-                syn::parse_quote!({
-                    let #source = #value;
-                    let mut #converted = ::std::vec::Vec::with_capacity(#length);
-                    for #item in #source.into_array() {
-                        #converted.push(#mapped);
-                    }
-                    runtime::FixedVector::new(<[_; #length]>::try_from(#converted)
-                        .expect("Vector coercion preserves its length"))
-                })
-            } else {
-                syn::parse_quote!({
-                    let #source = #value;
-                    runtime::FixedVector::new(#source.into_array().map(|#item| #mapped))
-                })
-            };
-            Ok(Coercion {
-                expression,
-                may_fail,
-            })
-        }
-        (Type::Tuple { elements: sources }, Type::Tuple { elements: targets })
-            if sources.len() == targets.len() && !sources.is_empty() =>
-        {
-            let source =
-                syn::Ident::new(&format!("__compact_cast_source_{depth}"), Span::call_site());
-            let AggregateCoercion {
-                items,
-                expressions: mapped,
-                may_fail,
-            } = coerce_aggregate_fields(sources, targets, depth)?;
-            Ok(Coercion {
-                may_fail,
-                expression: syn::parse_quote!({
-                    let #source = #value;
-                    let (#(#items),*,) = #source;
-                    (#(#mapped),*,)
-                }),
-            })
-        }
-        (
-            Type::Tuple { elements: sources },
-            Type::Vector {
-                element: target_element,
-                length,
-            },
-        ) if sources.len() == *length && !sources.is_empty() => {
-            let source =
-                syn::Ident::new(&format!("__compact_cast_source_{depth}"), Span::call_site());
-            let targets = vec![*target_element.clone(); sources.len()];
-            let AggregateCoercion {
-                items,
-                expressions: mapped,
-                may_fail,
-            } = coerce_aggregate_fields(sources, &targets, depth)?;
-            Ok(Coercion {
-                may_fail,
-                expression: syn::parse_quote!({
-                    let #source = #value;
-                    let (#(#items),*,) = #source;
-                    runtime::FixedVector::new([#(#mapped),*])
-                }),
-            })
-        }
-        (
-            Type::Vector {
-                element: source_element,
-                length,
-            },
-            Type::Tuple { elements: targets },
-        ) if *length == targets.len() && !targets.is_empty() => {
-            let source =
-                syn::Ident::new(&format!("__compact_cast_source_{depth}"), Span::call_site());
-            let sources = vec![*source_element.clone(); targets.len()];
-            let AggregateCoercion {
-                items,
-                expressions: mapped,
-                may_fail,
-            } = coerce_aggregate_fields(&sources, targets, depth)?;
-            Ok(Coercion {
-                may_fail,
-                expression: syn::parse_quote!({
-                    let #source = #value;
-                    let [#(#items),*] = #source.into_array();
-                    (#(#mapped),*,)
-                }),
-            })
-        }
-        _ => Err(RenderError::TypeMismatch {
-            expected: target.clone(),
-            actual: actual.clone(),
-        }),
-    }
+    let plan = crate::pure_semantics::coercion::plan_coercion(actual, target)?;
+    Ok(Coercion {
+        expression: coercion::render(&plan, value, depth),
+        may_fail: plan.may_fail(),
+    })
 }
 
 pub(crate) fn copy_type(ty: &Type) -> bool {
@@ -400,3 +196,5 @@ pub(crate) fn retained_value(value: syn::Expr, ty: &Type) -> syn::Expr {
 mod tests;
 
 pub(crate) mod carrier;
+
+mod coercion;

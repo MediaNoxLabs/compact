@@ -68,6 +68,14 @@ pub(crate) fn validate(contract: &Contract) -> Result<Preflight, crate::RenderEr
 pub(crate) fn recording_call_limits() -> (usize, usize) {
     (Limits::DEFAULT.call_depth, Limits::DEFAULT.expanded_work)
 }
+/// Conversion expansion is independent of annotation size. These use the
+/// production allowances; the test-only census envelope is not support policy.
+pub(crate) fn coercion_work_limit() -> usize {
+    Limits::DEFAULT.expanded_work
+}
+pub(crate) fn coercion_pending_limit() -> usize {
+    Limits::DEFAULT.pending
+}
 pub(crate) fn recording_block_depth_limit() -> usize {
     Limits::DEFAULT.expanded_depth
 }

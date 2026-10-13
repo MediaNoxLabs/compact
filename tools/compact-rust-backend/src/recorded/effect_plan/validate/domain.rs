@@ -48,48 +48,14 @@ pub(super) fn derives_supported(ty: &Type) -> bool {
 /// Exact native aggregate conversion relation, with no syntax construction.
 /// Callers independently bound/canonicalize both types before recursive comparison.
 pub(super) fn coercible(source: &Type, target: &Type) -> bool {
-    if !value_type(source) || !value_type(target) {
-        return false;
-    }
-    if source == target {
-        return true;
-    }
-    match (source, target) {
-        (Type::Unsigned { .. }, Type::Field) => unsigned_bound(source).is_some(),
-        (Type::Unsigned { .. }, Type::Unsigned { .. }) => {
-            fn limbs(bound: crate::UnsignedMaximum) -> (u128, u128) {
-                match bound {
-                    crate::UnsignedMaximum::Small(low) => (0, low),
-                    crate::UnsignedMaximum::Wide { high, low } => (high, low),
-                }
-            }
-            matches!((unsigned_bound(source),unsigned_bound(target)),(Some(a),Some(b)) if limbs(a)<=limbs(b))
-        }
-        (
-            Type::Vector {
-                element: a,
-                length: n,
-            },
-            Type::Vector {
-                element: b,
-                length: m,
-            },
-        ) => n == m && coercible(a, b),
-        (Type::Tuple { elements: a }, Type::Tuple { elements: b }) => {
-            !a.is_empty() && a.len() == b.len() && a.iter().zip(b).all(|(a, b)| coercible(a, b))
-        }
-        (Type::Tuple { elements }, Type::Vector { element, length }) => {
-            !elements.is_empty()
-                && elements.len() == *length
-                && elements.iter().all(|source| coercible(source, element))
-        }
-        (Type::Vector { element, length }, Type::Tuple { elements }) => {
-            !elements.is_empty()
-                && elements.len() == *length
-                && elements.iter().all(|target| coercible(element, target))
-        }
-        _ => false,
-    }
+    // Private callers receive the same defensive root bounds as native coercion.
+    // Domain validity still precedes identity: malformed native identity values
+    // must not become recordable through the shared conversion relation.
+    crate::resource_limits::recording_type_nodes(source).is_ok()
+        && crate::resource_limits::recording_type_nodes(target).is_ok()
+        && value_type(source)
+        && value_type(target)
+        && crate::pure_semantics::coercion::plan_coercion(source, target).is_ok()
 }
 
 /// Recorded witness outputs use the qualified official aligned FAB domain.
@@ -116,3 +82,6 @@ pub(super) fn default_value_type(ty: &Type) -> bool {
         && crate::resource_limits::recording_type_nodes(ty)
             .is_ok_and(|nodes| default_tuple_traits_supported(&nodes))
 }
+
+#[cfg(test)]
+mod coercion_tests;

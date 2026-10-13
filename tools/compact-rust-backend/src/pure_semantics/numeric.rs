@@ -103,7 +103,16 @@ pub(crate) fn checked_unsigned_cast(
 ) -> Result<UnsignedCastStrategy, RenderError> {
     let source = unsigned_maximum(source_max)?;
     let target = unsigned_maximum(target_max)?;
-    Ok(match (source, target) {
+    Ok(cast_strategy_from_bounds(source, target))
+}
+
+/// Derive output selection from already parsed bounds. Widening callers apply
+/// their own ordered bound relation; explicit casts also allow narrowing.
+pub(crate) fn cast_strategy_from_bounds(
+    source: UnsignedMaximum,
+    target: UnsignedMaximum,
+) -> UnsignedCastStrategy {
+    match (source, target) {
         (UnsignedMaximum::Small(source), UnsignedMaximum::Small(target)) => {
             UnsignedCastStrategy::SmallToSmall { source, target }
         }
@@ -116,7 +125,7 @@ pub(crate) fn checked_unsigned_cast(
         (UnsignedMaximum::Wide { .. }, UnsignedMaximum::Wide { high, low }) => {
             UnsignedCastStrategy::WideToWide { high, low }
         }
-    })
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

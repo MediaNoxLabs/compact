@@ -9,5 +9,6 @@
 //! migrated; carrier checks alone do not complete ADR-0473 or issue #622.
 
 pub(crate) mod carrier;
+pub(crate) mod coercion;
 pub(crate) mod identifier;
 pub(crate) mod numeric;

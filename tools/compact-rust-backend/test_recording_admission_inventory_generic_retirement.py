@@ -11,6 +11,8 @@ import unittest
 from unittest import mock
 
 import recording_admission_inventory as inventory
+import recording_admission_inventory_shared_arithmetic as shared_arithmetic
+from recording_admission_inventory_shared_arithmetic_test_support import install_historical_reads as install_arithmetic_reads
 import recording_admission_inventory_shared_conversion as shared_conversion
 from recording_admission_inventory_shared_conversion_test_support import install_historical_reads
 import recording_admission_inventory_shared_leaf as shared_leaf
@@ -32,7 +34,8 @@ class GenericRetirementTests(unittest.TestCase):
         newest = inventory.BASELINE.with_name('recording_admission_inventory.helper-discovery-620.json')
         latest_root = unit_fragment.latest_checkpoint(
             shared_leaf.latest_checkpoint(
-            shared_conversion.latest_checkpoint(inventory.ROOT, inventory.BASELINE), inventory.BASELINE), inventory.BASELINE)
+            shared_conversion.latest_checkpoint(
+            shared_arithmetic.latest_checkpoint(inventory.ROOT, inventory.BASELINE), inventory.BASELINE), inventory.BASELINE), inventory.BASELINE)
         latest_root = shared_coercion.latest_checkpoint(latest_root, inventory.BASELINE)
         latest_root = target_edition.latest_checkpoint(latest_root, inventory.BASELINE)
         latest_root = shared_pure.latest_checkpoint(latest_root, inventory.BASELINE)
@@ -46,6 +49,7 @@ class GenericRetirementTests(unittest.TestCase):
             key: json.loads((inventory.ROOT / path).read_text())
             for key, path in self.transition['predecessor_options'].items()
         }
+        install_arithmetic_reads(self, inventory.ROOT, inventory.BASELINE)
         install_historical_reads(self, inventory.ROOT, inventory.BASELINE)
 
     def report(self, **overrides):

@@ -18,3 +18,5 @@ pub(crate) mod visitation;
 
 pub(crate) mod children;
 pub(crate) mod conversion;
+
+pub(crate) mod arithmetic;

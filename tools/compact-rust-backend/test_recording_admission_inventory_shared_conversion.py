@@ -10,6 +10,8 @@ from pathlib import Path
 import unittest
 from unittest import mock
 import recording_admission_inventory as inventory
+import recording_admission_inventory_shared_arithmetic as shared_arithmetic
+from recording_admission_inventory_shared_arithmetic_test_support import install_historical_reads as install_arithmetic_reads
 import recording_admission_inventory_shared_conversion as conversion
 import recording_admission_inventory_shared_leaf as leaf
 from recording_admission_inventory_jubjub import digest
@@ -26,12 +28,13 @@ MANIFEST = inventory.BASELINE.with_name('recording_admission_inventory.shared-co
 class SharedConversionTests(unittest.TestCase):
     def setUp(self):
         self.extension = json.loads(MANIFEST.read_text())
-        self.root = _Overlay(inventory.ROOT)
+        self.root = _Overlay(shared_arithmetic.latest_checkpoint(inventory.ROOT, inventory.BASELINE))
         self.bytes = inventory.BASELINE.read_bytes()
         self.baseline = json.loads(self.bytes)
         self.previous = {k: json.loads((inventory.ROOT / p).read_text())
                          for k, p in self.extension['predecessor_options'].items()}
         self.predecessor = conversion.predecessor_sources(self.root, self.extension)
+        install_arithmetic_reads(self, inventory.ROOT, inventory.BASELINE)
 
     def report(self, **overrides):
         return inventory.verify(self.root, self.baseline, baseline_bytes=self.bytes,

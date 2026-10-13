@@ -96,3 +96,13 @@ pub(crate) trait ConversionSink: LeafSink {
         child: Self::Value,
     ) -> Self::Value;
 }
+
+/// Arithmetic support is checked before rendering either already-visited value.
+pub(crate) trait ArithmeticSink: LeafSink {
+    fn arithmetic(
+        &mut self,
+        facts: super::arithmetic::ArithmeticFacts,
+        left: Self::Value,
+        right: Self::Value,
+    ) -> Self::Value;
+}

@@ -70,31 +70,39 @@ pub(crate) fn unsigned_arithmetic_syntax(
         Expr::UnsignedMultiply { .. } => ArithmeticKind::Multiply,
         _ => unreachable!("unsigned arithmetic caller"),
     };
-    Ok(
-        match checked_unsigned_arithmetic(kind, left_max, right_max, result_max)? {
-            UnsignedArithmeticStrategy::WideAdd { high, low } => {
-                let high = syn::LitInt::new(&format!("{high}u128"), Span::call_site());
-                let low = syn::LitInt::new(&format!("{low}u128"), Span::call_site());
-                syn::parse_quote!(runtime::add_wide_unsigned::<#high,#low,_,_>(#left,#right)?)
-            }
-            UnsignedArithmeticStrategy::Small {
-                kind,
-                left: left_bound,
-                right: right_bound,
-                result,
-            } => {
-                let left_max = syn::LitInt::new(&left_bound.to_string(), Span::call_site());
-                let right_max = syn::LitInt::new(&right_bound.to_string(), Span::call_site());
-                let result_max = syn::LitInt::new(&result.to_string(), Span::call_site());
-                let helper: syn::Path = match kind {
-                    ArithmeticKind::Add => syn::parse_quote!(runtime::add_unsigned),
-                    ArithmeticKind::Subtract => syn::parse_quote!(runtime::subtract_unsigned),
-                    ArithmeticKind::Multiply => syn::parse_quote!(runtime::multiply_unsigned),
-                };
-                syn::parse_quote!(#helper::<#left_max,#right_max,#result_max>(#left,#right)?)
-            }
-        },
-    )
+    let strategy = checked_unsigned_arithmetic(kind, left_max, right_max, result_max)?;
+    Ok(render_unsigned_arithmetic(strategy, left, right))
+}
+
+/// Format a checked strategy without parsing or deciding operation support.
+pub(crate) fn render_unsigned_arithmetic(
+    strategy: UnsignedArithmeticStrategy,
+    left: syn::Expr,
+    right: syn::Expr,
+) -> syn::Expr {
+    match strategy {
+        UnsignedArithmeticStrategy::WideAdd { high, low } => {
+            let high = syn::LitInt::new(&format!("{high}u128"), Span::call_site());
+            let low = syn::LitInt::new(&format!("{low}u128"), Span::call_site());
+            syn::parse_quote!(runtime::add_wide_unsigned::<#high,#low,_,_>(#left,#right)?)
+        }
+        UnsignedArithmeticStrategy::Small {
+            kind,
+            left: left_bound,
+            right: right_bound,
+            result,
+        } => {
+            let left_max = syn::LitInt::new(&left_bound.to_string(), Span::call_site());
+            let right_max = syn::LitInt::new(&right_bound.to_string(), Span::call_site());
+            let result_max = syn::LitInt::new(&result.to_string(), Span::call_site());
+            let helper: syn::Path = match kind {
+                ArithmeticKind::Add => syn::parse_quote!(runtime::add_unsigned),
+                ArithmeticKind::Subtract => syn::parse_quote!(runtime::subtract_unsigned),
+                ArithmeticKind::Multiply => syn::parse_quote!(runtime::multiply_unsigned),
+            };
+            syn::parse_quote!(#helper::<#left_max,#right_max,#result_max>(#left,#right)?)
+        }
+    }
 }
 
 pub(crate) fn rust_type(ty: &Type) -> Result<syn::Type, RenderError> {

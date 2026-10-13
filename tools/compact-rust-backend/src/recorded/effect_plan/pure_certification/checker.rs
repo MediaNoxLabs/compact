@@ -72,3 +72,6 @@ pub(super) fn check_named_structs(types: &[&Type], path: &str) -> Result<(), sup
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod resource_measurement;

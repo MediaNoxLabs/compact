@@ -29,3 +29,9 @@ pub(crate) mod jubjub;
 
 pub(crate) mod aggregate;
 pub(crate) mod declarations;
+
+pub(crate) mod expression;
+
+pub(crate) mod visitor;
+
+pub(crate) mod control;

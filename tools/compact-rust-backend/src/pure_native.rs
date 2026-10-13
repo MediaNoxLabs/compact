@@ -4,10 +4,9 @@
 
 //! Native output views over children checked once by the pure semantic owner.
 //! This checkpoint still constructs syntax in body certification. It does not
-//! implement the complete syntax-free Expr fold or its CheckSink.
+//! select the production syntax-free body CheckSink; the shared fold is complete.
 
 pub(crate) mod control;
-pub(crate) mod dispatch;
 pub(crate) mod fragment;
 pub(crate) mod leaf;
 
@@ -16,6 +15,7 @@ mod tests;
 #[cfg(test)]
 pub(crate) mod visitation;
 
+#[cfg(test)]
 pub(crate) mod children;
 pub(crate) mod conversion;
 
@@ -28,3 +28,7 @@ pub(crate) mod aggregate;
 pub(crate) mod item;
 
 pub(crate) mod local;
+
+pub(crate) mod sink;
+
+pub(crate) mod value;

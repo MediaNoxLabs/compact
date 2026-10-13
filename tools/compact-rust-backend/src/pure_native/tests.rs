@@ -15,6 +15,7 @@ use crate::{
 use quote::ToTokens;
 use std::collections::HashMap;
 
+mod control_fold;
 mod differential;
 mod execution;
 mod item_assembly;

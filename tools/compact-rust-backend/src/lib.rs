@@ -1039,16 +1039,19 @@ mod discarded_expression_tests {
     }
 }
 
-/// One exhaustive variant map calls each existing semantic family directly.
-/// Result projection runs after child checking, without another recursive frame.
+/// Complete generic fold; native consumers retain expression and Unit views.
 fn native_fragment_with_calls(
     expr: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
     circuits: &HashMap<&str, &PureCircuit>,
 ) -> Result<(NativeFragment, Type), RenderError> {
-    #[cfg(test)]
-    pure_native::visitation::record(expr);
-    pure_native::dispatch::dispatch!(expr, parameters, circuits; keep_fragment, fragment_from_expression)
+    let typed = pure_semantics::expression::fold_expression(
+        expr,
+        parameters,
+        circuits,
+        &mut pure_native::sink::NativeSink::new(),
+    )?;
+    Ok((typed.output, typed.ty))
 }
 
 fn expression_with_calls(
@@ -1056,152 +1059,16 @@ fn expression_with_calls(
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
     circuits: &HashMap<&str, &PureCircuit>,
 ) -> Result<(syn::Expr, Type), RenderError> {
-    #[cfg(test)]
-    pure_native::visitation::record(expr);
-    pure_native::dispatch::dispatch!(expr, parameters, circuits; expression_from_fragment, keep_expression)
+    let typed = pure_semantics::expression::fold_expression(
+        expr,
+        parameters,
+        circuits,
+        &mut pure_native::sink::NativeSink::new(),
+    )?;
+    Ok((typed.output.into_expression(), typed.ty))
 }
 
-fn keep_expression(
-    _expr: &Expr,
-    result: Result<(syn::Expr, Type), RenderError>,
-) -> Result<(syn::Expr, Type), RenderError> {
-    result
-}
-fn keep_fragment(
-    _expr: &Expr,
-    result: Result<(NativeFragment, Type), RenderError>,
-) -> Result<(NativeFragment, Type), RenderError> {
-    result
-}
-fn expression_from_fragment(
-    _expr: &Expr,
-    result: Result<(NativeFragment, Type), RenderError>,
-) -> Result<(syn::Expr, Type), RenderError> {
-    result.map(|(fragment, ty)| (fragment.into_expression(), ty))
-}
-fn fragment_from_expression(
-    expr: &Expr,
-    result: Result<(syn::Expr, Type), RenderError>,
-) -> Result<(NativeFragment, Type), RenderError> {
-    result.map(|(expression, actual)| {
-        let fragment = if actual == Type::Unit {
-            let statements = match expr {
-                Expr::Unit | Expr::Default { ty: Type::Unit } => Vec::new(),
-                _ => vec![syn::parse_quote!(#expression;)],
-            };
-            NativeFragment::unit(expression, statements)
-        } else {
-            NativeFragment::Value(expression)
-        };
-        (fragment, actual)
-    })
-}
-
-fn pure_control_fragment(
-    expr: &Expr,
-    parameters: &HashMap<&str, (&Type, syn::Ident)>,
-    circuits: &HashMap<&str, &PureCircuit>,
-) -> Result<(NativeFragment, Type), RenderError> {
-    match expr {
-        Expr::Assert { condition, message } => {
-            let (condition, actual) = expression_with_calls(condition, parameters, circuits)?;
-            if actual != Type::Boolean {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Boolean,
-                    actual,
-                });
-            }
-            Ok((
-                pure_native::control::assertion(
-                    condition,
-                    message,
-                    parameters.values().map(|(_, name)| name),
-                ),
-                Type::Unit,
-            ))
-        }
-        Expr::Sequence { steps, value } => {
-            let mut statements = Vec::new();
-            for step in steps {
-                let (fragment, actual) = native_fragment_with_calls(step, parameters, circuits)?;
-                if actual != Type::Unit {
-                    return Err(RenderError::TypeMismatch {
-                        expected: Type::Unit,
-                        actual,
-                    });
-                }
-                statements.extend(fragment.into_views().1);
-            }
-            let (value, ty) = native_fragment_with_calls(value, parameters, circuits)?;
-            Ok((pure_native::fragment::sequence(statements, value), ty))
-        }
-        Expr::If {
-            condition,
-            then,
-            otherwise,
-        } => {
-            let (condition_value, actual) = expression_with_calls(condition, parameters, circuits)?;
-            if actual != Type::Boolean {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Boolean,
-                    actual,
-                });
-            }
-            // Validate both source occurrences before coalescing output. Equal
-            // arms remain separate semantic visits, with no statement retyping.
-            let (then_value, then_ty) = native_fragment_with_calls(then, parameters, circuits)?;
-            let (otherwise_value, otherwise_ty) =
-                native_fragment_with_calls(otherwise, parameters, circuits)?;
-            if then_ty != otherwise_ty {
-                return Err(RenderError::TypeMismatch {
-                    expected: then_ty,
-                    actual: otherwise_ty,
-                });
-            }
-            let facts = pure_native::control::IfFacts {
-                equal_arms: then == otherwise,
-                evaluate_condition: condition_needs_statement(condition),
-                unit_result: then_ty == Type::Unit,
-            };
-            Ok((
-                pure_native::control::conditional(
-                    facts,
-                    condition_value,
-                    then_value,
-                    otherwise_value,
-                    parameters.values().map(|(_, name)| name),
-                ),
-                then_ty,
-            ))
-        }
-        Expr::Let { bindings, body } => {
-            let mut locals = parameters.clone();
-            let mut statements = Vec::<syn::Stmt>::new();
-            for binding in bindings {
-                let checked_name = pure_semantics::identifier::check_name(&binding.name)?;
-                let (value, actual) = expression_with_calls(&binding.value, &locals, circuits)?;
-                if actual != binding.ty {
-                    return Err(RenderError::TypeMismatch {
-                        expected: binding.ty.clone(),
-                        actual,
-                    });
-                }
-                let local_ty = rust_type(&binding.ty)?;
-                let local_name = pure_native::local::allocate(
-                    &checked_name,
-                    &binding.name,
-                    locals.iter().map(|(key, (_, symbol))| (*key, symbol)),
-                );
-                statements.push(syn::parse_quote!(let #local_name: #local_ty = #value;));
-                locals.insert(binding.name.as_str(), (&binding.ty, local_name));
-            }
-            let (body, body_ty) = native_fragment_with_calls(body, &locals, circuits)?;
-            Ok((pure_native::fragment::lexical(statements, body), body_ty))
-        }
-        _ => unreachable!("private native fragment dispatch selects control family"),
-    }
-}
-
+#[cfg(test)]
 fn pure_aggregate_expression(
     expr: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
@@ -1265,6 +1132,7 @@ fn pure_aggregate_expression(
     Ok((typed.output, typed.ty))
 }
 
+#[cfg(test)]
 fn pure_conversion_expression(
     expr: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
@@ -1286,6 +1154,7 @@ fn pure_conversion_expression(
     Ok((typed.output, typed.ty))
 }
 
+#[cfg(test)]
 fn pure_arithmetic_expression(
     expr: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
@@ -1358,6 +1227,7 @@ fn pure_arithmetic_expression(
     Ok((typed.output, typed.ty))
 }
 
+#[cfg(test)]
 fn pure_crypto_expression(
     expr: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
@@ -1391,6 +1261,7 @@ fn pure_crypto_expression(
     Ok((typed.output, typed.ty))
 }
 
+#[cfg(test)]
 fn pure_leaf_expression(
     expr: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,

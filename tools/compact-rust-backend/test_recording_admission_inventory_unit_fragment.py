@@ -10,6 +10,8 @@ from pathlib import Path
 import unittest
 from unittest import mock
 import recording_admission_inventory as inventory
+import recording_admission_inventory_native_control_fold as native_control_fold
+from recording_admission_inventory_native_control_fold_test_support import install_historical_reads as install_native_fold_reads
 import recording_admission_inventory_lexical_symbols as lexical_symbols
 from recording_admission_inventory_lexical_symbols_test_support import install_historical_reads as install_symbol_reads
 import recording_admission_inventory_shared_aggregate as shared_aggregate
@@ -36,7 +38,8 @@ class UnitFragmentTests(unittest.TestCase):
             shared_arithmetic.latest_checkpoint(
             shared_crypto.latest_checkpoint(
             shared_aggregate.latest_checkpoint(
-            lexical_symbols.latest_checkpoint(inventory.ROOT, inventory.BASELINE), inventory.BASELINE), inventory.BASELINE), inventory.BASELINE), inventory.BASELINE), inventory.BASELINE)
+            lexical_symbols.latest_checkpoint(
+            native_control_fold.latest_checkpoint(inventory.ROOT, inventory.BASELINE), inventory.BASELINE), inventory.BASELINE), inventory.BASELINE), inventory.BASELINE), inventory.BASELINE), inventory.BASELINE)
         self.root = (historical_overlay(current_root, json.loads(latest.read_text()), _Overlay)
                      if latest.exists() else _Overlay(current_root))
         self.bytes = inventory.BASELINE.read_bytes()
@@ -44,6 +47,7 @@ class UnitFragmentTests(unittest.TestCase):
         self.previous = {k: json.loads((inventory.ROOT / p).read_text())
                          for k, p in self.extension['predecessor_options'].items()}
         self.predecessor = unit.predecessor_sources(self.root, self.extension)
+        install_native_fold_reads(self, inventory.ROOT, inventory.BASELINE)
         install_symbol_reads(self, inventory.ROOT, inventory.BASELINE)
         install_aggregate_reads(self, inventory.ROOT, inventory.BASELINE)
         install_crypto_reads(self, inventory.ROOT, inventory.BASELINE)

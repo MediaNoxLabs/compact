@@ -4,7 +4,7 @@
 
 //! Child traversal contract for shared semantic families.
 //! The core has no native dispatcher or unmigrated syntax fallback. A complete
-//! generic body visitor replaces the transitional native environment later.
+//! generic body visitor now supplies complete traversal for native output.
 use super::sink::{LeafSink, Typed};
 use crate::{RenderError, ir::Expr};
 

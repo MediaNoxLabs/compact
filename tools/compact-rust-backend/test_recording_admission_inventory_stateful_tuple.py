@@ -11,6 +11,8 @@ import unittest
 from unittest import mock
 
 import recording_admission_inventory as inventory
+import recording_admission_inventory_shared_crypto as shared_crypto
+from recording_admission_inventory_shared_crypto_test_support import install_historical_reads as install_crypto_reads
 import recording_admission_inventory_shared_arithmetic as shared_arithmetic
 from recording_admission_inventory_shared_arithmetic_test_support import install_historical_reads as install_arithmetic_reads
 import recording_admission_inventory_shared_conversion as shared_conversion
@@ -32,7 +34,8 @@ class StatefulTupleTests(unittest.TestCase):
         latest_root = unit_fragment.latest_checkpoint(
             shared_leaf.latest_checkpoint(
             shared_conversion.latest_checkpoint(
-            shared_arithmetic.latest_checkpoint(inventory.ROOT, inventory.BASELINE), inventory.BASELINE), inventory.BASELINE), inventory.BASELINE)
+            shared_arithmetic.latest_checkpoint(
+            shared_crypto.latest_checkpoint(inventory.ROOT, inventory.BASELINE), inventory.BASELINE), inventory.BASELINE), inventory.BASELINE), inventory.BASELINE)
         latest_root = shared_coercion.latest_checkpoint(latest_root, inventory.BASELINE)
         latest_root = target_edition.latest_checkpoint(latest_root, inventory.BASELINE)
         self.source_root = shared_pure.latest_checkpoint(latest_root, inventory.BASELINE)
@@ -41,6 +44,7 @@ class StatefulTupleTests(unittest.TestCase):
         self.baseline = json.loads(self.baseline_bytes)
         self.previous = {key: json.loads((inventory.ROOT / path).read_text())
                          for key, path in self.extension['predecessor_options'].items()}
+        install_crypto_reads(self, inventory.ROOT, inventory.BASELINE)
         install_arithmetic_reads(self, inventory.ROOT, inventory.BASELINE)
         install_historical_reads(self, inventory.ROOT, inventory.BASELINE)
 

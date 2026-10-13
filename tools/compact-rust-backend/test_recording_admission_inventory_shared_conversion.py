@@ -10,6 +10,8 @@ from pathlib import Path
 import unittest
 from unittest import mock
 import recording_admission_inventory as inventory
+import recording_admission_inventory_shared_crypto as shared_crypto
+from recording_admission_inventory_shared_crypto_test_support import install_historical_reads as install_crypto_reads
 import recording_admission_inventory_shared_arithmetic as shared_arithmetic
 from recording_admission_inventory_shared_arithmetic_test_support import install_historical_reads as install_arithmetic_reads
 import recording_admission_inventory_shared_conversion as conversion
@@ -28,12 +30,14 @@ MANIFEST = inventory.BASELINE.with_name('recording_admission_inventory.shared-co
 class SharedConversionTests(unittest.TestCase):
     def setUp(self):
         self.extension = json.loads(MANIFEST.read_text())
-        self.root = _Overlay(shared_arithmetic.latest_checkpoint(inventory.ROOT, inventory.BASELINE))
+        self.root = _Overlay(shared_arithmetic.latest_checkpoint(
+            shared_crypto.latest_checkpoint(inventory.ROOT, inventory.BASELINE), inventory.BASELINE))
         self.bytes = inventory.BASELINE.read_bytes()
         self.baseline = json.loads(self.bytes)
         self.previous = {k: json.loads((inventory.ROOT / p).read_text())
                          for k, p in self.extension['predecessor_options'].items()}
         self.predecessor = conversion.predecessor_sources(self.root, self.extension)
+        install_crypto_reads(self, inventory.ROOT, inventory.BASELINE)
         install_arithmetic_reads(self, inventory.ROOT, inventory.BASELINE)
 
     def report(self, **overrides):

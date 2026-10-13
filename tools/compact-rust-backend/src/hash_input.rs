@@ -5,23 +5,19 @@
 //! Select exact opaque hash encoding without reconstructing source aggregates.
 use crate::ir::Type;
 
-fn contains_opaque(ty: &Type) -> bool {
-    match ty {
-        Type::OpaqueString | Type::OpaqueBytes => true,
-        Type::Struct { fields, .. } => fields.iter().any(|field| contains_opaque(&field.ty)),
-        Type::Tuple { elements } => elements.iter().any(contains_opaque),
-        Type::Vector { element, .. } => contains_opaque(element),
-        _ => false,
-    }
-}
+use crate::pure_semantics::hash_encoding::{DynamicInputEncoding, contains_opaque};
 
 /// Receives an already-lowered operand once. Only qualified dynamic hash call
 /// sites use this helper; ordinary Value conversion and fixed inputs stay intact.
 pub(crate) fn syntax(value: syn::Expr, ty: &Type) -> syn::Expr {
-    if contains_opaque(ty) {
-        syn::parse_quote!(runtime::exact_hash_input(#value))
-    } else {
-        value
+    render_input(value, DynamicInputEncoding::for_type(ty))
+}
+
+/// Receives a checked encoding decision; performs no source-type inspection.
+pub(crate) fn render_input(value: syn::Expr, encoding: DynamicInputEncoding) -> syn::Expr {
+    match encoding {
+        DynamicInputEncoding::Exact => syn::parse_quote!(runtime::exact_hash_input(#value)),
+        DynamicInputEncoding::Direct => value,
     }
 }
 

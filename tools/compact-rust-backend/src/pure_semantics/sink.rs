@@ -106,3 +106,8 @@ pub(crate) trait ArithmeticSink: LeafSink {
         right: Self::Value,
     ) -> Self::Value;
 }
+
+/// Crypto consumers receive arity-safe checked operands, never source Types.
+pub(crate) trait CryptoSink: LeafSink {
+    fn crypto(&mut self, checked: super::crypto::CheckedCrypto<Self::Value>) -> Self::Value;
+}

@@ -22,3 +22,7 @@ pub(crate) mod children;
 pub(crate) mod conversion;
 
 pub(crate) mod arithmetic;
+
+pub(crate) mod crypto;
+pub(crate) mod hash_encoding;
+pub(crate) mod jubjub;

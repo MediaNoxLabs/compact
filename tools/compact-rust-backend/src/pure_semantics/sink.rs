@@ -86,3 +86,13 @@ impl<'a> UnsignedLiteralFacts<'a> {
         &self.bytes
     }
 }
+
+/// Consumers render complete checked conversions; they cannot accept/refuse
+/// support. Associated value/binding/carrier types are shared with leaf output.
+pub(crate) trait ConversionSink: LeafSink {
+    fn conversion(
+        &mut self,
+        facts: super::conversion::ConversionFacts,
+        child: Self::Value,
+    ) -> Self::Value;
+}

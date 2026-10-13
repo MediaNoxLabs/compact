@@ -10,6 +10,8 @@ from pathlib import Path
 import unittest
 from unittest import mock
 import recording_admission_inventory as inventory
+import recording_admission_inventory_shared_conversion as shared_conversion
+from recording_admission_inventory_shared_conversion_test_support import install_historical_reads
 import recording_admission_inventory_shared_leaf as leaf
 import recording_admission_inventory_unit_fragment as unit
 from recording_admission_inventory_jubjub import digest
@@ -23,12 +25,13 @@ MANIFEST = inventory.BASELINE.with_name('recording_admission_inventory.shared-le
 class SharedLeafTests(unittest.TestCase):
     def setUp(self):
         self.extension = json.loads(MANIFEST.read_text())
-        self.root = _Overlay(inventory.ROOT)
+        self.root = _Overlay(shared_conversion.latest_checkpoint(inventory.ROOT, inventory.BASELINE))
         self.bytes = inventory.BASELINE.read_bytes()
         self.baseline = json.loads(self.bytes)
         self.previous = {k: json.loads((inventory.ROOT / p).read_text())
                          for k, p in self.extension['predecessor_options'].items()}
         self.predecessor = leaf.predecessor_sources(self.root, self.extension)
+        install_historical_reads(self, inventory.ROOT, inventory.BASELINE)
 
     def report(self, **overrides):
         return inventory.verify(self.root, self.baseline, baseline_bytes=self.bytes,

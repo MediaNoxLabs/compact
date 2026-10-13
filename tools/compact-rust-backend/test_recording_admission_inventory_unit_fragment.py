@@ -10,6 +10,8 @@ from pathlib import Path
 import unittest
 from unittest import mock
 import recording_admission_inventory as inventory
+import recording_admission_inventory_shared_conversion as shared_conversion
+from recording_admission_inventory_shared_conversion_test_support import install_historical_reads
 import recording_admission_inventory_shared_leaf as shared_leaf
 import recording_admission_inventory_unit_fragment as unit
 from test_recording_admission_inventory_generic_qualification import _Overlay
@@ -21,7 +23,8 @@ class UnitFragmentTests(unittest.TestCase):
     def setUp(self):
         self.extension = json.loads(MANIFEST.read_text())
         latest = inventory.BASELINE.with_name('recording_admission_inventory.shared-leaf-622d1a.json')
-        current_root = shared_leaf.latest_checkpoint(inventory.ROOT, inventory.BASELINE)
+        current_root = shared_leaf.latest_checkpoint(
+            shared_conversion.latest_checkpoint(inventory.ROOT, inventory.BASELINE), inventory.BASELINE)
         self.root = (historical_overlay(current_root, json.loads(latest.read_text()), _Overlay)
                      if latest.exists() else _Overlay(current_root))
         self.bytes = inventory.BASELINE.read_bytes()
@@ -29,6 +32,7 @@ class UnitFragmentTests(unittest.TestCase):
         self.previous = {k: json.loads((inventory.ROOT / p).read_text())
                          for k, p in self.extension['predecessor_options'].items()}
         self.predecessor = unit.predecessor_sources(self.root, self.extension)
+        install_historical_reads(self, inventory.ROOT, inventory.BASELINE)
     def report(self, **overrides):
         return inventory.verify(self.root, self.baseline, baseline_bytes=self.bytes,
                                 **{**self.previous, 'unit_fragment_extension': self.extension, **overrides})

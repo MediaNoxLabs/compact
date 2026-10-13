@@ -11,6 +11,8 @@ import unittest
 from unittest import mock
 
 import recording_admission_inventory as inventory
+import recording_admission_inventory_shared_conversion as shared_conversion
+from recording_admission_inventory_shared_conversion_test_support import install_historical_reads
 import recording_admission_inventory_shared_leaf as shared_leaf
 import recording_admission_inventory_unit_fragment as unit_fragment
 import recording_admission_inventory_shared_coercion as shared_coercion
@@ -25,7 +27,8 @@ class SharedPureTests(unittest.TestCase):
     def setUp(self):
         self.extension = json.loads(MANIFEST.read_text())
         latest_root = unit_fragment.latest_checkpoint(
-            shared_leaf.latest_checkpoint(inventory.ROOT, inventory.BASELINE), inventory.BASELINE)
+            shared_leaf.latest_checkpoint(
+            shared_conversion.latest_checkpoint(inventory.ROOT, inventory.BASELINE), inventory.BASELINE), inventory.BASELINE)
         latest_root = shared_coercion.latest_checkpoint(latest_root, inventory.BASELINE)
         self.source_root = target_edition.latest_checkpoint(latest_root, inventory.BASELINE)
         self.root = _Overlay(self.source_root)
@@ -34,6 +37,7 @@ class SharedPureTests(unittest.TestCase):
         self.previous = {key: json.loads((inventory.ROOT / path).read_text())
                          for key, path in self.extension['predecessor_options'].items()}
         self.predecessor = shared.predecessor_sources(self.root, self.extension)
+        install_historical_reads(self, inventory.ROOT, inventory.BASELINE)
 
     def report(self, **overrides):
         return inventory.verify(self.root, self.baseline, baseline_bytes=self.baseline_bytes,

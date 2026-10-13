@@ -19,6 +19,7 @@ mod differential;
 mod execution;
 mod old_oracle;
 mod prepared;
+mod shared_conversion;
 mod shared_leaf;
 mod visits;
 mod workers;

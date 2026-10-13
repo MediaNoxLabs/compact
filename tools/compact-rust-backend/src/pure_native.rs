@@ -15,3 +15,6 @@ pub(crate) mod leaf;
 mod tests;
 #[cfg(test)]
 pub(crate) mod visitation;
+
+pub(crate) mod children;
+pub(crate) mod conversion;

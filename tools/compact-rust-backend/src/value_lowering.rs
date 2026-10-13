@@ -183,4 +183,4 @@ mod tests;
 
 pub(crate) mod carrier;
 
-mod coercion;
+pub(crate) mod coercion;

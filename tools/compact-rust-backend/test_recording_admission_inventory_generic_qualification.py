@@ -9,6 +9,8 @@ import json
 import unittest
 
 import recording_admission_inventory as inventory
+import recording_admission_inventory_shared_conversion as shared_conversion
+from recording_admission_inventory_shared_conversion_test_support import install_historical_reads
 import recording_admission_inventory_shared_leaf as shared_leaf
 import recording_admission_inventory_unit_fragment as unit_fragment
 import recording_admission_inventory_shared_coercion as shared_coercion
@@ -49,7 +51,8 @@ class GenericQualificationTests(unittest.TestCase):
         self.extension = json.loads(MANIFEST.read_text())
         newest = inventory.BASELINE.with_name('recording_admission_inventory.helper-discovery-620.json')
         current_root = unit_fragment.latest_checkpoint(
-            shared_leaf.latest_checkpoint(inventory.ROOT, inventory.BASELINE), inventory.BASELINE)
+            shared_leaf.latest_checkpoint(
+            shared_conversion.latest_checkpoint(inventory.ROOT, inventory.BASELINE), inventory.BASELINE), inventory.BASELINE)
         current_root = shared_coercion.latest_checkpoint(current_root, inventory.BASELINE)
         current_root = target_edition.latest_checkpoint(current_root, inventory.BASELINE)
         current_root = shared_pure.latest_checkpoint(current_root, inventory.BASELINE)
@@ -68,6 +71,7 @@ class GenericQualificationTests(unittest.TestCase):
             key: json.loads((inventory.ROOT / path).read_text())
             for key, path in self.extension['predecessor_options'].items()
         }
+        install_historical_reads(self, inventory.ROOT, inventory.BASELINE)
 
     def report(self, **overrides):
         arguments = dict(self.previous, generic_qualification_extension=self.extension)

@@ -10,6 +10,8 @@ from pathlib import Path
 import unittest
 from unittest import mock
 import recording_admission_inventory as inventory
+import recording_admission_inventory_shared_conversion as shared_conversion
+from recording_admission_inventory_shared_conversion_test_support import install_historical_reads
 import recording_admission_inventory_shared_leaf as shared_leaf
 import recording_admission_inventory_unit_fragment as unit_fragment
 import recording_admission_inventory_shared_coercion as coercion
@@ -21,13 +23,15 @@ class SharedCoercionTests(unittest.TestCase):
     def setUp(self):
         self.extension = json.loads(MANIFEST.read_text())
         self.source_root = unit_fragment.latest_checkpoint(
-            shared_leaf.latest_checkpoint(inventory.ROOT, inventory.BASELINE), inventory.BASELINE)
+            shared_leaf.latest_checkpoint(
+            shared_conversion.latest_checkpoint(inventory.ROOT, inventory.BASELINE), inventory.BASELINE), inventory.BASELINE)
         self.root = _Overlay(self.source_root)
         self.bytes = inventory.BASELINE.read_bytes()
         self.baseline = json.loads(self.bytes)
         self.previous = {key: json.loads((inventory.ROOT / path).read_text())
                          for key, path in self.extension['predecessor_options'].items()}
         self.predecessor = coercion.predecessor_sources(self.root, self.extension)
+        install_historical_reads(self, inventory.ROOT, inventory.BASELINE)
     def report(self, **overrides):
         return inventory.verify(self.root, self.baseline, baseline_bytes=self.bytes,
                                 **{**self.previous, 'shared_coercion_extension': self.extension, **overrides})

@@ -25,7 +25,7 @@ use crate::pure_semantics::{
 };
 use proc_macro2::Span;
 
-pub(super) fn render_unsigned_cast(value: syn::Expr, strategy: UnsignedCastStrategy) -> syn::Expr {
+pub(crate) fn render_unsigned_cast(value: syn::Expr, strategy: UnsignedCastStrategy) -> syn::Expr {
     match strategy {
         UnsignedCastStrategy::SmallToSmall { source, target } => {
             let source = syn::LitInt::new(&source.to_string(), Span::call_site());
@@ -49,7 +49,7 @@ pub(super) fn render_unsigned_cast(value: syn::Expr, strategy: UnsignedCastStrat
     }
 }
 
-pub(super) fn render(plan: &CoercionPlan, value: syn::Expr, depth: usize) -> syn::Expr {
+pub(crate) fn render(plan: &CoercionPlan, value: syn::Expr, depth: usize) -> syn::Expr {
     match plan.kind() {
         CoercionKind::Identity => value,
         CoercionKind::UnsignedToField { wide: false } => {

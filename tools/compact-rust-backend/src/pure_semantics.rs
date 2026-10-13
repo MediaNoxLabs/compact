@@ -17,3 +17,6 @@ pub(crate) mod leaf;
 pub(crate) mod ownership;
 pub(crate) mod scope;
 pub(crate) mod sink;
+
+pub(crate) mod children;
+pub(crate) mod conversion;

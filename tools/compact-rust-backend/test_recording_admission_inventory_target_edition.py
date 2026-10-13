@@ -11,6 +11,8 @@ import unittest
 from unittest import mock
 
 import recording_admission_inventory as inventory
+import recording_admission_inventory_body_checker as body_checker
+from recording_admission_inventory_body_checker_test_support import install_historical_reads as install_body_checker_reads
 import recording_admission_inventory_native_control_fold as native_control_fold
 from recording_admission_inventory_native_control_fold_test_support import install_historical_reads as install_native_fold_reads
 import recording_admission_inventory_lexical_symbols as lexical_symbols
@@ -42,7 +44,8 @@ class TargetEditionTests(unittest.TestCase):
             shared_crypto.latest_checkpoint(
             shared_aggregate.latest_checkpoint(
             lexical_symbols.latest_checkpoint(
-            native_control_fold.latest_checkpoint(inventory.ROOT, inventory.BASELINE), inventory.BASELINE), inventory.BASELINE), inventory.BASELINE), inventory.BASELINE), inventory.BASELINE), inventory.BASELINE), inventory.BASELINE)
+            native_control_fold.latest_checkpoint(
+            body_checker.latest_checkpoint(inventory.ROOT, inventory.BASELINE), inventory.BASELINE), inventory.BASELINE), inventory.BASELINE), inventory.BASELINE), inventory.BASELINE), inventory.BASELINE), inventory.BASELINE), inventory.BASELINE)
         self.source_root = shared_coercion.latest_checkpoint(latest_root, inventory.BASELINE)
         self.root = _Overlay(self.source_root)
         self.baseline_bytes = inventory.BASELINE.read_bytes()
@@ -50,6 +53,7 @@ class TargetEditionTests(unittest.TestCase):
         self.previous = {key: json.loads((inventory.ROOT / path).read_text())
                          for key, path in self.extension['predecessor_options'].items()}
         self.predecessor = edition.predecessor_sources(self.root, self.extension)
+        install_body_checker_reads(self, inventory.ROOT, inventory.BASELINE)
         install_native_fold_reads(self, inventory.ROOT, inventory.BASELINE)
         install_symbol_reads(self, inventory.ROOT, inventory.BASELINE)
         install_aggregate_reads(self, inventory.ROOT, inventory.BASELINE)

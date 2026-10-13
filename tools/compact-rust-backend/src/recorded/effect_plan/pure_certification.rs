@@ -2,12 +2,11 @@
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
 
-//! Reachable pure declarations certified through the native emitter's checks.
+//! Reachable pure declarations certified through the shared semantic fold.
 //! This is a bounded compiler certificate, not a formal proof or infallibility
-//! guarantee. A temporary native-syntax bridge avoids a second typechecker;
-//! extracting shared semantic typing remains architecture debt. No syntax is
-//! retained in this owner or the recording plan.
-mod native;
+//! guarantee. Body checking uses unit output and constructs no Rust syntax;
+//! native emission consumes the same checked semantic owners.
+mod checker;
 
 use super::{RecordingGap, invalid};
 use crate::ir::{Expr, PureCircuit, StatefulCircuit};
@@ -142,14 +141,14 @@ impl<'a> Certifier<'a> {
             .budget
             .check(source)
             .map_err(|e| invalid(path, e.to_string()))?;
-        // The native body checker can clone/coerce hidden local aggregate types.
+        // The shared body checker can clone/coerce hidden local aggregate types.
         // Bound their fixed layout before it runs, including all unused branches
         // of this reachable body. Unreachable declarations are not charged.
         let annotations = crate::resource_limits::recording_pure_annotations(source)
             .map_err(|e| invalid(path, e.to_string()))?;
         super::type_environment::check_fixed_layouts(&annotations.types, path)?;
-        native::check_named_structs(&annotations.types, path)?;
-        native::check_defaults(&annotations.defaults, path)?;
+        checker::check_named_structs(&annotations.types, path)?;
+        checker::check_defaults(&annotations.defaults, path)?;
         let normalized =
             crate::semantic_identifier(name).map_err(|e| invalid(path, e.to_string()))?;
         if self
@@ -230,10 +229,10 @@ impl<'a> Certifier<'a> {
                     "pure helper depth or expanded work limit exceeded",
                 ));
             }
-            // Only now may native typing inspect callee signatures: all direct
+            // Only now may shared typing inspect callee signatures: all direct
             // dependencies have already passed their borrowed resource scans.
             let body_path = format!("{path}.callee[{}]", frame.source.name);
-            native::check(frame.source, self.pure).map_err(|e| {
+            checker::check(frame.source, self.pure).map_err(|e| {
                 invalid(
                     &body_path,
                     format!("pure helper {:?}: {e}", frame.source.name),
@@ -241,7 +240,7 @@ impl<'a> Certifier<'a> {
             })?;
             active.remove(&frame.source.name);
             // First and only body clone, after borrowed resource checks and
-            // successful native typing of this declaration and all callees.
+            // successful shared typing of this declaration and all callees.
             self.certificates.entries.insert(
                 frame.source.name.clone(),
                 CertifiedPure {

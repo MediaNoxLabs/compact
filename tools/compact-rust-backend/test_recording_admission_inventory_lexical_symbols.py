@@ -10,6 +10,8 @@ from pathlib import Path
 import unittest
 from unittest import mock
 import recording_admission_inventory as inventory
+import recording_admission_inventory_body_checker as body_checker
+from recording_admission_inventory_body_checker_test_support import install_historical_reads as install_body_checker_reads
 import recording_admission_inventory_native_control_fold as native_control_fold
 from recording_admission_inventory_native_control_fold_test_support import install_historical_reads as install_native_fold_reads
 import recording_admission_inventory_lexical_symbols as symbols
@@ -27,12 +29,14 @@ MANIFEST = inventory.BASELINE.with_name('recording_admission_inventory.lexical-s
 class LexicalSymbolTests(unittest.TestCase):
     def setUp(self):
         self.extension = json.loads(MANIFEST.read_text())
-        self.root = _Overlay(native_control_fold.latest_checkpoint(inventory.ROOT, inventory.BASELINE))
+        self.root = _Overlay(native_control_fold.latest_checkpoint(
+            body_checker.latest_checkpoint(inventory.ROOT, inventory.BASELINE), inventory.BASELINE))
         self.bytes = inventory.BASELINE.read_bytes()
         self.baseline = json.loads(self.bytes)
         self.previous = {k: json.loads((inventory.ROOT / p).read_text())
                          for k, p in self.extension['predecessor_options'].items()}
         self.predecessor = symbols.predecessor_sources(self.root, self.extension)
+        install_body_checker_reads(self, inventory.ROOT, inventory.BASELINE)
         install_native_fold_reads(self, inventory.ROOT, inventory.BASELINE)
 
     def report(self, **overrides):

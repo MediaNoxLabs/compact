@@ -5,8 +5,8 @@
 //! Shared semantic decisions for native carriers and pure certification.
 //!
 //! Policies in this module construct no Rust syntax. Native interpreters consume
-//! checked facts. The complete expression-body certification fold is still being
-//! migrated; carrier checks alone do not complete ADR-0473 or issue #622.
+//! checked facts. Production pure body certification uses the complete shared
+//! expression fold with unit output; remaining qualification is tracked in #622.
 
 pub(crate) mod carrier;
 pub(crate) mod coercion;
@@ -35,3 +35,5 @@ pub(crate) mod expression;
 pub(crate) mod visitor;
 
 pub(crate) mod control;
+
+pub(crate) mod body_check;

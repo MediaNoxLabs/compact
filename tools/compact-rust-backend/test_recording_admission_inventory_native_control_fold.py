@@ -10,6 +10,8 @@ from pathlib import Path
 import unittest
 from unittest import mock
 import recording_admission_inventory as inventory
+import recording_admission_inventory_body_checker as body_checker
+from recording_admission_inventory_body_checker_test_support import install_historical_reads as install_body_checker_reads
 import recording_admission_inventory_native_control_fold as native
 import recording_admission_inventory_lexical_symbols as symbols
 from recording_admission_inventory_jubjub import digest
@@ -25,12 +27,13 @@ MANIFEST = inventory.BASELINE.with_name('recording_admission_inventory.native-co
 class NativeControlFoldTests(unittest.TestCase):
     def setUp(self):
         self.extension = json.loads(MANIFEST.read_text())
-        self.root = _Overlay(inventory.ROOT)
+        self.root = _Overlay(body_checker.latest_checkpoint(inventory.ROOT, inventory.BASELINE))
         self.bytes = inventory.BASELINE.read_bytes()
         self.baseline = json.loads(self.bytes)
         self.previous = {k: json.loads((inventory.ROOT / p).read_text())
                          for k, p in self.extension['predecessor_options'].items()}
         self.predecessor = native.predecessor_sources(self.root, self.extension)
+        install_body_checker_reads(self, inventory.ROOT, inventory.BASELINE)
 
     def report(self, **overrides):
         return inventory.verify(self.root, self.baseline, baseline_bytes=self.bytes,

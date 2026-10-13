@@ -12,6 +12,7 @@ from unittest import mock
 
 import recording_admission_inventory as inventory
 import recording_admission_inventory_generic_retirement as retirement
+import recording_admission_inventory_helper_discovery as helpers
 from test_recording_admission_inventory_generic_qualification import _Overlay
 
 MANIFEST = inventory.BASELINE.with_name('recording_admission_inventory.generic-retirement-618.json')
@@ -20,7 +21,10 @@ MANIFEST = inventory.BASELINE.with_name('recording_admission_inventory.generic-r
 class GenericRetirementTests(unittest.TestCase):
     def setUp(self):
         self.transition = json.loads(MANIFEST.read_text())
-        self.root = _Overlay(inventory.ROOT)
+        newest = inventory.BASELINE.with_name('recording_admission_inventory.helper-discovery-620.json')
+        self.source_root = (helpers.checkpoint(inventory.ROOT, json.loads(newest.read_text()))
+                            if newest.exists() else inventory.ROOT)
+        self.root = _Overlay(self.source_root)
         self.baseline_bytes = inventory.BASELINE.read_bytes()
         self.baseline = json.loads(self.baseline_bytes)
         self.previous = {
@@ -57,7 +61,7 @@ class GenericRetirementTests(unittest.TestCase):
         for label in ['owners', 'new_and_shared_sources', 'historical_manifests', 'oracle_authorities']:
             for owner in self.transition[label]:
                 with self.subTest(label=label, owner=owner):
-                    self.root.changes[owner] = (inventory.ROOT / owner).read_bytes() + b'\n'
+                    self.root.changes[owner] = (self.source_root / owner).read_bytes() + b'\n'
                     self.assertFalse(self.report()['passed'])
                     self.root.changes.clear()
 
@@ -67,7 +71,7 @@ class GenericRetirementTests(unittest.TestCase):
         self.assertEqual(len(original), 49)
         for row in original:
             with self.subTest(owner=row['path']):
-                self.root.changes[row['path']] = (inventory.ROOT / row['path']).read_bytes() + b'\n'
+                self.root.changes[row['path']] = (self.source_root / row['path']).read_bytes() + b'\n'
                 self.assertFalse(self.report()['passed'])
                 self.root.changes.clear()
 
@@ -106,7 +110,7 @@ class GenericRetirementTests(unittest.TestCase):
         ]
         for owner, before, after in mutations:
             with self.subTest(owner=owner, anchor=before):
-                source = (inventory.ROOT / owner).read_text()
+                source = (self.source_root / owner).read_text()
                 self.assertEqual(source.count(before), 1)
                 self.root.changes[owner] = source.replace(before, after, 1).encode()
                 with self.assertRaises(ValueError):
@@ -116,7 +120,7 @@ class GenericRetirementTests(unittest.TestCase):
 
     def test_unrelated_production_drift_stays_live(self):
         owner = retirement.BASE + '/helpers.rs'
-        self.root.changes[owner] = (inventory.ROOT / owner).read_bytes() + b'\n// drift\n'
+        self.root.changes[owner] = (self.source_root / owner).read_bytes() + b'\n// drift\n'
         self.assertFalse(self.report()['passed'])
 
     def test_cli_protects_transition_and_every_explicit_predecessor(self):

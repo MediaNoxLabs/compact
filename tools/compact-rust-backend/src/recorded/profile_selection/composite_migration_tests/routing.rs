@@ -22,14 +22,19 @@ fn actual_public_and_internal_helper_owners_are_composite_algebra() {
             "public {name}: {rows:?}"
         );
     }
-    // These expression calls are inlined into checked public roots. Shared helper
-    // discovery currently selects only Unit/Field interfaces, so exercise the real
-    // helper renderer separately rather than inventing a public discovery event.
-    assert!(
-        !rows
-            .iter()
-            .any(|r| r["circuit"] == "snapshot_helper" && r["phase"] == "helper_planning")
-    );
+    // Complete call facts now discover this struct-returning internal helper.
+    // Discovery preserves its visibility; checked composition still owns admission.
+    let discovered: Vec<_> = rows
+        .iter()
+        .filter(|r| r["circuit"] == "snapshot_helper" && r["phase"] == "helper_planning")
+        .collect();
+    assert!(!discovered.is_empty(), "actual helper discovery: {rows:?}");
+    for row in discovered {
+        assert_eq!(row["internal"], true);
+        assert_eq!(row["helper"], true);
+        assert_eq!(row["body_owner"], "algebra.ordinary");
+        assert_eq!(row["outcome"]["status"], "supported");
+    }
     let context = Context::new(&contract);
     let helper = contract
         .stateful_circuits

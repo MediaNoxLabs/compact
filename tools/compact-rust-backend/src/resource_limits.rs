@@ -19,6 +19,7 @@
 mod borrowed_types;
 mod policy;
 mod pure;
+mod recording_calls;
 use crate::ir::Contract;
 pub(crate) use borrowed_types::{
     recording_byte_payload_limit, recording_fixed_layout_limit, recording_pure_annotations,
@@ -26,6 +27,7 @@ pub(crate) use borrowed_types::{
 };
 use policy::{LimitError, Limits, ResourceKind as Kind, check};
 pub(crate) use pure::PureBodyBudget;
+pub(crate) use recording_calls::{recording_call_fact_limits, recording_call_targets};
 
 /// Resources have been checked, but an otherwise valid pure call cycle must
 /// still be refused before publishing the rendered source.

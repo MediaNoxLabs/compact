@@ -89,6 +89,7 @@ import recording_admission_inventory_single_admission as single_admission
 import recording_admission_inventory_start_funding as start_funding
 import recording_admission_inventory_generic_qualification as generic_qualification
 import recording_admission_inventory_generic_retirement as generic_retirement
+import recording_admission_inventory_helper_discovery as helper_discovery
 import recording_admission_inventory_jubjub as jubjub
 import recording_admission_inventory_calls as calls
 import recording_admission_inventory_terminal as terminal
@@ -360,7 +361,15 @@ def verify(root: Path, baseline: dict, strict_fingerprints: bool = False,
            single_admission_transition: dict | None = None,
            start_funding_transition: dict | None = None,
            generic_qualification_extension: dict | None = None,
-           generic_retirement_transition: dict | None = None) -> dict:
+           generic_retirement_transition: dict | None = None,
+           helper_discovery_transition: dict | None = None) -> dict:
+    if helper_discovery_transition is not None:
+        arguments = locals().copy()
+        arguments['helper_discovery_transition'] = None
+        def historical_verify(prior_root):
+            return verify(**{**arguments, 'root': prior_root})
+        return helper_discovery.verify_transition(
+            root, baseline, helper_discovery_transition, historical_verify, selector_signature)
     if generic_retirement_transition is not None:
         arguments = locals().copy()
         arguments['generic_retirement_transition'] = None
@@ -1415,6 +1424,8 @@ def referenced_authority_paths(root: Path, manifest: dict) -> list[Path]:
                  'reviewed_source_fingerprints'):
         paths.update(manifest.get(name, {}).keys())
     paths.update(manifest.get('predecessor_options', {}).values())
+    if manifest.get('helper_oracle', {}).get('path'):
+        paths.add(manifest['helper_oracle']['path'])
     oracle = manifest.get('original_oracle_preservation', {})
     if oracle.get('authority'):
         paths.add(oracle['authority'])
@@ -1511,6 +1522,7 @@ def main(argv=None) -> int:
     parser.add_argument('--start-funding-transition', type=Path, help='explicit #617 exclusive StartFunding fallback retirement')
     parser.add_argument('--generic-qualification-extension', type=Path, help='explicit #619 result-role and generic qualification; no retirement')
     parser.add_argument('--generic-retirement-transition', type=Path, help='explicit #618 complete generic fallback retirement; checked compiler refusals')
+    parser.add_argument('--helper-discovery-transition', type=Path, help='explicit #620 bounded semantic helper discovery and checked eligibility')
     args = parser.parse_args(argv)
     protected = [args.baseline] + ([args.transition] if args.transition else []) + ([args.instrumentation] if args.instrumentation else []) + ([args.jubjub_transition] if args.jubjub_transition else []) + ([args.call_extension] if args.call_extension else []) + ([args.terminal_transition] if args.terminal_transition else []) + ([args.unit_actions_transition] if args.unit_actions_transition else []) + ([args.context_query_transition] if args.context_query_transition else []) + ([args.kernel_transition] if args.kernel_transition else []) + ([args.composite_transition] if args.composite_transition else []) + ([args.receive_transition] if args.receive_transition else [])
     protected += [args.unit_domain_extension] if args.unit_domain_extension else []
@@ -1563,6 +1575,7 @@ def main(argv=None) -> int:
     protected += [args.start_funding_transition] if args.start_funding_transition else []
     protected += [args.generic_qualification_extension] if args.generic_qualification_extension else []
     protected += [args.generic_retirement_transition] if args.generic_retirement_transition else []
+    protected += [args.helper_discovery_transition] if args.helper_discovery_transition else []
     protected += [args.optional_write_transition] if args.optional_write_transition else []
     protected += [args.unit_composition_transition] if args.unit_composition_transition else []
     if args.output and any(args.output.resolve() == path.resolve() for path in protected):
@@ -1637,9 +1650,10 @@ def main(argv=None) -> int:
         start_funding_transition = json.loads(args.start_funding_transition.read_text()) if args.start_funding_transition else None
         generic_qualification_extension = json.loads(args.generic_qualification_extension.read_text()) if args.generic_qualification_extension else None
         generic_retirement_transition = json.loads(args.generic_retirement_transition.read_text()) if args.generic_retirement_transition else None
+        helper_discovery_transition = json.loads(args.helper_discovery_transition.read_text()) if args.helper_discovery_transition else None
         optional_write_transition = json.loads(args.optional_write_transition.read_text()) if args.optional_write_transition else None
         unit_composition_transition = json.loads(args.unit_composition_transition.read_text()) if args.unit_composition_transition else None
-        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension, voting_transition, phase_reset_transition, immediate_send_transition, zswap_transition, membership_transition, send_transition, observation_test_extension, merge_transition, guarded_deposit_transition, routing_test_extension, reset_payout_transition, shielded_payout_transition, inequality_test_extension, funded_mint_transition, keccak_test_extension, aligned_test_extension, encoding_extension, negation_test_extension, value_test_extension, unit_composition_transition, optional_write_transition, enum_advance_transition, witness_merkle_transition, organizer_transition, unsigned_product_transition, opaque_set_transition, unit_interface_extension, map_value_extension, guarded_map_transition, opaque_map_transition, resource_diagnostics_extension, empty_recording_extension, guarded_pure_transition, reachable_helpers_extension, key_only_map_removal_extension, asset_removal_transition, opaque_boolean_transition, opaque_field_transition, proved_set_sequence_transition, ordinary_interface_extension, storage_codec_extension, list_effects_extension, map_effects_extension, persistent_commit_extension, vector_map_extension, audited_local_transition, read_only_transition, single_admission_transition, start_funding_transition, generic_qualification_extension, generic_retirement_transition)
+        report = verify(args.root, baseline, args.strict_fingerprints, transition, baseline_bytes, instrumentation, jubjub_transition, call_extension, terminal_transition, unit_actions_transition, context_query_transition, kernel_transition, composite_transition, receive_transition, unit_domain_extension, voting_transition, phase_reset_transition, immediate_send_transition, zswap_transition, membership_transition, send_transition, observation_test_extension, merge_transition, guarded_deposit_transition, routing_test_extension, reset_payout_transition, shielded_payout_transition, inequality_test_extension, funded_mint_transition, keccak_test_extension, aligned_test_extension, encoding_extension, negation_test_extension, value_test_extension, unit_composition_transition, optional_write_transition, enum_advance_transition, witness_merkle_transition, organizer_transition, unsigned_product_transition, opaque_set_transition, unit_interface_extension, map_value_extension, guarded_map_transition, opaque_map_transition, resource_diagnostics_extension, empty_recording_extension, guarded_pure_transition, reachable_helpers_extension, key_only_map_removal_extension, asset_removal_transition, opaque_boolean_transition, opaque_field_transition, proved_set_sequence_transition, ordinary_interface_extension, storage_codec_extension, list_effects_extension, map_effects_extension, persistent_commit_extension, vector_map_extension, audited_local_transition, read_only_transition, single_admission_transition, start_funding_transition, generic_qualification_extension, generic_retirement_transition, helper_discovery_transition)
     except (OSError, ValueError, TypeError, KeyError) as error:
         parser.exit(2, f'inventory error: {error}\n')
     rendered = json.dumps(report, indent=2) + '\n'

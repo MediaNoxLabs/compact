@@ -11,6 +11,7 @@ import unittest
 import recording_admission_inventory as inventory
 import recording_admission_inventory_generic_qualification as qualification
 import recording_admission_inventory_generic_retirement as retirement
+import recording_admission_inventory_helper_discovery as helpers
 
 MANIFEST = inventory.BASELINE.with_name('recording_admission_inventory.generic-qualification-619.json')
 
@@ -40,11 +41,14 @@ class _Overlay:
 class GenericQualificationTests(unittest.TestCase):
     def setUp(self):
         self.extension = json.loads(MANIFEST.read_text())
+        newest = inventory.BASELINE.with_name('recording_admission_inventory.helper-discovery-620.json')
+        latest_root = (helpers.checkpoint(inventory.ROOT, json.loads(newest.read_text()))
+                       if newest.exists() else inventory.ROOT)
         outer = inventory.BASELINE.with_name('recording_admission_inventory.generic-retirement-618.json')
         # Historical qualification laws explicitly consume the authenticated
         # signed #619 snapshot; the outer gate checks all live retirement edits.
-        self.source_root = (retirement.checkpoint(inventory.ROOT, json.loads(outer.read_text()))
-                            if outer.exists() else inventory.ROOT)
+        self.source_root = (retirement.checkpoint(latest_root, json.loads(outer.read_text()))
+                            if outer.exists() else latest_root)
         self.root = _Overlay(self.source_root)
         self.baseline_bytes = inventory.BASELINE.read_bytes()
         self.baseline = json.loads(self.baseline_bytes)

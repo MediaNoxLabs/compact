@@ -16,9 +16,11 @@
 //! Discovery, stable naming and emission planning for shared recorded helpers.
 use super::*;
 
+pub(super) mod call_graph;
 #[cfg(test)]
 mod naming_tests;
 mod reachability;
+use call_graph::CallGraph;
 pub(crate) use reachability::retain_reachable_helpers;
 
 pub(super) fn helper_ident(
@@ -28,53 +30,8 @@ pub(super) fn helper_ident(
     crate::naming::recorded_helper_ident(name, circuits)
 }
 
-fn collect_field_callees(value: &Expr, names: &mut HashSet<String>) {
-    match value {
-        Expr::Call { name, .. } => {
-            names.insert(name.clone());
-        }
-        Expr::Add { left, right } => {
-            collect_field_callees(left, names);
-            collect_field_callees(right, names);
-        }
-        Expr::Coerce { value, ty } if *ty == Type::Field => {
-            collect_field_callees(value, names);
-        }
-        _ => {}
-    }
-}
-
-fn collect_shared_callees(action: &StateAction, names: &mut HashSet<String>) {
-    match action {
-        StateAction::CircuitCall { name, .. } => {
-            names.insert(name.clone());
-        }
-        StateAction::Sequence { actions } => {
-            for action in actions {
-                collect_shared_callees(action, names);
-            }
-        }
-        StateAction::If {
-            then, otherwise, ..
-        } => {
-            collect_shared_callees(then, names);
-            collect_shared_callees(otherwise, names);
-        }
-        StateAction::Let { bindings, action } => {
-            for binding in bindings {
-                if binding.ty == Type::Field {
-                    collect_field_callees(&binding.value, names);
-                }
-            }
-            collect_shared_callees(action, names);
-        }
-        StateAction::CellWrite { value, .. } => collect_field_callees(value, names),
-        _ => {}
-    }
-}
-
-/// Find recordable Unit and Field-value callees before emitting public entry points. Rendering each
-/// candidate without sharing also checks transitive support and rejects recursion.
+/// Plan optional sharing from bounded semantic call facts. Original declarations
+/// and complete checked helper rendering own admission, independently of shape.
 pub(crate) fn plan_recorded_helpers(
     ordered_circuits: &[StatefulCircuit],
     ledger_fields: &HashMap<&str, &LedgerField>,
@@ -84,54 +41,24 @@ pub(crate) fn plan_recorded_helpers(
 ) -> Result<(HashSet<String>, Vec<syn::Item>), RenderError> {
     #[cfg(test)]
     let _phase = admission_probe::trace::HelperPlanning::begin();
-    let mut roots_with_calls = HashSet::new();
-    for circuit in ordered_circuits.iter().filter(|circuit| !circuit.internal) {
-        let mut calls = HashSet::new();
-        for action in &circuit.actions {
-            collect_shared_callees(action, &mut calls);
-        }
-        if !calls.is_empty() {
-            roots_with_calls.insert(circuit.name.as_str());
-        }
-    }
-    if roots_with_calls.is_empty() {
+    let graph = CallGraph::from_declarations(ordered_circuits)?;
+    let roots: Vec<_> = ordered_circuits
+        .iter()
+        .enumerate()
+        .filter_map(|(index, circuit)| {
+            (!circuit.internal && graph.has_calls(index)).then_some(index)
+        })
+        .collect();
+    if roots.is_empty() {
         return Ok((HashSet::new(), Vec::new()));
     }
 
-    // A closed root can require a shared Unit continuation before the root is
-    // itself recordable. Validate prospective helpers first so admission does
-    // not depend on an unrelated exported circuit using the same helper.
-    let mut prospective = HashSet::new();
-    for circuit in ordered_circuits
-        .iter()
-        .filter(|circuit| roots_with_calls.contains(circuit.name.as_str()))
-    {
-        for action in &circuit.actions {
-            collect_shared_callees(action, &mut prospective);
-        }
-    }
-    loop {
-        let previous = prospective.len();
-        let current = prospective.clone();
-        for circuit in ordered_circuits
-            .iter()
-            .filter(|circuit| current.contains(&circuit.name))
-        {
-            for action in &circuit.actions {
-                collect_shared_callees(action, &mut prospective);
-            }
-        }
-        if prospective.len() == previous {
-            break;
-        }
-    }
+    // Preserve provisional helper validation before complete root previews.
+    // Original visibility remains intact: sharing never relaxes a public ABI.
+    let prospective = graph.reachable_from(roots.iter().copied());
     let mut provisional_names = HashSet::new();
-    for circuit in ordered_circuits {
-        let unit_body = circuit.result == Type::Unit && circuit.return_value == StateReturn::Unit;
-        let direct_field_body = circuit.result == Type::Field
-            && circuit.actions.is_empty()
-            && matches!(circuit.return_value, StateReturn::Expression { .. });
-        if !prospective.contains(&circuit.name) || !(unit_body || direct_field_body) {
+    for (index, circuit) in ordered_circuits.iter().enumerate() {
+        if !prospective[index] {
             continue;
         }
         if crate::located(circuit.source.as_ref(), || {
@@ -150,11 +77,11 @@ pub(crate) fn plan_recorded_helpers(
         }
     }
 
-    let mut candidates = HashSet::new();
-    for circuit in ordered_circuits
-        .iter()
-        .filter(|circuit| roots_with_calls.contains(circuit.name.as_str()))
-    {
+    // Only supported exported roots seed final optional sharing. Checked calls
+    // themselves inline and cannot depend on membership in this name set.
+    let mut supported_roots = Vec::new();
+    for index in roots {
+        let circuit = &ordered_circuits[index];
         let recorded = crate::located(circuit.source.as_ref(), || {
             render_recorded_circuit(
                 circuit,
@@ -165,35 +92,14 @@ pub(crate) fn plan_recorded_helpers(
                 &provisional_names,
             )
         })?;
-        if !recorded.is_supported() {
-            continue;
-        }
-        for action in &circuit.actions {
-            collect_shared_callees(action, &mut candidates);
+        if recorded.is_supported() {
+            supported_roots.push(index);
         }
     }
-    loop {
-        let previous = candidates.len();
-        let current = candidates.clone();
-        for circuit in ordered_circuits
-            .iter()
-            .filter(|circuit| current.contains(&circuit.name))
-        {
-            for action in &circuit.actions {
-                collect_shared_callees(action, &mut candidates);
-            }
-        }
-        if candidates.len() == previous {
-            break;
-        }
-    }
+    let candidates = graph.reachable_from(supported_roots);
     let mut names = HashSet::new();
-    for circuit in ordered_circuits {
-        let unit_body = circuit.result == Type::Unit && circuit.return_value == StateReturn::Unit;
-        let direct_field_body = circuit.result == Type::Field
-            && circuit.actions.is_empty()
-            && matches!(circuit.return_value, StateReturn::Expression { .. });
-        if !candidates.contains(&circuit.name) || !(unit_body || direct_field_body) {
+    for (index, circuit) in ordered_circuits.iter().enumerate() {
+        if !candidates[index] {
             continue;
         }
         if crate::located(circuit.source.as_ref(), || {

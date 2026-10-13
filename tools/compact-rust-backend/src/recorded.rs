@@ -54,7 +54,11 @@ mod guarded_map_migration_tests;
 mod guarded_mutations;
 #[cfg(test)]
 mod guarded_pure_migration_tests;
+#[cfg(test)]
+mod helper_discovery_tests;
 mod helpers;
+#[cfg(test)]
+mod helpers_reference;
 mod item;
 #[cfg(test)]
 mod opaque_map_migration_tests;
@@ -106,13 +110,10 @@ use std::collections::{HashMap, HashSet};
 #[cfg(test)]
 use crate::expression_with_calls;
 #[cfg(test)]
-use crate::ir::LedgerFieldKind;
-#[cfg(test)]
 use crate::ir::{CounterAmount, LocalBinding};
-use crate::ir::{
-    Expr, LedgerField, PureCircuit, StateAction, StateReturn, StatefulCircuit, Type,
-    WitnessDeclaration,
-};
+#[cfg(test)]
+use crate::ir::{Expr, LedgerFieldKind, StateAction, Type};
+use crate::ir::{LedgerField, PureCircuit, StateReturn, StatefulCircuit, WitnessDeclaration};
 #[cfg(test)]
 use crate::retained_value;
 use crate::stateful::circuit_uses_witness;

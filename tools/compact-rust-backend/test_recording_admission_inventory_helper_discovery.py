@@ -12,6 +12,7 @@ from unittest import mock
 
 import recording_admission_inventory as inventory
 import recording_admission_inventory_helper_discovery as helpers
+import recording_admission_inventory_native_tuple as native_tuple
 from test_recording_admission_inventory_generic_qualification import _Overlay
 
 MANIFEST = inventory.BASELINE.with_name('recording_admission_inventory.helper-discovery-620.json')
@@ -20,7 +21,8 @@ MANIFEST = inventory.BASELINE.with_name('recording_admission_inventory.helper-di
 class HelperDiscoveryTests(unittest.TestCase):
     def setUp(self):
         self.transition = json.loads(MANIFEST.read_text())
-        self.root = _Overlay(inventory.ROOT)
+        self.source_root = native_tuple.latest_checkpoint(inventory.ROOT, inventory.BASELINE)
+        self.root = _Overlay(self.source_root)
         self.baseline_bytes = inventory.BASELINE.read_bytes()
         self.baseline = json.loads(self.baseline_bytes)
         self.previous = {
@@ -60,7 +62,7 @@ class HelperDiscoveryTests(unittest.TestCase):
         for label in ('owners', 'new_and_shared_sources', 'historical_manifests', 'oracle_authorities'):
             for owner in self.transition[label]:
                 with self.subTest(label=label, owner=owner):
-                    self.root.changes[owner] = (inventory.ROOT / owner).read_bytes() + b'\n'
+                    self.root.changes[owner] = (self.source_root / owner).read_bytes() + b'\n'
                     self.assertFalse(self.report()['passed'])
                     self.root.changes.clear()
 
@@ -104,7 +106,7 @@ class HelperDiscoveryTests(unittest.TestCase):
                     mutations.append((owner, anchor, '// removed semantic boundary'))
         for owner, before, after in mutations:
             with self.subTest(owner=owner, anchor=before):
-                source = (inventory.ROOT / owner).read_text()
+                source = (self.source_root / owner).read_text()
                 self.assertEqual(source.count(before), 1)
                 self.root.changes[owner] = source.replace(before, after, 1).encode()
                 with self.assertRaises(ValueError):
@@ -125,7 +127,7 @@ class HelperDiscoveryTests(unittest.TestCase):
 
     def test_unrelated_compiler_drift_is_not_hidden(self):
         owner = helpers.SELECTOR
-        self.root.changes[owner] = (inventory.ROOT / owner).read_bytes() + b'\n// drift\n'
+        self.root.changes[owner] = (self.source_root / owner).read_bytes() + b'\n// drift\n'
         self.assertFalse(self.report()['passed'])
 
     def test_cli_protects_all_transitive_authorities_and_sources(self):

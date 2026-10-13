@@ -14,6 +14,7 @@ mod implicit_types;
 mod jubjub_value;
 mod naming;
 mod native_frame;
+mod native_representation;
 mod recorded;
 pub use recorded::{
     RecordingGap, RecordingGapCode, RecordingResource, RecordingResourceKind,
@@ -112,6 +113,13 @@ pub enum RenderError {
         operation: &'static str,
         max: String,
     },
+    /// An operation requires a trait the pinned Rust tuple carrier cannot provide.
+    UnsupportedTupleOperation {
+        operation: &'static str,
+        arity: usize,
+        limit: usize,
+        required_trait: &'static str,
+    },
     InvalidFieldLiteral(String),
     InvalidUnsignedLiteral {
         value: String,
@@ -203,6 +211,15 @@ impl fmt::Display for RenderError {
             Self::UnsupportedWideUnsignedOperation { operation, max } => write!(
                 f,
                 "unsupported wide Compact Uint {operation} for maximum {max:?}"
+            ),
+            Self::UnsupportedTupleOperation {
+                operation,
+                arity,
+                limit,
+                required_trait,
+            } => write!(
+                f,
+                "{operation} requires {required_trait}; tuple arity {arity} exceeds the supported maximum {limit}"
             ),
             Self::InvalidFieldLiteral(value) => {
                 write!(
@@ -1737,6 +1754,12 @@ fn pure_arithmetic_expression(
                     actual: right_ty,
                 });
             }
+            let operation = if matches!(expr, Expr::Equal { .. }) {
+                native_representation::Operation::Equal
+            } else {
+                native_representation::Operation::NotEqual
+            };
+            native_representation::check_tuple_traits(operation, &left_ty)?;
             let rendered = if matches!(expr, Expr::Equal { .. }) {
                 syn::parse_quote!(#left == #right)
             } else {
@@ -1784,6 +1807,10 @@ fn pure_crypto_expression(
     match expr {
         Expr::TransientHash { value } => {
             let (value, value_type) = expression_with_calls(value, parameters, circuits)?;
+            native_representation::check_tuple_traits(
+                native_representation::Operation::TransientHash,
+                &value_type,
+            )?;
             let value = hash_input::syntax(value, &value_type);
             Ok((
                 syn::parse_quote!(runtime::transient_hash(#value)),
@@ -1792,7 +1819,6 @@ fn pure_crypto_expression(
         }
         Expr::TransientCommit { value, opening } => {
             let (value, value_type) = expression_with_calls(value, parameters, circuits)?;
-            let value = hash_input::syntax(value, &value_type);
             let (opening, actual) = expression_with_calls(opening, parameters, circuits)?;
             if actual != Type::Field {
                 return Err(RenderError::TypeMismatch {
@@ -1800,27 +1826,40 @@ fn pure_crypto_expression(
                     actual,
                 });
             }
+            native_representation::check_tuple_traits(
+                native_representation::Operation::TransientCommit,
+                &value_type,
+            )?;
+            let value = hash_input::syntax(value, &value_type);
             Ok((
                 syn::parse_quote!(runtime::transient_commit(#value, #opening)),
                 Type::Field,
             ))
         }
         Expr::PersistentHash { value } => {
-            let (value, _) = expression_with_calls(value, parameters, circuits)?;
+            let (value, value_type) = expression_with_calls(value, parameters, circuits)?;
+            native_representation::check_tuple_traits(
+                native_representation::Operation::PersistentHash,
+                &value_type,
+            )?;
             Ok((
                 syn::parse_quote!(runtime::persistent_hash(#value)),
                 Type::Bytes { length: 32 },
             ))
         }
         Expr::Keccak256 { value } => {
-            let (value, _) = expression_with_calls(value, parameters, circuits)?;
+            let (value, value_type) = expression_with_calls(value, parameters, circuits)?;
+            native_representation::check_tuple_traits(
+                native_representation::Operation::Keccak256,
+                &value_type,
+            )?;
             Ok((
                 syn::parse_quote!(runtime::keccak256(#value)),
                 Type::Bytes { length: 32 },
             ))
         }
         Expr::PersistentCommit { value, opening } => {
-            let (value, _) = expression_with_calls(value, parameters, circuits)?;
+            let (value, value_type) = expression_with_calls(value, parameters, circuits)?;
             let (opening, actual) = expression_with_calls(opening, parameters, circuits)?;
             if actual != (Type::Bytes { length: 32 }) {
                 return Err(RenderError::TypeMismatch {
@@ -1828,6 +1867,10 @@ fn pure_crypto_expression(
                     actual,
                 });
             }
+            native_representation::check_tuple_traits(
+                native_representation::Operation::PersistentCommit,
+                &value_type,
+            )?;
             Ok((
                 syn::parse_quote!(runtime::persistent_commit(#value, #opening)),
                 Type::Bytes { length: 32 },
@@ -1861,6 +1904,10 @@ fn pure_crypto_expression(
         }
         Expr::HashToCurve { value } => {
             let (value, value_type) = expression_with_calls(value, parameters, circuits)?;
+            native_representation::check_tuple_traits(
+                native_representation::Operation::HashToCurve,
+                &value_type,
+            )?;
             let value = hash_input::syntax(value, &value_type);
             Ok((
                 syn::parse_quote!(runtime::hash_to_curve(#value)),

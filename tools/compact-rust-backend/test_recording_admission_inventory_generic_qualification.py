@@ -12,6 +12,7 @@ import recording_admission_inventory as inventory
 import recording_admission_inventory_generic_qualification as qualification
 import recording_admission_inventory_generic_retirement as retirement
 import recording_admission_inventory_helper_discovery as helpers
+import recording_admission_inventory_native_tuple as native_tuple
 
 MANIFEST = inventory.BASELINE.with_name('recording_admission_inventory.generic-qualification-619.json')
 
@@ -42,8 +43,9 @@ class GenericQualificationTests(unittest.TestCase):
     def setUp(self):
         self.extension = json.loads(MANIFEST.read_text())
         newest = inventory.BASELINE.with_name('recording_admission_inventory.helper-discovery-620.json')
-        latest_root = (helpers.checkpoint(inventory.ROOT, json.loads(newest.read_text()))
-                       if newest.exists() else inventory.ROOT)
+        current_root = native_tuple.latest_checkpoint(inventory.ROOT, inventory.BASELINE)
+        latest_root = (helpers.checkpoint(current_root, json.loads(newest.read_text()))
+                       if newest.exists() else current_root)
         outer = inventory.BASELINE.with_name('recording_admission_inventory.generic-retirement-618.json')
         # Historical qualification laws explicitly consume the authenticated
         # signed #619 snapshot; the outer gate checks all live retirement edits.

@@ -13,6 +13,7 @@ from unittest import mock
 import recording_admission_inventory as inventory
 import recording_admission_inventory_generic_retirement as retirement
 import recording_admission_inventory_helper_discovery as helpers
+import recording_admission_inventory_native_tuple as native_tuple
 from test_recording_admission_inventory_generic_qualification import _Overlay
 
 MANIFEST = inventory.BASELINE.with_name('recording_admission_inventory.generic-retirement-618.json')
@@ -22,8 +23,9 @@ class GenericRetirementTests(unittest.TestCase):
     def setUp(self):
         self.transition = json.loads(MANIFEST.read_text())
         newest = inventory.BASELINE.with_name('recording_admission_inventory.helper-discovery-620.json')
-        self.source_root = (helpers.checkpoint(inventory.ROOT, json.loads(newest.read_text()))
-                            if newest.exists() else inventory.ROOT)
+        latest_root = native_tuple.latest_checkpoint(inventory.ROOT, inventory.BASELINE)
+        self.source_root = (helpers.checkpoint(latest_root, json.loads(newest.read_text()))
+                            if newest.exists() else latest_root)
         self.root = _Overlay(self.source_root)
         self.baseline_bytes = inventory.BASELINE.read_bytes()
         self.baseline = json.loads(self.baseline_bytes)

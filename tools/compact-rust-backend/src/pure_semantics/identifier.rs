@@ -18,7 +18,8 @@
 //! Rules adapted from syn 2.0.117 `src/ident.rs` and proc-macro2 1.0.106
 //! `src/parse.rs`, `src/fallback.rs` (David Tolnay and contributors), under
 //! their Apache-2.0 license option. This specialized scanner preserves the
-//! existing parser contract; it does not parse arbitrary Rust token streams.
+//! existing lexical acceptance contract; it does not parse arbitrary Rust token
+//! streams. Validated names also carry Rust 2024 target escaping (ADR0476).
 //!
 //! Callers retain the compiler's borrowed source-resource gates. Scanning is
 //! linear in source bytes, comments use constant stack space, and allocation
@@ -61,7 +62,11 @@ pub(crate) fn check_name(name: &str) -> Result<CheckedName, RenderError> {
         .or_else(|| parse_raw_retry(&normalized))
         .map(|(text, raw)| CheckedName {
             text: text.to_owned(),
-            raw,
+            // The generated crate's fixed target edition is Rust 2024. `gen`
+            // is accepted by the pinned old lexer but reserved by that target.
+            // Escaping happens after acceptance, preserving lexical refusals
+            // and the semantic collision key for every source spelling.
+            raw: raw || text == "gen",
         })
         .ok_or_else(|| RenderError::InvalidIdentifier(name.to_owned()))
 }

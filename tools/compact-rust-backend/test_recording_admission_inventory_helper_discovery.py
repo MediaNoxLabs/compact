@@ -11,6 +11,7 @@ import unittest
 from unittest import mock
 
 import recording_admission_inventory as inventory
+import recording_admission_inventory_target_edition as target_edition
 import recording_admission_inventory_shared_pure as shared_pure
 import recording_admission_inventory_helper_discovery as helpers
 import recording_admission_inventory_native_tuple as native_tuple
@@ -22,7 +23,8 @@ MANIFEST = inventory.BASELINE.with_name('recording_admission_inventory.helper-di
 class HelperDiscoveryTests(unittest.TestCase):
     def setUp(self):
         self.transition = json.loads(MANIFEST.read_text())
-        latest_root = shared_pure.latest_checkpoint(inventory.ROOT, inventory.BASELINE)
+        latest_root = target_edition.latest_checkpoint(inventory.ROOT, inventory.BASELINE)
+        latest_root = shared_pure.latest_checkpoint(latest_root, inventory.BASELINE)
         self.source_root = native_tuple.latest_checkpoint(latest_root, inventory.BASELINE)
         self.root = _Overlay(self.source_root)
         self.baseline_bytes = inventory.BASELINE.read_bytes()

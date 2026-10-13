@@ -22,7 +22,16 @@ use crate::{RenderError, naming};
 mod reference;
 
 fn compare(name: &str) {
-    let old = reference::ident(name).map(|identifier| identifier.to_string());
+    let old = reference::ident(name).map(|identifier| {
+        let spelling = identifier.to_string();
+        // ADR0476 / #626: one deliberately corrected target spelling. The
+        // frozen oracle still decides acceptance, errors and semantic keys.
+        if spelling == "gen" {
+            "r#gen".to_owned()
+        } else {
+            spelling
+        }
+    });
     let new = check_name(name).map(|name| naming::checked_ident(&name).to_string());
     assert_eq!(new, old, "rendered identifier for {name:?}");
     assert_eq!(
@@ -263,6 +272,8 @@ fn normalized_namespace_collisions_match_old_semantic_keys() {
         ("a$b", "a_b"),
         ("foo", "r#foo"),
         ("type", "r#type"),
+        ("gen", "r#gen"),
+        ("/* comment */gen", "gen"),
         ("/* comment */foo", "foo"),
         ("\u{feff}foo", "foo"),
         ("é", "r#é"),
@@ -291,3 +302,6 @@ fn normalized_namespace_collisions_match_old_semantic_keys() {
         naming::validate_circuit_function_namespace([(composed, None), (decomposed, None)]).is_ok()
     );
 }
+
+#[path = "tests/edition_2024.rs"]
+mod edition_2024;

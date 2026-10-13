@@ -11,6 +11,7 @@ import unittest
 from unittest import mock
 
 import recording_admission_inventory as inventory
+import recording_admission_inventory_target_edition as target_edition
 import recording_admission_inventory_shared_pure as shared
 from test_recording_admission_inventory_generic_qualification import _Overlay
 
@@ -20,7 +21,8 @@ MANIFEST = inventory.BASELINE.with_name('recording_admission_inventory.shared-pu
 class SharedPureTests(unittest.TestCase):
     def setUp(self):
         self.extension = json.loads(MANIFEST.read_text())
-        self.root = _Overlay(inventory.ROOT)
+        self.source_root = target_edition.latest_checkpoint(inventory.ROOT, inventory.BASELINE)
+        self.root = _Overlay(self.source_root)
         self.baseline_bytes = inventory.BASELINE.read_bytes()
         self.baseline = json.loads(self.baseline_bytes)
         self.previous = {key: json.loads((inventory.ROOT / path).read_text())
@@ -66,7 +68,7 @@ class SharedPureTests(unittest.TestCase):
         paths.add(shared.SELECTOR)
         for owner in paths:
             with self.subTest(owner=owner):
-                self.root.changes[owner] = (inventory.ROOT / owner).read_bytes() + b'\n'
+                self.root.changes[owner] = (self.source_root / owner).read_bytes() + b'\n'
                 self.assertFalse(self.report()['passed'])
                 self.root.changes.clear()
 
@@ -92,7 +94,7 @@ class SharedPureTests(unittest.TestCase):
                     shared.checkpoint(self.root, forged)
 
     def mutation(self, owner, before, after):
-        source = (inventory.ROOT / owner).read_text()
+        source = (self.source_root / owner).read_text()
         self.assertEqual(source.count(before), 1)
         self.root.changes[owner] = source.replace(before, after, 1).encode()
         with self.assertRaises(ValueError):
@@ -147,7 +149,7 @@ class SharedPureTests(unittest.TestCase):
         result = shared.dependency_closure(self.root, self.predecessor)
         self.assertEqual(set(result), {'Cargo.lock', 'tools/compact-rust-backend/Cargo.lock'})
         for owner in result:
-            source = (inventory.ROOT / owner).read_text()
+            source = (self.source_root / owner).read_text()
             package = 'name = "unicode-ident"\nversion = "1.0.24"'
             self.assertEqual(source.count(package), 1)
             for replacement in ('name = "unicode-ident"\nversion = "1.0.25"',

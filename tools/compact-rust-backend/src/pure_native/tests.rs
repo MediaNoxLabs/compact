@@ -18,6 +18,7 @@ use std::collections::HashMap;
 mod differential;
 mod execution;
 mod item_assembly;
+mod local_symbols;
 mod old_oracle;
 mod prepared;
 mod shared_aggregate;

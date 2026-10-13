@@ -1178,7 +1178,7 @@ fn pure_control_fragment(
             let mut locals = parameters.clone();
             let mut statements = Vec::<syn::Stmt>::new();
             for binding in bindings {
-                ident(&binding.name)?;
+                let checked_name = pure_semantics::identifier::check_name(&binding.name)?;
                 let (value, actual) = expression_with_calls(&binding.value, &locals, circuits)?;
                 if actual != binding.ty {
                     return Err(RenderError::TypeMismatch {
@@ -1187,9 +1187,10 @@ fn pure_control_fragment(
                     });
                 }
                 let local_ty = rust_type(&binding.ty)?;
-                let local_name = syn::Ident::new(
-                    &format!("__compact_local_{}", binding.name),
-                    Span::call_site(),
+                let local_name = pure_native::local::allocate(
+                    &checked_name,
+                    &binding.name,
+                    locals.iter().map(|(key, (_, symbol))| (*key, symbol)),
                 );
                 statements.push(syn::parse_quote!(let #local_name: #local_ty = #value;));
                 locals.insert(binding.name.as_str(), (&binding.ty, local_name));

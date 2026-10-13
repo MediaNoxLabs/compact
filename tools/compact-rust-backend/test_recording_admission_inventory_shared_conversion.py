@@ -10,6 +10,8 @@ from pathlib import Path
 import unittest
 from unittest import mock
 import recording_admission_inventory as inventory
+import recording_admission_inventory_lexical_symbols as lexical_symbols
+from recording_admission_inventory_lexical_symbols_test_support import install_historical_reads as install_symbol_reads
 import recording_admission_inventory_shared_aggregate as shared_aggregate
 from recording_admission_inventory_shared_aggregate_test_support import install_historical_reads as install_aggregate_reads
 import recording_admission_inventory_shared_crypto as shared_crypto
@@ -34,12 +36,14 @@ class SharedConversionTests(unittest.TestCase):
         self.extension = json.loads(MANIFEST.read_text())
         self.root = _Overlay(shared_arithmetic.latest_checkpoint(
             shared_crypto.latest_checkpoint(
-            shared_aggregate.latest_checkpoint(inventory.ROOT, inventory.BASELINE), inventory.BASELINE), inventory.BASELINE))
+            shared_aggregate.latest_checkpoint(
+            lexical_symbols.latest_checkpoint(inventory.ROOT, inventory.BASELINE), inventory.BASELINE), inventory.BASELINE), inventory.BASELINE))
         self.bytes = inventory.BASELINE.read_bytes()
         self.baseline = json.loads(self.bytes)
         self.previous = {k: json.loads((inventory.ROOT / p).read_text())
                          for k, p in self.extension['predecessor_options'].items()}
         self.predecessor = conversion.predecessor_sources(self.root, self.extension)
+        install_symbol_reads(self, inventory.ROOT, inventory.BASELINE)
         install_aggregate_reads(self, inventory.ROOT, inventory.BASELINE)
         install_crypto_reads(self, inventory.ROOT, inventory.BASELINE)
         install_arithmetic_reads(self, inventory.ROOT, inventory.BASELINE)

@@ -24,6 +24,7 @@ use crate::ir::{
     ComparisonOperator, Expr, LedgerField, LedgerFieldKind, NativeWitnessBuiltin, PureCircuit,
     StatefulCircuit, StructField, Type, WitnessDeclaration,
 };
+use crate::native_representation;
 use crate::{
     RenderError, UnsignedMaximum, coerce_expression, condition_needs_statement, discard_expression,
     expression_with_calls, field_to_bytes_32_syntax, ident, ledger_path_expr,
@@ -1663,6 +1664,12 @@ fn render_arithmetic_operation(
                     actual: right_ty,
                 });
             }
+            let operation = if matches!(value, Expr::Equal { .. }) {
+                native_representation::Operation::Equal
+            } else {
+                native_representation::Operation::NotEqual
+            };
+            native_representation::check_tuple_traits(operation, &left_ty)?;
             let rendered = if matches!(value, Expr::Equal { .. }) {
                 syn::parse_quote!(#left_name == #right)
             } else {
@@ -1830,16 +1837,32 @@ fn render_crypto_operation(
             )?;
             let (operation, result): (syn::Path, Type) = match value {
                 Expr::TransientHash { .. } => {
+                    native_representation::check_tuple_traits(
+                        native_representation::Operation::TransientHash,
+                        &actual,
+                    )?;
                     (syn::parse_quote!(runtime::transient_hash), Type::Field)
                 }
-                Expr::PersistentHash { .. } => (
-                    syn::parse_quote!(runtime::persistent_hash),
-                    Type::Bytes { length: 32 },
-                ),
-                Expr::Keccak256 { .. } => (
-                    syn::parse_quote!(runtime::keccak256),
-                    Type::Bytes { length: 32 },
-                ),
+                Expr::PersistentHash { .. } => {
+                    native_representation::check_tuple_traits(
+                        native_representation::Operation::PersistentHash,
+                        &actual,
+                    )?;
+                    (
+                        syn::parse_quote!(runtime::persistent_hash),
+                        Type::Bytes { length: 32 },
+                    )
+                }
+                Expr::Keccak256 { .. } => {
+                    native_representation::check_tuple_traits(
+                        native_representation::Operation::Keccak256,
+                        &actual,
+                    )?;
+                    (
+                        syn::parse_quote!(runtime::keccak256),
+                        Type::Bytes { length: 32 },
+                    )
+                }
                 Expr::DegradeToTransient { .. } => {
                     if actual != (Type::Bytes { length: 32 }) {
                         return Err(RenderError::TypeMismatch {
@@ -1865,6 +1888,10 @@ fn render_crypto_operation(
                     )
                 }
                 Expr::HashToCurve { .. } => {
+                    native_representation::check_tuple_traits(
+                        native_representation::Operation::HashToCurve,
+                        &actual,
+                    )?;
                     (syn::parse_quote!(runtime::hash_to_curve), Type::JubjubPoint)
                 }
                 Expr::JubjubPointX { .. } | Expr::JubjubPointY { .. } | Expr::EcNeg { .. } => {
@@ -1958,6 +1985,12 @@ fn render_crypto_operation(
             if actual != expected {
                 return Err(RenderError::TypeMismatch { expected, actual });
             }
+            let tuple_operation = if matches!(value, Expr::TransientCommit { .. }) {
+                native_representation::Operation::TransientCommit
+            } else {
+                native_representation::Operation::PersistentCommit
+            };
+            native_representation::check_tuple_traits(tuple_operation, &input_type)?;
             let input = if matches!(value, Expr::TransientCommit { .. }) {
                 crate::hash_input::syntax(syn::parse_quote!(#input_name), &input_type)
             } else {
@@ -2067,3 +2100,6 @@ fn render_crypto_operation(
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod tuple_capabilities;

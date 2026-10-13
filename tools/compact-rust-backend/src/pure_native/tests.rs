@@ -17,8 +17,10 @@ use std::collections::HashMap;
 
 mod differential;
 mod execution;
+mod item_assembly;
 mod old_oracle;
 mod prepared;
+mod shared_aggregate;
 mod shared_arithmetic;
 mod shared_conversion;
 mod shared_crypto;

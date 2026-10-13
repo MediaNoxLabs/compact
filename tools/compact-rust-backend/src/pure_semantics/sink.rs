@@ -111,3 +111,16 @@ pub(crate) trait ArithmeticSink: LeafSink {
 pub(crate) trait CryptoSink: LeafSink {
     fn crypto(&mut self, checked: super::crypto::CheckedCrypto<Self::Value>) -> Self::Value;
 }
+
+/// Aggregate syntax and lexical symbols consume checked facts only.
+pub(crate) trait AggregateSink: LeafSink {
+    fn binding(&mut self, name: &CheckedName) -> Self::Binding;
+    fn aggregate(
+        &mut self,
+        checked: super::aggregate::CheckedAggregate<
+            Self::Value,
+            Self::Binding,
+            <Self::Carriers as CarrierSink>::Value,
+        >,
+    ) -> Self::Value;
+}

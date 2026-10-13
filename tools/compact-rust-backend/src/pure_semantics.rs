@@ -26,3 +26,6 @@ pub(crate) mod arithmetic;
 pub(crate) mod crypto;
 pub(crate) mod hash_encoding;
 pub(crate) mod jubjub;
+
+pub(crate) mod aggregate;
+pub(crate) mod declarations;

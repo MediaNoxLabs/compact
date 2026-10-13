@@ -13,3 +13,17 @@ pub(crate) trait Children<S: LeafSink> {
     /// existing borrowed source/declaration gates retain their error order.
     fn visit(&mut self, source: &Expr, sink: &mut S) -> Result<Typed<S::Value>, RenderError>;
 }
+
+/// One lexical body visit with a borrowed annotation and consumer-owned symbol.
+/// Implementations overlay the original source key and restore outer scope;
+/// they do not validate the name/type or mutate the caller's bindings.
+pub(crate) trait ScopedChildren<S: super::sink::AggregateSink>: Children<S> {
+    fn visit_bound(
+        &mut self,
+        source: &Expr,
+        source_key: &str,
+        ty: &crate::ir::Type,
+        binding: &S::Binding,
+        sink: &mut S,
+    ) -> Result<Typed<S::Value>, RenderError>;
+}

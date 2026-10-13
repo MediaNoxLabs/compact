@@ -40,3 +40,21 @@ impl Children<NativeLeafSink> for NativeChildren<'_, '_> {
         Ok(Typed { output, ty })
     }
 }
+
+impl crate::pure_semantics::children::ScopedChildren<NativeLeafSink> for NativeChildren<'_, '_> {
+    fn visit_bound(
+        &mut self,
+        source: &Expr,
+        source_key: &str,
+        ty: &Type,
+        binding: &syn::Ident,
+        _: &mut NativeLeafSink,
+    ) -> Result<Typed<syn::Expr>, RenderError> {
+        // Reborrow inherited entries into this shorter body scope. Only binding
+        // symbols are cloned, matching the old map overlay; no Type is cloned.
+        let mut scope: HashMap<&str, (&Type, syn::Ident)> = self.bindings.clone();
+        scope.insert(source_key, (ty, binding.clone()));
+        let (output, ty) = crate::expression_with_calls(source, &scope, self.declarations)?;
+        Ok(Typed { output, ty })
+    }
+}

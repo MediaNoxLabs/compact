@@ -179,10 +179,23 @@ pub(crate) fn copy_type(ty: &Type) -> bool {
 
 /// Keep an owned value available at an emission boundary without cloning Copy types.
 pub(crate) fn retained_value(value: syn::Expr, ty: &Type) -> syn::Expr {
-    if copy_type(ty) {
-        value
+    use crate::pure_semantics::ownership::Ownership;
+    let ownership = if copy_type(ty) {
+        Ownership::Copy
     } else {
-        syn::parse_quote!((#value).clone())
+        Ownership::Owned
+    };
+    retained_value_with_ownership(value, ownership)
+}
+
+/// Output-only retention; the semantic owner has already chosen ownership.
+pub(crate) fn retained_value_with_ownership(
+    value: syn::Expr,
+    ownership: crate::pure_semantics::ownership::Ownership,
+) -> syn::Expr {
+    match ownership {
+        crate::pure_semantics::ownership::Ownership::Copy => value,
+        crate::pure_semantics::ownership::Ownership::Owned => syn::parse_quote!((#value).clone()),
     }
 }
 

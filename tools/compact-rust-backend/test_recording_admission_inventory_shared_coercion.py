@@ -10,6 +10,8 @@ from pathlib import Path
 import unittest
 from unittest import mock
 import recording_admission_inventory as inventory
+import recording_admission_inventory_shared_aggregate as shared_aggregate
+from recording_admission_inventory_shared_aggregate_test_support import install_historical_reads as install_aggregate_reads
 import recording_admission_inventory_shared_crypto as shared_crypto
 from recording_admission_inventory_shared_crypto_test_support import install_historical_reads as install_crypto_reads
 import recording_admission_inventory_shared_arithmetic as shared_arithmetic
@@ -30,13 +32,15 @@ class SharedCoercionTests(unittest.TestCase):
             shared_leaf.latest_checkpoint(
             shared_conversion.latest_checkpoint(
             shared_arithmetic.latest_checkpoint(
-            shared_crypto.latest_checkpoint(inventory.ROOT, inventory.BASELINE), inventory.BASELINE), inventory.BASELINE), inventory.BASELINE), inventory.BASELINE)
+            shared_crypto.latest_checkpoint(
+            shared_aggregate.latest_checkpoint(inventory.ROOT, inventory.BASELINE), inventory.BASELINE), inventory.BASELINE), inventory.BASELINE), inventory.BASELINE), inventory.BASELINE)
         self.root = _Overlay(self.source_root)
         self.bytes = inventory.BASELINE.read_bytes()
         self.baseline = json.loads(self.bytes)
         self.previous = {key: json.loads((inventory.ROOT / path).read_text())
                          for key, path in self.extension['predecessor_options'].items()}
         self.predecessor = coercion.predecessor_sources(self.root, self.extension)
+        install_aggregate_reads(self, inventory.ROOT, inventory.BASELINE)
         install_crypto_reads(self, inventory.ROOT, inventory.BASELINE)
         install_arithmetic_reads(self, inventory.ROOT, inventory.BASELINE)
         install_historical_reads(self, inventory.ROOT, inventory.BASELINE)

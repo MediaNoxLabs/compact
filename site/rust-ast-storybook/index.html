@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="The evidence-backed story of the Compact Rust backend, from ledger-8 and text emission to typed Rust ASTs and checked recording effects." />
+    <meta name="theme-color" content="#0a0d12" />
+    <title>From source to proof · The Compact Rust journey</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a0d12'/%3E%3Cpath d='M13 18h19l8 8v20H13z' fill='none' stroke='%2378e6c3' stroke-width='4'/%3E%3Cpath d='M32 18v10h10M20 35h15M20 42h11' stroke='%23f5b85b' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script defer src="./data.js"></script>
+    <script defer src="./app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to the story</a>
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="Compact Rust journey, top">
+        <span class="brand-glyph" aria-hidden="true">⌁</span>
+        <span>COMPACT / RUST</span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="#journey">Journey</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#examples">Generated Rust</a>
+        <a href="#domain">Domain model</a>
+        <a href="#evidence">Evidence</a>
+        <a href="#errors">Errors &amp; gas</a>
+      </nav>
+      <button class="theme-button" id="theme-toggle" type="button" aria-label="Switch color theme" aria-pressed="false">
+        <span aria-hidden="true">◐</span>
+      </button>
+    </header>
+
+    <main id="main">
+      <section class="hero" id="top">
+        <div class="hero-grid" aria-hidden="true"></div>
+        <div class="hero-copy">
+          <p class="overline">AN ENGINEERING STORYBOOK · LEDGER-8 → CHECKED EFFECTS</p>
+          <h1>From source<br />to <em>proof.</em></h1>
+          <p class="hero-lede">How one Compact-to-Rust experiment became a typed compiler backend—and why its recording system had to learn operations instead of memorizing programs.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#journey">Read the story <span aria-hidden="true">↓</span></a>
+            <a class="button ghost" href="#architecture">Explore the architecture <span aria-hidden="true">↗</span></a>
+          </div>
+        </div>
+        <div class="hero-orbit" aria-label="Four stages: ledger-8, original Rust, Rust AST and effect algebra">
+          <div class="orbit-core"><span>COMPACT</span><strong>one source</strong></div>
+          <div class="orbit-ring ring-one"></div>
+          <div class="orbit-ring ring-two"></div>
+          <div class="orbit-node node-a"><b>00</b><span>ledger-8</span></div>
+          <div class="orbit-node node-b"><b>01</b><span>text emitter</span></div>
+          <div class="orbit-node node-c"><b>02</b><span>typed AST</span></div>
+          <div class="orbit-node node-d"><b>03</b><span>effect plan</span></div>
+        </div>
+        <div class="cutoff-strip">
+          <span><b>PUBLIC BASELINE</b> Rust-AST 0.3 closed</span>
+          <span><b>PROTOTYPE CUTOFF</b> <code>f3cef799</code> · 2026-10-14</span>
+          <span class="status-live"><i></i> EA13 qualification still open</span>
+        </div>
+      </section>
+
+      <section class="intro-band">
+        <p class="intro-quote">“The hard part was never printing Rust. It was deciding which layer is allowed to know what.”</p>
+        <div class="intro-facts">
+          <div><strong>4</strong><span>architectural eras</span></div>
+          <div><strong>360</strong><span>published ADRs through 0.3</span></div>
+          <div><strong>202</strong><span>retained prototype source outputs</span></div>
+          <div><strong>7</strong><span>evidence stages kept distinct</span></div>
+        </div>
+      </section>
+
+      <section class="chapter examples" id="examples" aria-labelledby="examples-title">
+        <header class="chapter-head">
+          <div class="chapter-tag">00 / GENERATED RUST · COLD OPEN</div>
+          <div><h2 id="examples-title">Read the transformation, not just the diagram</h2><p>These shortened excerpts come from the checked-in <code>tiny_oracle</code> Compact source and its generated ABI-50 Rust library.</p></div>
+        </header>
+        <div class="example-tabs" role="tablist" aria-label="Generated Rust example">
+          <button type="button" class="example-tab is-active" data-example="state" aria-selected="true">Stateful set</button>
+          <button type="button" class="example-tab" data-example="recording" aria-selected="false">Recorded get</button>
+          <button type="button" class="example-tab" data-example="types" aria-selected="false">Generated types</button>
+          <button type="button" class="example-tab" data-example="consumer" aria-selected="false">Consumer facade</button>
+        </div>
+        <div class="code-compare" role="tabpanel" aria-live="polite">
+          <article>
+            <div class="code-head"><span>COMPACT SOURCE</span><b id="example-source-label">circuit set</b></div>
+            <pre><code id="example-source-code">circuit set(v: Field): [] {
+  assert(in_state(STATE.unset),
+    "set: attempted to overwrite recorded value");
+  const sk = private$secret_key();
+  authority = public_key(sk);
+  value = disclose(v);
+  state = STATE.set;
+}</code></pre>
+          </article>
+          <article>
+            <div class="code-head"><span>GENERATED RUST · SHORTENED</span><b id="example-rust-label">native path</b></div>
+            <pre><code id="example-rust-code">let prior = in_state(context, STATE::unset)?;
+context = prior.context;
+total_cost += prior.gas_cost;
+if !prior.result {
+    return Err(CompactError::AssertionFailed(message));
+}
+let step = ledger_slots::value.write(context, v)?;
+context = step.context;
+total_cost += step.gas_cost;</code></pre>
+          </article>
+        </div>
+        <div class="example-annotation">
+          <span>WHAT CHANGED</span>
+          <p id="example-note">The source assertion becomes a typed runtime error; the slot owns the ledger operation; the generated body preserves source order and accumulates actual query cost.</p>
+          <a href="https://github.com/MediaNoxLabs/compact/blob/46fdf0895a012a50250d9b8f3c0b49e49de48b00/tests-rust-backend/tiny-oracle/lib.rs">Open complete generated library ↗</a>
+        </div>
+      </section>
+
+      <section class="chapter domain" id="domain" aria-labelledby="domain-title">
+        <header class="chapter-head">
+          <div class="chapter-tag">01 / RUNTIME DOMAIN MODEL</div>
+          <div><h2 id="domain-title">The types tell you who owns the truth</h2><p>Execution, recording and transaction preparation are different objects because they authenticate different facts.</p></div>
+        </header>
+        <div class="domain-flow" aria-label="Runtime domain model from generated contract to ledger application">
+          <div class="domain-node source"><span>GENERATED CONTRACT</span><b>types · slots · witnesses</b><small>source-shaped API</small></div>
+          <i aria-hidden="true">→</i>
+          <div class="domain-node native"><span>NATIVE</span><b>CircuitContext</b><small>state · query · gas · intents</small></div>
+          <i aria-hidden="true">→</i>
+          <div class="domain-node record"><span>RECORDED</span><b>RecordedCircuitResult</b><small>execution + PublicTrace</small></div>
+          <i aria-hidden="true">→</i>
+          <div class="domain-node prepare"><span>PREPARED</span><b>ContractCallPrototype</b><small>replay · partition · verifier</small></div>
+        </div>
+        <div class="domain-grid">
+          <article><span>EXECUTION</span><h3><code>CircuitContext</code></h3><p>Private state, upstream query context, Zswap intents, cost model, per-query gas guard and optional execution key.</p><small>Not a trace or transaction.</small></article>
+          <article><span>RESULT</span><h3><code>CircuitResult</code></h3><p>Successor context, typed source result, summed query cost and ordered private FAB outputs.</p><small>Not proof readiness.</small></article>
+          <article><span>RECORDING</span><h3><code>RecordingFrame</code></h3><p>Runs admitted operations while retaining ordered public Verify instructions and sealed identities.</p><small>Native support does not imply this exists.</small></article>
+          <article><span>OBSERVATION</span><h3><code>ObservedContractState</code></h3><p>Address, public state and caller-supplied transaction/block metadata with explicit allocation policy.</p><small>Observation is not finality proof.</small></article>
+          <article><span>CALL BINDING</span><h3><code>RecordedCall</code></h3><p>Ties trace, entry point and typed FAB input to the exact state from which recording began.</p><small>Still checks verifier and replay.</small></article>
+          <article><span>SHIELDED INTENT</span><h3><code>CircuitZswapPlan</code></h3><p>Source-ordered inputs/outputs with provisional or authoritative offer-bound allocation.</p><small>Not wallet state or a validated offer.</small></article>
+        </div>
+        <div class="ownership-split">
+          <article>
+            <p class="panel-label new">RUNTIME OWNS</p>
+            <h3>Ledger mechanics and transitions</h3>
+            <p>Typed slots, canonical VM programs, value decoding, witness-read metering, native/recording frames, replay adapters and transaction boundaries.</p>
+          </article>
+          <article>
+            <p class="panel-label old">MACROS OWN—AND ONLY OWN</p>
+            <h3>Mechanical representation glue</h3>
+            <p><code>CompactCellValue</code>, <code>CompactEnum</code>, <code>CompactStructRepr</code>, Merkle representations and the fallible witness-trait bridge.</p>
+          </article>
+        </div>
+        <p class="domain-rule">Macros do not decide circuit control flow, disclosure, ledger paths, recording admission, gas policy or proof support. Those decisions remain visible in the frontend, typed backend and runtime.</p>
+      </section>
+
+      <section class="chapter streams" id="streams" aria-labelledby="streams-title">
+        <header class="chapter-head">
+          <div class="chapter-tag">02 / LEDGER STREAMS</div>
+          <div>
+            <h2 id="streams-title">One delivered baseline. One future line.</h2>
+            <p>The Rust journey documented here is a ledger-8 story. Ledger-9 is useful comparison input, but it is not ready to become a delivery claim.</p>
+          </div>
+        </header>
+        <div class="stream-map">
+          <article class="stream-card delivered">
+            <div class="stream-status"><i></i> DELIVERED REFERENCE</div>
+            <h3>ledger-8 stream</h3>
+            <p>A coherent compiler, ledger VM, runtime and ZK dependency family. The original Rust backend, Rust-AST milestones and current effect prototype all preserve this authority.</p>
+            <ul><li>Foundation pinned at <a href="https://github.com/LFDT-Minokawa/compact/commit/eb72a5ab6085bf9b8564cc80c98c973e04825c2d"><code>eb72a5ab</code></a></li><li>Official primitives reused</li><li>Exact-source evidence retained</li></ul>
+          </article>
+          <div class="stream-divider" aria-hidden="true"><span>compare,<br />do not conflate</span></div>
+          <article class="stream-card future">
+            <div class="stream-status"><i></i> NOT READY</div>
+            <h3>ledger-9 stream</h3>
+            <p>External application and protocol work can expose future requirements. It does not retroactively expand ledger-8 parity, proof support or adoption.</p>
+            <ul><li>Tracked as an explicit boundary</li><li>Passport ACC adoption deferred</li><li>No ledger-9/10 compatibility claim</li></ul>
+          </article>
+        </div>
+        <p class="stream-rule"><b>Rule:</b> a ledger-9 observation may motivate an ADR or test, but only ledger-8 evidence can close the ledger-8 milestone documented on this page.</p>
+      </section>
+
+      <section class="chapter" id="journey" aria-labelledby="journey-title">
+        <header class="chapter-head">
+          <div class="chapter-tag">03 / THE JOURNEY</div>
+          <div>
+            <h2 id="journey-title">Four eras, one question</h2>
+            <p>What must be true before a Compact circuit can become trustworthy Rust?</p>
+          </div>
+        </header>
+        <div class="era-controls" role="group" aria-label="Filter journey milestones">
+          <button type="button" class="chip is-active" data-era="all" aria-pressed="true">All eras</button>
+          <button type="button" class="chip" data-era="foundation" aria-pressed="false">Foundation</button>
+          <button type="button" class="chip" data-era="ast" aria-pressed="false">Rust AST</button>
+          <button type="button" class="chip" data-era="qualification" aria-pressed="false">Qualification</button>
+          <button type="button" class="chip" data-era="effects" aria-pressed="false">Effects</button>
+        </div>
+        <div class="timeline" id="timeline">
+          <article class="timeline-card" data-era-card="foundation">
+            <div class="timeline-rail"><span>00</span></div>
+            <div class="timeline-copy">
+              <p class="card-meta">2026-06-25 · <a href="https://github.com/LFDT-Minokawa/compact/commit/eb72a5ab6085bf9b8564cc80c98c973e04825c2d"><code>eb72a5ab</code></a></p>
+              <h3>Fix the ground: ledger-8</h3>
+              <p>Pin compiler, ledger VM, runtime and ZK dependencies as one coherent family. Rust will reuse official primitives—not invent a second ledger.</p>
+              <ul><li>Stable comparison base</li><li>Clear protocol boundary</li><li>No ledger9/10 claims</li></ul>
+            </div>
+            <div class="timeline-state"><span class="state closed">BASE</span></div>
+          </article>
+          <article class="timeline-card" data-era-card="foundation">
+            <div class="timeline-rail"><span>01</span></div>
+            <div class="timeline-copy">
+              <p class="card-meta">ORIGINAL BACKEND · <a href="https://github.com/MediaNoxLabs/compact/commit/589c92ef961ce89ac730140e81b76d4c08222a70"><code>589c92ef</code></a></p>
+              <h3>Prove the destination with a text emitter</h3>
+              <p>Scheme reads a TypeScript-oriented compiler representation and emits Rust source. The path delivers real contracts and becomes the oracle for the rebuild.</p>
+              <details><summary>Why change it?</summary><p>Semantic admission, target syntax and string assembly were too tightly coupled. A new construct could touch many walkers and output fragments.</p></details>
+            </div>
+            <div class="timeline-state"><span class="state oracle">ORACLE</span></div>
+          </article>
+          <article class="timeline-card" data-era-card="ast">
+            <div class="timeline-rail"><span>02</span></div>
+            <div class="timeline-copy">
+              <p class="card-meta">MILESTONE 1 · 2026-10-02 · <a href="https://github.com/MediaNoxLabs/compact/commit/ea4cc006f973632c4c7b1fb4569af2b4c93ff38a"><code>ea4cc006</code></a></p>
+              <h3>Make the boundary typed</h3>
+              <p>Chez lowers to a closed private IR. Rust validates it and builds syntax with <code>syn</code>, <code>quote</code>, <code>proc-macro2</code> and <code>prettyplease</code>.</p>
+              <div class="metric-row"><span><b>128</b> generated sources</span><span><b>410</b> test/doc-test groups</span><span><b>37</b> exact oracle roots</span></div>
+            </div>
+            <div class="timeline-state"><span class="state closed">CLOSED</span></div>
+          </article>
+          <article class="timeline-card" data-era-card="ast">
+            <div class="timeline-rail"><span>03</span></div>
+            <div class="timeline-copy">
+              <p class="card-meta">MILESTONE 2 · 2026-10-06 · <a href="https://github.com/MediaNoxLabs/compact/commit/03c03a39a2d39c43c91143b9526ca1c2ffae706c"><code>03c03a39</code></a></p>
+              <h3>Turn a backend into a usable target</h3>
+              <p><code>compactc --target rust</code> emits a Cargo crate, matching runtime sources, artifacts and manifest. Recording, replay, proof and ledger application become explicit stages.</p>
+              <div class="metric-row"><span><b>386/386</b> source availability</span><span><b>203</b> sampled behavior rows</span><span><b>10</b> remote workflows</span></div>
+            </div>
+            <div class="timeline-state"><span class="state closed">CLOSED</span></div>
+          </article>
+          <article class="timeline-card" data-era-card="qualification">
+            <div class="timeline-rail"><span>04</span></div>
+            <div class="timeline-copy">
+              <p class="card-meta">0.3 · 2026-10-09 · <a href="https://github.com/MediaNoxLabs/compact/commit/0d7610b2792d60fee5d3713d4eb0ede3c98cc82a"><code>0d7610b2</code></a></p>
+              <h3>Qualify the system people touch</h3>
+              <p>External consumers, documentation, coverage, compatibility, DID, a bounded passport cohort, proof/application receipts and independent coding-agent review move into one scoped close.</p>
+              <div class="metric-row"><span><b>19/19</b> outcomes</span><span><b>93</b> criteria</span><span><b>121</b> milestone ADRs</span></div>
+            </div>
+            <div class="timeline-state"><span class="state closed">CLOSED</span></div>
+          </article>
+          <article class="timeline-card" data-era-card="effects">
+            <div class="timeline-rail"><span>05</span></div>
+            <div class="timeline-copy">
+              <p class="card-meta">0.4 PROTOTYPE · <code>f3cef799</code></p>
+              <h3>Teach the recorder to compose</h3>
+              <p>Replace whole-contract shape recognition with typed effect lowering, checked plans and a shared semantic fold. Retire old selectors family by family, with source-bound evidence.</p>
+              <div class="metric-row"><span><b>202</b> retained outputs</span><span><b>487</b> capability observations</span><span><b>69/84</b> unchanged boundaries</span></div>
+            </div>
+            <div class="timeline-state"><span class="state active">ACTIVE</span></div>
+          </article>
+        </div>
+        <div class="unlocks" aria-label="Capabilities unlocked across the journey">
+          <article><b>01</b><h3>Native destination</h3><p>The first backend proved that Compact programs could become useful Rust crates.</p></article>
+          <article><b>02</b><h3>Fail-closed boundary</h3><p>A private typed IR made unsupported semantics visible before Rust text existed.</p></article>
+          <article><b>03</b><h3>Generated consumer</h3><p><code>--target rust</code> made Cargo output, runtime files and artifacts one explicit product.</p></article>
+          <article><b>04</b><h3>Proof as a stage</h3><p>Record, replay, prepare, prove, verify and apply acquired separate receipts.</p></article>
+          <article><b>05</b><h3>Compositional effects</h3><p>New programs can be described by checked operations instead of new whole-program recognizers.</p></article>
+        </div>
+      </section>
+
+      <section class="chapter architecture" id="architecture" aria-labelledby="architecture-title">
+        <header class="chapter-head">
+          <div class="chapter-tag">04 / SYSTEM SHAPE</div>
+          <div>
+            <h2 id="architecture-title">Follow one contract through the stack</h2>
+            <p>Select a stage. The diagram explains what crosses the boundary and what does not.</p>
+          </div>
+        </header>
+        <div class="architecture-shell">
+          <div class="stage-list" role="tablist" aria-label="Compilation stages">
+            <button type="button" role="tab" aria-selected="true" class="stage-tab is-active" data-stage="frontend"><b>01</b><span>Frontend</span><small>Chez Scheme</small></button>
+            <button type="button" role="tab" aria-selected="false" class="stage-tab" data-stage="ir"><b>02</b><span>Private IR</span><small>typed JSON</small></button>
+            <button type="button" role="tab" aria-selected="false" class="stage-tab" data-stage="semantics"><b>03</b><span>Semantics</span><small>native + effects</small></button>
+            <button type="button" role="tab" aria-selected="false" class="stage-tab" data-stage="render"><b>04</b><span>Renderer</span><small>Rust AST</small></button>
+            <button type="button" role="tab" aria-selected="false" class="stage-tab" data-stage="runtime"><b>05</b><span>Runtime</span><small>ledger + ZK</small></button>
+          </div>
+          <div class="stage-panel" role="tabpanel" aria-live="polite">
+            <div class="stage-diagram" id="stage-diagram">
+              <span class="stage-kicker" id="stage-kicker">SOURCE AUTHORITY</span>
+              <svg viewBox="0 0 720 300" role="img" aria-labelledby="diagram-title diagram-desc">
+                <title id="diagram-title">Compact Rust compilation pipeline</title>
+                <desc id="diagram-desc">Compact source passes through Chez analysis, private typed IR, semantic lowering, Rust AST rendering and the runtime.</desc>
+                <path class="flow-line" d="M90 150H630" />
+                <g class="flow-node selected" data-node="frontend" transform="translate(90 150)"><circle r="34"/><text y="5">SRC</text></g>
+                <g class="flow-node" data-node="ir" transform="translate(225 150)"><circle r="34"/><text y="5">IR</text></g>
+                <g class="flow-node" data-node="semantics" transform="translate(360 150)"><circle r="34"/><text y="5">FX</text></g>
+                <g class="flow-node" data-node="render" transform="translate(495 150)"><circle r="34"/><text y="5">AST</text></g>
+                <g class="flow-node" data-node="runtime" transform="translate(630 150)"><circle r="34"/><text y="5">VM</text></g>
+                <text class="flow-label" x="90" y="218">Compact</text><text class="flow-label" x="225" y="218">schema</text><text class="flow-label" x="360" y="218">plan</text><text class="flow-label" x="495" y="218">Rust</text><text class="flow-label" x="630" y="218">ledger</text>
+              </svg>
+            </div>
+            <div class="stage-explanation">
+              <div><span>OWNER</span><strong id="stage-owner">Compact parser, type checker and shared analysis</strong></div>
+              <div><span>CROSSES THE BOUNDARY</span><p id="stage-crosses">Typed declarations, analyzed expressions and safe source-owner metadata.</p></div>
+              <div><span>DOES NOT MEAN</span><p id="stage-limit">Frontend acceptance is not native behavior, recording support or proof applicability.</p></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="before-after">
+          <article>
+            <p class="panel-label old">BEFORE · SHAPE RECOGNITION</p>
+            <h3>“Which known program is this?”</h3>
+            <div class="recognizer-stack" aria-label="Stack of specialized recognizers">
+              <span>voting_commit?</span><span>guarded_write?</span><span>shielded_payout?</span><span>funded_mint?</span><span>fallback</span>
+            </div>
+            <p>Safe, bounded profiles delivered coverage quickly. Their reuse unit was an entire arrangement of effects.</p>
+          </article>
+          <article>
+            <p class="panel-label new">AFTER · CHECKED EFFECTS</p>
+            <h3>“Which operations compose?”</h3>
+            <div class="effect-flow" aria-label="Typed operations composed into a checked plan">
+              <span>read</span><i>+</i><span>witness</span><i>+</i><span>assert</span><i>+</i><span>write</span><b>→ RecordedPlan</b>
+            </div>
+            <p>Types, scope, source order, resources and replay invariants are checked before rendering any Rust syntax.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="chapter compare" id="compare" aria-labelledby="compare-title">
+        <header class="chapter-head">
+          <div class="chapter-tag">05 / FOUR PATHS</div>
+          <div><h2 id="compare-title">Compare without flattening history</h2><p>Choose a dimension to see what changed—and what stayed authoritative.</p></div>
+        </header>
+        <div class="dimension-tabs" role="tablist" aria-label="Comparison dimension">
+          <button class="dimension-tab is-active" type="button" data-dimension="boundary" aria-selected="true">Boundary</button>
+          <button class="dimension-tab" type="button" data-dimension="syntax" aria-selected="false">Syntax</button>
+          <button class="dimension-tab" type="button" data-dimension="runtime" aria-selected="false">Runtime</button>
+          <button class="dimension-tab" type="button" data-dimension="recording" aria-selected="false">Recording</button>
+          <button class="dimension-tab" type="button" data-dimension="evidence" aria-selected="false">Evidence</button>
+        </div>
+        <div class="comparison-grid" id="comparison-grid" role="tabpanel" aria-live="polite"></div>
+        <noscript><p class="noscript">Enable JavaScript for the interactive comparison. The complete table is available in <code>doc/rust/journey/03-comparison-and-evidence.md</code>.</p></noscript>
+      </section>
+
+      <section class="chapter evidence" id="evidence" aria-labelledby="evidence-title">
+        <header class="chapter-head">
+          <div class="chapter-tag">06 / EVIDENCE LADDER</div>
+          <div><h2 id="evidence-title">A green box does not prove the next box</h2><p>Click a stage to see the exact claim boundary.</p></div>
+        </header>
+        <div class="evidence-ladder" role="group" aria-label="Evidence stages">
+          <button type="button" class="evidence-step is-active" data-evidence="inventory" aria-pressed="true"><b>01</b><span>Inventory</span></button>
+          <button type="button" class="evidence-step" data-evidence="compile" aria-pressed="false"><b>02</b><span>Compile</span></button>
+          <button type="button" class="evidence-step" data-evidence="native" aria-pressed="false"><b>03</b><span>Native</span></button>
+          <button type="button" class="evidence-step" data-evidence="record" aria-pressed="false"><b>04</b><span>Record</span></button>
+          <button type="button" class="evidence-step" data-evidence="replay" aria-pressed="false"><b>05</b><span>Replay</span></button>
+          <button type="button" class="evidence-step" data-evidence="proof" aria-pressed="false"><b>06</b><span>Proof</span></button>
+          <button type="button" class="evidence-step" data-evidence="apply" aria-pressed="false"><b>07</b><span>Apply</span></button>
+        </div>
+        <div class="evidence-detail" aria-live="polite">
+          <div><span id="evidence-index">01</span><h3 id="evidence-name">Source inventory</h3></div>
+          <p id="evidence-establishes">Names inputs, exports and classified capabilities.</p>
+          <p class="not-proof"><b>DOES NOT ESTABLISH</b><span id="evidence-limit">Execution, recording, proof or specification coverage.</span></p>
+        </div>
+        <div class="evidence-cards">
+          <article><span>MILESTONE 2</span><strong>386/386</strong><p>Source availability—not 386 behavior or proof claims.</p></article>
+          <article><span>0.3 INVENTORY</span><strong>1,055</strong><p>Classified functions—not a formal language denominator.</p></article>
+          <article><span>PROTOTYPE</span><strong>487</strong><p>Raw capability observations—not proof-enabled exports.</p></article>
+        </div>
+      </section>
+
+      <section class="chapter error-gas" id="errors" aria-labelledby="errors-title">
+        <header class="chapter-head">
+          <div class="chapter-tag">07 / ERRORS &amp; GAS</div>
+          <div><h2 id="errors-title">Move failures earlier—only when the facts exist</h2><p>The compiler now catches more malformed programs, while ledger-dependent assertions and artifact binding remain honest runtime or preparation results.</p></div>
+        </header>
+        <div class="gas-story">
+          <div class="gas-equation">
+            <div><span>TYPE­SCRIPT WRAPPER</span><strong>last query</strong><small>historical public field</small></div>
+            <b>≠</b>
+            <div><span>RUST CIRCUIT RESULT</span><strong>Σ queries</strong><small>executed circuit work</small></div>
+            <b>=</b>
+            <div class="correct"><span>CAPTURED TS COMPARISON</span><strong>Σ queries</strong><small>four dimensions</small></div>
+          </div>
+          <div class="witness-cost">
+            <div class="witness-number"><span>BEFORE</span><strong>85m</strong><small>write only</small></div>
+            <div class="witness-plus">+</div>
+            <div class="witness-number"><span>MISSING READ</span><strong>170m</strong><small>witness VM read</small></div>
+            <div class="witness-plus">=</div>
+            <div class="witness-number fixed"><span>CORRECT TOTAL</span><strong>255m</strong><small>read time</small></div>
+          </div>
+          <p>Witness projection metering corrected accounting; it did not make the VM cheaper. The configured ledger-8 gas limit remains per query, while accumulated gas is diagnostic. Transaction replay/partition gas remains a separate authority.</p>
+        </div>
+        <div class="error-boundaries">
+          <article><span>01</span><h3>Frontend</h3><p>Type, scope, disclosure and ordinary source recursion.</p><b>before private IR</b></article>
+          <article><span>02</span><h3>IR admission</h3><p>Unknown nodes, forged call cycles and invalid references.</p><b>before Rust output</b></article>
+          <article><span>03</span><h3>Backend / rustc</h3><p>Name collisions, unsupported target operations and invalid macro shapes.</p><b>compile-time refusal</b></article>
+          <article><span>04</span><h3>Runtime</h3><p>Source assertions, overflow, malformed state and rejected VM queries.</p><b>typed Result</b></article>
+          <article><span>05</span><h3>Preparation</h3><p>Address, state, verifier, replay and Zswap binding mismatches.</p><b>artifact-bound error</b></article>
+          <article><span>06</span><h3>Ledger / proof</h3><p>Invalid proof or transaction policy and application refusal.</p><b>authoritative validation</b></article>
+        </div>
+        <div class="fix-grid">
+          <a href="https://github.com/MediaNoxLabs/compact/commit/c70dd63cf91ce59e2bda82a0f27f32073639c669"><span>COMPILE TIME</span><h3>Rust name collisions</h3><p><code>a$b</code> and <code>a_b</code> now refuse at the later Compact declaration instead of producing duplicate Rust.</p><b>c70dd63c ↗</b></a>
+          <a href="https://github.com/MediaNoxLabs/compact/commit/ee768a60706607580d4ff8b3c949f22c882501b0"><span>MACRO HYGIENE</span><h3>Hostile source names</h3><p>Structs named <code>Option</code>, <code>Fr</code> or <code>runtime</code> no longer collide with representation expansion.</p><b>ee768a60 ↗</b></a>
+          <a href="https://github.com/MediaNoxLabs/compact/commit/dbfd7dc248b6bbe3b188a5a362142facf06621de"><span>IR ADMISSION</span><h3>Forged recursion</h3><p>Direct recursive IR is rejected before emission while acyclic helper sharing remains valid.</p><b>dbfd7dc2 ↗</b></a>
+          <a href="https://github.com/MediaNoxLabs/compact/commit/e68078846260e4c6b2d18f40ec9ec1a2571cae33"><span>RUNTIME BOUNDARY</span><h3>Path panic and truncation</h3><p>Empty reset and unrepresentable VM paths return errors before program construction.</p><b>e6807884 ↗</b></a>
+          <a href="https://github.com/MediaNoxLabs/compact/commit/6aa345fd76cf99ba491a761c42a39608d7e207eb"><span>DIAGNOSTICS</span><h3>Wide operation refusal</h3><p>A valid wide type with an unsupported operation is no longer mislabeled as a malformed bound.</p><b>6aa345fd ↗</b></a>
+          <a href="https://github.com/MediaNoxLabs/compact/commit/3799746acec6e5898e5e7b121621045d8dac925a"><span>GAS EVIDENCE</span><h3>Comparable denominators</h3><p>Rust totals are compared with summed TypeScript query captures, not the wrapper's final-query field.</p><b>3799746a ↗</b></a>
+        </div>
+      </section>
+
+      <section class="chapter lessons" id="lessons" aria-labelledby="lessons-title">
+        <header class="chapter-head">
+          <div class="chapter-tag">08 / CORRECTIONS</div>
+          <div><h2 id="lessons-title">The mistakes belong in the architecture</h2><p>Each correction changed more than a test. It clarified who owns the rule.</p></div>
+        </header>
+        <div class="decision-grid" id="decision-grid"></div>
+        <noscript><p class="noscript">The full corrections chapter is readable at <code>doc/rust/journey/04-decisions-and-corrections.md</code>.</p></noscript>
+      </section>
+
+      <section class="chapter applications" id="applications" aria-labelledby="applications-title">
+        <header class="chapter-head">
+          <div class="chapter-tag">09 / REAL PROGRAMS</div>
+          <div><h2 id="applications-title">Applications as evidence, not trophies</h2><p>DID and passport work exercised composition while keeping product claims bounded.</p></div>
+        </header>
+        <div class="application-grid">
+          <article class="app-card did">
+            <div class="app-top"><span>DID v0.7.0</span><b>retained adoption</b></div>
+            <h3>Identity state, relations and reducers</h3>
+            <div class="app-metrics"><span><strong>12</strong> stateful exports</span><span><strong>42</strong> finite relation calls</span></div>
+            <p>Native/recorded paths and selected strict proofs were qualified at exact revisions. The finite scenario set is not universal DID semantics.</p>
+          </article>
+          <article class="app-card passport">
+            <div class="app-top"><span>Digital passport</span><b>bounded cohort</b></div>
+            <h3>Pure programs and cross-language codecs</h3>
+            <div class="app-metrics"><span><strong>75</strong> pure exports</span><span><strong>202</strong> behavior cases</span></div>
+            <p>Seventeen files and four codec vectors were retained. Full Passport ACC, WebAuthn, foreign curves and ledger9/10 were explicitly not claimed.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="chapter test-story" id="tests" aria-labelledby="tests-title">
+        <header class="chapter-head">
+          <div class="chapter-tag">10 / TESTING THE TESTS</div>
+          <div><h2 id="tests-title">Faster without forgetting</h2><p>The historical suite was expensive because it authenticated history. The optimization kept that property.</p></div>
+        </header>
+        <div class="speed-visual">
+          <div class="speed-bars" role="img" aria-label="Historical validation decreased from 171.17 minutes serial to 55.14 minutes with four isolated process shards">
+            <div class="speed-row"><span>Serial</span><div class="speed-track"><i style="--size:100%"></i></div><strong>171.17 min</strong></div>
+            <div class="speed-row"><span>4 shards</span><div class="speed-track"><i class="fast" style="--size:32.21%"></i></div><strong>55.14 min</strong></div>
+          </div>
+          <div class="speed-copy">
+            <p class="big-number">3.105×</p>
+            <p>measured wall-time improvement on one frozen source and machine</p>
+          </div>
+        </div>
+        <div class="invariant-grid">
+          <div><b>974</b><span>unique IDs retained</span></div>
+          <div><b>0</b><span>failures, skips or unrun</span></div>
+          <div><b>independent</b><span>temporary state per worker</span></div>
+          <div><b>live</b><span>mutation detection preserved</span></div>
+        </div>
+        <p class="caveat">No validation-result cache. No live path cache. No universal CI speed claim.</p>
+      </section>
+
+      <section class="chapter current" id="current" aria-labelledby="current-title">
+        <header class="chapter-head">
+          <div class="chapter-tag">11 / CURRENT LINE</div>
+          <div><h2 id="current-title">What “done” still requires</h2><p>The prototype is interesting precisely because the finish line is explicit.</p></div>
+        </header>
+        <div class="current-layout">
+          <div class="current-status">
+            <span class="pulse-dot"></span>
+            <p>ACTIVE LOCAL PROTOTYPE</p>
+            <strong>EA13</strong>
+            <span>final qualification &amp; closure</span>
+          </div>
+          <ol class="gate-list">
+            <li><b>Freeze one candidate.</b><span>No claims from a moving dirty checkout.</span></li>
+            <li><b>Run the maintained full gate.</b><span>Default and experimental feature artifacts stay distinct.</span></li>
+            <li><b>Rebind proof reuse.</b><span>Source, IR, Rust, keys, runtime, graph and policy must match.</span></li>
+            <li><b>Review source reachability.</b><span>No test-only legacy permit may authorize production.</span></li>
+            <li><b>Publish the capability book.</b><span>Support, refusal, resources and evidence freshness per boundary.</span></li>
+            <li><b>Independent closure review.</b><span>Coding-agent review, accurately labeled.</span></li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="chapter sources" id="sources" aria-labelledby="sources-title">
+        <header class="chapter-head">
+          <div class="chapter-tag">12 / READ FURTHER</div>
+          <div><h2 id="sources-title">Every diagram has a paper trail</h2><p>The public links below are stable entry points. Vault-only prototype decisions are identified as such in the evidence index.</p></div>
+        </header>
+        <div class="source-links">
+          <a href="https://github.com/MediaNoxLabs/compact/blob/codex/rust-backend-ast/doc/rust/0.3.0-closure.md"><span>01</span><b>0.3 closure report</b><small>scope, evidence and limits</small></a>
+          <a href="https://github.com/MediaNoxLabs/compact/blob/codex/rust-backend-ast/doc/rust/adr/README.md"><span>02</span><b>ADR register</b><small>decisions and amendments</small></a>
+          <a href="https://github.com/MediaNoxLabs/compact/blob/codex/rust-backend-ast/doc/cops/README.md"><span>03</span><b>CoPS register</b><small>cross-component problems</small></a>
+          <a href="https://github.com/MediaNoxLabs/compact/blob/codex/rust-backend-ast/doc/rust/guides/index.md"><span>04</span><b>Developer guides</b><small>use the current backend</small></a>
+          <a href="https://github.com/MediaNoxLabs/compact/tree/codex/rust-backend-ast"><span>05</span><b>Rust-AST branch</b><small>published source baseline</small></a>
+          <a href="https://github.com/LFDT-Minokawa/compact/tree/ledger-8"><span>06</span><b>ledger-8 base</b><small>upstream foundation</small></a>
+          <a href="https://github.com/MediaNoxLabs/compact/blob/codex/rust-backend-ast/runtime-rs/README.md"><span>07</span><b>Runtime model</b><small>ABI history and owned semantics</small></a>
+          <a href="https://github.com/MediaNoxLabs/compact/blob/codex/rust-backend-ast/doc/rust/adr/0010-report-total-rust-circuit-gas-across-ledger-queries.md"><span>08</span><b>Gas decision</b><small>sum queries, compare equal denominators</small></a>
+          <a href="https://github.com/MediaNoxLabs/compact/blob/codex/rust-backend-ast/runtime-rs-macros/README.md"><span>09</span><b>Macro boundary</b><small>mechanical representation only</small></a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div><span class="brand-glyph" aria-hidden="true">⌁</span><b>COMPACT / RUST JOURNEY</b></div>
+      <p>Evidence cutoff: <code>f3cef799</code>. Prepared for review; not remotely published.</p>
+      <a href="#top">Back to top ↑</a>
+    </footer>
+  </body>
+</html>

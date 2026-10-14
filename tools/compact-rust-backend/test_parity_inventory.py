@@ -362,7 +362,7 @@ metadata.mkdir()
 
     def test_checked_baseline_roundtrip_and_known_bad_drift(self):
         current = inventory.baseline_rows(inventory.make_inventory(inventory.ROOT, [], None)["rows"])
-        checked = json.loads(inventory.DEFAULT_BASELINE.read_text())
+        checked = inventory.default_baseline_rows()
         self.assertEqual(checked, current)
         with tempfile.TemporaryDirectory() as directory:
             bad_baseline = Path(directory) / "bad-baseline.json"

@@ -1,0 +1,2514 @@
+[
+  {
+    "source": "examples/rust_backend/opaque_observed_nested.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "accept",
+    "signature": "export circuit accept(input: Outer): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_receive_composition.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "acceptSelected",
+    "signature": "export circuit acceptSelected(coin: ShieldedCoinInfo): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_wide_add.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "add128",
+    "signature": "export circuit add128(a: Uint<128>, b: Uint<128>): Wide",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_counter.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "adjust",
+    "signature": "export circuit adjust(amount: Uint<16>, remove: Uint<16>): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_counter_only.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "adjust",
+    "signature": "export circuit adjust(amount: Uint<16>, remove: Uint<16>): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/empty_witness_guard.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "ageGap",
+    "signature": "export pure circuit ageGap(newer: Attestation, older: Attestation): Uint<64>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_merkle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "append_historic",
+    "signature": "circuit append_historic(value: Uint<8>): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_pure_unit_statements.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "argument_order",
+    "signature": "export circuit argument_order(a: Boolean, b: Boolean): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_calls.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assemble",
+    "signature": "circuit assemble(payload: Opaque<\"Uint8Array\">, values: Vector<2, Field>): Owned",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/empty_witness_guard.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertAgeWithin",
+    "signature": "export pure circuit assertAgeWithin( attestation: Attestation, currentTime: Uint<64>, limit: Uint<64> ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_map_value_products.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertFresh",
+    "signature": "export pure circuit assertFresh(record: Stored, asOf: Uint<64>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/empty_witness_guard.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertFreshEnough",
+    "signature": "export pure circuit assertFreshEnough( policy: VerifierPolicy, attestation: Attestation, currentTime: Uint<64> ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_pure_unit_statements.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "both",
+    "signature": "circuit both(a: Boolean, b: Boolean): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_pure_unit_statements.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "bump",
+    "signature": "circuit bump(): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unit_composition.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "bump",
+    "signature": "circuit bump(): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_values.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "bytesIdentity",
+    "signature": "pure circuit bytesIdentity(value: Opaque<\"Uint8Array\">): Opaque<\"Uint8Array\">",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_opaque_public.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "bytes_roundtrip",
+    "signature": "export circuit bytes_roundtrip(value: Opaque<\"Uint8Array\">): BytesResult",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_wide_field_cast.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "cast129",
+    "signature": "export circuit cast129(input: Uint<129>): Converted",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_wide_field_cast.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "cast248",
+    "signature": "export circuit cast248(input: Uint<248>): Converted",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unit_actions.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "check",
+    "signature": "circuit check(value: Field): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_jubjub_negation.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "check_negation",
+    "signature": "circuit check_negation(expected: JubjubPoint): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unit_value_operations.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "check_point",
+    "signature": "circuit check_point(offset: Field, expected: JubjubPoint, blank: Bytes<32>): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_calls.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "checked",
+    "signature": "circuit checked(value: Owned, permit: Boolean): Owned",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/opaque_constructor_order.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "checked",
+    "signature": "pure circuit checked(ok: Boolean): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_pure_calls.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "checked",
+    "signature": "pure circuit checked(seed: Field, selected: Boolean, permit: Boolean): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_values.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "checked",
+    "signature": "pure circuit checked(value: Field, permit: Boolean): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_wide.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "choose",
+    "signature": "export circuit choose(next: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_jubjub_negation.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "close",
+    "signature": "export circuit close(expected: JubjubPoint): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unit_value_operations.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "close",
+    "signature": "export circuit close(offset: Field, expected: JubjubPoint, blank: Bytes<32>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unit_keccak.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "close",
+    "signature": "export circuit close(payload: Bytes<32>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_aligned_hashes.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "close",
+    "signature": "export circuit close(value: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_aligned_hashes.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "close_hash",
+    "signature": "export circuit close_hash(value: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_pure_calls.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "combine",
+    "signature": "pure circuit combine(left: Field, right: Field): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_terminal_composition.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "combine",
+    "signature": "pure circuit combine(left: Field, right: Field): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_opaque_aligned_hashes.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "commit_bytes",
+    "signature": "export circuit commit_bytes(value: Opaque<\"Uint8Array\">): Output",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_opaque_aligned_hashes.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "commit_string",
+    "signature": "export circuit commit_string(value: Opaque<\"string\">): Output",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_inequality.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "compare",
+    "signature": "export circuit compare(a: Uint<64>, b: Uint<64>): Outcome",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_ordered_comparisons.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "compare",
+    "signature": "export circuit compare(a: Uint<8>, b: Uint<64>): Relations",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_ordered_comparisons.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "compare128",
+    "signature": "export circuit compare128(a: Uint<128>, b: Uint<128>): Relations",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_composite.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "compose",
+    "signature": "export circuit compose(input: QualifiedShieldedCoinInfo, coin: ShieldedCoinInfo, recipient: Either<ZswapCoinPublicKey, ContractAddress>, selected: Boolean): Receipt",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_jubjub.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "compose",
+    "signature": "export circuit compose(point: JubjubPoint, scalar: Field): JubjubPoint",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_kernel.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "compose",
+    "signature": "export circuit compose(selected: Boolean, value: Bytes<32>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_values.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "conversions",
+    "signature": "export circuit conversions(seed: Field): Receipt",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_jubjub_negation.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "coordinates",
+    "signature": "export circuit coordinates(fallback: JubjubPoint, selected: Boolean): Coordinates",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_cells.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "copyBytes",
+    "signature": "pure circuit copyBytes(value: Opaque<\"Uint8Array\">): Opaque<\"Uint8Array\">",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_cells.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "copyEnvelope",
+    "signature": "pure circuit copyEnvelope(value: Envelope): Envelope",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_set.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "copyKey",
+    "signature": "pure circuit copyKey(value: OwnedKey): OwnedKey",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_cells.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "copyText",
+    "signature": "pure circuit copyText(value: Opaque<\"string\">): Opaque<\"string\">",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_counter_hash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "counterDigest",
+    "signature": "circuit counterDigest(left: Bytes<32>, right: Bytes<32>): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_opaque_aligned_hashes.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "curve_bytes",
+    "signature": "export circuit curve_bytes(value: Opaque<\"Uint8Array\">): Output",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_opaque_aligned_hashes.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "curve_string",
+    "signature": "export circuit curve_string(value: Opaque<\"string\">): Output",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_set.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "defaultKey",
+    "signature": "pure circuit defaultKey(): OwnedKey",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_merkle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "defaults",
+    "signature": "export circuit defaults(index: Uint<64>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unit_keccak.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "digest",
+    "signature": "export circuit digest(selected: Boolean): Digest",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_pure_calls.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "digest",
+    "signature": "pure circuit digest(seed: Field, selected: Boolean): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_context_query.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "direct_commit",
+    "signature": "export circuit direct_commit(): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_maps.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "direct_lookup",
+    "signature": "export circuit direct_lookup(key: Opaque<\"string\">): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_maps.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "direct_member",
+    "signature": "export circuit direct_member(key: Opaque<\"string\">): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_composite.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "emit",
+    "signature": "circuit emit(coin: ShieldedCoinInfo, recipient: Either<ZswapCoinPublicKey, ContractAddress>): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_public_products.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "empty",
+    "signature": "export circuit empty(input: [], values: Vector<0, Opaque<\"Uint8Array\">>): Receipt",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_cells.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "emptyBytes",
+    "signature": "pure circuit emptyBytes(): Opaque<\"Uint8Array\">",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_values.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "emptyBytes",
+    "signature": "pure circuit emptyBytes(): Opaque<\"Uint8Array\">",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_receive_values.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "emptyLocals",
+    "signature": "export circuit emptyLocals(): Receipt",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_cells.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "emptyText",
+    "signature": "pure circuit emptyText(): Opaque<\"string\">",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_values.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "emptyText",
+    "signature": "pure circuit emptyText(): Opaque<\"string\">",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_aligned_witness_results.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "entry",
+    "signature": "export circuit entry(fallback: Entry, selected: Boolean): Hashes",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unit_value_operations.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "evaluate",
+    "signature": "export circuit evaluate(offset: Field, fallback: JubjubPoint, selected: Boolean): Result",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_pure_calls.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "fingerprint",
+    "signature": "pure circuit fingerprint(pair: Pair): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/empty_witness_guard.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "finish",
+    "signature": "circuit finish(): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/recorded_tuple13_result.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "first",
+    "signature": "pure circuit first(): [Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Opaque<\"string\">]",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/recorded_tuple12_result.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "first",
+    "signature": "pure circuit first(): [Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field]",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_pure_unit_statements.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "first_value",
+    "signature": "circuit first_value(a: Boolean): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_pure_calls.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "foldStep",
+    "signature": "pure circuit foldStep(acc: Field, item: Field): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_pure_calls.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "folded",
+    "signature": "pure circuit folded(seed: Field): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_merkle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "forget",
+    "signature": "export circuit forget(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_aligned_hashes.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hash_only",
+    "signature": "export circuit hash_only(selected: Boolean): Hashes",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_merkle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hashes",
+    "signature": "export circuit hashes(hash: Bytes<32>, index: Uint<64>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_aligned_hashes.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hashes",
+    "signature": "export circuit hashes(selected: Boolean): Hashes",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_merkle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "historic_full_value",
+    "signature": "circuit historic_full_value(): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_merkle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "historic_known_value",
+    "signature": "circuit historic_known_value(root: MerkleTreeDigest): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_rich_values.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "identity",
+    "signature": "pure circuit identity(value: Envelope): Envelope",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_qualified_set_source.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "insert_once",
+    "signature": "export circuit insert_once( coin: ShieldedCoinInfo, recipient: Either<ZswapCoinPublicKey, ContractAddress> ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_qualified_set_source.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "insert_reused",
+    "signature": "circuit insert_reused( coin: ShieldedCoinInfo, recipient: Either<ZswapCoinPublicKey, ContractAddress> ): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_qualified_set_source.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "insert_selected",
+    "signature": "export circuit insert_selected( coin: ShieldedCoinInfo, recipient: Either<ZswapCoinPublicKey, ContractAddress>, selected: Boolean ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/opaque_constructor_order.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "inspect",
+    "signature": "export circuit inspect(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_cells.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "inspectText",
+    "signature": "export circuit inspectText(): Receipt",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unit_keccak.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "lazy_close",
+    "signature": "export circuit lazy_close(payload: Bytes<32>, selected: Boolean): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_maps.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "lazy_put",
+    "signature": "export circuit lazy_put(selected: Boolean, first: Opaque<\"string\">, second: Opaque<\"string\">, a: Field, b: Field): Present",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_set.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "lifecycle",
+    "signature": "export circuit lifecycle(seed: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_maps.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "lookup",
+    "signature": "export circuit lookup(key: Opaque<\"string\">): Found",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_pure_calls.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "makePair",
+    "signature": "pure circuit makePair(left: Field, right: Field): Pair",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_wide_casts.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "max248",
+    "signature": "export circuit max248(): Largest",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_nested_map_member.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "member",
+    "signature": "export circuit member(key: Field): Present",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_maps.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "member",
+    "signature": "export circuit member(key: Opaque<\"string\">): Present",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_wide_add.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "mixed",
+    "signature": "export circuit mixed(a: Uint<129>, b: Uint<8>): Wider",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unsigned_arithmetic.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "multiply",
+    "signature": "circuit multiply(left: Uint<8>, right: Uint<8>, tag: Field): Uint<16>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_field_multiply.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "multiply",
+    "signature": "export circuit multiply(a: Field, b: Field): Product",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unsigned_arithmetic.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "narrow",
+    "signature": "export circuit narrow(left: Uint<8>, right: Uint<8>, selected: Boolean): NarrowReceipt",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_wide_add.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "narrow128",
+    "signature": "export circuit narrow128(a: Uint<128>, b: Uint<128>): Narrow",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_wide_casts.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "narrow129",
+    "signature": "export circuit narrow129(input: Uint<248>): Wide",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_wide_casts.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "narrow8",
+    "signature": "export circuit narrow8(input: Uint<129>): Small",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_pure_unit_statements.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "nested",
+    "signature": "circuit nested(a: Boolean, b: Boolean): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_aligned_witness_results.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "nested",
+    "signature": "export circuit nested(fallback: Nested, selected: Boolean): Hashes",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_exact_hash_input.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "nested",
+    "signature": "export circuit nested(value: Envelope): Hashes",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_context_query.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "no_context",
+    "signature": "export circuit no_context(): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unit_actions.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "no_helper",
+    "signature": "export circuit no_helper(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_merkle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "observe",
+    "signature": "export circuit observe(root: MerkleTreeDigest): Snapshot",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_jubjub_projections.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "observe",
+    "signature": "export circuit observe(selected: Boolean): Coordinates",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_optional_send.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "optional_send",
+    "signature": "export circuit optional_send( selected: Boolean, input: QualifiedShieldedCoinInfo, recipient: Either<ZswapCoinPublicKey, ContractAddress>, value: Uint<128> ): ShieldedSendResult",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_terminal_composition.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "optional_write",
+    "signature": "export circuit optional_write(selected: Boolean, seed: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_inequality.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "owned",
+    "signature": "export circuit owned(a: Payload, b: Payload): OwnedResult",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_values.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "ownedIdentity",
+    "signature": "pure circuit ownedIdentity(value: Owned): Owned",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_rich_values.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "persist",
+    "signature": "circuit persist(value: Envelope): Envelope",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_merkle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "place",
+    "signature": "export circuit place(value: Uint<8>, index: Uint<64>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_merkle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "plain_full_value",
+    "signature": "circuit plain_full_value(): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_merkle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "plain_known_value",
+    "signature": "circuit plain_known_value(root: MerkleTreeDigest): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_receive_values.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "points",
+    "signature": "export circuit points(left: JubjubPoint, right: JubjubPoint, leftMarker: Field, rightMarker: Field, selected: Boolean): Receipt",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_transient_crypto.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "products",
+    "signature": "export circuit products(seed: Field): ProductReceipt",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_counter_hash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "products",
+    "signature": "export circuit products(value: Bytes<3>, empty: Bytes<0>): ProductReceipt",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_internal_interfaces.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "project",
+    "signature": "circuit project(input: [Opaque<\"Uint8Array\">, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field]): Piece",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_jubjub_projections.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "project",
+    "signature": "export circuit project(point: JubjubPoint): Coordinates",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_maps.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "put",
+    "signature": "export circuit put(key: Opaque<\"string\">, value: Field): Found",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_jubjub.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "raw_after_write",
+    "signature": "export circuit raw_after_write(point: JubjubPoint, scalar: Field): JubjubPoint",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/recorded_tuple13_result.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read",
+    "signature": "export circuit read(): [Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Opaque<\"string\">]",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/recorded_tuple12_result.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read",
+    "signature": "export circuit read(): [Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field]",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_map_value_products.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "readFresh",
+    "signature": "export circuit readFresh(id: Opaque<\"string\">, asOf: Uint<64>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_jubjub.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_branch",
+    "signature": "export circuit read_branch(selected: Boolean, point: JubjubPoint, scalar: Field): JubjubPoint",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/merkle_digest_witness_views.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_flag",
+    "signature": "export circuit read_flag(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/empty_witness_guard.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "recordFreshEnough",
+    "signature": "export circuit recordFreshEnough( policy: VerifierPolicy, attestation: Attestation, currentTime: Uint<64> ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_opaque_public.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "remember",
+    "signature": "circuit remember(input: Envelope): Envelope",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_public_products.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "remember",
+    "signature": "circuit remember(input: Product): Product",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_nested_map_remove.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "remove",
+    "signature": "export circuit remove(key: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_maps.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "remove",
+    "signature": "export circuit remove(key: Opaque<\"string\">): Present",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_public_products.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "replace",
+    "signature": "circuit replace(input: Product): Product",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unit_composition.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "require_enabled",
+    "signature": "pure circuit require_enabled(enabled: Boolean): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_merkle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "reset",
+    "signature": "export circuit reset(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_witness_inputs.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "run",
+    "signature": "export circuit run( text: Opaque<\"string\">, bytes: Opaque<\"Uint8Array\">, selected: Boolean ): Accepted",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_transient_crypto.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "run",
+    "signature": "export circuit run(input: Bytes<32>, seed: Field, selected: Boolean): Receipt",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_opaque_public.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "run",
+    "signature": "export circuit run(input: Envelope, useWitness: Boolean): Result",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_internal_interfaces.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "run",
+    "signature": "export circuit run(input: Opaque<\"Uint8Array\">, selected: Boolean): Result",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_public_products.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "run",
+    "signature": "export circuit run(input: Product, selected: Boolean): Result",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unit_composition.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "run",
+    "signature": "export circuit run(key: Opaque<\"string\">, enabled: Boolean, selected: Boolean): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unsigned_arithmetic.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "run",
+    "signature": "export circuit run(left: Uint<8>, right: Uint<8>, selected: Boolean): Receipt",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_counter_hash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "run",
+    "signature": "export circuit run(seed: Field, amount: Uint<16>, selected: Boolean): Receipt",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_set.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "run",
+    "signature": "export circuit run(seed: Field, selected: Boolean): Receipt",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_witness_domain.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "run",
+    "signature": "export circuit run(selected: Boolean): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_cells.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "run",
+    "signature": "export circuit run(selected: Boolean): Receipt",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_own_public_key.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "run",
+    "signature": "export circuit run(selected: Boolean): Result",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_pure_unit_statements.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "run",
+    "signature": "export circuit run(selected: Boolean): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_stateful_calls.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "run",
+    "signature": "export circuit run(selected: Boolean, first: Field, second: Field, permit: Boolean): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_calls.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "run",
+    "signature": "export circuit run(selected: Boolean, permit: Boolean): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_rich_values.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "run",
+    "signature": "export circuit run(selected: Boolean, seed: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_pure_calls.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "run",
+    "signature": "export circuit run(selected: Boolean, seed: Field, permit: Boolean): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_values.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "run",
+    "signature": "export circuit run(selected: Boolean, seed: Field, permit: Boolean): Receipt",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_merkle_nested.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "run",
+    "signature": "export circuit run(value: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_merkle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "run",
+    "signature": "export circuit run(value: Uint<8>, root: MerkleTreeDigest, selected: Boolean): Snapshot",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_set.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "scalarEmpty",
+    "signature": "export circuit scalarEmpty(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_set.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "scalarSize",
+    "signature": "export circuit scalarSize(): Uint<64>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/recorded_tuple13_result.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "second",
+    "signature": "pure circuit second(): [Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Opaque<\"string\">]",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/recorded_tuple12_result.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "second",
+    "signature": "pure circuit second(): [Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field]",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_pure_unit_statements.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "second_value",
+    "signature": "circuit second_value(b: Boolean): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/opaque_cell_inputs.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "setBytes",
+    "signature": "export circuit setBytes(value: Opaque<\"Uint8Array\">): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/opaque_cell_inputs.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "setEnvelope",
+    "signature": "export circuit setEnvelope(value: Envelope): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/opaque_cell_inputs.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "setText",
+    "signature": "export circuit setText(value: Opaque<\"string\">): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_aligned_witness_results.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "text",
+    "signature": "export circuit text(fallback: Opaque<\"string\">, selected: Boolean): Hashes",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_values.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "textIdentity",
+    "signature": "pure circuit textIdentity(value: Opaque<\"string\">): Opaque<\"string\">",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_opaque_public.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "text_roundtrip",
+    "signature": "export circuit text_roundtrip(value: Opaque<\"string\">): TextResult",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_values.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "toFields",
+    "signature": "pure circuit toFields(value: Vector<2, Uint<16>>): Vector<2, Field>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/opaque_observed_nested.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "touch",
+    "signature": "circuit touch(): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_internal_interfaces.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "touch",
+    "signature": "circuit touch(input: [Opaque<\"Uint8Array\">, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field]): [Opaque<\"Uint8Array\">, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field]",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_calls.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "touchBytes",
+    "signature": "circuit touchBytes(value: Opaque<\"Uint8Array\">): Opaque<\"Uint8Array\">",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_witness_inputs.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "touchBytes",
+    "signature": "circuit touchBytes(value: Opaque<\"Uint8Array\">): Opaque<\"Uint8Array\">",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_calls.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "touchOwned",
+    "signature": "circuit touchOwned(value: Owned): Owned",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_calls.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "touchPair",
+    "signature": "circuit touchPair(value: [Field, Boolean]): [Field, Boolean]",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_calls.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "touchText",
+    "signature": "circuit touchText(value: Opaque<\"string\">): Opaque<\"string\">",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_witness_inputs.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "touchText",
+    "signature": "circuit touchText(value: Opaque<\"string\">): Opaque<\"string\">",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_calls.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "touchVector",
+    "signature": "circuit touchVector(value: Vector<2, Field>): Vector<2, Field>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_calls.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "touchWide",
+    "signature": "circuit touchWide(value: Uint<160>): Uint<160>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_opaque_aligned_hashes.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "transient_bytes",
+    "signature": "export circuit transient_bytes(value: Opaque<\"Uint8Array\">): Output",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_opaque_aligned_hashes.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "transient_string",
+    "signature": "export circuit transient_string(value: Opaque<\"string\">): Output",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_aligned_witness_results.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "tuple11",
+    "signature": "export circuit tuple11(fallback: [Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>], selected: Boolean): Digest",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_public_products.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "tuple11",
+    "signature": "export circuit tuple11(input: [Opaque<\"Uint8Array\">, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field]): Receipt",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_values.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "tupleFields",
+    "signature": "pure circuit tupleFields(value: [Uint<8>, Uint<16>]): Vector<2, Field>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_aligned_witness_results.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "unit_text",
+    "signature": "export circuit unit_text(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_stateful_calls.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "update",
+    "signature": "circuit update(collision: Field, right: Field, permit: Boolean): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_pure_calls.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "update",
+    "signature": "circuit update(seed: Field, selected: Boolean, permit: Boolean): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_terminal_composition.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "update",
+    "signature": "export circuit update(seed: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_public_products.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "vector9",
+    "signature": "export circuit vector9(input: Vector<2, [Opaque<\"Uint8Array\">, Field, Field, Field, Field, Field, Field, Field, Field]>): Receipt",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_values.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "vectorIdentity",
+    "signature": "pure circuit vectorIdentity(value: Vector<2, Field>): Vector<2, Field>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_values.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "vectorSum",
+    "signature": "pure circuit vectorSum(value: Vector<2, Field>): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unit_actions.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "verify",
+    "signature": "export circuit verify(value: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_aligned_hashes.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "verifyHash",
+    "signature": "circuit verifyHash(value: Field): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unit_keccak.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "verifyLocal",
+    "signature": "circuit verifyLocal(payload: Bytes<32>): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_aligned_hashes.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "verifyLocal",
+    "signature": "circuit verifyLocal(value: Field): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_aligned_witness_results.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "verify_text",
+    "signature": "circuit verify_text(): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_values.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "widen",
+    "signature": "pure circuit widen(value: Vector<2, Uint<8>>): Vector<2, Uint<16>>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_wide_casts.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "widen129",
+    "signature": "export circuit widen129(input: Uint<129>): Largest",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_wide_casts.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "widen8",
+    "signature": "export circuit widen8(input: Uint<8>): Wide",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_wide_field_cast.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "witness129",
+    "signature": "export circuit witness129(selected: Boolean): Checked",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_wide_field_cast.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "witness248",
+    "signature": "export circuit witness248(selected: Boolean): Checked",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_exact_hash_input.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "witnessed",
+    "signature": "export circuit witnessed(fallback: Opaque<\"Uint8Array\">, selected: Boolean): Hashes",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_wide_casts.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "witnessed",
+    "signature": "export circuit witnessed(selected: Boolean): Checked",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_inequality.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "witnessed",
+    "signature": "export circuit witnessed(selected: Boolean): Outcome",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_ordered_comparisons.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "witnessed",
+    "signature": "export circuit witnessed(selected: Boolean): Outcome",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_field_multiply.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "witnessed",
+    "signature": "export circuit witnessed(selected: Boolean): Product",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_wide_add.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "witnessed",
+    "signature": "export circuit witnessed(selected: Boolean): Wide",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_qualified_coin_source.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "write_once",
+    "signature": "export circuit write_once(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_qualified_coin_source.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "write_read",
+    "signature": "export circuit write_read( coin: ShieldedCoinInfo, recipient: Either<ZswapCoinPublicKey, ContractAddress> ): QualifiedShieldedCoinInfo",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_aligned_hashes.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_aligned_witness_results.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_counter.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_counter_hash.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_counter_only.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_exact_hash_input.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_jubjub.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_jubjub_negation.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_opaque_aligned_hashes.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_calls.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_cells.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_values.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_pure_calls.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_receive_composition.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_receive_values.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_rich_values.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_set.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_stateful_calls.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_terminal_composition.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_transient_crypto.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unit_keccak.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unit_value_operations.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unsigned_arithmetic.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_witness_domain.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_map_value_products.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor(id: Opaque<\"string\">, value: Stored)",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_maps.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor(seed: Opaque<\"string\">)",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unit_composition.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor(seed: Opaque<\"string\">)",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/recorded_tuple12_result.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor(selected: Boolean)",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/recorded_tuple13_result.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor(selected: Boolean)",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/opaque_cell_inputs.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor(t: Opaque<\"string\">, b: Opaque<\"Uint8Array\">, e: Envelope)",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/opaque_constructor_order.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor(value: Opaque<\"string\">, ok: Boolean)",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_kernel.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "amount",
+    "signature": "witness amount(): Uint<64>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unit_keccak.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "authorized",
+    "signature": "witness authorized(): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_exact_hash_input.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "bytes",
+    "signature": "witness bytes(): Opaque<\"Uint8Array\">",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_calls.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "bytes",
+    "signature": "witness bytes(): Opaque<\"Uint8Array\">",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_witness_domain.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "bytes",
+    "signature": "witness bytes(): Opaque<\"Uint8Array\">",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_receive_composition.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "choose",
+    "signature": "witness choose(value: Uint<128>): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_composite.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "choose_coin",
+    "signature": "witness choose_coin(coin: ShieldedCoinInfo): ShieldedCoinInfo",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_composite.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "choose_recipient",
+    "signature": "witness choose_recipient(recipient: Either<ZswapCoinPublicKey, ContractAddress>): Either<ZswapCoinPublicKey, ContractAddress>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_witness_inputs.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "consume",
+    "signature": "witness consume( bytes: Opaque<\"Uint8Array\">, text: Opaque<\"string\">, pair: [Opaque<\"Uint8Array\">, Opaque<\"string\">], items: Vector<2, Opaque<\"Uint8Array\">>, product: Product ): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unit_value_operations.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "coordinate_x",
+    "signature": "witness coordinate_x(): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unit_value_operations.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "coordinate_y",
+    "signature": "witness coordinate_y(): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_aligned_hashes.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "curveInput",
+    "signature": "witness curveInput(): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unit_keccak.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "digestPayload",
+    "signature": "witness digestPayload(): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_kernel.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "domain",
+    "signature": "witness domain(): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_aligned_witness_results.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "entry_value",
+    "signature": "witness entry_value(): Entry",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_aligned_hashes.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "expectedDigest",
+    "signature": "witness expectedDigest(): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unit_keccak.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "expectedHash",
+    "signature": "witness expectedHash(): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_aligned_hashes.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "expectedPoint",
+    "signature": "witness expectedPoint(): JubjubPoint",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unit_composition.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "first",
+    "signature": "witness first(): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_jubjub_projections.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "first",
+    "signature": "witness first(): JubjubPoint",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/merkle_digest_witness_views.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "flag",
+    "signature": "witness flag(): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_aligned_hashes.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "hashInput",
+    "signature": "witness hashInput(): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_pure_unit_statements.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "left",
+    "signature": "witness left(): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_field_multiply.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "left",
+    "signature": "witness left(): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_wide_add.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "left",
+    "signature": "witness left(): Uint<129>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_inequality.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "left",
+    "signature": "witness left(): Uint<64>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_ordered_comparisons.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "left",
+    "signature": "witness left(): Uint<8>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_wide.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "mark",
+    "signature": "witness mark(): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_own_public_key.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "mark",
+    "signature": "witness mark(step: Uint<8>): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_pure_unit_statements.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "marker",
+    "signature": "witness marker(): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_wide_casts.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "marker",
+    "signature": "witness marker(): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_wide_field_cast.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "marker",
+    "signature": "witness marker(): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_aligned_witness_results.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "nested_value",
+    "signature": "witness nested_value(): Nested",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_wide_field_cast.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "next129",
+    "signature": "witness next129(): Uint<129>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_wide_field_cast.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "next248",
+    "signature": "witness next248(): Uint<248>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_qualified_coin_source.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "nextCoin",
+    "signature": "witness nextCoin(): ShieldedCoinInfo",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_qualified_set_source.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "nextCoin",
+    "signature": "witness nextCoin(): ShieldedCoinInfo",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_rich_values.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "nextEnvelope",
+    "signature": "witness nextEnvelope(value: Envelope, tag: Bytes<3>, phase: Phase): Envelope",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_qualified_coin_source.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "nextRecipient",
+    "signature": "witness nextRecipient(): Either<ZswapCoinPublicKey, ContractAddress>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_qualified_set_source.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "nextRecipient",
+    "signature": "witness nextRecipient(): Either<ZswapCoinPublicKey, ContractAddress>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_values.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "nextValue",
+    "signature": "witness nextValue(seed: Field): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_pure_calls.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "nextValue",
+    "signature": "witness nextValue(seed: Field): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_stateful_calls.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "nextValue",
+    "signature": "witness nextValue(seed: Field): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_wide_casts.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "nextWide",
+    "signature": "witness nextWide(): Uint<248>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unit_actions.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "notifyOnce",
+    "signature": "witness notifyOnce(): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_context_query.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "opening",
+    "signature": "witness opening(): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_counter_hash.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "opening",
+    "signature": "witness opening(seed: Field): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_transient_crypto.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "opening",
+    "signature": "witness opening(value: Field): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unsigned_arithmetic.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "operand",
+    "signature": "witness operand(tag: Field, value: Uint<8>): Uint<8>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_witness_domain.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "packet",
+    "signature": "witness packet(): Packet",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_aligned_witness_results.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "permit",
+    "signature": "witness permit(): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_exact_hash_input.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "permit",
+    "signature": "witness permit(): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_jubjub_negation.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "permit",
+    "signature": "witness permit(): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unit_value_operations.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "permit",
+    "signature": "witness permit(): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/empty_witness_guard.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "permit",
+    "signature": "witness permit(): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/opaque_observed_nested.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "permit",
+    "signature": "witness permit(): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_maps.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "pick_key",
+    "signature": "witness pick_key(): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_maps.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "pick_value",
+    "signature": "witness pick_value(): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_jubjub_negation.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "point",
+    "signature": "witness point(): JubjubPoint",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_opaque_public.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "replacement",
+    "signature": "witness replacement(): Opaque<\"Uint8Array\">",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_public_products.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "replacement",
+    "signature": "witness replacement(): Opaque<\"Uint8Array\">",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_pure_unit_statements.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "right",
+    "signature": "witness right(): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_field_multiply.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "right",
+    "signature": "witness right(): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_inequality.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "right",
+    "signature": "witness right(): Uint<64>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_ordered_comparisons.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "right",
+    "signature": "witness right(): Uint<64>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_wide_add.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "right",
+    "signature": "witness right(): Uint<8>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_unit_composition.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "second",
+    "signature": "witness second(): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_jubjub_projections.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "second",
+    "signature": "witness second(): JubjubPoint",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_aligned_witness_results.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "text_value",
+    "signature": "witness text_value(): Opaque<\"string\">",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_internal_interfaces.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "trace",
+    "signature": "witness trace(): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_owned_calls.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "trace",
+    "signature": "witness trace(): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_witness_domain.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "tuple",
+    "signature": "witness tuple(): [Field, Boolean]",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_aligned_witness_results.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "tuple_value",
+    "signature": "witness tuple_value(): [Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>, Bytes<32>]",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_witness_domain.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "vector",
+    "signature": "witness vector(): Vector<2, Field>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/effect_plan_witness_domain.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "wide",
+    "signature": "witness wide(): Uint<160>",
+    "visibility": "internal"
+  }
+]

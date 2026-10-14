@@ -12,7 +12,7 @@ use super::{
     scope::Bindings,
     sink::{CheckedLeaf, FieldLiteralFacts, LeafSink, Typed, UnsignedLiteralFacts},
 };
-use crate::{RenderError, ir::Type, resource_limits::recording_type_nodes};
+use crate::{RenderError, ir::Type};
 
 pub(crate) enum LeafSource<'a> {
     Unit,
@@ -60,12 +60,11 @@ pub(crate) fn fold_leaf<S: LeafSink>(
         ),
         LeafSource::Parameter(name) => {
             let (ty, binding) = bindings
-                .get(name)
+                .get_bounded(name)?
                 .ok_or_else(|| RenderError::UnknownParameter(name.to_owned()))?;
             // Private calls can carry unrelated or oversized annotations. Lookup
             // wins first; resource-only bounds precede ownership and result clone.
             // Bounded malformed annotations retain their prior native behavior.
-            drop(recording_type_nodes(ty)?);
             let ownership = if copy_type(ty) {
                 Ownership::Copy
             } else {

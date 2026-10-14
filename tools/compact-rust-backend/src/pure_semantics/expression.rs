@@ -12,7 +12,7 @@ use super::{
     crypto::fold_crypto,
     declarations::PureDeclarations,
     leaf::fold_leaf,
-    scope::Scope,
+    scope::{Scope, TypeBoundsSession},
     sink::{ExpressionSink, OrdinaryView, Typed},
     visitor::ExpressionVisitor,
 };
@@ -26,6 +26,20 @@ use source::Source;
 pub(crate) fn fold_expression<S: ExpressionSink, D: PureDeclarations>(
     expr: &Expr,
     bindings: &Scope<'_, S::Binding>,
+    declarations: &D,
+    sink: &mut S,
+) -> Result<Typed<S::Value>, RenderError>
+where
+    S::Binding: Clone,
+{
+    let checked = TypeBoundsSession::new(bindings);
+    fold_expression_in_session(expr, &checked, declarations, sink)
+}
+
+/// Recursive entry uses the same immutable binding session, never a fresh memo.
+pub(crate) fn fold_expression_in_session<S: ExpressionSink, D: PureDeclarations>(
+    expr: &Expr,
+    bindings: &TypeBoundsSession<'_, S::Binding>,
     declarations: &D,
     sink: &mut S,
 ) -> Result<Typed<S::Value>, RenderError>

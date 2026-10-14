@@ -9,6 +9,7 @@ use crate::{
     pure_native::sink::NativeSink,
     pure_semantics::{
         aggregate::{CallRefusal, fold_borrowed_call},
+        scope::TypeBoundsSession,
         sink::{ExpressionSink, OrdinaryView},
         visitor::ExpressionVisitor,
     },
@@ -48,10 +49,11 @@ pub(super) fn render(
     } else {
         None
     };
+    let checked_parameters = TypeBoundsSession::new(parameters);
     let typed = fold_borrowed_call(
         name,
         arguments,
-        &mut ExpressionVisitor::new(parameters, environment.circuits),
+        &mut ExpressionVisitor::new(&checked_parameters, environment.circuits),
         environment.circuits,
         &mut sink,
         callback,

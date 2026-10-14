@@ -9,7 +9,7 @@ use super::{
     children::Children,
     declarations::PureDeclarations,
     identifier::check_name,
-    scope::{LocalScope, Scope},
+    scope::{LocalScope, TypeBoundsSession},
     sink::{ExpressionSink, Typed},
     visitor::ExpressionVisitor,
 };
@@ -70,7 +70,7 @@ pub(crate) enum CheckedControl<'a, V, B, C> {
 
 pub(crate) fn fold_control<S: ExpressionSink, D: PureDeclarations>(
     source: ControlSource<'_>,
-    bindings: &Scope<'_, S::Binding>,
+    bindings: &TypeBoundsSession<'_, S::Binding>,
     declarations: &D,
     sink: &mut S,
 ) -> Result<Typed<S::Value>, RenderError>
@@ -166,7 +166,7 @@ fn expect(actual: Type, expected: Type) -> Result<(), RenderError> {
 fn lexical<S: ExpressionSink, D: PureDeclarations>(
     bindings: &[LocalBinding],
     body: &Expr,
-    outer: &Scope<'_, S::Binding>,
+    outer: &TypeBoundsSession<'_, S::Binding>,
     declarations: &D,
     sink: &mut S,
 ) -> Result<Typed<S::Value>, RenderError>
@@ -216,6 +216,9 @@ where
         ty: body.ty,
     })
 }
+
+#[cfg(test)]
+use super::scope::Scope;
 
 #[cfg(test)]
 mod tests;

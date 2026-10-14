@@ -7,8 +7,8 @@
 use super::{
     children::{Children, ScopedChildren},
     declarations::PureDeclarations,
-    expression::fold_expression,
-    scope::{LocalScope, Scope},
+    expression::fold_expression_in_session,
+    scope::{LocalScope, TypeBoundsSession},
     sink::{ExpressionSink, Typed},
 };
 use crate::{
@@ -16,12 +16,21 @@ use crate::{
     ir::{Expr, Type},
 };
 
-pub(crate) struct ExpressionVisitor<'call, 'ir, S: ExpressionSink, D> {
-    bindings: &'call Scope<'ir, S::Binding>,
+pub(crate) struct ExpressionVisitor<'call, 'ir, S: ExpressionSink, D>
+where
+    S::Binding: Clone,
+{
+    bindings: &'call TypeBoundsSession<'ir, S::Binding>,
     declarations: &'call D,
 }
-impl<'call, 'ir, S: ExpressionSink, D> ExpressionVisitor<'call, 'ir, S, D> {
-    pub(crate) fn new(bindings: &'call Scope<'ir, S::Binding>, declarations: &'call D) -> Self {
+impl<'call, 'ir, S: ExpressionSink, D> ExpressionVisitor<'call, 'ir, S, D>
+where
+    S::Binding: Clone,
+{
+    pub(crate) fn new(
+        bindings: &'call TypeBoundsSession<'ir, S::Binding>,
+        declarations: &'call D,
+    ) -> Self {
         Self {
             bindings,
             declarations,
@@ -33,7 +42,7 @@ where
     S::Binding: Clone,
 {
     fn visit(&mut self, source: &Expr, sink: &mut S) -> Result<Typed<S::Value>, RenderError> {
-        fold_expression(source, self.bindings, self.declarations, sink)
+        fold_expression_in_session(source, self.bindings, self.declarations, sink)
     }
 }
 impl<S: ExpressionSink, D: PureDeclarations> ScopedChildren<S> for ExpressionVisitor<'_, '_, S, D>
@@ -50,6 +59,6 @@ where
     ) -> Result<Typed<S::Value>, RenderError> {
         let mut scope = LocalScope::new(self.bindings);
         scope.insert(source_key, ty, binding.clone());
-        fold_expression(source, scope.bindings(), self.declarations, sink)
+        fold_expression_in_session(source, scope.bindings(), self.declarations, sink)
     }
 }

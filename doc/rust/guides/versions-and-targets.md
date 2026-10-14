@@ -1,10 +1,10 @@
 # Select versions and an execution target
 
-Version values are checked against the inspected branch. Installation snippets describe prerequisites; the linked receipts identify the commands actually executed.
+The table below retains the milestone 0.3.0 version checkpoint and target receipts. On the current recording-effect branch, runtime ABI is **52**, private IR is **20**, finalized capability reports are **3** and private origin transport is **3**. Native ledger remains **8.0.3**. No package publication or new platform qualification follows from these numbers. Installation snippets describe prerequisites; linked receipts identify actual execution.
 
 ## Keep these version domains separate
 
-| Boundary | Current value | Meaning |
+| Boundary | Retained 0.3.0 value | Meaning |
 |---|---|---|
 | Initiative milestone/artifact label | 0.3.0 / `rust-backend-v0.3.0` | Engineering milestone; no tag or published package is implied here |
 | Compact compiler | 0.31.133 | Frontend/toolchain version |
@@ -18,7 +18,7 @@ Version values are checked against the inspected branch. Installation snippets d
 | Native ledger | 8.0.3 | Pinned ledger graph |
 | Declared native MSRV | Rust1.88 | Qualified only with the documented lock/features/host |
 
-Generated Rust asserts `runtime::RUST_RUNTIME_ABI == 51`. Matching this number helps detect an accidental mismatch; it does not authenticate arbitrary source or establish semantic correctness by itself.
+Current generated Rust asserts `runtime::RUST_RUNTIME_ABI == 52`. Matching this number helps detect an accidental mismatch; it does not authenticate arbitrary source or establish semantic correctness by itself.
 
 ## Obtain a matching source distribution
 

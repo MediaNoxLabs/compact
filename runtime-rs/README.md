@@ -11,7 +11,7 @@ queries. Generated code checks `RUST_RUNTIME_ABI` at compile time. A generated
 crate bundles matching runtime sources by default or points to one shared
 source root when compiled with `--rust-runtime-root`.
 
-The current runtime ABI is 51. The following paragraphs record earlier ABI additions.
+The current runtime ABI is 52. The following paragraphs record earlier ABI additions.
 ABI 51 adds checked Cell construction and recursively validates opaque ledger inputs
 before native/recorded storage, collection keys and values, and typed Merkle leaf
 hashing. Generated constructors use `try_constructor_cell` and return

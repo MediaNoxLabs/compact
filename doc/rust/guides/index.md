@@ -4,6 +4,10 @@
 
 The Rust backend uses the ledger8 Compact frontend, a private typed IR and structured Rust AST emission with `syn`, `quote`, `proc-macro2` and `prettyplease`. Generated contracts reuse the pinned Midnight ledger/zk runtime primitives.
 
+## Current recording-effect branch
+
+The tutorial receipts below belong to milestone 0.3.0. For the current compiler architecture, primitive extension workflow, typed refusals and source diagnostics, read [Checked recording and source diagnostics](checked-recording.md). Use the [capability and retirement book](../recording-effect-algebra/capability-and-retirement-book.md) for separate execution, proof and application evidence.
+
 ## Pick a task
 
 | Task | Guide |

@@ -1,0 +1,844 @@
+{
+  "baseline_commit": "66da6c775743aec84fb62c46e19c9d110cbf5059",
+  "inventory_report": {
+    "path": "/Users/ysh/.codex/local-evidence/compact-622d5-typing-resources/inventory/current-inventory-data.json",
+    "sha256": "cd9e661cd9f05047839280b823088774a911660f43ec04167b690b37cf3a5484"
+  },
+  "current_manifest": {
+    "path": "/Users/ysh/.codex/worktrees/recording-effect-prototype/compact/tools/compact-rust-backend/recording_admission_inventory.resource-measurement-622d5.json",
+    "sha256": "c1be9cef6c9e5dde42f40fd703f311331553e7b308e751f755cfa805c6bbd732"
+  },
+  "counts": {
+    "original_boundaries": 84,
+    "explicit_retirements": 69,
+    "retained_production_semantic": 7,
+    "historical_test_artifacts": 8
+  },
+  "rows": [
+    {
+      "id": "selector.membership-optional",
+      "original_disposition": "replace-shape",
+      "original_family": "lazy-profile-selection",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 560,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "selector.jubjub-values",
+      "original_disposition": "replace-shape",
+      "original_family": "lazy-profile-selection",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 517,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "selector.kernel",
+      "original_disposition": "replace-shape",
+      "original_family": "lazy-profile-selection",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 527,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "selector.context-query",
+      "original_disposition": "replace-shape",
+      "original_family": "lazy-profile-selection",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 526,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "selector.composite-values",
+      "original_disposition": "replace-shape",
+      "original_family": "lazy-profile-selection",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 529,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "selector.shielded-receive",
+      "original_disposition": "replace-shape",
+      "original_family": "lazy-profile-selection",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 536,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "selector.voting-commit",
+      "original_disposition": "replace-shape",
+      "original_family": "lazy-profile-selection",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 547,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "selector.funded-mint",
+      "original_disposition": "replace-shape",
+      "original_family": "lazy-profile-selection",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 572,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "selector.guarded-deposit",
+      "original_disposition": "replace-shape",
+      "original_family": "lazy-profile-selection",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 566,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "selector.shielded-merge",
+      "original_disposition": "replace-shape",
+      "original_family": "lazy-profile-selection",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 565,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "selector.immediate-send",
+      "original_disposition": "replace-shape",
+      "original_family": "lazy-profile-selection",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 550,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "selector.shielded-send",
+      "original_disposition": "replace-shape",
+      "original_family": "lazy-profile-selection",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 561,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "selector.reset-payout",
+      "original_disposition": "replace-shape",
+      "original_family": "lazy-profile-selection",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 569,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "selector.shielded-payout",
+      "original_disposition": "replace-shape",
+      "original_family": "lazy-profile-selection",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 570,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "selector.terminal-returns",
+      "original_disposition": "replace-shape",
+      "original_family": "lazy-profile-selection",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 521,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "selector.phase-reset",
+      "original_disposition": "replace-shape",
+      "original_family": "lazy-profile-selection",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 549,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "selector.unit-actions",
+      "original_disposition": "replace-shape",
+      "original_family": "lazy-profile-selection",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 525,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "selector.unit-composition",
+      "original_disposition": "replace-shape",
+      "original_family": "lazy-profile-selection",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 580,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "selector.zswap",
+      "original_disposition": "replace-shape",
+      "original_family": "lazy-profile-selection",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 553,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "organizer.organizer",
+      "original_disposition": "replace-shape",
+      "original_family": "eager-organizer-selection",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 590,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "organizer.optional-write",
+      "original_disposition": "replace-shape",
+      "original_family": "eager-organizer-selection",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 587,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "organizer.enum-advance",
+      "original_disposition": "replace-shape",
+      "original_family": "eager-organizer-selection",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 588,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "organizer.witness-merkle",
+      "original_disposition": "replace-shape",
+      "original_family": "eager-organizer-selection",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 589,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "effectful.effectful",
+      "original_disposition": "replace-shape",
+      "original_family": "effectful-admission",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 511,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "effectful.start-funding",
+      "original_disposition": "replace-shape",
+      "original_family": "effectful-admission",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 617,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "effectful.checked-migration",
+      "original_disposition": "preserve-semantic",
+      "original_family": "checked-algebra-integration",
+      "disposition": "retained_production_semantic_boundary",
+      "source_anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "fn checked_effectful_return(",
+          "baseline_occurrences": 1
+        }
+      ]
+    },
+    {
+      "id": "early.audited-local",
+      "original_disposition": "replace-shape",
+      "original_family": "early-complete-renderer",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 614,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "early.read-only-verification",
+      "original_disposition": "replace-shape",
+      "original_family": "early-complete-renderer",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 615,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "guard.guarded-map-read",
+      "original_disposition": "replace-shape",
+      "original_family": "post-selector-guard",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 594,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "guard.opaque-map-write",
+      "original_disposition": "replace-shape",
+      "original_family": "post-selector-guard",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 596,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "guard.opaque-set-mutation",
+      "original_disposition": "replace-shape",
+      "original_family": "post-selector-guard",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 592,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "guard.guarded-struct-pure",
+      "original_disposition": "replace-shape",
+      "original_family": "post-selector-guard",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 600,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "guard.guarded-unsigned-product",
+      "original_disposition": "replace-shape",
+      "original_family": "post-selector-guard",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 591,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "guard.proved-opaque-set-sequence",
+      "original_disposition": "replace-shape",
+      "original_family": "opaque-whole-circuit-guard",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 605,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "guard.closed-opaque-set-operation",
+      "original_disposition": "replace-shape",
+      "original_family": "opaque-whole-circuit-guard",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 603,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "guard.closed-opaque-map-operation",
+      "original_disposition": "replace-shape",
+      "original_family": "opaque-whole-circuit-guard",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 604,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "guard.closed-opaque-asset-removal",
+      "original_disposition": "replace-shape",
+      "original_family": "opaque-whole-circuit-guard",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 601,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "guard.root-let-snapshot",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "snapshot-special-case",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 618,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "final.opaque-parameter-allowlist",
+      "original_disposition": "replace-shape",
+      "original_family": "post-lowering-policy",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 618,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "final.no-emitted-statements",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "post-lowering-policy",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 618,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "final.internal-export",
+      "original_disposition": "preserve-semantic",
+      "original_family": "post-lowering-policy",
+      "disposition": "retained_production_semantic_boundary",
+      "source_anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "if circuit.internal && !helper",
+          "baseline_occurrences": 1
+        }
+      ]
+    },
+    {
+      "id": "final.shielded-gap-precedence",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "post-lowering-policy",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 618,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "legacy.action-dispatch",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "generic-recursive-dispatch",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 618,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "legacy.action-bindings",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "generic-recursive-dispatch",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 618,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "legacy.action-assertions",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "generic-recursive-dispatch",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 618,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "legacy.action-control",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "generic-recursive-dispatch",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 618,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "legacy.action-collections",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "generic-recursive-dispatch",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 618,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "legacy.action-merkle",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "generic-recursive-dispatch",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 618,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "legacy.return-conditional",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "generic-recursive-dispatch",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 618,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "return.unit",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "generic-return-special-case",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 618,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "return.cell",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "generic-return-special-case",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 618,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "return.counter",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "generic-return-special-case",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 618,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "return.discarded-read",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "generic-return-special-case",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 618,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "return.set",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "generic-return-domain",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 618,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "return.list",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "generic-return-domain",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 618,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "return.map",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "generic-return-domain",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 618,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "return.merkle",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "generic-return-domain",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 618,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "return.pure-field-call",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "generic-return-domain",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 618,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "helper.discovery",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "shared-helper-routing",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 620,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "helper.field-call-discovery",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "shared-helper-routing",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 620,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "helper.transitive-admission",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "shared-helper-routing",
+      "disposition": "retained_production_semantic_boundary",
+      "source_anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/helpers.rs",
+          "text": "fn plan_recorded_helpers(",
+          "baseline_occurrences": 1
+        }
+      ]
+    },
+    {
+      "id": "helper.unit-field-shape",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "shared-helper-routing",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 620,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "permit.nested-map",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "nested-composition-permit",
+      "disposition": "retained_historical_test_only_artifact",
+      "source_anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/typed_plan/composition/nested_map_preflight.rs",
+          "text": "struct NestedMapRead",
+          "baseline_occurrences": 1
+        }
+      ]
+    },
+    {
+      "id": "permit.relation-root",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "nested-composition-permit",
+      "disposition": "retained_historical_test_only_artifact",
+      "source_anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/typed_plan/composition/relation_root_preflight.rs",
+          "text": "enum RelationPermit",
+          "baseline_occurrences": 1
+        }
+      ]
+    },
+    {
+      "id": "permit.selected-set",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "nested-composition-permit",
+      "disposition": "retained_historical_test_only_artifact",
+      "source_anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/typed_plan/composition/selected_set_preflight.rs",
+          "text": "struct SelectedSetFamily",
+          "baseline_occurrences": 1
+        }
+      ]
+    },
+    {
+      "id": "permit.exact-lookup-site",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "nested-composition-permit",
+      "disposition": "retained_historical_test_only_artifact",
+      "source_anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/typed_plan/composition.rs",
+          "text": "checked_lookup_sites: HashSet<*const Expr>",
+          "baseline_occurrences": 1
+        }
+      ]
+    },
+    {
+      "id": "boundary.native-first",
+      "original_disposition": "preserve-semantic",
+      "original_family": "semantic-and-structural-boundary",
+      "disposition": "retained_production_semantic_boundary",
+      "source_anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/lib.rs",
+          "text": "stateful::render_stateful_circuit(",
+          "baseline_occurrences": 1
+        }
+      ]
+    },
+    {
+      "id": "boundary.resource-preflight",
+      "original_disposition": "preserve-semantic",
+      "original_family": "semantic-and-structural-boundary",
+      "disposition": "retained_production_semantic_boundary",
+      "source_anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/lib.rs",
+          "text": "let preflight = resource_limits::validate(contract)?;",
+          "baseline_occurrences": 1
+        }
+      ]
+    },
+    {
+      "id": "boundary.observed-name-collision",
+      "original_disposition": "preserve-semantic",
+      "original_family": "semantic-and-structural-boundary",
+      "disposition": "retained_production_semantic_boundary",
+      "source_anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/lib.rs",
+          "text": "let observed_call = recorded.is_supported()",
+          "baseline_occurrences": 1
+        }
+      ]
+    },
+    {
+      "id": "boundary.witness-facade",
+      "original_disposition": "preserve-semantic",
+      "original_family": "semantic-and-structural-boundary",
+      "disposition": "retained_production_semantic_boundary",
+      "source_anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/item.rs",
+          "text": "fn assemble(",
+          "baseline_occurrences": 1
+        }
+      ]
+    },
+    {
+      "id": "boundary.admission-flags",
+      "original_disposition": "replace-shape",
+      "original_family": "semantic-and-structural-boundary",
+      "disposition": "retained_historical_test_only_artifact",
+      "source_anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/typed_plan/admission.rs",
+          "text": "struct AdmissionPolicy",
+          "baseline_occurrences": 1
+        }
+      ]
+    },
+    {
+      "id": "boundary.syntactic-effect-counts",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "semantic-and-structural-boundary",
+      "disposition": "retained_historical_test_only_artifact",
+      "source_anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/typed_plan/evidence.rs",
+          "text": "struct EffectEvidence",
+          "baseline_occurrences": 1
+        }
+      ]
+    },
+    {
+      "id": "value.field-expression",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "value-and-call-subdomain",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 618,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "value.boolean-expression",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "value-and-call-subdomain",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 618,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "value.scalar-expression",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "value-and-call-subdomain",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 618,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "value.pure-call-audit",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "value-and-call-subdomain",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 618,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "value.local-call-audit",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "value-and-call-subdomain",
+      "disposition": "retained_historical_test_only_artifact",
+      "source_anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/audited_local.rs",
+          "text": "fn unit_helper(",
+          "baseline_occurrences": 1
+        }
+      ]
+    },
+    {
+      "id": "value.composite-domain",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "value-and-call-subdomain",
+      "disposition": "retained_historical_test_only_artifact",
+      "source_anchors": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded/typed_plan.rs",
+          "text": "enum CompositeDomain",
+          "baseline_occurrences": 1
+        }
+      ]
+    },
+    {
+      "id": "return.dispatch",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "generic-return-special-case",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 618,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "return.counter-to-bytes",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "generic-return-special-case",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 618,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "return.saved-root-value",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "generic-return-special-case",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 618,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "return.opaque-map-ensure",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "generic-return-special-case",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 604,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "return.direct-field-expression",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "generic-return-special-case",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 618,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    },
+    {
+      "id": "return.direct-boolean-expression",
+      "original_disposition": "split-semantic-from-shape",
+      "original_family": "generic-return-special-case",
+      "disposition": "retired_production_test_oracle_retained",
+      "issue": 618,
+      "evidence_status": "retired-from-production-test-oracle-retained",
+      "evidence_passed": true
+    }
+  ],
+  "qualification": "No new retirement and no language coverage claim; current original84 dispositions projected from immutable evidence.",
+  "publication_status": "DRAFT_CURRENT_SOURCE_JOIN_PENDING_FINAL_CLI_HISTORY_AND_REVIEW",
+  "current_source": {
+    "head": "9faee816f7b10ded11f1d24e238cf5d3e29816a6",
+    "freeze_path": "/Users/ysh/.codex/local-evidence/compact-ea13-final-qualification/implementation/633-signed-test-oracle-source-freeze-262.json",
+    "freeze_sha256": "c24fdc939292a431e3fa631309be45a45c9419f0bdffec96ce43942cb7373517",
+    "epoch": "current #633 compiler, signed test-only oracle successor"
+  },
+  "original_row_qualification": "All 84 rows remain exact from the retained 66da6c77 ledger. No new retirements or original authority repins. Current source transition and final acceptance are separate."
+}

@@ -26,6 +26,8 @@ impl<'a> Types<'a> {
     fn new() -> Self {
         Self {
             scan: Scan {
+                observer: None,
+                current_site: RefusalSite::unavailable(),
                 limits: Limits::DEFAULT,
                 metrics: Metrics::default(),
                 pending: Vec::new(),

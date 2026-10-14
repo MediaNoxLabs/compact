@@ -18,13 +18,17 @@
 //! The traversal owns lexical scope and scheduling. This domain only appends
 //! the selected action's statements and updates its explicit effect state.
 
-use crate::circuit_analysis::{circuit_emits_native_private_output, circuit_uses_witness};
+use super::ActionOutput;
+use crate::circuit_analysis::{
+    circuit_emits_native_private_output_observed, circuit_uses_witness_observed,
+};
 use crate::ir::{
     Expr, LedgerField, NativeWitnessBuiltin, PureCircuit, StateAction, StatefulCircuit, Type,
     WitnessDeclaration,
 };
-use crate::stateful::expression::render_state_expression;
-use crate::{RenderError, discard_expression, expression_with_calls, ident};
+use crate::source_diagnostics::{Owner, RefusalObserver, RefusalSite};
+use crate::stateful::{NativeExpressionContext, expression::render_state_expression_observed};
+use crate::{RenderError, discard_expression, ident};
 use proc_macro2::Span;
 use std::collections::{HashMap, HashSet};
 
@@ -43,6 +47,37 @@ pub(super) fn lower(
     next_temp: &mut usize,
     uses_witness: &mut bool,
 ) -> Result<(), RenderError> {
+    let environment = NativeExpressionContext {
+        witnesses,
+        circuits,
+        stateful_circuits,
+        ledger_fields,
+        observer: None,
+    };
+    lower_observed(
+        action,
+        parameters,
+        &environment,
+        ActionOutput {
+            statements,
+            next_temp,
+            uses_witness,
+        },
+    )
+}
+
+pub(super) fn lower_observed(
+    action: &StateAction,
+    parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    environment: &NativeExpressionContext<'_, '_>,
+    output: ActionOutput<'_>,
+) -> Result<(), RenderError> {
+    let ActionOutput {
+        statements,
+        next_temp,
+        uses_witness,
+    } = output;
+    let stateful_circuits = environment.stateful_circuits;
     match action {
         StateAction::NativeWitnessCall {
             builtin: NativeWitnessBuiltin::OwnPublicKey,
@@ -56,16 +91,13 @@ pub(super) fn lower(
         StateAction::Expression { value } => {
             let mut effect_statements = Vec::new();
             let mut query_effect = false;
-            let (rendered, ty, effect) = render_state_expression(
+            let (rendered, ty, effect) = render_state_expression_observed(
                 value,
                 parameters,
-                witnesses,
                 &mut effect_statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 &mut query_effect,
+                environment,
             )?;
             if effect {
                 *uses_witness = true;
@@ -77,28 +109,33 @@ pub(super) fn lower(
             statements.extend(discard_expression(rendered, &ty));
         }
         StateAction::PureCall { name, arguments } => {
-            let call = Expr::Call {
-                name: name.clone(),
-                arguments: arguments.clone(),
-            };
-            let (rendered, _) = expression_with_calls(&call, parameters, circuits)?;
+            let rendered = pure_call::render(action, name, arguments, parameters, environment)?;
             statements.push(syn::parse_quote!(#rendered;));
         }
         StateAction::CircuitCall {
             name: callee_name,
             arguments,
         } => {
-            let callee = stateful_circuits
-                .get(callee_name.as_str())
-                .ok_or_else(|| RenderError::UnknownCircuit(callee_name.clone()))?;
-            let callee_uses_witness =
-                circuit_uses_witness(callee, stateful_circuits, &mut HashSet::new())?;
-            let callee_emits_native = circuit_emits_native_private_output(
+            let callee = stateful_circuits.get(callee_name.as_str()).ok_or_else(|| {
+                refused_action_name(action, environment.observer);
+                RenderError::UnknownCircuit(callee_name.clone())
+            })?;
+            let callee_uses_witness = circuit_uses_witness_observed(
                 callee,
                 stateful_circuits,
                 &mut HashSet::new(),
+                Some(RefusalSite::field(Owner::Action(action), "name")),
+                environment.observer,
+            )?;
+            let callee_emits_native = circuit_emits_native_private_output_observed(
+                callee,
+                stateful_circuits,
+                &mut HashSet::new(),
+                Some(RefusalSite::field(Owner::Action(action), "name")),
+                environment.observer,
             )?;
             if arguments.len() != callee.parameters.len() {
+                refused_action_name(action, environment.observer);
                 return Err(RenderError::ArgumentCount {
                     circuit: callee_name.clone(),
                     expected: callee.parameters.len(),
@@ -110,18 +147,16 @@ pub(super) fn lower(
             let mut argument_query_effect = false;
             let mut argument_witness_effect = false;
             for (argument, parameter) in arguments.iter().zip(&callee.parameters) {
-                let (rendered, actual, effect) = render_state_expression(
+                let (rendered, actual, effect) = render_state_expression_observed(
                     argument,
                     parameters,
-                    witnesses,
                     &mut argument_statements,
                     next_temp,
-                    circuits,
-                    stateful_circuits,
-                    ledger_fields,
                     &mut argument_query_effect,
+                    environment,
                 )?;
                 if actual != parameter.ty {
+                    refused_expression(argument, environment.observer);
                     return Err(RenderError::TypeMismatch {
                         expected: parameter.ty.clone(),
                         actual,
@@ -141,7 +176,9 @@ pub(super) fn lower(
             }
             statements.extend(argument_statements);
             *uses_witness |= argument_witness_effect;
-            let callee_name = ident(callee_name)?;
+            let callee_name = ident(callee_name).inspect_err(|_| {
+                refused_action_name(action, environment.observer);
+            })?;
             if callee_uses_witness {
                 statements.push(syn::parse_quote! {
                     let call_step = #callee_name(context, witnesses, #(#args),*)?;
@@ -161,20 +198,19 @@ pub(super) fn lower(
             statements.push(syn::parse_quote!(total_cost += call_step.gas_cost;));
         }
         StateAction::Assert { condition, message } => {
+            let original_condition = condition;
             let mut effect_statements = Vec::new();
             let mut query_effect = false;
-            let (condition, actual, effect) = render_state_expression(
+            let (condition, actual, effect) = render_state_expression_observed(
                 condition,
                 parameters,
-                witnesses,
                 &mut effect_statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 &mut query_effect,
+                environment,
             )?;
             if actual != Type::Boolean {
+                refused_expression(original_condition, environment.observer);
                 return Err(RenderError::TypeMismatch {
                     expected: Type::Boolean,
                     actual,
@@ -197,3 +233,16 @@ pub(super) fn lower(
     }
     Ok(())
 }
+
+fn refused_action_name(action: &StateAction, observer: Option<&dyn RefusalObserver>) {
+    if let Some(observer) = observer {
+        observer.refused(RefusalSite::field(Owner::Action(action), "name"));
+    }
+}
+fn refused_expression(source: &Expr, observer: Option<&dyn RefusalObserver>) {
+    if let Some(observer) = observer {
+        observer.refused(RefusalSite::node(Owner::Expr(source)));
+    }
+}
+
+mod pure_call;

@@ -36,7 +36,10 @@ where
     sink.observe_source(expr);
     // One ordinary result slot, with a direct return for complete control views.
     let typed = match source::classify(expr) {
-        Source::Control(source) => return fold_control(source, bindings, declarations, sink),
+        Source::Control(source) => {
+            return fold_control(source, bindings, declarations, sink)
+                .inspect_err(|error| sink.refused(expr, error));
+        }
         Source::Leaf(source) => fold_leaf(source, bindings, sink),
         Source::Conversion(source) => fold_conversion(
             source,
@@ -59,7 +62,8 @@ where
             declarations,
             sink,
         ),
-    }?;
+    }
+    .inspect_err(|error| sink.refused(expr, error))?;
     let view = if typed.ty == Type::Unit {
         if matches!(expr, Expr::Unit | Expr::Default { ty: Type::Unit }) {
             OrdinaryView::EmptyUnit

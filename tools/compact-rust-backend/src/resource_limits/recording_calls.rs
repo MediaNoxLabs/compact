@@ -39,6 +39,8 @@ fn measure_targets(
     limits: Limits,
 ) -> Result<HashSet<&str>, super::LimitError> {
     let mut scan = Scan {
+        observer: None,
+        current_site: super::RefusalSite::unavailable(),
         limits,
         metrics: Metrics::default(),
         pending: Vec::new(),

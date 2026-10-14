@@ -18,11 +18,13 @@
 //! The traversal owns lexical scope and scheduling. This domain only appends
 //! the selected action's statements and updates its explicit effect state.
 
+use super::ActionOutput;
 use crate::ir::{
     LedgerField, LedgerFieldKind, PureCircuit, StateAction, StatefulCircuit, Type,
     WitnessDeclaration,
 };
-use crate::stateful::expression::render_state_expression;
+use crate::source_diagnostics::{Owner, RefusalObserver, RefusalSite};
+use crate::stateful::{NativeExpressionContext, render_state_expression_observed};
 use crate::{RenderError, ident};
 use proc_macro2::Span;
 use std::collections::HashMap;
@@ -42,19 +44,58 @@ pub(super) fn lower(
     next_temp: &mut usize,
     uses_witness: &mut bool,
 ) -> Result<(), RenderError> {
+    let environment = NativeExpressionContext {
+        witnesses,
+        circuits,
+        stateful_circuits,
+        ledger_fields,
+        observer: None,
+    };
+    lower_observed(
+        action,
+        parameters,
+        &environment,
+        ActionOutput {
+            statements,
+            next_temp,
+            uses_witness,
+        },
+    )
+}
+
+pub(super) fn lower_observed(
+    action: &StateAction,
+    parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    environment: &NativeExpressionContext<'_, '_>,
+    output: ActionOutput<'_>,
+) -> Result<(), RenderError> {
+    let ActionOutput {
+        statements,
+        next_temp,
+        uses_witness,
+    } = output;
+    let ledger_fields = environment.ledger_fields;
     match action {
         StateAction::HistoricMerkleResetHistory { field, index } => {
-            let declaration = ledger_fields
-                .get(field.as_str())
-                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            let declaration = ledger_fields.get(field.as_str()).ok_or_else(|| {
+                refused(
+                    RefusalSite::field(Owner::Action(action), "field"),
+                    environment.observer,
+                );
+                RenderError::UnknownLedgerField(field.clone())
+            })?;
             if !matches!(
                 declaration.declaration,
                 LedgerFieldKind::HistoricMerkleTree { .. }
             ) || declaration.index != *index
             {
+                refused(
+                    RefusalSite::node(Owner::Action(action)),
+                    environment.observer,
+                );
                 return Err(RenderError::UnknownLedgerField(field.clone()));
             }
-            let slot = ident(&declaration.id)?;
+            let slot = ledger_ident(declaration, environment.observer)?;
             statements.push(syn::parse_quote! {
                 let step = crate::ledger_slots::#slot.reset_history(context)?;
             });
@@ -63,20 +104,34 @@ pub(super) fn lower(
         }
         StateAction::HistoricMerkleResetToDefault { field, index }
         | StateAction::MerkleResetToDefault { field, index } => {
-            let declaration = ledger_fields
-                .get(field.as_str())
-                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            let declaration = ledger_fields.get(field.as_str()).ok_or_else(|| {
+                refused(
+                    RefusalSite::field(Owner::Action(action), "field"),
+                    environment.observer,
+                );
+                RenderError::UnknownLedgerField(field.clone())
+            })?;
             let historic = match declaration.declaration {
                 LedgerFieldKind::HistoricMerkleTree { .. } => true,
                 LedgerFieldKind::MerkleTree { .. } => false,
-                _ => return Err(RenderError::UnknownLedgerField(field.clone())),
+                _ => {
+                    refused(
+                        RefusalSite::field(Owner::Action(action), "field"),
+                        environment.observer,
+                    );
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                }
             };
             let action_historic =
                 matches!(action, StateAction::HistoricMerkleResetToDefault { .. });
             if declaration.index != *index || historic != action_historic {
+                refused(
+                    RefusalSite::node(Owner::Action(action)),
+                    environment.observer,
+                );
                 return Err(RenderError::UnknownLedgerField(field.clone()));
             }
-            let slot = ident(&declaration.id)?;
+            let slot = ledger_ident(declaration, environment.observer)?;
             statements.push(syn::parse_quote! {
                 let step = crate::ledger_slots::#slot.reset_to_default(context)?;
             });
@@ -127,13 +182,23 @@ pub(super) fn lower(
             hash: value,
             ..
         } => {
-            let declaration = ledger_fields
-                .get(field.as_str())
-                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            let declaration = ledger_fields.get(field.as_str()).ok_or_else(|| {
+                refused(
+                    RefusalSite::field(Owner::Action(action), "field"),
+                    environment.observer,
+                );
+                RenderError::UnknownLedgerField(field.clone())
+            })?;
             let (ty, historic) = match &declaration.declaration {
                 LedgerFieldKind::HistoricMerkleTree { ty, .. } => (ty, true),
                 LedgerFieldKind::MerkleTree { ty, .. } => (ty, false),
-                _ => return Err(RenderError::UnknownLedgerField(field.clone())),
+                _ => {
+                    refused(
+                        RefusalSite::field(Owner::Action(action), "field"),
+                        environment.observer,
+                    );
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                }
             };
             let action_historic = matches!(
                 action,
@@ -143,20 +208,22 @@ pub(super) fn lower(
                     | StateAction::HistoricMerkleInsertHashIndex { .. }
             );
             if declaration.index != *index || historic != action_historic {
+                refused(
+                    RefusalSite::node(Owner::Action(action)),
+                    environment.observer,
+                );
                 return Err(RenderError::UnknownLedgerField(field.clone()));
             }
             let mut value_statements = Vec::new();
             let mut query_effect = false;
-            let (value, actual, value_witness_effect) = render_state_expression(
+            let original_value = value;
+            let (value, actual, value_witness_effect) = render_state_expression_observed(
                 value,
                 parameters,
-                witnesses,
                 &mut value_statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 &mut query_effect,
+                environment,
             )?;
             let is_hash = matches!(
                 action,
@@ -171,6 +238,10 @@ pub(super) fn lower(
                 ty.clone()
             };
             if actual != expected {
+                refused(
+                    RefusalSite::node(Owner::Expr(original_value)),
+                    environment.observer,
+                );
                 return Err(RenderError::TypeMismatch { expected, actual });
             }
             let mut witness_effect = value_witness_effect;
@@ -179,21 +250,22 @@ pub(super) fn lower(
                 | StateAction::HistoricMerkleInsertHashIndex { position, .. }
                 | StateAction::MerkleInsertIndex { position, .. }
                 | StateAction::MerkleInsertHashIndex { position, .. } => {
-                    let (rendered, actual, effect) = render_state_expression(
+                    let (rendered, actual, effect) = render_state_expression_observed(
                         position,
                         parameters,
-                        witnesses,
                         &mut value_statements,
                         next_temp,
-                        circuits,
-                        stateful_circuits,
-                        ledger_fields,
                         &mut query_effect,
+                        environment,
                     )?;
                     let expected = Type::Unsigned {
                         max: u64::MAX.to_string(),
                     };
                     if actual != expected {
+                        refused(
+                            RefusalSite::node(Owner::Expr(position)),
+                            environment.observer,
+                        );
                         return Err(RenderError::TypeMismatch { expected, actual });
                     }
                     witness_effect |= effect;
@@ -206,7 +278,7 @@ pub(super) fn lower(
                 statements.push(syn::parse_quote!(let mut context = context;));
             }
             statements.extend(value_statements);
-            let slot = ident(&declaration.id)?;
+            let slot = ledger_ident(declaration, environment.observer)?;
             let method = match (is_hash, position.is_some()) {
                 (false, false) => "insert",
                 (false, true) => "insert_index",
@@ -236,36 +308,52 @@ pub(super) fn lower(
             index,
             position,
         } => {
-            let declaration = ledger_fields
-                .get(field.as_str())
-                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            let declaration = ledger_fields.get(field.as_str()).ok_or_else(|| {
+                refused(
+                    RefusalSite::field(Owner::Action(action), "field"),
+                    environment.observer,
+                );
+                RenderError::UnknownLedgerField(field.clone())
+            })?;
             let historic = match &declaration.declaration {
                 LedgerFieldKind::HistoricMerkleTree { .. } => true,
                 LedgerFieldKind::MerkleTree { .. } => false,
-                _ => return Err(RenderError::UnknownLedgerField(field.clone())),
+                _ => {
+                    refused(
+                        RefusalSite::field(Owner::Action(action), "field"),
+                        environment.observer,
+                    );
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                }
             };
             let action_historic =
                 matches!(action, StateAction::HistoricMerkleInsertIndexDefault { .. });
             if declaration.index != *index || historic != action_historic {
+                refused(
+                    RefusalSite::node(Owner::Action(action)),
+                    environment.observer,
+                );
                 return Err(RenderError::UnknownLedgerField(field.clone()));
             }
             let mut value_statements = Vec::new();
             let mut query_effect = false;
-            let (position, actual, witness_effect) = render_state_expression(
+            let original_position = position;
+            let (position, actual, witness_effect) = render_state_expression_observed(
                 position,
                 parameters,
-                witnesses,
                 &mut value_statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 &mut query_effect,
+                environment,
             )?;
             let expected = Type::Unsigned {
                 max: u64::MAX.to_string(),
             };
             if actual != expected {
+                refused(
+                    RefusalSite::node(Owner::Expr(original_position)),
+                    environment.observer,
+                );
                 return Err(RenderError::TypeMismatch { expected, actual });
             }
             if witness_effect {
@@ -275,7 +363,7 @@ pub(super) fn lower(
                 statements.push(syn::parse_quote!(let mut context = context;));
             }
             statements.extend(value_statements);
-            let slot = ident(&declaration.id)?;
+            let slot = ledger_ident(declaration, environment.observer)?;
             statements.push(syn::parse_quote! {
                 let step = crate::ledger_slots::#slot.insert_index_default(context, #position)?;
             });
@@ -285,4 +373,21 @@ pub(super) fn lower(
         _ => unreachable!("native merkle action dispatched to its declared domain"),
     }
     Ok(())
+}
+
+fn ledger_ident(
+    declaration: &LedgerField,
+    observer: Option<&dyn RefusalObserver>,
+) -> Result<syn::Ident, RenderError> {
+    ident(&declaration.id).inspect_err(|_| {
+        if let Some(observer) = observer {
+            observer.refused(RefusalSite::field(Owner::Ledger(declaration), "id"));
+        }
+    })
+}
+
+fn refused(site: RefusalSite<'_>, observer: Option<&dyn RefusalObserver>) {
+    if let Some(observer) = observer {
+        observer.refused(site);
+    }
 }

@@ -21,17 +21,32 @@ use crate::{
     value_lowering::carrier::NativeCarrierSink,
 };
 
-pub(crate) struct NativeSink {
+pub(crate) type RefusalCallback<'callback> =
+    dyn FnMut(&crate::ir::Expr, &crate::RenderError) + 'callback;
+
+pub(crate) struct NativeSink<'callback> {
     syntax: NativeLeafSink,
+    refusal_callback: Option<&'callback mut RefusalCallback<'callback>>,
 }
-impl NativeSink {
+impl<'callback> NativeSink<'callback> {
     pub(crate) fn new() -> Self {
         Self {
             syntax: NativeLeafSink::new(),
+            refusal_callback: None,
+        }
+    }
+    /// The callback borrows each source/error only for this invocation. It can
+    /// capture identity or unavailable state, but cannot retain those references.
+    pub(crate) fn with_refusal_callback(
+        callback: &'callback mut RefusalCallback<'callback>,
+    ) -> Self {
+        Self {
+            syntax: NativeLeafSink::new(),
+            refusal_callback: Some(callback),
         }
     }
 }
-impl LeafSink for NativeSink {
+impl LeafSink for NativeSink<'_> {
     type Value = NativeFragment;
     type Binding = syn::Ident;
     type Carriers = NativeCarrierSink;
@@ -42,12 +57,12 @@ impl LeafSink for NativeSink {
         NativeFragment::Value(self.syntax.leaf(facts))
     }
 }
-impl ConversionSink for NativeSink {
+impl ConversionSink for NativeSink<'_> {
     fn conversion(&mut self, facts: ConversionFacts, child: Self::Value) -> Self::Value {
         NativeFragment::Value(self.syntax.conversion(facts, child.into_expression()))
     }
 }
-impl ArithmeticSink for NativeSink {
+impl ArithmeticSink for NativeSink<'_> {
     fn arithmetic(
         &mut self,
         facts: ArithmeticFacts,
@@ -61,12 +76,12 @@ impl ArithmeticSink for NativeSink {
         ))
     }
 }
-impl CryptoSink for NativeSink {
+impl CryptoSink for NativeSink<'_> {
     fn crypto(&mut self, checked: CheckedCrypto<Self::Value>) -> Self::Value {
         NativeFragment::Value(self.syntax.crypto(value::crypto(checked)))
     }
 }
-impl AggregateSink for NativeSink {
+impl AggregateSink for NativeSink<'_> {
     fn binding(&mut self, name: &CheckedName) -> Self::Binding {
         self.syntax.binding(name)
     }
@@ -77,7 +92,7 @@ impl AggregateSink for NativeSink {
         NativeFragment::Value(self.syntax.aggregate(value::aggregate(checked)))
     }
 }
-impl ControlSink for NativeSink {
+impl ControlSink for NativeSink<'_> {
     fn local_binding<'a>(
         &mut self,
         name: &CheckedName,
@@ -134,7 +149,12 @@ impl ControlSink for NativeSink {
         }
     }
 }
-impl ExpressionSink for NativeSink {
+impl ExpressionSink for NativeSink<'_> {
+    fn refused(&mut self, source: &crate::ir::Expr, error: &crate::RenderError) {
+        if let Some(callback) = self.refusal_callback.as_mut() {
+            callback(source, error);
+        }
+    }
     fn ordinary(&mut self, view: OrdinaryView, value: Self::Value) -> Self::Value {
         match view {
             OrdinaryView::Value => value,
@@ -151,3 +171,7 @@ impl ExpressionSink for NativeSink {
         super::visitation::record(source);
     }
 }
+
+#[cfg(test)]
+#[path = "refusal_tests.rs"]
+mod refusal_tests;

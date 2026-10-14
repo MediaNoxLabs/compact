@@ -245,3 +245,73 @@ fn check_sink_owns_no_output_accumulator_or_vector_expansion() {
         Ok(())
     );
 }
+
+/// The optional observer follows the same bounded carrier recursion on the
+/// ordinary worker stack. The whole-type guard still wins before any sink.
+#[test]
+fn observed_carrier_keeps_default_boundary_on_two_mib_worker() {
+    std::thread::Builder::new()
+        .stack_size(2 * 1024 * 1024)
+        .spawn(|| {
+            use crate::source_diagnostics::{Owner, RefusalObserver, RefusalSite, Slot};
+            use std::cell::Cell;
+            struct Capture<'a> {
+                leaf: &'a Type,
+                calls: Cell<usize>,
+            }
+            impl RefusalObserver for Capture<'_> {
+                fn refused(&self, site: RefusalSite<'_>) {
+                    assert_eq!(site.owner, Some(Owner::Type(self.leaf)));
+                    assert_eq!(site.slot, Slot::Field("max"));
+                    self.calls.set(self.calls.get() + 1);
+                }
+            }
+            fn nested(depth: usize, leaf: Type) -> Type {
+                (0..depth).fold(leaf, |ty, _| Type::Vector {
+                    element: Box::new(ty),
+                    length: 1,
+                })
+            }
+            let valid = nested(47, Type::Field);
+            let bad = nested(46, unsigned("bad"));
+            let mut leaf = &bad;
+            for _ in 0..46 {
+                let Type::Vector { element, .. } = leaf else {
+                    unreachable!()
+                };
+                leaf = element;
+            }
+            let capture = Capture {
+                leaf,
+                calls: Cell::new(0),
+            };
+            let plain = fold_carrier(&valid, &mut NativeCarrierSink)
+                .unwrap()
+                .into_token_stream()
+                .to_string();
+            let observed = fold_carrier_observed(&valid, &mut NativeCarrierSink, Some(&capture))
+                .unwrap()
+                .into_token_stream()
+                .to_string();
+            assert_eq!(observed, plain);
+            assert_eq!(capture.calls.get(), 0);
+            assert_eq!(
+                fold_carrier_observed(&bad, &mut CheckSink, Some(&capture)),
+                check_carrier(&bad)
+            );
+            assert_eq!(capture.calls.get(), 1);
+            let over = nested(48, unsigned("bad"));
+            assert!(matches!(
+                fold_carrier_observed(&over, &mut NoOutput, Some(&capture)),
+                Err(RenderError::ResourceLimit { .. })
+            ));
+            assert_eq!(
+                capture.calls.get(),
+                1,
+                "unavailable preflight must not invent a leaf"
+            );
+        })
+        .unwrap()
+        .join()
+        .unwrap();
+}

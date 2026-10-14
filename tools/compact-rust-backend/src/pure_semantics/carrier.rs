@@ -12,6 +12,7 @@ use super::{
     identifier::{CheckedName, check_name},
     numeric::{UnsignedMaximum, unsigned_maximum},
 };
+use crate::source_diagnostics::{Owner, RefusalObserver, RefusalSite};
 use crate::{RenderError, ir::Type, resource_limits::recording_type_nodes};
 
 pub(crate) enum Leaf<'a> {
@@ -70,11 +71,23 @@ pub(crate) fn fold_carrier<S: CarrierSink>(
     ty: &Type,
     sink: &mut S,
 ) -> Result<S::Value, RenderError> {
+    fold_carrier_observed(ty, sink, None)
+}
+/// Same carrier owner with an optional original-source observer.
+pub(crate) fn fold_carrier_observed<S: CarrierSink>(
+    ty: &Type,
+    sink: &mut S,
+    observer: Option<&dyn RefusalObserver>,
+) -> Result<S::Value, RenderError> {
     drop(recording_type_nodes(ty)?);
-    fold_bounded(ty, sink)
+    fold_bounded(ty, sink, observer)
 }
 
-fn fold_bounded<S: CarrierSink>(ty: &Type, sink: &mut S) -> Result<S::Value, RenderError> {
+fn fold_bounded<S: CarrierSink>(
+    ty: &Type,
+    sink: &mut S,
+    observer: Option<&dyn RefusalObserver>,
+) -> Result<S::Value, RenderError> {
     let leaf = match ty {
         Type::Unit => Leaf::Unit,
         Type::Boolean => Leaf::Boolean,
@@ -83,24 +96,37 @@ fn fold_bounded<S: CarrierSink>(ty: &Type, sink: &mut S) -> Result<S::Value, Ren
         Type::OpaqueString => Leaf::OpaqueString,
         Type::OpaqueBytes => Leaf::OpaqueBytes,
         Type::Bytes { length } => Leaf::Bytes(*length),
-        Type::Struct { name, .. } | Type::Enum { name, .. } => Leaf::Named(check_name(name)?),
+        Type::Struct { name, .. } | Type::Enum { name, .. } => {
+            Leaf::Named(check_name(name).inspect_err(|_| {
+                if let Some(observer) = observer {
+                    observer.refused(RefusalSite::field(Owner::Type(ty), "name"));
+                }
+            })?)
+        }
         Type::Unsigned { max } => Leaf::Unsigned {
             spelling: max,
-            maximum: unsigned_maximum(max)?,
+            maximum: unsigned_maximum(max).inspect_err(|_| {
+                if let Some(observer) = observer {
+                    observer.refused(RefusalSite::field(Owner::Type(ty), "max"));
+                }
+            })?,
         },
         Type::Tuple { elements } => {
             let mut tuple = sink.tuple();
             for element in elements {
-                let value = fold_bounded(element, sink)?;
+                let value = fold_bounded(element, sink, observer)?;
                 sink.element(&mut tuple, value);
             }
             return Ok(sink.finish_tuple(tuple));
         }
         Type::Vector { element, length } => {
-            let element = fold_bounded(element, sink)?;
+            let element = fold_bounded(element, sink, observer)?;
             return Ok(sink.vector(element, *length));
         }
         Type::LedgerMap { .. } => {
+            if let Some(observer) = observer {
+                observer.refused(RefusalSite::node(Owner::Type(ty)));
+            }
             return Err(RenderError::UnsupportedLedgerValueType(ty.clone()));
         }
     };

@@ -9,6 +9,7 @@
 mod context_free;
 mod declarations;
 mod lower;
+use crate::source_diagnostics::RefusalObserver;
 mod model;
 #[cfg(all(test, feature = "experimental-recording-plan"))]
 mod property_tests;
@@ -61,6 +62,7 @@ pub(super) fn check_with_calls(
     check_with_calls_diagnostic(circuit, ledger, witnesses, pure, circuits).map_err(Into::into)
 }
 
+#[cfg(test)]
 pub(super) fn check_with_calls_diagnostic(
     circuit: &StatefulCircuit,
     ledger: &HashMap<&str, &LedgerField>,
@@ -68,14 +70,29 @@ pub(super) fn check_with_calls_diagnostic(
     pure: &HashMap<&str, &PureCircuit>,
     circuits: &HashMap<&str, &StatefulCircuit>,
 ) -> Result<CheckedPlan, DiagnosticPlanError> {
-    let types =
-        type_environment::TypeEnvironment::from_sources(circuit, ledger, witnesses, pure, circuits)
-            .map_err(|gap| DiagnosticPlanError::Unsupported(gap.into()))?;
+    check_with_calls_observed(circuit, ledger, witnesses, pure, circuits, None)
+}
+pub(super) fn check_with_calls_observed(
+    circuit: &StatefulCircuit,
+    ledger: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+    observer: Option<&dyn RefusalObserver>,
+) -> Result<CheckedPlan, DiagnosticPlanError> {
+    let types = type_environment::TypeEnvironment::from_sources_observed(
+        circuit, ledger, witnesses, pure, circuits, observer,
+    )
+    .map_err(|gap| DiagnosticPlanError::Unsupported(gap.into()))?;
     let declarations = declarations::Declarations::with_calls(ledger, witnesses, pure, circuits)
         .with_type_environment(types)
         .with_root(circuit);
-    let (plan, certificates) = lower::lower_with_pure_calls(circuit, &declarations, pure, circuits)
-        .map_err(DiagnosticPlanError::Unsupported)?;
+    let (plan, certificates) = if observer.is_some() {
+        lower::lower_with_pure_calls_observed(circuit, &declarations, pure, circuits, observer)
+    } else {
+        lower::lower_with_pure_calls(circuit, &declarations, pure, circuits)
+    }
+    .map_err(DiagnosticPlanError::Unsupported)?;
     let declarations = declarations
         .with_certificates(certificates, pure)
         .map_err(DiagnosticPlanError::Invalid)?;
@@ -93,6 +110,7 @@ pub(super) fn lower_with_calls(
     lower_with_calls_diagnostic(circuit, ledger, witnesses, pure, circuits).map_err(Into::into)
 }
 
+#[cfg(test)]
 pub(super) fn lower_with_calls_diagnostic(
     circuit: &StatefulCircuit,
     ledger: &HashMap<&str, &LedgerField>,
@@ -100,8 +118,18 @@ pub(super) fn lower_with_calls_diagnostic(
     pure: &HashMap<&str, &PureCircuit>,
     circuits: &HashMap<&str, &StatefulCircuit>,
 ) -> Result<TypedPlan, DiagnosticPlanError> {
-    render(&check_with_calls_diagnostic(
-        circuit, ledger, witnesses, pure, circuits,
+    lower_with_calls_observed(circuit, ledger, witnesses, pure, circuits, None)
+}
+pub(super) fn lower_with_calls_observed(
+    circuit: &StatefulCircuit,
+    ledger: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+    observer: Option<&dyn RefusalObserver>,
+) -> Result<TypedPlan, DiagnosticPlanError> {
+    render(&check_with_calls_observed(
+        circuit, ledger, witnesses, pure, circuits, observer,
     )?)
     .map_err(DiagnosticPlanError::Invalid)
 }

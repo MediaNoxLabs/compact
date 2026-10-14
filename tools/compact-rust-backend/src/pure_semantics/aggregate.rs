@@ -19,6 +19,7 @@ use crate::{
     ir::{Expr, Parameter, Type},
 };
 mod call;
+pub(crate) use call::{CallRefusal, CallRefusalCallback};
 mod literal;
 mod projection;
 mod vector;
@@ -173,10 +174,29 @@ pub(crate) fn fold_aggregate<S: AggregateSink, C: ScopedChildren<S>>(
         }
     };
     let checked = checked?;
-    Ok(Typed {
+    Ok(project(checked, sink))
+}
+
+/// Borrowed Action call entry. Signature checks use the same call owner once;
+/// nested arguments retain the ordinary visitor and no Action-owned callback.
+pub(crate) fn fold_borrowed_call<S: AggregateSink, C: ScopedChildren<S>>(
+    name: &str,
+    arguments: &[Expr],
+    children: &mut C,
+    declarations: &impl PureDeclarations,
+    sink: &mut S,
+    refusal: Option<&mut CallRefusalCallback<'_>>,
+) -> Result<Typed<S::Value>, RenderError> {
+    let checked = call::check_with_refusal(name, arguments, children, declarations, sink, refusal)?;
+    Ok(project(checked, sink))
+}
+
+/// Common output projection, after all child traversal and semantic checks.
+fn project<S: AggregateSink>(checked: Typed<Output<S>>, sink: &mut S) -> Typed<S::Value> {
+    Typed {
         output: sink.aggregate(checked.output),
         ty: checked.ty,
-    })
+    }
 }
 
 #[cfg(test)]

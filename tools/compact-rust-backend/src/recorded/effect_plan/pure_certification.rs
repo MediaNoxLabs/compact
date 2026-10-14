@@ -11,6 +11,7 @@ mod checker;
 use super::{RecordingGap, invalid};
 use crate::ir::{Expr, PureCircuit, StatefulCircuit};
 use crate::resource_limits::PureBodyBudget;
+use crate::source_diagnostics::{Owner, RefusalObserver, RefusalSite};
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 /// Only this module can mint or change the exact source snapshot.
@@ -81,9 +82,17 @@ impl Certificates {
     }
 }
 
+#[derive(Clone)]
+struct Dependency<'a> {
+    name: String,
+    source: &'a Expr,
+}
+
 struct Frame<'a> {
     source: &'a PureCircuit,
-    dependencies: Vec<String>,
+    dependencies: Vec<Dependency<'a>>,
+    /// The actual parent occurrence selected by the existing DFS collector.
+    called_from: Option<&'a Expr>,
     next: usize,
     local_work: usize,
 }
@@ -115,12 +124,27 @@ impl<'a> Certifier<'a> {
         self.certificates
     }
 
-    fn enter(&mut self, name: &str, path: &str) -> Result<Frame<'a>, RecordingGap> {
-        let source = self
-            .pure
-            .get(name)
-            .copied()
-            .ok_or_else(|| invalid(path, format!("unknown pure callee {name:?}")))?;
+    fn enter(
+        &mut self,
+        name: &str,
+        path: &str,
+        observer: Option<&dyn RefusalObserver>,
+    ) -> Result<Frame<'a>, RecordingGap> {
+        self.enter_from(name, path, observer, None)
+    }
+
+    /// The existing DFS supplies its actual incoming occurrence, never a lookup by value.
+    fn enter_from(
+        &mut self,
+        name: &str,
+        path: &str,
+        observer: Option<&dyn RefusalObserver>,
+        incoming: Option<&Expr>,
+    ) -> Result<Frame<'a>, RecordingGap> {
+        let source = self.pure.get(name).copied().ok_or_else(|| {
+            refusal(observer, dependency_site(incoming));
+            invalid(path, format!("unknown pure callee {name:?}"))
+        })?;
         if self.stateful.contains_key(name)
             || self.stateful.values().any(|source| source.name == name)
             || self
@@ -132,6 +156,7 @@ impl<'a> Certifier<'a> {
                 != 1
             || source.name != name
         {
+            refusal(observer, dependency_site(incoming));
             return Err(invalid(
                 path,
                 "ambiguous pure/stateful declaration or inconsistent source name",
@@ -139,23 +164,44 @@ impl<'a> Certifier<'a> {
         }
         let local_work = self
             .budget
-            .check(source)
+            .check_observed(source, observer)
             .map_err(|e| invalid(path, e.to_string()))?;
         // The shared body checker can clone/coerce hidden local aggregate types.
         // Bound their fixed layout before it runs, including all unused branches
         // of this reachable body. Unreachable declarations are not charged.
-        let annotations = crate::resource_limits::recording_pure_annotations(source)
-            .map_err(|e| invalid(path, e.to_string()))?;
-        super::type_environment::check_fixed_layouts(&annotations.types, path)?;
-        checker::check_named_structs(&annotations.types, path)?;
-        checker::check_defaults(&annotations.defaults, path)?;
-        let normalized =
-            crate::semantic_identifier(name).map_err(|e| invalid(path, e.to_string()))?;
+        let annotations =
+            crate::resource_limits::recording_pure_annotations(source).map_err(|e| {
+                refusal(observer, RefusalSite::unavailable());
+                invalid(path, e.to_string())
+            })?;
+        if observer.is_some() {
+            super::type_environment::check_fixed_layouts_observed(
+                &annotations.types,
+                path,
+                observer,
+            )?;
+        } else {
+            super::type_environment::check_fixed_layouts(&annotations.types, path)?;
+        }
+        if observer.is_some() {
+            checker::check_named_structs_observed(&annotations.types, path, observer)?;
+            checker::check_defaults_observed(&annotations.defaults, path, observer)?;
+        } else {
+            checker::check_named_structs(&annotations.types, path)?;
+            checker::check_defaults(&annotations.defaults, path)?;
+        }
+        let normalized = crate::semantic_identifier(name).map_err(|e| {
+            if let Some(observer) = observer {
+                observer.refused(RefusalSite::field(Owner::Pure(source), "name"));
+            }
+            invalid(path, e.to_string())
+        })?;
         if self
             .normalized_names
             .get(&normalized)
             .is_some_and(|prior| prior != name)
         {
+            refusal(observer, RefusalSite::field(Owner::Pure(source), "name"));
             return Err(invalid(
                 path,
                 "pure helper names collide after Rust normalization",
@@ -167,13 +213,17 @@ impl<'a> Certifier<'a> {
         let dependencies = std::cell::RefCell::new(Vec::new());
         crate::circuit_analysis::expression_contains(&source.body, &|node| {
             if let Expr::Call { name, .. } | Expr::VectorFoldCall { name, .. } = node {
-                dependencies.borrow_mut().push(name.clone());
+                dependencies.borrow_mut().push(Dependency {
+                    name: name.clone(),
+                    source: node,
+                });
             }
             false
         });
         Ok(Frame {
             source,
             dependencies: dependencies.into_inner(),
+            called_from: None,
             next: 0,
             local_work,
         })
@@ -182,33 +232,66 @@ impl<'a> Certifier<'a> {
     /// Iterative DFS, memoized per immutable environment. Cached dependency
     /// summaries still contribute to every ancestor's depth/work bounds.
     pub(super) fn certify(&mut self, name: &str, path: &str) -> Result<(), RecordingGap> {
+        self.certify_observed(name, path, None)
+    }
+    pub(super) fn certify_observed(
+        &mut self,
+        name: &str,
+        path: &str,
+        observer: Option<&dyn RefusalObserver>,
+    ) -> Result<(), RecordingGap> {
         if self.certificates.get(name).is_some() {
             return Ok(());
         }
         let (depth_limit, work_limit) = crate::resource_limits::recording_call_limits();
-        let mut stack = vec![self.enter(name, path)?];
+        let mut stack = vec![self.enter(name, path, observer)?];
         let mut active = HashSet::from([name.to_owned()]);
         while let Some(frame) = stack.last_mut() {
             if let Some(dependency) = frame.dependencies.get(frame.next).cloned() {
                 frame.next += 1;
-                if active.contains(&dependency) {
+                if active.contains(&dependency.name) {
+                    if let Some(observer) = observer {
+                        observer
+                            .refused(RefusalSite::field(Owner::Expr(dependency.source), "name"));
+                    }
+                    related_edges(observer, &stack, None);
                     return Err(invalid(
                         path,
-                        format!("recursive pure helper {dependency:?}"),
+                        format!("recursive pure helper {:?}", dependency.name),
                     ));
                 }
-                if let Some(done) = self.certificates.get(&dependency) {
+                if let Some(done) = self.certificates.get(&dependency.name) {
                     if stack.len().saturating_add(done.depth) > depth_limit {
+                        if let Some(observer) = observer {
+                            observer.refused(RefusalSite::field(
+                                Owner::Expr(dependency.source),
+                                "name",
+                            ));
+                        }
+                        related_edges(observer, &stack, None);
                         return Err(invalid(path, "pure helper call depth limit exceeded"));
                     }
                     continue;
                 }
                 if stack.len() >= depth_limit {
+                    if let Some(observer) = observer {
+                        observer
+                            .refused(RefusalSite::field(Owner::Expr(dependency.source), "name"));
+                    }
+                    related_edges(observer, &stack, None);
                     return Err(invalid(path, "pure helper call depth limit exceeded"));
                 }
-                let dependency_path = format!("{path}.callee[{dependency}]");
-                let child = self.enter(&dependency, &dependency_path)?;
-                active.insert(dependency);
+                let dependency_path = format!("{path}.callee[{}]", dependency.name);
+                let mut child = self
+                    .enter_from(
+                        &dependency.name,
+                        &dependency_path,
+                        observer,
+                        Some(dependency.source),
+                    )
+                    .inspect_err(|_| related_edges(observer, &stack, Some(dependency.source)))?;
+                child.called_from = Some(dependency.source);
+                active.insert(dependency.name);
                 stack.push(child);
                 continue;
             }
@@ -218,12 +301,14 @@ impl<'a> Certifier<'a> {
             for dependency in &frame.dependencies {
                 let child = self
                     .certificates
-                    .get(dependency)
+                    .get(&dependency.name)
                     .expect("completed dependency");
                 depth = depth.max(child.depth.saturating_add(1));
                 work = work.saturating_add(child.expanded_work);
             }
             if depth > depth_limit || work > work_limit {
+                refusal(observer, RefusalSite::unavailable());
+                related_edges(observer, &stack, frame.called_from);
                 return Err(invalid(
                     path,
                     "pure helper depth or expanded work limit exceeded",
@@ -232,7 +317,13 @@ impl<'a> Certifier<'a> {
             // Only now may shared typing inspect callee signatures: all direct
             // dependencies have already passed their borrowed resource scans.
             let body_path = format!("{path}.callee[{}]", frame.source.name);
-            checker::check(frame.source, self.pure).map_err(|e| {
+            (if observer.is_some() {
+                checker::check_observed(frame.source, self.pure, observer)
+            } else {
+                checker::check(frame.source, self.pure)
+            })
+            .map_err(|e| {
+                related_edges(observer, &stack, frame.called_from);
                 invalid(
                     &body_path,
                     format!("pure helper {:?}: {e}", frame.source.name),
@@ -258,3 +349,43 @@ impl<'a> Certifier<'a> {
 mod resource_tests;
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod diagnostic_tests;
+
+/// Append only active original edges, inner-to-outer, after the real failure.
+/// The already-checked DFS depth bounds this loop; no new traversal or policy.
+fn related_edges(
+    observer: Option<&dyn RefusalObserver>,
+    stack: &[Frame<'_>],
+    current: Option<&Expr>,
+) {
+    let Some(observer) = observer else {
+        return;
+    };
+    if let Some(source) = current {
+        observer.related(RefusalSite::node(Owner::Expr(source)));
+    }
+    for frame in stack.iter().rev() {
+        if let Some(source) = frame.called_from {
+            observer.related(RefusalSite::node(Owner::Expr(source)));
+        }
+    }
+}
+
+#[cfg(test)]
+mod call_diagnostic_tests;
+
+fn dependency_site(incoming: Option<&Expr>) -> RefusalSite<'_> {
+    incoming.map_or_else(RefusalSite::unavailable, |source| {
+        RefusalSite::field(Owner::Expr(source), "name")
+    })
+}
+fn refusal(observer: Option<&dyn RefusalObserver>, site: RefusalSite<'_>) {
+    if let Some(observer) = observer {
+        observer.refused(site);
+    }
+}
+
+#[cfg(test)]
+mod source_guard_tests;

@@ -11,9 +11,11 @@ use super::{
     validate::{cell_type, execution_result_type, root_interface_type, uint},
 };
 use crate::ir::*;
+use crate::source_diagnostics::{Owner, RefusalObserver, RefusalSite};
 use std::collections::HashMap;
 mod aggregates;
 mod binary;
+mod borrowed_operations;
 mod calls;
 mod counters;
 mod expressions;
@@ -36,6 +38,7 @@ use super::rejection::{FailurePhase, Precision};
 
 type Scope = HashMap<String, Value>;
 struct Lowerer<'a> {
+    observer: Option<&'a dyn RefusalObserver>,
     declarations: &'a Declarations,
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
     pure: Certifier<'a>,
@@ -68,14 +71,25 @@ pub(super) fn lower_with_pure_calls<'a>(
     pure: &'a HashMap<&'a str, &'a PureCircuit>,
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
 ) -> Result<(Plan, Certificates), LoweringRejection> {
+    lower_with_pure_calls_observed(circuit, declarations, pure, circuits, None)
+}
+pub(super) fn lower_with_pure_calls_observed<'a>(
+    circuit: &StatefulCircuit,
+    declarations: &'a Declarations,
+    pure: &'a HashMap<&'a str, &'a PureCircuit>,
+    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
+    observer: Option<&'a dyn RefusalObserver>,
+) -> Result<(Plan, Certificates), LoweringRejection> {
     declarations
         .types()
-        .validate_at(&circuit.result, "return_value")?;
+        .validate_at_observed(&circuit.result, "return_value", observer)?;
     if !execution_result_type(&circuit.result) {
+        refused(observer, RefusalSite::node(Owner::Type(&circuit.result)));
         return Err(invalid("return_value", "unsupported circuit result type").into());
     }
     let (max_call_depth, max_expanded_steps) = crate::resource_limits::recording_call_limits();
     let mut lower = Lowerer {
+        observer,
         declarations,
         circuits,
         pure: Certifier::new(pure, circuits),
@@ -96,12 +110,14 @@ pub(super) fn lower_with_pure_calls<'a>(
         lower.spend(&format!("parameters[{i}]"))?;
         declarations
             .types()
-            .validate_at(&p.ty, &format!("parameters[{i}]"))?;
+            .validate_at_observed(&p.ty, &format!("parameters[{i}]"), observer)?;
         if !root_interface_type(&p.ty, circuit.internal) {
+            refused(observer, RefusalSite::node(Owner::Type(&p.ty)));
             return Err(invalid(&format!("parameters[{i}]"), "unsupported parameter type").into());
         }
         let value = lower.fresh(p.ty.clone());
         if scope.insert(p.name.clone(), value.clone()).is_some() {
+            refused(observer, RefusalSite::field(Owner::Parameter(p), "name"));
             return Err(invalid(&format!("parameters[{i}]"), "duplicate parameter").into());
         }
         parameters.push(value);
@@ -139,10 +155,16 @@ impl Lowerer<'_> {
     }
 
     fn unsupported_expression(&mut self, expression: &Expr, path: &str) -> RecordingGap {
+        if let Some(observer) = self.observer {
+            observer.refused(RefusalSite::node(Owner::Expr(expression)));
+        }
         self.concrete_failure(RecordingGap::expression(expression, path.into()))
     }
 
     fn unsupported_action(&mut self, action: &StateAction, path: &str) -> RecordingGap {
+        if let Some(observer) = self.observer {
+            observer.refused(RefusalSite::node(Owner::Action(action)));
+        }
         self.concrete_failure(RecordingGap::action(action, path.into()))
     }
 
@@ -156,6 +178,9 @@ impl Lowerer<'_> {
         // Checked publication consumes this label without parsing display text.
         // A sized box keeps this rare-error label to one pointer in recursive
         // error carriers; boxing a str would retain a two-word fat pointer.
+        if let Some(observer) = self.observer {
+            observer.refused(RefusalSite::node(Owner::Expr(expression)));
+        }
         self.concrete_node = Some(Box::new(ConcreteNode {
             name: RecordingGap::expression(expression, String::new()).ir_node,
         }));
@@ -167,6 +192,7 @@ impl Lowerer<'_> {
     /// for every actual invocation, not once per declaration.
     fn spend(&mut self, path: &str) -> Result<(), RecordingGap> {
         if self.expanded_steps >= self.max_expanded_steps {
+            refused(self.observer, RefusalSite::unavailable());
             return Err(invalid(
                 path,
                 format!(
@@ -473,15 +499,7 @@ impl Lowerer<'_> {
                 )?;
             }
             StateAction::Assert { condition, message } => {
-                self.expression(
-                    &Expr::Assert {
-                        condition: Box::new(condition.clone()),
-                        message: message.clone(),
-                    },
-                    scope,
-                    bindings,
-                    path,
-                )?;
+                self.borrowed_assertion(action, condition, message, scope, bindings, path)?;
             }
             StateAction::MapInsert { .. }
             | StateAction::MapRemove { .. }
@@ -557,6 +575,12 @@ impl Lowerer<'_> {
             }
         }
         Ok(())
+    }
+}
+
+fn refused(observer: Option<&dyn RefusalObserver>, site: RefusalSite<'_>) {
+    if let Some(observer) = observer {
+        observer.refused(site);
     }
 }
 

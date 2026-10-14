@@ -606,17 +606,49 @@ pub(crate) fn render_recorded_circuit(
     circuits: &HashMap<&str, &StatefulCircuit>,
     shared_callees: &HashSet<String>,
 ) -> Result<RecordingOutcome<syn::Item>, RenderError> {
-    #[cfg(test)]
-    let trace = admission_probe::trace::Scope::begin(circuit, false);
-    let result = render_recorded_item(
+    render_recorded_circuit_observed(
         circuit,
         ledger_fields,
         witnesses,
         pure_circuits,
         circuits,
         shared_callees,
-        false,
+        None,
+    )
+}
+
+pub(crate) fn render_recorded_circuit_observed(
+    circuit: &StatefulCircuit,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure_circuits: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+    shared_callees: &HashSet<String>,
+    observer: Option<&dyn crate::source_diagnostics::RefusalObserver>,
+) -> Result<RecordingOutcome<syn::Item>, RenderError> {
+    #[cfg(test)]
+    let trace = admission_probe::trace::Scope::begin(circuit, false);
+    if let Some(observer) = observer {
+        observer.begin_recording_root(circuit);
+    }
+    let result = render_recorded_item_observed(
+        circuit,
+        ledger_fields,
+        witnesses,
+        pure_circuits,
+        circuits,
+        shared_callees,
+        RecordedItemOptions {
+            helper: false,
+            observer,
+        },
     );
+    if let Some(observer) = observer {
+        observer.finish_recording_root(
+            circuit,
+            result.as_ref().ok().and_then(|outcome| outcome.gap()),
+        );
+    }
     #[cfg(test)]
     trace.finish(&result);
     result
@@ -656,19 +688,42 @@ fn lower_effectful_return(
     pure_circuits: &HashMap<&str, &PureCircuit>,
     circuits: &HashMap<&str, &StatefulCircuit>,
 ) -> Result<RecordingOutcome<recording_plan::TypedPlan>, RenderError> {
-    let algebra_gap =
-        match checked_effectful_return(circuit, ledger_fields, witnesses, pure_circuits, circuits)?
-        {
-            RecordingOutcome::Supported(plan) => {
-                #[cfg(test)]
-                {
-                    admission_probe::observe(admission_probe::Route::Algebra);
-                    admission_probe::trace::handled("effectful.checked-migration");
-                }
-                return Ok(RecordingOutcome::Supported(plan));
+    lower_effectful_return_observed(
+        circuit,
+        ledger_fields,
+        witnesses,
+        pure_circuits,
+        circuits,
+        None,
+    )
+}
+
+fn lower_effectful_return_observed(
+    circuit: &StatefulCircuit,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure_circuits: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+    observer: Option<&dyn crate::source_diagnostics::RefusalObserver>,
+) -> Result<RecordingOutcome<recording_plan::TypedPlan>, RenderError> {
+    let algebra_gap = match checked_effectful_return(
+        circuit,
+        ledger_fields,
+        witnesses,
+        pure_circuits,
+        circuits,
+        observer,
+    )? {
+        RecordingOutcome::Supported(plan) => {
+            #[cfg(test)]
+            {
+                admission_probe::observe(admission_probe::Route::Algebra);
+                admission_probe::trace::handled("effectful.checked-migration");
             }
-            RecordingOutcome::Unsupported(gap) => gap,
-        };
+            return Ok(RecordingOutcome::Supported(plan));
+        }
+        RecordingOutcome::Unsupported(gap) => gap,
+    };
 
     #[cfg(test)]
     admission_probe::observe(admission_probe::Route::Unsupported);
@@ -681,13 +736,15 @@ fn checked_effectful_return(
     witnesses: &HashMap<&str, &WitnessDeclaration>,
     pure_circuits: &HashMap<&str, &PureCircuit>,
     circuits: &HashMap<&str, &StatefulCircuit>,
+    observer: Option<&dyn crate::source_diagnostics::RefusalObserver>,
 ) -> Result<RecordingOutcome<recording_plan::TypedPlan>, RenderError> {
-    match effect_plan::lower_with_calls_diagnostic(
+    match effect_plan::lower_with_calls_observed(
         circuit,
         ledger_fields,
         witnesses,
         pure_circuits,
         circuits,
+        observer,
     ) {
         Ok(plan) => Ok(RecordingOutcome::Supported(plan)),
         Err(effect_plan::DiagnosticPlanError::Unsupported(rejection)) => {
@@ -713,9 +770,52 @@ fn render_recorded_item(
     shared_callees: &HashSet<String>,
     helper: bool,
 ) -> Result<RecordingOutcome<syn::Item>, RenderError> {
+    render_recorded_item_observed(
+        circuit,
+        ledger_fields,
+        witnesses,
+        pure_circuits,
+        circuits,
+        shared_callees,
+        RecordedItemOptions {
+            helper,
+            observer: None,
+        },
+    )
+}
+
+/// Emission role and optional source diagnostics travel together; neither
+/// changes the checked plan's admission or generated interface.
+struct RecordedItemOptions<'observer> {
+    helper: bool,
+    observer: Option<&'observer dyn crate::source_diagnostics::RefusalObserver>,
+}
+
+fn render_recorded_item_observed(
+    circuit: &StatefulCircuit,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure_circuits: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+    shared_callees: &HashSet<String>,
+    options: RecordedItemOptions<'_>,
+) -> Result<RecordingOutcome<syn::Item>, RenderError> {
+    let RecordedItemOptions { helper, observer } = options;
     // Preserve Effectful validation before helper routing and parameters.
     let effectful_plan = if matches!(circuit.return_value, StateReturn::Effectful { .. }) {
-        match lower_effectful_return(circuit, ledger_fields, witnesses, pure_circuits, circuits)? {
+        let effectful = if observer.is_some() {
+            lower_effectful_return_observed(
+                circuit,
+                ledger_fields,
+                witnesses,
+                pure_circuits,
+                circuits,
+                observer,
+            )
+        } else {
+            lower_effectful_return(circuit, ledger_fields, witnesses, pure_circuits, circuits)
+        };
+        match effectful? {
             RecordingOutcome::Supported(plan) => Some(plan),
             RecordingOutcome::Unsupported(gap) => return Ok(RecordingOutcome::Unsupported(gap)),
         }
@@ -739,14 +839,27 @@ fn render_recorded_item(
         args.push(syn::parse_quote!(#rust_name: #arg_ty));
     }
 
-    let plan = match profile_selection::select_checked(
-        circuit,
-        ledger_fields,
-        witnesses,
-        pure_circuits,
-        circuits,
-        effectful_plan,
-    )? {
+    let selection = if observer.is_some() {
+        profile_selection::select_checked_observed(
+            circuit,
+            ledger_fields,
+            witnesses,
+            pure_circuits,
+            circuits,
+            effectful_plan,
+            observer,
+        )
+    } else {
+        profile_selection::select_checked(
+            circuit,
+            ledger_fields,
+            witnesses,
+            pure_circuits,
+            circuits,
+            effectful_plan,
+        )
+    };
+    let plan = match selection? {
         profile_selection::CheckedSelection::Admitted(plan) => plan,
         profile_selection::CheckedSelection::Refused(rejection) => {
             return Ok(RecordingOutcome::Unsupported(rejection.into_checked_gap()));

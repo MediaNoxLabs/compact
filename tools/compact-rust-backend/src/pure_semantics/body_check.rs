@@ -67,3 +67,6 @@ impl ControlSink for BodyCheckSink {
 impl ExpressionSink for BodyCheckSink {
     fn ordinary(&mut self, _: OrdinaryView, _: ()) {}
 }
+
+mod observed;
+pub(crate) use observed::ObservedBodyCheckSink;

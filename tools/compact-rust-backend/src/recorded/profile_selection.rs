@@ -723,15 +723,35 @@ pub(super) fn select_checked(
     circuits: &HashMap<&str, &StatefulCircuit>,
     effectful_plan: Option<TypedPlan>,
 ) -> Result<CheckedSelection, RenderError> {
-    if let Some(plan) = effectful_plan {
-        return Ok(CheckedSelection::Admitted(plan));
-    }
-    match effect_plan::lower_with_calls_diagnostic(
+    select_checked_observed(
         circuit,
         ledger_fields,
         witnesses,
         pure_circuits,
         circuits,
+        effectful_plan,
+        None,
+    )
+}
+pub(super) fn select_checked_observed(
+    circuit: &StatefulCircuit,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure_circuits: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+    effectful_plan: Option<TypedPlan>,
+    observer: Option<&dyn crate::source_diagnostics::RefusalObserver>,
+) -> Result<CheckedSelection, RenderError> {
+    if let Some(plan) = effectful_plan {
+        return Ok(CheckedSelection::Admitted(plan));
+    }
+    match effect_plan::lower_with_calls_observed(
+        circuit,
+        ledger_fields,
+        witnesses,
+        pure_circuits,
+        circuits,
+        observer,
     ) {
         Ok(plan) => {
             #[cfg(test)]

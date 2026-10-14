@@ -16,18 +16,37 @@ pub(crate) struct PureBodyBudget {
 }
 impl PureBodyBudget {
     pub(crate) fn check(&mut self, circuit: &PureCircuit) -> Result<usize, crate::RenderError> {
-        self.measure(circuit)
-            .map_err(|error| crate::RenderError::ResourceLimit {
+        self.check_observed(circuit, None)
+    }
+    /// Reuse the same borrowed scan. Aggregate failures have no unique source leaf.
+    pub(crate) fn check_observed(
+        &mut self,
+        circuit: &PureCircuit,
+        observer: Option<&dyn RefusalObserver>,
+    ) -> Result<usize, crate::RenderError> {
+        self.measure(circuit, observer).map_err(|error| {
+            // A prior exact Scan callback wins; aggregate-only errors stay unavailable.
+            if let Some(observer) = observer {
+                observer.refused(RefusalSite::unavailable());
+            }
+            crate::RenderError::ResourceLimit {
                 resource: error.resource.label(),
                 observed: error.observed,
                 limit: error.limit,
-            })
+            }
+        })
     }
-    fn measure(&mut self, circuit: &PureCircuit) -> Result<usize, LimitError> {
+    fn measure(
+        &mut self,
+        circuit: &PureCircuit,
+        observer: Option<&dyn RefusalObserver>,
+    ) -> Result<usize, LimitError> {
         let limits = Limits::DEFAULT;
         self.declarations = self.declarations.saturating_add(1);
         check(Kind::Declarations, self.declarations, limits.declarations)?;
         let mut scan = Scan {
+            observer,
+            current_site: RefusalSite::unavailable(),
             limits,
             metrics: Metrics::default(),
             pending: Vec::new(),

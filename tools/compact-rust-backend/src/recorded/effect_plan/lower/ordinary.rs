@@ -37,21 +37,21 @@ impl Lowerer<'_> {
                 &return_path,
             )),
             // Specialized ledger returns use the original parameter scope, as native does.
-            StateReturn::CellRead { field, index } => self.expression(
-                &Expr::CellRead {
-                    field: field.clone(),
+            StateReturn::CellRead { field, index } => self.borrowed_leaf_return(
+                returned,
+                borrowed_operations::LeafQuery::CellRead {
+                    field,
                     index: *index,
                 },
-                scope,
                 bindings,
                 &return_path,
             ),
-            StateReturn::CounterRead { field, index } => self.expression(
-                &Expr::CounterRead {
-                    field: field.clone(),
+            StateReturn::CounterRead { field, index } => self.borrowed_leaf_return(
+                returned,
+                borrowed_operations::LeafQuery::CounterRead {
+                    field,
                     index: *index,
                 },
-                scope,
                 bindings,
                 &return_path,
             ),
@@ -100,21 +100,21 @@ impl Lowerer<'_> {
                     self.set_member(field, *index, value, scope, bindings, &return_path)?;
                 Ok(self.emit(operation, ty, bindings, &return_path))
             }
-            StateReturn::SetSize { field, index } => self.expression(
-                &Expr::SetSize {
-                    field: field.clone(),
+            StateReturn::SetSize { field, index } => self.borrowed_leaf_return(
+                returned,
+                borrowed_operations::LeafQuery::SetSize {
+                    field,
                     index: *index,
                 },
-                scope,
                 bindings,
                 &return_path,
             ),
-            StateReturn::SetIsEmpty { field, index } => self.expression(
-                &Expr::SetIsEmpty {
-                    field: field.clone(),
+            StateReturn::SetIsEmpty { field, index } => self.borrowed_leaf_return(
+                returned,
+                borrowed_operations::LeafQuery::SetIsEmpty {
+                    field,
                     index: *index,
                 },
-                scope,
                 bindings,
                 &return_path,
             ),

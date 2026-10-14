@@ -15,6 +15,13 @@ use crate::{
     },
 };
 
+pub(crate) enum CallRefusal<'source> {
+    Name,
+    Argument(&'source Expr),
+}
+pub(crate) type CallRefusalCallback<'callback> =
+    dyn for<'source> FnMut(CallRefusal<'source>) + 'callback;
+
 pub(super) fn check<S: AggregateSink>(
     name: &str,
     arguments: &[Expr],
@@ -22,10 +29,25 @@ pub(super) fn check<S: AggregateSink>(
     declarations: &impl PureDeclarations,
     sink: &mut S,
 ) -> Result<Typed<Output<S>>, RenderError> {
-    let circuit = declarations
-        .signature(name)
-        .ok_or_else(|| RenderError::UnknownCircuit(name.to_owned()))?;
+    check_with_refusal(name, arguments, children, declarations, sink, None)
+}
+
+/// Only this call boundary receives a callback. Child visits use the ordinary
+/// semantic entry, so nested calls never borrow an outer Action's name site.
+pub(super) fn check_with_refusal<S: AggregateSink>(
+    name: &str,
+    arguments: &[Expr],
+    children: &mut impl Children<S>,
+    declarations: &impl PureDeclarations,
+    sink: &mut S,
+    mut refusal: Option<&mut CallRefusalCallback<'_>>,
+) -> Result<Typed<Output<S>>, RenderError> {
+    let circuit = declarations.signature(name).ok_or_else(|| {
+        refuse(&mut refusal, CallRefusal::Name);
+        RenderError::UnknownCircuit(name.to_owned())
+    })?;
     if arguments.len() != circuit.parameters.len() {
+        refuse(&mut refusal, CallRefusal::Name);
         return Err(RenderError::ArgumentCount {
             circuit: name.to_owned(),
             expected: circuit.parameters.len(),
@@ -36,6 +58,7 @@ pub(super) fn check<S: AggregateSink>(
     for (source, parameter) in arguments.iter().zip(circuit.parameters) {
         let value = children.visit(source, sink)?;
         if value.ty != parameter.ty {
+            refuse(&mut refusal, CallRefusal::Argument(source));
             return Err(RenderError::TypeMismatch {
                 expected: parameter.ty.clone(),
                 actual: value.ty,
@@ -43,7 +66,7 @@ pub(super) fn check<S: AggregateSink>(
         }
         values.push(value.output);
     }
-    let function = check_name(name)?;
+    let function = check_name(name).inspect_err(|_| refuse(&mut refusal, CallRefusal::Name))?;
     Ok(Typed {
         output: CheckedAggregate::Call {
             function,
@@ -51,4 +74,10 @@ pub(super) fn check<S: AggregateSink>(
         },
         ty: circuit.result.clone(),
     })
+}
+
+fn refuse(callback: &mut Option<&mut CallRefusalCallback<'_>>, site: CallRefusal<'_>) {
+    if let Some(callback) = callback.as_mut() {
+        callback(site);
+    }
 }

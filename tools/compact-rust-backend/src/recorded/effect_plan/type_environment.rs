@@ -8,6 +8,7 @@
 use super::{RecordingGap, invalid};
 use crate::ir::{LedgerField, PureCircuit, StatefulCircuit, StructField, Type, WitnessDeclaration};
 use crate::recorded::RecordingResourceKind;
+use crate::source_diagnostics::{Owner, RefusalObserver, RefusalSite};
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 #[derive(Debug, Default)]
@@ -17,6 +18,7 @@ pub(super) struct TypeEnvironment {
 }
 
 impl TypeEnvironment {
+    #[cfg(test)]
     pub(super) fn from_sources(
         root: &StatefulCircuit,
         ledger: &HashMap<&str, &LedgerField>,
@@ -24,8 +26,20 @@ impl TypeEnvironment {
         pure: &HashMap<&str, &PureCircuit>,
         stateful: &HashMap<&str, &StatefulCircuit>,
     ) -> Result<Self, RecordingGap> {
+        Self::from_sources_observed(root, ledger, witnesses, pure, stateful, None)
+    }
+
+    pub(super) fn from_sources_observed(
+        root: &StatefulCircuit,
+        ledger: &HashMap<&str, &LedgerField>,
+        witnesses: &HashMap<&str, &WitnessDeclaration>,
+        pure: &HashMap<&str, &PureCircuit>,
+        stateful: &HashMap<&str, &StatefulCircuit>,
+        observer: Option<&dyn RefusalObserver>,
+    ) -> Result<Self, RecordingGap> {
         let types =
             crate::resource_limits::recording_source_types(root, ledger, witnesses, pure, stateful)
+                .inspect_err(|_| refused(observer, RefusalSite::unavailable()))
                 .map_err(|error| invalid("types", error.to_string()))?;
         // No recursive collector, clone or equality runs until all source bodies
         // and types have passed the shared exhaustive borrowed preflight.
@@ -35,8 +49,14 @@ impl TypeEnvironment {
         let mut environment = Self::default();
         for ty in types.types {
             if matches!(ty, Type::Struct { .. } | Type::Enum { .. }) {
-                crate::collect_named_types(ty, &mut environment.structs, &mut environment.enums)
-                    .map_err(|error| invalid("types", error.to_string()))?;
+                crate::collect_named_types_observed(
+                    ty,
+                    &mut environment.structs,
+                    &mut environment.enums,
+                    observer,
+                    None,
+                )
+                .map_err(|error| invalid("types", error.to_string()))?;
             }
         }
         // Builtin carriers come from the closed IR definition, not a caller's
@@ -48,15 +68,18 @@ impl TypeEnvironment {
                 &mut environment.structs,
                 &mut environment.enums,
             )
+            .inspect_err(|_| refused(observer, RefusalSite::unavailable()))
             .map_err(|error| invalid("types", error.to_string()))?;
         }
         // The native collector rejects duplicate raw names, but currently does
         // not reject member/variant names which normalize to the same Rust name.
         for fields in environment.structs.values() {
-            unique_names(fields.iter().map(|f| f.name.as_str()))?;
+            unique_names(fields.iter().map(|f| f.name.as_str()))
+                .inspect_err(|_| refused(observer, RefusalSite::unavailable()))?;
         }
         for variants in environment.enums.values() {
-            unique_names(variants.iter().map(String::as_str))?;
+            unique_names(variants.iter().map(String::as_str))
+                .inspect_err(|_| refused(observer, RefusalSite::unavailable()))?;
         }
         Ok(environment)
     }
@@ -67,9 +90,25 @@ impl TypeEnvironment {
     }
 
     pub(super) fn validate_at(&self, ty: &Type, path: &str) -> Result<(), RecordingGap> {
+        self.validate_at_observed(ty, path, None)
+    }
+
+    /// Observe only original source annotations supplied by the root/certifier.
+    /// Inferred or cloned lowerer annotations keep the originless entry point.
+    pub(super) fn validate_at_observed(
+        &self,
+        ty: &Type,
+        path: &str,
+        observer: Option<&dyn RefusalObserver>,
+    ) -> Result<(), RecordingGap> {
         let types = crate::resource_limits::recording_type_nodes(ty)
+            .inspect_err(|_| refused(observer, RefusalSite::unavailable()))
             .map_err(|error| invalid(path, error.to_string()))?;
-        check_fixed_layouts(&types, path)?;
+        if observer.is_some() {
+            check_fixed_layouts_observed(&types, path, observer)?;
+        } else {
+            check_fixed_layouts(&types, path)?;
+        }
         for ty in types {
             match ty {
                 Type::Unit
@@ -82,10 +121,14 @@ impl TypeEnvironment {
                 | Type::Vector { .. } => {}
                 Type::Unsigned { max } => {
                     crate::unsigned_maximum(max)
+                        .inspect_err(|_| {
+                            refused(observer, RefusalSite::field(Owner::Type(ty), "max"))
+                        })
                         .map_err(|error| invalid(path, error.to_string()))?;
                 }
                 Type::Enum { name, variants } => {
                     if self.enums.get(name) != Some(variants) {
+                        refused(observer, RefusalSite::node(Owner::Type(ty)));
                         return Err(invalid(
                             path,
                             "enum definition is not canonical source type",
@@ -94,6 +137,7 @@ impl TypeEnvironment {
                 }
                 Type::Struct { name, fields } => {
                     if self.structs.get(name) != Some(fields) {
+                        refused(observer, RefusalSite::node(Owner::Type(ty)));
                         return Err(invalid(
                             path,
                             "struct definition is not canonical source type",
@@ -102,6 +146,7 @@ impl TypeEnvironment {
                 }
                 Type::Tuple { .. } => {}
                 Type::LedgerMap { .. } => {
+                    refused(observer, RefusalSite::node(Owner::Type(ty)));
                     return Err(invalid(
                         path,
                         "type is outside checked recording value domain",
@@ -110,6 +155,12 @@ impl TypeEnvironment {
             }
         }
         Ok(())
+    }
+}
+
+fn refused(observer: Option<&dyn RefusalObserver>, site: RefusalSite<'_>) {
+    if let Some(observer) = observer {
+        observer.refused(site);
     }
 }
 
@@ -134,6 +185,14 @@ fn unique_names<'a>(names: impl Iterator<Item = &'a str>) -> Result<(), Recordin
 /// leaves contribute one slot; their dynamic payload length is not bounded here.
 /// These per-type limits do not claim total runtime RAM or repeated-call bounds.
 pub(super) fn check_fixed_layouts(types: &[&Type], path: &str) -> Result<(), RecordingGap> {
+    check_fixed_layouts_observed(types, path, None)
+}
+
+pub(super) fn check_fixed_layouts_observed(
+    types: &[&Type],
+    path: &str,
+    observer: Option<&dyn RefusalObserver>,
+) -> Result<(), RecordingGap> {
     #[derive(Clone, Copy)]
     struct Layout {
         bytes: usize,
@@ -170,6 +229,9 @@ pub(super) fn check_fixed_layouts(types: &[&Type], path: &str) -> Result<(), Rec
             _ => Layout { bytes: 0, slots: 1 },
         };
         if layout.bytes > byte_limit {
+            if let Some(observer) = observer {
+                observer.refused(RefusalSite::node(Owner::Type(ty)));
+            }
             return Err(invalid(
                 path,
                 format!("fixed-byte aggregate payload exceeds {byte_limit} bytes"),
@@ -177,6 +239,9 @@ pub(super) fn check_fixed_layouts(types: &[&Type], path: &str) -> Result<(), Rec
             .with_fixed_layout_resource(RecordingResourceKind::FixedBytePayload, byte_limit));
         }
         if layout.slots > slot_limit {
+            if let Some(observer) = observer {
+                observer.refused(RefusalSite::node(Owner::Type(ty)));
+            }
             return Err(invalid(
                 path,
                 format!("fixed aggregate layout exceeds {slot_limit} slots"),
@@ -193,3 +258,6 @@ mod tests;
 
 #[cfg(all(test, feature = "experimental-recording-plan"))]
 mod resource_tests;
+
+#[cfg(test)]
+mod observer_tests;

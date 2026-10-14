@@ -162,6 +162,9 @@ pub(crate) trait ExpressionSink:
     LeafSink + ConversionSink + ArithmeticSink + CryptoSink + AggregateSink + ControlSink
 {
     fn ordinary(&mut self, view: OrdinaryView, value: Self::Value) -> Self::Value;
+    /// Observe a checked failure at this source occurrence. Child failures are
+    /// reported before their enclosing owners; consumers cannot replace errors.
+    fn refused(&mut self, _source: &crate::ir::Expr, _error: &crate::RenderError) {}
     #[cfg(test)]
     fn observe_source(&mut self, _source: &crate::ir::Expr) {}
 }

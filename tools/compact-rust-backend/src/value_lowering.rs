@@ -108,6 +108,16 @@ pub(crate) fn render_unsigned_arithmetic(
 pub(crate) fn rust_type(ty: &Type) -> Result<syn::Type, RenderError> {
     crate::pure_semantics::carrier::fold_carrier(ty, &mut carrier::NativeCarrierSink)
 }
+pub(crate) fn rust_type_observed(
+    ty: &Type,
+    observer: Option<&dyn crate::source_diagnostics::RefusalObserver>,
+) -> Result<syn::Type, RenderError> {
+    crate::pure_semantics::carrier::fold_carrier_observed(
+        ty,
+        &mut carrier::NativeCarrierSink,
+        observer,
+    )
+}
 
 fn map_slot_value_type(value: &Type) -> Result<Option<syn::Type>, RenderError> {
     if let Type::LedgerMap { key, value } = value {

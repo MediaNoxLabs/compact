@@ -468,6 +468,60 @@ def run_required_proof_gates(directory: Path, snapshot: Path, environment: dict,
             raise GateError("required proof receipt changed during orchestration")
 
 
+def validate_historical_law_report(value: dict) -> None:
+    """Require complete dynamic case identity; a fixed historical count is not authority."""
+    if (not isinstance(value, dict)
+            or any(type(value.get(key)) is not int for key in
+                   ("schema_version", "issue", "failures", "errors"))
+            or not isinstance(value.get("descriptor_sha256"), str)
+            or re.fullmatch(r"[0-9a-f]{64}", value["descriptor_sha256"]) is None
+            or value.get("schema_version") != 1
+            or value.get("issue") != 632 or value.get("status") != "completed"
+            or value.get("passed") is not True
+            or value.get("actual_case_ids_match_plan") is not True
+            or value.get("not_run_case_ids") != {}
+            or value.get("failures") != 0 or value.get("errors") != 0
+            or value.get("skipped") != []):
+        raise GateError("historical laws did not complete every required case")
+    groups = ("ordinary", "earlier_inventory", "latest_inventory", "current_measurement")
+    planned, observed = value.get("planned_case_ids"), value.get("groups")
+    if (not isinstance(planned, dict) or set(planned) != set(groups)
+            or not isinstance(observed, dict) or set(observed) != set(groups)):
+        raise GateError("historical law group partition incomplete")
+    all_ids = []
+    for group in groups:
+        ids, row = planned[group], observed[group]
+        if (not isinstance(ids, list) or not all(isinstance(x, str) and x for x in ids)
+                or not isinstance(row, dict) or row.get("actual_case_ids") != ids
+                or type(row.get("tests_run")) is not int
+                or row.get("tests_run") != len(ids) or row.get("failures") != []
+                or row.get("errors") != [] or row.get("skipped") != []):
+            raise GateError("historical law case identity or group outcome differs: " + group)
+        all_ids.extend(ids)
+    if (not all_ids or len(all_ids) != len(set(all_ids))
+            or type(value.get("planned_case_count")) is not int
+            or type(value.get("tests_run")) is not int
+            or value["planned_case_count"] != len(all_ids)
+            or value["tests_run"] != len(all_ids)):
+        raise GateError("historical law case count or uniqueness differs")
+
+
+def run_historical_laws(directory: Path, archive: Path, graphs: Path,
+                        environment: dict, receipt: dict, *, command=None) -> None:
+    """Run authenticated laws using explicit portable source/graph fixture roots."""
+    command = run if command is None else command
+    path = directory / "historical-laws.json"
+    command([sys.executable, str(ROOT / "tools/compact-rust-backend/historical_law_dispatcher.py"),
+             "--root", str(ROOT), "--archived-conformance-root", str(archive.resolve()),
+             "--guarded-point-artifacts", str(graphs.resolve()), "--output", str(path)],
+            "parity-harness-tests", directory, receipt, env=environment)
+    value = json.loads(path.read_text())
+    validate_historical_law_report(value)
+    receipt["historical_laws"] = {"path": str(path), "sha256": sha256(path),
+                                  "tests_run": value["tests_run"],
+                                  "descriptor_sha256": value["descriptor_sha256"]}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", action="append", default=[],
@@ -486,6 +540,10 @@ def main() -> int:
     parser.add_argument("--expect-head", help="fail unless git HEAD has this SHA prefix")
     parser.add_argument("--skip-cargo", action="store_true",
                         help="focused mode: compile and compare fixtures without package tests")
+    parser.add_argument("--historical-archive-root", type=Path,
+                        help="full mode: authenticated historical conformance source bundle")
+    parser.add_argument("--guarded-point-artifacts", type=Path,
+                        help="full mode: retained source-bound graph and authority bundle")
     args = parser.parse_args()
     receipt = {"format_version": 1, "status": "failed", "mode": "full" if args.full else "focused",
                "commands": [], "fixtures": [], "capabilities": [], "proof_cross_tab": []}
@@ -506,6 +564,8 @@ def main() -> int:
         if args.full:
             import did_proof_gate
             did_proof_gate.prerequisites(os.environ)
+        if args.full and (args.historical_archive_root is None or args.guarded_point_artifacts is None):
+            raise GateError("--full requires --historical-archive-root and --guarded-point-artifacts")
         selected = select_sources(args.source, args.full)
         registry = {row.source: row for row in fixture_inventory.source_registry(ROOT)}
         registrations = [registry[source] for source, _ in selected]
@@ -657,9 +717,8 @@ def main() -> int:
             # compiler and the mutable GitHub release list. They are outside
             # this compiler/backend parity gate and cannot give a repeatable
             # local receipt.
-            run([sys.executable, "-m", "unittest", "discover", "-s",
-                 str(ROOT / "tools/compact-rust-backend"), "-p", "test_*.py"],
-                "parity-harness-tests", directory, receipt, env=environment)
+            run_historical_laws(directory, args.historical_archive_root,
+                                args.guarded_point_artifacts, environment, receipt)
             metadata_path = directory / "workspace-test-metadata.json"
             run(["cargo", "+1.99.0", "metadata", "--no-deps", "--format-version", "1",
                  "--all-features", "--locked"], "workspace-test-metadata", directory,
@@ -724,6 +783,10 @@ def main() -> int:
                                  ("generated_artifact", "generated_sha256")):
                     if sha256(Path(binding[key])) != binding[pin]:
                         raise GateError(f"executed consumer evidence changed during gate: {binding[key]}")
+        if "historical_laws" in receipt:
+            laws = receipt["historical_laws"]
+            if sha256(Path(laws["path"])) != laws["sha256"]:
+                raise GateError("historical law receipt changed during gate")
         receipt["working_tree_after"] = dirty_paths()
         finish_build_input_receipt(receipt, environment)
         receipt["status"] = "passed"

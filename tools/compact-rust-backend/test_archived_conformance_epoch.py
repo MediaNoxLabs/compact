@@ -59,7 +59,7 @@ class ArchivedConformanceEpochTests(unittest.TestCase):
 
     def test_archived_owner_drift_refuses_before_projection(self):
         descriptor = self.descriptor()
-        archive = Path(descriptor['archived_conformance']['archive_root'])
+        archive = dispatcher.require_archive_root()
         target = (archive / 'tools/compact-rust-backend/src/lib.rs').resolve()
         original = Path.read_bytes
 

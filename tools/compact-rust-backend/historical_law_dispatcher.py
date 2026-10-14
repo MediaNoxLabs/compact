@@ -7,15 +7,19 @@ from contextlib import contextmanager, nullcontext
 import hashlib
 import importlib
 import json
+import os
 from pathlib import Path
 import sys
 import time
 import unittest
 from unittest import mock
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(os.environ['COMPACT_HISTORICAL_LAW_ROOT']).resolve() if os.environ.get('COMPACT_HISTORICAL_LAW_ROOT') else None
+DEFAULT_DESCRIPTOR = Path(__file__).with_name('historical_law_runtime.json')
+ARCHIVE_ROOT = Path(os.environ['COMPACT_ARCHIVED_CONFORMANCE_ROOT']).resolve() if os.environ.get('COMPACT_ARCHIVED_CONFORMANCE_ROOT') else None
+GRAPH_ROOT = Path(os.environ['COMPACT_GUARDED_POINT_ROOT']).resolve() if os.environ.get('COMPACT_GUARDED_POINT_ROOT') else None
 BACKEND = 'tools/compact-rust-backend'
-DESCRIPTOR_SHA = 'f40a77cc304f3d4569f21e7a5882b7af428110e37520582f09d9bf4d8a7db47d'
+DESCRIPTOR_SHA = '06e737e8c3114fecb42257f67fd12ac01f090899d19833ea5757a55bb1def170'
 GROUPS = ('ordinary', 'earlier_inventory', 'latest_inventory', 'current_measurement')
 STAGES = ('resource_measurement', 'body_checker', 'native_control_fold', 'lexical_symbols',
           'shared_aggregate', 'shared_crypto', 'shared_arithmetic', 'shared_conversion',
@@ -32,23 +36,48 @@ def canonical(value):
 
 
 def authenticate_descriptor(descriptor):
-    if (canonical(descriptor) != DESCRIPTOR_SHA or descriptor.get('schema_version') != 1
+    if (canonical(descriptor) != DESCRIPTOR_SHA or descriptor.get('schema_version') != 2
             or descriptor.get('issue') != 632
             or tuple(row['name'] for row in descriptor['checkpoint_stages']) != STAGES):
         raise ValueError('unreviewed historical law descriptor or stage order')
 
 
 def load_descriptor(root, path=None):
-    path = path or root / BACKEND / 'historical_law_suite.json'
+    path = path or DEFAULT_DESCRIPTOR
     descriptor = json.loads(path.read_text())
     authenticate_descriptor(descriptor)
     return descriptor
 
 
+def require_archive_root(archive=None):
+    archive = archive if archive is not None else ARCHIVE_ROOT
+    if archive is None:
+        raise ValueError('explicit archived conformance root required; supply --archived-conformance-root')
+    return Path(archive).resolve()
+
+
+def require_graph_root():
+    if GRAPH_ROOT is None:
+        raise ValueError('explicit guarded point test fixture root required via COMPACT_GUARDED_POINT_ROOT')
+    return GRAPH_ROOT
+
+
+def graph_path(artifacts, relative):
+    path = (artifacts / relative).resolve()
+    if Path(relative).is_absolute() or not path.is_relative_to(artifacts.resolve()):
+        raise ValueError('guarded point artifact escapes root: ' + relative)
+    return path
+
+
+def source_fingerprints(root, descriptor, read_bytes=None):
+    from historical_law_source_transition import fingerprints
+    return fingerprints(root, descriptor, read_bytes)
+
+
 def authenticate_sources(root, descriptor, read_bytes=None):
     """Authenticate actual files and absent paths, before and after any projection."""
     read_bytes = read_bytes or Path.read_bytes
-    for relative, expected in descriptor['actual_source_fingerprints'].items():
+    for relative, expected in source_fingerprints(root, descriptor, read_bytes).items():
         path = (root / relative).resolve()
         if not path.is_relative_to(root.resolve()):
             raise ValueError('historical authority escapes root: ' + relative)
@@ -85,7 +114,7 @@ def earlier_suite_reads(root, descriptor):
     rows = {(root / relative).resolve(): source.encode() for relative, source in snapshots.items()}
     read_bytes, read_text = Path.read_bytes, Path.read_text
     expected = {(root / relative).resolve(): pin
-                for relative, pin in descriptor['actual_source_fingerprints'].items()}
+                for relative, pin in source_fingerprints(root, descriptor, read_bytes).items()}
 
     def actual_owner(path):
         pin = expected[path]
@@ -159,9 +188,10 @@ def prepare_guarded_point_artifacts(root, descriptor, artifacts):
             raise ValueError('guarded point artifact escapes root: ' + relative)
         if digest(path.read_bytes()) != expected:
             raise ValueError('guarded point artifact drift: ' + relative)
-    for path, expected in authority['authority_fingerprints'].items():
-        if digest(Path(path).read_bytes()) != expected:
-            raise ValueError('guarded point retained authority drift: ' + path)
+    for relative, expected in authority['authority_fingerprints'].items():
+        path = graph_path(artifacts, relative)
+        if digest(path.read_bytes()) != expected:
+            raise ValueError('guarded point retained authority drift: ' + relative)
     source = root / authority['source']['path']
     if digest(source.read_bytes()) != authority['source']['sha256']:
         raise ValueError('guarded point current fixture drift')
@@ -197,7 +227,7 @@ def load_suites(root, descriptor, loader=None):
 
 
 def run_suites(root, descriptor, suites, identities, *, verbosity=2, stream=None,
-               stop_after_failed_group=False):
+               stop_after_failed_group=False, archived_conformance_root=None):
     authenticate_descriptor(descriptor)
     from recording_admission_inventory_resource_measurement_test_support import historical_suite_reads
     measurement = json.loads((root / descriptor['checkpoint_stages'][0]['manifest']).read_text())
@@ -235,7 +265,7 @@ def run_suites(root, descriptor, suites, identities, *, verbosity=2, stream=None
                 if ordinary_segment:
                     segments.append((ordinary_segment, contexts[group], 'actual'))
                     ordinary_segment = []
-                segments.append(([case], lambda: archived_conformance_reads(root, descriptor),
+                segments.append(([case], lambda: archived_conformance_reads(root, descriptor, archived_conformance_root),
                                  'archived-conformance'))
             else:
                 ordinary_segment.append(case)
@@ -289,29 +319,53 @@ def run_suites(root, descriptor, suites, identities, *, verbosity=2, stream=None
 
 
 def main(argv=None):
+    global ROOT, ARCHIVE_ROOT, GRAPH_ROOT
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--root', type=Path, default=ROOT)
+    parser.add_argument('--root', type=Path, default=ROOT, required=ROOT is None)
     parser.add_argument('--descriptor', type=Path)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--verbosity', type=int, default=2)
     parser.add_argument('--guarded-point-artifacts', type=Path, required=True)
+    parser.add_argument('--archived-conformance-root', type=Path, required=True)
     parser.add_argument('--prepare-only', action='store_true')
     args = parser.parse_args(argv)
     root = args.root.resolve()
     descriptor = load_descriptor(root, args.descriptor)
-    protected = {(root / path).resolve() for path in descriptor['actual_source_fingerprints']}
-    protected.add((args.descriptor or root / BACKEND / 'historical_law_suite.json').resolve())
+    protected = {(root / path).resolve() for path in source_fingerprints(root, descriptor)}
+    protected.add((args.descriptor or DEFAULT_DESCRIPTOR).resolve())
+    transition = descriptor.get('current_source_transition')
+    if transition is not None:
+        from historical_law_source_transition import within, unique_fields
+        protected.add(within(root, transition['path']))
+        manifest = json.loads(within(root, transition['path']).read_bytes(), object_pairs_hook=unique_fields)
+        protected.add(within(root, manifest['epoch']['path']))
+        protected.update(within(root, row['path']) for row in manifest['owner_inverses'].values())
+    protected.update((args.archived_conformance_root / path).resolve()
+                     for path in descriptor['archived_conformance']['old_source_fingerprints'])
+    graph_authority = descriptor['guarded_point_artifacts']
+    protected.update((args.guarded_point_artifacts / path).resolve()
+                     for path in (*graph_authority['artifact_fingerprints'], *graph_authority['authority_fingerprints']))
     if args.output.exists() or args.output.resolve() in protected:
         parser.error('output must be a new receipt outside protected input paths')
     authenticate_sources(root, descriptor)
     phase, graph_tests, previous_artifacts = 'fixture-preflight', None, None
+    previous_roots = ROOT, ARCHIVE_ROOT, GRAPH_ROOT
+    # Case helpers share only the explicit current invocation's supplied roots.
+    # Restore them on every exit; no descriptor stores a machine-specific path.
+    ROOT, ARCHIVE_ROOT, GRAPH_ROOT = root, args.archived_conformance_root.resolve(), args.guarded_point_artifacts.resolve()
     try:
         artifacts = prepare_guarded_point_artifacts(root, descriptor, args.guarded_point_artifacts)
         from archived_conformance_test_support import authenticate_archive
         archive_authority = descriptor['archived_conformance']
-        authenticate_archive(Path(archive_authority['archive_root']),
-                             archive_authority['old_source_fingerprints'])
+        archive = require_archive_root(args.archived_conformance_root)
+        authenticate_archive(archive, archive_authority['old_source_fingerprints'])
+        canonical_module = sys.modules.get('historical_law_dispatcher')
+        if canonical_module is not sys.modules[__name__]:
+            raise ValueError('CLI and helpers must share canonical historical_law_dispatcher module identity')
+        # Keep these reviewed portability owners in the candidate/import path;
+        # all actual checker, checkpoint and test modules still come from root.
         sys.path.insert(0, str(root / BACKEND))
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
         graph_tests = importlib.import_module('test_guarded_point_zkir')
         previous_artifacts = graph_tests.ARTIFACTS
         graph_tests.ARTIFACTS = args.guarded_point_artifacts.resolve()
@@ -332,9 +386,17 @@ def main(argv=None):
         else:
             phase = 'execution'
             report = run_suites(root, descriptor, suites, identities, verbosity=args.verbosity,
-                                stop_after_failed_group=True)
+                                stop_after_failed_group=True, archived_conformance_root=archive)
             report['guarded_point_artifacts'] = artifacts
         prepare_guarded_point_artifacts(root, descriptor, args.guarded_point_artifacts)
+        authenticate_archive(archive, archive_authority['old_source_fingerprints'])
+        report['archived_conformance_root'] = str(archive)
+        report['actual_root'] = str(root)
+        report['canonical_dispatcher'] = {
+            'same_module': True, 'root': str(ROOT),
+            'archived_conformance_root': str(ARCHIVE_ROOT),
+            'guarded_point_artifacts': str(GRAPH_ROOT),
+        }
     except (OSError, ValueError, KeyError, TypeError) as error:
         report = {'schema_version': 1, 'issue': 632, 'status': 'infrastructure-refused',
                   'phase': phase, 'passed': False, 'full_suite_passed': False,
@@ -344,9 +406,17 @@ def main(argv=None):
     finally:
         if graph_tests is not None:
             graph_tests.ARTIFACTS = previous_artifacts
+        ROOT, ARCHIVE_ROOT, GRAPH_ROOT = previous_roots
     args.output.write_text(json.dumps(report, indent=2) + '\n')
     return 0 if report['status'] == 'prepared' or report.get('passed', False) else 1
 
 
 if __name__ == '__main__':
+    # Helpers and discovered cases import this canonical name. It must refer to
+    # this exact CLI module, not a second instance initialized without CLI roots.
+    current_module = sys.modules[__name__]
+    existing_module = sys.modules.get('historical_law_dispatcher')
+    if existing_module is not None and existing_module is not current_module:
+        raise ValueError('refusing to overwrite foreign historical_law_dispatcher module identity')
+    sys.modules['historical_law_dispatcher'] = current_module
     sys.exit(main())

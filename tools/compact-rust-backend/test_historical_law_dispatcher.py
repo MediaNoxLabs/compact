@@ -263,7 +263,8 @@ class DispatcherTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / 'failure.json'
             with mock.patch.object(dispatcher.importlib, 'import_module') as imports:
-                status = dispatcher.main(['--guarded-point-artifacts', directory, '--output', str(output)])
+                status = dispatcher.main(['--guarded-point-artifacts', directory, '--output', str(output),
+                                          '--archived-conformance-root', str(dispatcher.require_archive_root())])
             self.assertEqual(status, 1)
             imports.assert_not_called()
             receipt = json.loads(output.read_text())
@@ -314,13 +315,15 @@ class DispatcherTests(unittest.TestCase):
         descriptor = self.descriptor()
         with tempfile.TemporaryDirectory() as directory:
             artifacts = Path(directory)
-            for relative, origin in descriptor['guarded_point_artifacts']['archive_artifact_paths'].items():
+            authority = descriptor['guarded_point_artifacts']
+            for relative in (*authority['artifact_fingerprints'], *authority['authority_fingerprints']):
                 path = artifacts / relative
                 path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_bytes(Path(origin).read_bytes())
+                path.write_bytes((dispatcher.require_graph_root() / relative).read_bytes())
             output = artifacts / 'prepared.json'
             with mock.patch.object(dispatcher, 'run_suites') as runs:
                 status = dispatcher.main(['--guarded-point-artifacts', str(artifacts), '--output', str(output),
+                                          '--archived-conformance-root', str(dispatcher.require_archive_root()),
                                           '--prepare-only'])
             runs.assert_not_called()
             self.assertEqual(status, 0)

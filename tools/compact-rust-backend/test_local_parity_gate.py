@@ -202,12 +202,26 @@ class WorkspaceTestPlanTests(unittest.TestCase):
             compiler.chmod(0o755)
             def record(command, label, directory, receipt, **kwargs):
                 calls.append((label, command))
+                if label == "parity-harness-tests":
+                    groups = ("ordinary", "earlier_inventory", "latest_inventory", "current_measurement")
+                    report = {
+                        "schema_version": 1, "issue": 632, "descriptor_sha256": "f" * 64,
+                        "status": "completed", "passed": True, "actual_case_ids_match_plan": True,
+                        "not_run_case_ids": {}, "failures": 0, "errors": 0, "skipped": [],
+                        "planned_case_ids": {g: [g + ".Fixture.case"] for g in groups},
+                        "groups": {g: {"actual_case_ids": [g + ".Fixture.case"], "tests_run": 1,
+                                       "failures": [], "errors": [], "skipped": []} for g in groups},
+                        "planned_case_count": 4, "tests_run": 4,
+                    }
+                    (directory / "historical-laws.json").write_text(json.dumps(report))
                 if label == "workspace-test-metadata":
                     kwargs["stdout_path"].write_text(json.dumps({"workspace_members": [], "packages": []}))
                 if label == "did-proof-lifecycles":
                     raise gate.GateError("controlled stop after mandatory DID invocation")
             with patch.object(sys, "argv", ["gate", "--full", "--compiler", str(compiler),
-                    "--scheme", str(compiler), "--run-dir", str(root / "run")]), \
+                    "--scheme", str(compiler), "--run-dir", str(root / "run"),
+                    "--historical-archive-root", str(root / "archive"),
+                    "--guarded-point-artifacts", str(root / "graphs")]), \
                  patch.dict(os.environ, {"MIDNIGHT_LEDGER_TEST_STATIC_DIR": str(root)}), \
                  patch.object(gate.shutil, "which", return_value=str(compiler)), \
                  patch.object(did_proof_gate, "prerequisites", return_value={}), \

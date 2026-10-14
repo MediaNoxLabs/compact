@@ -23,18 +23,18 @@ def authenticate_archive(archive, fingerprints, read_bytes=None):
 
 
 @contextmanager
-def archived_conformance_reads(root, descriptor):
+def archived_conformance_reads(root, descriptor, archive=None):
     """Authenticate current and archived bytes before, during and after replay."""
     import historical_law_dispatcher as dispatcher
     dispatcher.authenticate_descriptor(descriptor)
     dispatcher.authenticate_sources(root, descriptor)
     authority = descriptor['archived_conformance']
-    archive = Path(authority['archive_root']).resolve()
+    archive = dispatcher.require_archive_root(archive)
     old = authority['old_source_fingerprints']
     snapshots = authenticate_archive(archive, old)
     read_bytes, read_text = Path.read_bytes, Path.read_text
     rows = {(root / relative).resolve(): relative for relative in snapshots}
-    current = descriptor['actual_source_fingerprints']
+    current = dispatcher.source_fingerprints(root, descriptor, read_bytes)
     if not set(old) <= current.keys():
         raise ValueError('archived conformance current prerequisites are unbound')
 

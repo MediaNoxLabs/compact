@@ -151,8 +151,8 @@ def check_native_zswap_intents(
     assert '"create_zswap_input"' in encoded and '"create_zswap_output"' in encoded
     report = json.loads((output / "contract/rust-capabilities.json").read_text())
     assert [(row["name"], row["recorded"], row["observed_call"], row["proof_required"]) for row in report["circuits"]] == [
-        ("produce", False, False, False), ("consume", False, False, False),
-        ("flow", True, True, True), ("witness_order", False, False, False),
+        ("produce", True, True, False), ("consume", True, True, False),
+        ("flow", True, True, True), ("witness_order", True, True, False),
         ("read_coin", True, True, True)]
     run(compiler, "--target", "rust", "--rust-require-recording", "--skip-zk", str(source), str(base / "requires-recording"))
     transfer_source = root / "examples/rust_backend/zswap_transfer_oracle.compact"

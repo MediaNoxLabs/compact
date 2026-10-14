@@ -27,5 +27,6 @@ This list is intentionally part of the publication packet.
 8. **Full Passport ACC.** It was removed from the 0.3 milestone. The bounded
    passport and retained Jubjub evidence must not be described as full ACC,
    foreign-curve, WebAuthn or ledger9/10 adoption.
-9. **Publication state.** This documentation branch is local and intentionally
-   not pushed, merged, deployed or connected to remote CI.
+9. **Publication state.** The documentation branch is pushed and the storybook
+   has an owner-private production deployment. It remains intentionally
+   unmerged and is not connected to remote CI.

@@ -79,6 +79,7 @@
           <button type="button" class="example-tab" data-example="recording" aria-selected="false">Recorded get</button>
           <button type="button" class="example-tab" data-example="types" aria-selected="false">Generated types</button>
           <button type="button" class="example-tab" data-example="consumer" aria-selected="false">Consumer facade</button>
+          <button type="button" class="example-tab" data-example="proof" aria-selected="false">Prepare + prove</button>
         </div>
         <div class="code-compare" role="tabpanel" aria-live="polite">
           <article>
@@ -145,6 +146,47 @@ total_cost += step.gas_cost;</code></pre>
             <h3>Mechanical representation glue</h3>
             <p><code>CompactCellValue</code>, <code>CompactEnum</code>, <code>CompactStructRepr</code>, Merkle representations and the fallible witness-trait bridge.</p>
           </article>
+        </div>
+        <div class="primitive-map" aria-labelledby="primitive-map-title">
+          <div class="diagram-heading">
+            <span>DIAGRAM A · PRIMITIVE OWNERSHIP</span>
+            <h3 id="primitive-map-title">Compact meaning crosses adapters—not copies</h3>
+            <p>The runtime keeps source-shaped types small while reusing the ledger-8 representation, VM, state, shielded-asset and curve primitives underneath.</p>
+          </div>
+          <div class="primitive-map-head" aria-hidden="true"><b>COMPACT SURFACE</b><b>RUST RUNTIME FACADE</b><b>AUTHORITATIVE LEDGER / ZK CRATE</b></div>
+          <div class="primitive-row">
+            <div><code>Field</code><small>circuit scalar</small></div><i>→</i><div><code>runtime::Field</code><small>alias, not a new field</small></div><i>→</i><div><code>midnight_transient_crypto::curve::Fr</code><small>ledger-8 circuit field</small></div>
+          </div>
+          <div class="primitive-row">
+            <div><code>Bytes&lt;N&gt;</code> · <code>Vector&lt;N,T&gt;</code><small>fixed source values</small></div><i>→</i><div><code>FixedBytes</code> · <code>FixedVector</code><small>FAB + field/binary representations</small></div><i>→</i><div><code>midnight_base_crypto::fab</code><small><code>AlignedValue</code>, <code>Value</code>, alignment</small></div>
+          </div>
+          <div class="primitive-row">
+            <div><code>ledger Cell/Set/Map/List/Merkle</code><small>declared state and paths</small></div><i>→</i><div><code>*Slot</code> + <code>CircuitContext</code><small>typed path and checked VM programs</small></div><i>→</i><div><code>midnight_onchain_{runtime,vm,state}</code><small><code>QueryContext</code>, <code>Op</code>, <code>StateValue</code></small></div>
+          </div>
+          <div class="primitive-row">
+            <div><code>CoinInfo</code> · recipient · Zswap intents<small>shielded inputs and outputs</small></div><i>→</i><div><code>CircuitZswapPlan</code><small>ordered intent + allocation policy</small></div><i>→</i><div><code>midnight_coin_structure</code> + <code>midnight_zswap</code><small>official coin, offer and ledger state</small></div>
+          </div>
+          <div class="primitive-row">
+            <div><code>JubjubPoint</code> · hashes · commitments<small>Compact cryptographic built-ins</small></div><i>→</i><div><code>JubjubPoint</code> + native functions<small>checked decoding and representation glue</small></div><i>→</i><div><code>midnight_transient_crypto</code> + <code>midnight_curves</code><small>embedded curve and checked point decoding</small></div>
+          </div>
+          <div class="primitive-row proof-row">
+            <div>recorded call + verifier artifact<small>proof-capable boundary</small></div><i>→</i><div><code>RecordedCall</code> → <code>ContractCallPrototype</code><small>replay, partition and exact binding</small></div><i>→</i><div><code>midnight_ledger</code> + proof provider graph<small><code>midnight_zkir</code> is used by the proof testkit, not hidden in emitted syntax</small></div>
+          </div>
+        </div>
+        <div class="proof-flow" aria-labelledby="proof-flow-title">
+          <div class="diagram-heading">
+            <span>DIAGRAM B · EVIDENCE FLOW</span>
+            <h3 id="proof-flow-title">A value reaches the ledger through six different claims</h3>
+          </div>
+          <ol>
+            <li><b>01</b><strong>Generate</strong><code>types · slots · circuit fn</code><small>compiler + Rust AST</small></li>
+            <li><b>02</b><strong>Execute</strong><code>CircuitResult</code><small>native semantics + observed gas</small></li>
+            <li><b>03</b><strong>Record</strong><code>RecordedCircuitResult</code><small>execution + ordered PublicTrace</small></li>
+            <li><b>04</b><strong>Prepare</strong><code>ContractCallPrototype</code><small>observed state + verifier + replay</small></li>
+            <li><b>05</b><strong>Prove</strong><code>ProofPreimage → proof</code><small>provider / ZKIR / proving parameters</small></li>
+            <li><b>06</b><strong>Apply</strong><code>Intent → Transaction</code><small>ledger validation and state transition</small></li>
+          </ol>
+          <p>Generated Rust owns steps 01–03 and the typed entry into 04. Proving and application remain explicit consumer/testkit operations so a native method can never masquerade as proof or ledger evidence.</p>
         </div>
         <p class="domain-rule">Macros do not decide circuit control flow, disclosure, ledger paths, recording admission, gas policy or proof support. Those decisions remain visible in the frontend, typed backend and runtime.</p>
       </section>
@@ -500,7 +542,7 @@ total_cost += step.gas_cost;</code></pre>
 
     <footer class="footer">
       <div><span class="brand-glyph" aria-hidden="true">⌁</span><b>COMPACT / RUST JOURNEY</b></div>
-      <p>Evidence cutoff: <code>f3cef799</code>. Prepared for review; not remotely published.</p>
+      <p>Evidence cutoff: <code>f3cef799</code>. Published from <code>rust-ast-docs</code>; not merged into the Rust-AST implementation branch.</p>
       <a href="#top">Back to top ↑</a>
     </footer>
   </body>

@@ -37,6 +37,35 @@ observation ── RecordedCall ── replay + partition ── ContractCallPro
 query. `CircuitResult.gas_cost` is the accumulated diagnostic cost of accepted
 queries. A whole-circuit budget is not implied.
 
+## Primitive ownership map
+
+The facade is deliberately thin. It preserves Compact names and checked
+conversion points while keeping the ledger-8 types authoritative:
+
+| Compact surface | Rust runtime facade | Ledger / ZK authority |
+| --- | --- | --- |
+| `Field` | `runtime::Field` / `runtime::Fr` | Alias of `midnight_transient_crypto::curve::Fr` |
+| `Bytes<N>`, `Vector<N,T>` | `FixedBytes<N>`, `FixedVector<T,N>` with FAB and field/binary representations | `midnight_base_crypto::fab::{AlignedValue, Value, Alignment}` plus `midnight_transient_crypto::repr` |
+| `Cell`, `Set`, `Map`, `List`, Merkle declarations | Typed `*Slot` values and `CircuitContext` operations | `midnight_onchain_runtime::QueryContext`, `midnight_onchain_vm::Op`, `midnight_onchain_state::StateValue`, and storage collections |
+| Coin information, recipient and shielded intents | Conversion helpers plus `CircuitZswapPlan` | `midnight_coin_structure` and `midnight_zswap` |
+| `JubjubPoint`, hashes and commitments | Checked `JubjubPoint` wrapper and native functions | `midnight_transient_crypto` plus checked decoding through `midnight_curves` |
+| Recorded call and verifier material | `RecordedCall` to `ContractCallPrototype` | `midnight_ledger` transaction construction; proof providers use the pinned `midnight-proofs` / `midnight-zkir` graph |
+
+The last row is a boundary rather than a type alias. Generated code creates a
+typed recorded call and enters preparation. It does not hide proving or ledger
+application inside emitted syntax. The proof testkit uses
+`midnight_zkir::LocalProvingProvider`; the runtime transaction adapter binds
+`VerifierKey` and `ProofPreimage` from the ledger's transient-crypto graph.
+
+```text
+generated types ── FAB / FieldRepr ── ledger value representation
+typed slots ────── checked VM ops ─── QueryContext + StateValue
+Zswap intents ─── explicit binding ── Offer + ledger Zswap state
+recorded call ─── replay/partition ── ContractCallPrototype
+                                          │
+                              provider proves / ledger applies
+```
+
 ## Ledger slots
 
 The generated declaration fixes a value type and a physical path. Runtime slot
@@ -82,6 +111,21 @@ and verifier identity before replay/partition. Errors such as
 `StateMismatch`, `VerifierMismatch`, `ReplayEffectsMismatch` and
 `PartitionEffectsMismatch` are trust-boundary failures rather than Compact
 source type errors.
+
+The evidence flow is intentionally longer than a generated function call:
+
+```text
+Generate          Execute          Record             Prepare
+types + slots  -> CircuitResult -> RecordedResult  -> ContractCallPrototype
+                                                           |
+                                                           v
+Apply          <- Verify/prove  <- ProofPreimage + exact artifact identity
+Intent/Tx          provider          provider / ZKIR / parameters
+```
+
+Each arrow can fail independently. This is why native execution, recording,
+preparation, proof verification and ledger application are reported as
+different capabilities.
 
 ## Shielded intent domain
 

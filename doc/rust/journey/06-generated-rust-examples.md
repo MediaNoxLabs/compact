@@ -156,6 +156,40 @@ These three lines do not make equivalent claims. The first executes natively,
 the second also produces a trace, and the third binds that trace to an observed
 contract and verifier before ledger preparation.
 
+## 7. Preparation does not hide the prover
+
+A proof-capable consumer continues explicitly from the generated `*_call`
+builder. The exact provider API depends on the integration harness, but the
+ownership boundary remains visible:
+
+```rust
+let call = contract
+    .recording()
+    .commit_call(&observed, private_state, value)?;
+
+let prepared = call.prepare(verifier, Fr::from(0_u64))?;
+
+let intent = Intent::empty(&mut rng, expiry)
+    .add_call::<ProofPreimage>(prepared);
+
+let transaction = Transaction::from_intents(
+    "local-test",
+    HashMap::new().insert(1_u16, intent),
+);
+
+let proven = transaction
+    .prove(
+        provider,
+        &INITIAL_PARAMETERS.cost_model.runtime_cost_model,
+    )
+    .await?;
+```
+
+The generated call builder knows the typed entry point and public input. The
+consumer supplies the observation, verifier artifact, commitment randomness,
+provider and transaction policy. A successful `prepare` therefore does not
+claim that proving or ledger application has succeeded.
+
 ## What the generated code demonstrates
 
 - Compact meaning is lowered before Rust syntax construction.

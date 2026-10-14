@@ -75,6 +75,34 @@ let call = contract.recording()
     .set_call(&observed, private, value)?;
 let prototype = call.prepare(verifier, randomness)?;`,
       note: "A compact facade does not flatten the evidence ladder. Native execution, complete recording and observed artifact-bound preparation remain separate capabilities and failure surfaces."
+    },
+    proof: {
+      sourceLabel: "proof-capable entry point",
+      rustLabel: "generated call + consumer proof boundary",
+      source: `export circuit commit(v: Field): [] {
+  value = disclose(v);
+}
+
+// The source declares behavior.
+// It does not select a verifier, proving key,
+// observation, transaction, or ledger policy.`,
+      rust: `let call = contract.recording()
+    .commit_call(&observed, private, value)?;
+let prepared = call.prepare(
+    verifier,
+    Fr::from(0_u64),
+)?;
+let intent = Intent::empty(&mut rng, expiry)
+    .add_call::<ProofPreimage>(prepared);
+let tx = Transaction::from_intents(
+    "local-test",
+    HashMap::new().insert(1_u16, intent),
+);
+let proven = tx.prove(
+    provider,
+    &INITIAL_PARAMETERS.cost_model.runtime_cost_model,
+).await?;`,
+      note: "The generated *_call method preserves the typed Compact entry point. The consumer supplies observed state and exact verifier material; the proof provider and ledger remain separate authorities."
     }
   },
   stages: {

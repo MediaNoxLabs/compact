@@ -1,0 +1,17 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+
+import CompactStandardLibrary;
+export ledger marker: Field;
+witness domain(): Bytes<32>;
+witness amount(): Uint<64>;
+export circuit compose(selected: Boolean, value: Bytes<32>): [] {
+  marker = 1;
+  kernel.claimZswapNullifier(disclose(value));
+  if (disclose(selected)) {
+    kernel.mintShielded(disclose(domain()), disclose(amount()));
+  } else {
+    kernel.claimZswapCoinReceive(disclose(value));
+  }
+}

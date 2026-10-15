@@ -27,6 +27,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct Container {
         pub nested: crate::types::Leaf,
@@ -41,6 +42,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct Leaf {
         pub curve: crate::types::Kind,
@@ -56,6 +58,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactEnum,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub enum Kind {
         A,
@@ -66,7 +69,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -79,7 +82,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -212,42 +215,39 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
-        fn __compact_recorded_body_bump<Private>(
-            frame: runtime::recording::RecordingFrame<Private>,
-        ) -> Result<(runtime::recording::RecordingFrame<Private>, ()), runtime::CompactError>
-        {
-            let frame = crate::ledger_slots::count.record_increment(frame, 1u16)?;
-            Ok((frame, ()))
-        }
         pub fn put<Private>(
             context: runtime::context::CircuitContext<Private>,
             __compact_param_0: crate::types::Container,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_plan_0: crate::types::Container = (__compact_param_0).clone();
-            let __compact_plan_1: crate::types::Leaf =
-                (((__compact_plan_0).clone()).nested).clone();
-            let __compact_plan_2: crate::types::Kind = (__compact_plan_1).curve;
-            let __compact_plan_3: crate::types::Kind = crate::types::Kind::C;
-            let __compact_plan_4: bool = __compact_plan_2 != __compact_plan_3;
-            if !__compact_plan_4 {
+            let __compact_effect_0: crate::types::Container = __compact_param_0;
+            let __compact_effect_1: crate::types::Leaf = (__compact_effect_0.nested).clone();
+            let __compact_effect_2: crate::types::Kind = __compact_effect_1.curve;
+            let __compact_effect_3: crate::types::Kind = crate::types::Kind::C;
+            let __compact_effect_4: bool = __compact_effect_2 != __compact_effect_3;
+            if !__compact_effect_4 {
                 return Err(runtime::CompactError::AssertionFailed("curve".to_owned()));
             }
-            let __compact_plan_5: runtime::OpaqueString = (((__compact_plan_0).clone()).id).clone();
-            let __compact_plan_6: runtime::OpaqueString = __compact_plan_5;
+            let __compact_effect_5: () = ();
+            let __compact_effect_6: runtime::OpaqueString = (__compact_effect_0.id).clone();
             let frame = crate::ledger_slots::entries.record_insert(
                 frame,
-                (__compact_plan_6).clone(),
-                (__compact_plan_0).clone(),
+                (__compact_effect_6).clone(),
+                (__compact_effect_0).clone(),
             )?;
-            let __compact_plan_7: runtime::BoundedUint<65535> =
-                runtime::BoundedUint::<65535>::new(1u128)
-                    .expect("Compact Uint literal fits its maximum");
-            let __compact_plan_8: runtime::BoundedUint<65535> = __compact_plan_7;
-            let frame = crate::ledger_slots::count
-                .record_increment(frame, (__compact_plan_8).value() as u16)?;
-            Ok(frame.finish(()))
+            let __compact_effect_7: () = ();
+            let (frame, __compact_effect_11): (_, ()) = {
+                let __compact_effect_8: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
+                let frame = crate::ledger_slots::count
+                    .record_increment(frame, (__compact_effect_8).value() as u16)?;
+                let __compact_effect_9: () = ();
+                let __compact_effect_10: () = ();
+                (frame, __compact_effect_10)
+            };
+            let __compact_effect_12: () = ();
+            Ok(frame.finish(__compact_effect_12))
         }
         pub fn drop<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -255,21 +255,27 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_plan_0: runtime::OpaqueString = (__compact_param_0).clone();
-            let (frame, __compact_plan_1): (_, bool) =
-                crate::ledger_slots::entries.record_member(frame, (__compact_plan_0).clone())?;
-            if !__compact_plan_1 {
+            let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
+            let (frame, __compact_effect_1): (_, bool) =
+                crate::ledger_slots::entries.record_member(frame, (__compact_effect_0).clone())?;
+            if !__compact_effect_1 {
                 return Err(runtime::CompactError::AssertionFailed("missing".to_owned()));
             }
+            let __compact_effect_2: () = ();
             let frame =
-                crate::ledger_slots::entries.record_remove(frame, (__compact_plan_0).clone())?;
-            let __compact_plan_2: runtime::BoundedUint<65535> =
-                runtime::BoundedUint::<65535>::new(1u128)
-                    .expect("Compact Uint literal fits its maximum");
-            let __compact_plan_3: runtime::BoundedUint<65535> = __compact_plan_2;
-            let frame = crate::ledger_slots::count
-                .record_increment(frame, (__compact_plan_3).value() as u16)?;
-            Ok(frame.finish(()))
+                crate::ledger_slots::entries.record_remove(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_3: () = ();
+            let (frame, __compact_effect_7): (_, ()) = {
+                let __compact_effect_4: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
+                let frame = crate::ledger_slots::count
+                    .record_increment(frame, (__compact_effect_4).value() as u16)?;
+                let __compact_effect_5: () = ();
+                let __compact_effect_6: () = ();
+                (frame, __compact_effect_6)
+            };
+            let __compact_effect_8: () = ();
+            Ok(frame.finish(__compact_effect_8))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
@@ -292,6 +298,8 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
+                runtime::ledger::CellValue::validate_cell_value(&((value).nested).label)?;
+                runtime::ledger::CellValue::validate_cell_value(&(value).id)?;
                 let input = runtime::fab::AlignedValue::from((value).clone());
                 let recorded = self.put(observed.circuit_context(private_state), value)?;
                 Ok(runtime::transaction::RecordedCall::new(
@@ -316,6 +324,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
+                runtime::ledger::CellValue::validate_cell_value(&id)?;
                 let input = runtime::fab::AlignedValue::from((id).clone());
                 let recorded = self.drop(observed.circuit_context(private_state), id)?;
                 Ok(runtime::transaction::RecordedCall::new(

@@ -1,0 +1,534 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "calls",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_unit_value_operations.compact",
+        "line": 5,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "coordinate_x",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "source": {
+        "file": "effect_plan_unit_value_operations.compact",
+        "line": 7,
+        "column": 1
+      }
+    },
+    {
+      "name": "coordinate_y",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "source": {
+        "file": "effect_plan_unit_value_operations.compact",
+        "line": 8,
+        "column": 1
+      }
+    },
+    {
+      "name": "permit",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "source": {
+        "file": "effect_plan_unit_value_operations.compact",
+        "line": 9,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "check_point",
+      "parameters": [
+        {
+          "name": "offset",
+          "ty": {
+            "kind": "field"
+          }
+        },
+        {
+          "name": "expected",
+          "ty": {
+            "kind": "jubjub_point"
+          }
+        },
+        {
+          "name": "blank",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "difference",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "subtract",
+                "left": {
+                  "kind": "witness_call",
+                  "name": "coordinate_x",
+                  "arguments": [
+                  ]
+                },
+                "right": {
+                  "kind": "parameter",
+                  "name": "offset"
+                }
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "point",
+                "ty": {
+                  "kind": "jubjub_point"
+                },
+                "value": {
+                  "kind": "construct_jubjub_point",
+                  "x": {
+                    "kind": "parameter",
+                    "name": "difference"
+                  },
+                  "y": {
+                    "kind": "witness_call",
+                    "name": "coordinate_y",
+                    "arguments": [
+                    ]
+                  }
+                }
+              }
+            ],
+            "action": {
+              "kind": "sequence",
+              "actions": [
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "jubjub_point_x",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "point"
+                      }
+                    },
+                    "right": {
+                      "kind": "jubjub_point_x",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "expected"
+                      }
+                    }
+                  },
+                  "message": "wrong x"
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "jubjub_point_y",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "point"
+                      }
+                    },
+                    "right": {
+                      "kind": "jubjub_point_y",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "expected"
+                      }
+                    }
+                  },
+                  "message": "wrong y"
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "default",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    },
+                    "right": {
+                      "kind": "parameter",
+                      "name": "blank"
+                    }
+                  },
+                  "message": "wrong default"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "effect_plan_unit_value_operations.compact",
+        "line": 11,
+        "column": 1
+      }
+    },
+    {
+      "name": "close",
+      "parameters": [
+        {
+          "name": "offset",
+          "ty": {
+            "kind": "field"
+          }
+        },
+        {
+          "name": "expected",
+          "ty": {
+            "kind": "jubjub_point"
+          }
+        },
+        {
+          "name": "blank",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_23",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_23"
+            }
+          }
+        },
+        {
+          "kind": "circuit_call",
+          "name": "check_point",
+          "arguments": [
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "offset"
+              },
+              "ty": {
+                "kind": "field"
+              }
+            },
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "expected"
+              },
+              "ty": {
+                "kind": "jubjub_point"
+              }
+            },
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "blank"
+              },
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              }
+            }
+          ]
+        },
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "witness_call",
+            "name": "permit",
+            "arguments": [
+            ]
+          },
+          "message": "denied"
+        }
+      ],
+      "source": {
+        "file": "effect_plan_unit_value_operations.compact",
+        "line": 18,
+        "column": 1
+      }
+    },
+    {
+      "name": "evaluate",
+      "parameters": [
+        {
+          "name": "offset",
+          "ty": {
+            "kind": "field"
+          }
+        },
+        {
+          "name": "fallback",
+          "ty": {
+            "kind": "jubjub_point"
+          }
+        },
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Result",
+        "fields": [
+          {
+            "name": "x",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "y",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "blank",
+            "ty": {
+              "kind": "bytes",
+              "length": 32
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "point",
+              "ty": {
+                "kind": "jubjub_point"
+              },
+              "value": {
+                "kind": "if",
+                "condition": {
+                  "kind": "parameter",
+                  "name": "selected"
+                },
+                "then": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "construct_jubjub_point",
+                    "x": {
+                      "kind": "subtract",
+                      "left": {
+                        "kind": "witness_call",
+                        "name": "coordinate_x",
+                        "arguments": [
+                        ]
+                      },
+                      "right": {
+                        "kind": "parameter",
+                        "name": "offset"
+                      }
+                    },
+                    "y": {
+                      "kind": "witness_call",
+                      "name": "coordinate_y",
+                      "arguments": [
+                      ]
+                    }
+                  },
+                  "ty": {
+                    "kind": "jubjub_point"
+                  }
+                },
+                "otherwise": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "fallback"
+                  },
+                  "ty": {
+                    "kind": "jubjub_point"
+                  }
+                }
+              }
+            }
+          ],
+          "body": {
+            "kind": "sequence",
+            "steps": [
+              {
+                "kind": "assert",
+                "condition": {
+                  "kind": "witness_call",
+                  "name": "permit",
+                  "arguments": [
+                  ]
+                },
+                "message": "denied"
+              }
+            ],
+            "value": {
+              "kind": "struct_literal",
+              "ty": {
+                "kind": "struct",
+                "name": "Result",
+                "fields": [
+                  {
+                    "name": "x",
+                    "ty": {
+                      "kind": "field"
+                    }
+                  },
+                  {
+                    "name": "y",
+                    "ty": {
+                      "kind": "field"
+                    }
+                  },
+                  {
+                    "name": "blank",
+                    "ty": {
+                      "kind": "bytes",
+                      "length": 32
+                    }
+                  }
+                ]
+              },
+              "fields": [
+                {
+                  "kind": "jubjub_point_x",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "point"
+                  }
+                },
+                {
+                  "kind": "jubjub_point_y",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "point"
+                  }
+                },
+                {
+                  "kind": "default",
+                  "ty": {
+                    "kind": "bytes",
+                    "length": 32
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_22",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_22"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_unit_value_operations.compact",
+        "line": 23,
+        "column": 1
+      }
+    }
+  ]
+}

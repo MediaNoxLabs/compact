@@ -407,7 +407,8 @@ pub(super) fn frame_cost(node: Node<'_>) -> [usize; 4] {
         | Node::StructField(..)
         | Node::KernelClaimKind(..)
         | Node::ComparisonOperator(..)
-        | Node::Text(..) => [0; 4],
+        | Node::Text(..)
+        | Node::AssertMessage(..) => [0; 4],
     }
 }
 pub(super) fn add_cost(a: [usize; 4], b: [usize; 4]) -> [usize; 4] {

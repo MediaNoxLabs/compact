@@ -1,0 +1,57 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+
+import CompactStandardLibrary;
+struct OwnedLeaf { text: Opaque<"string">; bytes: Opaque<"Uint8Array">; }
+struct Owned { leaf: OwnedLeaf; leaves: Vector<2, OwnedLeaf>; values: Vector<2, Field>; marker: Field; }
+export struct Receipt { value: Field; matched: Boolean; marker: Field; }
+export ledger stored: Field;
+witness nextValue(seed: Field): Field;
+constructor() { stored = 0; }
+
+pure circuit emptyText(): Opaque<"string"> { return default<Opaque<"string">>; }
+pure circuit emptyBytes(): Opaque<"Uint8Array"> { return default<Opaque<"Uint8Array">>; }
+pure circuit textIdentity(value: Opaque<"string">): Opaque<"string"> { return value; }
+pure circuit bytesIdentity(value: Opaque<"Uint8Array">): Opaque<"Uint8Array"> { return value; }
+pure circuit ownedIdentity(value: Owned): Owned { return value; }
+pure circuit vectorIdentity(value: Vector<2, Field>): Vector<2, Field> { return value; }
+pure circuit vectorSum(value: Vector<2, Field>): Field {
+  const pair: [Field, Field] = value as [Field, Field];
+  return pair[0] + pair[1];
+}
+pure circuit checked(value: Field, permit: Boolean): Field {
+  assert(permit, "owned helper refused");
+  return value;
+}
+export circuit run(selected: Boolean, seed: Field, permit: Boolean): Receipt {
+  const zero = default<Owned>;
+  const text = textIdentity(emptyText());
+  const bytes = bytesIdentity(emptyBytes());
+  const leaf = OwnedLeaf { text: text, bytes: bytes };
+  const leaves: Vector<2, OwnedLeaf> = [leaf, leaf];
+  const initial = Owned { leaf: leaf, leaves: leaves, values: [7, 11], marker: seed };
+  const chosen = selected ? initial : zero;
+  const copied = ownedIdentity(chosen);
+  const again = ownedIdentity(chosen);
+  const same = copied == again && textIdentity(text) == zero.leaf.text && bytesIdentity(bytes) == zero.leaf.bytes;
+  const total = vectorSum(vectorIdentity(copied.values));
+  stored = disclose(total);
+  const witnessed = nextValue(seed);
+  const result = checked(witnessed + total, permit);
+  stored = disclose(result);
+  return Receipt { value: stored, matched: disclose(same), marker: disclose(copied.marker + again.marker) };
+}
+
+pure circuit widen(value: Vector<2, Uint<8>>): Vector<2, Uint<16>> { return value; }
+pure circuit toFields(value: Vector<2, Uint<16>>): Vector<2, Field> { return value; }
+pure circuit tupleFields(value: [Uint<8>, Uint<16>]): Vector<2, Field> { return value; }
+export circuit conversions(seed: Field): Receipt {
+  const narrow: Vector<2, Uint<8>> = [7, 11];
+  const widened: Vector<2, Uint<16>> = widen(narrow);
+  const fields: Vector<2, Field> = toFields(widened);
+  const pair: [Uint<8>, Uint<16>] = [3, 5];
+  const converted: Vector<2, Field> = tupleFields(pair);
+  stored = disclose(vectorSum(fields) + vectorSum(converted) + seed);
+  return Receipt { value: stored, matched: fields == vectorIdentity(fields), marker: vectorSum(fields) };
+}

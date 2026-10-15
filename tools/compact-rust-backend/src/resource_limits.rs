@@ -16,21 +16,45 @@
 //! Bounded typed-IR preflight, before recursive rendering. The borrowed visitor
 //! budgets pending batches; graph arithmetic saturates. Pure-cycle facts are
 //! retained for semantic refusal after the renderer's existing checks.
+mod borrowed_types;
 mod policy;
+mod pure;
+mod recording_calls;
 use crate::ir::Contract;
+use crate::source_diagnostics::{RefusalObserver, RefusalSite};
+pub(crate) use borrowed_types::{
+    recording_byte_payload_limit, recording_fixed_layout_limit, recording_pure_annotations,
+    recording_source_types, recording_type_nodes,
+};
 use policy::{LimitError, Limits, ResourceKind as Kind, check};
+pub(crate) use pure::PureBodyBudget;
+pub(crate) use recording_calls::{recording_call_fact_limits, recording_call_targets};
 
 /// Resources have been checked, but an otherwise valid pure call cycle must
 /// still be refused before publishing the rendered source.
 #[must_use]
-pub(crate) struct Preflight {
+pub(crate) struct Preflight<'a> {
     pure_cycle: Option<usize>,
+    pure_cycle_site: Option<RefusalSite<'a>>,
+    original_contract: &'a Contract,
+    observer: Option<&'a dyn RefusalObserver>,
 }
 
-impl Preflight {
+impl Preflight<'_> {
     pub(crate) fn finish(self, contract: &Contract) -> Result<(), crate::RenderError> {
         if let Some(index) = self.pure_cycle {
             let circuit = &contract.circuits[index];
+            if let Some(observer) = self.observer {
+                // Private callers must finish the same input to retain a source
+                // identity. A different contract keeps the old refusal/point,
+                // but cannot borrow this input's closing-edge provenance.
+                let site = if std::ptr::eq(self.original_contract, contract) {
+                    self.pure_cycle_site.unwrap_or(RefusalSite::unavailable())
+                } else {
+                    RefusalSite::unavailable()
+                };
+                observer.refused(site);
+            }
             return crate::located(circuit.source.as_ref(), || {
                 Err(crate::RenderError::RecursivePureCall(circuit.name.clone()))
             });
@@ -39,9 +63,28 @@ impl Preflight {
     }
 }
 
-pub(crate) fn validate(contract: &Contract) -> Result<Preflight, crate::RenderError> {
-    measure(contract, Limits::DEFAULT)
+pub(crate) fn validate(contract: &Contract) -> Result<Preflight<'_>, crate::RenderError> {
+    validate_with_observer(contract, None)
+}
+pub(crate) fn validate_with_observer<'a>(
+    contract: &'a Contract,
+    observer: Option<&'a dyn RefusalObserver>,
+) -> Result<Preflight<'a>, crate::RenderError> {
+    let mut pure_cycle_site = None;
+    let measured = match observer {
+        Some(observer) => measure_with_cycle_site(
+            contract,
+            Limits::DEFAULT,
+            Some(observer),
+            &mut pure_cycle_site,
+        ),
+        None => measure(contract, Limits::DEFAULT),
+    };
+    measured
         .map(|metrics| Preflight {
+            pure_cycle_site,
+            original_contract: contract,
+            observer,
             pure_cycle: match metrics.graph_status {
                 GraphStatus::PureCycle(index) => Some(index),
                 _ => None,
@@ -52,6 +95,23 @@ pub(crate) fn validate(contract: &Contract) -> Result<Preflight, crate::RenderEr
             observed: error.observed,
             limit: error.limit,
         })
+}
+
+/// Defensive bounds for checked recording calls also entered by private tests.
+/// Public generation still performs the complete borrowed-IR preflight first.
+pub(crate) fn recording_call_limits() -> (usize, usize) {
+    (Limits::DEFAULT.call_depth, Limits::DEFAULT.expanded_work)
+}
+/// Conversion expansion is independent of annotation size. These use the
+/// production allowances; the test-only census envelope is not support policy.
+pub(crate) fn coercion_work_limit() -> usize {
+    Limits::DEFAULT.expanded_work
+}
+pub(crate) fn coercion_pending_limit() -> usize {
+    Limits::DEFAULT.pending
+}
+pub(crate) fn recording_block_depth_limit() -> usize {
+    Limits::DEFAULT.expanded_depth
 }
 fn check_frames(metrics: &Metrics, limits: Limits) -> Result<(), LimitError> {
     for (i, kind) in [
@@ -79,6 +139,7 @@ enum GraphStatus {
 
 #[derive(Clone, Copy)]
 struct CallEdge<'a> {
+    site: RefusalSite<'a>,
     name: &'a str,
     depth: usize,
     cost: [usize; 4],
@@ -107,6 +168,8 @@ struct Visit<'a> {
     cost: [usize; 4],
 }
 struct Scan<'a> {
+    observer: Option<&'a dyn RefusalObserver>,
+    current_site: RefusalSite<'a>,
     limits: Limits,
     metrics: Metrics,
     pending: Vec<Visit<'a>>,
@@ -120,18 +183,36 @@ struct Scan<'a> {
 }
 impl<'a> Scan<'a> {
     fn reserve(&self, n: usize) -> Result<(), LimitError> {
-        check(
+        self.reserve_for(n, self.current_site)
+    }
+    fn check_site(
+        &self,
+        resource: Kind,
+        value: usize,
+        limit: usize,
+        site: RefusalSite<'_>,
+    ) -> Result<(), LimitError> {
+        check(resource, value, limit).inspect_err(|_| {
+            if let Some(observer) = self.observer {
+                observer.refused(site);
+            }
+        })
+    }
+    fn reserve_for(&self, n: usize, site: RefusalSite<'_>) -> Result<(), LimitError> {
+        self.check_site(
             Kind::PendingNodes,
             self.pending.len().saturating_add(n),
             self.limits.pending,
+            site,
         )?;
-        check(
+        self.check_site(
             Kind::Nodes,
             self.metrics
                 .nodes
                 .saturating_add(self.pending.len())
                 .saturating_add(n),
             self.limits.nodes,
+            site,
         )
     }
     fn push(
@@ -140,8 +221,9 @@ impl<'a> Scan<'a> {
         depth: usize,
         owner: Option<usize>,
     ) -> Result<(), LimitError> {
-        self.reserve(1)?;
-        check(Kind::SyntaxDepth, depth, self.limits.syntax_depth)?;
+        let site = node.origin_site();
+        self.reserve_for(1, site)?;
+        self.check_site(Kind::SyntaxDepth, depth, self.limits.syntax_depth, site)?;
         let cost = add_cost(
             if depth == 1 {
                 [0; 4]
@@ -161,23 +243,26 @@ impl<'a> Scan<'a> {
     }
     fn text(&mut self, s: &str) -> Result<(), LimitError> {
         self.metrics.string_bytes = self.metrics.string_bytes.saturating_add(s.len());
-        check(
+        self.check_site(
             Kind::StringBytes,
             self.metrics.string_bytes,
             self.limits.strings,
+            self.current_site,
         )
     }
     fn literal_bytes(&mut self, n: usize) -> Result<(), LimitError> {
         self.metrics.literal_bytes = self.metrics.literal_bytes.saturating_add(n);
-        check(
+        self.check_site(
             Kind::LiteralBytes,
             self.metrics.literal_bytes,
             self.limits.literal_bytes,
+            self.current_site,
         )
     }
     fn call(&mut self, owner: Option<usize>, name: &'a str, depth: usize) {
         if let Some(i) = owner {
             self.edges[i].push(CallEdge {
+                site: self.current_site,
                 name,
                 depth,
                 cost: self.current_cost,
@@ -192,6 +277,22 @@ mod frames;
 use frames::{add_cost, frame_cost, max_cost};
 
 fn measure(contract: &Contract, limits: Limits) -> Result<Metrics, LimitError> {
+    measure_observed(contract, limits, None)
+}
+fn measure_observed<'a>(
+    contract: &'a Contract,
+    limits: Limits,
+    observer: Option<&'a dyn RefusalObserver>,
+) -> Result<Metrics, LimitError> {
+    measure_with_cycle_site(contract, limits, observer, &mut None)
+}
+
+fn measure_with_cycle_site<'a>(
+    contract: &'a Contract,
+    limits: Limits,
+    observer: Option<&'a dyn RefusalObserver>,
+    pure_cycle_site: &mut Option<RefusalSite<'a>>,
+) -> Result<Metrics, LimitError> {
     // The public entry caller retains schema precedence; this standalone visitor is metrics-only.
     let count = contract
         .circuits
@@ -200,6 +301,8 @@ fn measure(contract: &Contract, limits: Limits) -> Result<Metrics, LimitError> {
         .saturating_add(usize::from(contract.constructor.is_some()));
     check(Kind::Declarations, count, limits.declarations)?;
     let mut scan = Scan {
+        observer,
+        current_site: RefusalSite::unavailable(),
         limits,
         metrics: Metrics {
             graph_status: GraphStatus::Acyclic,
@@ -240,7 +343,7 @@ fn measure(contract: &Contract, limits: Limits) -> Result<Metrics, LimitError> {
         }
     }
     check_frames(&scan.metrics, limits)?;
-    call_graph::finish(contract, scan)
+    call_graph::finish(contract, scan, pure_cycle_site)
 }
 
 mod call_graph;
@@ -252,3 +355,6 @@ mod pure_cycles;
 
 #[cfg(test)]
 mod seeded_graph_tests;
+
+#[cfg(test)]
+mod pure_cycle_diagnostic_tests;

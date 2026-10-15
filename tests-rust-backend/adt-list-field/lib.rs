@@ -27,6 +27,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct Maybe {
         pub is_some: ::core::primitive::bool,
@@ -36,7 +37,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -47,7 +48,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -288,105 +289,194 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_recorded_empty_0): (_, bool) =
+            let (frame, __compact_effect_0): (_, bool) =
                 crate::ledger_slots::c.record_is_empty(frame)?;
-            if !(__compact_recorded_empty_0 == true) {
+            let __compact_effect_1: bool = true;
+            let __compact_effect_2: bool = __compact_effect_0 == __compact_effect_1;
+            if !__compact_effect_2 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Structure should be empty".to_owned(),
                 ));
             }
-            let (frame, __compact_recorded_length_1): (_, u64) =
-                crate::ledger_slots::c.record_length(frame)?;
-            if !(__compact_recorded_length_1 == 0u64) {
+            let __compact_effect_3: () = ();
+            let (frame, __compact_list_length_4) = crate::ledger_slots::c.record_length(frame)?;
+            let __compact_effect_4: runtime::BoundedUint<18446744073709551615> =
+                <runtime::BoundedUint<18446744073709551615>>::new(__compact_list_length_4 as u128)?;
+            let __compact_effect_5: runtime::BoundedUint<18446744073709551615> =
+                <runtime::BoundedUint<18446744073709551615>>::new(0u128)?;
+            let __compact_effect_6: bool = __compact_effect_4 == __compact_effect_5;
+            if !__compact_effect_6 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Size should be 0".to_owned(),
                 ));
             }
-            let (frame, __compact_recorded_head_2): (_, crate::types::Maybe) =
+            let __compact_effect_7: () = ();
+            let (frame, __compact_effect_8): (_, crate::types::Maybe) =
                 crate::ledger_slots::c.record_head::<crate::types::Maybe, _, _>(frame)?;
-            if !(__compact_recorded_head_2.is_some == false) {
+            let __compact_effect_9: bool = __compact_effect_8.is_some;
+            let __compact_effect_10: bool = false;
+            let __compact_effect_11: bool = __compact_effect_9 == __compact_effect_10;
+            if !__compact_effect_11 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Head should not exist".to_owned(),
                 ));
             }
-            let frame =
-                crate::ledger_slots::c.record_push_front(frame, runtime::Field::from(0u128))?;
-            let (frame, __compact_recorded_length_3): (_, u64) =
-                crate::ledger_slots::c.record_length(frame)?;
-            if !(__compact_recorded_length_3 == 1u64) {
+            let __compact_effect_12: () = ();
+            let __compact_effect_13: runtime::Field = runtime::Field::from_le_bytes(&[
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let frame = crate::ledger_slots::c.record_push_front(frame, __compact_effect_13)?;
+            let __compact_effect_14: () = ();
+            let (frame, __compact_list_length_15) = crate::ledger_slots::c.record_length(frame)?;
+            let __compact_effect_15: runtime::BoundedUint<18446744073709551615> =
+                <runtime::BoundedUint<18446744073709551615>>::new(
+                    __compact_list_length_15 as u128,
+                )?;
+            let __compact_effect_16: runtime::BoundedUint<18446744073709551615> =
+                <runtime::BoundedUint<18446744073709551615>>::new(1u128)?;
+            let __compact_effect_17: bool = __compact_effect_15 == __compact_effect_16;
+            if !__compact_effect_17 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Size should be 1".to_owned(),
                 ));
             }
-            let (frame, __compact_recorded_head_4): (_, crate::types::Maybe) =
+            let __compact_effect_18: () = ();
+            let (frame, __compact_effect_19): (_, crate::types::Maybe) =
                 crate::ledger_slots::c.record_head::<crate::types::Maybe, _, _>(frame)?;
-            if !(__compact_recorded_head_4.is_some == true) {
+            let __compact_effect_20: bool = __compact_effect_19.is_some;
+            let __compact_effect_21: bool = true;
+            let __compact_effect_22: bool = __compact_effect_20 == __compact_effect_21;
+            if !__compact_effect_22 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Head should exist".to_owned(),
                 ));
             }
-            let (frame, __compact_recorded_head_5): (_, crate::types::Maybe) =
+            let __compact_effect_23: () = ();
+            let (frame, __compact_effect_24): (_, crate::types::Maybe) =
                 crate::ledger_slots::c.record_head::<crate::types::Maybe, _, _>(frame)?;
-            if !(__compact_recorded_head_5.value == runtime::Field::from(0u128)) {
+            let __compact_effect_25: runtime::Field = __compact_effect_24.value;
+            let __compact_effect_26: runtime::Field = runtime::Field::from_le_bytes(&[
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_27: bool = __compact_effect_25 == __compact_effect_26;
+            if !__compact_effect_27 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Head should have value 0".to_owned(),
                 ));
             }
-            let frame =
-                crate::ledger_slots::c.record_push_front(frame, runtime::Field::from(1u128))?;
-            let (frame, __compact_recorded_length_6): (_, u64) =
-                crate::ledger_slots::c.record_length(frame)?;
-            if !(__compact_recorded_length_6 == 2u64) {
+            let __compact_effect_28: () = ();
+            let __compact_effect_29: runtime::Field = runtime::Field::from_le_bytes(&[
+                1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let frame = crate::ledger_slots::c.record_push_front(frame, __compact_effect_29)?;
+            let __compact_effect_30: () = ();
+            let (frame, __compact_list_length_31) = crate::ledger_slots::c.record_length(frame)?;
+            let __compact_effect_31: runtime::BoundedUint<18446744073709551615> =
+                <runtime::BoundedUint<18446744073709551615>>::new(
+                    __compact_list_length_31 as u128,
+                )?;
+            let __compact_effect_32: runtime::BoundedUint<18446744073709551615> =
+                <runtime::BoundedUint<18446744073709551615>>::new(2u128)?;
+            let __compact_effect_33: bool = __compact_effect_31 == __compact_effect_32;
+            if !__compact_effect_33 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Size should be 2".to_owned(),
                 ));
             }
-            let (frame, __compact_recorded_head_7): (_, crate::types::Maybe) =
+            let __compact_effect_34: () = ();
+            let (frame, __compact_effect_35): (_, crate::types::Maybe) =
                 crate::ledger_slots::c.record_head::<crate::types::Maybe, _, _>(frame)?;
-            if !(__compact_recorded_head_7.value == runtime::Field::from(1u128)) {
+            let __compact_effect_36: runtime::Field = __compact_effect_35.value;
+            let __compact_effect_37: runtime::Field = runtime::Field::from_le_bytes(&[
+                1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_38: bool = __compact_effect_36 == __compact_effect_37;
+            if !__compact_effect_38 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Head should have value 1".to_owned(),
                 ));
             }
+            let __compact_effect_39: () = ();
             let frame = crate::ledger_slots::c.record_pop_front(frame)?;
-            let (frame, __compact_recorded_length_8): (_, u64) =
-                crate::ledger_slots::c.record_length(frame)?;
-            if !(__compact_recorded_length_8 == 1u64) {
+            let __compact_effect_40: () = ();
+            let (frame, __compact_list_length_41) = crate::ledger_slots::c.record_length(frame)?;
+            let __compact_effect_41: runtime::BoundedUint<18446744073709551615> =
+                <runtime::BoundedUint<18446744073709551615>>::new(
+                    __compact_list_length_41 as u128,
+                )?;
+            let __compact_effect_42: runtime::BoundedUint<18446744073709551615> =
+                <runtime::BoundedUint<18446744073709551615>>::new(1u128)?;
+            let __compact_effect_43: bool = __compact_effect_41 == __compact_effect_42;
+            if !__compact_effect_43 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Size should be 1".to_owned(),
                 ));
             }
-            let (frame, __compact_recorded_head_9): (_, crate::types::Maybe) =
+            let __compact_effect_44: () = ();
+            let (frame, __compact_effect_45): (_, crate::types::Maybe) =
                 crate::ledger_slots::c.record_head::<crate::types::Maybe, _, _>(frame)?;
-            if !(__compact_recorded_head_9.value == runtime::Field::from(0u128)) {
+            let __compact_effect_46: runtime::Field = __compact_effect_45.value;
+            let __compact_effect_47: runtime::Field = runtime::Field::from_le_bytes(&[
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_48: bool = __compact_effect_46 == __compact_effect_47;
+            if !__compact_effect_48 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Head should have value 0".to_owned(),
                 ));
             }
+            let __compact_effect_49: () = ();
             let frame = crate::ledger_slots::c.record_pop_front(frame)?;
-            let (frame, __compact_recorded_head_10): (_, crate::types::Maybe) =
+            let __compact_effect_50: () = ();
+            let (frame, __compact_effect_51): (_, crate::types::Maybe) =
                 crate::ledger_slots::c.record_head::<crate::types::Maybe, _, _>(frame)?;
-            if !(__compact_recorded_head_10.is_some == false) {
+            let __compact_effect_52: bool = __compact_effect_51.is_some;
+            let __compact_effect_53: bool = false;
+            let __compact_effect_54: bool = __compact_effect_52 == __compact_effect_53;
+            if !__compact_effect_54 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Head should not exist".to_owned(),
                 ));
             }
+            let __compact_effect_55: () = ();
             let frame = crate::ledger_slots::c.record_reset(frame)?;
-            let (frame, __compact_recorded_length_11): (_, u64) =
-                crate::ledger_slots::c.record_length(frame)?;
-            if !(__compact_recorded_length_11 == 0u64) {
+            let __compact_effect_56: () = ();
+            let (frame, __compact_list_length_57) = crate::ledger_slots::c.record_length(frame)?;
+            let __compact_effect_57: runtime::BoundedUint<18446744073709551615> =
+                <runtime::BoundedUint<18446744073709551615>>::new(
+                    __compact_list_length_57 as u128,
+                )?;
+            let __compact_effect_58: runtime::BoundedUint<18446744073709551615> =
+                <runtime::BoundedUint<18446744073709551615>>::new(0u128)?;
+            let __compact_effect_59: bool = __compact_effect_57 == __compact_effect_58;
+            if !__compact_effect_59 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Size should be 0".to_owned(),
                 ));
             }
-            let (frame, __compact_recorded_empty_12): (_, bool) =
+            let __compact_effect_60: () = ();
+            let (frame, __compact_effect_61): (_, bool) =
                 crate::ledger_slots::c.record_is_empty(frame)?;
-            if !(__compact_recorded_empty_12 == true) {
+            let __compact_effect_62: bool = true;
+            let __compact_effect_63: bool = __compact_effect_61 == __compact_effect_62;
+            if !__compact_effect_63 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Structure should be empty".to_owned(),
                 ));
             }
-            Ok(frame.finish(()))
+            let __compact_effect_64: () = ();
+            let __compact_effect_65: () = ();
+            Ok(frame.finish(__compact_effect_65))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

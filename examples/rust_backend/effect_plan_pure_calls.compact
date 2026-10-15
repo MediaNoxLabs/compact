@@ -1,0 +1,53 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+
+import CompactStandardLibrary;
+struct Pair { left: Field; right: Field; }
+struct VectorBox { values: Vector<2, Field>; }
+export ledger stored: Field;
+witness nextValue(seed: Field): Field;
+constructor() { stored = 0; }
+
+pure circuit makePair(left: Field, right: Field): Pair {
+  return Pair { left: left, right: right };
+}
+pure circuit fingerprint(pair: Pair): Field {
+  return transientHash<Pair>(pair);
+}
+pure circuit foldStep(acc: Field, item: Field): Field {
+  return transientCommit<Field>(acc, item);
+}
+pure circuit folded(seed: Field): Field {
+  const holder = default<VectorBox>;
+  return fold(foldStep, seed, holder.values);
+}
+pure circuit digest(seed: Field, selected: Boolean): Field {
+  const pair = makePair(seed, folded(seed));
+  const chosen = selected ? pair : makePair(folded(seed), seed);
+  return fingerprint(chosen);
+}
+pure circuit combine(left: Field, right: Field): Field {
+  return fingerprint(makePair(left, right));
+}
+pure circuit checked(seed: Field, selected: Boolean, permit: Boolean): Field {
+  assert(permit, "pure helper refused");
+  return digest(seed, selected);
+}
+circuit update(seed: Field, selected: Boolean, permit: Boolean): Field {
+  const previous = stored;
+  const value = checked(seed + previous, selected, permit);
+  stored = disclose(value);
+  return stored;
+}
+export circuit run(selected: Boolean, seed: Field, permit: Boolean): Field {
+  const first = combine(nextValue(seed), nextValue(seed + 1));
+  const left = update(first, selected, true);
+  if (disclose(selected)) {
+    stored = disclose(update(nextValue(left), selected, permit));
+    return digest(stored, false);
+  } else {
+    stored = disclose(update(nextValue(seed), selected, permit));
+    return digest(stored, true);
+  }
+}

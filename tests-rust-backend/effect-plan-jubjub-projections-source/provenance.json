@@ -1,0 +1,28 @@
+{
+  "format": "compact-source-fixture-provenance/v1",
+  "source": "examples/rust_backend/effect_plan_jubjub_projections.compact",
+  "source_sha256": "b7ab602c335957bc68d2aaa3ce664968dc3161fdd8f5700b34880210ec6862f9",
+  "retained_ir": "tools/compact-rust-backend/tests/effect-plan-jubjub-projections-schema20-ir.json",
+  "retained_ir_sha256": "2f2fd4f362f80fac5d30714ba0357a29a26843be5733acea6c0b30fd147941c9",
+  "baseline_generated_rust_sha256": "80ddce7f700ad4707e3071400bd840e766d7eabb780e48670f78f1a0a536ea1c",
+  "baseline_receipt_sha256": "15f714915f94e9c853961119f72e6b08d0812f24d832b76966e2e539bcd1d5b8",
+  "baseline_generation_exit_code": 0,
+  "baseline_tools": [
+    {
+      "path": "/tmp/rust040-pure-unit-statements/alias-guard-proof-gate/bin/compactc",
+      "bytes": 23485064,
+      "sha256": "f2e7a79fd7fcc837404d2d53b3d045dd286e252fe7c007f695e6580a905656ad"
+    },
+    {
+      "path": "/tmp/rust040-pure-unit-statements/alias-guard-proof-gate/bin/compactc-scheme",
+      "bytes": 8957752,
+      "sha256": "1294418df12639a7ade4e60800ee98d0ffbefde192aadf7169ec4e2f4eb06634"
+    },
+    {
+      "path": "/tmp/rust040-pure-unit-statements/alias-guard-proof-gate/bin/zkir",
+      "bytes": 10309960,
+      "sha256": "b8c79bb1c7fef14e3d801e10a024a9ab8af90343d718e58a510c238ddfaa90f9"
+    }
+  ],
+  "claim": "Exact genuine-source full IR capture. Baseline native/TS generation succeeded; recording unavailable before #575. Runtime/proof qualification is separate."
+}

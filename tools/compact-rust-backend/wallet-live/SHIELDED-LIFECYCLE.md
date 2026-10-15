@@ -30,17 +30,26 @@ Run `node shielded-check.mjs`. The directory and every handoff are retained on
 failure. It is not a resume command: inspect the confirmed chain stage before
 starting another run. The script never starts, stops or modifies services.
 
-## Required live sequence
+## Current codec gate
+
+Ledger 8.1.3 is the current local decoder/offline fixture version. No live
+node/indexer profile is approved for it, so the default JavaScript checkpoint
+preflight and production Rust builder refuse live execution. The former
+node-0.22.3/indexer-4.0.1/ledger-8.0.2/codec-8.0.3 pairing is retained historical
+evidence, not an approved 8.1.3 profile. Offline tests explicitly inject their
+fixture policy; the live runner never does so.
+
+## Live sequence required after profile validation
 
 1. Sync the wallet and register available NIGHT for Dust if necessary.
 2. Build and submit a deployment containing all three operation keys; wait for
    the exact submitted action in a canonical finalized block.
 3. Acquire an immutable checkpoint from the node, indexer and one exact wallet
    SDK snapshot. The adapter and builder must agree on version, network, block,
-   event, root and frontier. Preflight uses the adapter's exact reviewed node/
-   indexer profile; unknown combinations fail closed. The candidate local profile
-   preserves actual node ledger `=8.0.2` separately from codec `8.0.3` and does
-   not become live compatibility evidence until all acceptance phases pass.
+   event, root and frontier. Preflight must use a newly reviewed node/indexer/codec profile. No such
+   profile is currently approved for ledger 8.1.3; all combinations fail closed.
+   The historical node ledger `=8.0.2` and codec `8.0.3` remain separate
+   identities and cannot be promoted by relabeling.
 4. Bootstrap a fresh token of value 42 to the actual wallet encryption/public
    keys. Confirm the action and recover its exact nonce, type, value, commitment
    and allocated index in the wallet's available coins.

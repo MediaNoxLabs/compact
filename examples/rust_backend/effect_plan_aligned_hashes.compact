@@ -1,0 +1,41 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger calls: Counter;
+export struct Hashes { x: Field; digest: Bytes<32>; }
+witness curveInput(): Field;
+witness hashInput(): Field;
+witness expectedPoint(): JubjubPoint;
+witness expectedDigest(): Bytes<32>;
+constructor() {}
+circuit verifyLocal(value: Field): [] {
+  assert(hashToCurve<Field>(value) == expectedPoint(), "point mismatch");
+  assert(persistentHash<Field>(value) == expectedDigest(), "digest mismatch");
+}
+export circuit close(value: Field): [] {
+  verifyLocal(value);
+  calls.increment(1);
+}
+export circuit hashes(selected: Boolean): Hashes {
+  calls.increment(1);
+  const x = disclose(selected)
+    ? disclose(jubjubPointX(hashToCurve<Field>(curveInput()))) : 0;
+  const digest = disclose(selected)
+    ? disclose(persistentHash<Field>(hashInput())) : (0 as Bytes<32>);
+  return Hashes { x, digest };
+}
+
+circuit verifyHash(value: Field): [] {
+  assert(persistentHash<Field>(value) == expectedDigest(), "digest mismatch");
+}
+export circuit close_hash(value: Field): [] {
+  verifyHash(value);
+  calls.increment(1);
+}
+export circuit hash_only(selected: Boolean): Hashes {
+  calls.increment(1);
+  const digest = disclose(selected)
+    ? disclose(persistentHash<Field>(hashInput())) : (0 as Bytes<32>);
+  return Hashes { x: 0, digest: digest };
+}

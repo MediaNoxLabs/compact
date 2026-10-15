@@ -195,6 +195,7 @@ pub(super) fn unit_helper(
         })
 }
 
+#[cfg(test)]
 fn uncoerced<'a>(value: &'a Expr, ty: &Type) -> Option<&'a Expr> {
     match value {
         Expr::Coerce { value, ty: actual } if actual == ty => Some(value),
@@ -202,6 +203,7 @@ fn uncoerced<'a>(value: &'a Expr, ty: &Type) -> Option<&'a Expr> {
     }
 }
 
+#[cfg(test)]
 pub(super) fn render(
     circuit: &StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,

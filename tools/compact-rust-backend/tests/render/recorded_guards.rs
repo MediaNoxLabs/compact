@@ -23,7 +23,7 @@ use compact_rust_backend::ir::{
 use compact_rust_backend::{render, render_with_capabilities};
 
 #[test]
-fn recorded_mixed_width_guard_requires_exact_public_widths_and_pure_operands() {
+fn recorded_mixed_width_guard_composes_typed_widths_and_public_reads() {
     let mut contract = Contract {
         schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
@@ -95,17 +95,14 @@ fn recorded_mixed_width_guard_requires_exact_public_widths_and_pure_operands() {
             .recorded
     };
     assert!(recorded(&contract));
-    assert!(
-        render_with_capabilities(&contract)
-            .unwrap()
-            .source
-            .contains("__compact_recorded_widened_0")
-    );
+    let source = render_with_capabilities(&contract).unwrap().source;
+    let body = super::lifecycle_recording::generated_body(&source, "recorded", "matching");
+    assert!(body.contains("record_increment"));
 
     contract.stateful_circuits[0].parameters[0].ty = Type::Unsigned {
         max: "65535".into(),
     };
-    assert!(!recorded(&contract));
+    assert!(recorded(&contract));
     contract.stateful_circuits[0].parameters[0].ty = Type::Unsigned { max: "255".into() };
     let StateAction::Assert { condition, .. } = &mut contract.stateful_circuits[0].actions[0]
     else {
@@ -121,11 +118,20 @@ fn recorded_mixed_width_guard_requires_exact_public_widths_and_pure_operands() {
         field: "stored".into(),
         index: 1,
     };
-    assert!(!recorded(&contract));
+    assert!(recorded(&contract));
+    let source = render_with_capabilities(&contract).unwrap().source;
+    let body = super::lifecycle_recording::generated_body(&source, "recorded", "matching");
+    assert!(body.find("record_read").unwrap() < body.find("record_increment").unwrap());
+    let StateAction::CounterIncrement { index, .. } = &mut contract.stateful_circuits[0].actions[1]
+    else {
+        unreachable!()
+    };
+    *index = 99;
+    assert!(render_with_capabilities(&contract).is_err());
 }
 
 #[test]
-fn recorded_product_guard_requires_closed_pure_body_and_counter_one() {
+fn recorded_product_guard_composes_typed_pure_bodies_and_counter_amounts() {
     let uint32 = Type::Unsigned {
         max: "4294967295".into(),
     };
@@ -255,7 +261,7 @@ fn recorded_product_guard_requires_closed_pure_body_and_counter_one() {
     if let Expr::Sequence { steps, .. } = &mut contract.circuits[0].body {
         steps.push(Expr::Unit);
     }
-    assert!(!recorded(&contract));
+    assert!(recorded(&contract));
     contract = pristine.clone();
     if let Expr::Sequence { steps, .. } = &mut contract.circuits[0].body
         && let Expr::Assert { condition, .. } = &mut steps[0]
@@ -267,7 +273,7 @@ fn recorded_product_guard_requires_closed_pure_body_and_counter_one() {
             max: "17179869180".into(),
         };
     }
-    assert!(!recorded(&contract));
+    assert!(recorded(&contract));
     contract = pristine.clone();
     if let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[1] {
         bindings[0].value = Expr::UnsignedLiteral {
@@ -275,16 +281,23 @@ fn recorded_product_guard_requires_closed_pure_body_and_counter_one() {
             max: "65535".into(),
         };
     }
-    assert!(!recorded(&contract));
+    assert!(recorded(&contract));
     contract = pristine;
     if let StateAction::PureCall { arguments, .. } = &mut contract.stateful_circuits[0].actions[0] {
         arguments.swap(0, 1);
     }
-    assert!(!recorded(&contract));
+    assert!(recorded(&contract));
+    let source = render_with_capabilities(&contract).unwrap().source;
+    let body = super::lifecycle_recording::generated_body(&source, "recorded", "record");
+    assert!(body.contains("record_increment") && body.contains("guard"));
+    if let StateAction::PureCall { arguments, .. } = &mut contract.stateful_circuits[0].actions[0] {
+        arguments.pop();
+    }
+    assert!(render_with_capabilities(&contract).is_err());
 }
 
 #[test]
-fn boolean_pair_hash_cell_assertion_records_read_before_counter_write() {
+fn boolean_pair_and_scalar_hash_assertions_record_read_before_counter_write() {
     let vector = Type::Vector {
         element: Box::new(Type::Field),
         length: 2,
@@ -364,14 +377,34 @@ fn boolean_pair_hash_cell_assertion_records_read_before_counter_write() {
             },
         ],
     };
-    let rendered = render_with_capabilities(&contract).unwrap();
-    assert!(rendered.capabilities.circuits[0].recorded);
-    assert!(rendered.capabilities.circuits[0].observed_call);
-    let source = rendered.source.split("pub mod recorded").nth(1).unwrap();
-    let hash = source.find("runtime::transient_hash(").unwrap();
-    let read = source.find("record_read(frame)").unwrap();
-    let write = source.find("record_increment(frame").unwrap();
-    assert!(hash < read && read < write);
+    fn assert_ordered_recording(contract: &Contract, label: &str) {
+        let rendered = render_with_capabilities(contract).unwrap();
+        let capability = rendered
+            .capabilities
+            .circuits
+            .iter()
+            .find(|circuit| circuit.name == "check")
+            .unwrap();
+        assert!(capability.recorded && capability.observed_call, "{label}");
+        let source = rendered.source.split("pub mod recorded").nth(1).unwrap();
+        let hash = source.find("runtime::transient_hash(").unwrap();
+        let read = source.find("record_read(frame)").unwrap();
+        let write = source.find("record_increment(frame").unwrap();
+        assert!(hash < read && read < write, "{label}");
+        if let Some(base) = std::env::var_os("COMPACT_HASH_GUARD_PROBE_OUTPUT") {
+            let base = std::path::PathBuf::from(base);
+            std::fs::create_dir_all(&base).unwrap();
+            let directory = base.join(label);
+            std::fs::create_dir(&directory).expect("hash guard exports require a fresh directory");
+            std::fs::write(
+                directory.join("compact-rust-ir.json"),
+                serde_json::to_vec_pretty(contract).unwrap(),
+            )
+            .unwrap();
+            std::fs::write(directory.join("lib.rs"), rendered.source).unwrap();
+        }
+    }
+    assert_ordered_recording(&contract, "boolean-pair-hash");
 
     let StateReturn::Expression { value } = &mut contract.stateful_circuits[0].return_value else {
         unreachable!();
@@ -382,20 +415,14 @@ fn boolean_pair_hash_cell_assertion_records_read_before_counter_write() {
     **left = Expr::TransientHash {
         value: Box::new(Expr::FieldLiteral { value: "7".into() }),
     };
-    let rejected = render_with_capabilities(&contract).unwrap();
-    assert!(!rejected.capabilities.circuits[0].recorded);
-    assert_eq!(
-        rejected.capabilities.circuits[0]
-            .recording_unavailable
-            .as_ref()
-            .unwrap()
-            .ir_node,
-        "StateAction::Assert"
-    );
+    // Scalar Field hashing is already in the generic transient-hash domain.
+    // Typed NotEqual now composes it with the same ledger read and assertion;
+    // the earlier Boolean-pair recognizer's argument shape is not an ABI limit.
+    assert_ordered_recording(&contract, "scalar-field-hash");
 }
 
 #[test]
-fn recorded_pure_assert_call_rejects_extra_pure_steps() {
+fn recorded_pure_assert_call_preserves_multiple_typed_assertion_steps() {
     let assertion = Expr::Assert {
         condition: Box::new(Expr::NotEqual {
             left: Box::new(Expr::Parameter {
@@ -442,11 +469,26 @@ fn recorded_pure_assert_call_rejects_extra_pure_steps() {
     };
     steps.push(assertion);
     let rendered = render_with_capabilities(&contract).unwrap();
-    assert!(!rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].observed_call);
+    let body = super::lifecycle_recording::generated_body(
+        &rendered.source,
+        "pure_circuits",
+        "require_positive",
+    );
+    assert_eq!(body.matches("\"positive\"").count(), 2);
+    let Expr::Sequence { steps, .. } = &mut contract.circuits[0].body else {
+        unreachable!()
+    };
+    let Expr::Assert { condition, .. } = &mut steps[1] else {
+        unreachable!()
+    };
+    **condition = Expr::FieldLiteral { value: "1".into() };
+    assert!(render_with_capabilities(&contract).is_err());
 }
 
 #[test]
-fn conditional_assertion_folds_only_closed_same_type_unsigned_equality() {
+fn conditional_assertion_keeps_typed_equality_and_branch_local_observations() {
     let mut contract = identity(Type::Unit, Expr::Unit);
     contract.circuits.clear();
     contract.ledger_fields = vec![LedgerField {
@@ -495,11 +537,9 @@ fn conditional_assertion_folds_only_closed_same_type_unsigned_equality() {
     }];
     let rendered = render_with_capabilities(&contract).unwrap();
     assert!(rendered.capabilities.circuits[0].recorded);
-    assert!(
-        rendered
-            .source
-            .contains("__compact_recorded_conditional_bool_0: bool = !(__compact_param_0)")
-    );
+    let recorded = rendered.source.split_once("pub mod recorded").unwrap().1;
+    assert!(recorded.contains(" == "));
+    assert!(recorded.find("AssertionFailed").unwrap() < recorded.find("record_write").unwrap());
     assert!(rendered.source.contains("closed equality denied"));
     assert!(rendered.source.contains("record_write(frame"));
 
@@ -518,11 +558,84 @@ fn conditional_assertion_folds_only_closed_same_type_unsigned_equality() {
         }),
         right: Box::new(Expr::FieldLiteral { value: "1".into() }),
     };
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    let recorded = rendered.source.split_once("pub mod recorded").unwrap().1;
+    assert_eq!(recorded.matches("record_read(frame)").count(), 1);
+    assert!(
+        recorded.find("record_read(frame)").unwrap() < recorded.find("AssertionFailed").unwrap()
+    );
+    // Inspect syntax to ensure the observation remains in the selected arm.
+    use quote::ToTokens;
+    use syn::visit_mut::VisitMut;
+    struct SelectedRead(usize);
+    impl VisitMut for SelectedRead {
+        fn visit_expr_if_mut(&mut self, branch: &mut syn::ExprIf) {
+            if branch
+                .then_branch
+                .to_token_stream()
+                .to_string()
+                .contains("record_read")
+            {
+                assert!(
+                    !branch
+                        .cond
+                        .to_token_stream()
+                        .to_string()
+                        .contains("record_read")
+                );
+                self.0 += 1;
+            }
+            syn::visit_mut::visit_expr_if_mut(self, branch);
+        }
+    }
+    let mut syntax = syn::parse_file(&rendered.source).unwrap();
+    let mut selected = SelectedRead(0);
+    selected.visit_file_mut(&mut syntax);
+    assert_eq!(selected.0, 1);
+
+    // Dynamic opaque hashing and direct defaults now compose in the selected arm.
+    let StateAction::Assert {
+        condition: Expr::If { then, .. },
+        ..
+    } = &mut contract.stateful_circuits[0].actions[0]
+    else {
+        unreachable!()
+    };
+    **then = Expr::Equal {
+        left: Box::new(Expr::TransientHash {
+            value: Box::new(Expr::Default {
+                ty: Type::OpaqueString,
+            }),
+        }),
+        right: Box::new(Expr::FieldLiteral { value: "1".into() }),
+    };
+    let report = render_with_capabilities(&contract).unwrap().capabilities;
+    assert!(report.circuits[0].recorded && report.circuits[0].observed_call);
+    // Keep an independently unsupported commitment operand under the same
+    // assertion, preserving the diagnostic and selected-arm boundary.
+    let StateAction::Assert {
+        condition: Expr::If { then, .. },
+        ..
+    } = &mut contract.stateful_circuits[0].actions[0]
+    else {
+        unreachable!()
+    };
+    let Expr::Equal { left, .. } = then.as_mut() else {
+        unreachable!()
+    };
+    **left = Expr::TransientHash {
+        value: Box::new(Expr::PersistentCommit {
+            value: Box::new(super::support::unsupported_commit_input()),
+            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
+        }),
+    };
+    super::support::register_unsupported_fold(&mut contract);
     let report = render_with_capabilities(&contract).unwrap().capabilities;
     assert!(!report.circuits[0].recorded);
     let gap = report.circuits[0].recording_unavailable.as_ref().unwrap();
-    assert_eq!(gap.ir_node, "StateAction::Assert");
-    assert_eq!(gap.path, "actions[0]");
+    assert_eq!(gap.ir_node, "Expr::VectorFoldCall");
+    assert_eq!(gap.path, "actions[0].condition.then.left.value.value");
 }
 
 #[test]
@@ -593,7 +706,7 @@ fn stateful_assertions_require_boolean_and_record_typed_read_only_results() {
 }
 
 #[test]
-fn assertion_recording_rejects_nonunit_steps_wrong_slots_and_extra_effects() {
+fn assertion_recording_composes_typed_effects_and_rejects_invalid_steps_and_slots() {
     let source: serde_json::Value =
         serde_json::from_str(include_str!("../stateful-assert-schema20-ir.json")).unwrap();
     let parse = |value| serde_json::from_value::<Contract>(value).unwrap();
@@ -612,13 +725,11 @@ fn assertion_recording_rejects_nonunit_steps_wrong_slots_and_extra_effects() {
             field: "low".into(),
             index: 1,
         });
-    assert!(
-        !render_with_capabilities(&extra)
-            .unwrap()
-            .capabilities
-            .circuits[0]
-            .recorded
-    );
+    // A correctly typed reset composes with assertions; it no longer needs
+    // to match the old assertion-only circuit shape.
+    let report = render_with_capabilities(&extra).unwrap();
+    assert!(report.capabilities.circuits[0].recorded);
+    assert!(report.capabilities.circuits[0].observed_call);
     let mut mismatch = source.clone();
     mismatch["ledger_fields"][0]["declaration"]["ty"] = serde_json::json!({"kind":"field"});
     assert!(render(&parse(mismatch)).is_err());

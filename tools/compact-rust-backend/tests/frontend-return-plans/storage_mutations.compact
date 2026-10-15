@@ -1,0 +1,34 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+
+import CompactStandardLibrary;
+export ledger count: Counter;
+export ledger values: Set<Field>;
+export ledger coinCell: QualifiedShieldedCoinInfo;
+export circuit nested(selected: Boolean, amount: Uint<16>): Field {
+  if (disclose(selected)) {
+    const step = disclose(amount);
+    if (count.lessThan(10)) {
+      count.increment(step);
+      return count as Field;
+    } else {
+      count.resetToDefault();
+      return count as Field;
+    }
+  } else { return count as Field; }
+}
+export circuit insert(selected: Boolean, value: Field): Field {
+  if (disclose(selected)) { values.insert(disclose(value)); return 1 as Field; }
+  else { return 0 as Field; }
+}
+export circuit remove(selected: Boolean, value: Field): Field {
+  if (disclose(selected)) { values.remove(disclose(value)); return 1 as Field; }
+  else { return 0 as Field; }
+}
+export circuit write_coin(selected: Boolean, coin: ShieldedCoinInfo, recipient: Either<ZswapCoinPublicKey, ContractAddress>): Field {
+  if (disclose(selected)) {
+    coinCell.writeCoin(disclose(coin), disclose(recipient));
+    return 1 as Field;
+  } else { return 0 as Field; }
+}

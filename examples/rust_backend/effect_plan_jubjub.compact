@@ -1,0 +1,42 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+
+import CompactStandardLibrary;
+export ledger first: JubjubPoint;
+export ledger second: JubjubPoint;
+constructor() {
+  first = ecMulGenerator(0);
+  second = ecMulGenerator(0);
+}
+
+// Old family's one-write grammar; returned value intentionally differs from storage.
+export circuit compose(point: JubjubPoint, scalar: Field): JubjubPoint {
+  const reduced = jubjubScalarFromNative(scalar);
+  const combined = ecAdd(ecMulGenerator(reduced), point);
+  const value = ecMul(combined, reduced);
+  first = disclose(value);
+  return ecAdd(value, ecMulGenerator(1));
+}
+
+// New composition: ordered writes, a Unit branch and point reads.
+export circuit read_branch(selected: Boolean, point: JubjubPoint, scalar: Field): JubjubPoint {
+  first = disclose(point);
+  const reduced = jubjubScalarFromNative(scalar);
+  // CoPS-004: shared read keeps unselected ZKIR curve operands valid.
+  const saved = first;
+  if (disclose(selected)) {
+    second = ecAdd(saved, ecMulGenerator(disclose(reduced)));
+  } else {
+    second = ecMul(saved, disclose(reduced));
+  }
+  return second;
+}
+
+// Failure after an earlier write must not commit a partial ContractLab state.
+export circuit raw_after_write(point: JubjubPoint, scalar: Field): JubjubPoint {
+  first = disclose(point);
+  const value = ecMul(point, scalar);
+  second = disclose(value);
+  return value;
+}

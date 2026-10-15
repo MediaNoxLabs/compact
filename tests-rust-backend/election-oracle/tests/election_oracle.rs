@@ -1172,3 +1172,254 @@ fn recorded_reveal_preserves_ballots_membership_counters_and_short_circuit_witne
         );
     }
 }
+
+// A failed provider must win over later authority and phase assertions. The
+// unrelated witness methods deliberately panic; callback logs preserve exact order.
+#[derive(Clone, Default)]
+struct RefusingAuthorityWitness {
+    calls: std::rc::Rc<std::cell::RefCell<Vec<(&'static str, u64)>>>,
+    fail_path: bool,
+}
+impl compact_rust_election_oracle_fixture::ledger_contract::TryWitnesses<u64>
+    for RefusingAuthorityWitness
+{
+    fn private_secret_key(
+        &self,
+        context: WitnessContext<'_, u64, LedgerView<'_>>,
+    ) -> Result<(u64, runtime::FixedBytes<32>), runtime::CompactError> {
+        self.calls
+            .borrow_mut()
+            .push(("secret", *context.private_state));
+        Err(runtime::CompactError::InvalidLedgerCell(
+            "secret provider refused".into(),
+        ))
+    }
+    fn private_state(
+        &self,
+        _: WitnessContext<'_, u64, LedgerView<'_>>,
+    ) -> Result<(u64, PrivateState), runtime::CompactError> {
+        panic!("authorization calls must only request eligible path and secret")
+    }
+    fn private_state_advance(
+        &self,
+        _: WitnessContext<'_, u64, LedgerView<'_>>,
+    ) -> Result<(u64, ()), runtime::CompactError> {
+        panic!("authorization calls must only request eligible path and secret")
+    }
+    fn private_vote_record(
+        &self,
+        _: WitnessContext<'_, u64, LedgerView<'_>>,
+        _: PermissibleVotes,
+    ) -> Result<(u64, ()), runtime::CompactError> {
+        panic!("authorization calls must only request eligible path and secret")
+    }
+    fn private_vote(
+        &self,
+        _: WitnessContext<'_, u64, LedgerView<'_>>,
+    ) -> Result<(u64, PermissibleVotes), runtime::CompactError> {
+        panic!("authorization calls must only request eligible path and secret")
+    }
+    fn context_eligible_voters_path_of(
+        &self,
+        context: WitnessContext<'_, u64, LedgerView<'_>>,
+        key: runtime::FixedBytes<32>,
+    ) -> Result<(u64, MaybeCompact1), runtime::CompactError> {
+        assert_eq!(key, runtime::FixedBytes::new([8; 32]));
+        self.calls
+            .borrow_mut()
+            .push(("path", *context.private_state));
+        if self.fail_path {
+            Err(runtime::CompactError::InvalidLedgerCell(
+                "path provider refused".into(),
+            ))
+        } else {
+            // Empty initial tree: the returned optional path is absent.
+            assert!(
+                context
+                    .ledger
+                    .eligible_voters()?
+                    .find_path_for_leaf(key)
+                    .is_none()
+            );
+            Ok((*context.private_state + 1, MaybeCompact1::default()))
+        }
+    }
+    fn context_committed_votes_path_of(
+        &self,
+        _: WitnessContext<'_, u64, LedgerView<'_>>,
+        _: runtime::FixedBytes<32>,
+    ) -> Result<(u64, MaybeCompact1), runtime::CompactError> {
+        panic!("authorization calls must only request eligible path and secret")
+    }
+}
+
+#[test]
+fn topic_provider_failure_precedes_authority_and_phase_guards_once() {
+    use compact_rust_election_oracle_fixture::ledger_contract as c;
+    let initial = |authority| {
+        initial_state(
+            ConstructorContext::new(10_u64),
+            runtime::FixedBytes::new(authority),
+        )
+        .unwrap()
+        .into_circuit_context(ContractAddress::default())
+    };
+    let configured = set_topic(initial(AUTHORITY), &FixedWitness, "ready".into()).unwrap();
+    let advanced = advance(configured.context, &FixedWitness).unwrap();
+    for (label, context) in [
+        ("authorized", initial(AUTHORITY)),
+        ("wrong authority", initial([0; 32])),
+        ("wrong phase", advanced.context),
+    ] {
+        let private = context.private_state;
+        let snapshot = ContractState::new(
+            context.query.state.get_ref().clone(),
+            Default::default(),
+            Default::default(),
+        );
+        let fresh = || {
+            runtime::context::CircuitContext::from_contract_state(
+                private,
+                ContractAddress::default(),
+                &snapshot,
+            )
+        };
+        let native_provider = RefusingAuthorityWitness::default();
+        let recorded_provider = RefusingAuthorityWitness::default();
+        let expected = runtime::CompactError::InvalidLedgerCell("secret provider refused".into());
+        assert_eq!(
+            c::set_topic(fresh(), &native_provider, "denied".into())
+                .err()
+                .unwrap(),
+            expected,
+            "{label}"
+        );
+        assert_eq!(
+            c::recorded::set_topic(fresh(), &recorded_provider, "denied".into())
+                .err()
+                .unwrap(),
+            expected,
+            "{label}"
+        );
+        assert_eq!(
+            *native_provider.calls.borrow(),
+            [("secret", private)],
+            "{label}"
+        );
+        assert_eq!(
+            *recorded_provider.calls.borrow(),
+            [("secret", private)],
+            "{label}"
+        );
+        #[cfg(feature = "ledger-transaction")]
+        {
+            use runtime::transaction::{Observation, ObservedContractState};
+            let observed = ObservedContractState::new(
+                Default::default(),
+                snapshot.clone(),
+                Observation {
+                    transaction_hash: [0; 32],
+                    block_hash: [0; 32],
+                    block_height: 0,
+                },
+            );
+            let provider = RefusingAuthorityWitness::default();
+            let contract = c::Contract::from(provider.clone());
+            assert_eq!(
+                contract
+                    .recording()
+                    .set_topic_call(&observed, private, "denied".into())
+                    .err()
+                    .unwrap(),
+                expected,
+                "{label}"
+            );
+            assert_eq!(*provider.calls.borrow(), [("secret", private)], "{label}");
+        }
+    }
+}
+
+#[test]
+fn voter_provider_failures_preserve_path_then_secret_prefix() {
+    use compact_rust_election_oracle_fixture::ledger_contract as c;
+    let initial = initial_state(
+        ConstructorContext::new(10_u64),
+        runtime::FixedBytes::new(AUTHORITY),
+    )
+    .unwrap();
+    let snapshot = ContractState::new(
+        initial.ledger_state.get_ref().clone(),
+        Default::default(),
+        Default::default(),
+    );
+    let fresh = || {
+        runtime::context::CircuitContext::from_contract_state(
+            10,
+            ContractAddress::default(),
+            &snapshot,
+        )
+    };
+    let key = runtime::FixedBytes::new([8; 32]);
+    for fail_path in [true, false] {
+        let expected_events = if fail_path {
+            vec![("path", 10)]
+        } else {
+            vec![("path", 10), ("secret", 11)]
+        };
+        let expected_error = runtime::CompactError::InvalidLedgerCell(
+            if fail_path {
+                "path provider refused"
+            } else {
+                "secret provider refused"
+            }
+            .into(),
+        );
+        let native = RefusingAuthorityWitness {
+            fail_path,
+            ..Default::default()
+        };
+        let recorded = RefusingAuthorityWitness {
+            fail_path,
+            ..Default::default()
+        };
+        assert_eq!(
+            c::add_voter(fresh(), &native, key).err().unwrap(),
+            expected_error
+        );
+        assert_eq!(
+            c::recorded::add_voter(fresh(), &recorded, key)
+                .err()
+                .unwrap(),
+            expected_error
+        );
+        assert_eq!(*native.calls.borrow(), expected_events);
+        assert_eq!(*recorded.calls.borrow(), expected_events);
+        #[cfg(feature = "ledger-transaction")]
+        {
+            use runtime::transaction::{Observation, ObservedContractState};
+            let observed = ObservedContractState::new(
+                Default::default(),
+                snapshot.clone(),
+                Observation {
+                    transaction_hash: [0; 32],
+                    block_hash: [0; 32],
+                    block_height: 0,
+                },
+            );
+            let witness = RefusingAuthorityWitness {
+                fail_path,
+                ..Default::default()
+            };
+            let contract = c::Contract::from(witness.clone());
+            assert_eq!(
+                contract
+                    .recording()
+                    .add_voter_call(&observed, 10, key)
+                    .err()
+                    .unwrap(),
+                expected_error
+            );
+            assert_eq!(*witness.calls.borrow(), expected_events);
+        }
+    }
+}

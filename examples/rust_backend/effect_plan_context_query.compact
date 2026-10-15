@@ -1,0 +1,22 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+
+import CompactStandardLibrary;
+
+// Direct outer commitment: both public context reads must remain ordered queries.
+export circuit direct_commit(): Bytes<32> {
+  return persistentCommit<Vector<2, Bytes<32>>>(
+    [kernel.self().bytes, pad(32, "context-query")],
+    kernel.self().bytes
+  );
+}
+
+witness opening(): Bytes<32>;
+
+// A recordable value with no public query is not a prepared transaction.
+export circuit no_context(): Bytes<32> {
+  return persistentCommit<Vector<2, Bytes<32>>>(
+    [pad(32, "left"), pad(32, "right")], disclose(opening())
+  );
+}

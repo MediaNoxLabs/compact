@@ -61,7 +61,10 @@ def main() -> int:
     checked = 0
     changed = []
     failures = []
-    source_fixtures = list(fixture_inventory.fixture_map(ROOT).items())
+    registrations = {row.source: row for row in fixture_inventory.source_registry(ROOT)}
+    source_fixtures = [(row.source, fixture_inventory.emission_fixture(row, ROOT))
+                       for row in registrations.values()
+                       if fixture_inventory.emission_fixture(row, ROOT) is not None]
     if args.only:
         selected = set(args.only)
         source_fixtures = [(source, fixture) for source, fixture in source_fixtures
@@ -70,12 +73,16 @@ def main() -> int:
         if missing:
             raise SystemExit(f"unknown fixture source basename(s): {sorted(missing)}")
     for source, fixture in sorted(source_fixtures):
-        if not fixture.exists():
+        if not fixture.exists() and not args.update:
             failures.append(f"{source.name}: missing {fixture.relative_to(ROOT)}")
             continue
         with tempfile.TemporaryDirectory(prefix="compact-rust-fixture-") as output:
+            if compiler is None and registrations[source].frontend_flags:
+                failures.append(f"{source.name}: set COMPACTC to pass registered frontend flags")
+                continue
             compile_command = (
-                [compiler, "--target", "rust", "--skip-zk", str(source), output]
+                [compiler, "--target", "rust", "--skip-zk",
+                 *registrations[source].frontend_flags, str(source), output]
                 if compiler is not None
                 else [str(BACKEND), str(source), output]
             )
@@ -108,9 +115,10 @@ def main() -> int:
                 continue
             checked += 1
             fresh = generated.read_bytes()
-            if fresh != fixture.read_bytes():
+            if not fixture.is_file() or fresh != fixture.read_bytes():
                 changed.append(str(fixture.relative_to(ROOT)))
                 if args.update:
+                    fixture.parent.mkdir(parents=True, exist_ok=True)
                     fixture.write_bytes(fresh)
 
     for failure in failures:

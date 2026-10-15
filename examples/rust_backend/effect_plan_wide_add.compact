@@ -1,0 +1,29 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger calls: Counter;
+export struct Wide { value: Uint<129>; }
+export struct Wider { value: Uint<130>; }
+export struct Narrow { value: Uint<128>; }
+witness left(): Uint<129>;
+witness right(): Uint<8>;
+export circuit add128(a: Uint<128>, b: Uint<128>): Wide {
+  calls.increment(1);
+  return Wide { value: a + b };
+}
+export circuit mixed(a: Uint<129>, b: Uint<8>): Wider {
+  calls.increment(1);
+  return Wider { value: a + b };
+}
+export circuit narrow128(a: Uint<128>, b: Uint<128>): Narrow {
+  calls.increment(1);
+  return Narrow { value: (a + b) as Uint<128> };
+}
+export circuit witnessed(selected: Boolean): Wide {
+  calls.increment(1);
+  const sum = disclose(selected)
+    ? ((disclose(left()) + disclose(right())) as Uint<129>)
+    : 0 as Uint<129>;
+  return Wide { value: sum };
+}

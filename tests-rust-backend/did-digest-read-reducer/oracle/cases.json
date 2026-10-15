@@ -2,7 +2,7 @@
   "format": "compact-did-digest-read-reducer-capture/v1",
   "scope": "Renamed and reordered String/Point product Map read with audited local Unit witness",
   "generatedJavaScriptSha256": "a87d3003a1a7f24816094a90ebccb7497e9d059f3847d24bc67033312ad2babc",
-  "runtimeJavaScriptSha256": "f6b1b8b0d4ecfd6458706fd3969babbb988879dd9c39618cc137c463a151781b",
+  "runtimeJavaScriptSha256": "db88e0bf0c11d081fcd8ba05ee7390cad8238be4c17dddc7da092219585c7cb7",
   "provenance": [
     {
       "path": "examples/rust_backend/did_digest_read_reducer/contract.compact",
@@ -10,7 +10,7 @@
     },
     {
       "path": "tests-rust-backend/did-digest-read-reducer/lib.rs",
-      "sha256": "a120cb002cb37980a45b089ba8be67b29b6078de0567e8974c9c2cfd12423a14"
+      "sha256": "1ecefd3330ab686f218378635440e39aa050a7e4d1e402015a73ead38673d159"
     },
     {
       "path": "tests-rust-backend/did-digest-read-reducer/oracle/capture.mjs",

@@ -1,0 +1,80 @@
+{
+  "baseline_commit": "1ff2726532da89fd37d875e27eb56235e0a116b4",
+  "claim": "Exact cfg-only isolation, one test-only predicate forwarding wrapper, and explicit test-only public diagnostic expectations; original49 signed owner hashes remain immutable.",
+  "owners": {
+    "tools/compact-rust-backend/src/recorded/typed_plan.rs": {
+      "previous_sha256": "c47f5eda8e0577c202690cfac5c6c0cb76c64b827b5ac99e63face9ad5b76017",
+      "current_sha256": "c78a853183deb5c6292d8067e35e630abcf8688a36809bd8f1cf2b73e4771144",
+      "predecessor_reconstruction": [
+        {
+          "current": "mod leaves;\nmod observations;\nuse admission::AdmissionPolicy;\n#[cfg(test)]\npub(super) use composition::CompositionRejection;\n\n#[cfg(test)]\npub(super) fn unit_composition_parameter_type(ty: &Type) -> bool {\n    composition::value_type(ty)\n}\n\nuse declarations::Declarations;\nuse evaluation::EvaluationState;\nuse evidence::EffectEvidence;\n",
+          "previous": "mod leaves;\nmod observations;\nuse admission::AdmissionPolicy;\npub(super) use composition::CompositionRejection;\nuse declarations::Declarations;\nuse evaluation::EvaluationState;\nuse evidence::EffectEvidence;\n"
+        },
+        {
+          "current": "    FieldObservations,\n    TerminalReturns,\n    JubjubValues,\n    // Constructed only by the retained whole-Unit oracle.\n    #[cfg_attr(not(test), allow(dead_code))]\n    UnitComposition,\n}\nimpl CompositeDomain {\n",
+          "previous": "    FieldObservations,\n    TerminalReturns,\n    JubjubValues,\n    UnitComposition,\n}\nimpl CompositeDomain {\n"
+        },
+        {
+          "current": "    voting_commit::lower(circuit, ledger, witnesses, pure, circuits)\n}\n\n#[cfg(test)]\npub(super) fn lower_unit_composition_checked<'a>(\n    circuit: &StatefulCircuit,\n    ledger: &'a HashMap<&'a str, &'a LedgerField>,\n",
+          "previous": "    voting_commit::lower(circuit, ledger, witnesses, pure, circuits)\n}\n\npub(super) fn lower_unit_composition_checked<'a>(\n    circuit: &StatefulCircuit,\n    ledger: &'a HashMap<&'a str, &'a LedgerField>,\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/typed_plan/composition.rs": {
+      "previous_sha256": "126c7f8922b304828021dc9124bded8729de64c72ccfb96794db9fb6537aa4a0",
+      "current_sha256": "6ba7e4bd2462be2b33437f8cf7bf5bd3ee3bebb897ce1ed7d12b55d9d83e0c42",
+      "predecessor_reconstruction": [
+        {
+          "current": "// limitations under the License.\n//! Closed typed Cell/Counter Unit composition; shared Plan owns evaluation.\nuse super::*;\n#[cfg(test)]\nuse relation_root_preflight::RelationPermit;\n\n// Shared Plan retains the policy representation; only the test oracle constructs it.\n#[cfg_attr(not(test), allow(dead_code))]\n#[derive(Clone, Copy)]\npub(super) enum AuditedCall<'a> {\n    PureValue(&'a PureCircuit),\n",
+          "previous": "// limitations under the License.\n//! Closed typed Cell/Counter Unit composition; shared Plan owns evaluation.\nuse super::*;\nuse relation_root_preflight::RelationPermit;\n\n#[derive(Clone, Copy)]\npub(super) enum AuditedCall<'a> {\n    PureValue(&'a PureCircuit),\n"
+        },
+        {
+          "current": "        _ => false,\n    }\n}\n#[cfg(test)]\npub(super) fn value_type(ty: &Type) -> bool {\n    match ty {\n        Type::OpaqueString | Type::Enum { .. } => true,\n",
+          "previous": "        _ => false,\n    }\n}\npub(super) fn value_type(ty: &Type) -> bool {\n    match ty {\n        Type::OpaqueString | Type::Enum { .. } => true,\n"
+        },
+        {
+          "current": "// Mutation accepts nonempty flat named products of previously audited scalar\n// values. The declared struct name/field order remain exact typed data, never\n// an admission dispatch key.\n#[cfg(test)]\npub(super) fn flat_string_point_product(ty: &Type) -> bool {\n    matches!(ty, Type::Struct { fields, .. }\n        if !fields.is_empty() && fields.iter().all(|field|\n            matches!(field.ty, Type::OpaqueString | Type::JubjubPoint)))\n}\n\n#[cfg(test)]\npub(super) fn flat_string_point_map(declaration: &LedgerFieldKind) -> bool {\n    matches!(declaration, LedgerFieldKind::Map { key: Type::OpaqueString, value }\n        if flat_string_point_product(value))\n",
+          "previous": "// Mutation accepts nonempty flat named products of previously audited scalar\n// values. The declared struct name/field order remain exact typed data, never\n// an admission dispatch key.\npub(super) fn flat_string_point_product(ty: &Type) -> bool {\n    matches!(ty, Type::Struct { fields, .. }\n        if !fields.is_empty() && fields.iter().all(|field|\n            matches!(field.ty, Type::OpaqueString | Type::JubjubPoint)))\n}\n\npub(super) fn flat_string_point_map(declaration: &LedgerFieldKind) -> bool {\n    matches!(declaration, LedgerFieldKind::Map { key: Type::OpaqueString, value }\n        if flat_string_point_product(value))\n"
+        },
+        {
+          "current": "    path.first() == Some(&field.index) && (1..=2).contains(&path.len())\n}\n/// Failure evidence stays private: capability JSON retains its existing schema.\n#[cfg(test)]\n#[derive(Debug)]\npub(in crate::recorded) struct CompositionRejection {\n    pub(super) gap: RecordingGap,\n",
+          "previous": "    path.first() == Some(&field.index) && (1..=2).contains(&path.len())\n}\n/// Failure evidence stays private: capability JSON retains its existing schema.\n#[derive(Debug)]\npub(in crate::recorded) struct CompositionRejection {\n    pub(super) gap: RecordingGap,\n"
+        },
+        {
+          "current": "    precision: RejectionPrecision,\n    phase: RejectionPhase,\n}\n#[cfg(test)]\n#[derive(Debug, PartialEq, Eq)]\nenum RejectionPrecision {\n    ConcreteNode,\n    EnclosingAction,\n    Obligation,\n}\n#[cfg(test)]\n#[derive(Debug, PartialEq, Eq)]\nenum RejectionPhase {\n    PolicyAudit,\n",
+          "previous": "    precision: RejectionPrecision,\n    phase: RejectionPhase,\n}\n#[derive(Debug, PartialEq, Eq)]\nenum RejectionPrecision {\n    ConcreteNode,\n    EnclosingAction,\n    Obligation,\n}\n#[derive(Debug, PartialEq, Eq)]\nenum RejectionPhase {\n    PolicyAudit,\n"
+        },
+        {
+          "current": "    FinalObligation,\n}\n\n#[cfg(test)]\nimpl CompositionRejection {\n    /// Refine only the same root action's coarse legacy refusal. Never inspect\n    /// diagnostic path/detail text, or override an earlier concrete error.\n",
+          "previous": "    FinalObligation,\n}\n\nimpl CompositionRejection {\n    /// Refine only the same root action's coarse legacy refusal. Never inspect\n    /// diagnostic path/detail text, or override an earlier concrete error.\n"
+        },
+        {
+          "current": "    }\n}\n\n#[cfg(test)]\nstruct Audit<'a> {\n    ledger: &'a HashMap<&'a str, &'a LedgerField>,\n    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,\n",
+          "previous": "    }\n}\n\nstruct Audit<'a> {\n    ledger: &'a HashMap<&'a str, &'a LedgerField>,\n    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,\n"
+        },
+        {
+          "current": "    root_action: usize,\n    failure: Option<CompositionRejection>,\n}\n#[cfg(test)]\nimpl Audit<'_> {\n    fn slot(&self, name: &str, index: u8) -> Option<&LedgerField> {\n        self.ledger\n",
+          "previous": "    root_action: usize,\n    failure: Option<CompositionRejection>,\n}\nimpl Audit<'_> {\n    fn slot(&self, name: &str, index: u8) -> Option<&LedgerField> {\n        self.ledger\n"
+        },
+        {
+          "current": "    }\n}\n\n#[cfg(test)]\npub(super) fn lower_checked<'a>(\n    circuit: &StatefulCircuit,\n    ledger: &'a HashMap<&'a str, &'a LedgerField>,\n",
+          "previous": "    }\n}\n\npub(super) fn lower_checked<'a>(\n    circuit: &StatefulCircuit,\n    ledger: &'a HashMap<&'a str, &'a LedgerField>,\n"
+        },
+        {
+          "current": "#[path = \"composition/relation_composition_tests.rs\"]\nmod adr295_preflight;\n\n#[cfg(test)]\nmod selected_set_preflight;\n\n#[cfg(test)]\nmod nested_map_preflight;\n\n#[cfg(test)]\nmod relation_root_preflight;\n",
+          "previous": "#[path = \"composition/relation_composition_tests.rs\"]\nmod adr295_preflight;\n\nmod selected_set_preflight;\n\nmod nested_map_preflight;\n\nmod relation_root_preflight;\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/typed_plan/composition/tests.rs": {
+      "previous_sha256": "a0765208843e342d7eceb65b118a45a508d37fdd38568f31d4c8ae7b9733aa49",
+      "current_sha256": "609a43b3c6506ea9e4d3fdf8d6bafad82afa29cbeafdb80de4527b177978790b",
+      "predecessor_reconstruction": [
+        {
+          "current": "        .unwrap();\n    assert!(!capability.recorded && !capability.observed_call);\n    let gap = capability.recording_unavailable.as_ref().unwrap();\n    // The frozen Audit stops at its enclosing hash shape. Checked lowering\n    // identifies the actual unsupported commitment inside that operand.\n    assert_eq!(gap.path, format!(\"{}.value\", still_rejected.gap.path));\n    assert_eq!(gap.ir_node, \"Expr::PersistentCommit\");\n}\n\n#[test]\n",
+          "previous": "        .unwrap();\n    assert!(!capability.recorded && !capability.observed_call);\n    let gap = capability.recording_unavailable.as_ref().unwrap();\n    assert_eq!(gap.path, still_rejected.gap.path);\n    assert_eq!(gap.ir_node, \"Expr::TransientHash\");\n}\n\n#[test]\n"
+        }
+      ]
+    }
+  }
+}

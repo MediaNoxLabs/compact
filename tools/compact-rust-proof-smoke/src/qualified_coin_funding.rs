@@ -70,7 +70,7 @@ pub(super) fn seed_and_fund(
     let seed_index = *seed_indices
         .get(&seed_commitment)
         .ok_or("seed coin commitment was not allocated")?;
-    let wallet = LocalZswapState::<DefaultDB>::new().apply(&keys, &seed_offer);
+    let wallet = LocalZswapState::<DefaultDB>::new().apply(&keys, &seed_offer)?;
     if wallet.merkle_tree.root() != ledger.zswap.coin_coms.root() {
         return Err("seeded wallet and ledger Zswap trees differ".into());
     }

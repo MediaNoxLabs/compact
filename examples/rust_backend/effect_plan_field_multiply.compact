@@ -1,0 +1,16 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger calls: Counter;
+export struct Product { value: Field; }
+witness left(): Field;
+witness right(): Field;
+export circuit multiply(a: Field, b: Field): Product {
+  calls.increment(1);
+  return Product { value: a * b };
+}
+export circuit witnessed(selected: Boolean): Product {
+  calls.increment(1);
+  return Product { value: disclose(selected) ? disclose(left()) * disclose(right()) : 0 as Field };
+}

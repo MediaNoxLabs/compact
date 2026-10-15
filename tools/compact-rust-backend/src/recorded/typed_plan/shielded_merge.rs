@@ -26,6 +26,10 @@ pub(super) const SUM: &str = "680564733841876926926749214863536422911";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum Inputs {
+    #[cfg_attr(
+        not(test),
+        allow(dead_code, reason = "retained historical merge admission oracle")
+    )]
     HistoricalPair,
     ReceivedRight,
 }
@@ -127,6 +131,7 @@ pub(super) fn received_helper(
         )
 }
 
+#[cfg(test)]
 pub(super) fn lower<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,

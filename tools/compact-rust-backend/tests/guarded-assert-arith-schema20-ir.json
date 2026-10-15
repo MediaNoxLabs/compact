@@ -1,0 +1,816 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "accepted",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "guarded_assert_arith_oracle.compact",
+        "line": 77,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+    {
+      "name": "assertFreshEnough",
+      "parameters": [
+        {
+          "name": "policy",
+          "ty": {
+            "kind": "struct",
+            "name": "VerifierPolicy",
+            "fields": [
+              {
+                "name": "enforceMaxAge",
+                "ty": {
+                  "kind": "boolean"
+                }
+              },
+              {
+                "name": "maxAge",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "18446744073709551615"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "attestation",
+          "ty": {
+            "kind": "struct",
+            "name": "Attestation",
+            "fields": [
+              {
+                "name": "proof",
+                "ty": {
+                  "kind": "struct",
+                  "name": "StatusProof",
+                  "fields": [
+                    {
+                      "name": "createdAt",
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "18446744073709551615"
+                      }
+                    },
+                    {
+                      "name": "issuer",
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "18446744073709551615"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "hasExpiration",
+                "ty": {
+                  "kind": "boolean"
+                }
+              },
+              {
+                "name": "expiresAt",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "18446744073709551615"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "currentTime",
+          "ty": {
+            "kind": "unsigned",
+            "max": "18446744073709551615"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "body": {
+        "kind": "sequence",
+        "steps": [
+          {
+            "kind": "assert",
+            "condition": {
+              "kind": "compare",
+              "operator": "greater_equal",
+              "left": {
+                "kind": "parameter",
+                "name": "currentTime"
+              },
+              "right": {
+                "kind": "struct_field",
+                "value": {
+                  "kind": "struct_field",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "attestation"
+                  },
+                  "field": "proof",
+                  "index": 0
+                },
+                "field": "createdAt",
+                "index": 0
+              }
+            },
+            "message": "attestation creation time cannot be in the future"
+          },
+          {
+            "kind": "if",
+            "condition": {
+              "kind": "struct_field",
+              "value": {
+                "kind": "parameter",
+                "name": "policy"
+              },
+              "field": "enforceMaxAge",
+              "index": 0
+            },
+            "then": {
+              "kind": "assert",
+              "condition": {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "t_19",
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "18446744073709551615"
+                    },
+                    "value": {
+                      "kind": "let",
+                      "bindings": [
+                        {
+                          "name": "t_20",
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "18446744073709551615"
+                          },
+                          "value": {
+                            "kind": "struct_field",
+                            "value": {
+                              "kind": "struct_field",
+                              "value": {
+                                "kind": "parameter",
+                                "name": "attestation"
+                              },
+                              "field": "proof",
+                              "index": 0
+                            },
+                            "field": "createdAt",
+                            "index": 0
+                          }
+                        }
+                      ],
+                      "body": {
+                        "kind": "unsigned_subtract",
+                        "max": "18446744073709551615",
+                        "left": {
+                          "kind": "parameter",
+                          "name": "currentTime"
+                        },
+                        "right": {
+                          "kind": "parameter",
+                          "name": "t_20"
+                        }
+                      }
+                    }
+                  }
+                ],
+                "body": {
+                  "kind": "compare",
+                  "operator": "less_equal",
+                  "left": {
+                    "kind": "parameter",
+                    "name": "t_19"
+                  },
+                  "right": {
+                    "kind": "struct_field",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "policy"
+                    },
+                    "field": "maxAge",
+                    "index": 1
+                  }
+                }
+              },
+              "message": "attestation exceeds the max-age policy"
+            },
+            "otherwise": {
+              "kind": "unit"
+            }
+          }
+        ],
+        "value": {
+          "kind": "unit"
+        }
+      },
+      "source": {
+        "file": "guarded_assert_arith_oracle.compact",
+        "line": 81,
+        "column": 1
+      }
+    },
+    {
+      "name": "assertAgeWithin",
+      "parameters": [
+        {
+          "name": "attestation",
+          "ty": {
+            "kind": "struct",
+            "name": "Attestation",
+            "fields": [
+              {
+                "name": "proof",
+                "ty": {
+                  "kind": "struct",
+                  "name": "StatusProof",
+                  "fields": [
+                    {
+                      "name": "createdAt",
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "18446744073709551615"
+                      }
+                    },
+                    {
+                      "name": "issuer",
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "18446744073709551615"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "hasExpiration",
+                "ty": {
+                  "kind": "boolean"
+                }
+              },
+              {
+                "name": "expiresAt",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "18446744073709551615"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "currentTime",
+          "ty": {
+            "kind": "unsigned",
+            "max": "18446744073709551615"
+          }
+        },
+        {
+          "name": "limit",
+          "ty": {
+            "kind": "unsigned",
+            "max": "18446744073709551615"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "body": {
+        "kind": "sequence",
+        "steps": [
+          {
+            "kind": "assert",
+            "condition": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "t_17",
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "18446744073709551615"
+                  },
+                  "value": {
+                    "kind": "let",
+                    "bindings": [
+                      {
+                        "name": "t_18",
+                        "ty": {
+                          "kind": "unsigned",
+                          "max": "18446744073709551615"
+                        },
+                        "value": {
+                          "kind": "struct_field",
+                          "value": {
+                            "kind": "struct_field",
+                            "value": {
+                              "kind": "parameter",
+                              "name": "attestation"
+                            },
+                            "field": "proof",
+                            "index": 0
+                          },
+                          "field": "createdAt",
+                          "index": 0
+                        }
+                      }
+                    ],
+                    "body": {
+                      "kind": "unsigned_subtract",
+                      "max": "18446744073709551615",
+                      "left": {
+                        "kind": "parameter",
+                        "name": "currentTime"
+                      },
+                      "right": {
+                        "kind": "parameter",
+                        "name": "t_18"
+                      }
+                    }
+                  }
+                }
+              ],
+              "body": {
+                "kind": "compare",
+                "operator": "less_equal",
+                "left": {
+                  "kind": "parameter",
+                  "name": "t_17"
+                },
+                "right": {
+                  "kind": "parameter",
+                  "name": "limit"
+                }
+              }
+            },
+            "message": "attestation age exceeds the limit"
+          }
+        ],
+        "value": {
+          "kind": "unit"
+        }
+      },
+      "source": {
+        "file": "guarded_assert_arith_oracle.compact",
+        "line": 100,
+        "column": 1
+      }
+    },
+    {
+      "name": "ageGap",
+      "parameters": [
+        {
+          "name": "newer",
+          "ty": {
+            "kind": "struct",
+            "name": "Attestation",
+            "fields": [
+              {
+                "name": "proof",
+                "ty": {
+                  "kind": "struct",
+                  "name": "StatusProof",
+                  "fields": [
+                    {
+                      "name": "createdAt",
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "18446744073709551615"
+                      }
+                    },
+                    {
+                      "name": "issuer",
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "18446744073709551615"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "hasExpiration",
+                "ty": {
+                  "kind": "boolean"
+                }
+              },
+              {
+                "name": "expiresAt",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "18446744073709551615"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "older",
+          "ty": {
+            "kind": "struct",
+            "name": "Attestation",
+            "fields": [
+              {
+                "name": "proof",
+                "ty": {
+                  "kind": "struct",
+                  "name": "StatusProof",
+                  "fields": [
+                    {
+                      "name": "createdAt",
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "18446744073709551615"
+                      }
+                    },
+                    {
+                      "name": "issuer",
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "18446744073709551615"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "hasExpiration",
+                "ty": {
+                  "kind": "boolean"
+                }
+              },
+              {
+                "name": "expiresAt",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "18446744073709551615"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "18446744073709551615"
+      },
+      "body": {
+        "kind": "sequence",
+        "steps": [
+          {
+            "kind": "assert",
+            "condition": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "t_14",
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "18446744073709551615"
+                  },
+                  "value": {
+                    "kind": "struct_field",
+                    "value": {
+                      "kind": "struct_field",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "newer"
+                      },
+                      "field": "proof",
+                      "index": 0
+                    },
+                    "field": "createdAt",
+                    "index": 0
+                  }
+                }
+              ],
+              "body": {
+                "kind": "compare",
+                "operator": "greater_equal",
+                "left": {
+                  "kind": "parameter",
+                  "name": "t_14"
+                },
+                "right": {
+                  "kind": "struct_field",
+                  "value": {
+                    "kind": "struct_field",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "older"
+                    },
+                    "field": "proof",
+                    "index": 0
+                  },
+                  "field": "createdAt",
+                  "index": 0
+                }
+              }
+            },
+            "message": "newer attestation must not predate the older one"
+          }
+        ],
+        "value": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "t_15",
+              "ty": {
+                "kind": "unsigned",
+                "max": "18446744073709551615"
+              },
+              "value": {
+                "kind": "struct_field",
+                "value": {
+                  "kind": "struct_field",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "newer"
+                  },
+                  "field": "proof",
+                  "index": 0
+                },
+                "field": "createdAt",
+                "index": 0
+              }
+            }
+          ],
+          "body": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "t_16",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "18446744073709551615"
+                },
+                "value": {
+                  "kind": "struct_field",
+                  "value": {
+                    "kind": "struct_field",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "older"
+                    },
+                    "field": "proof",
+                    "index": 0
+                  },
+                  "field": "createdAt",
+                  "index": 0
+                }
+              }
+            ],
+            "body": {
+              "kind": "unsigned_subtract",
+              "max": "18446744073709551615",
+              "left": {
+                "kind": "parameter",
+                "name": "t_15"
+              },
+              "right": {
+                "kind": "parameter",
+                "name": "t_16"
+              }
+            }
+          }
+        }
+      },
+      "source": {
+        "file": "guarded_assert_arith_oracle.compact",
+        "line": 113,
+        "column": 1
+      }
+    }
+  ],
+  "stateful_circuits": [
+    {
+      "name": "recordFreshEnough",
+      "parameters": [
+        {
+          "name": "policy",
+          "ty": {
+            "kind": "struct",
+            "name": "VerifierPolicy",
+            "fields": [
+              {
+                "name": "enforceMaxAge",
+                "ty": {
+                  "kind": "boolean"
+                }
+              },
+              {
+                "name": "maxAge",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "18446744073709551615"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "attestation",
+          "ty": {
+            "kind": "struct",
+            "name": "Attestation",
+            "fields": [
+              {
+                "name": "proof",
+                "ty": {
+                  "kind": "struct",
+                  "name": "StatusProof",
+                  "fields": [
+                    {
+                      "name": "createdAt",
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "18446744073709551615"
+                      }
+                    },
+                    {
+                      "name": "issuer",
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "18446744073709551615"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "hasExpiration",
+                "ty": {
+                  "kind": "boolean"
+                }
+              },
+              {
+                "name": "expiresAt",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "18446744073709551615"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "currentTime",
+          "ty": {
+            "kind": "unsigned",
+            "max": "18446744073709551615"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "pure_call",
+          "name": "assertFreshEnough",
+          "arguments": [
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "policy"
+              },
+              "ty": {
+                "kind": "struct",
+                "name": "VerifierPolicy",
+                "fields": [
+                  {
+                    "name": "enforceMaxAge",
+                    "ty": {
+                      "kind": "boolean"
+                    }
+                  },
+                  {
+                    "name": "maxAge",
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "18446744073709551615"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "attestation"
+              },
+              "ty": {
+                "kind": "struct",
+                "name": "Attestation",
+                "fields": [
+                  {
+                    "name": "proof",
+                    "ty": {
+                      "kind": "struct",
+                      "name": "StatusProof",
+                      "fields": [
+                        {
+                          "name": "createdAt",
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "18446744073709551615"
+                          }
+                        },
+                        {
+                          "name": "issuer",
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "18446744073709551615"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "hasExpiration",
+                    "ty": {
+                      "kind": "boolean"
+                    }
+                  },
+                  {
+                    "name": "expiresAt",
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "18446744073709551615"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "currentTime"
+              },
+              "ty": {
+                "kind": "unsigned",
+                "max": "18446744073709551615"
+              }
+            }
+          ]
+        },
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_21",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "accepted",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_21"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "guarded_assert_arith_oracle.compact",
+        "line": 123,
+        "column": 1
+      }
+    }
+  ]
+}

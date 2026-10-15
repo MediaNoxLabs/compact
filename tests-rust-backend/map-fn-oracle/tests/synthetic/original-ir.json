@@ -1,0 +1,193 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "c",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "vector",
+          "length": 3,
+          "element": {
+            "kind": "unsigned",
+            "max": "18446744073709551615"
+          }
+        }
+      },
+      "source": {
+        "file": "map_fn_oracle.compact",
+        "line": 36,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "ping",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_1",
+              "ty": {
+                "kind": "vector",
+                "length": 3,
+                "element": {
+                  "kind": "unsigned",
+                  "max": "18446744073709551615"
+                }
+              },
+              "value": {
+                "kind": "vector_map",
+                "parameter": {
+                  "name": "x",
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "18446744073709551615"
+                  }
+                },
+                "source": {
+                  "kind": "tuple",
+                  "elements": [
+                    {
+                      "kind": "unsigned_literal",
+                      "value": "0",
+                      "max": "18446744073709551615"
+                    },
+                    {
+                      "kind": "unsigned_literal",
+                      "value": "0",
+                      "max": "0"
+                    },
+                    {
+                      "kind": "unsigned_literal",
+                      "value": "0",
+                      "max": "0"
+                    }
+                  ]
+                },
+                "body": {
+                  "kind": "parameter",
+                  "name": "x"
+                },
+                "result": {
+                  "kind": "unsigned",
+                  "max": "18446744073709551615"
+                },
+                "length": 3
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "c",
+            "index": 0,
+            "value": {
+              "kind": "parameter",
+              "name": "tmp_1"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "map_fn_oracle.compact",
+        "line": 42,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": {
+    "parameters": [
+    ],
+    "steps": [
+      {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "tmp_0",
+            "ty": {
+              "kind": "vector",
+              "length": 3,
+              "element": {
+                "kind": "unsigned",
+                "max": "18446744073709551615"
+              }
+            },
+            "value": {
+              "kind": "vector_map",
+              "parameter": {
+                "name": "x",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "18446744073709551615"
+                }
+              },
+              "source": {
+                "kind": "tuple",
+                "elements": [
+                  {
+                    "kind": "unsigned_literal",
+                    "value": "1",
+                    "max": "18446744073709551615"
+                  },
+                  {
+                    "kind": "unsigned_literal",
+                    "value": "2",
+                    "max": "2"
+                  },
+                  {
+                    "kind": "unsigned_literal",
+                    "value": "3",
+                    "max": "3"
+                  }
+                ]
+              },
+              "body": {
+                "kind": "parameter",
+                "name": "x"
+              },
+              "result": {
+                "kind": "unsigned",
+                "max": "18446744073709551615"
+              },
+              "length": 3
+            }
+          }
+        ],
+        "step": {
+          "kind": "cell_write",
+          "field": "c",
+          "index": 0,
+          "value": {
+            "kind": "parameter",
+            "name": "tmp_0"
+          }
+        }
+      }
+    ],
+    "source": {
+      "file": "map_fn_oracle.compact",
+      "line": 38,
+      "column": 1
+    }
+  }
+}

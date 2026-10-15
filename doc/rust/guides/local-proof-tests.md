@@ -45,7 +45,7 @@ At commit `17433b40a14da83c5c500d92420149c28f755b88`, the proof-enabled testkit 
 
 ## Dependency and ownership notes
 
-The fixture uses the same official ledger8 graph as Compact: `midnight-transient-crypto` 2.0.1 for the three traits and proof types, `midnight-zkir` 2.1.0 for `LocalProvingProvider`, and `midnight-base-crypto` 1.0.0 for RNG capabilities. The existing runtime transaction feature uses `midnight-ledger` 8.0.3. No new versions or product repository dependencies were introduced.
+The current fixture uses the same official ledger8.1.3 source revision as Compact: `midnight-transient-crypto` 2.1.1 for the three traits and proof types, `midnight-zkir` 2.1.1 for `LocalProvingProvider`, and `midnight-base-crypto` 1.0.2 for RNG capabilities. The runtime transaction feature uses `midnight-ledger` 8.1.3. All four use revision `b5d3e965a18e4cac17fac4f38446fc55c524439a`; see [matching tools](ledger-8.1.3-local-qualification.md#current-source-profile). The dated ADR0360 counts above retain their original dependency graph; they are not fresh execution counts for the upgrade. No product repository dependency is required.
 
 The verifier helper applies its encoded-byte policy after resolver acquisition. It is a test convenience, not an acquisition/aggregate memory guarantee or authentication of artifacts. For the decoder's exact scope and configurable 64 MiB preset, see [input admission](proof-integration.md#admit-encoded-state-and-verifier-inputs).
 

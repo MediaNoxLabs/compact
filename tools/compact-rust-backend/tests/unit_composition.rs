@@ -15,6 +15,8 @@
 
 use compact_rust_backend::{ir::Contract, render_with_capabilities};
 use serde_json::{Value, json};
+#[path = "support/recording_refusal.rs"]
+mod recording_refusal;
 fn fixture(chunked: bool) -> Value {
     serde_json::from_str(if chunked {
         include_str!("unit-composition/chunked.json")
@@ -48,17 +50,167 @@ fn flat_and_chunked_declared_helpers_compose_on_one_recording_frame() {
     }
 }
 #[test]
-fn complete_audit_rejects_hidden_unsupported_effects_in_unselected_branch() {
+fn checked_hidden_effects_compose_but_unselected_unsupported_effects_are_refused() {
     for chunked in [false, true] {
         let mut v = fixture(chunked);
-        circuit(&mut v,"guard")["actions"].as_array_mut().unwrap().push(json!({
+        let actions = circuit(&mut v, "guard")["actions"].as_array_mut().unwrap();
+        let index = actions.len();
+        actions.push(json!({
             "kind":"if", "condition":{"kind":"boolean","value":true},
             "then":{"kind":"sequence","actions":[]},
             "otherwise":{"kind":"expression","value":{"kind":"kernel_self","ty":{"kind":"struct","name":"ContractAddress","fields":[{"name":"bytes","ty":{"kind":"bytes","length":32}}]}}}
         }));
-        assert!(!recorded(v));
+        // KernelSelf is a checked operation, including inside an unselected
+        // stateful helper branch. The branch must remain in generated recording.
+        let contract: Contract = serde_json::from_value(v.clone()).unwrap();
+        let output = render_with_capabilities(&contract).unwrap();
+        let capability = output
+            .capabilities
+            .circuits
+            .iter()
+            .find(|c| c.name == "close")
+            .unwrap();
+        assert!(
+            capability.recorded && capability.observed_call,
+            "chunked={chunked}"
+        );
+        assert!(
+            output
+                .source
+                .split("pub mod recorded")
+                .nth(1)
+                .unwrap()
+                .contains("kernel_self()")
+        );
+
+        // The configured-key observation is now a checked private effect.
+        // Its unselected arm must remain present and lazy in generated code.
+        circuit(&mut v, "guard")["actions"][index]["otherwise"] = json!({
+            "kind":"native_witness_call", "builtin":"own_public_key"
+        });
+        let contract: Contract = serde_json::from_value(v.clone()).unwrap();
+        let output = render_with_capabilities(&contract).unwrap();
+        let capability = output
+            .capabilities
+            .circuits
+            .iter()
+            .find(|c| c.name == "close")
+            .unwrap();
+        assert!(
+            capability.recorded && capability.observed_call,
+            "chunked={chunked}"
+        );
+        assert!(
+            output
+                .source
+                .split("pub mod recorded")
+                .nth(1)
+                .unwrap()
+                .contains("own_coin_public_key()?")
+        );
+
+        // Generic Boolean inequality is now checked even in the lazy arm.
+        circuit(&mut v, "guard")["actions"][index]["otherwise"] = json!({
+            "kind":"expression", "value": {
+                "kind":"not_equal", "left":{"kind":"boolean","value":true},
+                "right":{"kind":"boolean","value":false}
+            }
+        });
+        let contract: Contract = serde_json::from_value(v.clone()).unwrap();
+        let output = render_with_capabilities(&contract).unwrap();
+        let capability = output
+            .capabilities
+            .circuits
+            .iter()
+            .find(|c| c.name == "close")
+            .unwrap();
+        assert!(
+            capability.recorded && capability.observed_call,
+            "chunked={chunked}"
+        );
+
+        // Keccak is checked even inside this unselected helper arm.
+        circuit(&mut v, "guard")["actions"][index]["otherwise"] = json!({
+            "kind":"expression", "value": {
+                "kind":"equal", "left": {
+                    "kind":"keccak256", "value":{"kind":"bytes_literal","bytes":vec![7u8; 32]}
+                }, "right":{"kind":"bytes_literal","bytes":vec![0u8; 32]}
+            }
+        });
+        let contract: Contract = serde_json::from_value(v.clone()).unwrap();
+        let output = render_with_capabilities(&contract).unwrap();
+        let capability = output
+            .capabilities
+            .circuits
+            .iter()
+            .find(|c| c.name == "close")
+            .unwrap();
+        assert!(
+            capability.recorded && capability.observed_call,
+            "chunked={chunked}"
+        );
+        assert!(
+            output
+                .source
+                .split("pub mod recorded")
+                .nth(1)
+                .unwrap()
+                .contains("keccak256")
+        );
+
+        // Scalar defaults now lower in the unselected helper arm as well.
+        circuit(&mut v, "guard")["actions"][index]["otherwise"] = json!({
+            "kind":"expression", "value":{"kind":"default","ty":{"kind":"boolean"}}
+        });
+        let contract: Contract = serde_json::from_value(v.clone()).unwrap();
+        let output = render_with_capabilities(&contract).unwrap();
+        let capability = output
+            .capabilities
+            .circuits
+            .iter()
+            .find(|c| c.name == "close")
+            .unwrap();
+        assert!(
+            capability.recorded && capability.observed_call,
+            "chunked={chunked}"
+        );
+
+        // Fixed-FAB Field commitments now compose in the unselected helper arm.
+        circuit(&mut v, "guard")["actions"][index]["otherwise"] = json!({
+            "kind":"expression", "value": {"kind":"persistent_commit",
+                "value":{"kind":"field_literal","value":"0"},
+                "opening":{"kind":"bytes_literal","bytes":vec![0u8; 32]}}
+        });
+        assert!(recorded(v.clone()));
+        // The former VectorMap refusal is now a positive. Then retain a
+        // source-qualified direct fold negative with its real pure declaration.
+        circuit(&mut v, "guard")["actions"][index]["otherwise"]["value"]["value"] = json!({"kind":"vector_map",
+                "parameter":{"name":"sentinel_item","ty":{"kind":"field"}},
+                "source":{"kind":"tuple","elements":[{"kind":"field_literal","value":"1"}]},
+                "body":{"kind":"parameter","name":"sentinel_item"},
+                "result":{"kind":"field"},"length":1});
+        assert!(recorded(v.clone()));
+        let mut complete: Contract = serde_json::from_value(v).unwrap();
+        recording_refusal::register_unsupported_fold(&mut complete);
+        v = serde_json::to_value(complete).unwrap();
+        circuit(&mut v, "guard")["actions"][index]["otherwise"]["value"]["value"] =
+            serde_json::to_value(recording_refusal::unsupported_commit_input()).unwrap();
+        let contract: Contract = serde_json::from_value(v).unwrap();
+        let output = render_with_capabilities(&contract).unwrap();
+        let capability = output
+            .capabilities
+            .circuits
+            .iter()
+            .find(|c| c.name == "close")
+            .unwrap();
+        assert!(
+            !capability.recorded && !capability.observed_call,
+            "chunked={chunked}"
+        );
+        assert!(capability.recording_unavailable.is_some());
     }
 }
+
 #[test]
 fn wrong_helper_arity_type_and_scope_never_fall_back_to_native_helper() {
     let mut v = fixture(false);
@@ -89,7 +241,7 @@ fn crypto() -> Value {
     serde_json::from_str(include_str!("unit-composition/crypto.json")).unwrap()
 }
 #[test]
-fn native_crypto_helpers_cannot_hide_a_public_read_and_fall_back_to_recorded() {
+fn stateful_crypto_helpers_record_public_reads_and_reject_invalid_slots() {
     assert!(recorded(crypto()));
     for unused_binding in [false, true] {
         let mut v = crypto();
@@ -103,7 +255,36 @@ fn native_crypto_helpers_cannot_hide_a_public_read_and_fall_back_to_recorded() {
             .as_array_mut()
             .unwrap()
             .push(json!({"kind":"assert","condition":hidden,"message":"hidden public effect"}));
-        assert!(!recorded(v), "unused_binding={unused_binding}");
+        let output =
+            render_with_capabilities(&serde_json::from_value::<Contract>(v.clone()).unwrap())
+                .unwrap();
+        assert!(
+            output
+                .capabilities
+                .circuits
+                .iter()
+                .any(|c| c.name == "close" && c.recorded && c.observed_call)
+        );
+        let body = output.source.split("pub mod recorded").nth(1).unwrap();
+        let baseline =
+            render_with_capabilities(&serde_json::from_value::<Contract>(crypto()).unwrap())
+                .unwrap();
+        let before = baseline.source.split("pub mod recorded").nth(1).unwrap();
+        assert!(body.matches("record_read(").count() > before.matches("record_read(").count());
+        let actions = circuit(&mut v, "schnorrVerify")["actions"]
+            .as_array_mut()
+            .unwrap();
+        let condition = &mut actions.last_mut().unwrap()["condition"];
+        let read = if unused_binding {
+            &mut condition["bindings"][0]["value"]
+        } else {
+            &mut condition["otherwise"]
+        };
+        read["index"] = json!(99);
+        assert!(
+            !recorded(v),
+            "invalid read slot, unused_binding={unused_binding}"
+        );
     }
 }
 #[test]

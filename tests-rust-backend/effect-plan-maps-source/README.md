@@ -1,0 +1,9 @@
+# Source-generated scalar Maps
+
+The unchanged Compact source `examples/rust_backend/effect_plan_maps.compact` is compiled from its complete schema-20 IR at build time. Five named-struct roots exercise the four Map operations: membership, lookup, insertion, and removal. `lazy_put` checks key-before-value witness ordering and short-circuiting.
+
+Four local tests cover native, recorded, observed, and independent manual slot execution; verify-op replay; state/effects/private transcript/gas; and prepared original input/output FAB bindings. The capture contains 26 fresh official TS cases: 22 successes and four refusals. Of those, three successes and one missing-lookup refusal are direct-return native/TS controls. The two direct-return roots deliberately retain their existing admission policy and have no recorded/observed surface.
+
+The cases include absence, replacement of an existing value, deletion of present and absent keys, missing lookup, Unicode and interior-NUL keys, eight lazy Boolean configurations, two ordered provider failures, and two suppressed failures. Every TS configuration has an explicit unique ID; tests also check arguments and provider configuration. Rust-only trailing-NUL refusal checks are supplementary safe-input controls, not additional TS parity rows.
+
+`oracle/capture.mjs` executes the exact same source with the official TS runtime. Pass the source, generated `contract` directory, a separately built runtime package, and output path. The JSON records source/generated/runtime hashes, Node/package versions, full proof data, query costs, and serialized preimage size. Gas comparison includes callback ledger reads and excludes post-execution state inspection. This fixture does not claim proof generation or transaction application; a selected proof adapter is a separate gate.

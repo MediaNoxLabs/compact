@@ -41,19 +41,41 @@ pub(super) fn try_run(
     match (selector, asset) {
         ("--prepare-proof-material", _) => Some(material::prepare_proof_material(arguments)),
         ("--mixed-width-recording", _) => Some(expressions::mixed_width_recording(arguments)),
+        ("--mixed-width-record-pinned", _) => {
+            Some(expressions::mixed_width_record_pinned(arguments))
+        }
         ("--wide-unsigned-field-cast", _) => Some(expressions::wide_unsigned_field_cast(arguments)),
         ("--closed-pure-unsigned-call", _) => {
             Some(expressions::closed_pure_unsigned_call(arguments))
         }
         ("--test-center-counter", _) => Some(contracts::test_center_counter(arguments)),
         ("--test-center-welcome", _) => Some(contracts::test_center_welcome(arguments)),
+        ("--test-center-welcome-check-in", _) => {
+            Some(contracts::test_center_welcome_check_in(arguments))
+        }
+        ("--test-center-welcome-organizers", _) => {
+            Some(contracts::test_center_welcome_organizers(arguments))
+        }
         ("--opaque-string-set", _) => Some(collections::opaque_string_set(arguments)),
+        ("--opaque-string-set-member", _) => Some(collections::opaque_string_set_member(arguments)),
         ("--opaque-string-map", _) => Some(collections::opaque_string_map(arguments)),
+        ("--opaque-string-map-ensure", _) => Some(collections::opaque_string_map_ensure(arguments)),
+        ("--map-effects", _) => Some(collections::map_effects(arguments)),
+        ("--map-value-products", _) => Some(collections::map_value_products(arguments)),
+        ("--unit-composition", _) => Some(collections::unit_composition(arguments)),
+        ("--aligned-hashes", _) => Some(collections::aligned_hashes(arguments)),
+        ("--exact-hash-input", _) => Some(collections::exact_hash_input(arguments)),
+        ("--jubjub-negation", _) => Some(collections::jubjub_negation(arguments)),
+        ("--unit-value-operations", _) => Some(collections::unit_value_operations(arguments)),
+        ("--aligned-witness-results", _) => Some(collections::aligned_witness_results(arguments)),
         ("--conditional-set", _) => Some(collections::conditional_set(arguments)),
         ("--adt-set-enum", _) => Some(collections::adt_set_enum(arguments)),
         ("--guarded-recording", _) => Some(expressions::guarded_recording(arguments)),
         (_, Some(proof)) => Some(run_asset(proof, arguments)),
         ("--schnorr-attestation", _) => Some(expressions::schnorr_attestation(arguments)),
+        ("--schnorr-attestation-strict", _) => {
+            Some(expressions::schnorr_attestation_strict(arguments))
+        }
         ("--zswap-transfer", _) => Some(shielded::zswap_transfer(arguments)),
         ("--shielded-receive", _) => Some(shielded::shielded_receive(arguments)),
         ("--shielded-merge", _) => Some(shielded::shielded_merge(arguments)),
@@ -65,15 +87,21 @@ pub(super) fn try_run(
         ("--wallet-funded-receive", _) => Some(shielded::wallet_funded_receive(arguments)),
         ("--kernel-shielded-effects", _) => Some(shielded::kernel_shielded_effects(arguments)),
         ("--qualified-coin-set", _) => Some(shielded::qualified_coin_set(arguments)),
+        ("--qualified-coin-set-chunked", _) => {
+            Some(shielded::qualified_coin_set_chunked(arguments))
+        }
         ("--qualified-coin-cell", _) => Some(shielded::qualified_coin_cell(arguments)),
         ("--adt-set-qualified-coin-info", _) => {
             Some(shielded::adt_set_qualified_coin_info(arguments))
         }
         ("--adt-set-vector", _) => Some(collections::adt_set_vector(arguments)),
+        ("--adt-set-vector-strict", _) => Some(collections::adt_set_vector_strict(arguments)),
         ("--adt-list-vector-field-4", _) => Some(collections::adt_list_vector_field_4(arguments)),
         ("--adt-list-bytes", _) => Some(collections::adt_list_bytes(arguments)),
         ("--adt-list-enum", _) => Some(collections::adt_list_enum(arguments)),
         ("--adt-list-field", _) => Some(collections::adt_list_field(arguments)),
+        ("--adt-list-field-strict", _) => Some(collections::adt_list_field_strict(arguments)),
+        ("--map-remaining-strict", _) => Some(collections::map_remaining_strict(arguments)),
         ("--closed-pure-field", _) => Some(expressions::closed_pure_field(arguments)),
         ("--struct-constructor-cell", _) => Some(expressions::struct_constructor_cell(arguments)),
         ("--pure-assert-call", _) => Some(expressions::pure_assert_call(arguments)),
@@ -83,6 +111,9 @@ pub(super) fn try_run(
         ("--let-return", _) => Some(expressions::let_return(arguments)),
         ("--field-to-bytes32", _) => Some(expressions::field_to_bytes32(arguments)),
         ("--literal-bytes-field", _) => Some(expressions::literal_bytes_field(arguments)),
+        ("--literal-bytes-field-strict", _) => {
+            Some(expressions::literal_bytes_field_strict(arguments))
+        }
         ("--coracle-start", _) => Some(contracts::coracle_start(arguments)),
         ("--coracle-concede", _) => Some(contracts::coracle_concede(arguments)),
         ("--coracle-withdraw", _) => Some(contracts::coracle_withdraw(arguments)),
@@ -112,9 +143,40 @@ pub(super) fn try_run(
         ("--micro-dao-token", _) => Some(contracts::micro_dao_token(arguments)),
         ("--composite-zswap", _) => Some(shielded::composite_zswap(arguments)),
         ("--field-observation", _) => Some(expressions::field_observation(arguments)),
+        ("--opaque-public", _) => Some(expressions::opaque_public(arguments)),
+        ("--opaque-cell-input", _) => Some(expressions::opaque_cell_input(arguments)),
+        ("--owned-witness-inputs", _) => Some(expressions::owned_witness_inputs(arguments)),
+        ("--public-products", _) => Some(expressions::public_products(arguments)),
+        ("--wide-add", _) => Some(expressions::wide_add(arguments)),
+        ("--wide-casts", _) => Some(expressions::wide_casts(arguments)),
         ("--stateful-struct", _) => Some(recorded::stateful_struct(arguments)),
         ("--stateful-assert", _) => Some(recorded::stateful_assert(arguments)),
+        ("--effect-plan-unsigned-arithmetic", _) => {
+            Some(recorded::effect_plan_unsigned_arithmetic(arguments))
+        }
+        ("--effect-plan-merkle", _) => Some(recorded::effect_plan_merkle(arguments)),
+        ("--effect-plan-transient-crypto", _) => {
+            Some(recorded::effect_plan_transient_crypto(arguments))
+        }
+        ("--effect-plan-counter", _) => Some(recorded::effect_plan_counter(arguments)),
+        ("--effect-plan-counter-only", _) => Some(recorded::effect_plan_counter_only(arguments)),
+        ("--effect-plan-jubjub", _) => Some(recorded::effect_plan_jubjub(arguments)),
+        ("--effect-plan-rich-values", _) => Some(recorded::effect_plan_rich_values(arguments)),
+        ("--effect-plan-pure-calls", _) => Some(recorded::effect_plan_pure_calls(arguments)),
+        ("--effect-plan-stateful-calls", _) => {
+            Some(recorded::effect_plan_stateful_calls(arguments))
+        }
+        ("--guarded-point-read", _) => Some(recorded::guarded_point_read(arguments)),
+        ("--guarded-point-nested", _) => Some(recorded::guarded_point_nested(arguments)),
+        ("--guarded-point-vm", _) => Some(recorded::guarded_point_vm(arguments)),
         ("--effectful-return", _) => Some(recorded::effectful_return(arguments)),
+        ("--effect-plan-wide-source", _) => Some(recorded::effect_plan_wide_source(arguments)),
+        #[cfg(feature = "experimental-recording-plan")]
+        ("--effect-plan-prototype", _) => Some(recorded::effect_plan_prototype(arguments)),
+        #[cfg(not(feature = "experimental-recording-plan"))]
+        ("--effect-plan-prototype", _) => Some(Err(
+            "--effect-plan-prototype requires the experimental-recording-plan Cargo feature".into(),
+        )),
         ("--root-let-action-return", _) => Some(recorded::root_let_action_return(arguments)),
         ("--counter-less-than", _) => Some(recorded::counter_less_than(arguments)),
         ("--pair-hash-cell", _) => Some(recorded::pair_hash_cell(arguments)),
@@ -123,6 +185,7 @@ pub(super) fn try_run(
         ("--pure-field-arguments", _) => Some(expressions::pure_field_arguments(arguments)),
         ("--stateful-pure-return", _) => Some(recorded::stateful_pure_return(arguments)),
         ("--persistent-commit", _) => Some(expressions::persistent_commit(arguments)),
+        ("--persistent-commit-strict", _) => Some(expressions::persistent_commit_strict(arguments)),
         ("--assert-witness", _) => Some(recorded::assert_witness(arguments)),
         ("--witness-vector-let", _) => Some(recorded::witness_vector_let(arguments)),
         ("--witness-vector-bare", _) => Some(recorded::witness_vector_bare(arguments)),
@@ -145,6 +208,7 @@ pub(super) fn try_run(
         ("--merkle-verify", _) => Some(merkle::merkle_verify(arguments)),
         ("--merkle-reset", _) => Some(merkle::merkle_reset(arguments)),
         ("--vector-map", _) => Some(collections::vector_map(arguments)),
+        ("--vector-map-strict", _) => Some(collections::vector_map_strict(arguments)),
         ("--merkle-root", _) => Some(merkle::merkle_root(arguments)),
         ("--zerocash-spend", _) => Some(contracts::zerocash_spend(arguments)),
         ("--bboard", _) => Some(contracts::bboard(arguments)),
@@ -206,6 +270,31 @@ mod tests {
                 "--mixed-width-recording",
                 1,
                 "usage: compact-rust-proof-smoke --mixed-width-recording <proof-output>",
+            ),
+            (
+                "--opaque-public",
+                1,
+                "usage: compact-rust-proof-smoke --opaque-public <proof-output>",
+            ),
+            (
+                "--owned-witness-inputs",
+                1,
+                "usage: compact-rust-proof-smoke --owned-witness-inputs <proof-output>",
+            ),
+            (
+                "--public-products",
+                1,
+                "usage: compact-rust-proof-smoke --public-products <proof-output>",
+            ),
+            (
+                "--wide-add",
+                1,
+                "usage: compact-rust-proof-smoke --wide-add <proof-output>",
+            ),
+            (
+                "--wide-casts",
+                1,
+                "usage: compact-rust-proof-smoke --wide-casts <proof-output>",
             ),
             (
                 "--wide-unsigned-field-cast",

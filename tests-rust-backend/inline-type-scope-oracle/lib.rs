@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -34,7 +34,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -74,13 +74,14 @@ pub mod ledger_contract {
         __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let state = runtime::ledger::contract_state(vec![
-            runtime::ledger::constructor_cell::<
+            runtime::ledger::try_constructor_cell::<
                 runtime::FixedVector<runtime::Field, 2>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<runtime::FixedBytes<32>, runtime::ledger::DefaultDB>(
-                Default::default(),
-            ),
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
+                runtime::FixedBytes<32>,
+                runtime::ledger::DefaultDB,
+            >(Default::default())?,
         ]);
         {
             let mut context = runtime::context::ConstructorResult::new(__compact_context, state)
@@ -270,8 +271,11 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame = crate::ledger_slots::hashCell.record_write(frame, __compact_param_0)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: runtime::FixedBytes<32> = __compact_param_0;
+            let frame = crate::ledger_slots::hashCell.record_write(frame, __compact_effect_0)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn checkScalarScope<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -280,19 +284,28 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_hash_arg_0: runtime::Field = __compact_param_1;
-            let __compact_recorded_hash_1: runtime::FixedBytes<32> =
-                runtime::persistent_hash(__compact_recorded_hash_arg_0);
-            let (frame, __compact_recorded_value_2): (_, runtime::FixedBytes<32>) =
-                crate::ledger_slots::hashCell.record_read(frame)?;
-            if !(__compact_recorded_hash_1 == __compact_recorded_value_2) {
+            let __compact_effect_0: runtime::FixedVector<runtime::Field, 2> = __compact_param_0;
+            let __compact_effect_1: runtime::Field = __compact_param_1;
+            let (frame, __compact_effect_6): (_, bool) = {
+                let __compact_effect_2: runtime::Field = __compact_effect_1;
+                let __compact_effect_3: runtime::FixedBytes<32> =
+                    runtime::persistent_hash(__compact_effect_2);
+                let (frame, __compact_effect_4): (_, runtime::FixedBytes<32>) =
+                    crate::ledger_slots::hashCell.record_read(frame)?;
+                let __compact_effect_5: bool = __compact_effect_3 == __compact_effect_4;
+                (frame, __compact_effect_5)
+            };
+            if !__compact_effect_6 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "scalar helper formal took the caller's vector type".to_owned(),
                 ));
             }
+            let __compact_effect_7: () = ();
             let frame =
-                crate::ledger_slots::fieldVec.record_write(frame, (__compact_param_0).clone())?;
-            Ok(frame.finish(()))
+                crate::ledger_slots::fieldVec.record_write(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_8: () = ();
+            let __compact_effect_9: () = ();
+            Ok(frame.finish(__compact_effect_9))
         }
         pub fn checkAggScope<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -301,20 +314,29 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_hash_arg_0: runtime::FixedVector<runtime::Field, 4> =
-                (__compact_param_1).clone();
-            let __compact_recorded_hash_1: runtime::FixedBytes<32> =
-                runtime::persistent_hash(__compact_recorded_hash_arg_0);
-            let (frame, __compact_recorded_value_2): (_, runtime::FixedBytes<32>) =
-                crate::ledger_slots::hashCell.record_read(frame)?;
-            if !(__compact_recorded_hash_1 == __compact_recorded_value_2) {
+            let __compact_effect_0: runtime::FixedVector<runtime::Field, 2> = __compact_param_0;
+            let __compact_effect_1: runtime::FixedVector<runtime::Field, 4> = __compact_param_1;
+            let (frame, __compact_effect_6): (_, bool) = {
+                let __compact_effect_2: runtime::FixedVector<runtime::Field, 4> =
+                    (__compact_effect_1).clone();
+                let __compact_effect_3: runtime::FixedBytes<32> =
+                    runtime::persistent_hash((__compact_effect_2).clone());
+                let (frame, __compact_effect_4): (_, runtime::FixedBytes<32>) =
+                    crate::ledger_slots::hashCell.record_read(frame)?;
+                let __compact_effect_5: bool = __compact_effect_3 == __compact_effect_4;
+                (frame, __compact_effect_5)
+            };
+            if !__compact_effect_6 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "aggregate helper formal took the caller's shorter vector type".to_owned(),
                 ));
             }
+            let __compact_effect_7: () = ();
             let frame =
-                crate::ledger_slots::fieldVec.record_write(frame, (__compact_param_0).clone())?;
-            Ok(frame.finish(()))
+                crate::ledger_slots::fieldVec.record_write(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_8: () = ();
+            let __compact_effect_9: () = ();
+            Ok(frame.finish(__compact_effect_9))
         }
         pub fn checkNoCollisionScope<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -322,20 +344,28 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_hash_arg_0: runtime::FixedVector<runtime::Field, 2> =
-                (__compact_param_0).clone();
-            let __compact_recorded_hash_1: runtime::FixedBytes<32> =
-                runtime::persistent_hash(__compact_recorded_hash_arg_0);
-            let (frame, __compact_recorded_value_2): (_, runtime::FixedBytes<32>) =
-                crate::ledger_slots::hashCell.record_read(frame)?;
-            if !(__compact_recorded_hash_1 == __compact_recorded_value_2) {
+            let __compact_effect_0: runtime::FixedVector<runtime::Field, 2> = __compact_param_0;
+            let (frame, __compact_effect_5): (_, bool) = {
+                let __compact_effect_1: runtime::FixedVector<runtime::Field, 2> =
+                    (__compact_effect_0).clone();
+                let __compact_effect_2: runtime::FixedBytes<32> =
+                    runtime::persistent_hash((__compact_effect_1).clone());
+                let (frame, __compact_effect_3): (_, runtime::FixedBytes<32>) =
+                    crate::ledger_slots::hashCell.record_read(frame)?;
+                let __compact_effect_4: bool = __compact_effect_2 == __compact_effect_3;
+                (frame, __compact_effect_4)
+            };
+            if !__compact_effect_5 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "aggregate helper formal was not recovered".to_owned(),
                 ));
             }
+            let __compact_effect_6: () = ();
             let frame =
-                crate::ledger_slots::fieldVec.record_write(frame, (__compact_param_0).clone())?;
-            Ok(frame.finish(()))
+                crate::ledger_slots::fieldVec.record_write(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_7: () = ();
+            let __compact_effect_8: () = ();
+            Ok(frame.finish(__compact_effect_8))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

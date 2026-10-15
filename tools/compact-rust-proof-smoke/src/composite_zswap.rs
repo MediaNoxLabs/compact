@@ -56,7 +56,24 @@ fn verifier(root: &Path, name: &str) -> Result<VerifierKey, Box<dyn Error>> {
         root.join(format!("keys/{name}.verifier")),
     )?))?)
 }
+fn validate_ir(bytes: &[u8], expected: &str) -> Result<(), Box<dyn Error>> {
+    let expected: serde_json::Value = serde_json::from_str(expected)?;
+    let actual: serde_json::Value = serde_json::from_slice(bytes)?;
+    if expected != actual {
+        return Err("composite source/proof IR mismatch".into());
+    }
+    Ok(())
+}
 pub(super) fn run(original: &Path, transfer_root: &Path) -> Result<(), Box<dyn Error>> {
+    // Bind both complete sources before either scenario reads proving keys.
+    validate_ir(
+        &std::fs::read(original.join("contract/compact-rust-ir.json"))?,
+        compact_rust_stateful_struct_oracle_fixture::RETAINED_IR,
+    )?;
+    validate_ir(
+        &std::fs::read(transfer_root.join("contract/compact-rust-ir.json"))?,
+        compact_rust_composite_zswap_transfer_oracle_fixture::RETAINED_IR,
+    )?;
     original_planned(original)?;
     funded_transfer(transfer_root)
 }
@@ -420,4 +437,23 @@ fn funded_transfer(root: &Path) -> Result<(), Box<dyn Error>> {
         "composite transfer42: exact spent-nullifier replay rejection; same-frame Kernel.self and Unit members retained"
     );
     Ok(())
+}
+
+#[cfg(test)]
+mod source_pairing_tests {
+    use super::*;
+    #[test]
+    fn both_sources_are_bound_before_reading_keys_and_cannot_be_swapped() {
+        let original = compact_rust_stateful_struct_oracle_fixture::RETAINED_IR;
+        let transfer = compact_rust_composite_zswap_transfer_oracle_fixture::RETAINED_IR;
+        validate_ir(original.as_bytes(), original).unwrap();
+        validate_ir(transfer.as_bytes(), transfer).unwrap();
+        assert!(validate_ir(original.as_bytes(), transfer).is_err());
+        assert!(validate_ir(transfer.as_bytes(), original).is_err());
+        for source in [original, transfer] {
+            let mut changed: serde_json::Value = serde_json::from_str(source).unwrap();
+            changed["stateful_circuits"][0]["name"] = "different".into();
+            assert!(validate_ir(&serde_json::to_vec(&changed).unwrap(), source).is_err());
+        }
+    }
 }

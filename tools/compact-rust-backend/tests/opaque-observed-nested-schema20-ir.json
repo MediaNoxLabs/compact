@@ -1,0 +1,144 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "calls",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "opaque_observed_nested.compact",
+        "line": 7,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "permit",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "source": {
+        "file": "opaque_observed_nested.compact",
+        "line": 8,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "touch",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_1",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_1"
+            }
+          }
+        },
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "witness_call",
+            "name": "permit",
+            "arguments": [
+            ]
+          },
+          "message": "permission refused"
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "opaque_observed_nested.compact",
+        "line": 9,
+        "column": 1
+      }
+    },
+    {
+      "name": "accept",
+      "parameters": [
+        {
+          "name": "input",
+          "ty": {
+            "kind": "struct",
+            "name": "Outer",
+            "fields": [
+              {
+                "name": "inner",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Inner",
+                  "fields": [
+                    {
+                      "name": "text",
+                      "ty": {
+                        "kind": "opaque_string"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "circuit_call",
+          "name": "touch",
+          "arguments": [
+          ]
+        }
+      ],
+      "source": {
+        "file": "opaque_observed_nested.compact",
+        "line": 13,
+        "column": 1
+      }
+    }
+  ]
+}

@@ -22,7 +22,7 @@ use compact_rust_backend::ir::{
 use compact_rust_backend::render_with_capabilities;
 
 #[test]
-fn recorded_pair_hash_bindings_require_closed_typed_field_literals() {
+fn recorded_pair_hash_bindings_accept_typed_literals_and_recorded_reads() {
     let pair = || Expr::Tuple {
         elements: vec![
             Expr::FieldLiteral { value: "0".into() },
@@ -129,7 +129,11 @@ fn recorded_pair_hash_bindings_require_closed_typed_field_literals() {
         }),
     };
     let rendered = render_with_capabilities(&contract).unwrap();
-    assert!(!rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].recorded);
+    let body =
+        super::lifecycle_recording::generated_body(&rendered.source, "recorded", "persistent");
+    assert_eq!(body.matches("record_read").count(), 1);
+    assert!(body.find("record_read").unwrap() < body.find("persistent_hash").unwrap());
     assert!(rendered.capabilities.circuits[1].recorded);
 
     let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[1].actions[0] else {
@@ -141,11 +145,12 @@ fn recorded_pair_hash_bindings_require_closed_typed_field_literals() {
         }),
     };
     let rendered = render_with_capabilities(&contract).unwrap();
-    assert!(rendered.capabilities.circuits.iter().all(|c| !c.recorded));
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[1].recorded);
 }
 
 #[test]
-fn typed_field_helper_hash_then_cell_read_preserves_order_and_rejects_effects() {
+fn typed_field_helper_hash_composes_effects_in_order_and_certified_body_variants() {
     let pair = Type::Vector {
         length: 2,
         element: Box::new(Type::Field),
@@ -268,26 +273,62 @@ fn typed_field_helper_hash_then_cell_read_preserves_order_and_rejects_effects() 
             index: 0,
             value: Expr::FieldLiteral { value: "2".into() },
         });
-    assert!(
-        !render_with_capabilities(&contract)
-            .unwrap()
-            .capabilities
-            .circuits[0]
-            .recorded
-    );
+    // A write is a supported effect, even though the earlier whole-helper
+    // recipe admitted only a read-only body. It precedes the pure call and read.
+    let composed = render_with_capabilities(&contract).unwrap();
+    assert!(composed.capabilities.circuits[0].recorded);
+    let recording = composed.source.split("pub mod recorded").nth(1).unwrap();
+    let source_write = recording.find("record_write(frame").unwrap();
+    let pure = recording.find("crate::pure_circuits::hashPair(").unwrap();
+    let read = recording.find("record_read(frame)").unwrap();
+    let target_write = recording.rfind("record_write(frame").unwrap();
+    assert!(source_write < pure && pure < read && read < target_write);
+
     contract.stateful_circuits[0].actions.clear();
     contract.circuits[0].body = Expr::FieldLiteral { value: "9".into() };
+    // Certification permits a constant pure result; spelling a hash is not
+    // required for the typed helper call and subsequent Cell read to compose.
     assert!(
-        !render_with_capabilities(&contract)
+        render_with_capabilities(&contract)
             .unwrap()
             .capabilities
             .circuits[0]
             .recorded
     );
+
+    let rejects = |contract: &Contract| match render_with_capabilities(contract) {
+        Err(_) => true,
+        Ok(rendered) => !rendered.capabilities.circuits[0].recorded,
+    };
+    let mut wrong_argument = contract.clone();
+    wrong_argument.stateful_circuits[0].parameters[0].ty = Type::Boolean;
+    assert!(rejects(&wrong_argument));
+    let mut recursive = contract.clone();
+    recursive.stateful_circuits[0]
+        .actions
+        .push(StateAction::CircuitCall {
+            name: "helper".into(),
+            arguments: vec![Expr::Parameter {
+                name: "pair".into(),
+            }],
+        });
+    assert!(rejects(&recursive));
+    let mut wrong_slot = contract.clone();
+    let StateReturn::Expression {
+        value: Expr::Add { right, .. },
+    } = &mut wrong_slot.stateful_circuits[0].return_value
+    else {
+        unreachable!()
+    };
+    let Expr::CellRead { index, .. } = right.as_mut() else {
+        unreachable!()
+    };
+    *index = 99;
+    assert!(rejects(&wrong_slot));
 }
 
 #[test]
-fn closed_field_pair_hash_call_records_typed_bridge_without_admitting_other_hashes() {
+fn certified_pure_hash_bridge_records_body_variants_but_direct_hashes_remain_bounded() {
     let vector = Type::Vector {
         element: Box::new(Type::Field),
         length: 2,
@@ -390,20 +431,59 @@ fn closed_field_pair_hash_call_records_typed_bridge_without_admitting_other_hash
     contract.circuits[0].body = Expr::TransientHash {
         value: Box::new(Expr::FieldLiteral { value: "3".into() }),
     };
+    // Certification checks the complete native pure body, so a scalar hash is
+    // accepted inside the helper even though it is outside the old pair shape.
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    let body = rendered.source.split("pub mod recorded").nth(1).unwrap();
+    assert_eq!(body.matches("pure_circuits::bridge()?").count(), 1);
+    assert!(
+        body.find("pure_circuits::bridge()?").unwrap() < body.find("record_write(frame").unwrap()
+    );
+
+    // Direct scalar and dynamic opaque hashes both compose, including defaults.
+    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    bindings[0].value = Expr::TransientHash {
+        value: Box::new(Expr::FieldLiteral { value: "3".into() }),
+    };
+    let accepted = render_with_capabilities(&contract).unwrap();
+    assert!(accepted.capabilities.circuits[0].recorded);
+    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    bindings[0].value = Expr::TransientHash {
+        value: Box::new(Expr::Default {
+            ty: Type::OpaqueString,
+        }),
+    };
+    let accepted = render_with_capabilities(&contract).unwrap();
+    assert!(
+        accepted.capabilities.circuits[0].recorded
+            && accepted.capabilities.circuits[0].observed_call
+    );
+    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    bindings[0].value = Expr::TransientHash {
+        value: Box::new(Expr::PersistentCommit {
+            value: Box::new(super::support::unsupported_commit_input()),
+            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
+        }),
+    };
+    super::support::register_unsupported_fold(&mut contract);
     let rejected = render_with_capabilities(&contract).unwrap();
     assert!(!rejected.capabilities.circuits[0].recorded);
-    assert_eq!(
+    assert!(
         rejected.capabilities.circuits[0]
             .recording_unavailable
-            .as_ref()
-            .unwrap()
-            .ir_node,
-        "Expr::Call"
+            .is_some()
     );
 }
 
 #[test]
-fn persistent_hash_helper_recording_preserves_formals_and_rejects_effects() {
+fn persistent_hash_helper_recording_composes_effects_and_preserves_formals() {
     let mut contract: Contract =
         serde_json::from_str(include_str!("../inline-type-scope-schema12-ir.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
@@ -429,7 +509,7 @@ fn persistent_hash_helper_recording_preserves_formals_and_rejects_effects() {
         });
     let rendered = render_with_capabilities(&effectful).unwrap();
     assert!(
-        !rendered
+        rendered
             .capabilities
             .circuits
             .iter()
@@ -437,6 +517,16 @@ fn persistent_hash_helper_recording_preserves_formals_and_rejects_effects() {
             .unwrap()
             .recorded
     );
+    let helper = effectful
+        .stateful_circuits
+        .iter_mut()
+        .find(|circuit| circuit.name == "scalarHelper")
+        .unwrap();
+    let StateAction::CellWrite { index, .. } = helper.actions.last_mut().unwrap() else {
+        unreachable!()
+    };
+    *index = 99;
+    assert!(render_with_capabilities(&effectful).is_err());
     let mut wrong_width = contract.clone();
     wrong_width
         .stateful_circuits
@@ -473,14 +563,44 @@ fn composite_recording_does_not_erase_local_argument_widening() {
     let mut contract: Contract =
         serde_json::from_str(include_str!("../struct-helper-widening-schema13-ir.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
-    let available = |contract: &Contract| {
-        render_with_capabilities(contract)
-            .unwrap()
-            .capabilities
-            .circuits[0]
-            .recorded
+    let assert_widening_order = |contract: &Contract, call: &str| {
+        let rendered = render_with_capabilities(contract).unwrap();
+        assert_eq!(rendered.capabilities.circuits.len(), 1);
+        assert!(rendered.capabilities.circuits[0].recorded);
+        // Prettyplease may split the witness receiver and generic arguments
+        // across lines, including a trailing generic comma. Compare tokens
+        // while preserving the exact cast bounds and operation order.
+        let body = rendered.source.split("pub mod recorded").nth(1).unwrap();
+        let body = body
+            .chars()
+            .filter(|character| !character.is_whitespace())
+            .collect::<String>()
+            .replace(",>", ">");
+        assert_eq!(body.matches("witnesses.small(").count(), 1);
+        assert_eq!(body.matches("cast_unsigned::<255,65535>").count(), 1);
+        assert_eq!(body.matches(call).count(), 1);
+        let witness = body.find("witnesses.small(").unwrap();
+        let widening = body.find("cast_unsigned::<255,65535>").unwrap();
+        let helper = body.find(call).unwrap();
+        let write = body.find("record_write(frame").unwrap();
+        assert!(witness < widening && widening < helper && helper < write);
     };
-    assert!(!available(&contract));
+    assert_widening_order(&contract, "pure_circuits::wrap(");
+
+    // An explicit widening is required by the native pure-call signature. The
+    // newly supported composition must not erase that type check.
+    let mut wrong_width = contract.clone();
+    let StateAction::Let { action, .. } = &mut wrong_width.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    let StateAction::Let { bindings, .. } = action.as_mut() else {
+        unreachable!()
+    };
+    let Expr::Call { arguments, .. } = &mut bindings[0].value else {
+        unreachable!()
+    };
+    arguments[0] = Expr::Parameter { name: "n".into() };
+    assert!(render_with_capabilities(&wrong_width).is_err());
     // Exercise the same conversion through a struct-returning witness.
     let helper = contract
         .circuits
@@ -521,5 +641,5 @@ fn composite_recording_does_not_erase_local_argument_widening() {
     for action in &mut contract.stateful_circuits[0].actions {
         replace(action);
     }
-    assert!(!available(&contract));
+    assert_widening_order(&contract, "witnesses.wrap(");
 }

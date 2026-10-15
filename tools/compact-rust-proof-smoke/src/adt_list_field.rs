@@ -18,6 +18,9 @@
 use super::*;
 use compact_rust_adt_list_field_fixture::ledger_contract as contract;
 
+mod strict;
+pub(super) use strict::run as run_strict;
+
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
     let mut rng = StdRng::seed_from_u64(0x0101_4c49_5354_4644);
     let initial = contract::initial_state(ConstructorContext::new(()))?;

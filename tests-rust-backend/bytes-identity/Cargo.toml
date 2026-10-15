@@ -26,4 +26,4 @@ path = "lib.rs"
 midnight-compact-runtime = { path = "../../runtime-rs" }
 
 [dev-dependencies]
-midnight-base-crypto = "=1.0.0"
+midnight-base-crypto = { version = "=1.0.2", git = "https://github.com/midnightntwrk/midnight-ledger", rev = "b5d3e965a18e4cac17fac4f38446fc55c524439a" }

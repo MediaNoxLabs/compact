@@ -15,6 +15,8 @@
 
 use compact_rust_backend::{ir::Contract, render_with_capabilities};
 use serde_json::{Value, json};
+#[path = "support/recording_refusal.rs"]
+mod recording_refusal;
 fn fixture(name: &str) -> Value {
     serde_json::from_str(match name {
         "store" => include_str!("point-composition/point_store.json"),
@@ -83,7 +85,27 @@ fn coordinates_and_inequality_validate_actual_operand_types() {
         if both {
             condition["right"] = json!({"kind":"boolean","value":false});
         }
-        assert!(!recorded(v, "check"));
+        if both {
+            let output =
+                render_with_capabilities(&serde_json::from_value::<Contract>(v).unwrap()).unwrap();
+            assert!(
+                output
+                    .capabilities
+                    .circuits
+                    .iter()
+                    .any(|c| c.name == "check" && c.recorded && c.observed_call)
+            );
+            assert!(
+                output
+                    .source
+                    .split("pub mod recorded")
+                    .nth(1)
+                    .unwrap()
+                    .contains(" != ")
+            );
+        } else {
+            assert!(!recorded(v, "check")); // Boolean versus Field stays ill-typed.
+        }
     }
 }
 #[test]
@@ -121,6 +143,55 @@ fn helper_scope_type_slot_cycle_and_unselected_effects_stay_checked() {
             "type"=>{circuit(&mut v,"changes")["parameters"][0]["ty"]=json!({"kind":"field"});},
             "effect"=>circuit(&mut v,"changes")["actions"].as_array_mut().unwrap().push(json!({"kind":"if","condition":{"kind":"boolean","value":true},"then":{"kind":"sequence","actions":[]},"otherwise":{"kind":"expression","value":{"kind":"native_witness_call","builtin":"own_public_key"}}})),
             _=>unreachable!(),
+        }
+        if mutation == "effect" {
+            let output =
+                render_with_capabilities(&serde_json::from_value::<Contract>(v.clone()).unwrap())
+                    .unwrap();
+            assert!(
+                output
+                    .capabilities
+                    .circuits
+                    .iter()
+                    .any(|c| c.name == "check" && c.recorded && c.observed_call)
+            );
+            assert!(
+                output
+                    .source
+                    .split("pub mod recorded")
+                    .nth(1)
+                    .unwrap()
+                    .contains("own_coin_public_key()")
+            );
+            // The newly supported Field commitment at the same lazy position
+            // remains admitted; an unsupported child is still checked.
+            let actions = circuit(&mut v, "changes")["actions"]
+                .as_array_mut()
+                .unwrap();
+            actions.last_mut().unwrap()["otherwise"]["value"] = json!({"kind":"persistent_commit",
+                "value":{"kind":"field_literal","value":"0"},
+                "opening":{"kind":"bytes_literal","bytes":vec![0u8;32]}});
+            assert!(recorded(v.clone(), "check"));
+            let actions = circuit(&mut v, "changes")["actions"]
+                .as_array_mut()
+                .unwrap();
+            actions.last_mut().unwrap()["otherwise"]["value"]["value"] = json!({"kind":"vector_map",
+                "parameter":{"name":"sentinel_item","ty":{"kind":"field"}},
+                "source":{"kind":"tuple","elements":[{"kind":"field_literal","value":"1"}]},
+                "body":{"kind":"parameter","name":"sentinel_item"},
+                "result":{"kind":"field"},"length":1});
+            assert!(recorded(v.clone(), "check"));
+            let mut complete: Contract = serde_json::from_value(v).unwrap();
+            recording_refusal::register_unsupported_fold(&mut complete);
+            v = serde_json::to_value(complete).unwrap();
+            let actions = circuit(&mut v, "changes")["actions"]
+                .as_array_mut()
+                .unwrap();
+            actions.last_mut().unwrap()["otherwise"]["value"]["value"] =
+                serde_json::to_value(recording_refusal::unsupported_commit_input()).unwrap();
+            // This negative is native-valid, not a swallowed render error.
+            render_with_capabilities(&serde_json::from_value::<Contract>(v.clone()).unwrap())
+                .unwrap();
         }
         assert!(!recorded(v, "check"), "{mutation}");
     }

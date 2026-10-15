@@ -1,0 +1,363 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "c",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "set",
+        "ty": {
+          "kind": "enum",
+          "name": "Names",
+          "variants": [
+            "bill",
+            "sally",
+            "fred",
+            "george"
+          ]
+        }
+      },
+      "source": {
+        "file": "set_enum.compact",
+        "line": 25,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "test",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "one",
+              "ty": {
+                "kind": "enum",
+                "name": "Names",
+                "variants": [
+                  "bill",
+                  "sally",
+                  "fred",
+                  "george"
+                ]
+              },
+              "value": {
+                "kind": "enum_variant",
+                "ty": {
+                  "kind": "enum",
+                  "name": "Names",
+                  "variants": [
+                    "bill",
+                    "sally",
+                    "fred",
+                    "george"
+                  ]
+                },
+                "variant": "bill"
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "two",
+                "ty": {
+                  "kind": "enum",
+                  "name": "Names",
+                  "variants": [
+                    "bill",
+                    "sally",
+                    "fred",
+                    "george"
+                  ]
+                },
+                "value": {
+                  "kind": "enum_variant",
+                  "ty": {
+                    "kind": "enum",
+                    "name": "Names",
+                    "variants": [
+                      "bill",
+                      "sally",
+                      "fred",
+                      "george"
+                    ]
+                  },
+                  "variant": "sally"
+                }
+              }
+            ],
+            "action": {
+              "kind": "sequence",
+              "actions": [
+                {
+                  "kind": "set_remove",
+                  "field": "c",
+                  "index": 0,
+                  "value": {
+                    "kind": "parameter",
+                    "name": "one"
+                  }
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_is_empty",
+                      "field": "c",
+                      "index": 0
+                    },
+                    "right": {
+                      "kind": "boolean",
+                      "value": true
+                    }
+                  },
+                  "message": "Structure should be empty"
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_size",
+                      "field": "c",
+                      "index": 0
+                    },
+                    "right": {
+                      "kind": "unsigned_literal",
+                      "value": "0",
+                      "max": "18446744073709551615"
+                    }
+                  },
+                  "message": "Size should be 0"
+                },
+                {
+                  "kind": "set_insert",
+                  "field": "c",
+                  "index": 0,
+                  "value": {
+                    "kind": "parameter",
+                    "name": "one"
+                  }
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_size",
+                      "field": "c",
+                      "index": 0
+                    },
+                    "right": {
+                      "kind": "unsigned_literal",
+                      "value": "1",
+                      "max": "18446744073709551615"
+                    }
+                  },
+                  "message": "Size should be 1"
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_member",
+                      "field": "c",
+                      "index": 0,
+                      "value": {
+                        "kind": "parameter",
+                        "name": "one"
+                      }
+                    },
+                    "right": {
+                      "kind": "boolean",
+                      "value": true
+                    }
+                  },
+                  "message": "Key 0 should have value 1"
+                },
+                {
+                  "kind": "set_insert",
+                  "field": "c",
+                  "index": 0,
+                  "value": {
+                    "kind": "parameter",
+                    "name": "two"
+                  }
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_size",
+                      "field": "c",
+                      "index": 0
+                    },
+                    "right": {
+                      "kind": "unsigned_literal",
+                      "value": "2",
+                      "max": "18446744073709551615"
+                    }
+                  },
+                  "message": "Size should be 2"
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_member",
+                      "field": "c",
+                      "index": 0,
+                      "value": {
+                        "kind": "parameter",
+                        "name": "two"
+                      }
+                    },
+                    "right": {
+                      "kind": "boolean",
+                      "value": true
+                    }
+                  },
+                  "message": "Key 1 should be member"
+                },
+                {
+                  "kind": "set_remove",
+                  "field": "c",
+                  "index": 0,
+                  "value": {
+                    "kind": "parameter",
+                    "name": "one"
+                  }
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_size",
+                      "field": "c",
+                      "index": 0
+                    },
+                    "right": {
+                      "kind": "unsigned_literal",
+                      "value": "1",
+                      "max": "18446744073709551615"
+                    }
+                  },
+                  "message": "Size should be 1"
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_member",
+                      "field": "c",
+                      "index": 0,
+                      "value": {
+                        "kind": "parameter",
+                        "name": "two"
+                      }
+                    },
+                    "right": {
+                      "kind": "boolean",
+                      "value": true
+                    }
+                  },
+                  "message": "Key 0 should not be member"
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_member",
+                      "field": "c",
+                      "index": 0,
+                      "value": {
+                        "kind": "parameter",
+                        "name": "one"
+                      }
+                    },
+                    "right": {
+                      "kind": "boolean",
+                      "value": false
+                    }
+                  },
+                  "message": "Key 1 should be member"
+                },
+                {
+                  "kind": "set_reset",
+                  "field": "c",
+                  "index": 0
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_size",
+                      "field": "c",
+                      "index": 0
+                    },
+                    "right": {
+                      "kind": "unsigned_literal",
+                      "value": "0",
+                      "max": "18446744073709551615"
+                    }
+                  },
+                  "message": "Size should be 0"
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_is_empty",
+                      "field": "c",
+                      "index": 0
+                    },
+                    "right": {
+                      "kind": "boolean",
+                      "value": true
+                    }
+                  },
+                  "message": "Structure should be empty"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "set_enum.compact",
+        "line": 27,
+        "column": 1
+      }
+    }
+  ]
+}

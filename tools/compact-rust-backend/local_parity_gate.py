@@ -39,6 +39,7 @@ import tomllib
 sys.dont_write_bytecode = True
 import parity_inventory as inventory
 import fixture_inventory
+import source_consumer_gate
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -142,8 +143,9 @@ def planned_test_commands(plan: dict) -> list[tuple[str, list[str]]]:
     return commands
 
 
-def select_sources(names: list[str], full: bool) -> list[tuple[Path, Path]]:
-    mapping = fixture_map()
+def select_sources(names: list[str], full: bool) -> list[tuple[Path, Path | None]]:
+    mapping = {row.source: fixture_inventory.emission_fixture(row, ROOT)
+               for row in fixture_inventory.source_registry(ROOT)}
     if full:
         if names:
             raise GateError("--full cannot be combined with --source")
@@ -165,6 +167,100 @@ def select_sources(names: list[str], full: bool) -> list[tuple[Path, Path]]:
     if len({source for source, _ in selected}) != len(selected):
         raise GateError("duplicate --source selection")
     return sorted(selected)
+
+
+def qualify_generated_consumers(registrations, directory, environment, receipt):
+    """Compare fresh source outputs with Cargo's actual build-script artifacts."""
+    generated = [row for row in registrations if row.build_script is not None]
+    if not generated:
+        return
+    metadata_path = directory / "consumer-metadata.json"
+    run(["cargo", "+1.99.0", "metadata", "--no-deps", "--format-version", "1", "--locked"],
+        "consumer-metadata", directory, receipt, env=environment, stdout_path=metadata_path)
+    messages = directory / "consumer-build-messages.jsonl"
+    packages = sorted({row.package for row in generated})
+    run(["cargo", "+1.99.0", "build", *sum((["-p", name] for name in packages), []),
+         "--lib", "--all-features", "--locked", "--message-format=json"],
+        "source-consumer-build", directory, receipt, env=environment, stdout_path=messages)
+    directories = source_consumer_gate.cargo_output_directories(
+        messages, json.loads(metadata_path.read_text()))
+    rows = []
+    for row in generated:
+        original = source_consumer_gate.consumer_artifact(row, directories)
+        formatted = fixture_output(directory, row.source) / "consumer-artifact.rs"
+        shutil.copyfile(original, formatted)
+        run(["rustfmt", "--edition", "2024", str(formatted)],
+            f"format-consumer-{row.source.stem}", directory, receipt, env=environment)
+        fresh = fixture_output(directory, row.source) / "contract/lib.rs"
+        expected = fixture_output(directory, row.source) / "host-placed-generated.rs"
+        expected.write_bytes(source_consumer_gate.place_in_host(fresh.read_bytes(), row.namespace))
+        run(["rustfmt", "--edition", "2024", str(expected)],
+            f"format-host-{row.source.stem}", directory, receipt, env=environment)
+        rows.append(source_consumer_gate.compare_consumer_artifact(
+            row, fresh, formatted, original, expected))
+    receipt["generated_consumer_bindings"] = rows
+    receipt["consumer_build_messages"] = {"path": str(messages), "sha256": sha256(messages)}
+    receipt["consumer_metadata"] = {"path": str(metadata_path), "sha256": sha256(metadata_path)}
+
+
+def qualify_compiler_probes(registrations, directory, environment, receipt):
+    """Compile accepted probes' actual emitted public crates outside the workspace."""
+    rows = []
+    for row in registrations:
+        if row.role is not fixture_inventory.SourceRole.COMPILER_PROBE:
+            continue
+        contract = fixture_output(directory, row.source) / "contract"
+        # Resolve this isolated crate's lock offline from the retained workspace
+        # dependency cohort, then freeze it for the actual check. Record both.
+        lock = contract / "Cargo.lock"
+        shutil.copyfile(ROOT / "Cargo.lock", lock)
+        seed = sha256(lock)
+        run(["cargo", "+1.99.0", "check", "--manifest-path", str(contract / "Cargo.toml"),
+             "--all-features", "--offline"], f"resolve-probe-{row.source.stem}",
+            directory, receipt, env=environment)
+        resolved = sha256(lock)
+        run(["cargo", "+1.99.0", "check", "--manifest-path", str(contract / "Cargo.toml"),
+             "--all-features", "--offline", "--locked"], f"check-probe-{row.source.stem}",
+            directory, receipt, env=environment)
+        if sha256(lock) != resolved:
+            raise GateError(f"isolated compiler-probe lock changed: {row.source}")
+        rows.append({"source": inventory.relative_source(row.source, ROOT),
+                     "generated_sha256": sha256(contract / "lib.rs"),
+                     "manifest_sha256": sha256(contract / "Cargo.toml"),
+                     "lock": str(lock), "seed_lock_sha256": seed, "lock_sha256": resolved,
+                     "scope": "Fresh public crate compilation, not execution or proof coverage."})
+    receipt["compiler_probe_consumers"] = rows
+
+
+def qualify_executed_consumer_outputs(registrations, message_paths, directory, environment, receipt):
+    """Join completed Cargo tests to actual include dependencies and fresh emission."""
+    generated = [row for row in registrations if row.build_script is not None]
+    if not generated:
+        return
+    metadata_path = Path(receipt["consumer_metadata"]["path"])
+    metadata = json.loads(metadata_path.read_text())
+    rows = []
+    for row in generated:
+        candidates = [path for path in message_paths
+                      if row.package in source_consumer_gate.cargo_output_directories(path, metadata)]
+        if len(candidates) != 1:
+            raise GateError(f"missing or ambiguous executed consumer build: {row.source}")
+        messages = candidates[0]
+        bindings = source_consumer_gate.consumed_artifact_bindings(row, messages, metadata, ROOT)
+        original = Path(bindings[0]["generated_artifact"])
+        formatted = fixture_output(directory, row.source) / "executed-consumer-artifact.rs"
+        expected = fixture_output(directory, row.source) / "executed-host-generated.rs"
+        fresh = fixture_output(directory, row.source) / "contract/lib.rs"
+        shutil.copyfile(original, formatted)
+        expected.write_bytes(source_consumer_gate.place_in_host(fresh.read_bytes(), row.namespace))
+        for label, path in (("consumer", formatted), ("host", expected)):
+            run(["rustfmt", "--edition", "2024", str(path)],
+                f"format-executed-{label}-{row.source.stem}", directory, receipt, env=environment)
+        entry = source_consumer_gate.compare_consumer_artifact(row, fresh, formatted, original, expected)
+        entry["compiled_targets"] = bindings
+        entry["cargo_test_messages"] = {"path": str(messages), "sha256": sha256(messages)}
+        rows.append(entry)
+    receipt["executed_consumer_bindings"] = rows
 
 
 def stable_copy(source: Path, destination: Path) -> dict:
@@ -317,8 +413,6 @@ def proof_cross_tab(report: dict, contract_info: dict, source: Path) -> list[dic
         proof = proof_by_name[circuit["name"]]
         if circuit["proof_required"] is not proof:
             raise GateError(f"{source.name}.{circuit['name']}: proof applicability disagrees with contract-info")
-        if circuit["recorded"] and not proof:
-            raise GateError(f"{source.name}.{circuit['name']}: recorded nonproof circuit")
         rows.append({"name": circuit["name"], "proof": proof,
                      "recorded": circuit["recorded"],
                      "observed_call": circuit["observed_call"]})
@@ -326,7 +420,7 @@ def proof_cross_tab(report: dict, contract_info: dict, source: Path) -> list[dic
 
 
 def compare_baseline(contracts: list[dict], selected: set[str], full: bool) -> None:
-    baseline = json.loads(inventory.DEFAULT_BASELINE.read_text())
+    baseline = inventory.default_baseline_rows()
     if not full:
         baseline = [row for row in baseline if row["source"] in selected]
     current = inventory.baseline_rows([{"source": contract["source"], **declaration}
@@ -414,6 +508,8 @@ def main() -> int:
             import did_proof_gate
             did_proof_gate.prerequisites(os.environ)
         selected = select_sources(args.source, args.full)
+        registry = {row.source: row for row in fixture_inventory.source_registry(ROOT)}
+        registrations = [registry[source] for source, _ in selected]
         head = git_head()
         if args.expect_head and not head.startswith(args.expect_head):
             raise GateError(f"HEAD {head} does not match {args.expect_head}")
@@ -444,6 +540,13 @@ def main() -> int:
         receipt["cargo_target_dir"] = environment["CARGO_TARGET_DIR"]
         receipt["rust_toolchain"] = environment["RUSTUP_TOOLCHAIN"]
         receipt["build_inputs"] = build_input_receipt(environment)
+        receipt["source_registry"] = {
+            "path": str(ROOT / "tools/compact-rust-backend/fixture_registry.json"),
+            "sha256": sha256(ROOT / "tools/compact-rust-backend/fixture_registry.json"),
+            "input_fingerprints": source_consumer_gate.check_input_fingerprints(registrations)}
+        receipt["declaration_baselines"] = {
+            str(path): sha256(path) for path in (inventory.DEFAULT_BASELINE,
+                ROOT / "tools/compact-rust-backend/parity_registry_baseline.json")}
         selected_paths = {inventory.relative_source(source, ROOT) for source, _ in selected}
         paths = inventory.source_paths(ROOT, []) if args.full else [source for source, _ in selected]
         contracts = [inventory.parse_source(path, ROOT) for path in paths]
@@ -451,10 +554,11 @@ def main() -> int:
         receipt["metadata"] = inventory.receipt_metadata(ROOT, snapshot, contracts)
         packages = []
         for source, fixture in selected:
+            registration = registry[source]
             relative = inventory.relative_source(source, ROOT)
             output = fixture_output(directory, source)
             run([str(snapshot), "--target", "rust", "--skip-zk", "--rust-runtime-root",
-                 str(ROOT), str(source), str(output)], f"compile-{source.stem}", directory,
+                 str(ROOT), *registration.frontend_flags, str(source), str(output)], f"compile-{source.stem}", directory,
                 receipt, env=environment)
             generated = output / "contract/lib.rs"
             report = json.loads((output / "contract/rust-capabilities.json").read_text())
@@ -463,13 +567,17 @@ def main() -> int:
             proof_rows = proof_cross_tab(report, contract_info, source)
             run(["rustfmt", "--edition", "2024", str(generated)],
                 f"format-{source.stem}", directory, receipt, env=environment)
-            if not fixture.is_file() or generated.read_bytes() != fixture.read_bytes():
+            if fixture is not None and (not fixture.is_file() or generated.read_bytes() != fixture.read_bytes()):
                 raise GateError(f"stale or missing generated fixture: {fixture.relative_to(ROOT)}")
-            package = tomllib.loads((fixture.parent / "Cargo.toml").read_text())["package"]["name"]
-            packages.append(package)
-            receipt["fixtures"].append({"source": relative, "source_sha256": sha256(source),
-                                        "fixture": str(fixture.relative_to(ROOT)),
-                                        "fixture_sha256": sha256(fixture), "package": package})
+            if registration.package is not None:
+                packages.append(registration.package)
+            entry = {"source": relative, "source_sha256": sha256(source),
+                     "role": registration.role.value, "generated": str(generated),
+                     "generated_sha256": sha256(generated), "package": registration.package,
+                     "qualification": registration.qualification}
+            if fixture is not None:
+                entry.update({"fixture": str(fixture.relative_to(ROOT)), "fixture_sha256": sha256(fixture)})
+            receipt["fixtures"].append(entry)
             receipt["capabilities"].append({"source": relative, "report": report})
             receipt["proof_cross_tab"].append({"source": relative, "circuits": proof_rows})
         circuits = [circuit for entry in receipt["capabilities"] for circuit in entry["report"]["circuits"]]
@@ -480,9 +588,15 @@ def main() -> int:
             "observed_call": sum(circuit["observed_call"] for circuit in circuits),
             "recording_missing": sum(not circuit["recorded"] for circuit in circuits),
             "proof_eligible": sum(row["proof"] for row in proof_rows),
+            "proof_eligible_recorded": sum(row["proof"] and row["recorded"] for row in proof_rows),
             "provable_missing": sum(row["proof"] and not row["recorded"] for row in proof_rows),
-            "nonproof_native_only": sum(not row["proof"] for row in proof_rows),
+            "nonproof": sum(not row["proof"] for row in proof_rows),
+            "nonproof_recorded": sum(not row["proof"] and row["recorded"] for row in proof_rows),
+            "nonproof_native_only": sum(not row["proof"] and not row["recorded"] for row in proof_rows),
         }
+        if not args.skip_cargo:
+            qualify_generated_consumers(registrations, directory, environment, receipt)
+            qualify_compiler_probes(registrations, directory, environment, receipt)
         if args.full:
             run(["cargo", "+1.99.0", "fmt", "--all", "--check"],
                 "workspace-format", directory, receipt, env=environment)
@@ -554,10 +668,15 @@ def main() -> int:
             metadata = json.loads(metadata_path.read_text())
             receipt["workspace_test_metadata"] = {"path": str(metadata_path),
                                                   "sha256": sha256(metadata_path)}
-            plan = workspace_test_plan(metadata, {fixture for _, fixture in selected})
+            plan = workspace_test_plan(metadata, {fixture for _, fixture in selected if fixture is not None})
             receipt["workspace_test_plan"] = plan
+            test_messages = []
             for label, command in planned_test_commands(plan):
-                run(command, label, directory, receipt, env=environment)
+                messages = directory / f"{label}-messages.jsonl"
+                run([*command, "--message-format=json"], label, directory, receipt,
+                    env=environment, stdout_path=messages)
+                test_messages.append(messages)
+            qualify_executed_consumer_outputs(registrations, test_messages, directory, environment, receipt)
             run(["cargo", "+1.99.0", "test", "-p", "compact", "--lib", "--bins",
                  "--all-features", "--locked"],
                 "compact-cli-unit-tests", directory, receipt, env=environment)
@@ -573,8 +692,12 @@ def main() -> int:
                 env=environment)
             run_required_proof_gates(directory, snapshot, environment, receipt)
         elif not args.skip_cargo:
-            run(["cargo", "+1.99.0", "test", "--locked", *sum((["-p", name] for name in packages), [])],
-                "selected-cargo-tests", directory, receipt, env=environment)
+            if packages:
+                messages = directory / "selected-cargo-tests-messages.jsonl"
+                run(["cargo", "+1.99.0", "test", "--locked", "--all-targets", "--all-features",
+                     "--message-format=json", *sum((["-p", name] for name in sorted(set(packages))), [])],
+                    "selected-cargo-tests", directory, receipt, env=environment, stdout_path=messages)
+                qualify_executed_consumer_outputs(registrations, [messages], directory, environment, receipt)
         if git_head() != head:
             raise GateError("git HEAD changed during gate")
         for component in ("compiler", "scheme"):
@@ -583,13 +706,30 @@ def main() -> int:
         for entry in receipt["fixtures"]:
             for key, hash_key in (("source", "source_sha256"),
                                   ("fixture", "fixture_sha256")):
+                if key not in entry:
+                    continue
                 if sha256(ROOT / entry[key]) != entry[hash_key]:
                     raise GateError(f"{entry[key]} changed during gate")
+            if sha256(Path(entry["generated"])) != entry["generated_sha256"]:
+                raise GateError(f"generated source changed during gate: {entry['source']}")
+        if source_consumer_gate.check_input_fingerprints(registrations) != receipt["source_registry"]["input_fingerprints"]:
+            raise GateError("registered source/consumer authority changed during gate")
+        if sha256(Path(receipt["source_registry"]["path"])) != receipt["source_registry"]["sha256"]:
+            raise GateError("source registry changed during gate")
+        for path, pin in receipt["declaration_baselines"].items():
+            if sha256(Path(path)) != pin:
+                raise GateError(f"declaration baseline changed during gate: {path}")
+        for entry in receipt.get("executed_consumer_bindings", []):
+            for binding in entry["compiled_targets"]:
+                for key, pin in (("artifact", "artifact_sha256"), ("depfile", "depfile_sha256"),
+                                 ("generated_artifact", "generated_sha256")):
+                    if sha256(Path(binding[key])) != binding[pin]:
+                        raise GateError(f"executed consumer evidence changed during gate: {binding[key]}")
         receipt["working_tree_after"] = dirty_paths()
         finish_build_input_receipt(receipt, environment)
         receipt["status"] = "passed"
         print(f"local parity {receipt['mode']} passed: {len(selected)} fixtures, "
-              f"{receipt['capability_summary']['recorded']}/"
+              f"{receipt['capability_summary']['proof_eligible_recorded']}/"
               f"{receipt['capability_summary']['proof_eligible']} proof-required recorded, "
               f"{receipt['capability_summary']['nonproof_native_only']} nonproof native-only; "
               f"receipt {directory / 'receipt.json'}")

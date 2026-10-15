@@ -31,6 +31,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         path: impl Into<LedgerPath>,
         value: T,
     ) -> Result<Self, CompactError> {
+        value.validate_cell_value()?;
         self.apply_checked_verify_program(ledger::merkle_insert_program(path, value))
     }
 
@@ -58,6 +59,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         path: impl Into<LedgerPath>,
         value: T,
     ) -> Result<Self, CompactError> {
+        value.validate_cell_value()?;
         self.apply_checked_verify_program(ledger::historic_merkle_insert_program(path, value))
     }
 
@@ -94,6 +96,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         value: T,
         position: crate::BoundedUint<{ u64::MAX as u128 }>,
     ) -> Result<Self, CompactError> {
+        value.validate_cell_value()?;
         self.apply_checked_verify_program(ledger::merkle_insert_index_program(
             path,
             value,
@@ -120,10 +123,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         path: impl Into<LedgerPath>,
         position: crate::BoundedUint<{ u64::MAX as u128 }>,
     ) -> Result<Self, CompactError> {
-        self.apply_checked_verify_program(ledger::merkle_insert_index_default_program::<T, D>(
-            path,
-            position.value() as u64,
-        ))
+        self.insert_merkle_index(path, T::default(), position)
     }
 
     pub fn insert_historic_merkle_index<T: CellValue>(
@@ -132,6 +132,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         value: T,
         position: crate::BoundedUint<{ u64::MAX as u128 }>,
     ) -> Result<Self, CompactError> {
+        value.validate_cell_value()?;
         self.apply_checked_verify_program(ledger::historic_merkle_insert_index_program(
             path,
             value,
@@ -158,10 +159,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         path: impl Into<LedgerPath>,
         position: crate::BoundedUint<{ u64::MAX as u128 }>,
     ) -> Result<Self, CompactError> {
-        self.apply_checked_verify_program(ledger::historic_merkle_insert_index_default_program::<
-            T,
-            D,
-        >(path, position.value() as u64))
+        self.insert_historic_merkle_index(path, T::default(), position)
     }
 
     /// Read plain-tree fullness through the ledger VM and retain the observed

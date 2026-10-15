@@ -28,6 +28,41 @@ use crate::recording::RecordingFrame;
 ///
 /// This marker has no value codec. It lets a generated slot name the nested
 /// structure while keeping scalar lookup and insert methods unavailable.
+///
+/// Removing a nested child does not require a scalar codec. Scalar access stays
+/// unavailable, including its recorded forms:
+///
+/// ```compile_fail,E0599
+/// use midnight_compact_runtime::{Field, context::CircuitContext, slots::{MapNode, MapSlot}};
+/// fn scalar_lookup(context: CircuitContext<()>) {
+///     let slot = MapSlot::<bool, MapNode<bool, Field>>::new(&[0]);
+///     slot.lookup(context, true);
+/// }
+/// ```
+///
+/// ```compile_fail,E0599
+/// use midnight_compact_runtime::{Field, context::CircuitContext, slots::{MapNode, MapSlot}};
+/// fn scalar_insert(context: CircuitContext<()>, value: MapNode<bool, Field>) {
+///     let slot = MapSlot::<bool, MapNode<bool, Field>>::new(&[0]);
+///     slot.insert(context, true, value);
+/// }
+/// ```
+///
+/// ```compile_fail,E0599
+/// use midnight_compact_runtime::{Field, recording::RecordingFrame, slots::{MapNode, MapSlot}};
+/// fn scalar_lookup(frame: RecordingFrame<()>) {
+///     let slot = MapSlot::<bool, MapNode<bool, Field>>::new(&[0]);
+///     slot.record_lookup(frame, true);
+/// }
+/// ```
+///
+/// ```compile_fail,E0599
+/// use midnight_compact_runtime::{Field, recording::RecordingFrame, slots::{MapNode, MapSlot}};
+/// fn scalar_insert(frame: RecordingFrame<()>, value: MapNode<bool, Field>) {
+///     let slot = MapSlot::<bool, MapNode<bool, Field>>::new(&[0]);
+///     slot.record_insert(frame, true, value);
+/// }
+/// ```
 #[derive(Clone, Copy, Debug)]
 pub struct MapNode<K, V>(PhantomData<fn() -> (K, V)>);
 
@@ -58,6 +93,14 @@ impl<K: CellValue, V> MapSlot<K, V> {
         context.member_map(self.path, key)
     }
 
+    pub fn remove<Private, D: DB>(
+        self,
+        context: CircuitContext<Private, D>,
+        key: K,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        context.remove_map(self.path, key)
+    }
+
     pub fn size<Private, D: DB>(
         self,
         context: CircuitContext<Private, D>,
@@ -81,6 +124,14 @@ impl<K: CellValue, V> MapSlot<K, V> {
         K: Clone,
     {
         frame.member_map(self.path, key)
+    }
+
+    pub fn record_remove<Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+        key: K,
+    ) -> Result<RecordingFrame<Private, D>, CompactError> {
+        frame.remove_map(self.path, key)
     }
 
     pub fn record_size<Private, D: DB>(
@@ -135,14 +186,6 @@ impl<K: CellValue, V: CellValue> MapSlot<K, V> {
         self.insert(context, key, V::default())
     }
 
-    pub fn remove<Private, D: DB>(
-        self,
-        context: CircuitContext<Private, D>,
-        key: K,
-    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
-        context.remove_map(self.path, key)
-    }
-
     pub fn reset<Private, D: DB>(
         self,
         context: CircuitContext<Private, D>,
@@ -176,14 +219,6 @@ impl<K: CellValue, V: CellValue> MapSlot<K, V> {
         V: Default,
     {
         self.record_insert(frame, key, V::default())
-    }
-
-    pub fn record_remove<Private, D: DB>(
-        self,
-        frame: RecordingFrame<Private, D>,
-        key: K,
-    ) -> Result<RecordingFrame<Private, D>, CompactError> {
-        frame.remove_map(self.path, key)
     }
 
     pub fn record_reset<Private, D: DB>(

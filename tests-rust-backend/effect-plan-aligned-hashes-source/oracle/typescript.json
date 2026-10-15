@@ -1,0 +1,3499 @@
+{
+  "status": "passed",
+  "scope": "Fresh same-source official TypeScript execution. Hash answers independently computed via official aligned APIs; not published cryptographic vectors. No proof execution in this capture.",
+  "node": "v24.14.0",
+  "files": {
+    "artifact:sha256:675d6f3b04d157a32c5355fc820de1300e0d8a856024c69322ffe76dc9948599/effect_plan_aligned_hashes.compact": "675d6f3b04d157a32c5355fc820de1300e0d8a856024c69322ffe76dc9948599",
+    "artifact:sha256:957d0ca123aec91b89fd18fa47eb1f260558fdc7bb66fd3b4e3bed4075ed3b81/capture.mjs": "957d0ca123aec91b89fd18fa47eb1f260558fdc7bb66fd3b4e3bed4075ed3b81",
+    "artifact:sha256:a9c9c470ed65d1b44968cac710263235174a26de6b2175cd0f6de55a77bc32b3/index.js": "a9c9c470ed65d1b44968cac710263235174a26de6b2175cd0f6de55a77bc32b3",
+    "artifact:sha256:3451aee0b050702a99cd327fdf3163be35484003089f299111146bb3b676401c/compact-rust-ir.json": "3451aee0b050702a99cd327fdf3163be35484003089f299111146bb3b676401c",
+    "artifact:sha256:38f113eeb408c9b7d51fc67c5688f3b9fcceff4bba0047b79413bbe0ad1d45b0/package.json": "38f113eeb408c9b7d51fc67c5688f3b9fcceff4bba0047b79413bbe0ad1d45b0",
+    "artifact:sha256:d0e454d3b50799efdd8f7e7e1c2920c903309d7cf4f87f703b1b79f9f889c5f3/package-lock.json": "d0e454d3b50799efdd8f7e7e1c2920c903309d7cf4f87f703b1b79f9f889c5f3",
+    "artifact:sha256:17f6c82a42a77ab73eccd057dfcd5741aa20f8471a0a5bb539558390dc9b490d/built-ins.d.ts": "17f6c82a42a77ab73eccd057dfcd5741aa20f8471a0a5bb539558390dc9b490d",
+    "artifact:sha256:db88e0bf0c11d081fcd8ba05ee7390cad8238be4c17dddc7da092219585c7cb7/built-ins.js": "db88e0bf0c11d081fcd8ba05ee7390cad8238be4c17dddc7da092219585c7cb7",
+    "artifact:sha256:3e5a4857700b2745ef48c95c774281a2bb10f75c5d3de86c4b749c5cf6b18d92/built-ins.js.map": "3e5a4857700b2745ef48c95c774281a2bb10f75c5d3de86c4b749c5cf6b18d92",
+    "artifact:sha256:6137fb1c69bd6b5a8cbcd21ef8578446ecc14a440465a3a72ef270491f4663bd/casts.d.ts": "6137fb1c69bd6b5a8cbcd21ef8578446ecc14a440465a3a72ef270491f4663bd",
+    "artifact:sha256:340072713fcb032b22209f226034aefb4cbb8401f914b77758fe36600ea1b2c1/casts.js": "340072713fcb032b22209f226034aefb4cbb8401f914b77758fe36600ea1b2c1",
+    "artifact:sha256:1fa728f3b8e483f17f2f850e87b2cdd734c02547530c468746572fc74dd06ba8/casts.js.map": "1fa728f3b8e483f17f2f850e87b2cdd734c02547530c468746572fc74dd06ba8",
+    "artifact:sha256:2024083e64d9d08c358d93f02701b6eaaddf0f2432171fafad0f748ca1efe3ce/circuit-context.d.ts": "2024083e64d9d08c358d93f02701b6eaaddf0f2432171fafad0f748ca1efe3ce",
+    "artifact:sha256:1d4e04503589ad7bef59a9cc9e5386c6ffe645c9503fbb2cd11ad26aeba95a95/circuit-context.js": "1d4e04503589ad7bef59a9cc9e5386c6ffe645c9503fbb2cd11ad26aeba95a95",
+    "artifact:sha256:ba0f8977ac3f1258721e5fd6840b2f9e84acdbcbfa740e9ba60ca1a085388f45/circuit-context.js.map": "ba0f8977ac3f1258721e5fd6840b2f9e84acdbcbfa740e9ba60ca1a085388f45",
+    "artifact:sha256:2033d058f593fcdbabd62fb3d8604032f27b22ea00a66379462846d6df13a202/compact-types.d.ts": "2033d058f593fcdbabd62fb3d8604032f27b22ea00a66379462846d6df13a202",
+    "artifact:sha256:5cdccdb9fde9fdb297459588f33ce093ad557584b35b480819e0d930ce1bd73b/compact-types.js": "5cdccdb9fde9fdb297459588f33ce093ad557584b35b480819e0d930ce1bd73b",
+    "artifact:sha256:cd3e264dbd6d4b7ac5a84d059ea8d21a983602de5c5e9dff98c8dfbecfc23260/compact-types.js.map": "cd3e264dbd6d4b7ac5a84d059ea8d21a983602de5c5e9dff98c8dfbecfc23260",
+    "artifact:sha256:52f566aa6b460b2c4663995bf853719d7c07d88cbffb998ffd6ac55af8f0506c/constants.d.ts": "52f566aa6b460b2c4663995bf853719d7c07d88cbffb998ffd6ac55af8f0506c",
+    "artifact:sha256:199ecbf52063edee09d388961ee9d65725e88fd5f005afe2172a994535b525d9/constants.js": "199ecbf52063edee09d388961ee9d65725e88fd5f005afe2172a994535b525d9",
+    "artifact:sha256:fea28653cfe09986eda8e8067131d89701331bc003115f56f9b3a003b1574a1c/constants.js.map": "fea28653cfe09986eda8e8067131d89701331bc003115f56f9b3a003b1574a1c",
+    "artifact:sha256:b28ebd976066cae55ce1298494622f5bdaee4586f48d159d4b88c83d02f37487/constructor-context.d.ts": "b28ebd976066cae55ce1298494622f5bdaee4586f48d159d4b88c83d02f37487",
+    "artifact:sha256:61908ad347c97a2517b62e4813647062a79c23743aa591075772d823c810d004/constructor-context.js": "61908ad347c97a2517b62e4813647062a79c23743aa591075772d823c810d004",
+    "artifact:sha256:2cd3c1e6fb6e5be0962a71ca5c11b3243e8ec10091bd9a7985aadcec601751eb/constructor-context.js.map": "2cd3c1e6fb6e5be0962a71ca5c11b3243e8ec10091bd9a7985aadcec601751eb",
+    "artifact:sha256:d0da5cc956fae48a34daa1fd217d40b46031abc47ad7e68fef35e7780c12cae0/contract-dependencies.d.ts": "d0da5cc956fae48a34daa1fd217d40b46031abc47ad7e68fef35e7780c12cae0",
+    "artifact:sha256:997be1d72c489ed128e0bf9e042feef3b5c88de4a378c7cec54a4887d390222d/contract-dependencies.js": "997be1d72c489ed128e0bf9e042feef3b5c88de4a378c7cec54a4887d390222d",
+    "artifact:sha256:44bcbfa1df11816535b9a33f8c3a08e0885dfea43b71f459376bf6c0752e2834/contract-dependencies.js.map": "44bcbfa1df11816535b9a33f8c3a08e0885dfea43b71f459376bf6c0752e2834",
+    "artifact:sha256:bb2592736f1915023e2409b620e0f7bbdfec84318236d4e01722e5e6fefa64a8/error.d.ts": "bb2592736f1915023e2409b620e0f7bbdfec84318236d4e01722e5e6fefa64a8",
+    "artifact:sha256:d8c33a222146c73d2ee59de1cce20d5ec937046b7be8e62fd196f642a3d5b893/error.js": "d8c33a222146c73d2ee59de1cce20d5ec937046b7be8e62fd196f642a3d5b893",
+    "artifact:sha256:cdb63cdeff9c755fb3451ee1a978f2c39196d95972b56ca90d2e5146ec0d463b/error.js.map": "cdb63cdeff9c755fb3451ee1a978f2c39196d95972b56ca90d2e5146ec0d463b",
+    "artifact:sha256:82b7786199a65ab3e72b094c6aafa3b31a365a7cebe7168bcdb427551cac163e/index.d.ts": "82b7786199a65ab3e72b094c6aafa3b31a365a7cebe7168bcdb427551cac163e",
+    "artifact:sha256:c55a8ab3e7533b3fa6e27b66ab742c783d912d5a00d6ecc23d9f6142ddb0ecde/index.js": "c55a8ab3e7533b3fa6e27b66ab742c783d912d5a00d6ecc23d9f6142ddb0ecde",
+    "artifact:sha256:02ded8d4606f1585301c8825e547664446e33333b57c7bc8f1012aed51682241/index.js.map": "02ded8d4606f1585301c8825e547664446e33333b57c7bc8f1012aed51682241",
+    "artifact:sha256:395e31cc65a6c2d2628650ac9fa2588ca5b7f3d224e2207b3b6b02505e36de04/proof-data.d.ts": "395e31cc65a6c2d2628650ac9fa2588ca5b7f3d224e2207b3b6b02505e36de04",
+    "artifact:sha256:0ebb8586d5144654b35b30d191dffd2308dc31d4ddd6d05277ef3d06015d2d29/proof-data.js": "0ebb8586d5144654b35b30d191dffd2308dc31d4ddd6d05277ef3d06015d2d29",
+    "artifact:sha256:dd40c6c8b1d62f35d707171f8be8f73b39f0bc450f9022bde46221ca955919a3/proof-data.js.map": "dd40c6c8b1d62f35d707171f8be8f73b39f0bc450f9022bde46221ca955919a3",
+    "artifact:sha256:3fdbacd5d724cd6160297f979b968643417bbfe3ad5368b51db338649f7b3280/utils.d.ts": "3fdbacd5d724cd6160297f979b968643417bbfe3ad5368b51db338649f7b3280",
+    "artifact:sha256:b22b8551d9bd2a941af9a14fb7c8505dae624698fcd175732a8f3b1b0a2a944a/utils.js": "b22b8551d9bd2a941af9a14fb7c8505dae624698fcd175732a8f3b1b0a2a944a",
+    "artifact:sha256:145254c55643418ae6c9da040354fc620bed18c602428dd8aaad6335f331e5c1/utils.js.map": "145254c55643418ae6c9da040354fc620bed18c602428dd8aaad6335f331e5c1",
+    "artifact:sha256:4d0a01cef17be4ba1c5293173073c7c2afecde1e5af2964d79597a2e3d806a93/version.d.ts": "4d0a01cef17be4ba1c5293173073c7c2afecde1e5af2964d79597a2e3d806a93",
+    "artifact:sha256:f1773226cd68c2331666af6d99f47a00d85762035e2d1a98f9ddd9d8d16c1e6e/version.js": "f1773226cd68c2331666af6d99f47a00d85762035e2d1a98f9ddd9d8d16c1e6e",
+    "artifact:sha256:fe1661c369840539160b32fec1d2dc152fc30e0e1ca554570a0198f0cdf09c29/version.js.map": "fe1661c369840539160b32fec1d2dc152fc30e0e1ca554570a0198f0cdf09c29",
+    "artifact:sha256:13fa81acd2bae844ecb807a8836ead4d2ed72d7a58e34e057f8ab3da5216286d/witness.d.ts": "13fa81acd2bae844ecb807a8836ead4d2ed72d7a58e34e057f8ab3da5216286d",
+    "artifact:sha256:41ee3eef3faea8f4dbe6aa92e614ba531d2525bd19685d5956421e00fa4ac3bb/witness.js": "41ee3eef3faea8f4dbe6aa92e614ba531d2525bd19685d5956421e00fa4ac3bb",
+    "artifact:sha256:bc7647301ee18e1dcc367aff0f13f1ffb394baab6355328f008767fde3371203/witness.js.map": "bc7647301ee18e1dcc367aff0f13f1ffb394baab6355328f008767fde3371203",
+    "artifact:sha256:ecad6ad12815cfe3aa18a72e4d081fcd291388f5d4f9f03ddbfc36d74ac378d5/zswap.d.ts": "ecad6ad12815cfe3aa18a72e4d081fcd291388f5d4f9f03ddbfc36d74ac378d5",
+    "artifact:sha256:1d98e2a9f4f2840b8b3eb46025e1254cb581286506324cb5084623161b6e9b8f/zswap.js": "1d98e2a9f4f2840b8b3eb46025e1254cb581286506324cb5084623161b6e9b8f",
+    "artifact:sha256:9b4381e42af882bd6523bb9c196ac48411ffb7eee92f8f92492f7d5a886cb750/zswap.js.map": "9b4381e42af882bd6523bb9c196ac48411ffb7eee92f8f92492f7d5a886cb750",
+    "artifact:sha256:f70e71923b7ddd69926a6f26674a26adbb7e6bc1085512a7e9dc05c071588442/midnight_onchain_runtime_wasm.js": "f70e71923b7ddd69926a6f26674a26adbb7e6bc1085512a7e9dc05c071588442",
+    "artifact:sha256:1b1264f59bad75fa215eadb1a9308b5b25128e676413845ba6c65dfc4261c35f/midnight_onchain_runtime_wasm_bg.js": "1b1264f59bad75fa215eadb1a9308b5b25128e676413845ba6c65dfc4261c35f",
+    "artifact:sha256:edeea319fe8b1dca486a3aeaa051e64d4b7fb96d83b5d2bb15e68fc1ce23369e/midnight_onchain_runtime_wasm_bg.wasm": "edeea319fe8b1dca486a3aeaa051e64d4b7fb96d83b5d2bb15e68fc1ce23369e",
+    "artifact:sha256:73678c901cae14ae9bede7f6ec0ce8ff723ad897192542297642111ffd97c932/midnight_onchain_runtime_wasm_fs.js": "73678c901cae14ae9bede7f6ec0ce8ff723ad897192542297642111ffd97c932",
+    "artifact:sha256:31d0d38a81d910c9154599494071b0fd4e99e354b34ebb386399a163cf0c627c/onchain-runtime-v3.d.ts": "31d0d38a81d910c9154599494071b0fd4e99e354b34ebb386399a163cf0c627c",
+    "artifact:sha256:1d1864e418678e065bd68fe3bb1f2f765de59f11b18d2750bea673682d9f4ea0/package-lock.json": "1d1864e418678e065bd68fe3bb1f2f765de59f11b18d2750bea673682d9f4ea0",
+    "artifact:sha256:bea88fd56d85fdc8178945a784993980981fd7987e39018f9c0b3b25b3134f54/package.json": "bea88fd56d85fdc8178945a784993980981fd7987e39018f9c0b3b25b3134f54"
+  },
+  "knownAnswers": [
+    {
+      "input": "0",
+      "point": {
+        "x": "39286861825592668938857228015519842367088173695839866656671141249519927733429",
+        "y": "25837152904870786417997093073262510224435471563289722119773299584367818633578"
+      },
+      "digest": [
+        102,
+        104,
+        122,
+        173,
+        248,
+        98,
+        189,
+        119,
+        108,
+        143,
+        193,
+        139,
+        142,
+        159,
+        142,
+        32,
+        8,
+        151,
+        20,
+        133,
+        110,
+        226,
+        51,
+        179,
+        144,
+        42,
+        89,
+        29,
+        13,
+        95,
+        41,
+        37
+      ]
+    },
+    {
+      "input": "1",
+      "point": {
+        "x": "8529850210595416629938472005096683087104554224588475444533605324205958182045",
+        "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+      },
+      "digest": [
+        1,
+        208,
+        250,
+        189,
+        37,
+        31,
+        203,
+        190,
+        43,
+        147,
+        180,
+        185,
+        39,
+        178,
+        106,
+        210,
+        161,
+        169,
+        144,
+        119,
+        21,
+        46,
+        69,
+        222,
+        209,
+        230,
+        120,
+        175,
+        164,
+        93,
+        190,
+        197
+      ]
+    },
+    {
+      "input": "2",
+      "point": {
+        "x": "21780080344883166865218917222319727000259021450611938055380990511032243135458",
+        "y": "22757159113265777120680378933407519492841368476988884532182649982532970069446"
+      },
+      "digest": [
+        87,
+        120,
+        249,
+        133,
+        219,
+        117,
+        76,
+        102,
+        40,
+        105,
+        31,
+        86,
+        250,
+        218,
+        229,
+        12,
+        101,
+        253,
+        219,
+        232,
+        235,
+        46,
+        147,
+        3,
+        150,
+        51,
+        254,
+        250,
+        5,
+        212,
+        94,
+        49
+      ]
+    },
+    {
+      "input": "17",
+      "point": {
+        "x": "42023300770689419405121637395511816239266073898743270890570596423463478477220",
+        "y": "44818593998183481071449505303786937835464176216948707129549205859483743053764"
+      },
+      "digest": [
+        52,
+        57,
+        186,
+        32,
+        231,
+        51,
+        93,
+        157,
+        130,
+        159,
+        24,
+        63,
+        238,
+        109,
+        242,
+        240,
+        165,
+        224,
+        109,
+        183,
+        65,
+        64,
+        213,
+        44,
+        3,
+        165,
+        83,
+        209,
+        128,
+        35,
+        137,
+        30
+      ]
+    }
+  ],
+  "caseCount": 24,
+  "rows": [
+    {
+      "id": "close-0",
+      "circuit": "close",
+      "value": "0",
+      "other": "0",
+      "selected": true,
+      "fail": null,
+      "mismatch": null,
+      "args": [
+        "0"
+      ],
+      "events": [
+        [
+          "expectedPoint",
+          5,
+          "0"
+        ],
+        [
+          "expectedDigest",
+          6,
+          "0"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "510000000",
+        "computeTime": "3823311622",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "status": "success",
+      "result": [],
+      "privateState": 7,
+      "calls": "1",
+      "proofData": {
+        "input": {
+          "value": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [],
+          "alignment": []
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": [
+          {
+            "value": [
+              [
+                181,
+                172,
+                24,
+                151,
+                203,
+                228,
+                146,
+                4,
+                2,
+                128,
+                250,
+                4,
+                153,
+                188,
+                21,
+                146,
+                7,
+                37,
+                18,
+                253,
+                250,
+                198,
+                239,
+                89,
+                93,
+                60,
+                56,
+                63,
+                103,
+                147,
+                219,
+                86
+              ],
+              [
+                106,
+                241,
+                106,
+                215,
+                138,
+                46,
+                180,
+                146,
+                169,
+                64,
+                30,
+                71,
+                66,
+                170,
+                229,
+                118,
+                12,
+                102,
+                113,
+                191,
+                35,
+                36,
+                251,
+                176,
+                39,
+                80,
+                193,
+                181,
+                112,
+                79,
+                31,
+                57
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              },
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              }
+            ]
+          },
+          {
+            "value": [
+              [
+                102,
+                104,
+                122,
+                173,
+                248,
+                98,
+                189,
+                119,
+                108,
+                143,
+                193,
+                139,
+                142,
+                159,
+                142,
+                32,
+                8,
+                151,
+                20,
+                133,
+                110,
+                226,
+                51,
+                179,
+                144,
+                42,
+                89,
+                29,
+                13,
+                95,
+                41,
+                37
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "bytes",
+                  "length": 32
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      }
+    },
+    {
+      "id": "close_hash-0",
+      "circuit": "close_hash",
+      "value": "0",
+      "other": "0",
+      "selected": true,
+      "fail": null,
+      "mismatch": null,
+      "args": [
+        "0"
+      ],
+      "events": [
+        [
+          "expectedDigest",
+          5,
+          "0"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "340000000",
+        "computeTime": "2573396769",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "status": "success",
+      "result": [],
+      "privateState": 6,
+      "calls": "1",
+      "proofData": {
+        "input": {
+          "value": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [],
+          "alignment": []
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": [
+          {
+            "value": [
+              [
+                102,
+                104,
+                122,
+                173,
+                248,
+                98,
+                189,
+                119,
+                108,
+                143,
+                193,
+                139,
+                142,
+                159,
+                142,
+                32,
+                8,
+                151,
+                20,
+                133,
+                110,
+                226,
+                51,
+                179,
+                144,
+                42,
+                89,
+                29,
+                13,
+                95,
+                41,
+                37
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "bytes",
+                  "length": 32
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      }
+    },
+    {
+      "id": "hashes-0",
+      "circuit": "hashes",
+      "value": "0",
+      "other": "0",
+      "selected": true,
+      "fail": null,
+      "mismatch": null,
+      "args": [
+        true
+      ],
+      "events": [
+        [
+          "curveInput",
+          5,
+          "1"
+        ],
+        [
+          "hashInput",
+          6,
+          "1"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "510000000",
+        "computeTime": "3823311622",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "status": "success",
+      "result": {
+        "x": "39286861825592668938857228015519842367088173695839866656671141249519927733429",
+        "digest": [
+          102,
+          104,
+          122,
+          173,
+          248,
+          98,
+          189,
+          119,
+          108,
+          143,
+          193,
+          139,
+          142,
+          159,
+          142,
+          32,
+          8,
+          151,
+          20,
+          133,
+          110,
+          226,
+          51,
+          179,
+          144,
+          42,
+          89,
+          29,
+          13,
+          95,
+          41,
+          37
+        ]
+      },
+      "privateState": 7,
+      "calls": "1",
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              181,
+              172,
+              24,
+              151,
+              203,
+              228,
+              146,
+              4,
+              2,
+              128,
+              250,
+              4,
+              153,
+              188,
+              21,
+              146,
+              7,
+              37,
+              18,
+              253,
+              250,
+              198,
+              239,
+              89,
+              93,
+              60,
+              56,
+              63,
+              103,
+              147,
+              219,
+              86
+            ],
+            [
+              102,
+              104,
+              122,
+              173,
+              248,
+              98,
+              189,
+              119,
+              108,
+              143,
+              193,
+              139,
+              142,
+              159,
+              142,
+              32,
+              8,
+              151,
+              20,
+              133,
+              110,
+              226,
+              51,
+              179,
+              144,
+              42,
+              89,
+              29,
+              13,
+              95,
+              41,
+              37
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 32
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": [
+          {
+            "value": [
+              []
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              }
+            ]
+          },
+          {
+            "value": [
+              []
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      }
+    },
+    {
+      "id": "hash_only-0",
+      "circuit": "hash_only",
+      "value": "0",
+      "other": "0",
+      "selected": true,
+      "fail": null,
+      "mismatch": null,
+      "args": [
+        true
+      ],
+      "events": [
+        [
+          "hashInput",
+          5,
+          "1"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "340000000",
+        "computeTime": "2573396769",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "status": "success",
+      "result": {
+        "x": "0",
+        "digest": [
+          102,
+          104,
+          122,
+          173,
+          248,
+          98,
+          189,
+          119,
+          108,
+          143,
+          193,
+          139,
+          142,
+          159,
+          142,
+          32,
+          8,
+          151,
+          20,
+          133,
+          110,
+          226,
+          51,
+          179,
+          144,
+          42,
+          89,
+          29,
+          13,
+          95,
+          41,
+          37
+        ]
+      },
+      "privateState": 6,
+      "calls": "1",
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [],
+            [
+              102,
+              104,
+              122,
+              173,
+              248,
+              98,
+              189,
+              119,
+              108,
+              143,
+              193,
+              139,
+              142,
+              159,
+              142,
+              32,
+              8,
+              151,
+              20,
+              133,
+              110,
+              226,
+              51,
+              179,
+              144,
+              42,
+              89,
+              29,
+              13,
+              95,
+              41,
+              37
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 32
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": [
+          {
+            "value": [
+              []
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      }
+    },
+    {
+      "id": "close-1",
+      "circuit": "close",
+      "value": "1",
+      "other": "1",
+      "selected": true,
+      "fail": null,
+      "mismatch": null,
+      "args": [
+        "1"
+      ],
+      "events": [
+        [
+          "expectedPoint",
+          5,
+          "0"
+        ],
+        [
+          "expectedDigest",
+          6,
+          "0"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "510000000",
+        "computeTime": "3823311622",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "status": "success",
+      "result": [],
+      "privateState": 7,
+      "calls": "1",
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [],
+          "alignment": []
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": [
+          {
+            "value": [
+              [
+                157,
+                52,
+                201,
+                185,
+                204,
+                155,
+                101,
+                1,
+                10,
+                105,
+                33,
+                117,
+                104,
+                143,
+                190,
+                125,
+                12,
+                131,
+                178,
+                249,
+                240,
+                240,
+                108,
+                254,
+                120,
+                107,
+                228,
+                167,
+                96,
+                185,
+                219,
+                18
+              ],
+              [
+                17,
+                169,
+                199,
+                80,
+                148,
+                108,
+                92,
+                119,
+                108,
+                249,
+                200,
+                118,
+                27,
+                54,
+                239,
+                222,
+                17,
+                105,
+                237,
+                204,
+                41,
+                209,
+                198,
+                215,
+                185,
+                85,
+                130,
+                220,
+                150,
+                114,
+                176,
+                75
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              },
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              }
+            ]
+          },
+          {
+            "value": [
+              [
+                1,
+                208,
+                250,
+                189,
+                37,
+                31,
+                203,
+                190,
+                43,
+                147,
+                180,
+                185,
+                39,
+                178,
+                106,
+                210,
+                161,
+                169,
+                144,
+                119,
+                21,
+                46,
+                69,
+                222,
+                209,
+                230,
+                120,
+                175,
+                164,
+                93,
+                190,
+                197
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "bytes",
+                  "length": 32
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      }
+    },
+    {
+      "id": "close_hash-1",
+      "circuit": "close_hash",
+      "value": "1",
+      "other": "1",
+      "selected": true,
+      "fail": null,
+      "mismatch": null,
+      "args": [
+        "1"
+      ],
+      "events": [
+        [
+          "expectedDigest",
+          5,
+          "0"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "340000000",
+        "computeTime": "2573396769",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "status": "success",
+      "result": [],
+      "privateState": 6,
+      "calls": "1",
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [],
+          "alignment": []
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": [
+          {
+            "value": [
+              [
+                1,
+                208,
+                250,
+                189,
+                37,
+                31,
+                203,
+                190,
+                43,
+                147,
+                180,
+                185,
+                39,
+                178,
+                106,
+                210,
+                161,
+                169,
+                144,
+                119,
+                21,
+                46,
+                69,
+                222,
+                209,
+                230,
+                120,
+                175,
+                164,
+                93,
+                190,
+                197
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "bytes",
+                  "length": 32
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      }
+    },
+    {
+      "id": "hashes-1",
+      "circuit": "hashes",
+      "value": "1",
+      "other": "1",
+      "selected": true,
+      "fail": null,
+      "mismatch": null,
+      "args": [
+        true
+      ],
+      "events": [
+        [
+          "curveInput",
+          5,
+          "1"
+        ],
+        [
+          "hashInput",
+          6,
+          "1"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "510000000",
+        "computeTime": "3823311622",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "status": "success",
+      "result": {
+        "x": "8529850210595416629938472005096683087104554224588475444533605324205958182045",
+        "digest": [
+          1,
+          208,
+          250,
+          189,
+          37,
+          31,
+          203,
+          190,
+          43,
+          147,
+          180,
+          185,
+          39,
+          178,
+          106,
+          210,
+          161,
+          169,
+          144,
+          119,
+          21,
+          46,
+          69,
+          222,
+          209,
+          230,
+          120,
+          175,
+          164,
+          93,
+          190,
+          197
+        ]
+      },
+      "privateState": 7,
+      "calls": "1",
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              157,
+              52,
+              201,
+              185,
+              204,
+              155,
+              101,
+              1,
+              10,
+              105,
+              33,
+              117,
+              104,
+              143,
+              190,
+              125,
+              12,
+              131,
+              178,
+              249,
+              240,
+              240,
+              108,
+              254,
+              120,
+              107,
+              228,
+              167,
+              96,
+              185,
+              219,
+              18
+            ],
+            [
+              1,
+              208,
+              250,
+              189,
+              37,
+              31,
+              203,
+              190,
+              43,
+              147,
+              180,
+              185,
+              39,
+              178,
+              106,
+              210,
+              161,
+              169,
+              144,
+              119,
+              21,
+              46,
+              69,
+              222,
+              209,
+              230,
+              120,
+              175,
+              164,
+              93,
+              190,
+              197
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 32
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": [
+          {
+            "value": [
+              [
+                1
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              }
+            ]
+          },
+          {
+            "value": [
+              [
+                1
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      }
+    },
+    {
+      "id": "hash_only-1",
+      "circuit": "hash_only",
+      "value": "1",
+      "other": "1",
+      "selected": true,
+      "fail": null,
+      "mismatch": null,
+      "args": [
+        true
+      ],
+      "events": [
+        [
+          "hashInput",
+          5,
+          "1"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "340000000",
+        "computeTime": "2573396769",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "status": "success",
+      "result": {
+        "x": "0",
+        "digest": [
+          1,
+          208,
+          250,
+          189,
+          37,
+          31,
+          203,
+          190,
+          43,
+          147,
+          180,
+          185,
+          39,
+          178,
+          106,
+          210,
+          161,
+          169,
+          144,
+          119,
+          21,
+          46,
+          69,
+          222,
+          209,
+          230,
+          120,
+          175,
+          164,
+          93,
+          190,
+          197
+        ]
+      },
+      "privateState": 6,
+      "calls": "1",
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [],
+            [
+              1,
+              208,
+              250,
+              189,
+              37,
+              31,
+              203,
+              190,
+              43,
+              147,
+              180,
+              185,
+              39,
+              178,
+              106,
+              210,
+              161,
+              169,
+              144,
+              119,
+              21,
+              46,
+              69,
+              222,
+              209,
+              230,
+              120,
+              175,
+              164,
+              93,
+              190,
+              197
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 32
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": [
+          {
+            "value": [
+              [
+                1
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      }
+    },
+    {
+      "id": "close-2",
+      "circuit": "close",
+      "value": "2",
+      "other": "2",
+      "selected": true,
+      "fail": null,
+      "mismatch": null,
+      "args": [
+        "2"
+      ],
+      "events": [
+        [
+          "expectedPoint",
+          5,
+          "0"
+        ],
+        [
+          "expectedDigest",
+          6,
+          "0"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "510000000",
+        "computeTime": "3823311622",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "status": "success",
+      "result": [],
+      "privateState": 7,
+      "calls": "1",
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              2
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [],
+          "alignment": []
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": [
+          {
+            "value": [
+              [
+                226,
+                35,
+                197,
+                157,
+                140,
+                239,
+                185,
+                229,
+                47,
+                118,
+                34,
+                2,
+                239,
+                117,
+                238,
+                80,
+                238,
+                2,
+                163,
+                44,
+                73,
+                166,
+                9,
+                220,
+                44,
+                247,
+                237,
+                198,
+                175,
+                22,
+                39,
+                48
+              ],
+              [
+                198,
+                189,
+                123,
+                125,
+                181,
+                105,
+                122,
+                171,
+                138,
+                80,
+                184,
+                160,
+                229,
+                89,
+                26,
+                239,
+                50,
+                80,
+                181,
+                247,
+                60,
+                160,
+                10,
+                188,
+                82,
+                216,
+                12,
+                141,
+                121,
+                24,
+                80,
+                50
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              },
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              }
+            ]
+          },
+          {
+            "value": [
+              [
+                87,
+                120,
+                249,
+                133,
+                219,
+                117,
+                76,
+                102,
+                40,
+                105,
+                31,
+                86,
+                250,
+                218,
+                229,
+                12,
+                101,
+                253,
+                219,
+                232,
+                235,
+                46,
+                147,
+                3,
+                150,
+                51,
+                254,
+                250,
+                5,
+                212,
+                94,
+                49
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "bytes",
+                  "length": 32
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      }
+    },
+    {
+      "id": "close_hash-2",
+      "circuit": "close_hash",
+      "value": "2",
+      "other": "2",
+      "selected": true,
+      "fail": null,
+      "mismatch": null,
+      "args": [
+        "2"
+      ],
+      "events": [
+        [
+          "expectedDigest",
+          5,
+          "0"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "340000000",
+        "computeTime": "2573396769",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "status": "success",
+      "result": [],
+      "privateState": 6,
+      "calls": "1",
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              2
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [],
+          "alignment": []
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": [
+          {
+            "value": [
+              [
+                87,
+                120,
+                249,
+                133,
+                219,
+                117,
+                76,
+                102,
+                40,
+                105,
+                31,
+                86,
+                250,
+                218,
+                229,
+                12,
+                101,
+                253,
+                219,
+                232,
+                235,
+                46,
+                147,
+                3,
+                150,
+                51,
+                254,
+                250,
+                5,
+                212,
+                94,
+                49
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "bytes",
+                  "length": 32
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      }
+    },
+    {
+      "id": "hashes-2",
+      "circuit": "hashes",
+      "value": "2",
+      "other": "2",
+      "selected": true,
+      "fail": null,
+      "mismatch": null,
+      "args": [
+        true
+      ],
+      "events": [
+        [
+          "curveInput",
+          5,
+          "1"
+        ],
+        [
+          "hashInput",
+          6,
+          "1"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "510000000",
+        "computeTime": "3823311622",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "status": "success",
+      "result": {
+        "x": "21780080344883166865218917222319727000259021450611938055380990511032243135458",
+        "digest": [
+          87,
+          120,
+          249,
+          133,
+          219,
+          117,
+          76,
+          102,
+          40,
+          105,
+          31,
+          86,
+          250,
+          218,
+          229,
+          12,
+          101,
+          253,
+          219,
+          232,
+          235,
+          46,
+          147,
+          3,
+          150,
+          51,
+          254,
+          250,
+          5,
+          212,
+          94,
+          49
+        ]
+      },
+      "privateState": 7,
+      "calls": "1",
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              226,
+              35,
+              197,
+              157,
+              140,
+              239,
+              185,
+              229,
+              47,
+              118,
+              34,
+              2,
+              239,
+              117,
+              238,
+              80,
+              238,
+              2,
+              163,
+              44,
+              73,
+              166,
+              9,
+              220,
+              44,
+              247,
+              237,
+              198,
+              175,
+              22,
+              39,
+              48
+            ],
+            [
+              87,
+              120,
+              249,
+              133,
+              219,
+              117,
+              76,
+              102,
+              40,
+              105,
+              31,
+              86,
+              250,
+              218,
+              229,
+              12,
+              101,
+              253,
+              219,
+              232,
+              235,
+              46,
+              147,
+              3,
+              150,
+              51,
+              254,
+              250,
+              5,
+              212,
+              94,
+              49
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 32
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": [
+          {
+            "value": [
+              [
+                2
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              }
+            ]
+          },
+          {
+            "value": [
+              [
+                2
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      }
+    },
+    {
+      "id": "hash_only-2",
+      "circuit": "hash_only",
+      "value": "2",
+      "other": "2",
+      "selected": true,
+      "fail": null,
+      "mismatch": null,
+      "args": [
+        true
+      ],
+      "events": [
+        [
+          "hashInput",
+          5,
+          "1"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "340000000",
+        "computeTime": "2573396769",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "status": "success",
+      "result": {
+        "x": "0",
+        "digest": [
+          87,
+          120,
+          249,
+          133,
+          219,
+          117,
+          76,
+          102,
+          40,
+          105,
+          31,
+          86,
+          250,
+          218,
+          229,
+          12,
+          101,
+          253,
+          219,
+          232,
+          235,
+          46,
+          147,
+          3,
+          150,
+          51,
+          254,
+          250,
+          5,
+          212,
+          94,
+          49
+        ]
+      },
+      "privateState": 6,
+      "calls": "1",
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [],
+            [
+              87,
+              120,
+              249,
+              133,
+              219,
+              117,
+              76,
+              102,
+              40,
+              105,
+              31,
+              86,
+              250,
+              218,
+              229,
+              12,
+              101,
+              253,
+              219,
+              232,
+              235,
+              46,
+              147,
+              3,
+              150,
+              51,
+              254,
+              250,
+              5,
+              212,
+              94,
+              49
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 32
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": [
+          {
+            "value": [
+              [
+                2
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      }
+    },
+    {
+      "id": "hashes-ordered-distinct",
+      "circuit": "hashes",
+      "value": "1",
+      "other": "2",
+      "selected": true,
+      "fail": null,
+      "mismatch": null,
+      "args": [
+        true
+      ],
+      "events": [
+        [
+          "curveInput",
+          5,
+          "1"
+        ],
+        [
+          "hashInput",
+          6,
+          "1"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "510000000",
+        "computeTime": "3823311622",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "status": "success",
+      "result": {
+        "x": "8529850210595416629938472005096683087104554224588475444533605324205958182045",
+        "digest": [
+          87,
+          120,
+          249,
+          133,
+          219,
+          117,
+          76,
+          102,
+          40,
+          105,
+          31,
+          86,
+          250,
+          218,
+          229,
+          12,
+          101,
+          253,
+          219,
+          232,
+          235,
+          46,
+          147,
+          3,
+          150,
+          51,
+          254,
+          250,
+          5,
+          212,
+          94,
+          49
+        ]
+      },
+      "privateState": 7,
+      "calls": "1",
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              157,
+              52,
+              201,
+              185,
+              204,
+              155,
+              101,
+              1,
+              10,
+              105,
+              33,
+              117,
+              104,
+              143,
+              190,
+              125,
+              12,
+              131,
+              178,
+              249,
+              240,
+              240,
+              108,
+              254,
+              120,
+              107,
+              228,
+              167,
+              96,
+              185,
+              219,
+              18
+            ],
+            [
+              87,
+              120,
+              249,
+              133,
+              219,
+              117,
+              76,
+              102,
+              40,
+              105,
+              31,
+              86,
+              250,
+              218,
+              229,
+              12,
+              101,
+              253,
+              219,
+              232,
+              235,
+              46,
+              147,
+              3,
+              150,
+              51,
+              254,
+              250,
+              5,
+              212,
+              94,
+              49
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 32
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": [
+          {
+            "value": [
+              [
+                1
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              }
+            ]
+          },
+          {
+            "value": [
+              [
+                2
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      }
+    },
+    {
+      "id": "hashes-lazy",
+      "circuit": "hashes",
+      "value": "1",
+      "other": "2",
+      "selected": false,
+      "fail": "hashInput",
+      "mismatch": null,
+      "args": [
+        false
+      ],
+      "events": [],
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "status": "success",
+      "result": {
+        "x": "0",
+        "digest": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "privateState": 5,
+      "calls": "1",
+      "proofData": {
+        "input": {
+          "value": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [],
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 32
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      }
+    },
+    {
+      "id": "hashes-hash-refusal",
+      "circuit": "hashes",
+      "value": "1",
+      "other": "2",
+      "selected": true,
+      "fail": "hashInput",
+      "mismatch": null,
+      "args": [
+        true
+      ],
+      "events": [
+        [
+          "curveInput",
+          5,
+          "1"
+        ],
+        [
+          "hashInput",
+          6,
+          "1"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "510000000",
+        "computeTime": "3823311622",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "status": "refused",
+      "reason": "hashInput provider refused",
+      "error": "Error: hashInput provider refused"
+    },
+    {
+      "id": "hash_only-lazy",
+      "circuit": "hash_only",
+      "value": "1",
+      "other": "2",
+      "selected": false,
+      "fail": "hashInput",
+      "mismatch": null,
+      "args": [
+        false
+      ],
+      "events": [],
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "status": "success",
+      "result": {
+        "x": "0",
+        "digest": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "privateState": 5,
+      "calls": "1",
+      "proofData": {
+        "input": {
+          "value": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [],
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 32
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      }
+    },
+    {
+      "id": "hash_only-hash-refusal",
+      "circuit": "hash_only",
+      "value": "1",
+      "other": "2",
+      "selected": true,
+      "fail": "hashInput",
+      "mismatch": null,
+      "args": [
+        true
+      ],
+      "events": [
+        [
+          "hashInput",
+          5,
+          "1"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "340000000",
+        "computeTime": "2573396769",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "status": "refused",
+      "reason": "hashInput provider refused",
+      "error": "Error: hashInput provider refused"
+    },
+    {
+      "id": "hashes-curve-refusal",
+      "circuit": "hashes",
+      "value": "1",
+      "other": "2",
+      "selected": true,
+      "fail": "curveInput",
+      "mismatch": null,
+      "args": [
+        true
+      ],
+      "events": [
+        [
+          "curveInput",
+          5,
+          "1"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "340000000",
+        "computeTime": "2573396769",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "status": "refused",
+      "reason": "curveInput provider refused",
+      "error": "Error: curveInput provider refused"
+    },
+    {
+      "id": "close-expectedPoint-refusal",
+      "circuit": "close",
+      "value": "1",
+      "other": "2",
+      "selected": true,
+      "fail": "expectedPoint",
+      "mismatch": null,
+      "args": [
+        "1"
+      ],
+      "events": [
+        [
+          "expectedPoint",
+          5,
+          "0"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1249914853",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "status": "refused",
+      "reason": "expectedPoint provider refused",
+      "error": "Error: expectedPoint provider refused"
+    },
+    {
+      "id": "close-expectedPoint-mismatch",
+      "circuit": "close",
+      "value": "1",
+      "other": "2",
+      "selected": true,
+      "fail": null,
+      "mismatch": "expectedPoint",
+      "args": [
+        "1"
+      ],
+      "events": [
+        [
+          "expectedPoint",
+          5,
+          "0"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1249914853",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "status": "refused",
+      "reason": "point mismatch",
+      "error": "CompactError: failed assert: point mismatch"
+    },
+    {
+      "id": "close-expectedDigest-refusal",
+      "circuit": "close",
+      "value": "1",
+      "other": "2",
+      "selected": true,
+      "fail": "expectedDigest",
+      "mismatch": null,
+      "args": [
+        "1"
+      ],
+      "events": [
+        [
+          "expectedPoint",
+          5,
+          "0"
+        ],
+        [
+          "expectedDigest",
+          6,
+          "0"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "340000000",
+        "computeTime": "2499829706",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "status": "refused",
+      "reason": "expectedDigest provider refused",
+      "error": "Error: expectedDigest provider refused"
+    },
+    {
+      "id": "close-expectedDigest-mismatch",
+      "circuit": "close",
+      "value": "1",
+      "other": "2",
+      "selected": true,
+      "fail": null,
+      "mismatch": "expectedDigest",
+      "args": [
+        "1"
+      ],
+      "events": [
+        [
+          "expectedPoint",
+          5,
+          "0"
+        ],
+        [
+          "expectedDigest",
+          6,
+          "0"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "340000000",
+        "computeTime": "2499829706",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "status": "refused",
+      "reason": "digest mismatch",
+      "error": "CompactError: failed assert: digest mismatch"
+    },
+    {
+      "id": "close_hash-refusal",
+      "circuit": "close_hash",
+      "value": "1",
+      "other": "2",
+      "selected": true,
+      "fail": "expectedDigest",
+      "mismatch": null,
+      "args": [
+        "1"
+      ],
+      "events": [
+        [
+          "expectedDigest",
+          5,
+          "0"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1249914853",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "status": "refused",
+      "reason": "expectedDigest provider refused",
+      "error": "Error: expectedDigest provider refused"
+    },
+    {
+      "id": "close_hash-mismatch",
+      "circuit": "close_hash",
+      "value": "1",
+      "other": "2",
+      "selected": true,
+      "fail": null,
+      "mismatch": "expectedDigest",
+      "args": [
+        "1"
+      ],
+      "events": [
+        [
+          "expectedDigest",
+          5,
+          "0"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1249914853",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "status": "refused",
+      "reason": "digest mismatch",
+      "error": "CompactError: failed assert: digest mismatch"
+    }
+  ]
+}

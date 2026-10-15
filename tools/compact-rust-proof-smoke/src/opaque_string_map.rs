@@ -18,6 +18,10 @@
 
 //! Prove the generated opaque-key, fixed-Field Map calls through ledger-8.
 
+mod ensure;
+
+pub(super) use ensure::run as run_ensure;
+
 use super::*;
 use compact_rust_opaque_string_map_query_oracle_fixture::ledger_contract as contract;
 use midnight_compact_runtime::OpaqueString;

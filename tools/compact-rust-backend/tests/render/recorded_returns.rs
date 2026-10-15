@@ -51,7 +51,7 @@ fn effectful_recording_audits_both_branches_slots_and_lexical_scope() {
     let mut wrong_witness = source.clone();
     wrong_witness["witnesses"][0]["result"] = serde_json::json!({"kind":"boolean"});
     assert!(render(&parse(wrong_witness)).is_err());
-    // Even a statically unselected branch must fit the audited action domain.
+    // Statically unselected branches are checked; Assert is a supported effect.
     let mut unsupported = source.clone();
     unsupported
         .pointer_mut(&format!("{branch}/condition"))
@@ -60,8 +60,9 @@ fn effectful_recording_audits_both_branches_slots_and_lexical_scope() {
     unsupported.pointer_mut(&format!("{branch}/otherwise/result/actions")).unwrap().as_array_mut().unwrap().push(
         serde_json::json!({"kind":"assert", "condition":{"kind":"boolean", "value":true}, "message":"outside effectful recording profile"}));
     let report = render_with_capabilities(&parse(unsupported)).unwrap();
-    assert!(!report.capabilities.circuits[0].recorded);
-    assert!(!report.capabilities.circuits[0].observed_call);
+    // Default algebra admission composes Assert without a whole-body profile.
+    assert!(report.capabilities.circuits[0].recorded);
+    assert!(report.capabilities.circuits[0].observed_call);
     let mut missing_slot = source.clone();
     missing_slot["ledger_fields"]
         .as_array_mut()
@@ -282,13 +283,11 @@ fn discarded_field_binding_keeps_reads_but_rejects_wrong_slot_type_and_nonunit_b
         unreachable!()
     };
     bindings[0].value = Expr::Parameter { name: "a".into() };
-    assert!(
-        !render_with_capabilities(&pure_only)
-            .unwrap()
-            .capabilities
-            .circuits[0]
-            .recorded
-    );
+    // A pure Unit composition can record an empty program. Preparation still
+    // rejects EmptyTranscript; source-fixture tests qualify that separate gate.
+    let pure_rendered = render_with_capabilities(&pure_only).unwrap();
+    assert!(pure_rendered.capabilities.circuits[0].recorded);
+    assert!(pure_rendered.capabilities.circuits[0].observed_call);
 
     let mut unsupported = contract.clone();
     let StateReturn::Expression {
@@ -304,13 +303,11 @@ fn discarded_field_binding_keeps_reads_but_rejects_wrong_slot_type_and_nonunit_b
             value: Box::new(Expr::Parameter { name: "b".into() }),
         },
     });
-    assert!(
-        !render_with_capabilities(&unsupported)
-            .unwrap()
-            .capabilities
-            .circuits[0]
-            .recorded
-    );
+    // Aligned persistent hashing composes with discarded reads; malformed slot
+    // authority and result types below remain independent rejection controls.
+    let hashed = render_with_capabilities(&unsupported).unwrap();
+    assert!(hashed.capabilities.circuits[0].recorded);
+    assert!(hashed.capabilities.circuits[0].observed_call);
     let mut wrong_index = contract.clone();
     wrong_index.ledger_fields[0].index = 1;
     assert!(render(&wrong_index).is_err());

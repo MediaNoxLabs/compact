@@ -63,7 +63,9 @@ fn upstream_transient_uses_singleton_input_but_allocates_after_normal_outputs() 
         .unwrap();
     let ledger = ledger.post_block_update(Timestamp::from_secs(0));
     assert_eq!(ledger.first_free, 2);
-    let wallet = midnight_zswap::local::State::<DefaultDB>::new().apply(&keys, &seed);
+    let wallet = midnight_zswap::local::State::<DefaultDB>::new()
+        .apply(&keys, &seed)
+        .expect("valid seed offer updates the test wallet");
     assert_eq!(wallet.merkle_tree.root(), ledger.coin_coms.root());
     let input_coin = *wallet
         .coins

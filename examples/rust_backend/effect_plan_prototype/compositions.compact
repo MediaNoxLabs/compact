@@ -1,0 +1,55 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+
+import CompactStandardLibrary;
+
+export ledger state: Field;
+export ledger round: Counter;
+witness mark(): Field;
+
+// Assert before mutation, then exercise a witness only in the selected branch.
+export circuit guardedChoice(selector: Field, next: Field): Field {
+  const before = state.read();
+  assert(disclose(next) == 9, "next must be nine");
+  round.increment(1);
+  if (disclose(selector) == 0) {
+    state.write(disclose(next));
+    return before;
+  } else {
+    const observed = mark();
+    assert(disclose(observed) == 77, "unexpected mark");
+    if (disclose(selector) == 1) {
+      state.write(disclose(before + observed));
+      return state.read();
+    } else {
+      state.write(disclose(before + next));
+      return disclose(observed);
+    }
+  }
+}
+
+// Witnesses observe different write/counter prefixes on the two live branches.
+export circuit orderedObservation(selector: Field, next: Field): Field {
+  const before = state.read();
+  state.write(before + 1);
+  if (disclose(selector) == 0) {
+    const observed = mark();
+    assert(disclose(observed) == 77, "unexpected mark");
+    round.increment(2);
+    return disclose(state.read() + observed);
+  } else {
+    round.increment(3);
+    const after = round.read() as Field;
+    if (disclose(selector) == 1) {
+      state.write(disclose(next) + after);
+      const observed = mark();
+      assert(disclose(observed) == 77, "unexpected mark");
+      return state.read();
+    } else {
+      assert(disclose(next) == 0, "late guard");
+      state.write(before);
+      return after;
+    }
+  }
+}

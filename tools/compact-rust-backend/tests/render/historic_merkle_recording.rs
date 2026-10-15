@@ -204,7 +204,13 @@ fn historic_merkle_indexed_hash_records_only_matching_bytes32_and_uint64_sources
     let rendered = render_with_capabilities(&contract).unwrap();
     assert!(rendered.capabilities.circuits[0].recorded);
     assert!(rendered.capabilities.circuits[0].observed_call);
-    assert!(rendered.source.contains(".record_insert_hash_index(frame,"));
+    assert!(
+        rendered
+            .source
+            .split_whitespace()
+            .collect::<String>()
+            .contains(".record_insert_hash_index(frame,")
+    );
 
     contract.stateful_circuits[0].parameters[0].ty = Type::Bytes { length: 31 };
     assert!(render_with_capabilities(&contract).is_err());
@@ -237,8 +243,10 @@ fn historic_merkle_indexed_hash_records_only_matching_bytes32_and_uint64_sources
             name: "position".into(),
         }),
     };
-    let rejected = render_with_capabilities(&contract).unwrap();
-    assert!(!rejected.capabilities.circuits[0].recorded);
+    // Conditional operands compose while preserving the exact declared type.
+    let composed = render_with_capabilities(&contract).unwrap();
+    assert!(composed.capabilities.circuits[0].recorded);
+    assert!(composed.capabilities.circuits[0].observed_call);
 }
 
 #[test]
@@ -303,6 +311,8 @@ fn historic_merkle_hash_append_records_only_exact_historic_bytes32_source() {
             name: "hash".into(),
         }),
     };
-    let rejected = render_with_capabilities(&contract).unwrap();
-    assert!(!rejected.capabilities.circuits[0].recorded);
+    // Conditional operands compose while preserving the exact declared type.
+    let composed = render_with_capabilities(&contract).unwrap();
+    assert!(composed.capabilities.circuits[0].recorded);
+    assert!(composed.capabilities.circuits[0].observed_call);
 }

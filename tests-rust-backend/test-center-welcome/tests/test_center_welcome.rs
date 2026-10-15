@@ -530,3 +530,107 @@ fn original_welcome_constructor_matches_typescript_empty_and_one_participant() {
         );
     }
 }
+
+#[derive(Clone, Default)]
+struct RefusingOrganizerWitness(std::rc::Rc<RefCell<Vec<u64>>>);
+impl compact_rust_test_center_welcome_fixture::ledger_contract::TryWitnesses<u64>
+    for RefusingOrganizerWitness
+{
+    fn local_sk(
+        &self,
+        context: WitnessContext<'_, u64, LedgerView<'_>>,
+    ) -> Result<(u64, MaybeCompact1), runtime::CompactError> {
+        self.0.borrow_mut().push(*context.private_state);
+        Err(runtime::CompactError::InvalidLedgerCell(
+            "local_sk provider refused".into(),
+        ))
+    }
+    fn set_local_id(
+        &self,
+        _: WitnessContext<'_, u64, LedgerView<'_>>,
+        _: OpaqueString,
+    ) -> Result<(u64, ()), runtime::CompactError> {
+        panic!("organizer calls must not set a local participant id")
+    }
+}
+
+#[test]
+fn organizer_provider_failure_stops_after_one_secret_callback() {
+    let initial = initial_state(
+        ConstructorContext::new(7_u64),
+        &OrganizerWitness::default(),
+        participants(true),
+    )
+    .unwrap();
+    let snapshot = ContractState::new(
+        initial.ledger_state.get_ref().clone(),
+        Default::default(),
+        Default::default(),
+    );
+    let fresh = || {
+        runtime::context::CircuitContext::from_contract_state(
+            7,
+            ContractAddress::default(),
+            &snapshot,
+        )
+    };
+    let expected = runtime::CompactError::InvalidLedgerCell("local_sk provider refused".into());
+    for participant in [true, false] {
+        for recorded_mode in [false, true] {
+            let witness = RefusingOrganizerWitness::default();
+            let error = match (recorded_mode, participant) {
+                (false, true) => add_participant(fresh(), &witness, OpaqueString::from("bob"))
+                    .err()
+                    .unwrap(),
+                (false, false) => add_organizer(fresh(), &witness, FixedBytes::new([7; 32]))
+                    .err()
+                    .unwrap(),
+                (true, true) => {
+                    recorded::add_participant(fresh(), &witness, OpaqueString::from("bob"))
+                        .err()
+                        .unwrap()
+                }
+                (true, false) => {
+                    recorded::add_organizer(fresh(), &witness, FixedBytes::new([7; 32]))
+                        .err()
+                        .unwrap()
+                }
+            };
+            assert_eq!(error, expected);
+            assert_eq!(*witness.0.borrow(), [7]);
+        }
+        #[cfg(feature = "ledger-transaction")]
+        {
+            use runtime::transaction::{Observation, ObservedContractState};
+            let observed = ObservedContractState::new(
+                Default::default(),
+                snapshot.clone(),
+                Observation {
+                    transaction_hash: [0; 32],
+                    block_hash: [0; 32],
+                    block_height: 0,
+                },
+            );
+            let witness = RefusingOrganizerWitness::default();
+            let contract =
+                compact_rust_test_center_welcome_fixture::ledger_contract::Contract::from(
+                    witness.clone(),
+                );
+            let error = if participant {
+                contract
+                    .recording()
+                    .add_participant_call(&observed, 7, OpaqueString::from("bob"))
+                    .err()
+                    .unwrap()
+            } else {
+                contract
+                    .recording()
+                    .add_organizer_call(&observed, 7, FixedBytes::new([7; 32]))
+                    .err()
+                    .unwrap()
+            };
+            assert_eq!(error, expected);
+            assert_eq!(*witness.0.borrow(), [7]);
+        }
+    }
+}

@@ -327,3 +327,7 @@ fn chunked_map_calls_match_typescript_and_replay() {
             .is_err()
     );
 }
+
+#[cfg(feature = "ledger-transaction")]
+#[path = "observed/preparation.rs"]
+mod observed_preparation;

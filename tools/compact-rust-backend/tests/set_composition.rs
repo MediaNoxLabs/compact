@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use compact_rust_backend::{ir::Contract, render_with_capabilities};
+use compact_rust_backend::{RenderError, ir::Contract, render_with_capabilities};
 use serde_json::{Value, json};
 fn fixture(name: &str) -> Value {
     serde_json::from_str(match name {
@@ -63,11 +63,13 @@ fn edit_kind(v: &mut Value, kind: &str, edit: &mut impl FnMut(&mut Value)) {
     }
 }
 #[test]
-fn string_set_and_unit_guard_composition_preserve_old_controls() {
+fn string_set_and_unit_guard_composition_includes_removal() {
     for name in ["insert_control", "member_control", "mutate"] {
         assert!(recorded(fixture("set"), name), "{name}");
     }
-    assert!(!recorded(fixture("set"), "remove_control")); // No new global standalone profile.
+    // Membership interface admission now composes removal as a typed effect.
+    // The alias-set fixture checks native, recorded and observed state behavior.
+    assert!(recorded(fixture("set"), "remove_control"));
     assert!(recorded(fixture("guard"), "run"));
     assert!(recorded(fixture("digest"), "run"));
 }
@@ -150,6 +152,62 @@ fn string_set_slot_key_and_enum_identity_stay_typed() {
                 c["actions"].as_array_mut().unwrap().push(json!({"kind":"if","condition":{"kind":"boolean","value":true},"then":{"kind":"sequence","actions":[]},"otherwise":{"kind":"map_remove","field":"other_map","index":2,"key":{"kind":"field_literal","value":"1"}}}));
             }
             _ => unreachable!(),
+        }
+        if kind == "hidden_map" {
+            let output =
+                render_with_capabilities(&serde_json::from_value::<Contract>(v.clone()).unwrap())
+                    .unwrap();
+            assert!(
+                output
+                    .capabilities
+                    .circuits
+                    .iter()
+                    .any(|c| c.name == "mutate" && c.recorded && c.observed_call)
+            );
+            let body = output.source.split("pub mod recorded").nth(1).unwrap();
+            assert!(
+                body.split_whitespace()
+                    .collect::<String>()
+                    .contains("other_map.record_remove(")
+            );
+            // Map reset is also a typed effect, including in an unselected branch.
+            let actions = declaration(&mut v, "stateful_circuits", "mutate")["actions"]
+                .as_array_mut()
+                .unwrap();
+            actions.last_mut().unwrap()["otherwise"] =
+                json!({"kind":"map_reset","field":"other_map","index":2});
+            let output =
+                render_with_capabilities(&serde_json::from_value::<Contract>(v.clone()).unwrap())
+                    .unwrap();
+            assert!(
+                output
+                    .capabilities
+                    .circuits
+                    .iter()
+                    .any(|c| { c.name == "mutate" && c.recorded && c.observed_call })
+            );
+            let body = output.source.split("pub mod recorded").nth(1).unwrap();
+            assert!(
+                body.split_whitespace()
+                    .collect::<String>()
+                    .contains("other_map.record_reset(")
+            );
+
+            // The operation must still resolve the declared field/index pair.
+            let actions = declaration(&mut v, "stateful_circuits", "mutate")["actions"]
+                .as_array_mut()
+                .unwrap();
+            actions.last_mut().unwrap()["otherwise"]["index"] = json!(9);
+            let error =
+                render_with_capabilities(&serde_json::from_value::<Contract>(v.clone()).unwrap())
+                    .err()
+                    .expect("invalid Map slot must fail native validation");
+            let RenderError::Located { error, .. } = error else {
+                panic!("expected native source location for the invalid Map slot");
+            };
+            assert!(
+                matches!(*error, RenderError::UnknownLedgerField(ref field) if field == "other_map")
+            );
         }
         assert!(!recorded(v, "mutate"), "{kind}");
     }

@@ -20,6 +20,11 @@ use midnight_compact_runtime as runtime;
 mod support;
 
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
+    // Complete source binding precedes state construction, deployment and key reads.
+    counter_scenario::validate_ir(
+        &std::fs::read(root.join("contract/compact-rust-ir.json"))?,
+        compact_rust_test_center_bboard_fixture::RETAINED_IR,
+    )?;
     let mut seeded = support::initial();
     for (index, text) in ["", "🌙 Midnight — 你好, Привіт"].into_iter().enumerate() {
         let message = runtime::OpaqueString::from(text);
@@ -66,12 +71,30 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
         if format!("{manual:?}") != format!("{prepared:?}") {
             return Err("post observed-call mismatch".into());
         }
-        check_transaction(root, "post", deploy, prepared, &mut rng, |applied| {
-            if applied.data.get_ref() != &expected {
-                return Err("post applied state mismatch".into());
-            }
-            Ok(())
-        })?;
+        if index == 0 {
+            // Explicit pre-call contract snapshot; the shared helper funds Dust
+            // separately and applies the call under default ledger strictness.
+            opaque_public::apply_funded(
+                root,
+                "post",
+                prepared,
+                deploy,
+                &expected,
+                rng.clone(),
+                0x5600,
+            )?;
+            println!(
+                "bboard empty-message post: funded default-strict ledger-8 application passed"
+            );
+        } else {
+            check_transaction(root, "post", deploy, prepared, &mut rng, |applied| {
+                if applied.data.get_ref() != &expected {
+                    return Err("post applied state mismatch".into());
+                }
+                Ok(())
+            })?;
+            println!("bboard Unicode post: relaxed-balancing diagnostic application passed");
+        }
         seeded = support::rehydrate(native.context);
         let private = seeded.private_state;
         let deploy = make_deploy(
@@ -130,7 +153,31 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
             Ok(())
         })?;
         seeded = support::rehydrate(native.context);
-        println!("original bboard cycle {index}: post and take_down verified and ledger-applied");
+        println!(
+            "bboard cycle {index}: take_down proof and relaxed-balancing diagnostic application passed"
+        );
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod source_binding_tests {
+    use super::*;
+
+    #[test]
+    fn complete_fixture_accepts_exact_source_and_rejects_missing_or_changed_circuit() {
+        let source = compact_rust_test_center_bboard_fixture::RETAINED_IR;
+        counter_scenario::validate_ir(source.as_bytes(), source).unwrap();
+        let value: serde_json::Value = serde_json::from_str(source).unwrap();
+        let mut missing = value.clone();
+        missing["stateful_circuits"].as_array_mut().unwrap().pop();
+        assert!(
+            counter_scenario::validate_ir(&serde_json::to_vec(&missing).unwrap(), source).is_err()
+        );
+        let mut changed = value;
+        changed["stateful_circuits"][0]["name"] = "different_source_circuit".into();
+        assert!(
+            counter_scenario::validate_ir(&serde_json::to_vec(&changed).unwrap(), source).is_err()
+        );
+    }
 }

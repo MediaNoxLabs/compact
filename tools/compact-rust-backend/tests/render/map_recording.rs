@@ -22,7 +22,7 @@ use compact_rust_backend::ir::{
 use compact_rust_backend::{RenderError, render, render_with_capabilities};
 
 #[test]
-fn opaque_string_map_recording_requires_closed_field_lookup_sequence() {
+fn opaque_string_map_recording_composes_writes_and_keeps_return_domain() {
     let mut contract: Contract =
         serde_json::from_str(include_str!("../opaque-string-map-schema13-ir.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
@@ -44,8 +44,11 @@ fn opaque_string_map_recording_requires_closed_field_lookup_sequence() {
     contract.stateful_circuits[0].actions.push(original.clone());
     assert_eq!(
         statuses(&contract),
-        vec![("put".into(), false), ("ensure".into(), true)]
+        vec![("put".into(), true), ("ensure".into(), true)]
     );
+    let source = render_with_capabilities(&contract).unwrap().source;
+    let body = super::lifecycle_recording::generated_body(&source, "recorded", "put");
+    assert_eq!(body.matches("record_insert").count(), 2);
     contract.stateful_circuits[0].actions.truncate(1);
     let StateAction::MapInsert { value, .. } = &mut contract.stateful_circuits[0].actions[0] else {
         unreachable!()
@@ -53,7 +56,7 @@ fn opaque_string_map_recording_requires_closed_field_lookup_sequence() {
     *value = Expr::FieldLiteral { value: "7".into() };
     assert_eq!(
         statuses(&contract),
-        vec![("put".into(), false), ("ensure".into(), true)]
+        vec![("put".into(), true), ("ensure".into(), true)]
     );
     contract.stateful_circuits[0].actions[0] = original;
 
@@ -66,8 +69,31 @@ fn opaque_string_map_recording_requires_closed_field_lookup_sequence() {
     **body = Expr::FieldLiteral { value: "7".into() };
     assert_eq!(
         statuses(&contract),
-        vec![("put".into(), true), ("ensure".into(), false)]
+        vec![("put".into(), true), ("ensure".into(), true)]
     );
+    let output = render_with_capabilities(&contract).unwrap();
+    let body = super::lifecycle_recording::generated_body(&output.source, "recorded", "ensure");
+    let lookup = body
+        .find(&quote::quote!(.record_lookup).to_string())
+        .unwrap();
+    // Field constants use the exact canonical 32-byte little-endian encoding.
+    let bytes = [7u8].into_iter().chain([0u8; 31]);
+    let literal = body
+        .find(&quote::quote!([#(#bytes,)*]).to_string())
+        .unwrap();
+    assert!(lookup < literal);
+    let StateReturn::Expression {
+        value: Expr::Let { body, .. },
+    } = &mut contract.stateful_circuits[1].return_value
+    else {
+        unreachable!()
+    };
+    **body = Expr::Boolean { value: true };
+    assert!(matches!(
+        render(&contract),
+        Err(RenderError::Located { error, .. })
+            if matches!(*error, RenderError::TypeMismatch { expected: Type::Field, actual: Type::Boolean })
+    ));
 }
 
 #[test]
@@ -203,7 +229,29 @@ fn map_insert_and_lookup_require_key_and_value_types() {
         index: 0,
         key: Expr::Parameter { name: "key".into() },
     }];
-    assert!(!render(&contract).unwrap().contains("pub mod recorded"));
+    let output = render_with_capabilities(&contract).unwrap();
+    assert!(
+        output.capabilities.circuits[0].recorded && output.capabilities.circuits[0].observed_call
+    );
+    assert!(
+        output
+            .source
+            .split("pub mod recorded")
+            .nth(1)
+            .unwrap()
+            .contains("record_insert_default(")
+    );
+    let StateAction::MapInsertDefault { key, .. } = &mut contract.stateful_circuits[0].actions[0]
+    else {
+        unreachable!()
+    };
+    *key = Expr::Parameter {
+        name: "value".into(),
+    };
+    assert!(matches!(
+        render(&contract),
+        Err(RenderError::TypeMismatch { .. })
+    ));
 
     // A nested ledger Map has a structural slot, but its value still has no
     // CellValue codec for scalar insert and lookup operations.

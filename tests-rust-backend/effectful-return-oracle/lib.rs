@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -34,7 +34,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -84,12 +84,12 @@ pub mod ledger_contract {
         __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let state = runtime::ledger::contract_state(vec![
-            runtime::ledger::constructor_cell::<runtime::Field, runtime::ledger::DefaultDB>(
+            runtime::ledger::try_constructor_cell::<runtime::Field, runtime::ledger::DefaultDB>(
                 Default::default(),
-            ),
-            runtime::ledger::constructor_cell::<runtime::Field, runtime::ledger::DefaultDB>(
+            )?,
+            runtime::ledger::try_constructor_cell::<runtime::Field, runtime::ledger::DefaultDB>(
                 Default::default(),
-            ),
+            )?,
         ]);
         Ok(runtime::context::ConstructorResult::new(
             __compact_context,
@@ -174,41 +174,47 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_plan_0): (_, runtime::Field) =
+            let __compact_effect_0: runtime::Field = __compact_param_0;
+            let (frame, __compact_effect_1): (_, runtime::Field) =
                 crate::ledger_slots::state.record_read(frame)?;
-            let __compact_plan_1: runtime::Field = __compact_plan_0;
-            let __compact_plan_2: runtime::Field = runtime::Field::from(1u128);
-            let __compact_plan_3: runtime::Field = __compact_plan_1 + __compact_plan_2;
-            let __compact_plan_4: runtime::Field = __compact_plan_3;
-            let frame = crate::ledger_slots::state.record_write(frame, __compact_plan_4)?;
-            let (frame, __compact_plan_5): (_, runtime::Field) =
+            let __compact_effect_2: runtime::Field = runtime::Field::from_le_bytes(&[
+                1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_3: runtime::Field = __compact_effect_1 + __compact_effect_2;
+            let frame = crate::ledger_slots::state.record_write(frame, __compact_effect_3)?;
+            let __compact_effect_4: () = ();
+            let (frame, __compact_effect_5): (_, runtime::Field) =
                 crate::ledger_slots::state.record_read(frame)?;
-            let __compact_plan_6: runtime::Field = runtime::Field::from(1u128);
-            let __compact_plan_7: bool = __compact_plan_5 == __compact_plan_6;
-            let (frame, __compact_plan_15): (_, runtime::Field) = if __compact_plan_7 {
-                let __compact_plan_8: runtime::Field = __compact_plan_1;
-                let frame = crate::ledger_slots::state.record_write(frame, __compact_param_0)?;
-                (frame, __compact_plan_8)
+            let __compact_effect_6: runtime::Field = runtime::Field::from_le_bytes(&[
+                1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_7: bool = __compact_effect_5 == __compact_effect_6;
+            let (frame, __compact_effect_14): (_, runtime::Field) = if __compact_effect_7 {
+                let frame = crate::ledger_slots::state.record_write(frame, __compact_effect_0)?;
+                let __compact_effect_8: () = ();
+                (frame, __compact_effect_1)
             } else {
-                let __compact_plan_9: runtime::BoundedUint<100> =
-                    runtime::BoundedUint::<100>::new(100u128)
-                        .expect("Compact Uint literal fits its maximum");
-                let __compact_plan_10: runtime::BoundedUint<100> = __compact_plan_9;
-                let (frame, __compact_plan_11): (_, runtime::Field) =
+                let __compact_effect_9: runtime::BoundedUint<100> =
+                    <runtime::BoundedUint<100>>::new(100u128)?;
+                let (frame, __compact_effect_10): (_, runtime::Field) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.mark(context.witness_context_with(super::LedgerView {
                             state: context.query.state.get_ref(),
                             meter,
                         }))
                     })?;
-                let __compact_plan_12: runtime::Field = __compact_plan_11;
-                let frame = crate::ledger_slots::unused.record_write(frame, __compact_plan_12)?;
-                let __compact_plan_13: runtime::Field =
-                    runtime::Field::from((__compact_plan_10).value());
-                let __compact_plan_14: runtime::Field = __compact_plan_1 + __compact_plan_13;
-                (frame, __compact_plan_14)
+                let frame = crate::ledger_slots::unused.record_write(frame, __compact_effect_10)?;
+                let __compact_effect_11: () = ();
+                let __compact_effect_12: runtime::Field =
+                    runtime::Field::from((__compact_effect_9).value());
+                let __compact_effect_13: runtime::Field = __compact_effect_1 + __compact_effect_12;
+                (frame, __compact_effect_13)
             };
-            Ok(frame.finish(__compact_plan_15))
+            Ok(frame.finish(__compact_effect_14))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

@@ -21,34 +21,41 @@
 use proc_macro2::Span;
 use std::collections::{HashMap, HashSet};
 
+use crate::circuit_analysis::circuit_uses_witness_observed;
 use crate::ir::{
     CounterAmount, Expr, LedgerField, LedgerFieldKind, StateAction, StateReturn, StatefulCircuit,
     Type, WitnessDeclaration,
 };
-use crate::stateful::circuit_uses_witness;
+use crate::source_diagnostics::{Owner, RefusalSite};
+use crate::stateful::NativeExpressionContext;
 use crate::{RenderError, expression_with_calls, ident};
+
+struct FrameOutput<'output> {
+    steps: &'output mut Vec<syn::Stmt>,
+    next_id: &'output mut usize,
+}
 
 fn field_expression(
     value: &Expr,
     bindings: &HashMap<String, syn::Ident>,
-    witnesses: &HashMap<&str, &WitnessDeclaration>,
-    steps: &mut Vec<syn::Stmt>,
-    next_id: &mut usize,
+    environment: &NativeExpressionContext<'_, '_>,
+    output: &mut FrameOutput<'_>,
 ) -> Result<Option<syn::Expr>, RenderError> {
+    let witnesses = environment.witnesses;
     match value {
         Expr::Parameter { name } => Ok(bindings.get(name).map(|name| syn::parse_quote!(#name))),
         Expr::Coerce { value, ty } if *ty == Type::Field => {
-            field_expression(value, bindings, witnesses, steps, next_id)
+            field_expression(value, bindings, environment, output)
         }
         Expr::FieldLiteral { .. } => {
-            let (syntax, ty) = expression_with_calls(value, &HashMap::new(), &HashMap::new())?;
+            let (syntax, ty) = environment.pure_expression(value, &HashMap::new())?;
             Ok((ty == Type::Field).then_some(syntax))
         }
         Expr::Add { left, right } => {
-            let Some(left) = field_expression(left, bindings, witnesses, steps, next_id)? else {
+            let Some(left) = field_expression(left, bindings, environment, output)? else {
                 return Ok(None);
             };
-            let Some(right) = field_expression(right, bindings, witnesses, steps, next_id)? else {
+            let Some(right) = field_expression(right, bindings, environment, output)? else {
                 return Ok(None);
             };
             Ok(Some(syn::parse_quote!((#left) + (#right))))
@@ -68,19 +75,22 @@ fn field_expression(
             }
             let mut args = Vec::with_capacity(arguments.len());
             for argument in arguments {
-                let Some(arg) = field_expression(argument, bindings, witnesses, steps, next_id)?
-                else {
+                let Some(arg) = field_expression(argument, bindings, environment, output)? else {
                     return Ok(None);
                 };
                 args.push(arg);
             }
-            let witness_name = ident(name)?;
+            let witness_name = ident(name).inspect_err(|_| {
+                if let Some(observer) = environment.observer {
+                    observer.refused(RefusalSite::field(Owner::Expr(value), "name"));
+                }
+            })?;
             let value_name = syn::Ident::new(
-                &format!("__compact_frame_witness_{}", *next_id),
+                &format!("__compact_frame_witness_{}", *output.next_id),
                 Span::call_site(),
             );
-            *next_id += 1;
-            steps.push(syn::parse_quote! {
+            *output.next_id += 1;
+            output.steps.push(syn::parse_quote! {
                 let (frame, #value_name) = frame.try_witness_metered(|context, meter| {
                     witnesses.#witness_name(
                         context.witness_context_with(LedgerView {
@@ -100,24 +110,15 @@ fn field_expression(
 fn append_action(
     action: &StateAction,
     bindings: &HashMap<String, syn::Ident>,
-    ledger_fields: &HashMap<&str, &LedgerField>,
-    witnesses: &HashMap<&str, &WitnessDeclaration>,
-    circuits: &HashMap<&str, &StatefulCircuit>,
-    steps: &mut Vec<syn::Stmt>,
-    next_id: &mut usize,
+    environment: &NativeExpressionContext<'_, '_>,
+    output: &mut FrameOutput<'_>,
 ) -> Result<bool, RenderError> {
+    let ledger_fields = environment.ledger_fields;
+    let circuits = environment.stateful_circuits;
     match action {
         StateAction::Sequence { actions } => {
             for action in actions {
-                if !append_action(
-                    action,
-                    bindings,
-                    ledger_fields,
-                    witnesses,
-                    circuits,
-                    steps,
-                    next_id,
-                )? {
+                if !append_action(action, bindings, environment, output)? {
                     return Ok(false);
                 }
             }
@@ -132,28 +133,21 @@ fn append_action(
                 if binding.ty != Type::Field {
                     return Ok(false);
                 }
-                let Some(value) =
-                    field_expression(&binding.value, &scope, witnesses, steps, next_id)?
+                let Some(value) = field_expression(&binding.value, &scope, environment, output)?
                 else {
                     return Ok(false);
                 };
                 let local = syn::Ident::new(
-                    &format!("__compact_frame_local_{}", *next_id),
+                    &format!("__compact_frame_local_{}", *output.next_id),
                     Span::call_site(),
                 );
-                *next_id += 1;
-                steps.push(syn::parse_quote!(let #local: runtime::Field = #value;));
+                *output.next_id += 1;
+                output
+                    .steps
+                    .push(syn::parse_quote!(let #local: runtime::Field = #value;));
                 scope.insert(binding.name.clone(), local);
             }
-            append_action(
-                action,
-                &scope,
-                ledger_fields,
-                witnesses,
-                circuits,
-                steps,
-                next_id,
-            )
+            append_action(action, &scope, environment, output)
         }
         StateAction::CellWrite {
             field,
@@ -168,11 +162,15 @@ fn append_action(
             {
                 return Ok(false);
             }
-            let Some(value) = field_expression(value, bindings, witnesses, steps, next_id)? else {
+            let Some(value) = field_expression(value, bindings, environment, output)? else {
                 return Ok(false);
             };
-            let slot = ident(&declaration.id)?;
-            steps.push(syn::parse_quote! {
+            let slot = ident(&declaration.id).inspect_err(|_| {
+                if let Some(observer) = environment.observer {
+                    observer.refused(RefusalSite::field(Owner::Ledger(declaration), "id"));
+                }
+            })?;
+            output.steps.push(syn::parse_quote! {
                 let (frame, ()) = frame.apply(|context| {
                     crate::ledger_slots::#slot.write(context, #value)
                 })?;
@@ -194,21 +192,30 @@ fn append_action(
             }
             let mut args = Vec::with_capacity(arguments.len());
             for argument in arguments {
-                let Some(arg) = field_expression(argument, bindings, witnesses, steps, next_id)?
-                else {
+                let Some(arg) = field_expression(argument, bindings, environment, output)? else {
                     return Ok(false);
                 };
                 args.push(arg);
             }
-            let callee_name = ident(name)?;
-            if circuit_uses_witness(callee, circuits, &mut HashSet::new())? {
-                steps.push(syn::parse_quote! {
+            let callee_name = ident(name).inspect_err(|_| {
+                if let Some(observer) = environment.observer {
+                    observer.refused(RefusalSite::field(Owner::Action(action), "name"));
+                }
+            })?;
+            if circuit_uses_witness_observed(
+                callee,
+                circuits,
+                &mut HashSet::new(),
+                Some(RefusalSite::field(Owner::Action(action), "name")),
+                environment.observer,
+            )? {
+                output.steps.push(syn::parse_quote! {
                     let (frame, ()) = frame.apply(|context| {
                         self::#callee_name(context, witnesses, #(#args),*)
                     })?;
                 });
             } else {
-                steps.push(syn::parse_quote! {
+                output.steps.push(syn::parse_quote! {
                     let (frame, ()) = frame.apply(|context| {
                         self::#callee_name(context, #(#args),*)
                     })?;
@@ -329,6 +336,23 @@ pub(crate) fn render_if_supported(
     witnesses: &HashMap<&str, &WitnessDeclaration>,
     circuits: &HashMap<&str, &StatefulCircuit>,
 ) -> Result<Option<syn::Item>, RenderError> {
+    let pure = HashMap::new();
+    let environment = NativeExpressionContext {
+        witnesses,
+        circuits: &pure,
+        stateful_circuits: circuits,
+        ledger_fields,
+        observer: None,
+    };
+    render_if_supported_observed(circuit, &environment)
+}
+
+pub(crate) fn render_if_supported_observed(
+    circuit: &StatefulCircuit,
+    environment: &NativeExpressionContext<'_, '_>,
+) -> Result<Option<syn::Item>, RenderError> {
+    let ledger_fields = environment.ledger_fields;
+    let circuits = environment.stateful_circuits;
     if let Some(item) = render_simple_leaf(circuit, ledger_fields) {
         return Ok(Some(item));
     }
@@ -338,42 +362,55 @@ pub(crate) fn render_if_supported(
             .parameters
             .iter()
             .any(|parameter| parameter.ty != Type::Field)
-        || !circuit_uses_witness(circuit, circuits, &mut HashSet::new())?
+        || !circuit_uses_witness_observed(
+            circuit,
+            circuits,
+            &mut HashSet::new(),
+            None,
+            environment.observer,
+        )?
     {
         return Ok(None);
     }
     let mut bindings = HashMap::new();
     let mut args = Vec::<syn::FnArg>::new();
     for (index, parameter) in circuit.parameters.iter().enumerate() {
-        ident(&parameter.name)?;
+        ident(&parameter.name).inspect_err(|_| {
+            if let Some(observer) = environment.observer {
+                observer.refused(RefusalSite::field(Owner::Parameter(parameter), "name"));
+            }
+        })?;
         let name = syn::Ident::new(&format!("__compact_param_{index}"), Span::call_site());
         if bindings
             .insert(parameter.name.clone(), name.clone())
             .is_some()
         {
+            if let Some(observer) = environment.observer {
+                observer.refused(RefusalSite::field(Owner::Parameter(parameter), "name"));
+            }
             return Err(RenderError::DuplicateParameter(parameter.name.clone()));
         }
         args.push(syn::parse_quote!(#name: runtime::Field));
     }
     let mut steps = Vec::new();
     let mut next_id = 0;
+    let mut output = FrameOutput {
+        steps: &mut steps,
+        next_id: &mut next_id,
+    };
     for action in &circuit.actions {
-        if !append_action(
-            action,
-            &bindings,
-            ledger_fields,
-            witnesses,
-            circuits,
-            &mut steps,
-            &mut next_id,
-        )? {
+        if !append_action(action, &bindings, environment, &mut output)? {
             return Ok(None);
         }
     }
     if steps.is_empty() {
         return Ok(None);
     }
-    let name = ident(&circuit.name)?;
+    let name = ident(&circuit.name).inspect_err(|_| {
+        if let Some(observer) = environment.observer {
+            observer.refused(RefusalSite::field(Owner::Stateful(circuit), "name"));
+        }
+    })?;
     let visibility: syn::Visibility = if circuit.internal {
         syn::parse_quote!(pub(crate))
     } else {
@@ -394,3 +431,6 @@ pub(crate) fn render_if_supported(
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod diagnostic_tests;

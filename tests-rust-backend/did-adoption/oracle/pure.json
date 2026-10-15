@@ -11,7 +11,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/lib.rs",
-      "sha256": "06c6ad6b1bc75c98eb81401e7385285fd5fb11cc88f4f89ea5ab61edb40d204c"
+      "sha256": "c3ae6d09f37cf421a2fd2bbe7209894b395edd4a03052e5cd912573f115a5d8e"
     },
     {
       "path": "runtime/src/built-ins.ts",
@@ -31,7 +31,7 @@
     }
   ],
   "generatedJavaScriptSha256": "9ae8d78cef694d99d985ac416e3bf17e5969125201a435d1c3332e5f60664338",
-  "runtimeJavaScriptSha256": "f6b1b8b0d4ecfd6458706fd3969babbb988879dd9c39618cc137c463a151781b",
+  "runtimeJavaScriptSha256": "db88e0bf0c11d081fcd8ba05ee7390cad8238be4c17dddc7da092219585c7cb7",
   "cases": [
     {
       "name": "controllerAuthorizationDigest",

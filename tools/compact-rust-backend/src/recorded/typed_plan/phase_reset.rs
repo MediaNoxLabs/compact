@@ -18,6 +18,7 @@ use super::*;
 use crate::coin_shapes::qualified_coin_type;
 pub(super) const WIDENED: &str = "18446744073709551616";
 pub(super) const SUM: &str = "36893488147419103231";
+#[cfg(test)]
 const U64: &str = "18446744073709551615";
 pub(super) fn helper_signature(c: &StatefulCircuit) -> bool {
     c.internal
@@ -45,6 +46,7 @@ pub(super) fn cell_type(ty: &Type) -> bool {
         || *ty == qualified_coin_type()
         || matches!(ty, Type::Struct { fields, .. } if matches!(fields.as_slice(), [tag, value] if tag.name == "is_some" && tag.ty == Type::Boolean && value.name == "value" && matches!(&value.ty, Type::Struct { name, fields } if name == "ZswapCoinPublicKey" && matches!(fields.as_slice(), [bytes] if bytes.name == "bytes" && bytes.ty == (Type::Bytes { length: 32 })))))
 }
+#[cfg(test)]
 struct Audit<'a> {
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
     witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
@@ -56,6 +58,7 @@ struct Audit<'a> {
     sets: usize,
     increments: usize,
 }
+#[cfg(test)]
 impl Audit<'_> {
     fn field(&self, field: &str, index: u8) -> Option<&LedgerFieldKind> {
         let f = self.ledger.get(field)?;
@@ -179,6 +182,7 @@ impl Audit<'_> {
         }
     }
 }
+#[cfg(test)]
 pub(super) fn lower<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,

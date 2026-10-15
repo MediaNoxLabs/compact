@@ -1,0 +1,756 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "calls",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_opaque_public.compact",
+        "line": 5,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "replacement",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "opaque_bytes"
+      },
+      "source": {
+        "file": "effect_plan_opaque_public.compact",
+        "line": 11,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "remember",
+      "parameters": [
+        {
+          "name": "input",
+          "ty": {
+            "kind": "struct",
+            "name": "Envelope",
+            "fields": [
+              {
+                "name": "message",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Message",
+                  "fields": [
+                    {
+                      "name": "text",
+                      "ty": {
+                        "kind": "opaque_string"
+                      }
+                    },
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "opaque_bytes"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Envelope",
+        "fields": [
+          {
+            "name": "message",
+            "ty": {
+              "kind": "struct",
+              "name": "Message",
+              "fields": [
+                {
+                  "name": "text",
+                  "ty": {
+                    "kind": "opaque_string"
+                  }
+                },
+                {
+                  "name": "bytes",
+                  "ty": {
+                    "kind": "opaque_bytes"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "parameter",
+          "name": "input"
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_5",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_5"
+            }
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "effect_plan_opaque_public.compact",
+        "line": 13,
+        "column": 1
+      }
+    },
+    {
+      "name": "run",
+      "parameters": [
+        {
+          "name": "input",
+          "ty": {
+            "kind": "struct",
+            "name": "Envelope",
+            "fields": [
+              {
+                "name": "message",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Message",
+                  "fields": [
+                    {
+                      "name": "text",
+                      "ty": {
+                        "kind": "opaque_string"
+                      }
+                    },
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "opaque_bytes"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "useWitness",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Result",
+        "fields": [
+          {
+            "name": "chosen",
+            "ty": {
+              "kind": "struct",
+              "name": "Envelope",
+              "fields": [
+                {
+                  "name": "message",
+                  "ty": {
+                    "kind": "struct",
+                    "name": "Message",
+                    "fields": [
+                      {
+                        "name": "text",
+                        "ty": {
+                          "kind": "opaque_string"
+                        }
+                      },
+                      {
+                        "name": "bytes",
+                        "ty": {
+                          "kind": "opaque_bytes"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "original",
+            "ty": {
+              "kind": "struct",
+              "name": "Envelope",
+              "fields": [
+                {
+                  "name": "message",
+                  "ty": {
+                    "kind": "struct",
+                    "name": "Message",
+                    "fields": [
+                      {
+                        "name": "text",
+                        "ty": {
+                          "kind": "opaque_string"
+                        }
+                      },
+                      {
+                        "name": "bytes",
+                        "ty": {
+                          "kind": "opaque_bytes"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "kept",
+              "ty": {
+                "kind": "struct",
+                "name": "Envelope",
+                "fields": [
+                  {
+                    "name": "message",
+                    "ty": {
+                      "kind": "struct",
+                      "name": "Message",
+                      "fields": [
+                        {
+                          "name": "text",
+                          "ty": {
+                            "kind": "opaque_string"
+                          }
+                        },
+                        {
+                          "name": "bytes",
+                          "ty": {
+                            "kind": "opaque_bytes"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "value": {
+                "kind": "call",
+                "name": "remember",
+                "arguments": [
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "input"
+                    },
+                    "ty": {
+                      "kind": "struct",
+                      "name": "Envelope",
+                      "fields": [
+                        {
+                          "name": "message",
+                          "ty": {
+                            "kind": "struct",
+                            "name": "Message",
+                            "fields": [
+                              {
+                                "name": "text",
+                                "ty": {
+                                  "kind": "opaque_string"
+                                }
+                              },
+                              {
+                                "name": "bytes",
+                                "ty": {
+                                  "kind": "opaque_bytes"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "body": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "chosen",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Envelope",
+                  "fields": [
+                    {
+                      "name": "message",
+                      "ty": {
+                        "kind": "struct",
+                        "name": "Message",
+                        "fields": [
+                          {
+                            "name": "text",
+                            "ty": {
+                              "kind": "opaque_string"
+                            }
+                          },
+                          {
+                            "name": "bytes",
+                            "ty": {
+                              "kind": "opaque_bytes"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                "value": {
+                  "kind": "if",
+                  "condition": {
+                    "kind": "parameter",
+                    "name": "useWitness"
+                  },
+                  "then": {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "struct_literal",
+                      "ty": {
+                        "kind": "struct",
+                        "name": "Envelope",
+                        "fields": [
+                          {
+                            "name": "message",
+                            "ty": {
+                              "kind": "struct",
+                              "name": "Message",
+                              "fields": [
+                                {
+                                  "name": "text",
+                                  "ty": {
+                                    "kind": "opaque_string"
+                                  }
+                                },
+                                {
+                                  "name": "bytes",
+                                  "ty": {
+                                    "kind": "opaque_bytes"
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      },
+                      "fields": [
+                        {
+                          "kind": "struct_literal",
+                          "ty": {
+                            "kind": "struct",
+                            "name": "Message",
+                            "fields": [
+                              {
+                                "name": "text",
+                                "ty": {
+                                  "kind": "opaque_string"
+                                }
+                              },
+                              {
+                                "name": "bytes",
+                                "ty": {
+                                  "kind": "opaque_bytes"
+                                }
+                              }
+                            ]
+                          },
+                          "fields": [
+                            {
+                              "kind": "struct_field",
+                              "value": {
+                                "kind": "struct_field",
+                                "value": {
+                                  "kind": "parameter",
+                                  "name": "kept"
+                                },
+                                "field": "message",
+                                "index": 0
+                              },
+                              "field": "text",
+                              "index": 0
+                            },
+                            {
+                              "kind": "witness_call",
+                              "name": "replacement",
+                              "arguments": [
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "ty": {
+                      "kind": "struct",
+                      "name": "Envelope",
+                      "fields": [
+                        {
+                          "name": "message",
+                          "ty": {
+                            "kind": "struct",
+                            "name": "Message",
+                            "fields": [
+                              {
+                                "name": "text",
+                                "ty": {
+                                  "kind": "opaque_string"
+                                }
+                              },
+                              {
+                                "name": "bytes",
+                                "ty": {
+                                  "kind": "opaque_bytes"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "otherwise": {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "kept"
+                    },
+                    "ty": {
+                      "kind": "struct",
+                      "name": "Envelope",
+                      "fields": [
+                        {
+                          "name": "message",
+                          "ty": {
+                            "kind": "struct",
+                            "name": "Message",
+                            "fields": [
+                              {
+                                "name": "text",
+                                "ty": {
+                                  "kind": "opaque_string"
+                                }
+                              },
+                              {
+                                "name": "bytes",
+                                "ty": {
+                                  "kind": "opaque_bytes"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ],
+            "body": {
+              "kind": "struct_literal",
+              "ty": {
+                "kind": "struct",
+                "name": "Result",
+                "fields": [
+                  {
+                    "name": "chosen",
+                    "ty": {
+                      "kind": "struct",
+                      "name": "Envelope",
+                      "fields": [
+                        {
+                          "name": "message",
+                          "ty": {
+                            "kind": "struct",
+                            "name": "Message",
+                            "fields": [
+                              {
+                                "name": "text",
+                                "ty": {
+                                  "kind": "opaque_string"
+                                }
+                              },
+                              {
+                                "name": "bytes",
+                                "ty": {
+                                  "kind": "opaque_bytes"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "original",
+                    "ty": {
+                      "kind": "struct",
+                      "name": "Envelope",
+                      "fields": [
+                        {
+                          "name": "message",
+                          "ty": {
+                            "kind": "struct",
+                            "name": "Message",
+                            "fields": [
+                              {
+                                "name": "text",
+                                "ty": {
+                                  "kind": "opaque_string"
+                                }
+                              },
+                              {
+                                "name": "bytes",
+                                "ty": {
+                                  "kind": "opaque_bytes"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "fields": [
+                {
+                  "kind": "parameter",
+                  "name": "chosen"
+                },
+                {
+                  "kind": "parameter",
+                  "name": "kept"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "effect_plan_opaque_public.compact",
+        "line": 17,
+        "column": 1
+      }
+    },
+    {
+      "name": "text_roundtrip",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "TextResult",
+        "fields": [
+          {
+            "name": "value",
+            "ty": {
+              "kind": "opaque_string"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "struct_literal",
+          "ty": {
+            "kind": "struct",
+            "name": "TextResult",
+            "fields": [
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "opaque_string"
+                }
+              }
+            ]
+          },
+          "fields": [
+            {
+              "kind": "parameter",
+              "name": "value"
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_4",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_4"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_opaque_public.compact",
+        "line": 24,
+        "column": 1
+      }
+    },
+    {
+      "name": "bytes_roundtrip",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "opaque_bytes"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "BytesResult",
+        "fields": [
+          {
+            "name": "value",
+            "ty": {
+              "kind": "opaque_bytes"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "struct_literal",
+          "ty": {
+            "kind": "struct",
+            "name": "BytesResult",
+            "fields": [
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "opaque_bytes"
+                }
+              }
+            ]
+          },
+          "fields": [
+            {
+              "kind": "parameter",
+              "name": "value"
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_3",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_3"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_opaque_public.compact",
+        "line": 28,
+        "column": 1
+      }
+    }
+  ]
+}

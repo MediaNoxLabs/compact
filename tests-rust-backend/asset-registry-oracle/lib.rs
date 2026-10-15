@@ -27,6 +27,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct AssetRecord {
         pub code: ::midnight_compact_runtime::FixedBytes<32>,
@@ -43,6 +44,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct ContractAddress {
         pub bytes: ::midnight_compact_runtime::FixedBytes<32>,
@@ -55,6 +57,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct CustodyGrant {
         pub code: ::midnight_compact_runtime::FixedBytes<32>,
@@ -69,6 +72,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct FreshnessPolicy {
         pub enforceMaxAge: ::core::primitive::bool,
@@ -82,6 +86,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct Provenance {
         pub facility: ::midnight_compact_runtime::FixedBytes<32>,
@@ -96,6 +101,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactEnum,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub enum AssetClass {
         Unspecified,
@@ -112,6 +118,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactEnum,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub enum ListMutation {
         Unspecified,
@@ -127,6 +134,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactEnum,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub enum RecordMutation {
         Unspecified,
@@ -137,7 +145,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub fn assertRecordFreshEnough(
         policy: crate::types::FreshnessPolicy,
         record: crate::types::AssetRecord,
@@ -274,7 +282,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -556,49 +564,53 @@ pub mod ledger_contract {
         witnesses: &W,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let state = runtime::ledger::contract_state(vec![
-            runtime::ledger::constructor_cell::<
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<4294967295>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 crate::types::ContractAddress,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 crate::types::ContractAddress,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<runtime::JubjubPoint, runtime::ledger::DefaultDB>(
-                Default::default(),
-            ),
-            runtime::ledger::constructor_cell::<runtime::JubjubPoint, runtime::ledger::DefaultDB>(
-                Default::default(),
-            ),
-            runtime::ledger::constructor_cell::<runtime::FixedBytes<32>, runtime::ledger::DefaultDB>(
-                Default::default(),
-            ),
-            runtime::ledger::constructor_cell::<runtime::FixedBytes<32>, runtime::ledger::DefaultDB>(
-                Default::default(),
-            ),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
+                runtime::JubjubPoint,
+                runtime::ledger::DefaultDB,
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
+                runtime::JubjubPoint,
+                runtime::ledger::DefaultDB,
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
+                runtime::FixedBytes<32>,
+                runtime::ledger::DefaultDB,
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
+                runtime::FixedBytes<32>,
+                runtime::ledger::DefaultDB,
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
+            >(Default::default())?,
             runtime::ledger::constructor_counter(),
-            runtime::ledger::constructor_cell::<bool, runtime::ledger::DefaultDB>(
+            runtime::ledger::try_constructor_cell::<bool, runtime::ledger::DefaultDB>(
                 Default::default(),
-            ),
-            runtime::ledger::constructor_cell::<bool, runtime::ledger::DefaultDB>(
+            )?,
+            runtime::ledger::try_constructor_cell::<bool, runtime::ledger::DefaultDB>(
                 Default::default(),
-            ),
+            )?,
             runtime::ledger::constructor_counter(),
             runtime::ledger::constructor_counter(),
             runtime::ledger::constructor_map(),
@@ -1353,43 +1365,6 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
-        fn __compact_recorded_body_recordWrite<Private, W: super::TryWitnesses<Private>>(
-            frame: runtime::recording::RecordingFrame<Private>,
-            witnesses: &W,
-        ) -> Result<(runtime::recording::RecordingFrame<Private>, ()), runtime::CompactError>
-        {
-            let frame = crate::ledger_slots::writeCount.record_increment(frame, 1u16)?;
-            let frame = crate::ledger_slots::revision.record_increment(frame, 1u16)?;
-            let (frame, __compact_witness_0) = frame.try_witness_metered(|context, meter| {
-                witnesses.currentTimestamp(context.witness_context_with(super::LedgerView {
-                    state: context.query.state.get_ref(),
-                    meter,
-                }))
-            })?;
-            let frame = crate::ledger_slots::updatedAt.record_write(frame, __compact_witness_0)?;
-            Ok((frame, ()))
-        }
-        fn __compact_recorded_body_assertWritable<Private>(
-            frame: runtime::recording::RecordingFrame<Private>,
-        ) -> Result<(runtime::recording::RecordingFrame<Private>, ()), runtime::CompactError>
-        {
-            let (frame, __compact_recorded_bool_0): (_, bool) =
-                crate::ledger_slots::open.record_read(frame)?;
-            if !(__compact_recorded_bool_0) {
-                return Err(runtime::CompactError::AssertionFailed(
-                    "registry is closed".to_owned(),
-                ));
-            }
-            let (frame, __compact_recorded_bool_1): (_, bool) =
-                crate::ledger_slots::frozen.record_read(frame)?;
-            let __compact_recorded_conditional_bool_2: bool = !(__compact_recorded_bool_1);
-            if !(__compact_recorded_conditional_bool_2) {
-                return Err(runtime::CompactError::AssertionFailed(
-                    "registry is frozen".to_owned(),
-                ));
-            }
-            Ok((frame, ()))
-        }
         pub fn setCustodian<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
@@ -1397,11 +1372,65 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, _) = __compact_recorded_body_assertWritable(frame)?;
+            let __compact_effect_0: crate::types::ContractAddress = __compact_param_0;
+            let (frame, __compact_effect_9): (_, ()) = {
+                let (frame, __compact_effect_1): (_, bool) =
+                    crate::ledger_slots::open.record_read(frame)?;
+                if !__compact_effect_1 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "registry is closed".to_owned(),
+                    ));
+                }
+                let __compact_effect_2: () = ();
+                let (frame, __compact_effect_3): (_, bool) =
+                    crate::ledger_slots::frozen.record_read(frame)?;
+                let (frame, __compact_effect_6): (_, bool) = if __compact_effect_3 {
+                    let __compact_effect_4: bool = false;
+                    (frame, __compact_effect_4)
+                } else {
+                    let __compact_effect_5: bool = true;
+                    (frame, __compact_effect_5)
+                };
+                if !__compact_effect_6 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "registry is frozen".to_owned(),
+                    ));
+                }
+                let __compact_effect_7: () = ();
+                let __compact_effect_8: () = ();
+                (frame, __compact_effect_8)
+            };
             let frame =
-                crate::ledger_slots::custodian.record_write(frame, (__compact_param_0).clone())?;
-            let (frame, _) = __compact_recorded_body_recordWrite(frame, witnesses)?;
-            Ok(frame.finish(()))
+                crate::ledger_slots::custodian.record_write(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_10: () = ();
+            let (frame, __compact_effect_18): (_, ()) = {
+                let __compact_effect_11: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
+                let frame = crate::ledger_slots::writeCount
+                    .record_increment(frame, (__compact_effect_11).value() as u16)?;
+                let __compact_effect_12: () = ();
+                let __compact_effect_13: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
+                let frame = crate::ledger_slots::revision
+                    .record_increment(frame, (__compact_effect_13).value() as u16)?;
+                let __compact_effect_14: () = ();
+                let (frame, __compact_effect_15): (_, runtime::BoundedUint<18446744073709551615>) =
+                    frame.try_witness_metered(|context, meter| {
+                        witnesses.currentTimestamp(context.witness_context_with(
+                            super::LedgerView {
+                                state: context.query.state.get_ref(),
+                                meter,
+                            },
+                        ))
+                    })?;
+                let frame =
+                    crate::ledger_slots::updatedAt.record_write(frame, __compact_effect_15)?;
+                let __compact_effect_16: () = ();
+                let __compact_effect_17: () = ();
+                (frame, __compact_effect_17)
+            };
+            let __compact_effect_19: () = ();
+            Ok(frame.finish(__compact_effect_19))
         }
         pub fn setRecord<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -1412,57 +1441,155 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_write_key: runtime::OpaqueString = (__compact_param_0).clone();
-            let __compact_recorded_write_value: crate::types::AssetRecord =
-                (__compact_param_1).clone();
-            let __compact_recorded_write_mutation: crate::types::RecordMutation = __compact_param_2;
-            let (frame, _) = __compact_recorded_body_assertWritable(frame)?;
-            if !(__compact_recorded_write_mutation == crate::types::RecordMutation::Insert
-                || __compact_recorded_write_mutation == crate::types::RecordMutation::Update)
-            {
+            let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
+            let __compact_effect_1: crate::types::AssetRecord = __compact_param_1;
+            let __compact_effect_2: crate::types::RecordMutation = __compact_param_2;
+            let (frame, __compact_effect_11): (_, ()) = {
+                let (frame, __compact_effect_3): (_, bool) =
+                    crate::ledger_slots::open.record_read(frame)?;
+                if !__compact_effect_3 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "registry is closed".to_owned(),
+                    ));
+                }
+                let __compact_effect_4: () = ();
+                let (frame, __compact_effect_5): (_, bool) =
+                    crate::ledger_slots::frozen.record_read(frame)?;
+                let (frame, __compact_effect_8): (_, bool) = if __compact_effect_5 {
+                    let __compact_effect_6: bool = false;
+                    (frame, __compact_effect_6)
+                } else {
+                    let __compact_effect_7: bool = true;
+                    (frame, __compact_effect_7)
+                };
+                if !__compact_effect_8 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "registry is frozen".to_owned(),
+                    ));
+                }
+                let __compact_effect_9: () = ();
+                let __compact_effect_10: () = ();
+                (frame, __compact_effect_10)
+            };
+            let __compact_effect_12: crate::types::RecordMutation =
+                crate::types::RecordMutation::Insert;
+            let __compact_effect_13: bool = __compact_effect_2 == __compact_effect_12;
+            let (frame, __compact_effect_17): (_, bool) = if __compact_effect_13 {
+                let __compact_effect_14: bool = true;
+                (frame, __compact_effect_14)
+            } else {
+                let __compact_effect_15: crate::types::RecordMutation =
+                    crate::types::RecordMutation::Update;
+                let __compact_effect_16: bool = __compact_effect_2 == __compact_effect_15;
+                (frame, __compact_effect_16)
+            };
+            if !__compact_effect_17 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "record mutation must be Insert or Update".to_owned(),
                 ));
             }
-            crate::pure_circuits::assertRecordClassKnown(__compact_recorded_write_value.clone())?;
-            let frame = if __compact_recorded_write_mutation == crate::types::RecordMutation::Update
-            {
-                let (frame, __compact_recorded_present): (_, bool) =
-                    crate::ledger_slots::records
-                        .record_member(frame, __compact_recorded_write_key.clone())?;
-                if !__compact_recorded_present {
+            let __compact_effect_18: () = ();
+            let __compact_effect_19: () =
+                crate::pure_circuits::assertRecordClassKnown((__compact_effect_1).clone())?;
+            let __compact_effect_20: crate::types::RecordMutation =
+                crate::types::RecordMutation::Update;
+            let __compact_effect_21: bool = __compact_effect_2 == __compact_effect_20;
+            let (frame, __compact_effect_44): (_, ()) = if __compact_effect_21 {
+                let (frame, __compact_effect_22): (_, bool) = crate::ledger_slots::records
+                    .record_member(frame, (__compact_effect_0).clone())?;
+                if !__compact_effect_22 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "record does not exist".to_owned(),
                     ));
                 }
-                crate::ledger_slots::records
-                    .record_remove(frame, __compact_recorded_write_key.clone())?
+                let __compact_effect_23: () = ();
+                let frame = crate::ledger_slots::records
+                    .record_remove(frame, (__compact_effect_0).clone())?;
+                let __compact_effect_24: () = ();
+                let __compact_effect_25: () = ();
+                (frame, __compact_effect_25)
             } else {
-                let (frame, __compact_recorded_first_present): (_, bool) =
-                    crate::ledger_slots::records
-                        .record_member(frame, __compact_recorded_write_key.clone())?;
-                if __compact_recorded_first_present {
-                    return Err(runtime::CompactError::AssertionFailed(
-                        "record already exists".to_owned(),
-                    ));
-                }
-                let (frame, __compact_recorded_target_present): (_, bool) =
-                    crate::ledger_slots::custodyGrants
-                        .record_member(frame, __compact_recorded_write_key.clone())?;
-                if __compact_recorded_target_present {
-                    return Err(runtime::CompactError::AssertionFailed(
-                        "record already exists".to_owned(),
-                    ));
-                }
-                crate::ledger_slots::recordCount.record_increment(frame, 1_u16)?
+                let __compact_effect_26: crate::types::RecordMutation =
+                    crate::types::RecordMutation::Insert;
+                let __compact_effect_27: bool = __compact_effect_2 == __compact_effect_26;
+                let (frame, __compact_effect_42): (_, ()) = if __compact_effect_27 {
+                    let (frame, __compact_effect_33): (_, bool) = {
+                        let __compact_effect_28: runtime::OpaqueString =
+                            (__compact_effect_0).clone();
+                        let (frame, __compact_effect_29): (_, bool) = crate::ledger_slots::records
+                            .record_member(frame, (__compact_effect_28).clone())?;
+                        let (frame, __compact_effect_32): (_, bool) = if __compact_effect_29 {
+                            let __compact_effect_30: bool = true;
+                            (frame, __compact_effect_30)
+                        } else {
+                            let (frame, __compact_effect_31): (_, bool) =
+                                crate::ledger_slots::custodyGrants
+                                    .record_member(frame, (__compact_effect_28).clone())?;
+                            (frame, __compact_effect_31)
+                        };
+                        (frame, __compact_effect_32)
+                    };
+                    let (frame, __compact_effect_36): (_, bool) = if __compact_effect_33 {
+                        let __compact_effect_34: bool = false;
+                        (frame, __compact_effect_34)
+                    } else {
+                        let __compact_effect_35: bool = true;
+                        (frame, __compact_effect_35)
+                    };
+                    if !__compact_effect_36 {
+                        return Err(runtime::CompactError::AssertionFailed(
+                            "record already exists".to_owned(),
+                        ));
+                    }
+                    let __compact_effect_37: () = ();
+                    let __compact_effect_38: runtime::BoundedUint<65535> =
+                        <runtime::BoundedUint<65535>>::new(1u128)?;
+                    let frame = crate::ledger_slots::recordCount
+                        .record_increment(frame, (__compact_effect_38).value() as u16)?;
+                    let __compact_effect_39: () = ();
+                    let __compact_effect_40: () = ();
+                    (frame, __compact_effect_40)
+                } else {
+                    let __compact_effect_41: () = ();
+                    (frame, __compact_effect_41)
+                };
+                let __compact_effect_43: () = ();
+                (frame, __compact_effect_43)
             };
             let frame = crate::ledger_slots::records.record_insert(
                 frame,
-                __compact_recorded_write_key,
-                __compact_recorded_write_value,
+                (__compact_effect_0).clone(),
+                (__compact_effect_1).clone(),
             )?;
-            let (frame, _) = __compact_recorded_body_recordWrite(frame, witnesses)?;
-            Ok(frame.finish(()))
+            let __compact_effect_45: () = ();
+            let (frame, __compact_effect_53): (_, ()) = {
+                let __compact_effect_46: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
+                let frame = crate::ledger_slots::writeCount
+                    .record_increment(frame, (__compact_effect_46).value() as u16)?;
+                let __compact_effect_47: () = ();
+                let __compact_effect_48: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
+                let frame = crate::ledger_slots::revision
+                    .record_increment(frame, (__compact_effect_48).value() as u16)?;
+                let __compact_effect_49: () = ();
+                let (frame, __compact_effect_50): (_, runtime::BoundedUint<18446744073709551615>) =
+                    frame.try_witness_metered(|context, meter| {
+                        witnesses.currentTimestamp(context.witness_context_with(
+                            super::LedgerView {
+                                state: context.query.state.get_ref(),
+                                meter,
+                            },
+                        ))
+                    })?;
+                let frame =
+                    crate::ledger_slots::updatedAt.record_write(frame, __compact_effect_50)?;
+                let __compact_effect_51: () = ();
+                let __compact_effect_52: () = ();
+                (frame, __compact_effect_52)
+            };
+            let __compact_effect_54: () = ();
+            Ok(frame.finish(__compact_effect_54))
         }
         pub fn removeRecord<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -1471,31 +1598,91 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_opaque_key_0: runtime::OpaqueString =
-                (__compact_param_0).clone();
-            let (frame, _) = __compact_recorded_body_assertWritable(frame)?;
-            let (frame, __compact_recorded_member_1): (_, bool) = crate::ledger_slots::records
-                .record_member(frame, (__compact_recorded_opaque_key_0).clone())?;
-            if !(__compact_recorded_member_1) {
+            let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
+            let (frame, __compact_effect_9): (_, ()) = {
+                let (frame, __compact_effect_1): (_, bool) =
+                    crate::ledger_slots::open.record_read(frame)?;
+                if !__compact_effect_1 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "registry is closed".to_owned(),
+                    ));
+                }
+                let __compact_effect_2: () = ();
+                let (frame, __compact_effect_3): (_, bool) =
+                    crate::ledger_slots::frozen.record_read(frame)?;
+                let (frame, __compact_effect_6): (_, bool) = if __compact_effect_3 {
+                    let __compact_effect_4: bool = false;
+                    (frame, __compact_effect_4)
+                } else {
+                    let __compact_effect_5: bool = true;
+                    (frame, __compact_effect_5)
+                };
+                if !__compact_effect_6 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "registry is frozen".to_owned(),
+                    ));
+                }
+                let __compact_effect_7: () = ();
+                let __compact_effect_8: () = ();
+                (frame, __compact_effect_8)
+            };
+            let (frame, __compact_effect_10): (_, bool) =
+                crate::ledger_slots::records.record_member(frame, (__compact_effect_0).clone())?;
+            if !__compact_effect_10 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "record does not exist".to_owned(),
                 ));
             }
-            let __compact_recorded_key_2 = (__compact_recorded_opaque_key_0).clone();
-            let (frame, __compact_recorded_member_3): (_, bool) =
-                crate::ledger_slots::watchList.record_member(frame, __compact_recorded_key_2)?;
-            let __compact_recorded_conditional_bool_4: bool = !(__compact_recorded_member_3);
-            if !(__compact_recorded_conditional_bool_4) {
+            let __compact_effect_11: () = ();
+            let (frame, __compact_effect_12): (_, bool) = crate::ledger_slots::watchList
+                .record_member(frame, (__compact_effect_0).clone())?;
+            let (frame, __compact_effect_15): (_, bool) = if __compact_effect_12 {
+                let __compact_effect_13: bool = false;
+                (frame, __compact_effect_13)
+            } else {
+                let __compact_effect_14: bool = true;
+                (frame, __compact_effect_14)
+            };
+            if !__compact_effect_15 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "record is still watched".to_owned(),
                 ));
             }
-            let frame = crate::ledger_slots::records
-                .record_remove(frame, (__compact_recorded_opaque_key_0).clone())?;
+            let __compact_effect_16: () = ();
+            let frame =
+                crate::ledger_slots::records.record_remove(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_17: () = ();
             let frame = crate::ledger_slots::retiredKeys
-                .record_insert(frame, (__compact_recorded_opaque_key_0).clone())?;
-            let (frame, _) = __compact_recorded_body_recordWrite(frame, witnesses)?;
-            Ok(frame.finish(()))
+                .record_insert(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_18: () = ();
+            let (frame, __compact_effect_26): (_, ()) = {
+                let __compact_effect_19: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
+                let frame = crate::ledger_slots::writeCount
+                    .record_increment(frame, (__compact_effect_19).value() as u16)?;
+                let __compact_effect_20: () = ();
+                let __compact_effect_21: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
+                let frame = crate::ledger_slots::revision
+                    .record_increment(frame, (__compact_effect_21).value() as u16)?;
+                let __compact_effect_22: () = ();
+                let (frame, __compact_effect_23): (_, runtime::BoundedUint<18446744073709551615>) =
+                    frame.try_witness_metered(|context, meter| {
+                        witnesses.currentTimestamp(context.witness_context_with(
+                            super::LedgerView {
+                                state: context.query.state.get_ref(),
+                                meter,
+                            },
+                        ))
+                    })?;
+                let frame =
+                    crate::ledger_slots::updatedAt.record_write(frame, __compact_effect_23)?;
+                let __compact_effect_24: () = ();
+                let __compact_effect_25: () = ();
+                (frame, __compact_effect_25)
+            };
+            let __compact_effect_27: () = ();
+            Ok(frame.finish(__compact_effect_27))
         }
         pub fn setCustodyGrant<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -1506,56 +1693,148 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_write_key: runtime::OpaqueString = (__compact_param_0).clone();
-            let __compact_recorded_write_value: crate::types::CustodyGrant =
-                (__compact_param_1).clone();
-            let __compact_recorded_write_mutation: crate::types::RecordMutation = __compact_param_2;
-            let (frame, _) = __compact_recorded_body_assertWritable(frame)?;
-            if !(__compact_recorded_write_mutation == crate::types::RecordMutation::Insert
-                || __compact_recorded_write_mutation == crate::types::RecordMutation::Update)
-            {
+            let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
+            let __compact_effect_1: crate::types::CustodyGrant = __compact_param_1;
+            let __compact_effect_2: crate::types::RecordMutation = __compact_param_2;
+            let (frame, __compact_effect_11): (_, ()) = {
+                let (frame, __compact_effect_3): (_, bool) =
+                    crate::ledger_slots::open.record_read(frame)?;
+                if !__compact_effect_3 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "registry is closed".to_owned(),
+                    ));
+                }
+                let __compact_effect_4: () = ();
+                let (frame, __compact_effect_5): (_, bool) =
+                    crate::ledger_slots::frozen.record_read(frame)?;
+                let (frame, __compact_effect_8): (_, bool) = if __compact_effect_5 {
+                    let __compact_effect_6: bool = false;
+                    (frame, __compact_effect_6)
+                } else {
+                    let __compact_effect_7: bool = true;
+                    (frame, __compact_effect_7)
+                };
+                if !__compact_effect_8 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "registry is frozen".to_owned(),
+                    ));
+                }
+                let __compact_effect_9: () = ();
+                let __compact_effect_10: () = ();
+                (frame, __compact_effect_10)
+            };
+            let __compact_effect_12: crate::types::RecordMutation =
+                crate::types::RecordMutation::Insert;
+            let __compact_effect_13: bool = __compact_effect_2 == __compact_effect_12;
+            let (frame, __compact_effect_17): (_, bool) = if __compact_effect_13 {
+                let __compact_effect_14: bool = true;
+                (frame, __compact_effect_14)
+            } else {
+                let __compact_effect_15: crate::types::RecordMutation =
+                    crate::types::RecordMutation::Update;
+                let __compact_effect_16: bool = __compact_effect_2 == __compact_effect_15;
+                (frame, __compact_effect_16)
+            };
+            if !__compact_effect_17 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "grant mutation must be Insert or Update".to_owned(),
                 ));
             }
-            let frame = if __compact_recorded_write_mutation == crate::types::RecordMutation::Update
-            {
-                let (frame, __compact_recorded_present): (_, bool) =
-                    crate::ledger_slots::custodyGrants
-                        .record_member(frame, __compact_recorded_write_key.clone())?;
-                if !__compact_recorded_present {
+            let __compact_effect_18: () = ();
+            let __compact_effect_19: crate::types::RecordMutation =
+                crate::types::RecordMutation::Update;
+            let __compact_effect_20: bool = __compact_effect_2 == __compact_effect_19;
+            let (frame, __compact_effect_41): (_, ()) = if __compact_effect_20 {
+                let (frame, __compact_effect_21): (_, bool) = crate::ledger_slots::custodyGrants
+                    .record_member(frame, (__compact_effect_0).clone())?;
+                if !__compact_effect_21 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "grant does not exist".to_owned(),
                     ));
                 }
-                crate::ledger_slots::custodyGrants
-                    .record_remove(frame, __compact_recorded_write_key.clone())?
+                let __compact_effect_22: () = ();
+                let frame = crate::ledger_slots::custodyGrants
+                    .record_remove(frame, (__compact_effect_0).clone())?;
+                let __compact_effect_23: () = ();
+                let __compact_effect_24: () = ();
+                (frame, __compact_effect_24)
             } else {
-                let (frame, __compact_recorded_first_present): (_, bool) =
-                    crate::ledger_slots::records
-                        .record_member(frame, __compact_recorded_write_key.clone())?;
-                if __compact_recorded_first_present {
-                    return Err(runtime::CompactError::AssertionFailed(
-                        "grant already exists".to_owned(),
-                    ));
-                }
-                let (frame, __compact_recorded_target_present): (_, bool) =
-                    crate::ledger_slots::custodyGrants
-                        .record_member(frame, __compact_recorded_write_key.clone())?;
-                if __compact_recorded_target_present {
-                    return Err(runtime::CompactError::AssertionFailed(
-                        "grant already exists".to_owned(),
-                    ));
-                }
-                frame
+                let __compact_effect_25: crate::types::RecordMutation =
+                    crate::types::RecordMutation::Insert;
+                let __compact_effect_26: bool = __compact_effect_2 == __compact_effect_25;
+                let (frame, __compact_effect_39): (_, ()) = if __compact_effect_26 {
+                    let (frame, __compact_effect_32): (_, bool) = {
+                        let __compact_effect_27: runtime::OpaqueString =
+                            (__compact_effect_0).clone();
+                        let (frame, __compact_effect_28): (_, bool) = crate::ledger_slots::records
+                            .record_member(frame, (__compact_effect_27).clone())?;
+                        let (frame, __compact_effect_31): (_, bool) = if __compact_effect_28 {
+                            let __compact_effect_29: bool = true;
+                            (frame, __compact_effect_29)
+                        } else {
+                            let (frame, __compact_effect_30): (_, bool) =
+                                crate::ledger_slots::custodyGrants
+                                    .record_member(frame, (__compact_effect_27).clone())?;
+                            (frame, __compact_effect_30)
+                        };
+                        (frame, __compact_effect_31)
+                    };
+                    let (frame, __compact_effect_35): (_, bool) = if __compact_effect_32 {
+                        let __compact_effect_33: bool = false;
+                        (frame, __compact_effect_33)
+                    } else {
+                        let __compact_effect_34: bool = true;
+                        (frame, __compact_effect_34)
+                    };
+                    if !__compact_effect_35 {
+                        return Err(runtime::CompactError::AssertionFailed(
+                            "grant already exists".to_owned(),
+                        ));
+                    }
+                    let __compact_effect_36: () = ();
+                    let __compact_effect_37: () = ();
+                    (frame, __compact_effect_37)
+                } else {
+                    let __compact_effect_38: () = ();
+                    (frame, __compact_effect_38)
+                };
+                let __compact_effect_40: () = ();
+                (frame, __compact_effect_40)
             };
             let frame = crate::ledger_slots::custodyGrants.record_insert(
                 frame,
-                __compact_recorded_write_key,
-                __compact_recorded_write_value,
+                (__compact_effect_0).clone(),
+                (__compact_effect_1).clone(),
             )?;
-            let (frame, _) = __compact_recorded_body_recordWrite(frame, witnesses)?;
-            Ok(frame.finish(()))
+            let __compact_effect_42: () = ();
+            let (frame, __compact_effect_50): (_, ()) = {
+                let __compact_effect_43: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
+                let frame = crate::ledger_slots::writeCount
+                    .record_increment(frame, (__compact_effect_43).value() as u16)?;
+                let __compact_effect_44: () = ();
+                let __compact_effect_45: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
+                let frame = crate::ledger_slots::revision
+                    .record_increment(frame, (__compact_effect_45).value() as u16)?;
+                let __compact_effect_46: () = ();
+                let (frame, __compact_effect_47): (_, runtime::BoundedUint<18446744073709551615>) =
+                    frame.try_witness_metered(|context, meter| {
+                        witnesses.currentTimestamp(context.witness_context_with(
+                            super::LedgerView {
+                                state: context.query.state.get_ref(),
+                                meter,
+                            },
+                        ))
+                    })?;
+                let frame =
+                    crate::ledger_slots::updatedAt.record_write(frame, __compact_effect_47)?;
+                let __compact_effect_48: () = ();
+                let __compact_effect_49: () = ();
+                (frame, __compact_effect_49)
+            };
+            let __compact_effect_51: () = ();
+            Ok(frame.finish(__compact_effect_51))
         }
         pub fn setWatch<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -1565,50 +1844,149 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_watch_key: runtime::OpaqueString = (__compact_param_0).clone();
-            let __compact_recorded_watch_mutation: crate::types::ListMutation = __compact_param_1;
-            let (frame, _) = __compact_recorded_body_assertWritable(frame)?;
-            if !(__compact_recorded_watch_mutation == crate::types::ListMutation::Add
-                || __compact_recorded_watch_mutation == crate::types::ListMutation::Drop)
-            {
+            let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
+            let __compact_effect_1: crate::types::ListMutation = __compact_param_1;
+            let (frame, __compact_effect_10): (_, ()) = {
+                let (frame, __compact_effect_2): (_, bool) =
+                    crate::ledger_slots::open.record_read(frame)?;
+                if !__compact_effect_2 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "registry is closed".to_owned(),
+                    ));
+                }
+                let __compact_effect_3: () = ();
+                let (frame, __compact_effect_4): (_, bool) =
+                    crate::ledger_slots::frozen.record_read(frame)?;
+                let (frame, __compact_effect_7): (_, bool) = if __compact_effect_4 {
+                    let __compact_effect_5: bool = false;
+                    (frame, __compact_effect_5)
+                } else {
+                    let __compact_effect_6: bool = true;
+                    (frame, __compact_effect_6)
+                };
+                if !__compact_effect_7 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "registry is frozen".to_owned(),
+                    ));
+                }
+                let __compact_effect_8: () = ();
+                let __compact_effect_9: () = ();
+                (frame, __compact_effect_9)
+            };
+            let __compact_effect_11: crate::types::ListMutation = crate::types::ListMutation::Add;
+            let __compact_effect_12: bool = __compact_effect_1 == __compact_effect_11;
+            let (frame, __compact_effect_16): (_, bool) = if __compact_effect_12 {
+                let __compact_effect_13: bool = true;
+                (frame, __compact_effect_13)
+            } else {
+                let __compact_effect_14: crate::types::ListMutation =
+                    crate::types::ListMutation::Drop;
+                let __compact_effect_15: bool = __compact_effect_1 == __compact_effect_14;
+                (frame, __compact_effect_15)
+            };
+            if !__compact_effect_16 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "watch mutation must be Add or Drop".to_owned(),
                 ));
             }
-            let (frame, __compact_recorded_first_exists): (_, bool) = crate::ledger_slots::records
-                .record_member(frame, __compact_recorded_watch_key.clone())?;
-            let (frame, __compact_recorded_exists): (_, bool) = if __compact_recorded_first_exists {
-                (frame, true)
-            } else {
-                crate::ledger_slots::custodyGrants
-                    .record_member(frame, __compact_recorded_watch_key.clone())?
+            let __compact_effect_17: () = ();
+            let (frame, __compact_effect_23): (_, bool) = {
+                let __compact_effect_18: runtime::OpaqueString = (__compact_effect_0).clone();
+                let (frame, __compact_effect_19): (_, bool) = crate::ledger_slots::records
+                    .record_member(frame, (__compact_effect_18).clone())?;
+                let (frame, __compact_effect_22): (_, bool) = if __compact_effect_19 {
+                    let __compact_effect_20: bool = true;
+                    (frame, __compact_effect_20)
+                } else {
+                    let (frame, __compact_effect_21): (_, bool) =
+                        crate::ledger_slots::custodyGrants
+                            .record_member(frame, (__compact_effect_18).clone())?;
+                    (frame, __compact_effect_21)
+                };
+                (frame, __compact_effect_22)
             };
-            if !__compact_recorded_exists {
+            if !__compact_effect_23 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "record does not exist".to_owned(),
                 ));
             }
-            let frame = if __compact_recorded_watch_mutation == crate::types::ListMutation::Add {
-                let (frame, __compact_recorded_watched): (_, bool) = crate::ledger_slots::watchList
-                    .record_member(frame, __compact_recorded_watch_key.clone())?;
-                if __compact_recorded_watched {
+            let __compact_effect_24: () = ();
+            let __compact_effect_25: crate::types::ListMutation = crate::types::ListMutation::Add;
+            let __compact_effect_26: bool = __compact_effect_1 == __compact_effect_25;
+            let (frame, __compact_effect_43): (_, ()) = if __compact_effect_26 {
+                let (frame, __compact_effect_27): (_, bool) = crate::ledger_slots::watchList
+                    .record_member(frame, (__compact_effect_0).clone())?;
+                let (frame, __compact_effect_30): (_, bool) = if __compact_effect_27 {
+                    let __compact_effect_28: bool = false;
+                    (frame, __compact_effect_28)
+                } else {
+                    let __compact_effect_29: bool = true;
+                    (frame, __compact_effect_29)
+                };
+                if !__compact_effect_30 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "record is already watched".to_owned(),
                     ));
                 }
-                crate::ledger_slots::watchList.record_insert(frame, __compact_recorded_watch_key)?
+                let __compact_effect_31: () = ();
+                let frame = crate::ledger_slots::watchList
+                    .record_insert(frame, (__compact_effect_0).clone())?;
+                let __compact_effect_32: () = ();
+                let __compact_effect_33: () = ();
+                (frame, __compact_effect_33)
             } else {
-                let (frame, __compact_recorded_watched): (_, bool) = crate::ledger_slots::watchList
-                    .record_member(frame, __compact_recorded_watch_key.clone())?;
-                if !__compact_recorded_watched {
-                    return Err(runtime::CompactError::AssertionFailed(
-                        "record is not watched".to_owned(),
-                    ));
-                }
-                crate::ledger_slots::watchList.record_remove(frame, __compact_recorded_watch_key)?
+                let __compact_effect_34: crate::types::ListMutation =
+                    crate::types::ListMutation::Drop;
+                let __compact_effect_35: bool = __compact_effect_1 == __compact_effect_34;
+                let (frame, __compact_effect_41): (_, ()) = if __compact_effect_35 {
+                    let (frame, __compact_effect_36): (_, bool) = crate::ledger_slots::watchList
+                        .record_member(frame, (__compact_effect_0).clone())?;
+                    if !__compact_effect_36 {
+                        return Err(runtime::CompactError::AssertionFailed(
+                            "record is not watched".to_owned(),
+                        ));
+                    }
+                    let __compact_effect_37: () = ();
+                    let frame = crate::ledger_slots::watchList
+                        .record_remove(frame, (__compact_effect_0).clone())?;
+                    let __compact_effect_38: () = ();
+                    let __compact_effect_39: () = ();
+                    (frame, __compact_effect_39)
+                } else {
+                    let __compact_effect_40: () = ();
+                    (frame, __compact_effect_40)
+                };
+                let __compact_effect_42: () = ();
+                (frame, __compact_effect_42)
             };
-            let (frame, _) = __compact_recorded_body_recordWrite(frame, witnesses)?;
-            Ok(frame.finish(()))
+            let (frame, __compact_effect_51): (_, ()) = {
+                let __compact_effect_44: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
+                let frame = crate::ledger_slots::writeCount
+                    .record_increment(frame, (__compact_effect_44).value() as u16)?;
+                let __compact_effect_45: () = ();
+                let __compact_effect_46: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
+                let frame = crate::ledger_slots::revision
+                    .record_increment(frame, (__compact_effect_46).value() as u16)?;
+                let __compact_effect_47: () = ();
+                let (frame, __compact_effect_48): (_, runtime::BoundedUint<18446744073709551615>) =
+                    frame.try_witness_metered(|context, meter| {
+                        witnesses.currentTimestamp(context.witness_context_with(
+                            super::LedgerView {
+                                state: context.query.state.get_ref(),
+                                meter,
+                            },
+                        ))
+                    })?;
+                let frame =
+                    crate::ledger_slots::updatedAt.record_write(frame, __compact_effect_48)?;
+                let __compact_effect_49: () = ();
+                let __compact_effect_50: () = ();
+                (frame, __compact_effect_50)
+            };
+            let __compact_effect_52: () = ();
+            Ok(frame.finish(__compact_effect_52))
         }
         pub fn tag<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -1617,10 +1995,64 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, _) = __compact_recorded_body_assertWritable(frame)?;
-            let frame = crate::ledger_slots::tags.record_insert(frame, __compact_param_0)?;
-            let (frame, _) = __compact_recorded_body_recordWrite(frame, witnesses)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: runtime::Field = __compact_param_0;
+            let (frame, __compact_effect_9): (_, ()) = {
+                let (frame, __compact_effect_1): (_, bool) =
+                    crate::ledger_slots::open.record_read(frame)?;
+                if !__compact_effect_1 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "registry is closed".to_owned(),
+                    ));
+                }
+                let __compact_effect_2: () = ();
+                let (frame, __compact_effect_3): (_, bool) =
+                    crate::ledger_slots::frozen.record_read(frame)?;
+                let (frame, __compact_effect_6): (_, bool) = if __compact_effect_3 {
+                    let __compact_effect_4: bool = false;
+                    (frame, __compact_effect_4)
+                } else {
+                    let __compact_effect_5: bool = true;
+                    (frame, __compact_effect_5)
+                };
+                if !__compact_effect_6 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "registry is frozen".to_owned(),
+                    ));
+                }
+                let __compact_effect_7: () = ();
+                let __compact_effect_8: () = ();
+                (frame, __compact_effect_8)
+            };
+            let frame = crate::ledger_slots::tags.record_insert(frame, __compact_effect_0)?;
+            let __compact_effect_10: () = ();
+            let (frame, __compact_effect_18): (_, ()) = {
+                let __compact_effect_11: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
+                let frame = crate::ledger_slots::writeCount
+                    .record_increment(frame, (__compact_effect_11).value() as u16)?;
+                let __compact_effect_12: () = ();
+                let __compact_effect_13: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
+                let frame = crate::ledger_slots::revision
+                    .record_increment(frame, (__compact_effect_13).value() as u16)?;
+                let __compact_effect_14: () = ();
+                let (frame, __compact_effect_15): (_, runtime::BoundedUint<18446744073709551615>) =
+                    frame.try_witness_metered(|context, meter| {
+                        witnesses.currentTimestamp(context.witness_context_with(
+                            super::LedgerView {
+                                state: context.query.state.get_ref(),
+                                meter,
+                            },
+                        ))
+                    })?;
+                let frame =
+                    crate::ledger_slots::updatedAt.record_write(frame, __compact_effect_15)?;
+                let __compact_effect_16: () = ();
+                let __compact_effect_17: () = ();
+                (frame, __compact_effect_17)
+            };
+            let __compact_effect_19: () = ();
+            Ok(frame.finish(__compact_effect_19))
         }
         pub fn assertStoredRecordFresh<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -1630,28 +2062,26 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_map_key: runtime::OpaqueString = (__compact_param_0).clone();
-            let (frame, __compact_recorded_map_member): (_, bool) = crate::ledger_slots::records
-                .record_member(frame, __compact_recorded_map_key.clone())?;
-            if !__compact_recorded_map_member {
+            let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
+            let __compact_effect_1: crate::types::FreshnessPolicy = __compact_param_1;
+            let __compact_effect_2: runtime::BoundedUint<18446744073709551615> = __compact_param_2;
+            let (frame, __compact_effect_3): (_, bool) =
+                crate::ledger_slots::records.record_member(frame, (__compact_effect_0).clone())?;
+            if !__compact_effect_3 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "record does not exist".to_owned(),
                 ));
             }
-            let (frame, __compact_recorded_map_value): (_, crate::types::AssetRecord) =
-                crate::ledger_slots::records.record_lookup(frame, __compact_recorded_map_key)?;
-            let __compact_recorded_guard_arg_0: crate::types::FreshnessPolicy =
-                (__compact_param_1).clone();
-            let __compact_recorded_guard_arg_1: crate::types::AssetRecord =
-                __compact_recorded_map_value;
-            let __compact_recorded_guard_arg_2: runtime::BoundedUint<18446744073709551615> =
-                __compact_param_2;
-            crate::pure_circuits::assertRecordFreshEnough(
-                __compact_recorded_guard_arg_0,
-                __compact_recorded_guard_arg_1,
-                __compact_recorded_guard_arg_2,
+            let __compact_effect_4: () = ();
+            let (frame, __compact_effect_5): (_, crate::types::AssetRecord) =
+                crate::ledger_slots::records.record_lookup(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_6: () = crate::pure_circuits::assertRecordFreshEnough(
+                (__compact_effect_1).clone(),
+                (__compact_effect_5).clone(),
+                __compact_effect_2,
             )?;
-            Ok(frame.finish(()))
+            let __compact_effect_7: () = ();
+            Ok(frame.finish(__compact_effect_7))
         }
         pub fn assertGrantEffective<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -1660,27 +2090,25 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_map_key: runtime::OpaqueString = (__compact_param_0).clone();
-            let (frame, __compact_recorded_map_member): (_, bool) =
-                crate::ledger_slots::custodyGrants
-                    .record_member(frame, __compact_recorded_map_key.clone())?;
-            if !__compact_recorded_map_member {
+            let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
+            let __compact_effect_1: runtime::BoundedUint<18446744073709551615> = __compact_param_1;
+            let (frame, __compact_effect_2): (_, bool) = crate::ledger_slots::custodyGrants
+                .record_member(frame, (__compact_effect_0).clone())?;
+            if !__compact_effect_2 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "grant does not exist".to_owned(),
                 ));
             }
-            let (frame, __compact_recorded_map_value): (_, crate::types::CustodyGrant) =
+            let __compact_effect_3: () = ();
+            let (frame, __compact_effect_4): (_, crate::types::CustodyGrant) =
                 crate::ledger_slots::custodyGrants
-                    .record_lookup(frame, __compact_recorded_map_key)?;
-            let __compact_recorded_guard_arg_0: crate::types::CustodyGrant =
-                __compact_recorded_map_value;
-            let __compact_recorded_guard_arg_1: runtime::BoundedUint<18446744073709551615> =
-                __compact_param_1;
-            crate::pure_circuits::assertGrantNotFuture(
-                __compact_recorded_guard_arg_0,
-                __compact_recorded_guard_arg_1,
+                    .record_lookup(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_5: () = crate::pure_circuits::assertGrantNotFuture(
+                (__compact_effect_4).clone(),
+                __compact_effect_1,
             )?;
-            Ok(frame.finish(()))
+            let __compact_effect_6: () = ();
+            Ok(frame.finish(__compact_effect_6))
         }
         pub fn acceptIfFresh<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -1691,19 +2119,42 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_guard_arg_0: crate::types::FreshnessPolicy =
-                (__compact_param_0).clone();
-            let __compact_recorded_guard_arg_1: crate::types::AssetRecord =
-                (__compact_param_1).clone();
-            let __compact_recorded_guard_arg_2: runtime::BoundedUint<18446744073709551615> =
-                __compact_param_2;
-            crate::pure_circuits::assertRecordFreshEnough(
-                __compact_recorded_guard_arg_0,
-                __compact_recorded_guard_arg_1,
-                __compact_recorded_guard_arg_2,
+            let __compact_effect_0: crate::types::FreshnessPolicy = __compact_param_0;
+            let __compact_effect_1: crate::types::AssetRecord = __compact_param_1;
+            let __compact_effect_2: runtime::BoundedUint<18446744073709551615> = __compact_param_2;
+            let __compact_effect_3: () = crate::pure_circuits::assertRecordFreshEnough(
+                (__compact_effect_0).clone(),
+                (__compact_effect_1).clone(),
+                __compact_effect_2,
             )?;
-            let (frame, _) = __compact_recorded_body_recordWrite(frame, witnesses)?;
-            Ok(frame.finish(()))
+            let (frame, __compact_effect_11): (_, ()) = {
+                let __compact_effect_4: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
+                let frame = crate::ledger_slots::writeCount
+                    .record_increment(frame, (__compact_effect_4).value() as u16)?;
+                let __compact_effect_5: () = ();
+                let __compact_effect_6: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
+                let frame = crate::ledger_slots::revision
+                    .record_increment(frame, (__compact_effect_6).value() as u16)?;
+                let __compact_effect_7: () = ();
+                let (frame, __compact_effect_8): (_, runtime::BoundedUint<18446744073709551615>) =
+                    frame.try_witness_metered(|context, meter| {
+                        witnesses.currentTimestamp(context.witness_context_with(
+                            super::LedgerView {
+                                state: context.query.state.get_ref(),
+                                meter,
+                            },
+                        ))
+                    })?;
+                let frame =
+                    crate::ledger_slots::updatedAt.record_write(frame, __compact_effect_8)?;
+                let __compact_effect_9: () = ();
+                let __compact_effect_10: () = ();
+                (frame, __compact_effect_10)
+            };
+            let __compact_effect_12: () = ();
+            Ok(frame.finish(__compact_effect_12))
         }
         pub fn close<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -1711,39 +2162,48 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_plan_0): (_, bool) =
+            let (frame, __compact_effect_0): (_, bool) =
                 crate::ledger_slots::open.record_read(frame)?;
-            if !__compact_plan_0 {
+            if !__compact_effect_0 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "registry is already closed".to_owned(),
                 ));
             }
-            let __compact_plan_1: bool = false;
-            let frame = crate::ledger_slots::open.record_write(frame, __compact_plan_1)?;
-            let __compact_plan_2: bool = true;
-            let frame = crate::ledger_slots::frozen.record_write(frame, __compact_plan_2)?;
-            let __compact_plan_3: runtime::BoundedUint<65535> =
-                runtime::BoundedUint::<65535>::new(1u128)
-                    .expect("Compact Uint literal fits its maximum");
-            let __compact_plan_4: runtime::BoundedUint<65535> = __compact_plan_3;
-            let frame = crate::ledger_slots::writeCount
-                .record_increment(frame, (__compact_plan_4).value() as u16)?;
-            let __compact_plan_5: runtime::BoundedUint<65535> =
-                runtime::BoundedUint::<65535>::new(1u128)
-                    .expect("Compact Uint literal fits its maximum");
-            let __compact_plan_6: runtime::BoundedUint<65535> = __compact_plan_5;
-            let frame = crate::ledger_slots::revision
-                .record_increment(frame, (__compact_plan_6).value() as u16)?;
-            let (frame, __compact_plan_7): (_, runtime::BoundedUint<18446744073709551615>) = frame
-                .try_witness_metered(|context, meter| {
-                    witnesses.currentTimestamp(context.witness_context_with(super::LedgerView {
-                        state: context.query.state.get_ref(),
-                        meter,
-                    }))
-                })?;
-            let __compact_plan_8: runtime::BoundedUint<18446744073709551615> = __compact_plan_7;
-            let frame = crate::ledger_slots::updatedAt.record_write(frame, __compact_plan_8)?;
-            Ok(frame.finish(()))
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: bool = false;
+            let frame = crate::ledger_slots::open.record_write(frame, __compact_effect_2)?;
+            let __compact_effect_3: () = ();
+            let __compact_effect_4: bool = true;
+            let frame = crate::ledger_slots::frozen.record_write(frame, __compact_effect_4)?;
+            let __compact_effect_5: () = ();
+            let (frame, __compact_effect_13): (_, ()) = {
+                let __compact_effect_6: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
+                let frame = crate::ledger_slots::writeCount
+                    .record_increment(frame, (__compact_effect_6).value() as u16)?;
+                let __compact_effect_7: () = ();
+                let __compact_effect_8: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
+                let frame = crate::ledger_slots::revision
+                    .record_increment(frame, (__compact_effect_8).value() as u16)?;
+                let __compact_effect_9: () = ();
+                let (frame, __compact_effect_10): (_, runtime::BoundedUint<18446744073709551615>) =
+                    frame.try_witness_metered(|context, meter| {
+                        witnesses.currentTimestamp(context.witness_context_with(
+                            super::LedgerView {
+                                state: context.query.state.get_ref(),
+                                meter,
+                            },
+                        ))
+                    })?;
+                let frame =
+                    crate::ledger_slots::updatedAt.record_write(frame, __compact_effect_10)?;
+                let __compact_effect_11: () = ();
+                let __compact_effect_12: () = ();
+                (frame, __compact_effect_12)
+            };
+            let __compact_effect_14: () = ();
+            Ok(frame.finish(__compact_effect_14))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
@@ -1775,6 +2235,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
+                runtime::ledger::CellValue::validate_cell_value(&recordId)?;
                 let input = runtime::fab::AlignedValue::concat(&[
                     runtime::fab::AlignedValue::from((recordId).clone()),
                     runtime::fab::AlignedValue::from((policy).clone()),
@@ -1813,6 +2274,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
+                runtime::ledger::CellValue::validate_cell_value(&grantId)?;
                 let input = runtime::fab::AlignedValue::from(((grantId).clone(), asOf));
                 let recorded = self.assertGrantEffective(
                     observed.circuit_context(private_state),
@@ -1892,6 +2354,8 @@ pub mod ledger_contract {
             where
                 W: super::TryWitnesses<Private>,
             {
+                runtime::ledger::CellValue::validate_cell_value(&recordId)?;
+                runtime::ledger::CellValue::validate_cell_value(&(record).note)?;
                 let input = runtime::fab::AlignedValue::concat(&[
                     runtime::fab::AlignedValue::from((recordId).clone()),
                     runtime::fab::AlignedValue::from((record).clone()),
@@ -1933,6 +2397,7 @@ pub mod ledger_contract {
             where
                 W: super::TryWitnesses<Private>,
             {
+                runtime::ledger::CellValue::validate_cell_value(&recordId)?;
                 let input = runtime::fab::AlignedValue::from((recordId).clone());
                 let recorded =
                     self.removeRecord(observed.circuit_context(private_state), recordId)?;
@@ -1970,6 +2435,7 @@ pub mod ledger_contract {
             where
                 W: super::TryWitnesses<Private>,
             {
+                runtime::ledger::CellValue::validate_cell_value(&grantId)?;
                 let input = runtime::fab::AlignedValue::concat(&[
                     runtime::fab::AlignedValue::from((grantId).clone()),
                     runtime::fab::AlignedValue::from((grant).clone()),
@@ -2013,6 +2479,7 @@ pub mod ledger_contract {
             where
                 W: super::TryWitnesses<Private>,
             {
+                runtime::ledger::CellValue::validate_cell_value(&recordId)?;
                 let input = runtime::fab::AlignedValue::from(((recordId).clone(), mutation));
                 let recorded =
                     self.setWatch(observed.circuit_context(private_state), recordId, mutation)?;
@@ -2071,6 +2538,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
+                runtime::ledger::CellValue::validate_cell_value(&recordId)?;
                 let input = runtime::fab::AlignedValue::concat(&[
                     runtime::fab::AlignedValue::from((recordId).clone()),
                     runtime::fab::AlignedValue::from((policy).clone()),
@@ -2109,6 +2577,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
+                runtime::ledger::CellValue::validate_cell_value(&grantId)?;
                 let input = runtime::fab::AlignedValue::from(((grantId).clone(), asOf));
                 let recorded = self.assertGrantEffective(
                     observed.circuit_context(private_state),
@@ -2149,6 +2618,7 @@ pub mod ledger_contract {
             where
                 W: super::TryWitnesses<Private>,
             {
+                runtime::ledger::CellValue::validate_cell_value(&(record).note)?;
                 let input = runtime::fab::AlignedValue::concat(&[
                     runtime::fab::AlignedValue::from((policy).clone()),
                     runtime::fab::AlignedValue::from((record).clone()),

@@ -1,0 +1,457 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "records",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "map",
+        "key": {
+          "kind": "opaque_string"
+        },
+        "value": {
+          "kind": "struct",
+          "name": "Stored",
+          "fields": [
+            {
+              "name": "stamp",
+              "ty": {
+                "kind": "unsigned",
+                "max": "18446744073709551615"
+              }
+            },
+            {
+              "name": "fields",
+              "ty": {
+                "kind": "vector",
+                "length": 2,
+                "element": {
+                  "kind": "field"
+                }
+              }
+            },
+            {
+              "name": "pair",
+              "ty": {
+                "kind": "tuple",
+                "elements": [
+                  {
+                    "kind": "field"
+                  },
+                  {
+                    "kind": "boolean"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "wide",
+              "ty": {
+                "kind": "unsigned",
+                "max": "680564733841876926926749214863536422911"
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "effect_plan_map_value_products.compact",
+        "line": 11,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+    {
+      "name": "assertFresh",
+      "parameters": [
+        {
+          "name": "record",
+          "ty": {
+            "kind": "struct",
+            "name": "Stored",
+            "fields": [
+              {
+                "name": "stamp",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "18446744073709551615"
+                }
+              },
+              {
+                "name": "fields",
+                "ty": {
+                  "kind": "vector",
+                  "length": 2,
+                  "element": {
+                    "kind": "field"
+                  }
+                }
+              },
+              {
+                "name": "pair",
+                "ty": {
+                  "kind": "tuple",
+                  "elements": [
+                    {
+                      "kind": "field"
+                    },
+                    {
+                      "kind": "boolean"
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "wide",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "680564733841876926926749214863536422911"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "asOf",
+          "ty": {
+            "kind": "unsigned",
+            "max": "18446744073709551615"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "body": {
+        "kind": "sequence",
+        "steps": [
+          {
+            "kind": "assert",
+            "condition": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "t_5",
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "18446744073709551615"
+                  },
+                  "value": {
+                    "kind": "struct_field",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "record"
+                    },
+                    "field": "stamp",
+                    "index": 0
+                  }
+                }
+              ],
+              "body": {
+                "kind": "compare",
+                "operator": "less_equal",
+                "left": {
+                  "kind": "parameter",
+                  "name": "t_5"
+                },
+                "right": {
+                  "kind": "parameter",
+                  "name": "asOf"
+                }
+              }
+            },
+            "message": "record is in the future"
+          }
+        ],
+        "value": {
+          "kind": "unit"
+        }
+      },
+      "source": {
+        "file": "effect_plan_map_value_products.compact",
+        "line": 15,
+        "column": 1
+      }
+    }
+  ],
+  "stateful_circuits": [
+    {
+      "name": "readFresh",
+      "parameters": [
+        {
+          "name": "id",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        },
+        {
+          "name": "asOf",
+          "ty": {
+            "kind": "unsigned",
+            "max": "18446744073709551615"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "key",
+              "ty": {
+                "kind": "opaque_string"
+              },
+              "value": {
+                "kind": "parameter",
+                "name": "id"
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "assert",
+                "condition": {
+                  "kind": "map_member",
+                  "field": "records",
+                  "index": 0,
+                  "key": {
+                    "kind": "parameter",
+                    "name": "key"
+                  }
+                },
+                "message": "record does not exist"
+              },
+              {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "record",
+                    "ty": {
+                      "kind": "struct",
+                      "name": "Stored",
+                      "fields": [
+                        {
+                          "name": "stamp",
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "18446744073709551615"
+                          }
+                        },
+                        {
+                          "name": "fields",
+                          "ty": {
+                            "kind": "vector",
+                            "length": 2,
+                            "element": {
+                              "kind": "field"
+                            }
+                          }
+                        },
+                        {
+                          "name": "pair",
+                          "ty": {
+                            "kind": "tuple",
+                            "elements": [
+                              {
+                                "kind": "field"
+                              },
+                              {
+                                "kind": "boolean"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "name": "wide",
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "680564733841876926926749214863536422911"
+                          }
+                        }
+                      ]
+                    },
+                    "value": {
+                      "kind": "map_lookup",
+                      "field": "records",
+                      "index": 0,
+                      "key": {
+                        "kind": "parameter",
+                        "name": "key"
+                      }
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "pure_call",
+                  "name": "assertFresh",
+                  "arguments": [
+                    {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "record"
+                      },
+                      "ty": {
+                        "kind": "struct",
+                        "name": "Stored",
+                        "fields": [
+                          {
+                            "name": "stamp",
+                            "ty": {
+                              "kind": "unsigned",
+                              "max": "18446744073709551615"
+                            }
+                          },
+                          {
+                            "name": "fields",
+                            "ty": {
+                              "kind": "vector",
+                              "length": 2,
+                              "element": {
+                                "kind": "field"
+                              }
+                            }
+                          },
+                          {
+                            "name": "pair",
+                            "ty": {
+                              "kind": "tuple",
+                              "elements": [
+                                {
+                                  "kind": "field"
+                                },
+                                {
+                                  "kind": "boolean"
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "name": "wide",
+                            "ty": {
+                              "kind": "unsigned",
+                              "max": "680564733841876926926749214863536422911"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "asOf"
+                      },
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "18446744073709551615"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_map_value_products.compact",
+        "line": 18,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": {
+    "parameters": [
+      {
+        "name": "id",
+        "ty": {
+          "kind": "opaque_string"
+        }
+      },
+      {
+        "name": "value",
+        "ty": {
+          "kind": "struct",
+          "name": "Stored",
+          "fields": [
+            {
+              "name": "stamp",
+              "ty": {
+                "kind": "unsigned",
+                "max": "18446744073709551615"
+              }
+            },
+            {
+              "name": "fields",
+              "ty": {
+                "kind": "vector",
+                "length": 2,
+                "element": {
+                  "kind": "field"
+                }
+              }
+            },
+            {
+              "name": "pair",
+              "ty": {
+                "kind": "tuple",
+                "elements": [
+                  {
+                    "kind": "field"
+                  },
+                  {
+                    "kind": "boolean"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "wide",
+              "ty": {
+                "kind": "unsigned",
+                "max": "680564733841876926926749214863536422911"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "steps": [
+      {
+        "kind": "map_insert",
+        "field": "records",
+        "index": 0,
+        "key": {
+          "kind": "parameter",
+          "name": "id"
+        },
+        "value": {
+          "kind": "parameter",
+          "name": "value"
+        }
+      }
+    ],
+    "source": {
+      "file": "effect_plan_map_value_products.compact",
+      "line": 12,
+      "column": 1
+    }
+  }
+}

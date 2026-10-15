@@ -18,6 +18,10 @@
 
 //! Prove the generated variable-length OpaqueString Set calls through ledger-8.
 
+mod member;
+
+pub(super) use member::run as run_member;
+
 use super::*;
 use compact_rust_opaque_string_set_oracle_fixture::ledger_contract as contract;
 use midnight_compact_runtime::OpaqueString;

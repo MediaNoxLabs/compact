@@ -29,7 +29,7 @@ At `17433b40a14da83c5c500d92420149c28f755b88`, retained proof-feature qualificat
 | `LabError` | Report testkit boundary and execution failures |
 | `ProofLab` / `ProofError` (`proof` feature) | Reuse official local proving providers and explicit verifier resolution/decode errors |
 
-The crate re-exports its matching runtime as `runtime`. Current source package versions are testkit **0.1.0** and runtime **0.2.0**; the runtime ABI is **50**. These numbers describe different compatibility boundaries. See [the version guide](../doc/rust/guides/versions-and-targets.md).
+The crate re-exports its matching runtime as `runtime`. Current source package versions are testkit **0.1.0** and runtime **0.2.0**; the runtime ABI is **52**. These numbers describe different compatibility boundaries. See [the version guide](../doc/rust/guides/versions-and-targets.md).
 
 ## What a local test establishes
 

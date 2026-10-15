@@ -1,0 +1,9 @@
+{
+  "source": "../../examples/rust_backend/effect_plan_pure_unit_statements.compact",
+  "source_sha256": "1afecd681a6b8fc7962a217ad5ad1eb4e6b443ffb3d91a194809274c51656ff7",
+  "retained_ir": "../../tools/compact-rust-backend/tests/effect-plan-pure-unit-statements-schema20-ir.json",
+  "retained_ir_sha256": "fde8aedbfb4be2208be7cfef995d353f07e623d70bdcbf77b0895b903422683a",
+  "baseline_native_rust_sha256": "4058daecba78a26d2959c9733d5467351be8857f0b7c447fb0a13c8ca3c5f1ae",
+  "baseline_generation_receipt_sha256": "17874bf94a3cb6df292511abe4707871efd740d0b1b600b8467d133aa66419ff",
+  "claim": "Exact source/full IR paired to successful frozen native generation. Current generated consumer compilation/runtime qualification is separate; no proof claim."
+}

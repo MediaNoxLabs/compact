@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -33,7 +33,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -275,8 +275,11 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame = crate::ledger_slots::seen.record_insert(frame, __compact_param_0)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: bool = __compact_param_0;
+            let frame = crate::ledger_slots::seen.record_insert(frame, __compact_effect_0)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn contains<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -284,10 +287,10 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_key_0 = __compact_param_0;
-            let (frame, __compact_recorded_member_1): (_, bool) =
-                crate::ledger_slots::seen.record_member(frame, __compact_recorded_key_0)?;
-            Ok(frame.finish(__compact_recorded_member_1))
+            let __compact_effect_0: bool = __compact_param_0;
+            let (frame, __compact_effect_1): (_, bool) =
+                crate::ledger_slots::seen.record_member(frame, __compact_effect_0)?;
+            Ok(frame.finish(__compact_effect_1))
         }
         pub fn add_field<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -295,8 +298,11 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame = crate::ledger_slots::fields.record_insert(frame, __compact_param_0)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: runtime::Field = __compact_param_0;
+            let frame = crate::ledger_slots::fields.record_insert(frame, __compact_effect_0)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn contains_field<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -304,10 +310,10 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_key_0 = __compact_param_0;
-            let (frame, __compact_recorded_member_1): (_, bool) =
-                crate::ledger_slots::fields.record_member(frame, __compact_recorded_key_0)?;
-            Ok(frame.finish(__compact_recorded_member_1))
+            let __compact_effect_0: runtime::Field = __compact_param_0;
+            let (frame, __compact_effect_1): (_, bool) =
+                crate::ledger_slots::fields.record_member(frame, __compact_effect_0)?;
+            Ok(frame.finish(__compact_effect_1))
         }
         pub fn remove<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -315,8 +321,11 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame = crate::ledger_slots::seen.record_remove(frame, __compact_param_0)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: bool = __compact_param_0;
+            let frame = crate::ledger_slots::seen.record_remove(frame, __compact_effect_0)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn seen_size<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -328,19 +337,22 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (_, u64) = crate::ledger_slots::seen.record_size(frame)?;
-            Ok(frame.finish(
-                runtime::BoundedUint::<18446744073709551615>::new(observed as u128)
-                    .expect("ledger Set size fits Uint<64>"),
-            ))
+            let (frame, __compact_effect_set_size_0) =
+                crate::ledger_slots::seen.record_size(frame)?;
+            let __compact_effect_0: runtime::BoundedUint<18446744073709551615> =
+                <runtime::BoundedUint<18446744073709551615>>::new(
+                    __compact_effect_set_size_0 as u128,
+                )?;
+            Ok(frame.finish(__compact_effect_0))
         }
         pub fn seen_is_empty<Private>(
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (_, bool) = crate::ledger_slots::seen.record_is_empty(frame)?;
-            Ok(frame.finish(observed))
+            let (frame, __compact_effect_0): (_, bool) =
+                crate::ledger_slots::seen.record_is_empty(frame)?;
+            Ok(frame.finish(__compact_effect_0))
         }
         pub fn reset_fields<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -348,7 +360,9 @@ pub mod ledger_contract {
         {
             let frame = runtime::recording::RecordingFrame::new(context);
             let frame = crate::ledger_slots::fields.record_reset(frame)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: () = ();
+            let __compact_effect_1: () = ();
+            Ok(frame.finish(__compact_effect_1))
         }
         pub fn choose<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -357,27 +371,35 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_branch_1: bool = __compact_param_1;
-            #[allow(clippy::let_and_return)]
-            let frame = if __compact_recorded_branch_1 {
-                let __compact_recorded_branch_0: bool = __compact_param_0;
-                #[allow(clippy::let_and_return)]
-                let frame = if __compact_recorded_branch_0 {
-                    let frame = crate::ledger_slots::seen.record_insert(frame, true)?;
-                    frame
+            let __compact_effect_0: bool = __compact_param_0;
+            let __compact_effect_1: bool = __compact_param_1;
+            let (frame, __compact_effect_12): (_, ()) = if __compact_effect_1 {
+                let (frame, __compact_effect_8): (_, ()) = if __compact_effect_0 {
+                    let __compact_effect_2: bool = true;
+                    let frame =
+                        crate::ledger_slots::seen.record_insert(frame, __compact_effect_2)?;
+                    let __compact_effect_3: () = ();
+                    let __compact_effect_4: () = ();
+                    (frame, __compact_effect_4)
                 } else {
-                    let frame = crate::ledger_slots::seen.record_insert(frame, false)?;
-                    frame
+                    let __compact_effect_5: bool = false;
+                    let frame =
+                        crate::ledger_slots::seen.record_insert(frame, __compact_effect_5)?;
+                    let __compact_effect_6: () = ();
+                    let __compact_effect_7: () = ();
+                    (frame, __compact_effect_7)
                 };
-                frame
+                let __compact_effect_9: () = ();
+                (frame, __compact_effect_9)
             } else {
-                let frame = crate::ledger_slots::seen.record_remove(frame, __compact_param_0)?;
-                frame
+                let frame = crate::ledger_slots::seen.record_remove(frame, __compact_effect_0)?;
+                let __compact_effect_10: () = ();
+                let __compact_effect_11: () = ();
+                (frame, __compact_effect_11)
             };
-            let __compact_recorded_key_2 = __compact_param_0;
-            let (frame, __compact_recorded_member_3): (_, bool) =
-                crate::ledger_slots::seen.record_member(frame, __compact_recorded_key_2)?;
-            Ok(frame.finish(__compact_recorded_member_3))
+            let (frame, __compact_effect_13): (_, bool) =
+                crate::ledger_slots::seen.record_member(frame, __compact_effect_0)?;
+            Ok(frame.finish(__compact_effect_13))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

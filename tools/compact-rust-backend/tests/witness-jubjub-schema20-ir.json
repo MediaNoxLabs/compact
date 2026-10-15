@@ -1,0 +1,427 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+  ],
+  "witnesses": [
+    {
+      "name": "secret_point",
+      "parameters": [
+        {
+          "name": "seed",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "jubjub_point"
+      },
+      "source": {
+        "file": "witness_jubjub.compact",
+        "line": 18,
+        "column": 1
+      }
+    },
+    {
+      "name": "secret_scalar",
+      "parameters": [
+        {
+          "name": "seed",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "source": {
+        "file": "witness_jubjub.compact",
+        "line": 19,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "combine",
+      "parameters": [
+        {
+          "name": "seed",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "jubjub_point"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "ec_add",
+          "left": {
+            "kind": "witness_call",
+            "name": "secret_point",
+            "arguments": [
+              {
+                "kind": "coerce",
+                "value": {
+                  "kind": "parameter",
+                  "name": "seed"
+                },
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          },
+          "right": {
+            "kind": "witness_call",
+            "name": "secret_point",
+            "arguments": [
+              {
+                "kind": "coerce",
+                "value": {
+                  "kind": "parameter",
+                  "name": "seed"
+                },
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "witness_jubjub.compact",
+        "line": 21,
+        "column": 1
+      }
+    },
+    {
+      "name": "scale",
+      "parameters": [
+        {
+          "name": "seed",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "jubjub_point"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "ec_mul",
+          "point": {
+            "kind": "witness_call",
+            "name": "secret_point",
+            "arguments": [
+              {
+                "kind": "coerce",
+                "value": {
+                  "kind": "parameter",
+                  "name": "seed"
+                },
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          },
+          "scalar": {
+            "kind": "witness_call",
+            "name": "secret_scalar",
+            "arguments": [
+              {
+                "kind": "coerce",
+                "value": {
+                  "kind": "parameter",
+                  "name": "seed"
+                },
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "witness_jubjub.compact",
+        "line": 25,
+        "column": 1
+      }
+    },
+    {
+      "name": "point_x",
+      "parameters": [
+        {
+          "name": "seed",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "jubjub_point_x",
+          "value": {
+            "kind": "witness_call",
+            "name": "secret_point",
+            "arguments": [
+              {
+                "kind": "coerce",
+                "value": {
+                  "kind": "parameter",
+                  "name": "seed"
+                },
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "witness_jubjub.compact",
+        "line": 29,
+        "column": 1
+      }
+    },
+    {
+      "name": "point_y",
+      "parameters": [
+        {
+          "name": "seed",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "jubjub_point_y",
+          "value": {
+            "kind": "witness_call",
+            "name": "secret_point",
+            "arguments": [
+              {
+                "kind": "coerce",
+                "value": {
+                  "kind": "parameter",
+                  "name": "seed"
+                },
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "witness_jubjub.compact",
+        "line": 33,
+        "column": 1
+      }
+    },
+    {
+      "name": "negate",
+      "parameters": [
+        {
+          "name": "seed",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "jubjub_point"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "ec_neg",
+          "value": {
+            "kind": "witness_call",
+            "name": "secret_point",
+            "arguments": [
+              {
+                "kind": "coerce",
+                "value": {
+                  "kind": "parameter",
+                  "name": "seed"
+                },
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "witness_jubjub.compact",
+        "line": 37,
+        "column": 1
+      }
+    },
+    {
+      "name": "reveal",
+      "parameters": [
+        {
+          "name": "seed",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "jubjub_point"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "witness_call",
+          "name": "secret_point",
+          "arguments": [
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "seed"
+              },
+              "ty": {
+                "kind": "field"
+              }
+            }
+          ]
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "witness_jubjub.compact",
+        "line": 41,
+        "column": 1
+      }
+    },
+    {
+      "name": "hash_scalar",
+      "parameters": [
+        {
+          "name": "seed",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "jubjub_point"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "hash_to_curve",
+          "value": {
+            "kind": "witness_call",
+            "name": "secret_scalar",
+            "arguments": [
+              {
+                "kind": "coerce",
+                "value": {
+                  "kind": "parameter",
+                  "name": "seed"
+                },
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "witness_jubjub.compact",
+        "line": 45,
+        "column": 1
+      }
+    },
+    {
+      "name": "generator",
+      "parameters": [
+        {
+          "name": "seed",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "jubjub_point"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "ec_mul_generator",
+          "scalar": {
+            "kind": "jubjub_scalar_from_native",
+            "value": {
+              "kind": "witness_call",
+              "name": "secret_scalar",
+              "arguments": [
+                {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "seed"
+                  },
+                  "ty": {
+                    "kind": "field"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "witness_jubjub.compact",
+        "line": 49,
+        "column": 1
+      }
+    }
+  ]
+}

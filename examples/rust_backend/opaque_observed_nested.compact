@@ -1,0 +1,16 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export struct Inner { text: Opaque<"string">; }
+export struct Outer { inner: Inner; }
+export ledger calls: Counter;
+witness permit(): Boolean;
+circuit touch(): [] {
+  calls.increment(1);
+  assert(permit(), "permission refused");
+}
+export circuit accept(input: Outer): [] {
+  // The public ABI still includes this argument when the body does not use it.
+  touch();
+}

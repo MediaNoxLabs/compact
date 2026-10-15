@@ -1,0 +1,15 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+
+import CompactStandardLibrary;
+export ledger result: JubjubPoint;
+constructor() { result = ecMulGenerator(0); }
+export circuit invalid(selected: Boolean, x: Field, y: Field): JubjubPoint {
+  if (disclose(selected)) {
+    result = disclose(ecMul(constructJubjubPoint(x, y), 1));
+  } else {
+    result = ecMulGenerator(0);
+  }
+  return result;
+}

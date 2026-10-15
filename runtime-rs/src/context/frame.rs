@@ -92,6 +92,22 @@ impl<Private, D: DB> CircuitFrame<Private, D> {
         Ok((self, value))
     }
 
+    /// Record exact opaque-bearing witness bytes, retaining ordinary callback
+    /// ordering and success-only adoption. Preparation checks transport validity.
+    pub fn try_witness_metered_exact<T, F>(self, call: F) -> Result<(Self, T), CompactError>
+    where
+        T: Clone + crate::HashInputValue,
+        F: FnOnce(
+            &CircuitContext<Private, D>,
+            &WitnessReadMeter<'_, D>,
+        ) -> Result<(Private, T), CompactError>,
+    {
+        let (frame, value) = self.try_witness_metered(|context, meter| {
+            call(context, meter).map(|(private, value)| (private, crate::exact_hash_input(value)))
+        })?;
+        Ok((frame, value.into_inner()))
+    }
+
     /// Run a native ledger step or complete nested circuit in sequence.
     pub fn apply<T, F>(self, operation: F) -> Result<(Self, T), CompactError>
     where

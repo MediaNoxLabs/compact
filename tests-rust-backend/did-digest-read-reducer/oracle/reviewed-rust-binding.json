@@ -1,0 +1,48 @@
+{
+  "format": "compact-reviewed-rust-binding/v1",
+  "scope": "Early read-only shape route retired to independently checked composition (#615/ADR0466). Original TS captures and original test files unchanged. Current exact generated Rust and new standalone observed/manual/private/witness qualification reviewed separately; no fresh TS execution claim.",
+  "captures": [
+    {
+      "file": "cases.json",
+      "sha256": "68a2a1e71a6a5e0ea89292328341545dc103887c16a5eea152ce9bdc3495097d"
+    }
+  ],
+  "replacements": [
+    {
+      "path": "tests-rust-backend/did-digest-read-reducer/lib.rs",
+      "captured_sha256": "1ecefd3330ab686f218378635440e39aa050a7e4d1e402015a73ead38673d159",
+      "current_sha256": "ccd90031d9e229630a07aa634f496bb76bbbcef75b5a923e0f7e0a4f02b06ab6"
+    },
+    {
+      "path": "tests-rust-backend/did-digest-read-reducer/tests/provenance.rs",
+      "captured_sha256": "17a8bda9df6f5a22aa1d5b92aecbfb241f27178a02c61a9b9381a25c59cb9103",
+      "current_sha256": "657121b59c4957e3e580d7d86ca9a5cfde47f18da588519feaadbbff8b9b654a"
+    }
+  ],
+  "reviewed_artifacts": [
+    {
+      "path": "tests-rust-backend/support/reviewed_capture.rs",
+      "sha256": "482cea8e2806f220a939e02f459ffad9c7ff25c685e7bf6aab051f2bc528217b"
+    },
+    {
+      "path": "tests-rust-backend/did-digest-read-reducer/tests/digest_qualification.rs",
+      "sha256": "b99f4cb6681a6abc2cc930e3fe3c96138a8ac2429121cc2b8a07ac574855a558"
+    },
+    {
+      "path": "tests-rust-backend/did-digest-read-reducer/tests/digest_qualification/manual.rs",
+      "sha256": "ce1a02787456d0f98d857fd2e283e4111cbf4a0dec541170554b819be6a7adc0"
+    },
+    {
+      "path": "tests-rust-backend/did-digest-read-reducer/tests/digest_qualification/mod.rs",
+      "sha256": "7240a10989d00d402c51e2cca484aa049ed8571b9d47785c6c7335f70e8d3363"
+    },
+    {
+      "path": "tests-rust-backend/did-digest-read-reducer/tests/digest_qualification/provider.rs",
+      "sha256": "9a383411e0c915518c0fd5da6acd71cf02a975bb280f23bd6e522e1a31d77088"
+    },
+    {
+      "path": "tests-rust-backend/did-digest-read-reducer/tests/digest_qualification/scenarios.rs",
+      "sha256": "a24752e1cf2b865bc9e4495be616eaab6f151e6310a94a05ae18d2c6cdf36915"
+    }
+  ]
+}

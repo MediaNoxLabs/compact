@@ -51,6 +51,30 @@ pub(super) fn mixed_width_recording(
     }
 }
 
+pub(super) fn mixed_width_record_pinned(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let root = arguments
+        .next()
+        .ok_or("usage: compact-rust-proof-smoke --mixed-width-record-pinned <proof-output>")?;
+    if arguments.next().is_some() {
+        return Err(
+            "usage: compact-rust-proof-smoke --mixed-width-record-pinned <proof-output>".into(),
+        );
+    }
+    let proof = std::thread::Builder::new()
+        .name("mixed-width-pinned-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            mixed_width_recording::run_pinned(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("mixed-width pinned proof thread panicked".into()),
+    }
+}
+
 pub(super) fn wide_unsigned_field_cast(
     arguments: &mut impl Iterator<Item = OsString>,
 ) -> Result<(), Box<dyn Error>> {
@@ -362,6 +386,17 @@ pub(super) fn persistent_commit(
     persistent_commit::run(Path::new(&root))
 }
 
+pub(super) fn persistent_commit_strict(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let usage = "usage: compact-rust-proof-smoke --persistent-commit-strict <proof-output>";
+    let root = arguments.next().ok_or(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage.into());
+    }
+    persistent_commit::run_strict(Path::new(&root))
+}
+
 pub(super) fn inline_type_scope(
     arguments: &mut impl Iterator<Item = OsString>,
 ) -> Result<(), Box<dyn Error>> {
@@ -379,5 +414,166 @@ pub(super) fn inline_type_scope(
         Ok(Ok(())) => Ok(()),
         Ok(Err(error)) => Err(error.into()),
         Err(_) => Err("inline type scope proof thread panicked".into()),
+    }
+}
+
+pub(super) fn opaque_public(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let usage = "usage: compact-rust-proof-smoke --opaque-public <proof-output>";
+    let root = arguments.next().ok_or(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("opaque-public-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            super::super::opaque_public::run(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("opaque public proof thread panicked".into()),
+    }
+}
+
+pub(super) fn owned_witness_inputs(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let usage = "usage: compact-rust-proof-smoke --owned-witness-inputs <proof-output>";
+    let root = arguments.next().ok_or(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("owned-witness-inputs-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            super::super::owned_witness_inputs::run(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("owned witness inputs proof thread panicked".into()),
+    }
+}
+
+pub(super) fn public_products(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let usage = "usage: compact-rust-proof-smoke --public-products <proof-output>";
+    let root = arguments.next().ok_or(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("public-products-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            super::super::public_products::run(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("public products proof thread panicked".into()),
+    }
+}
+
+pub(super) fn wide_casts(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let usage = "usage: compact-rust-proof-smoke --wide-casts <proof-output>";
+    let root = arguments.next().ok_or(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("wide-casts-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            super::super::wide_casts::run(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("wide casts proof thread panicked".into()),
+    }
+}
+
+pub(super) fn wide_add(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let usage = "usage: compact-rust-proof-smoke --wide-add <proof-output>";
+    let root = arguments.next().ok_or(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("wide-add-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || super::super::wide_add::run(Path::new(&root)).map_err(|e| e.to_string()))?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("wide addition proof thread panicked".into()),
+    }
+}
+
+pub(super) fn opaque_cell_input(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let usage = "usage: compact-rust-proof-smoke --opaque-cell-input <proof-output>";
+    let root = arguments.next().ok_or(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("opaque-cell-input-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            super::super::opaque_cell_input::run(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("opaque-cell-input proof thread panicked".into()),
+    }
+}
+
+/// Selected source-bound strict-funded snapshot; historical runner stays available.
+pub(super) fn literal_bytes_field_strict(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let root = arguments
+        .next()
+        .ok_or("usage: compact-rust-proof-smoke --literal-bytes-field-strict <proof-output>")?;
+    if arguments.next().is_some() {
+        return Err(
+            "usage: compact-rust-proof-smoke --literal-bytes-field-strict <proof-output>".into(),
+        );
+    }
+    literal_bytes_field::run_strict(Path::new(&root))
+}
+
+/// Original source-paired attestation endpoints with strict funded ledger checks.
+pub(super) fn schnorr_attestation_strict(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let usage = "usage: compact-rust-proof-smoke --schnorr-attestation-strict <proof-output>";
+    let root = arguments.next().ok_or(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("schnorr-attestation-strict-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            schnorr_attestation::run_strict(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("Schnorr attestation strict proof thread panicked".into()),
     }
 }

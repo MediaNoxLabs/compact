@@ -53,7 +53,28 @@ impl schnorr::Witnesses<u64> for Witness {
     }
 }
 
+const RETAINED_IR: &str =
+    include_str!("../../compact-rust-backend/tests/schnorr-attestation-schema20-ir.json");
+
+#[derive(Clone, Copy)]
+enum ApplicationMode {
+    Transaction,
+    StrictFunded,
+}
+
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
+    run_with_application(root, ApplicationMode::Transaction)
+}
+
+pub(super) fn run_strict(root: &Path) -> Result<(), Box<dyn Error>> {
+    counter_scenario::validate_ir(
+        &std::fs::read(root.join("contract/compact-rust-ir.json"))?,
+        RETAINED_IR,
+    )?;
+    run_with_application(root, ApplicationMode::StrictFunded)
+}
+
+fn run_with_application(root: &Path, mode: ApplicationMode) -> Result<(), Box<dyn Error>> {
     let reference: serde_json::Value = serde_json::from_str(include_str!(
         "../../../runtime-rs/tests/fixtures/schnorr-attest-oracle.json"
     ))?;
@@ -122,7 +143,7 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
             AlignedValue::from(digest.clone()),
             AlignedValue::from(signature.clone()),
         ]);
-        let manual = check_generated_trace(root, name, recorded, input)?;
+        let direct = check_generated_trace(root, name, recorded, input.clone())?;
         let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
             root.join(format!("keys/{name}.verifier")),
         )?))?;
@@ -145,17 +166,43 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
                     signature.clone(),
                 )?
         }
-        .prepare(verifier, Fr::from(0_u64))?;
-        if format!("{manual:?}") != format!("{typed:?}") {
-            return Err(format!("{name}: typed and manual calls differ").into());
+        .prepare(verifier.clone(), Fr::from(0_u64))?;
+        if format!("{direct:?}") != format!("{typed:?}") {
+            return Err(format!("{name}: direct and observed preparation differ").into());
         }
-        check_transaction(root, name, deploy, typed, &mut rng, |applied| {
-            if applied.data.get_ref() != &expected_state {
-                return Err(format!("{name}: ledger apply state differs").into());
+        match mode {
+            ApplicationMode::Transaction => {
+                check_transaction(root, name, deploy, typed, &mut rng, |applied| {
+                    if applied.data.get_ref() != &expected_state {
+                        return Err(format!("{name}: ledger apply state differs").into());
+                    }
+                    Ok(())
+                })?;
+                println!("{name}: pinned proof verified and ledger-8 applied");
             }
-            Ok(())
-        })?;
-        println!("{name}: pinned proof verified and ledger-8 applied");
+            ApplicationMode::StrictFunded => {
+                if typed.input != input || typed.output != AlignedValue::from(()) {
+                    return Err(format!("{name}: input/output FAB binding differs").into());
+                }
+                kernel_shielded_effects::prove_and_verify_call(root, name, &typed, &verifier)?;
+                opaque_public::apply_funded(
+                    root,
+                    name,
+                    typed,
+                    deploy,
+                    &expected_state,
+                    rng,
+                    614 + index as u64,
+                )?;
+                println!(
+                    "{name}: source-bound proof verified, changed binding rejected and strict funded ledger8 apply; constructor supplied, not proved"
+                );
+            }
+        }
     }
     Ok(())
 }
+
+#[cfg(test)]
+#[path = "schnorr_attestation/strict_tests.rs"]
+mod strict_tests;

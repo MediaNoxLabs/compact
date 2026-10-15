@@ -27,6 +27,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct LeafPreimage {
         pub domain_sep: ::midnight_compact_runtime::FixedBytes<6>,
@@ -40,6 +41,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
         ::midnight_compact_runtime::CompactMerkleTreeDigest,
     )]
     pub struct MerkleTreeDigest {
@@ -53,6 +55,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
         ::midnight_compact_runtime::CompactMerklePath,
     )]
     pub struct MerkleTreePath {
@@ -67,6 +70,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
         ::midnight_compact_runtime::CompactMerklePathEntry,
     )]
     pub struct MerkleTreePathEntry {
@@ -77,7 +81,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub(crate) fn merkleTreePathRoot(
         path: crate::types::MerkleTreePath,
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {
@@ -133,7 +137,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -279,8 +283,11 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame = crate::ledger_slots::t.record_insert(frame, __compact_param_0)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: runtime::BoundedUint<255> = __compact_param_0;
+            let frame = crate::ledger_slots::t.record_insert(frame, __compact_effect_0)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn replace<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -288,13 +295,17 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: runtime::BoundedUint<255> = __compact_param_0;
+            let __compact_effect_1: runtime::BoundedUint<18446744073709551615> =
+                <runtime::BoundedUint<18446744073709551615>>::new(0u128)?;
             let frame = crate::ledger_slots::t.record_insert_index(
                 frame,
-                __compact_param_0,
-                runtime::BoundedUint::<18446744073709551615>::new(0u128)
-                    .expect("Compact Uint literal fits its maximum"),
+                __compact_effect_0,
+                __compact_effect_1,
             )?;
-            Ok(frame.finish(()))
+            let __compact_effect_2: () = ();
+            let __compact_effect_3: () = ();
+            Ok(frame.finish(__compact_effect_3))
         }
         pub fn verify<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -302,17 +313,18 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, path) = frame.try_witness_metered(|context, meter| {
-                witnesses.leaf_path(context.witness_context_with(super::LedgerView {
-                    state: context.query.state.get_ref(),
-                    meter,
-                }))
-            })?;
-            let root: crate::types::MerkleTreeDigest =
-                crate::pure_circuits::merkleTreePathRoot(path)?;
-            let (frame, observed): (_, bool) =
-                crate::ledger_slots::t.record_check_root(frame, root)?;
-            Ok(frame.finish(observed))
+            let (frame, __compact_effect_0): (_, crate::types::MerkleTreePath) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.leaf_path(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            let __compact_effect_1: crate::types::MerkleTreeDigest =
+                crate::pure_circuits::merkleTreePathRoot((__compact_effect_0).clone())?;
+            let (frame, __compact_effect_2): (_, bool) =
+                crate::ledger_slots::t.record_check_root(frame, (__compact_effect_1).clone())?;
+            Ok(frame.finish(__compact_effect_2))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

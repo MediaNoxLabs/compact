@@ -20,7 +20,7 @@ use super::{
     constructor_cell, decode_last_read, path_keys, read_cell,
 };
 use midnight_base_crypto::cost_model::RunningCost;
-use midnight_base_crypto::fab::AlignedValue;
+use midnight_onchain_state::state::AlignedValueChecked;
 use midnight_onchain_vm::cost_model::CostModel;
 use midnight_onchain_vm::ops::{Key, Op};
 use midnight_onchain_vm::result_mode::{ResultMode, ResultModeGather, ResultModeVerify};
@@ -67,7 +67,7 @@ pub(crate) fn counter_read_program<M: ResultMode<D>, D: DB>(
             push_path: false,
             path: path
                 .iter()
-                .map(|index| Key::Value(AlignedValue::from(*index)))
+                .map(|index| Key::Value(AlignedValueChecked::from(*index)))
                 .collect::<Vec<_>>()
                 .into(),
         },
@@ -115,7 +115,7 @@ pub(crate) fn counter_less_than_program<M: ResultMode<D>, D: DB>(
         },
         Op::Push {
             storage: false,
-            value: constructor_cell::<u64, D>(threshold),
+            value: super::vm::literal::<u64, D>(threshold),
         },
         Op::Lt,
         Op::Popeq {

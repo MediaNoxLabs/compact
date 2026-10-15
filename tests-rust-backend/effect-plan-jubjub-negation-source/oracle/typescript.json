@@ -1,0 +1,1586 @@
+{
+  "status": "passed",
+  "scope": "Genuine frozen default-v2 source TS execution with independent official negation answers, involution/additive inverse reference laws and private FAB/callback checks; no Rust execution or proof claim.",
+  "files": {
+    "artifact:sha256:f31228d2e586010779e306b44a883c7a97857891845df1dcffd29a7ec1bbd519/effect_plan_jubjub_negation.compact": "f31228d2e586010779e306b44a883c7a97857891845df1dcffd29a7ec1bbd519",
+    "artifact:sha256:75ebc38d8d78067b417aaad8ffddb9e8c886a3c6f4f384aef9373225e06a5c5b/capture.mjs": "75ebc38d8d78067b417aaad8ffddb9e8c886a3c6f4f384aef9373225e06a5c5b",
+    "artifact:sha256:e98ad7dce7b9b47b350b869bbaacf433f18a8f298f514876ba1eec528381d998/compact-rust-ir.json": "e98ad7dce7b9b47b350b869bbaacf433f18a8f298f514876ba1eec528381d998",
+    "artifact:sha256:4e8358f32586bdba8731234212a05bffb03066fa596b92dca4d4ae28a09fe2e5/index.js": "4e8358f32586bdba8731234212a05bffb03066fa596b92dca4d4ae28a09fe2e5",
+    "artifact:sha256:38f113eeb408c9b7d51fc67c5688f3b9fcceff4bba0047b79413bbe0ad1d45b0/package.json": "38f113eeb408c9b7d51fc67c5688f3b9fcceff4bba0047b79413bbe0ad1d45b0",
+    "artifact:sha256:d0e454d3b50799efdd8f7e7e1c2920c903309d7cf4f87f703b1b79f9f889c5f3/package-lock.json": "d0e454d3b50799efdd8f7e7e1c2920c903309d7cf4f87f703b1b79f9f889c5f3",
+    "artifact:sha256:17f6c82a42a77ab73eccd057dfcd5741aa20f8471a0a5bb539558390dc9b490d/built-ins.d.ts": "17f6c82a42a77ab73eccd057dfcd5741aa20f8471a0a5bb539558390dc9b490d",
+    "artifact:sha256:db88e0bf0c11d081fcd8ba05ee7390cad8238be4c17dddc7da092219585c7cb7/built-ins.js": "db88e0bf0c11d081fcd8ba05ee7390cad8238be4c17dddc7da092219585c7cb7",
+    "artifact:sha256:3e5a4857700b2745ef48c95c774281a2bb10f75c5d3de86c4b749c5cf6b18d92/built-ins.js.map": "3e5a4857700b2745ef48c95c774281a2bb10f75c5d3de86c4b749c5cf6b18d92",
+    "artifact:sha256:6137fb1c69bd6b5a8cbcd21ef8578446ecc14a440465a3a72ef270491f4663bd/casts.d.ts": "6137fb1c69bd6b5a8cbcd21ef8578446ecc14a440465a3a72ef270491f4663bd",
+    "artifact:sha256:340072713fcb032b22209f226034aefb4cbb8401f914b77758fe36600ea1b2c1/casts.js": "340072713fcb032b22209f226034aefb4cbb8401f914b77758fe36600ea1b2c1",
+    "artifact:sha256:1fa728f3b8e483f17f2f850e87b2cdd734c02547530c468746572fc74dd06ba8/casts.js.map": "1fa728f3b8e483f17f2f850e87b2cdd734c02547530c468746572fc74dd06ba8",
+    "artifact:sha256:2024083e64d9d08c358d93f02701b6eaaddf0f2432171fafad0f748ca1efe3ce/circuit-context.d.ts": "2024083e64d9d08c358d93f02701b6eaaddf0f2432171fafad0f748ca1efe3ce",
+    "artifact:sha256:1d4e04503589ad7bef59a9cc9e5386c6ffe645c9503fbb2cd11ad26aeba95a95/circuit-context.js": "1d4e04503589ad7bef59a9cc9e5386c6ffe645c9503fbb2cd11ad26aeba95a95",
+    "artifact:sha256:ba0f8977ac3f1258721e5fd6840b2f9e84acdbcbfa740e9ba60ca1a085388f45/circuit-context.js.map": "ba0f8977ac3f1258721e5fd6840b2f9e84acdbcbfa740e9ba60ca1a085388f45",
+    "artifact:sha256:2033d058f593fcdbabd62fb3d8604032f27b22ea00a66379462846d6df13a202/compact-types.d.ts": "2033d058f593fcdbabd62fb3d8604032f27b22ea00a66379462846d6df13a202",
+    "artifact:sha256:5cdccdb9fde9fdb297459588f33ce093ad557584b35b480819e0d930ce1bd73b/compact-types.js": "5cdccdb9fde9fdb297459588f33ce093ad557584b35b480819e0d930ce1bd73b",
+    "artifact:sha256:cd3e264dbd6d4b7ac5a84d059ea8d21a983602de5c5e9dff98c8dfbecfc23260/compact-types.js.map": "cd3e264dbd6d4b7ac5a84d059ea8d21a983602de5c5e9dff98c8dfbecfc23260",
+    "artifact:sha256:52f566aa6b460b2c4663995bf853719d7c07d88cbffb998ffd6ac55af8f0506c/constants.d.ts": "52f566aa6b460b2c4663995bf853719d7c07d88cbffb998ffd6ac55af8f0506c",
+    "artifact:sha256:199ecbf52063edee09d388961ee9d65725e88fd5f005afe2172a994535b525d9/constants.js": "199ecbf52063edee09d388961ee9d65725e88fd5f005afe2172a994535b525d9",
+    "artifact:sha256:fea28653cfe09986eda8e8067131d89701331bc003115f56f9b3a003b1574a1c/constants.js.map": "fea28653cfe09986eda8e8067131d89701331bc003115f56f9b3a003b1574a1c",
+    "artifact:sha256:b28ebd976066cae55ce1298494622f5bdaee4586f48d159d4b88c83d02f37487/constructor-context.d.ts": "b28ebd976066cae55ce1298494622f5bdaee4586f48d159d4b88c83d02f37487",
+    "artifact:sha256:61908ad347c97a2517b62e4813647062a79c23743aa591075772d823c810d004/constructor-context.js": "61908ad347c97a2517b62e4813647062a79c23743aa591075772d823c810d004",
+    "artifact:sha256:2cd3c1e6fb6e5be0962a71ca5c11b3243e8ec10091bd9a7985aadcec601751eb/constructor-context.js.map": "2cd3c1e6fb6e5be0962a71ca5c11b3243e8ec10091bd9a7985aadcec601751eb",
+    "artifact:sha256:d0da5cc956fae48a34daa1fd217d40b46031abc47ad7e68fef35e7780c12cae0/contract-dependencies.d.ts": "d0da5cc956fae48a34daa1fd217d40b46031abc47ad7e68fef35e7780c12cae0",
+    "artifact:sha256:997be1d72c489ed128e0bf9e042feef3b5c88de4a378c7cec54a4887d390222d/contract-dependencies.js": "997be1d72c489ed128e0bf9e042feef3b5c88de4a378c7cec54a4887d390222d",
+    "artifact:sha256:44bcbfa1df11816535b9a33f8c3a08e0885dfea43b71f459376bf6c0752e2834/contract-dependencies.js.map": "44bcbfa1df11816535b9a33f8c3a08e0885dfea43b71f459376bf6c0752e2834",
+    "artifact:sha256:bb2592736f1915023e2409b620e0f7bbdfec84318236d4e01722e5e6fefa64a8/error.d.ts": "bb2592736f1915023e2409b620e0f7bbdfec84318236d4e01722e5e6fefa64a8",
+    "artifact:sha256:d8c33a222146c73d2ee59de1cce20d5ec937046b7be8e62fd196f642a3d5b893/error.js": "d8c33a222146c73d2ee59de1cce20d5ec937046b7be8e62fd196f642a3d5b893",
+    "artifact:sha256:cdb63cdeff9c755fb3451ee1a978f2c39196d95972b56ca90d2e5146ec0d463b/error.js.map": "cdb63cdeff9c755fb3451ee1a978f2c39196d95972b56ca90d2e5146ec0d463b",
+    "artifact:sha256:82b7786199a65ab3e72b094c6aafa3b31a365a7cebe7168bcdb427551cac163e/index.d.ts": "82b7786199a65ab3e72b094c6aafa3b31a365a7cebe7168bcdb427551cac163e",
+    "artifact:sha256:c55a8ab3e7533b3fa6e27b66ab742c783d912d5a00d6ecc23d9f6142ddb0ecde/index.js": "c55a8ab3e7533b3fa6e27b66ab742c783d912d5a00d6ecc23d9f6142ddb0ecde",
+    "artifact:sha256:02ded8d4606f1585301c8825e547664446e33333b57c7bc8f1012aed51682241/index.js.map": "02ded8d4606f1585301c8825e547664446e33333b57c7bc8f1012aed51682241",
+    "artifact:sha256:395e31cc65a6c2d2628650ac9fa2588ca5b7f3d224e2207b3b6b02505e36de04/proof-data.d.ts": "395e31cc65a6c2d2628650ac9fa2588ca5b7f3d224e2207b3b6b02505e36de04",
+    "artifact:sha256:0ebb8586d5144654b35b30d191dffd2308dc31d4ddd6d05277ef3d06015d2d29/proof-data.js": "0ebb8586d5144654b35b30d191dffd2308dc31d4ddd6d05277ef3d06015d2d29",
+    "artifact:sha256:dd40c6c8b1d62f35d707171f8be8f73b39f0bc450f9022bde46221ca955919a3/proof-data.js.map": "dd40c6c8b1d62f35d707171f8be8f73b39f0bc450f9022bde46221ca955919a3",
+    "artifact:sha256:3fdbacd5d724cd6160297f979b968643417bbfe3ad5368b51db338649f7b3280/utils.d.ts": "3fdbacd5d724cd6160297f979b968643417bbfe3ad5368b51db338649f7b3280",
+    "artifact:sha256:b22b8551d9bd2a941af9a14fb7c8505dae624698fcd175732a8f3b1b0a2a944a/utils.js": "b22b8551d9bd2a941af9a14fb7c8505dae624698fcd175732a8f3b1b0a2a944a",
+    "artifact:sha256:145254c55643418ae6c9da040354fc620bed18c602428dd8aaad6335f331e5c1/utils.js.map": "145254c55643418ae6c9da040354fc620bed18c602428dd8aaad6335f331e5c1",
+    "artifact:sha256:4d0a01cef17be4ba1c5293173073c7c2afecde1e5af2964d79597a2e3d806a93/version.d.ts": "4d0a01cef17be4ba1c5293173073c7c2afecde1e5af2964d79597a2e3d806a93",
+    "artifact:sha256:f1773226cd68c2331666af6d99f47a00d85762035e2d1a98f9ddd9d8d16c1e6e/version.js": "f1773226cd68c2331666af6d99f47a00d85762035e2d1a98f9ddd9d8d16c1e6e",
+    "artifact:sha256:fe1661c369840539160b32fec1d2dc152fc30e0e1ca554570a0198f0cdf09c29/version.js.map": "fe1661c369840539160b32fec1d2dc152fc30e0e1ca554570a0198f0cdf09c29",
+    "artifact:sha256:13fa81acd2bae844ecb807a8836ead4d2ed72d7a58e34e057f8ab3da5216286d/witness.d.ts": "13fa81acd2bae844ecb807a8836ead4d2ed72d7a58e34e057f8ab3da5216286d",
+    "artifact:sha256:41ee3eef3faea8f4dbe6aa92e614ba531d2525bd19685d5956421e00fa4ac3bb/witness.js": "41ee3eef3faea8f4dbe6aa92e614ba531d2525bd19685d5956421e00fa4ac3bb",
+    "artifact:sha256:bc7647301ee18e1dcc367aff0f13f1ffb394baab6355328f008767fde3371203/witness.js.map": "bc7647301ee18e1dcc367aff0f13f1ffb394baab6355328f008767fde3371203",
+    "artifact:sha256:ecad6ad12815cfe3aa18a72e4d081fcd291388f5d4f9f03ddbfc36d74ac378d5/zswap.d.ts": "ecad6ad12815cfe3aa18a72e4d081fcd291388f5d4f9f03ddbfc36d74ac378d5",
+    "artifact:sha256:1d98e2a9f4f2840b8b3eb46025e1254cb581286506324cb5084623161b6e9b8f/zswap.js": "1d98e2a9f4f2840b8b3eb46025e1254cb581286506324cb5084623161b6e9b8f",
+    "artifact:sha256:9b4381e42af882bd6523bb9c196ac48411ffb7eee92f8f92492f7d5a886cb750/zswap.js.map": "9b4381e42af882bd6523bb9c196ac48411ffb7eee92f8f92492f7d5a886cb750",
+    "artifact:sha256:f70e71923b7ddd69926a6f26674a26adbb7e6bc1085512a7e9dc05c071588442/midnight_onchain_runtime_wasm.js": "f70e71923b7ddd69926a6f26674a26adbb7e6bc1085512a7e9dc05c071588442",
+    "artifact:sha256:1b1264f59bad75fa215eadb1a9308b5b25128e676413845ba6c65dfc4261c35f/midnight_onchain_runtime_wasm_bg.js": "1b1264f59bad75fa215eadb1a9308b5b25128e676413845ba6c65dfc4261c35f",
+    "artifact:sha256:edeea319fe8b1dca486a3aeaa051e64d4b7fb96d83b5d2bb15e68fc1ce23369e/midnight_onchain_runtime_wasm_bg.wasm": "edeea319fe8b1dca486a3aeaa051e64d4b7fb96d83b5d2bb15e68fc1ce23369e",
+    "artifact:sha256:73678c901cae14ae9bede7f6ec0ce8ff723ad897192542297642111ffd97c932/midnight_onchain_runtime_wasm_fs.js": "73678c901cae14ae9bede7f6ec0ce8ff723ad897192542297642111ffd97c932",
+    "artifact:sha256:31d0d38a81d910c9154599494071b0fd4e99e354b34ebb386399a163cf0c627c/onchain-runtime-v3.d.ts": "31d0d38a81d910c9154599494071b0fd4e99e354b34ebb386399a163cf0c627c",
+    "artifact:sha256:1d1864e418678e065bd68fe3bb1f2f765de59f11b18d2750bea673682d9f4ea0/package-lock.json": "1d1864e418678e065bd68fe3bb1f2f765de59f11b18d2750bea673682d9f4ea0",
+    "artifact:sha256:bea88fd56d85fdc8178945a784993980981fd7987e39018f9c0b3b25b3134f54/package.json": "bea88fd56d85fdc8178945a784993980981fd7987e39018f9c0b3b25b3134f54"
+  },
+  "cases": 10,
+  "executionSuccess": 5,
+  "executionRefusal": 5,
+  "preimageSuccess": 5,
+  "rows": [
+    {
+      "id": "coordinates-identity",
+      "circuit": "coordinates",
+      "payload": {
+        "x": "0",
+        "y": "1"
+      },
+      "fallback": {
+        "x": "0",
+        "y": "1"
+      },
+      "selected": true,
+      "permit": true,
+      "fail": null,
+      "expected": {
+        "x": "0",
+        "y": "1"
+      },
+      "negated": {
+        "x": "0",
+        "y": "1"
+      },
+      "args": [
+        {
+          "x": "0",
+          "y": "1"
+        },
+        true
+      ],
+      "events": [
+        [
+          "point",
+          5,
+          "1"
+        ],
+        [
+          "permit",
+          6,
+          "1"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "510000000",
+        "computeTime": "3823311622",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "status": "success",
+      "result": {
+        "x": "0",
+        "y": "1"
+      },
+      "privateState": 7,
+      "proofData": {
+        "input": {
+          "value": [
+            [],
+            [
+              1
+            ],
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [],
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": [
+          {
+            "value": [
+              [],
+              [
+                1
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              },
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              }
+            ]
+          },
+          {
+            "value": [
+              [
+                1
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "bytes",
+                  "length": 1
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "serializedPreimage": {
+        "status": "success",
+        "bytes": 91
+      }
+    },
+    {
+      "id": "coordinates-nonidentity",
+      "circuit": "coordinates",
+      "payload": {
+        "x": "8529850210595416629938472005096683087104554224588475444533605324205958182045",
+        "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+      },
+      "fallback": {
+        "x": "0",
+        "y": "1"
+      },
+      "selected": true,
+      "permit": true,
+      "fail": null,
+      "expected": {
+        "x": "43906024964530773849509268503089282750585998275939162378070053375732623002468",
+        "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+      },
+      "negated": {
+        "x": "43906024964530773849509268503089282750585998275939162378070053375732623002468",
+        "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+      },
+      "args": [
+        {
+          "x": "0",
+          "y": "1"
+        },
+        true
+      ],
+      "events": [
+        [
+          "point",
+          5,
+          "1"
+        ],
+        [
+          "permit",
+          6,
+          "1"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "510000000",
+        "computeTime": "3823311622",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "status": "success",
+      "result": {
+        "x": "43906024964530773849509268503089282750585998275939162378070053375732623002468",
+        "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+      },
+      "privateState": 7,
+      "proofData": {
+        "input": {
+          "value": [
+            [],
+            [
+              1
+            ],
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              100,
+              203,
+              54,
+              70,
+              50,
+              100,
+              154,
+              254,
+              244,
+              242,
+              220,
+              138,
+              154,
+              20,
+              255,
+              213,
+              248,
+              84,
+              239,
+              15,
+              23,
+              231,
+              204,
+              52,
+              207,
+              17,
+              185,
+              129,
+              242,
+              237,
+              17,
+              97
+            ],
+            [
+              17,
+              169,
+              199,
+              80,
+              148,
+              108,
+              92,
+              119,
+              108,
+              249,
+              200,
+              118,
+              27,
+              54,
+              239,
+              222,
+              17,
+              105,
+              237,
+              204,
+              41,
+              209,
+              198,
+              215,
+              185,
+              85,
+              130,
+              220,
+              150,
+              114,
+              176,
+              75
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": [
+          {
+            "value": [
+              [
+                157,
+                52,
+                201,
+                185,
+                204,
+                155,
+                101,
+                1,
+                10,
+                105,
+                33,
+                117,
+                104,
+                143,
+                190,
+                125,
+                12,
+                131,
+                178,
+                249,
+                240,
+                240,
+                108,
+                254,
+                120,
+                107,
+                228,
+                167,
+                96,
+                185,
+                219,
+                18
+              ],
+              [
+                17,
+                169,
+                199,
+                80,
+                148,
+                108,
+                92,
+                119,
+                108,
+                249,
+                200,
+                118,
+                27,
+                54,
+                239,
+                222,
+                17,
+                105,
+                237,
+                204,
+                41,
+                209,
+                198,
+                215,
+                185,
+                85,
+                130,
+                220,
+                150,
+                114,
+                176,
+                75
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              },
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              }
+            ]
+          },
+          {
+            "value": [
+              [
+                1
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "bytes",
+                  "length": 1
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "serializedPreimage": {
+        "status": "success",
+        "bytes": 155
+      }
+    },
+    {
+      "id": "coordinates-lazy-provider-suppressed",
+      "circuit": "coordinates",
+      "payload": {
+        "x": "8529850210595416629938472005096683087104554224588475444533605324205958182045",
+        "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+      },
+      "fallback": {
+        "x": "8529850210595416629938472005096683087104554224588475444533605324205958182045",
+        "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+      },
+      "selected": false,
+      "permit": true,
+      "fail": "point",
+      "expected": {
+        "x": "43906024964530773849509268503089282750585998275939162378070053375732623002468",
+        "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+      },
+      "negated": {
+        "x": "43906024964530773849509268503089282750585998275939162378070053375732623002468",
+        "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+      },
+      "args": [
+        {
+          "x": "8529850210595416629938472005096683087104554224588475444533605324205958182045",
+          "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+        },
+        false
+      ],
+      "events": [
+        [
+          "permit",
+          5,
+          "1"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "340000000",
+        "computeTime": "2573396769",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "status": "success",
+      "result": {
+        "x": "43906024964530773849509268503089282750585998275939162378070053375732623002468",
+        "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+      },
+      "privateState": 6,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              157,
+              52,
+              201,
+              185,
+              204,
+              155,
+              101,
+              1,
+              10,
+              105,
+              33,
+              117,
+              104,
+              143,
+              190,
+              125,
+              12,
+              131,
+              178,
+              249,
+              240,
+              240,
+              108,
+              254,
+              120,
+              107,
+              228,
+              167,
+              96,
+              185,
+              219,
+              18
+            ],
+            [
+              17,
+              169,
+              199,
+              80,
+              148,
+              108,
+              92,
+              119,
+              108,
+              249,
+              200,
+              118,
+              27,
+              54,
+              239,
+              222,
+              17,
+              105,
+              237,
+              204,
+              41,
+              209,
+              198,
+              215,
+              185,
+              85,
+              130,
+              220,
+              150,
+              114,
+              176,
+              75
+            ],
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              100,
+              203,
+              54,
+              70,
+              50,
+              100,
+              154,
+              254,
+              244,
+              242,
+              220,
+              138,
+              154,
+              20,
+              255,
+              213,
+              248,
+              84,
+              239,
+              15,
+              23,
+              231,
+              204,
+              52,
+              207,
+              17,
+              185,
+              129,
+              242,
+              237,
+              17,
+              97
+            ],
+            [
+              17,
+              169,
+              199,
+              80,
+              148,
+              108,
+              92,
+              119,
+              108,
+              249,
+              200,
+              118,
+              27,
+              54,
+              239,
+              222,
+              17,
+              105,
+              237,
+              204,
+              41,
+              209,
+              198,
+              215,
+              185,
+              85,
+              130,
+              220,
+              150,
+              114,
+              176,
+              75
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": [
+          {
+            "value": [
+              [
+                1
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "bytes",
+                  "length": 1
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "serializedPreimage": {
+        "status": "success",
+        "bytes": 153
+      }
+    },
+    {
+      "id": "coordinates-point-refusal",
+      "circuit": "coordinates",
+      "payload": {
+        "x": "8529850210595416629938472005096683087104554224588475444533605324205958182045",
+        "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+      },
+      "fallback": {
+        "x": "0",
+        "y": "1"
+      },
+      "selected": true,
+      "permit": true,
+      "fail": "point",
+      "expected": {
+        "x": "43906024964530773849509268503089282750585998275939162378070053375732623002468",
+        "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+      },
+      "negated": {
+        "x": "43906024964530773849509268503089282750585998275939162378070053375732623002468",
+        "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+      },
+      "args": [
+        {
+          "x": "0",
+          "y": "1"
+        },
+        true
+      ],
+      "events": [
+        [
+          "point",
+          5,
+          "1"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "340000000",
+        "computeTime": "2573396769",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "status": "refused",
+      "reason": "point provider refused",
+      "error": "Error: point provider refused"
+    },
+    {
+      "id": "coordinates-permit-refusal",
+      "circuit": "coordinates",
+      "payload": {
+        "x": "8529850210595416629938472005096683087104554224588475444533605324205958182045",
+        "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+      },
+      "fallback": {
+        "x": "0",
+        "y": "1"
+      },
+      "selected": true,
+      "permit": true,
+      "fail": "permit",
+      "expected": {
+        "x": "43906024964530773849509268503089282750585998275939162378070053375732623002468",
+        "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+      },
+      "negated": {
+        "x": "43906024964530773849509268503089282750585998275939162378070053375732623002468",
+        "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+      },
+      "args": [
+        {
+          "x": "0",
+          "y": "1"
+        },
+        true
+      ],
+      "events": [
+        [
+          "point",
+          5,
+          "1"
+        ],
+        [
+          "permit",
+          6,
+          "1"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "510000000",
+        "computeTime": "3823311622",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "status": "refused",
+      "reason": "permit provider refused",
+      "error": "Error: permit provider refused"
+    },
+    {
+      "id": "coordinates-denied",
+      "circuit": "coordinates",
+      "payload": {
+        "x": "8529850210595416629938472005096683087104554224588475444533605324205958182045",
+        "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+      },
+      "fallback": {
+        "x": "0",
+        "y": "1"
+      },
+      "selected": true,
+      "permit": false,
+      "fail": null,
+      "expected": {
+        "x": "43906024964530773849509268503089282750585998275939162378070053375732623002468",
+        "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+      },
+      "negated": {
+        "x": "43906024964530773849509268503089282750585998275939162378070053375732623002468",
+        "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+      },
+      "args": [
+        {
+          "x": "0",
+          "y": "1"
+        },
+        true
+      ],
+      "events": [
+        [
+          "point",
+          5,
+          "1"
+        ],
+        [
+          "permit",
+          6,
+          "1"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "510000000",
+        "computeTime": "3823311622",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "status": "refused",
+      "reason": "denied",
+      "error": "CompactError: failed assert: denied"
+    },
+    {
+      "id": "close-identity",
+      "circuit": "close",
+      "payload": {
+        "x": "0",
+        "y": "1"
+      },
+      "fallback": {
+        "x": "0",
+        "y": "1"
+      },
+      "selected": true,
+      "permit": true,
+      "fail": null,
+      "expected": {
+        "x": "0",
+        "y": "1"
+      },
+      "negated": {
+        "x": "0",
+        "y": "1"
+      },
+      "args": [
+        {
+          "x": "0",
+          "y": "1"
+        }
+      ],
+      "events": [
+        [
+          "point",
+          5,
+          "1"
+        ],
+        [
+          "permit",
+          6,
+          "1"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "510000000",
+        "computeTime": "3823311622",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "status": "success",
+      "result": [],
+      "privateState": 7,
+      "proofData": {
+        "input": {
+          "value": [
+            [],
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [],
+          "alignment": []
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": [
+          {
+            "value": [
+              [],
+              [
+                1
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              },
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              }
+            ]
+          },
+          {
+            "value": [
+              [
+                1
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "bytes",
+                  "length": 1
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "serializedPreimage": {
+        "status": "success",
+        "bytes": 84
+      }
+    },
+    {
+      "id": "close-nonidentity",
+      "circuit": "close",
+      "payload": {
+        "x": "8529850210595416629938472005096683087104554224588475444533605324205958182045",
+        "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+      },
+      "fallback": {
+        "x": "0",
+        "y": "1"
+      },
+      "selected": true,
+      "permit": true,
+      "fail": null,
+      "expected": {
+        "x": "43906024964530773849509268503089282750585998275939162378070053375732623002468",
+        "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+      },
+      "negated": {
+        "x": "43906024964530773849509268503089282750585998275939162378070053375732623002468",
+        "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+      },
+      "args": [
+        {
+          "x": "43906024964530773849509268503089282750585998275939162378070053375732623002468",
+          "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+        }
+      ],
+      "events": [
+        [
+          "point",
+          5,
+          "1"
+        ],
+        [
+          "permit",
+          6,
+          "1"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "510000000",
+        "computeTime": "3823311622",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "status": "success",
+      "result": [],
+      "privateState": 7,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              100,
+              203,
+              54,
+              70,
+              50,
+              100,
+              154,
+              254,
+              244,
+              242,
+              220,
+              138,
+              154,
+              20,
+              255,
+              213,
+              248,
+              84,
+              239,
+              15,
+              23,
+              231,
+              204,
+              52,
+              207,
+              17,
+              185,
+              129,
+              242,
+              237,
+              17,
+              97
+            ],
+            [
+              17,
+              169,
+              199,
+              80,
+              148,
+              108,
+              92,
+              119,
+              108,
+              249,
+              200,
+              118,
+              27,
+              54,
+              239,
+              222,
+              17,
+              105,
+              237,
+              204,
+              41,
+              209,
+              198,
+              215,
+              185,
+              85,
+              130,
+              220,
+              150,
+              114,
+              176,
+              75
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [],
+          "alignment": []
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": [
+          {
+            "value": [
+              [
+                157,
+                52,
+                201,
+                185,
+                204,
+                155,
+                101,
+                1,
+                10,
+                105,
+                33,
+                117,
+                104,
+                143,
+                190,
+                125,
+                12,
+                131,
+                178,
+                249,
+                240,
+                240,
+                108,
+                254,
+                120,
+                107,
+                228,
+                167,
+                96,
+                185,
+                219,
+                18
+              ],
+              [
+                17,
+                169,
+                199,
+                80,
+                148,
+                108,
+                92,
+                119,
+                108,
+                249,
+                200,
+                118,
+                27,
+                54,
+                239,
+                222,
+                17,
+                105,
+                237,
+                204,
+                41,
+                209,
+                198,
+                215,
+                185,
+                85,
+                130,
+                220,
+                150,
+                114,
+                176,
+                75
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              },
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              }
+            ]
+          },
+          {
+            "value": [
+              [
+                1
+              ]
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "bytes",
+                  "length": 1
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "serializedPreimage": {
+        "status": "success",
+        "bytes": 212
+      }
+    },
+    {
+      "id": "close-wrong-x",
+      "circuit": "close",
+      "payload": {
+        "x": "8529850210595416629938472005096683087104554224588475444533605324205958182045",
+        "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+      },
+      "fallback": {
+        "x": "0",
+        "y": "1"
+      },
+      "selected": true,
+      "permit": true,
+      "fail": null,
+      "expected": {
+        "x": "0",
+        "y": "1"
+      },
+      "negated": {
+        "x": "43906024964530773849509268503089282750585998275939162378070053375732623002468",
+        "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+      },
+      "args": [
+        {
+          "x": "0",
+          "y": "1"
+        }
+      ],
+      "events": [
+        [
+          "point",
+          5,
+          "1"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "340000000",
+        "computeTime": "2573396769",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "status": "refused",
+      "reason": "wrong x",
+      "error": "CompactError: failed assert: wrong x"
+    },
+    {
+      "id": "close-point-refusal",
+      "circuit": "close",
+      "payload": {
+        "x": "8529850210595416629938472005096683087104554224588475444533605324205958182045",
+        "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+      },
+      "fallback": {
+        "x": "0",
+        "y": "1"
+      },
+      "selected": true,
+      "permit": true,
+      "fail": "point",
+      "expected": {
+        "x": "43906024964530773849509268503089282750585998275939162378070053375732623002468",
+        "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+      },
+      "negated": {
+        "x": "43906024964530773849509268503089282750585998275939162378070053375732623002468",
+        "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+      },
+      "args": [
+        {
+          "x": "43906024964530773849509268503089282750585998275939162378070053375732623002468",
+          "y": "34235219593443829788357640017408689239061932050376700886375929844786499397905"
+        }
+      ],
+      "events": [
+        [
+          "point",
+          5,
+          "1"
+        ]
+      ],
+      "queryCostSum": {
+        "readTime": "340000000",
+        "computeTime": "2573396769",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "status": "refused",
+      "reason": "point provider refused",
+      "error": "Error: point provider refused"
+    }
+  ]
+}

@@ -15,6 +15,7 @@
 
 //! Typed set mutation, membership queries, and recorded key bindings.
 
+use super::lifecycle_recording::generated_body;
 use super::support::identity;
 use compact_rust_backend::ir::{
     Contract, Expr, LedgerField, LedgerFieldKind, LocalBinding, Parameter, PureCircuit,
@@ -23,7 +24,7 @@ use compact_rust_backend::ir::{
 use compact_rust_backend::{RenderError, render, render_with_capabilities};
 
 #[test]
-fn opaque_string_set_recording_requires_closed_typed_operations() {
+fn opaque_string_set_recording_composes_defaults_and_checks_declared_keys() {
     let mut contract: Contract =
         serde_json::from_str(include_str!("../opaque-string-set-schema13-ir.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
@@ -45,8 +46,12 @@ fn opaque_string_set_recording_requires_closed_typed_operations() {
     contract.stateful_circuits[0].actions.push(extra_action);
     assert_eq!(
         statuses(&contract),
-        vec![("addName".into(), false), ("hasName".into(), true)]
+        vec![("addName".into(), true), ("hasName".into(), true)]
     );
+
+    let rendered = render_with_capabilities(&contract).unwrap();
+    let repeated = generated_body(&rendered.source, "recorded", "addName");
+    assert_eq!(repeated.matches("record_insert").count(), 2);
 
     contract.stateful_circuits[0].actions.truncate(1);
     let StateReturn::SetMember { value, .. } = &mut contract.stateful_circuits[1].return_value
@@ -58,12 +63,27 @@ fn opaque_string_set_recording_requires_closed_typed_operations() {
     };
     assert_eq!(
         statuses(&contract),
-        vec![("addName".into(), true), ("hasName".into(), false)]
+        vec![("addName".into(), true), ("hasName".into(), true)]
     );
+    let output = render_with_capabilities(&contract).unwrap();
+    assert!(
+        generated_body(&output.source, "recorded", "hasName")
+            .contains(&quote::quote!(.record_member).to_string())
+    );
+    let StateReturn::SetMember { value, .. } = &mut contract.stateful_circuits[1].return_value
+    else {
+        unreachable!()
+    };
+    *value = Expr::FieldLiteral { value: "1".into() };
+    assert!(matches!(
+        render(&contract),
+        Err(RenderError::Located { error, .. })
+            if matches!(*error, RenderError::TypeMismatch { expected: Type::OpaqueString, actual: Type::Field })
+    ));
 }
 
 #[test]
-fn opaque_set_check_in_records_only_typed_parameter_and_unit_witness() {
+fn opaque_set_check_in_composes_typed_effects_and_preserves_witness_order() {
     let opaque = Type::OpaqueString;
     let parameter = Parameter {
         name: "participant".into(),
@@ -138,19 +158,19 @@ fn opaque_set_check_in_records_only_typed_parameter_and_unit_witness() {
     assert!(rendered.source.contains("record_member"));
     assert!(rendered.source.contains("record_insert"));
     assert!(rendered.source.contains("try_witness_metered"));
+    let body = generated_body(&rendered.source, "recorded", "check_in");
+    assert!(body.find("record_member").unwrap() < body.find("not eligible").unwrap());
+    assert!(body.find("not eligible").unwrap() < body.find("record_insert").unwrap());
+    assert!(body.find("record_insert").unwrap() < body.find("try_witness_metered").unwrap());
 
     let mut incomplete = contract.clone();
     incomplete.stateful_circuits[0].actions.truncate(2);
-    let rejected = render_with_capabilities(&incomplete).unwrap();
-    assert!(!rejected.capabilities.circuits[0].recorded);
-    assert_eq!(
-        rejected.capabilities.circuits[0]
-            .recording_unavailable
-            .as_ref()
-            .unwrap()
-            .path,
-        "actions[0]"
-    );
+    // A Unit witness is optional: the two remaining typed effects are complete.
+    let without_witness = render_with_capabilities(&incomplete).unwrap();
+    assert!(without_witness.capabilities.circuits[0].recorded);
+    let body = generated_body(&without_witness.source, "recorded", "check_in");
+    assert!(body.find("record_member").unwrap() < body.find("record_insert").unwrap());
+    assert!(!body.contains("try_witness_metered"));
 
     let StateAction::Expression {
         value: Expr::WitnessCall { arguments, .. },
@@ -159,15 +179,41 @@ fn opaque_set_check_in_records_only_typed_parameter_and_unit_witness() {
         unreachable!()
     };
     arguments[0] = Expr::Default { ty: opaque.clone() };
+    let defaulted = render_with_capabilities(&contract).unwrap();
+    assert!(defaulted.capabilities.circuits[0].recorded);
+    assert!(defaulted.capabilities.circuits[0].observed_call);
+    // Keep the now-supported default callback value. A commitment with an unsupported VectorFoldCall child
+    // in its local prefix still refuses recording at that exact argument path.
+    let StateAction::Expression {
+        value: Expr::WitnessCall { arguments, .. },
+    } = &mut contract.stateful_circuits[0].actions[2]
+    else {
+        unreachable!()
+    };
+    arguments[0] = Expr::Let {
+        bindings: vec![LocalBinding {
+            name: "unsupported_commit".into(),
+            ty: Type::Bytes { length: 32 },
+            value: Expr::PersistentCommit {
+                value: Box::new(super::support::unsupported_commit_input()),
+                opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
+            },
+        }],
+        body: Box::new(Expr::Default { ty: opaque.clone() }),
+    };
+    super::support::register_unsupported_fold(&mut contract);
     let rejected = render_with_capabilities(&contract).unwrap();
     assert!(!rejected.capabilities.circuits[0].recorded);
+    // Checked publication identifies the actual unsupported Fold in the witness
+    // argument; the historical enclosing Let diagnostic is retired.
+    let gap = rejected.capabilities.circuits[0]
+        .recording_unavailable
+        .as_ref()
+        .unwrap();
+    assert_eq!(gap.ir_node, "Expr::VectorFoldCall");
     assert_eq!(
-        rejected.capabilities.circuits[0]
-            .recording_unavailable
-            .as_ref()
-            .unwrap()
-            .path,
-        "actions[2].value.arguments[0]"
+        gap.path,
+        "actions[2].value.arguments[0].bindings[0].value.value"
     );
 
     contract.stateful_circuits[0].actions[2] = StateAction::SetRemove {
@@ -177,16 +223,12 @@ fn opaque_set_check_in_records_only_typed_parameter_and_unit_witness() {
             name: "participant".into(),
         },
     };
-    let rejected = render_with_capabilities(&contract).unwrap();
-    assert!(!rejected.capabilities.circuits[0].recorded);
-    assert_eq!(
-        rejected.capabilities.circuits[0]
-            .recording_unavailable
-            .as_ref()
-            .unwrap()
-            .path,
-        "actions[2]"
-    );
+    let removal = render_with_capabilities(&contract).unwrap();
+    assert!(removal.capabilities.circuits[0].recorded);
+    let body = generated_body(&removal.source, "recorded", "check_in");
+    assert!(body.find("record_member").unwrap() < body.find("record_insert").unwrap());
+    assert!(body.find("record_insert").unwrap() < body.find("record_remove").unwrap());
+    assert!(!body.contains("try_witness_metered"));
 
     contract.stateful_circuits[0].parameters[0].ty = Type::OpaqueBytes;
     contract.ledger_fields[0].declaration = LedgerFieldKind::Set {
@@ -195,16 +237,18 @@ fn opaque_set_check_in_records_only_typed_parameter_and_unit_witness() {
     contract.ledger_fields[1].declaration = LedgerFieldKind::Set {
         ty: Type::OpaqueBytes,
     };
-    let rejected = render_with_capabilities(&contract).unwrap();
-    assert!(!rejected.capabilities.circuits[0].recorded);
-    assert_eq!(
-        rejected.capabilities.circuits[0]
-            .recording_unavailable
-            .as_ref()
-            .unwrap()
-            .path,
-        "actions[0]"
+    let bytes = render_with_capabilities(&contract).unwrap();
+    assert!(
+        bytes.capabilities.circuits[0].recorded && bytes.capabilities.circuits[0].observed_call
     );
+    let body = generated_body(&bytes.source, "recorded", "check_in");
+    assert!(body.find("record_member").unwrap() < body.find("record_insert").unwrap());
+    assert!(body.find("record_insert").unwrap() < body.find("record_remove").unwrap());
+    contract.stateful_circuits[0].parameters[0].ty = Type::Field;
+    assert!(matches!(
+        render(&contract),
+        Err(RenderError::TypeMismatch { .. })
+    ));
 }
 
 #[test]
@@ -462,8 +506,13 @@ fn recorded_set_assertions_preserve_boolean_queries_and_pure_field_bindings() {
     let rendered = render(&contract).unwrap();
     assert!(rendered.contains("record_is_empty(frame)?"));
     assert!(rendered.contains("record_member(frame,"));
-    assert!(rendered.contains("__compact_recorded_static_"));
-    assert!(rendered.find("record_is_empty(frame)?") < rendered.find("record_member(frame,"));
+    let body = generated_body(&rendered, "recorded", "check_queries");
+    let empty = body.find("record_is_empty").unwrap();
+    let literal = body.find("Field :: from_le_bytes").unwrap();
+    let member = body.find("record_member").unwrap();
+    assert!(empty < literal && literal < member);
+    assert!(body.find("initially empty").unwrap() < literal);
+    assert!(member < body.find("no member").unwrap());
 }
 
 #[test]
@@ -529,33 +578,50 @@ fn enum_set_locals_record_typed_keys_in_source_order() {
     let rendered = render_with_capabilities(&contract).unwrap();
     assert!(rendered.capabilities.circuits[0].recorded);
     assert!(rendered.capabilities.circuits[0].observed_call);
-    let body = rendered.source.split("pub mod recorded").nth(1).unwrap();
-    let bound = body.find("__compact_recorded_enum_").unwrap();
-    let inserted = body.find("record_insert(frame,").unwrap();
-    let observed = body.find("record_member(frame,").unwrap();
-    let removed = body.find("record_remove(frame,").unwrap();
+    let body = generated_body(&rendered.source, "recorded", "test");
+    let bound = body.find("Names :: bill").unwrap();
+    let inserted = body.find("record_insert").unwrap();
+    let observed = body.find("record_member").unwrap();
+    let removed = body.find("record_remove").unwrap();
     assert!(bound < inserted && inserted < observed && observed < removed);
 
-    // Other native enum bindings keep an explicit recording gap until their
-    // source shape has its own replay and proof coverage.
+    // Enum defaults now preserve the same typed key and operation ordering.
     let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
         unreachable!();
     };
     bindings[0].value = Expr::Default { ty: names };
     let defaulted = render_with_capabilities(&contract).unwrap();
-    assert!(!defaulted.capabilities.circuits[0].recorded);
-    assert_eq!(
-        defaulted.capabilities.circuits[0]
-            .recording_unavailable
-            .as_ref()
-            .unwrap()
-            .ir_node,
-        "StateAction::Let",
+    assert!(defaulted.capabilities.circuits[0].recorded);
+    assert!(defaulted.capabilities.circuits[0].observed_call);
+    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    bindings.insert(
+        0,
+        LocalBinding {
+            name: "unsupported_commit".into(),
+            ty: Type::Bytes { length: 32 },
+            value: Expr::PersistentCommit {
+                value: Box::new(super::support::unsupported_commit_input()),
+                opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
+            },
+        },
     );
+    super::support::register_unsupported_fold(&mut contract);
+    let defaulted = render_with_capabilities(&contract).unwrap();
+    assert!(!defaulted.capabilities.circuits[0].recorded);
+    // The retained commitment-binding fallback refuses the VectorFoldCall operand
+    // before opening evaluation or the later enum binding.
+    let gap = defaulted.capabilities.circuits[0]
+        .recording_unavailable
+        .as_ref()
+        .unwrap();
+    assert_eq!(gap.ir_node, "Expr::VectorFoldCall");
+    assert_eq!(gap.path, "actions[0].bindings[0].value.value");
 }
 
 #[test]
-fn closed_literal_vector_call_records_set_key_but_other_pure_calls_remain_unavailable() {
+fn typed_pure_vector_calls_record_set_keys_and_keep_callee_authority() {
     let mut contract = identity(Type::Unit, Expr::Unit);
     let vector = Type::Vector {
         element: Box::new(Type::Field),
@@ -632,14 +698,17 @@ fn closed_literal_vector_call_records_set_key_but_other_pure_calls_remain_unavai
 
     contract.circuits[0].body = Expr::Default { ty: vector.clone() };
     let defaulted = render_with_capabilities(&contract).unwrap();
-    assert!(!defaulted.capabilities.circuits[0].recorded);
-    assert_eq!(
-        defaulted.capabilities.circuits[0]
-            .recording_unavailable
-            .as_ref()
+    assert!(
+        defaulted.capabilities.circuits[0].recorded
+            && defaulted.capabilities.circuits[0].observed_call
+    );
+    let body = generated_body(&defaulted.source, "recorded", "test");
+    assert!(
+        body.find(&quote::quote!(crate::pure_circuits::getVector()).to_string())
             .unwrap()
-            .ir_node,
-        "StateAction::Let"
+            < body
+                .find(&quote::quote!(.record_insert).to_string())
+                .unwrap()
     );
 
     contract.circuits[0].body = Expr::Vector {
@@ -661,7 +730,29 @@ fn closed_literal_vector_call_records_set_key_but_other_pure_calls_remain_unavai
         arguments: vec![Expr::FieldLiteral { value: "7".into() }],
     };
     let argument_bearing = render_with_capabilities(&contract).unwrap();
-    assert!(!argument_bearing.capabilities.circuits[0].recorded);
+    assert!(
+        argument_bearing.capabilities.circuits[0].recorded
+            && argument_bearing.capabilities.circuits[0].observed_call
+    );
+    let body = generated_body(&argument_bearing.source, "recorded", "test");
+    assert!(
+        body.find(&quote::quote!(crate::pure_circuits::getVector).to_string())
+            .unwrap()
+            < body
+                .find(&quote::quote!(.record_insert).to_string())
+                .unwrap()
+    );
+    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    let Expr::Call { arguments, .. } = &mut bindings[0].value else {
+        unreachable!()
+    };
+    arguments.clear();
+    assert!(
+        render(&contract).is_err(),
+        "callee arity remains authoritative"
+    );
 }
 
 #[test]
@@ -705,10 +796,9 @@ fn set_actions_require_the_declared_element_type() {
     assert!(source.contains("runtime::ledger::SetView<'a, bool, D>"));
     assert!(source.contains("crate::ledger_slots::seen.inspect(self.state)"));
     assert!(source.contains("crate::ledger_slots::seen.insert(context, __compact_param_0)?"));
-    assert!(
-        source.contains(".record_insert(frame, __compact_param_0)?"),
-        "{source}"
-    );
+    let body = generated_body(&source, "recorded", "add");
+    assert!(body.contains("record_insert"), "{body}");
+    assert!(body.find("__compact_param_0").unwrap() < body.find("record_insert").unwrap());
     contract.stateful_circuits[0].parameters[0].ty = Type::Field;
     assert_eq!(
         render(&contract),
@@ -749,8 +839,8 @@ fn set_actions_require_the_declared_element_type() {
     assert!(source.contains("crate::ledger_slots::seen.size(context)?"));
     assert!(source.contains(".record_size(frame)?"), "{source}");
 
-    // The native slot handles this type, but the recorder must not expose a
-    // method until its complete typed expression path is supported.
+    // Plain fixed-byte insertion now uses the same checked ordinary Set
+    // operation as Boolean insertion; declaration equality remains mandatory.
     contract.ledger_fields[0].declaration = LedgerFieldKind::Set {
         ty: Type::Bytes { length: 32 },
     };
@@ -764,5 +854,15 @@ fn set_actions_require_the_declared_element_type() {
             name: "value".into(),
         },
     }];
-    assert!(!render(&contract).unwrap().contains("pub mod recorded"));
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(generated_body(&rendered.source, "recorded", "add").contains("record_insert"));
+    contract.stateful_circuits[0].parameters[0].ty = Type::Bytes { length: 31 };
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Bytes { length: 32 },
+            actual: Type::Bytes { length: 31 },
+        })
+    );
 }

@@ -21,25 +21,11 @@ use crate::{CompactError, ledger};
 
 impl<Private, D: DB> CircuitContext<Private, D> {
     pub fn merkle_insert_index_default<T: CellValue + Default>(
-        mut self,
+        self,
         path: impl Into<ledger::LedgerPath>,
         position: crate::BoundedUint<{ u64::MAX as u128 }>,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
-        let result = ledger::merkle_insert_index_default::<T, D>(
-            &self.query,
-            path,
-            position.value() as u64,
-            self.gas_limit,
-            &self.cost_model,
-        )
-        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
-        self.query = result.context;
-        Ok(CircuitResult {
-            context: self,
-            result: (),
-            gas_cost: result.gas_cost,
-            private_transcript_outputs: Vec::new(),
-        })
+        self.merkle_insert_index(path, T::default(), position)
     }
 
     pub fn merkle_insert_index<T: CellValue>(
@@ -48,6 +34,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         item: T,
         position: crate::BoundedUint<{ u64::MAX as u128 }>,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        item.validate_cell_value()?;
         let result = ledger::merkle_insert_index(
             &self.query,
             path,
@@ -95,6 +82,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         path: impl Into<ledger::LedgerPath>,
         item: T,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        item.validate_cell_value()?;
         let result =
             ledger::merkle_insert(&self.query, path, item, self.gas_limit, &self.cost_model)
                 .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -125,25 +113,11 @@ impl<Private, D: DB> CircuitContext<Private, D> {
     }
 
     pub fn historic_insert_index_default<T: CellValue + Default>(
-        mut self,
+        self,
         path: impl Into<ledger::LedgerPath>,
         position: crate::BoundedUint<{ u64::MAX as u128 }>,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
-        let result = ledger::historic_insert_index_default::<T, D>(
-            &self.query,
-            path,
-            position.value() as u64,
-            self.gas_limit,
-            &self.cost_model,
-        )
-        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
-        self.query = result.context;
-        Ok(CircuitResult {
-            context: self,
-            result: (),
-            gas_cost: result.gas_cost,
-            private_transcript_outputs: Vec::new(),
-        })
+        self.historic_insert_index(path, T::default(), position)
     }
 
     pub fn historic_insert_index<T: CellValue>(
@@ -152,6 +126,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         item: T,
         position: crate::BoundedUint<{ u64::MAX as u128 }>,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        item.validate_cell_value()?;
         let result = ledger::historic_insert_index(
             &self.query,
             path,
@@ -199,6 +174,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         path: impl Into<ledger::LedgerPath>,
         item: T,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        item.validate_cell_value()?;
         let result =
             ledger::historic_insert(&self.query, path, item, self.gas_limit, &self.cost_model)
                 .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;

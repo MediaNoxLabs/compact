@@ -27,6 +27,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct Binding {
         pub version: ::midnight_compact_runtime::BoundedUint<18446744073709551615>,
@@ -39,6 +40,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct SchnorrHashInput {
         pub ann_x: ::midnight_compact_runtime::Field,
@@ -55,6 +57,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct SchnorrSignature {
         pub announcement: ::midnight_compact_runtime::JubjubPoint,
@@ -67,7 +70,7 @@ pub use types::Verify_SchnorrSignature;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub(crate) fn digest(
         expected: runtime::BoundedUint<18446744073709551615>,
     ) -> Result<runtime::FixedVector<runtime::Field, 4>, runtime::CompactError> {
@@ -93,7 +96,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -185,19 +188,22 @@ pub mod ledger_contract {
         __compact_constructor_param_0: runtime::JubjubPoint,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let __compact_constructor_value_0 = __compact_constructor_param_0;
+        runtime::ledger::CellValue::validate_cell_value(&__compact_constructor_value_0)?;
         let __compact_constructor_value_1 = true;
+        runtime::ledger::CellValue::validate_cell_value(&__compact_constructor_value_1)?;
         let state = runtime::ledger::contract_state(vec![
-            runtime::ledger::constructor_cell::<runtime::JubjubPoint, runtime::ledger::DefaultDB>(
-                __compact_constructor_value_0,
-            ),
-            runtime::ledger::constructor_cell::<bool, runtime::ledger::DefaultDB>(
+            runtime::ledger::try_constructor_cell::<
+                runtime::JubjubPoint,
+                runtime::ledger::DefaultDB,
+            >(__compact_constructor_value_0)?,
+            runtime::ledger::try_constructor_cell::<bool, runtime::ledger::DefaultDB>(
                 __compact_constructor_value_1,
-            ),
+            )?,
             runtime::ledger::constructor_counter(),
-            runtime::ledger::constructor_cell::<
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
+            >(Default::default())?,
         ]);
         Ok(runtime::context::ConstructorResult::new(
             __compact_context,
@@ -502,53 +508,6 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
-        fn __compact_recorded_body_authorize<Private, W: super::TryWitnesses<Private>>(
-            frame: runtime::recording::RecordingFrame<Private>,
-            witnesses: &W,
-            __compact_param_0: crate::types::SchnorrSignature,
-            __compact_param_1: runtime::BoundedUint<18446744073709551615>,
-            __compact_param_2: runtime::FixedVector<runtime::Field, 4>,
-        ) -> Result<(runtime::recording::RecordingFrame<Private>, ()), runtime::CompactError>
-        {
-            let (frame, __compact_plan_0) = crate::ledger_slots::version.record_read(frame)?;
-            let __compact_plan_1: runtime::BoundedUint<18446744073709551615> =
-                runtime::BoundedUint::<18446744073709551615>::new(__compact_plan_0 as u128)?;
-            let __compact_plan_2: bool = __compact_param_1 == __compact_plan_1;
-            if !__compact_plan_2 {
-                return Err(runtime::CompactError::AssertionFailed("stale".to_owned()));
-            }
-            let __compact_plan_3: runtime::FixedVector<runtime::Field, 4> =
-                (__compact_param_2).clone();
-            let __compact_plan_4: crate::types::SchnorrSignature = (__compact_param_0).clone();
-            let (frame, __compact_plan_5): (_, runtime::JubjubPoint) =
-                crate::ledger_slots::controller.record_read(frame)?;
-            let __compact_plan_6: runtime::JubjubPoint = __compact_plan_5;
-            let (frame, ()) = frame.call_local(|context| {
-                super::schnorrVerifyDigest(
-                    context,
-                    witnesses,
-                    __compact_plan_3,
-                    __compact_plan_4,
-                    __compact_plan_6,
-                )
-            })?;
-            Ok((frame, ()))
-        }
-        fn __compact_recorded_body_note<Private, W: super::TryWitnesses<Private>>(
-            frame: runtime::recording::RecordingFrame<Private>,
-            witnesses: &W,
-        ) -> Result<(runtime::recording::RecordingFrame<Private>, ()), runtime::CompactError>
-        {
-            let frame = crate::ledger_slots::version.record_increment(frame, 1u16)?;
-            let (frame, __compact_witness_0) = frame.try_witness_metered(|context, meter| {
-                witnesses.now(context.witness_context_with(super::LedgerView {
-                    state: context.query.state.get_ref(),
-                    meter,
-                }))
-            })?;
-            let frame = crate::ledger_slots::updated.record_write(frame, __compact_witness_0)?;
-            Ok((frame, ()))
-        }
         pub fn close<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
@@ -557,59 +516,187 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_plan_0: crate::types::SchnorrSignature = (__compact_param_0).clone();
-            let __compact_plan_1: runtime::BoundedUint<18446744073709551615> = __compact_param_1;
-            let __compact_plan_2: runtime::BoundedUint<18446744073709551615> = __compact_param_1;
-            let __compact_plan_3: runtime::FixedVector<runtime::Field, 4> =
-                crate::pure_circuits::digest(__compact_plan_2)?;
-            let __compact_plan_4: runtime::FixedVector<runtime::Field, 4> = __compact_plan_3;
-            let (frame, __compact_plan_5) = crate::ledger_slots::version.record_read(frame)?;
-            let __compact_plan_6: runtime::BoundedUint<18446744073709551615> =
-                runtime::BoundedUint::<18446744073709551615>::new(__compact_plan_5 as u128)?;
-            let __compact_plan_7: bool = __compact_plan_1 == __compact_plan_6;
-            if !__compact_plan_7 {
-                return Err(runtime::CompactError::AssertionFailed("stale".to_owned()));
-            }
-            let __compact_plan_8: runtime::FixedVector<runtime::Field, 4> =
-                (__compact_plan_4).clone();
-            let __compact_plan_9: crate::types::SchnorrSignature = (__compact_plan_0).clone();
-            let (frame, __compact_plan_10): (_, runtime::JubjubPoint) =
-                crate::ledger_slots::controller.record_read(frame)?;
-            let __compact_plan_11: runtime::JubjubPoint = __compact_plan_10;
-            let (frame, ()) = frame.call_local(|context| {
-                super::schnorrVerifyDigest(
-                    context,
-                    witnesses,
-                    __compact_plan_8,
-                    __compact_plan_9,
-                    __compact_plan_11,
-                )
-            })?;
-            let (frame, __compact_plan_12): (_, bool) =
+            let __compact_effect_0: crate::types::SchnorrSignature = __compact_param_0;
+            let __compact_effect_1: runtime::BoundedUint<18446744073709551615> = __compact_param_1;
+            let __compact_effect_2: runtime::FixedVector<runtime::Field, 4> =
+                crate::pure_circuits::digest(__compact_effect_1)?;
+            let (frame, __compact_effect_55): (_, ()) = {
+                let __compact_effect_3: crate::types::SchnorrSignature =
+                    (__compact_effect_0).clone();
+                let __compact_effect_4: runtime::BoundedUint<18446744073709551615> =
+                    __compact_effect_1;
+                let __compact_effect_5: runtime::FixedVector<runtime::Field, 4> =
+                    (__compact_effect_2).clone();
+                let (frame, __compact_effect_raw_6) =
+                    crate::ledger_slots::version.record_read(frame)?;
+                let __compact_effect_6: runtime::BoundedUint<18446744073709551615> =
+                    <runtime::BoundedUint<18446744073709551615>>::new(
+                        __compact_effect_raw_6 as u128,
+                    )?;
+                let __compact_effect_7: bool = __compact_effect_4 == __compact_effect_6;
+                if !__compact_effect_7 {
+                    return Err(runtime::CompactError::AssertionFailed("stale".to_owned()));
+                }
+                let __compact_effect_8: () = ();
+                let (frame, __compact_effect_9): (_, runtime::JubjubPoint) =
+                    crate::ledger_slots::controller.record_read(frame)?;
+                let (frame, __compact_effect_53): (_, ()) = {
+                    let __compact_effect_10: runtime::FixedVector<runtime::Field, 4> =
+                        (__compact_effect_5).clone();
+                    let __compact_effect_11: crate::types::SchnorrSignature =
+                        (__compact_effect_3).clone();
+                    let __compact_effect_12: runtime::JubjubPoint = __compact_effect_9;
+                    let (frame, __compact_effect_51): (_, ()) = {
+                        let __compact_effect_13: runtime::FixedVector<runtime::Field, 4> =
+                            (__compact_effect_10).clone();
+                        let __compact_effect_14: crate::types::SchnorrSignature =
+                            (__compact_effect_11).clone();
+                        let __compact_effect_15: runtime::JubjubPoint = __compact_effect_12;
+                        let __compact_effect_16: runtime::JubjubPoint =
+                            __compact_effect_14.announcement;
+                        let __compact_effect_17: runtime::Field = __compact_effect_14.response;
+                        let __compact_effect_18: runtime::Field =
+                            runtime::jubjub_point_x(__compact_effect_16);
+                        let __compact_effect_19: runtime::Field =
+                            runtime::jubjub_point_y(__compact_effect_16);
+                        let __compact_effect_20: runtime::Field =
+                            runtime::jubjub_point_x(__compact_effect_15);
+                        let __compact_effect_21: runtime::Field =
+                            runtime::jubjub_point_y(__compact_effect_15);
+                        let __compact_effect_22: crate::types::SchnorrHashInput =
+                            crate::types::SchnorrHashInput {
+                                ann_x: __compact_effect_18,
+                                ann_y: __compact_effect_19,
+                                pk_x: __compact_effect_20,
+                                pk_y: __compact_effect_21,
+                                msg: (__compact_effect_13).clone(),
+                            };
+                        let __compact_effect_23: runtime::Field =
+                            runtime::transient_hash((__compact_effect_22).clone());
+                        let __compact_effect_24: runtime::Field = runtime::Field::from_le_bytes(&[
+                            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                            0u8, 0u8, 0u8, 1u8,
+                        ])
+                        .expect("validated Compact Field literal");
+                        let (frame, __compact_effect_25): (
+                            _,
+                            (
+                                runtime::BoundedUint<127>,
+                                runtime::WideUint<
+                                    1329227995784915872903807060280344575u128,
+                                    340282366920938463463374607431768211455u128,
+                                >,
+                            ),
+                        ) = frame.try_witness_metered(|context, meter| {
+                            witnesses.getSchnorrReduction(
+                                context.witness_context_with(super::LedgerView {
+                                    state: context.query.state.get_ref(),
+                                    meter,
+                                }),
+                                __compact_effect_23,
+                            )
+                        })?;
+                        let __compact_effect_26: runtime::BoundedUint<127> = __compact_effect_25.0;
+                        let __compact_effect_27: runtime::WideUint<
+                            1329227995784915872903807060280344575u128,
+                            340282366920938463463374607431768211455u128,
+                        > = __compact_effect_25.1;
+                        let __compact_effect_28: runtime::BoundedUint<127> =
+                            <runtime::BoundedUint<127>>::new(116u128)?;
+                        let __compact_effect_29: bool =
+                            __compact_effect_26.value() < __compact_effect_28.value();
+                        if !__compact_effect_29 {
+                            return Err(runtime::CompactError::AssertionFailed(
+                                "Schnorr quotient out of range".to_owned(),
+                            ));
+                        }
+                        let __compact_effect_30: () = ();
+                        let __compact_effect_31: runtime::Field =
+                            runtime::Field::from((__compact_effect_26).value());
+                        let __compact_effect_32: runtime::Field =
+                            __compact_effect_31 * __compact_effect_24;
+                        let __compact_effect_33: runtime::Field = (__compact_effect_27).as_field();
+                        let __compact_effect_34: runtime::Field =
+                            __compact_effect_32 + __compact_effect_33;
+                        let __compact_effect_35: bool = __compact_effect_34 == __compact_effect_23;
+                        if !__compact_effect_35 {
+                            return Err(runtime::CompactError::AssertionFailed(
+                                "Invalid challenge reduction".to_owned(),
+                            ));
+                        }
+                        let __compact_effect_36: () = ();
+                        let __compact_effect_37: runtime::Field = (__compact_effect_27).as_field();
+                        let __compact_effect_38: runtime::JubjubPoint =
+                            runtime::ec_mul_generator(__compact_effect_17)?;
+                        let __compact_effect_39: runtime::JubjubPoint =
+                            runtime::ec_mul(__compact_effect_15, __compact_effect_37)?;
+                        let __compact_effect_40: runtime::JubjubPoint =
+                            runtime::ec_add(__compact_effect_16, __compact_effect_39);
+                        let __compact_effect_41: runtime::Field =
+                            runtime::jubjub_point_x(__compact_effect_38);
+                        let __compact_effect_42: runtime::Field =
+                            runtime::jubjub_point_x(__compact_effect_40);
+                        let __compact_effect_43: bool = __compact_effect_41 == __compact_effect_42;
+                        let (frame, __compact_effect_48): (_, bool) = if __compact_effect_43 {
+                            let __compact_effect_44: runtime::Field =
+                                runtime::jubjub_point_y(__compact_effect_38);
+                            let __compact_effect_45: runtime::Field =
+                                runtime::jubjub_point_y(__compact_effect_40);
+                            let __compact_effect_46: bool =
+                                __compact_effect_44 == __compact_effect_45;
+                            (frame, __compact_effect_46)
+                        } else {
+                            let __compact_effect_47: bool = false;
+                            (frame, __compact_effect_47)
+                        };
+                        if !__compact_effect_48 {
+                            return Err(runtime::CompactError::AssertionFailed(
+                                "Invalid Jubjub Schnorr signature".to_owned(),
+                            ));
+                        }
+                        let __compact_effect_49: () = ();
+                        let __compact_effect_50: () = ();
+                        (frame, __compact_effect_50)
+                    };
+                    let __compact_effect_52: () = ();
+                    (frame, __compact_effect_52)
+                };
+                let __compact_effect_54: () = ();
+                (frame, __compact_effect_54)
+            };
+            let (frame, __compact_effect_56): (_, bool) =
                 crate::ledger_slots::active.record_read(frame)?;
-            if !__compact_plan_12 {
+            if !__compact_effect_56 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "inactive".to_owned(),
                 ));
             }
-            let __compact_plan_13: bool = false;
-            let frame = crate::ledger_slots::active.record_write(frame, __compact_plan_13)?;
-            let __compact_plan_14: runtime::BoundedUint<65535> =
-                runtime::BoundedUint::<65535>::new(1u128)
-                    .expect("Compact Uint literal fits its maximum");
-            let __compact_plan_15: runtime::BoundedUint<65535> = __compact_plan_14;
-            let frame = crate::ledger_slots::version
-                .record_increment(frame, (__compact_plan_15).value() as u16)?;
-            let (frame, __compact_plan_16): (_, runtime::BoundedUint<18446744073709551615>) = frame
-                .try_witness_metered(|context, meter| {
-                    witnesses.now(context.witness_context_with(super::LedgerView {
-                        state: context.query.state.get_ref(),
-                        meter,
-                    }))
-                })?;
-            let __compact_plan_17: runtime::BoundedUint<18446744073709551615> = __compact_plan_16;
-            let frame = crate::ledger_slots::updated.record_write(frame, __compact_plan_17)?;
-            Ok(frame.finish(()))
+            let __compact_effect_57: () = ();
+            let __compact_effect_58: bool = false;
+            let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_58)?;
+            let __compact_effect_59: () = ();
+            let (frame, __compact_effect_65): (_, ()) = {
+                let __compact_effect_60: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
+                let frame = crate::ledger_slots::version
+                    .record_increment(frame, (__compact_effect_60).value() as u16)?;
+                let __compact_effect_61: () = ();
+                let (frame, __compact_effect_62): (_, runtime::BoundedUint<18446744073709551615>) =
+                    frame.try_witness_metered(|context, meter| {
+                        witnesses.now(context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }))
+                    })?;
+                let frame =
+                    crate::ledger_slots::updated.record_write(frame, __compact_effect_62)?;
+                let __compact_effect_63: () = ();
+                let __compact_effect_64: () = ();
+                (frame, __compact_effect_64)
+            };
+            let __compact_effect_66: () = ();
+            Ok(frame.finish(__compact_effect_66))
         }
         pub fn verifyOnly<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -619,35 +706,157 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_plan_0: crate::types::SchnorrSignature = (__compact_param_0).clone();
-            let __compact_plan_1: runtime::BoundedUint<18446744073709551615> = __compact_param_1;
-            let __compact_plan_2: runtime::BoundedUint<18446744073709551615> = __compact_param_1;
-            let __compact_plan_3: runtime::FixedVector<runtime::Field, 4> =
-                crate::pure_circuits::digest(__compact_plan_2)?;
-            let __compact_plan_4: runtime::FixedVector<runtime::Field, 4> = __compact_plan_3;
-            let (frame, __compact_plan_5) = crate::ledger_slots::version.record_read(frame)?;
-            let __compact_plan_6: runtime::BoundedUint<18446744073709551615> =
-                runtime::BoundedUint::<18446744073709551615>::new(__compact_plan_5 as u128)?;
-            let __compact_plan_7: bool = __compact_plan_1 == __compact_plan_6;
-            if !__compact_plan_7 {
-                return Err(runtime::CompactError::AssertionFailed("stale".to_owned()));
-            }
-            let __compact_plan_8: runtime::FixedVector<runtime::Field, 4> =
-                (__compact_plan_4).clone();
-            let __compact_plan_9: crate::types::SchnorrSignature = (__compact_plan_0).clone();
-            let (frame, __compact_plan_10): (_, runtime::JubjubPoint) =
-                crate::ledger_slots::controller.record_read(frame)?;
-            let __compact_plan_11: runtime::JubjubPoint = __compact_plan_10;
-            let (frame, ()) = frame.call_local(|context| {
-                super::schnorrVerifyDigest(
-                    context,
-                    witnesses,
-                    __compact_plan_8,
-                    __compact_plan_9,
-                    __compact_plan_11,
-                )
-            })?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: crate::types::SchnorrSignature = __compact_param_0;
+            let __compact_effect_1: runtime::BoundedUint<18446744073709551615> = __compact_param_1;
+            let __compact_effect_2: runtime::FixedVector<runtime::Field, 4> =
+                crate::pure_circuits::digest(__compact_effect_1)?;
+            let (frame, __compact_effect_55): (_, ()) = {
+                let __compact_effect_3: crate::types::SchnorrSignature =
+                    (__compact_effect_0).clone();
+                let __compact_effect_4: runtime::BoundedUint<18446744073709551615> =
+                    __compact_effect_1;
+                let __compact_effect_5: runtime::FixedVector<runtime::Field, 4> =
+                    (__compact_effect_2).clone();
+                let (frame, __compact_effect_raw_6) =
+                    crate::ledger_slots::version.record_read(frame)?;
+                let __compact_effect_6: runtime::BoundedUint<18446744073709551615> =
+                    <runtime::BoundedUint<18446744073709551615>>::new(
+                        __compact_effect_raw_6 as u128,
+                    )?;
+                let __compact_effect_7: bool = __compact_effect_4 == __compact_effect_6;
+                if !__compact_effect_7 {
+                    return Err(runtime::CompactError::AssertionFailed("stale".to_owned()));
+                }
+                let __compact_effect_8: () = ();
+                let (frame, __compact_effect_9): (_, runtime::JubjubPoint) =
+                    crate::ledger_slots::controller.record_read(frame)?;
+                let (frame, __compact_effect_53): (_, ()) = {
+                    let __compact_effect_10: runtime::FixedVector<runtime::Field, 4> =
+                        (__compact_effect_5).clone();
+                    let __compact_effect_11: crate::types::SchnorrSignature =
+                        (__compact_effect_3).clone();
+                    let __compact_effect_12: runtime::JubjubPoint = __compact_effect_9;
+                    let (frame, __compact_effect_51): (_, ()) = {
+                        let __compact_effect_13: runtime::FixedVector<runtime::Field, 4> =
+                            (__compact_effect_10).clone();
+                        let __compact_effect_14: crate::types::SchnorrSignature =
+                            (__compact_effect_11).clone();
+                        let __compact_effect_15: runtime::JubjubPoint = __compact_effect_12;
+                        let __compact_effect_16: runtime::JubjubPoint =
+                            __compact_effect_14.announcement;
+                        let __compact_effect_17: runtime::Field = __compact_effect_14.response;
+                        let __compact_effect_18: runtime::Field =
+                            runtime::jubjub_point_x(__compact_effect_16);
+                        let __compact_effect_19: runtime::Field =
+                            runtime::jubjub_point_y(__compact_effect_16);
+                        let __compact_effect_20: runtime::Field =
+                            runtime::jubjub_point_x(__compact_effect_15);
+                        let __compact_effect_21: runtime::Field =
+                            runtime::jubjub_point_y(__compact_effect_15);
+                        let __compact_effect_22: crate::types::SchnorrHashInput =
+                            crate::types::SchnorrHashInput {
+                                ann_x: __compact_effect_18,
+                                ann_y: __compact_effect_19,
+                                pk_x: __compact_effect_20,
+                                pk_y: __compact_effect_21,
+                                msg: (__compact_effect_13).clone(),
+                            };
+                        let __compact_effect_23: runtime::Field =
+                            runtime::transient_hash((__compact_effect_22).clone());
+                        let __compact_effect_24: runtime::Field = runtime::Field::from_le_bytes(&[
+                            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                            0u8, 0u8, 0u8, 1u8,
+                        ])
+                        .expect("validated Compact Field literal");
+                        let (frame, __compact_effect_25): (
+                            _,
+                            (
+                                runtime::BoundedUint<127>,
+                                runtime::WideUint<
+                                    1329227995784915872903807060280344575u128,
+                                    340282366920938463463374607431768211455u128,
+                                >,
+                            ),
+                        ) = frame.try_witness_metered(|context, meter| {
+                            witnesses.getSchnorrReduction(
+                                context.witness_context_with(super::LedgerView {
+                                    state: context.query.state.get_ref(),
+                                    meter,
+                                }),
+                                __compact_effect_23,
+                            )
+                        })?;
+                        let __compact_effect_26: runtime::BoundedUint<127> = __compact_effect_25.0;
+                        let __compact_effect_27: runtime::WideUint<
+                            1329227995784915872903807060280344575u128,
+                            340282366920938463463374607431768211455u128,
+                        > = __compact_effect_25.1;
+                        let __compact_effect_28: runtime::BoundedUint<127> =
+                            <runtime::BoundedUint<127>>::new(116u128)?;
+                        let __compact_effect_29: bool =
+                            __compact_effect_26.value() < __compact_effect_28.value();
+                        if !__compact_effect_29 {
+                            return Err(runtime::CompactError::AssertionFailed(
+                                "Schnorr quotient out of range".to_owned(),
+                            ));
+                        }
+                        let __compact_effect_30: () = ();
+                        let __compact_effect_31: runtime::Field =
+                            runtime::Field::from((__compact_effect_26).value());
+                        let __compact_effect_32: runtime::Field =
+                            __compact_effect_31 * __compact_effect_24;
+                        let __compact_effect_33: runtime::Field = (__compact_effect_27).as_field();
+                        let __compact_effect_34: runtime::Field =
+                            __compact_effect_32 + __compact_effect_33;
+                        let __compact_effect_35: bool = __compact_effect_34 == __compact_effect_23;
+                        if !__compact_effect_35 {
+                            return Err(runtime::CompactError::AssertionFailed(
+                                "Invalid challenge reduction".to_owned(),
+                            ));
+                        }
+                        let __compact_effect_36: () = ();
+                        let __compact_effect_37: runtime::Field = (__compact_effect_27).as_field();
+                        let __compact_effect_38: runtime::JubjubPoint =
+                            runtime::ec_mul_generator(__compact_effect_17)?;
+                        let __compact_effect_39: runtime::JubjubPoint =
+                            runtime::ec_mul(__compact_effect_15, __compact_effect_37)?;
+                        let __compact_effect_40: runtime::JubjubPoint =
+                            runtime::ec_add(__compact_effect_16, __compact_effect_39);
+                        let __compact_effect_41: runtime::Field =
+                            runtime::jubjub_point_x(__compact_effect_38);
+                        let __compact_effect_42: runtime::Field =
+                            runtime::jubjub_point_x(__compact_effect_40);
+                        let __compact_effect_43: bool = __compact_effect_41 == __compact_effect_42;
+                        let (frame, __compact_effect_48): (_, bool) = if __compact_effect_43 {
+                            let __compact_effect_44: runtime::Field =
+                                runtime::jubjub_point_y(__compact_effect_38);
+                            let __compact_effect_45: runtime::Field =
+                                runtime::jubjub_point_y(__compact_effect_40);
+                            let __compact_effect_46: bool =
+                                __compact_effect_44 == __compact_effect_45;
+                            (frame, __compact_effect_46)
+                        } else {
+                            let __compact_effect_47: bool = false;
+                            (frame, __compact_effect_47)
+                        };
+                        if !__compact_effect_48 {
+                            return Err(runtime::CompactError::AssertionFailed(
+                                "Invalid Jubjub Schnorr signature".to_owned(),
+                            ));
+                        }
+                        let __compact_effect_49: () = ();
+                        let __compact_effect_50: () = ();
+                        (frame, __compact_effect_50)
+                    };
+                    let __compact_effect_52: () = ();
+                    (frame, __compact_effect_52)
+                };
+                let __compact_effect_54: () = ();
+                (frame, __compact_effect_54)
+            };
+            let __compact_effect_56: () = ();
+            Ok(frame.finish(__compact_effect_56))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

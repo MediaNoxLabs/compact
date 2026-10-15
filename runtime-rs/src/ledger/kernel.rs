@@ -15,10 +15,10 @@
 
 //! Kernel effects use their own ledger VM frame, never a contract ledger slot.
 use super::{
-    CoinCommitment, CoinNullifier, CompactError, HashOutput, QueryContext, QueryResults,
-    StateValue, constructor_cell,
+    CoinCommitment, CoinNullifier, CompactError, HashOutput, QueryContext, QueryResults, StateValue,
 };
 use midnight_base_crypto::{cost_model::RunningCost, fab::AlignedValue};
+use midnight_onchain_state::state::AlignedValueChecked;
 use midnight_onchain_vm::{
     cost_model::CostModel,
     ops::{Key, Op},
@@ -70,11 +70,11 @@ pub(crate) fn kernel_claim_program<M: ResultMode<D>, D: DB>(claim: KernelClaim) 
         Op::Idx {
             cached: true,
             push_path: true,
-            path: vec![Key::Value(AlignedValue::from(index))].into(),
+            path: vec![Key::Value(AlignedValueChecked::from(index))].into(),
         },
         Op::Push {
             storage: false,
-            value: StateValue::from(value),
+            value: super::vm::literal(value),
         },
         Op::Push {
             storage: false,
@@ -93,18 +93,18 @@ pub(crate) fn kernel_mint_shielded_program<M: ResultMode<D>, D: DB>(
         Op::Idx {
             cached: true,
             push_path: true,
-            path: vec![Key::Value(AlignedValue::from(4_u8))].into(),
+            path: vec![Key::Value(AlignedValueChecked::from(4_u8))].into(),
         },
         Op::Push {
             storage: false,
-            value: StateValue::from(AlignedValue::from(domain)),
+            value: super::vm::literal(domain),
         },
         Op::Dup { n: 1 },
         Op::Dup { n: 1 },
         Op::Member,
         Op::Push {
             storage: false,
-            value: constructor_cell(amount),
+            value: super::vm::literal(amount),
         },
         Op::Swap { n: 0 },
         Op::Neg,
@@ -125,6 +125,7 @@ pub(crate) fn kernel_mint_shielded_program<M: ResultMode<D>, D: DB>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ledger::constructor_cell;
     use crate::ledger::{ChargedState, ContractAddress, DefaultDB};
     #[test]
     fn canonical_kernel_programs_match_independent_typescript() {
@@ -195,7 +196,7 @@ mod tests {
             Op::Pop,
             Op::Push {
                 storage: false,
-                value: constructor_cell(false),
+                value: super::super::vm::literal(false),
             },
             Op::Swap { n: 0 },
         ];

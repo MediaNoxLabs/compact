@@ -1,0 +1,402 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "active",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "boolean"
+        }
+      },
+      "source": {
+        "file": "effect_plan_unit_keccak.compact",
+        "line": 5,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "expectedHash",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "bytes",
+        "length": 32
+      },
+      "source": {
+        "file": "effect_plan_unit_keccak.compact",
+        "line": 6,
+        "column": 1
+      }
+    },
+    {
+      "name": "authorized",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "source": {
+        "file": "effect_plan_unit_keccak.compact",
+        "line": 7,
+        "column": 1
+      }
+    },
+    {
+      "name": "digestPayload",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "bytes",
+        "length": 32
+      },
+      "source": {
+        "file": "effect_plan_unit_keccak.compact",
+        "line": 8,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "verifyLocal",
+      "parameters": [
+        {
+          "name": "payload",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "equal",
+            "left": {
+              "kind": "keccak256",
+              "value": {
+                "kind": "parameter",
+                "name": "payload"
+              }
+            },
+            "right": {
+              "kind": "witness_call",
+              "name": "expectedHash",
+              "arguments": [
+              ]
+            }
+          },
+          "message": "hash mismatch"
+        },
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "witness_call",
+            "name": "authorized",
+            "arguments": [
+            ]
+          },
+          "message": "not authorized"
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "effect_plan_unit_keccak.compact",
+        "line": 11,
+        "column": 1
+      }
+    },
+    {
+      "name": "close",
+      "parameters": [
+        {
+          "name": "payload",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "circuit_call",
+          "name": "verifyLocal",
+          "arguments": [
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "payload"
+              },
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              }
+            }
+          ]
+        },
+        {
+          "kind": "cell_write",
+          "field": "active",
+          "index": 0,
+          "value": {
+            "kind": "boolean",
+            "value": false
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_unit_keccak.compact",
+        "line": 15,
+        "column": 1
+      }
+    },
+    {
+      "name": "lazy_close",
+      "parameters": [
+        {
+          "name": "payload",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "parameter",
+            "name": "selected"
+          },
+          "then": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "circuit_call",
+                "name": "verifyLocal",
+                "arguments": [
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "payload"
+                    },
+                    "ty": {
+                      "kind": "bytes",
+                      "length": 32
+                    }
+                  }
+                ]
+              },
+              {
+                "kind": "cell_write",
+                "field": "active",
+                "index": 0,
+                "value": {
+                  "kind": "boolean",
+                  "value": false
+                }
+              }
+            ]
+          },
+          "otherwise": {
+            "kind": "sequence",
+            "actions": [
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_unit_keccak.compact",
+        "line": 19,
+        "column": 1
+      }
+    },
+    {
+      "name": "digest",
+      "parameters": [
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Digest",
+        "fields": [
+          {
+            "name": "value",
+            "ty": {
+              "kind": "bytes",
+              "length": 32
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "struct_literal",
+          "ty": {
+            "kind": "struct",
+            "name": "Digest",
+            "fields": [
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              }
+            ]
+          },
+          "fields": [
+            {
+              "kind": "parameter",
+              "name": "value"
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "value",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              },
+              "value": {
+                "kind": "if",
+                "condition": {
+                  "kind": "parameter",
+                  "name": "selected"
+                },
+                "then": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "keccak256",
+                    "value": {
+                      "kind": "witness_call",
+                      "name": "digestPayload",
+                      "arguments": [
+                      ]
+                    }
+                  },
+                  "ty": {
+                    "kind": "bytes",
+                    "length": 32
+                  }
+                },
+                "otherwise": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "field_to_bytes32",
+                    "value": {
+                      "kind": "field_literal",
+                      "value": "0"
+                    }
+                  },
+                  "ty": {
+                    "kind": "bytes",
+                    "length": 32
+                  }
+                }
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "assert",
+                "condition": {
+                  "kind": "witness_call",
+                  "name": "authorized",
+                  "arguments": [
+                  ]
+                },
+                "message": "not authorized"
+              },
+              {
+                "kind": "cell_write",
+                "field": "active",
+                "index": 0,
+                "value": {
+                  "kind": "boolean",
+                  "value": false
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_unit_keccak.compact",
+        "line": 26,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": {
+    "parameters": [
+    ],
+    "steps": [
+      {
+        "kind": "cell_write",
+        "field": "active",
+        "index": 0,
+        "value": {
+          "kind": "boolean",
+          "value": true
+        }
+      }
+    ],
+    "source": {
+      "file": "effect_plan_unit_keccak.compact",
+      "line": 10,
+      "column": 1
+    }
+  }
+}

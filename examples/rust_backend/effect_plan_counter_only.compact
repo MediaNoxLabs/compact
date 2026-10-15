@@ -1,0 +1,21 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+
+import CompactStandardLibrary;
+
+export ledger round: Counter;
+export ledger peer: Counter;
+
+constructor() { peer.increment(10); }
+
+export circuit adjust(amount: Uint<16>, remove: Uint<16>): Field {
+  round.increment(disclose(amount));
+  if (round.lessThan(peer)) {
+    round.decrement(disclose(remove));
+    return round as Field;
+  } else {
+    round.resetToDefault();
+    return round as Field;
+  }
+}

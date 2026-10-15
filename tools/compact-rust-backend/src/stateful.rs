@@ -23,23 +23,30 @@ mod expression;
 mod facade;
 mod returns;
 
-pub(crate) use expression::render_state_expression;
+pub(crate) use expression::NativeExpressionContext;
+pub(crate) use expression::render_state_expression_observed;
 pub(crate) use facade::render_contract_method;
 
 // Preserve existing internal paths for shared call-graph analysis.
+#[cfg(test)]
+pub(crate) use crate::circuit_analysis::expression_requires_witness;
 pub(crate) use crate::circuit_analysis::{
-    circuit_uses_witness, expression_contains_stateful_call, expression_requires_witness,
+    circuit_uses_witness, expression_contains_stateful_call, expression_requires_witness_observed,
 };
 
-use crate::circuit_analysis::circuit_emits_native_private_output;
+use crate::circuit_analysis::{
+    circuit_emits_native_private_output_observed, circuit_uses_witness_observed,
+};
 use crate::ir::{
     LedgerField, PureCircuit, ReturnPlan, StateAction, StateReturn, StatefulCircuit, Type,
     WitnessDeclaration,
 };
-use crate::{RenderError, discard_expression, ident, rust_type};
+use crate::source_diagnostics::{Owner, RefusalObserver, RefusalSite};
+use crate::{RenderError, discard_expression, rust_type};
 use proc_macro2::Span;
 use std::collections::{HashMap, HashSet};
 
+#[cfg(test)]
 pub(crate) fn render_stateful_circuit(
     circuit: &StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,
@@ -47,40 +54,97 @@ pub(crate) fn render_stateful_circuit(
     circuits: &HashMap<&str, &PureCircuit>,
     stateful_circuits: &HashMap<&str, &StatefulCircuit>,
 ) -> Result<syn::Item, RenderError> {
-    if matches!(circuit.return_value, StateReturn::Effectful { .. }) && !circuit.actions.is_empty()
-    {
-        return Err(RenderError::MalformedReturnPlan);
-    }
-    if let Some(item) = crate::native_frame::render_if_supported(
+    render_stateful_circuit_observed(
         circuit,
         ledger_fields,
         witnesses,
+        circuits,
         stateful_circuits,
-    )? {
+        None,
+    )
+}
+
+/// Existing assembly checks observe their original source operands before error
+/// cloning. Errors propagated from deeper originless helpers remain unmapped.
+pub(crate) fn render_stateful_circuit_observed(
+    circuit: &StatefulCircuit,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    circuits: &HashMap<&str, &PureCircuit>,
+    stateful_circuits: &HashMap<&str, &StatefulCircuit>,
+    observer: Option<&dyn RefusalObserver>,
+) -> Result<syn::Item, RenderError> {
+    if matches!(circuit.return_value, StateReturn::Effectful { .. }) && !circuit.actions.is_empty()
+    {
+        if let Some(observer) = observer {
+            observer.refused(RefusalSite::node(Owner::StateReturn(&circuit.return_value)));
+        }
+        return Err(RenderError::MalformedReturnPlan);
+    }
+    let environment = NativeExpressionContext {
+        witnesses,
+        circuits,
+        stateful_circuits,
+        ledger_fields,
+        observer,
+    };
+    let frame = if observer.is_some() {
+        crate::native_frame::render_if_supported_observed(circuit, &environment)
+    } else {
+        crate::native_frame::render_if_supported(
+            circuit,
+            ledger_fields,
+            witnesses,
+            stateful_circuits,
+        )
+    }?;
+    if let Some(item) = frame {
         return Ok(item);
     }
-    let name = ident(&circuit.name)?;
+    let name = crate::native_header::identifier(
+        &circuit.name,
+        RefusalSite::field(Owner::Stateful(circuit), "name"),
+        observer,
+    )?;
     let mut parameters = HashMap::new();
     let mut args = Vec::<syn::FnArg>::new();
     for (index, parameter) in circuit.parameters.iter().enumerate() {
-        ident(&parameter.name)?;
+        crate::native_header::identifier(
+            &parameter.name,
+            RefusalSite::field(Owner::Parameter(parameter), "name"),
+            observer,
+        )?;
         let rust_name = syn::Ident::new(&format!("__compact_param_{index}"), Span::call_site());
         if parameters
             .insert(parameter.name.as_str(), (&parameter.ty, rust_name.clone()))
             .is_some()
         {
+            if let Some(observer) = observer {
+                observer.refused(RefusalSite::field(Owner::Parameter(parameter), "name"));
+            }
             return Err(RenderError::DuplicateParameter(parameter.name.clone()));
         }
-        let arg_ty = rust_type(&parameter.ty)?;
+        let arg_ty = crate::native_header::carrier(&parameter.ty, observer)?;
         args.push(syn::parse_quote!(#rust_name: #arg_ty));
     }
     let mut statements = Vec::<syn::Stmt>::new();
-    let mut uses_witness = circuit_uses_witness(circuit, stateful_circuits, &mut HashSet::new())?;
-    let has_native_private_output =
-        circuit_emits_native_private_output(circuit, stateful_circuits, &mut HashSet::new())?;
+    let mut uses_witness = circuit_uses_witness_observed(
+        circuit,
+        stateful_circuits,
+        &mut HashSet::new(),
+        None,
+        observer,
+    )?;
+    let has_native_private_output = circuit_emits_native_private_output_observed(
+        circuit,
+        stateful_circuits,
+        &mut HashSet::new(),
+        None,
+        observer,
+    )?;
     let mut next_temp = 0;
     let mut next_local = 0;
-    let result_ty = rust_type(&circuit.result)?;
+    let result_ty = crate::native_header::carrier(&circuit.result, observer)?;
     enum Pending<'a> {
         Action(&'a StateAction, bool),
         Plan(&'a ReturnPlan),
@@ -118,18 +182,18 @@ pub(crate) fn render_stateful_circuit(
                     ReturnPlan::Value { value } => {
                         let mut effect_statements = Vec::new();
                         let mut query_effect = false;
-                        let (rendered, actual, effect) = render_state_expression(
+                        let (rendered, actual, effect) = render_state_expression_observed(
                             value,
                             &local_parameters,
-                            witnesses,
                             &mut effect_statements,
                             &mut next_temp,
-                            circuits,
-                            stateful_circuits,
-                            ledger_fields,
                             &mut query_effect,
+                            &environment,
                         )?;
                         if actual != circuit.result {
+                            if let Some(observer) = observer {
+                                observer.refused(RefusalSite::node(Owner::Expr(value)));
+                            }
                             return Err(RenderError::TypeMismatch {
                                 expected: circuit.result.clone(),
                                 actual,
@@ -154,21 +218,26 @@ pub(crate) fn render_stateful_circuit(
                     ReturnPlan::Let { bindings, result } => {
                         scopes.push(local_parameters.clone());
                         for binding in bindings {
-                            ident(&binding.name)?;
+                            crate::native_header::identifier(
+                                &binding.name,
+                                RefusalSite::field(Owner::Binding(binding), "name"),
+                                observer,
+                            )?;
                             let mut binding_statements = Vec::new();
                             let mut query_effect = false;
-                            let (value, actual, effect) = render_state_expression(
+                            let (value, actual, effect) = render_state_expression_observed(
                                 &binding.value,
                                 &local_parameters,
-                                witnesses,
                                 &mut binding_statements,
                                 &mut next_temp,
-                                circuits,
-                                stateful_circuits,
-                                ledger_fields,
                                 &mut query_effect,
+                                &environment,
                             )?;
                             if actual != binding.ty {
+                                if let Some(observer) = observer {
+                                    observer
+                                        .refused(RefusalSite::node(Owner::Expr(&binding.value)));
+                                }
                                 return Err(RenderError::TypeMismatch {
                                     expected: binding.ty.clone(),
                                     actual,
@@ -199,18 +268,18 @@ pub(crate) fn render_stateful_circuit(
                     } => {
                         let mut condition_statements = Vec::new();
                         let mut query_effect = false;
-                        let (rendered, actual, effect) = render_state_expression(
+                        let (rendered, actual, effect) = render_state_expression_observed(
                             condition,
                             &local_parameters,
-                            witnesses,
                             &mut condition_statements,
                             &mut next_temp,
-                            circuits,
-                            stateful_circuits,
-                            ledger_fields,
                             &mut query_effect,
+                            &environment,
                         )?;
                         if actual != Type::Boolean {
+                            if let Some(observer) = observer {
+                                observer.refused(RefusalSite::node(Owner::Expr(condition)));
+                            }
                             return Err(RenderError::TypeMismatch {
                                 expected: Type::Boolean,
                                 actual,
@@ -308,21 +377,25 @@ pub(crate) fn render_stateful_circuit(
             } => {
                 scopes.push(local_parameters.clone());
                 for binding in bindings {
-                    ident(&binding.name)?;
+                    crate::native_header::identifier(
+                        &binding.name,
+                        RefusalSite::field(Owner::Binding(binding), "name"),
+                        observer,
+                    )?;
                     let mut binding_statements = Vec::new();
                     let mut query_effect = false;
-                    let (value, actual, effect) = render_state_expression(
+                    let (value, actual, effect) = render_state_expression_observed(
                         &binding.value,
                         &local_parameters,
-                        witnesses,
                         &mut binding_statements,
                         &mut next_temp,
-                        circuits,
-                        stateful_circuits,
-                        ledger_fields,
                         &mut query_effect,
+                        &environment,
                     )?;
                     if actual != binding.ty {
+                        if let Some(observer) = observer {
+                            observer.refused(RefusalSite::node(Owner::Expr(&binding.value)));
+                        }
                         return Err(RenderError::TypeMismatch {
                             expected: binding.ty.clone(),
                             actual,
@@ -361,18 +434,18 @@ pub(crate) fn render_stateful_circuit(
             } => {
                 let mut condition_statements = Vec::new();
                 let mut query_effect = false;
-                let (rendered, actual, effect) = render_state_expression(
+                let (rendered, actual, effect) = render_state_expression_observed(
                     condition,
                     &local_parameters,
-                    witnesses,
                     &mut condition_statements,
                     &mut next_temp,
-                    circuits,
-                    stateful_circuits,
-                    ledger_fields,
                     &mut query_effect,
+                    &environment,
                 )?;
                 if actual != Type::Boolean {
+                    if let Some(observer) = observer {
+                        observer.refused(RefusalSite::node(Owner::Expr(condition)));
+                    }
                     return Err(RenderError::TypeMismatch {
                         expected: Type::Boolean,
                         actual,
@@ -395,31 +468,59 @@ pub(crate) fn render_stateful_circuit(
             _ => {}
         }
         let parameters = local_parameters.clone();
-        actions::lower(
-            action,
+        if observer.is_some() {
+            actions::lower_observed(
+                action,
+                &parameters,
+                &environment,
+                actions::ActionOutput {
+                    statements: &mut statements,
+                    next_temp: &mut next_temp,
+                    uses_witness: &mut uses_witness,
+                },
+            )
+        } else {
+            actions::lower(
+                action,
+                &parameters,
+                ledger_fields,
+                witnesses,
+                circuits,
+                stateful_circuits,
+                &mut statements,
+                &mut next_temp,
+                &mut uses_witness,
+            )
+        }?;
+    }
+    let return_expr = if observer.is_some() {
+        returns::lower_observed(
+            circuit,
             &parameters,
-            ledger_fields,
+            &return_parameters,
+            &environment,
+            &result_ty,
+            returns::ReturnOutput {
+                statements: &mut statements,
+                next_temp: &mut next_temp,
+                uses_witness: &mut uses_witness,
+            },
+        )
+    } else {
+        returns::lower(
+            circuit,
+            &parameters,
+            &return_parameters,
             witnesses,
             circuits,
             stateful_circuits,
+            ledger_fields,
+            &result_ty,
             &mut statements,
             &mut next_temp,
             &mut uses_witness,
-        )?;
-    }
-    let return_expr = returns::lower(
-        circuit,
-        &parameters,
-        &return_parameters,
-        witnesses,
-        circuits,
-        stateful_circuits,
-        ledger_fields,
-        &result_ty,
-        &mut statements,
-        &mut next_temp,
-        &mut uses_witness,
-    )?;
+        )
+    }?;
     let transcript_init: syn::Stmt = if uses_witness || has_native_private_output {
         syn::parse_quote!(let mut private_transcript_outputs = Vec::new();)
     } else {
@@ -486,3 +587,12 @@ pub(crate) fn render_stateful_circuit(
     };
     Ok(item)
 }
+
+#[cfg(test)]
+mod diagnostic_tests;
+
+#[cfg(test)]
+mod local_binding_diagnostic_tests;
+
+#[cfg(test)]
+mod header_diagnostic_tests;

@@ -75,7 +75,9 @@ impl Fixture {
         .unwrap();
         let (state, indices) = ledger.zswap.try_apply(&seed, None).unwrap();
         ledger.zswap = Sp::new(state.post_block_update(Timestamp::from_secs(0)));
-        let wallet = midnight_zswap::local::State::new().apply(&keys, &seed);
+        let wallet = midnight_zswap::local::State::new()
+            .apply(&keys, &seed)
+            .unwrap();
         let wallet_coin = *wallet.coins.iter().next().unwrap().1;
         let (_, wallet_input) = wallet.spend(&mut rng, &keys, &wallet_coin, None).unwrap();
         Self {
@@ -107,7 +109,7 @@ impl Fixture {
                 observation: self.observation(),
                 address: self.address,
                 network_id: "local-test".into(),
-                ledger_version: "8.0.3".into(),
+                ledger_version: "8.1.3".into(),
                 zswap_root: self.ledger.zswap.coin_coms.rehash().root().unwrap(),
                 first_free: self.ledger.zswap.first_free,
                 final_zswap_event_id: 19,
@@ -119,7 +121,7 @@ impl Fixture {
                 block_hash: [2; 32],
                 block_height: 3,
                 network_id: "local-test".into(),
-                ledger_version: "8.0.3".into(),
+                ledger_version: "8.1.3".into(),
                 applied_event_id: 19,
                 wallet_state_sha256: midnight_base_crypto::hash::persistent_hash(&bytes(
                     &self.wallet,

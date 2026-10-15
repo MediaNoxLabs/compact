@@ -67,3 +67,6 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
     println!("literal Bytes-to-Field snapshot proved and applied through ledger-8");
     Ok(())
 }
+
+mod strict;
+pub(crate) use strict::run as run_strict;

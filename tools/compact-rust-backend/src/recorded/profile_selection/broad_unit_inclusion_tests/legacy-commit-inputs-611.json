@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "issue": 611,
+  "baseline_commit": "7cad2355868222135dde1dcad95a747c385a1b75",
+  "scope": "Exact test-only restoration of obsolete public PersistentCommit refusal controls; original Audit assertions and original 49 oracle digests remain unchanged.",
+  "owners": {
+    "tools/compact-rust-backend/src/recorded/typed_plan/composition/tests.rs": {
+      "current_sha256": "f43abe8cd67ca8a7e10644c557fe91f684ecbb84033d4cf6cec4cb92eca142c4",
+      "previous_sha256": "609a43b3c6506ea9e4d3fdf8d6bafad82afa29cbeafdb80de4527b177978790b",
+      "predecessor_reconstruction": [
+        {
+          "current": "            .find(|x| x.name == \"close\")\n            .unwrap();\n        assert!(capability.recorded && capability.observed_call);\n        // Fixed commitments are supported. This explicit opaque-input native-IR\n        // control is frontend-excluded and retains concrete policy provenance.\n        let expression = &mut circuit(&mut v, \"guard\")[\"actions\"][index][\"otherwise\"][\"value\"];\n        expression[\"left\"] = json!({\"kind\":\"hash_to_curve\",\"value\":{\n            \"kind\":\"persistent_commit\",\"value\":{\"kind\":\"default\",\"ty\":{\"kind\":\"opaque_string\"}},\n            \"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}\n        }});\n        let still_rejected = rejected(v.clone(), \"close\");\n",
+          "previous": "            .find(|x| x.name == \"close\")\n            .unwrap();\n        assert!(capability.recorded && capability.observed_call);\n        // Native fixed-FAB commitments remain wider than the checked Bytes32 pair.\n        let expression = &mut circuit(&mut v, \"guard\")[\"actions\"][index][\"otherwise\"][\"value\"];\n        expression[\"left\"] = json!({\"kind\":\"hash_to_curve\",\"value\":{\n            \"kind\":\"persistent_commit\",\"value\":{\"kind\":\"jubjub_point_x\",\"value\":expression[\"left\"].clone()},\n            \"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}\n        }});\n        let still_rejected = rejected(v.clone(), \"close\");\n"
+        },
+        {
+          "current": "    assert!(capability.recorded && capability.observed_call);\n    let binding = &mut circuit(&mut v, \"close\")[\"actions\"][0][\"arguments\"][0][\"bindings\"][0];\n    binding[\"value\"] = json!({\"kind\":\"transient_hash\", \"value\":{\n        \"kind\":\"persistent_commit\",\"value\":{\"kind\":\"default\",\"ty\":{\"kind\":\"opaque_string\"}},\n        \"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}\n    }});\n    let still_rejected = rejected(v.clone(), \"close\");\n",
+          "previous": "    assert!(capability.recorded && capability.observed_call);\n    let binding = &mut circuit(&mut v, \"close\")[\"actions\"][0][\"arguments\"][0][\"bindings\"][0];\n    binding[\"value\"] = json!({\"kind\":\"transient_hash\", \"value\":{\n        \"kind\":\"persistent_commit\",\"value\":{\"kind\":\"field_literal\",\"value\":\"0\"},\n        \"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}\n    }});\n    let still_rejected = rejected(v.clone(), \"close\");\n"
+        },
+        {
+          "current": "        .unwrap();\n    assert!(!capability.recorded && !capability.observed_call);\n    let gap = capability.recording_unavailable.as_ref().unwrap();\n    // This opaque-input control is frontend-excluded native IR. The frozen\n    // Audit stops at its enclosing hash shape. Checked lowering\n    // identifies the actual unsupported commitment inside that operand.\n    assert_eq!(gap.path, format!(\"{}.value\", still_rejected.gap.path));\n    assert_eq!(gap.ir_node, \"Expr::PersistentCommit\");\n",
+          "previous": "        .unwrap();\n    assert!(!capability.recorded && !capability.observed_call);\n    let gap = capability.recording_unavailable.as_ref().unwrap();\n    // The frozen Audit stops at its enclosing hash shape. Checked lowering\n    // identifies the actual unsupported commitment inside that operand.\n    assert_eq!(gap.path, format!(\"{}.value\", still_rejected.gap.path));\n    assert_eq!(gap.ir_node, \"Expr::PersistentCommit\");\n"
+        }
+      ]
+    }
+  }
+}

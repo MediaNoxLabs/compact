@@ -31,18 +31,18 @@
       # NOTE: if this is an internal release (uses -alpha, -beta, or -rc) do NOT update the package.json in runtime
       # since npm can only access public releases. For the compact-runtime release nix will pull in the correct
       # version from this url.
-      url = "github:midnightntwrk/midnight-ledger/ledger-8.0.3"; # zkir-v2
+      url = "github:midnightntwrk/midnight-ledger/ledger-8.1.3"; # zkir-v2
       inputs.zkir.follows = "zkir";
     };
     onchain-runtime-v3 = {
       # dependency for compact-runtime release
       # all notes for the zkir input applies to onchain-runtime input too.
-      url = "github:midnightntwrk/midnight-ledger/ledger-8";
+      url = "github:midnightntwrk/midnight-ledger/ledger-8.1.3";
       inputs.zkir.follows = "zkir";
     };
     zkir-wasm = {
       # dependency for test-center
-      url = "github:midnightntwrk/midnight-ledger/ledger-8.0.3";
+      url = "github:midnightntwrk/midnight-ledger/ledger-8.1.3";
       inputs.zkir.follows = "zkir";
     };
     zkir-v3 = {
@@ -231,7 +231,10 @@
               ./tools/compact-rust-backend/README.md
               ./tools/compact-rust-backend/src
             ];
-            cargoLock.lockFile = ./tools/compact-rust-backend/Cargo.lock;
+            cargoLock = {
+              lockFile = ./tools/compact-rust-backend/Cargo.lock;
+              outputHashes."midnight-base-crypto-1.0.2" = "sha256-iNrhLPBGrWxeospwl8eW4TtYNlk+vY5Y564OTRjwBoM=";
+            };
             cargoBuildFlags = [ "--bin" "compactc" ];
             # Compiler-backed gates run in build-compiler.yml against the full
             # workspace; this derivation packages just the public command.
@@ -590,6 +593,7 @@
             packages = [
               pkgs.nodejs
               pkgs.yarn
+              pkgs.python3
               pkgs.alejandra
               packages.runtime.package
               packages.runtime.node-modules
@@ -608,6 +612,7 @@
             packages = [
               pkgs.nodejs
               pkgs.yarn
+              pkgs.python3
               pkgs.binaryen
               packages.runtime.package
               packages.runtime.node-modules
@@ -626,6 +631,7 @@
             packages = [
               packages.compactc
               pkgs.yarn
+              pkgs.python3
               zkir.packages.${system}.zkir
               packages.zkir-v3-bin
             ];
@@ -650,6 +656,7 @@
               packages.zkir-v3-bin
               pkgs.nodejs
               pkgs.yarn
+              pkgs.python3
             ];
             shellHook = runtime-shell-hook;
           };

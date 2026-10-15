@@ -27,6 +27,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct Maybe {
         pub is_some: ::core::primitive::bool,
@@ -40,6 +41,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct MaybeCompact1 {
         pub is_some: ::core::primitive::bool,
@@ -49,7 +51,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub fn public_key(
         sk: runtime::FixedBytes<32>,
     ) -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
@@ -77,7 +79,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -359,31 +361,40 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_recorded_maybe_sk): (_, crate::types::MaybeCompact1) = frame
-                .try_witness_metered(|context, meter| {
-                    witnesses.local_sk(context.witness_context_with(super::LedgerView {
-                        state: context.query.state.get_ref(),
-                        meter,
-                    }))
-                })?;
-            if !__compact_recorded_maybe_sk.is_some {
-                return Err(runtime::CompactError::AssertionFailed(
-                    "No secret key found".to_owned(),
-                ));
-            }
-            let __compact_recorded_organizer_pk: runtime::FixedBytes<32> =
-                crate::pure_circuits::public_key(__compact_recorded_maybe_sk.value)?;
-            let (frame, __compact_recorded_is_organizer): (_, bool) =
-                crate::ledger_slots::organizer_pks
-                    .record_member(frame, __compact_recorded_organizer_pk)?;
-            if !__compact_recorded_is_organizer {
+            let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
+            let (frame, __compact_effect_5): (_, runtime::FixedBytes<32>) = {
+                let (frame, __compact_effect_1): (_, crate::types::MaybeCompact1) = frame
+                    .try_witness_metered(|context, meter| {
+                        witnesses.local_sk(context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }))
+                    })?;
+                let __compact_effect_2: bool = __compact_effect_1.is_some;
+                if !__compact_effect_2 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "No secret key found".to_owned(),
+                    ));
+                }
+                let __compact_effect_3: () = ();
+                let __compact_effect_4: runtime::FixedBytes<32> = __compact_effect_1.value;
+                (frame, __compact_effect_4)
+            };
+            let __compact_effect_6: runtime::FixedBytes<32> =
+                crate::pure_circuits::public_key(__compact_effect_5)?;
+            let (frame, __compact_effect_7): (_, bool) =
+                crate::ledger_slots::organizer_pks.record_member(frame, __compact_effect_6)?;
+            if !__compact_effect_7 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Not an organizer".to_owned(),
                 ));
             }
+            let __compact_effect_8: () = ();
             let frame = crate::ledger_slots::eligible_participants
-                .record_insert(frame, (__compact_param_0).clone())?;
-            Ok(frame.finish(()))
+                .record_insert(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_9: () = ();
+            let __compact_effect_10: () = ();
+            Ok(frame.finish(__compact_effect_10))
         }
         pub fn add_organizer<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -392,31 +403,40 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_recorded_maybe_sk): (_, crate::types::MaybeCompact1) = frame
-                .try_witness_metered(|context, meter| {
-                    witnesses.local_sk(context.witness_context_with(super::LedgerView {
-                        state: context.query.state.get_ref(),
-                        meter,
-                    }))
-                })?;
-            if !__compact_recorded_maybe_sk.is_some {
-                return Err(runtime::CompactError::AssertionFailed(
-                    "No secret key found".to_owned(),
-                ));
-            }
-            let __compact_recorded_organizer_pk: runtime::FixedBytes<32> =
-                crate::pure_circuits::public_key(__compact_recorded_maybe_sk.value)?;
-            let (frame, __compact_recorded_is_organizer): (_, bool) =
-                crate::ledger_slots::organizer_pks
-                    .record_member(frame, __compact_recorded_organizer_pk)?;
-            if !__compact_recorded_is_organizer {
+            let __compact_effect_0: runtime::FixedBytes<32> = __compact_param_0;
+            let (frame, __compact_effect_5): (_, runtime::FixedBytes<32>) = {
+                let (frame, __compact_effect_1): (_, crate::types::MaybeCompact1) = frame
+                    .try_witness_metered(|context, meter| {
+                        witnesses.local_sk(context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }))
+                    })?;
+                let __compact_effect_2: bool = __compact_effect_1.is_some;
+                if !__compact_effect_2 {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "No secret key found".to_owned(),
+                    ));
+                }
+                let __compact_effect_3: () = ();
+                let __compact_effect_4: runtime::FixedBytes<32> = __compact_effect_1.value;
+                (frame, __compact_effect_4)
+            };
+            let __compact_effect_6: runtime::FixedBytes<32> =
+                crate::pure_circuits::public_key(__compact_effect_5)?;
+            let (frame, __compact_effect_7): (_, bool) =
+                crate::ledger_slots::organizer_pks.record_member(frame, __compact_effect_6)?;
+            if !__compact_effect_7 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Not an organizer".to_owned(),
                 ));
             }
+            let __compact_effect_8: () = ();
             let frame =
-                crate::ledger_slots::organizer_pks.record_insert(frame, __compact_param_0)?;
-            Ok(frame.finish(()))
+                crate::ledger_slots::organizer_pks.record_insert(frame, __compact_effect_0)?;
+            let __compact_effect_9: () = ();
+            let __compact_effect_10: () = ();
+            Ok(frame.finish(__compact_effect_10))
         }
         pub fn check_in<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -425,29 +445,30 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_key_0 = (__compact_param_0).clone();
-            let (frame, __compact_recorded_member_1): (_, bool) =
-                crate::ledger_slots::eligible_participants
-                    .record_member(frame, __compact_recorded_key_0)?;
-            if !(__compact_recorded_member_1) {
+            let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
+            let (frame, __compact_effect_1): (_, bool) = crate::ledger_slots::eligible_participants
+                .record_member(frame, (__compact_effect_0).clone())?;
+            if !__compact_effect_1 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Not eligible participant".to_owned(),
                 ));
             }
+            let __compact_effect_2: () = ();
             let frame = crate::ledger_slots::checked_in_participants
-                .record_insert(frame, (__compact_param_0).clone())?;
-            let __compact_recorded_witness_arg_2: runtime::OpaqueString =
-                (__compact_param_0).clone();
-            let (frame, _) = frame.try_witness_metered(|context, meter| {
-                witnesses.set_local_id(
-                    context.witness_context_with(super::LedgerView {
-                        state: context.query.state.get_ref(),
-                        meter,
-                    }),
-                    __compact_recorded_witness_arg_2,
-                )
-            })?;
-            Ok(frame.finish(()))
+                .record_insert(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_3: () = ();
+            let (frame, __compact_effect_4): (_, ()) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.set_local_id(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        (__compact_effect_0).clone(),
+                    )
+                })?;
+            let __compact_effect_5: () = ();
+            Ok(frame.finish(__compact_effect_5))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
@@ -480,6 +501,7 @@ pub mod ledger_contract {
             where
                 W: super::TryWitnesses<Private>,
             {
+                runtime::ledger::CellValue::validate_cell_value(&participant)?;
                 let input = runtime::fab::AlignedValue::from((participant).clone());
                 let recorded =
                     self.add_participant(observed.circuit_context(private_state), participant)?;
@@ -546,6 +568,7 @@ pub mod ledger_contract {
             where
                 W: super::TryWitnesses<Private>,
             {
+                runtime::ledger::CellValue::validate_cell_value(&participant)?;
                 let input = runtime::fab::AlignedValue::from((participant).clone());
                 let recorded =
                     self.check_in(observed.circuit_context(private_state), participant)?;

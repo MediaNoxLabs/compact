@@ -1,10 +1,10 @@
 # Select versions and an execution target
 
-Version values are checked against the inspected branch. Installation snippets describe prerequisites; the linked receipts identify the commands actually executed.
+The table below retains the milestone 0.3.0 version checkpoint and target receipts. On the current recording-effect branch, runtime ABI is **52**, private IR is **20**, finalized capability reports are **3** and private origin transport is **3**. Native ledger is **8.1.3** at official revision `b5d3e965a18e4cac17fac4f38446fc55c524439a`, with compatibility schema **2** and declared Rust **1.89** minimum. The current local execution used Rust 1.99; the older 1.88 receipts below do not qualify this new dependency graph. See [ledger compatibility and retained qualification](ledger-8.1.3-local-qualification.md) for the exact ZK cohort and fresh local proof scope. No package publication or new platform qualification follows from these numbers. Installation snippets describe prerequisites; linked receipts identify actual execution.
 
 ## Keep these version domains separate
 
-| Boundary | Current value | Meaning |
+| Boundary | Retained 0.3.0 value | Meaning |
 |---|---|---|
 | Initiative milestone/artifact label | 0.3.0 / `rust-backend-v0.3.0` | Engineering milestone; no tag or published package is implied here |
 | Compact compiler | 0.31.133 | Frontend/toolchain version |
@@ -18,7 +18,7 @@ Version values are checked against the inspected branch. Installation snippets d
 | Native ledger | 8.0.3 | Pinned ledger graph |
 | Declared native MSRV | Rust1.88 | Qualified only with the documented lock/features/host |
 
-Generated Rust asserts `runtime::RUST_RUNTIME_ABI == 50`. Matching this number helps detect an accidental mismatch; it does not authenticate arbitrary source or establish semantic correctness by itself.
+Current generated Rust asserts `runtime::RUST_RUNTIME_ABI == 52`. Matching this number helps detect an accidental mismatch; it does not authenticate arbitrary source or establish semantic correctness by itself.
 
 ## Obtain a matching source distribution
 
@@ -52,7 +52,7 @@ The tutorial commands target native Rust. They are not Node/browser build instru
 
 ## Migrate consumers
 
-1. Preserve old generated code with its original matching runtime, or regenerate source with the ABI50 compiler/runtime/macros pair. Do not edit the ABI assertion.
+1. Preserve old generated code with its original matching runtime, or regenerate source with the current matching ABI52 compiler/runtime/macros pair. Do not edit the ABI assertion.
 2. Prefer the generated crate's `runtime` re-export for value types, avoiding duplicate crate identities.
 3. Backend0.2 exposes non-exhaustive `RenderError`. External matches need a fallback; resource diagnostics expose `{resource, limit, observed}`. Display text/resource labels are human diagnostics, not a stable machine protocol.
 4. Keep the qualified Cargo.lock. A successful build of one workspace lock does not qualify a different standalone or target-specific resolution.
@@ -60,9 +60,9 @@ The tutorial commands target native Rust. They are not Node/browser build instru
 
 The ADR0293/0304 migration receipts already contain old ABI49 refusal, working ABI50 controls, non-exhaustive compile failures, migrated callers and standalone Rust1.88 lock qualification. Those are historical qualified executions, not new runs of these drafts.
 
-## Accepted compatibility checkpoint
+## Retained 0.3.0 compatibility checkpoint
 
-The authoritative local policy is the accompanying `feature-source-policy.json`, accepted at `5efa91c2`. Its current MSRV receipt covers actual Rust1.88 workspace backend/Jubjub all-feature and isolated standalone compilation at49898aed; the only later source changes before5efa91c2 are two test files. The accepted feature profiles are default native, exact-evidence `ledger-transaction`, source-only ContractLab, experimental bounded WASM and registry **manifest emission only**. Default native includes crypto/proof dependencies.
+The historical policy was accepted at `5efa91c2`; the accompanying `feature-source-policy.json` now records the current ledger8.1.3 source pairing separately. The retained MSRV receipt covers actual Rust1.88 workspace backend/Jubjub all-feature and isolated standalone compilation at49898aed; the only later source changes before5efa91c2 are two test files. The accepted feature profiles are default native, exact-evidence `ledger-transaction`, source-only ContractLab, experimental bounded WASM and registry **manifest emission only**. Default native includes crypto/proof dependencies.
 
 DID's original compiler profile (ledger8.0.2/compiler0.31.1/runtime0.16.0), its npm ledger-v8@8.1.0 wire profile and the isolated coherent Rust8.1 receiver are separate from native8.0.3. No native promotion follows from those receipts. See [candidate qualification](candidate-qualification.md) for current source, validation and documentation dispositions. The resumed ADR0285 consumer-safety controls passed at4c8aebc3. Independent audits and final-candidate checks retain their separate dispositions.
 

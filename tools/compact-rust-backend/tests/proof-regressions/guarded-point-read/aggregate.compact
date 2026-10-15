@@ -1,0 +1,16 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+
+import CompactStandardLibrary;
+export struct Inner { points: Vector<2, JubjubPoint>; marker: Field; }
+export struct Envelope { inner: Inner; label: Field; }
+export ledger stored: Envelope;
+constructor(value: Envelope) { stored = disclose(value); }
+export circuit from_aggregate(selected: Boolean): JubjubPoint {
+  if (disclose(selected)) {
+    return ecAdd(stored.inner.points[0], ecMulGenerator(1));
+  } else {
+    return ecMul(stored.inner.points[1], 2);
+  }
+}

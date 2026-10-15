@@ -92,3 +92,7 @@ fn two_witnesses_preserve_source_order_and_transcript_order() {
     let result = sum_secrets(context, &Secret, Field::from(2_u64)).unwrap();
     assert_oracle_output(&result, &oracle);
 }
+
+#[cfg(feature = "ledger-transaction")]
+#[path = "recording/mod.rs"]
+mod recording;

@@ -1,0 +1,364 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "flag",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "boolean"
+        }
+      },
+      "source": {
+        "file": "tuple13_return.compact",
+        "line": 3,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+    {
+      "name": "first",
+      "internal": true,
+      "parameters": [
+      ],
+      "result": {
+        "kind": "tuple",
+        "elements": [
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "opaque_string"
+          }
+        ]
+      },
+      "body": {
+        "kind": "tuple",
+        "elements": [
+          {
+            "kind": "field_literal",
+            "value": "0"
+          },
+          {
+            "kind": "field_literal",
+            "value": "1"
+          },
+          {
+            "kind": "field_literal",
+            "value": "2"
+          },
+          {
+            "kind": "field_literal",
+            "value": "3"
+          },
+          {
+            "kind": "field_literal",
+            "value": "4"
+          },
+          {
+            "kind": "field_literal",
+            "value": "5"
+          },
+          {
+            "kind": "field_literal",
+            "value": "6"
+          },
+          {
+            "kind": "field_literal",
+            "value": "7"
+          },
+          {
+            "kind": "field_literal",
+            "value": "8"
+          },
+          {
+            "kind": "field_literal",
+            "value": "9"
+          },
+          {
+            "kind": "field_literal",
+            "value": "10"
+          },
+          {
+            "kind": "field_literal",
+            "value": "11"
+          },
+          {
+            "kind": "default",
+            "ty": {
+              "kind": "opaque_string"
+            }
+          }
+        ]
+      },
+      "source": {
+        "file": "tuple13_return.compact",
+        "line": 5,
+        "column": 1
+      }
+    },
+    {
+      "name": "second",
+      "internal": true,
+      "parameters": [
+      ],
+      "result": {
+        "kind": "tuple",
+        "elements": [
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "opaque_string"
+          }
+        ]
+      },
+      "body": {
+        "kind": "tuple",
+        "elements": [
+          {
+            "kind": "field_literal",
+            "value": "12"
+          },
+          {
+            "kind": "field_literal",
+            "value": "13"
+          },
+          {
+            "kind": "field_literal",
+            "value": "14"
+          },
+          {
+            "kind": "field_literal",
+            "value": "15"
+          },
+          {
+            "kind": "field_literal",
+            "value": "16"
+          },
+          {
+            "kind": "field_literal",
+            "value": "17"
+          },
+          {
+            "kind": "field_literal",
+            "value": "18"
+          },
+          {
+            "kind": "field_literal",
+            "value": "19"
+          },
+          {
+            "kind": "field_literal",
+            "value": "20"
+          },
+          {
+            "kind": "field_literal",
+            "value": "21"
+          },
+          {
+            "kind": "field_literal",
+            "value": "22"
+          },
+          {
+            "kind": "field_literal",
+            "value": "23"
+          },
+          {
+            "kind": "default",
+            "ty": {
+              "kind": "opaque_string"
+            }
+          }
+        ]
+      },
+      "source": {
+        "file": "tuple13_return.compact",
+        "line": 8,
+        "column": 1
+      }
+    }
+  ],
+  "stateful_circuits": [
+    {
+      "name": "read",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "tuple",
+        "elements": [
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "opaque_string"
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "if",
+          "condition": {
+            "kind": "cell_read",
+            "field": "flag",
+            "index": 0
+          },
+          "then": {
+            "kind": "call",
+            "name": "first",
+            "arguments": [
+            ]
+          },
+          "otherwise": {
+            "kind": "call",
+            "name": "second",
+            "arguments": [
+            ]
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "tuple13_return.compact",
+        "line": 11,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": {
+    "parameters": [
+      {
+        "name": "selected",
+        "ty": {
+          "kind": "boolean"
+        }
+      }
+    ],
+    "steps": [
+      {
+        "kind": "cell_write",
+        "field": "flag",
+        "index": 0,
+        "value": {
+          "kind": "parameter",
+          "name": "selected"
+        }
+      }
+    ],
+    "source": {
+      "file": "tuple13_return.compact",
+      "line": 4,
+      "column": 1
+    }
+  }
+}

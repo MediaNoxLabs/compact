@@ -1,0 +1,52 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+
+// Sixteen declarations give the Set a genuine frontend path [1, 14].
+export ledger padding00: Field;
+export ledger padding01: Field;
+export ledger padding02: Field;
+export ledger padding03: Field;
+export ledger padding04: Field;
+export ledger padding05: Field;
+export ledger padding06: Field;
+export ledger padding07: Field;
+export ledger padding08: Field;
+export ledger padding09: Field;
+export ledger padding10: Field;
+export ledger padding11: Field;
+export ledger padding12: Field;
+export ledger padding13: Field;
+export ledger padding14: Field;
+export ledger coins: Set<QualifiedShieldedCoinInfo>;
+
+witness nextCoin(): ShieldedCoinInfo;
+witness nextRecipient(): Either<ZswapCoinPublicKey, ContractAddress>;
+
+circuit insert_reused(
+  coin: ShieldedCoinInfo,
+  recipient: Either<ZswapCoinPublicKey, ContractAddress>
+): [] {
+  coins.insertCoin(disclose(coin), disclose(recipient));
+  coins.insertCoin(disclose(coin), disclose(recipient));
+}
+
+export circuit insert_once(
+  coin: ShieldedCoinInfo,
+  recipient: Either<ZswapCoinPublicKey, ContractAddress>
+): [] {
+  coins.insertCoin(disclose(coin), disclose(recipient));
+}
+
+export circuit insert_selected(
+  coin: ShieldedCoinInfo,
+  recipient: Either<ZswapCoinPublicKey, ContractAddress>,
+  selected: Boolean
+): [] {
+  coins.insertCoin(disclose(coin), disclose(recipient));
+  if (disclose(selected)) {
+    insert_reused(disclose(nextCoin()), disclose(nextRecipient()));
+  }
+  coins.insertCoin(disclose(coin), disclose(recipient));
+}

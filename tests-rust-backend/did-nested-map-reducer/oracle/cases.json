@@ -1,8 +1,8 @@
 {
   "format": "compact-did-primitive-reducer-capture/v1",
   "kind": "nested-map",
-  "generatedJavaScriptSha256": "c21b8875f7bf5142d41802ee93dc4b8af1473266eb4b934967f92607f5b4b0d4",
-  "runtimeJavaScriptSha256": "f6b1b8b0d4ecfd6458706fd3969babbb988879dd9c39618cc137c463a151781b",
+  "generatedJavaScriptSha256": "17a7a05e8a5f35b9e397040b01add0d48d1f477ea819c873eb156a0eeb922aa2",
+  "runtimeJavaScriptSha256": "db88e0bf0c11d081fcd8ba05ee7390cad8238be4c17dddc7da092219585c7cb7",
   "captureSha256": "97e2ed2b889abc091417a436025d909afbe232ce84031ff6c781e864579b2507",
   "runtimeVersion": "0.16.101",
   "provenance": [
@@ -12,7 +12,7 @@
     },
     {
       "path": "tests-rust-backend/did-nested-map-reducer/lib.rs",
-      "sha256": "4b245d107d3eb5cda3fb3d4fe39c0a9bb96b0b2d4f73fe0e0d0f2a4096d3408d"
+      "sha256": "e9931ad7908246ff414e96d07ed0a5b7089a8ec54d48519164a97db62e5afad2"
     },
     {
       "path": "tests-rust-backend/did-nested-map-reducer/tests/behavior.rs",

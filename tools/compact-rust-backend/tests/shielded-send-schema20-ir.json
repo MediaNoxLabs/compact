@@ -2740,7 +2740,7 @@
       ],
       "source": {
         "file": "shielded_send_oracle.compact",
-        "line": 3,
+        "line": 18,
         "column": 1
       }
     },
@@ -3027,7 +3027,7 @@
       ],
       "source": {
         "file": "shielded_send_oracle.compact",
-        "line": 14,
+        "line": 29,
         "column": 1
       }
     },
@@ -3314,7 +3314,7 @@
       ],
       "source": {
         "file": "shielded_send_oracle.compact",
-        "line": 26,
+        "line": 41,
         "column": 1
       }
     },
@@ -3610,7 +3610,7 @@
       ],
       "source": {
         "file": "shielded_send_oracle.compact",
-        "line": 38,
+        "line": 53,
         "column": 1
       }
     }

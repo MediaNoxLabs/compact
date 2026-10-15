@@ -356,7 +356,7 @@ fn calibrated_mixed_owner_paths_render_on_ordinary_worker() {
         (include_str!("test_inputs/constructor_crypto.json"), false),
         (include_str!("test_inputs/bound_chain-14.json"), true),
         (include_str!("test_inputs/mixed_chain-11.json"), true),
-        (include_str!("test_inputs/native_map-32.json"), false),
+        (include_str!("test_inputs/native_map-32.json"), true),
     ] {
         let contract: Contract = serde_json::from_str(source).unwrap();
         let rendered =

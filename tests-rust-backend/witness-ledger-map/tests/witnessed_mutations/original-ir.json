@@ -1,0 +1,108 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "table",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "map",
+        "key": {
+          "kind": "boolean"
+        },
+        "value": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "witness_ledger_map.compact",
+        "line": 18,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "has_true",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "source": {
+        "file": "witness_ledger_map.compact",
+        "line": 20,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "put_true",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "map_insert",
+          "field": "table",
+          "index": 0,
+          "key": {
+            "kind": "boolean",
+            "value": true
+          },
+          "value": {
+            "kind": "parameter",
+            "name": "value"
+          }
+        }
+      ],
+      "source": {
+        "file": "witness_ledger_map.compact",
+        "line": 22,
+        "column": 1
+      }
+    },
+    {
+      "name": "private_has",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "witness_call",
+          "name": "has_true",
+          "arguments": [
+          ]
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "witness_ledger_map.compact",
+        "line": 26,
+        "column": 1
+      }
+    }
+  ]
+}

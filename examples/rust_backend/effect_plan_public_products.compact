@@ -1,0 +1,43 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger calls: Counter;
+export struct Empty {}
+export struct Nested { tag: Field; text: Opaque<"string">; }
+export struct Product {
+  pair: [Opaque<"string">, Opaque<"Uint8Array">];
+  items: Vector<2, Opaque<"Uint8Array">>;
+  nested: Nested;
+  wide: Uint<129>;
+  empty: Empty;
+}
+export struct Result { chosen: Product; original: Product; }
+export struct Receipt { value: Field; }
+witness replacement(): Opaque<"Uint8Array">;
+circuit remember(input: Product): Product {
+  calls.increment(1);
+  return input;
+}
+circuit replace(input: Product): Product {
+  const replacementBytes = disclose(replacement());
+  return Product { pair: input.pair, items: [input.pair[1], replacementBytes],
+    nested: input.nested, wide: input.wide, empty: input.empty };
+}
+export circuit run(input: Product, selected: Boolean): Result {
+  const kept = remember(input);
+  const chosen = disclose(selected) ? replace(kept) : kept;
+  return Result { chosen: chosen, original: kept };
+}
+export circuit tuple11(input: [Opaque<"Uint8Array">, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field]): Receipt {
+  calls.increment(1);
+  return Receipt { value: input[1] };
+}
+export circuit vector9(input: Vector<2, [Opaque<"Uint8Array">, Field, Field, Field, Field, Field, Field, Field, Field]>): Receipt {
+  calls.increment(1);
+  return Receipt { value: 1 };
+}
+export circuit empty(input: [], values: Vector<0, Opaque<"Uint8Array">>): Receipt {
+  calls.increment(1);
+  return Receipt { value: 0 };
+}

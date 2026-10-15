@@ -1,0 +1,231 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "count",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "checked_subtraction.compact",
+        "line": 6,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "mutate_then_subtract",
+      "parameters": [
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "value",
+          "ty": {
+            "kind": "unsigned",
+            "max": "65535"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "65535"
+      },
+      "return_value": {
+        "kind": "effectful",
+        "body": {
+          "kind": "conditional",
+          "condition": {
+            "kind": "parameter",
+            "name": "selected"
+          },
+          "then": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "tmp_16",
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "65535"
+                    },
+                    "value": {
+                      "kind": "unsigned_literal",
+                      "value": "1",
+                      "max": "65535"
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "counter_increment",
+                  "field": "count",
+                  "index": 0,
+                  "amount": {
+                    "kind": "parameter",
+                    "name": "tmp_16"
+                  }
+                }
+              }
+            ],
+            "result": {
+              "kind": "value",
+              "value": {
+                "kind": "unsigned_subtract",
+                "max": "65535",
+                "left": {
+                  "kind": "parameter",
+                  "name": "value"
+                },
+                "right": {
+                  "kind": "unsigned_literal",
+                  "value": "1",
+                  "max": "65535"
+                }
+              }
+            }
+          },
+          "otherwise": {
+            "kind": "value",
+            "value": {
+              "kind": "parameter",
+              "name": "value"
+            }
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "checked_subtraction.compact",
+        "line": 7,
+        "column": 1
+      }
+    },
+    {
+      "name": "explicit_guard_then_subtract",
+      "parameters": [
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "value",
+          "ty": {
+            "kind": "unsigned",
+            "max": "65535"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "65535"
+      },
+      "return_value": {
+        "kind": "effectful",
+        "body": {
+          "kind": "conditional",
+          "condition": {
+            "kind": "parameter",
+            "name": "selected"
+          },
+          "then": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "assert",
+                "condition": {
+                  "kind": "compare",
+                  "operator": "greater_equal",
+                  "left": {
+                    "kind": "parameter",
+                    "name": "value"
+                  },
+                  "right": {
+                    "kind": "unsigned_literal",
+                    "value": "2",
+                    "max": "65535"
+                  }
+                },
+                "message": "explicit guard before mutation"
+              },
+              {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "tmp_15",
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "65535"
+                    },
+                    "value": {
+                      "kind": "unsigned_literal",
+                      "value": "1",
+                      "max": "65535"
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "counter_increment",
+                  "field": "count",
+                  "index": 0,
+                  "amount": {
+                    "kind": "parameter",
+                    "name": "tmp_15"
+                  }
+                }
+              }
+            ],
+            "result": {
+              "kind": "value",
+              "value": {
+                "kind": "unsigned_subtract",
+                "max": "65535",
+                "left": {
+                  "kind": "parameter",
+                  "name": "value"
+                },
+                "right": {
+                  "kind": "unsigned_literal",
+                  "value": "1",
+                  "max": "65535"
+                }
+              }
+            }
+          },
+          "otherwise": {
+            "kind": "value",
+            "value": {
+              "kind": "parameter",
+              "name": "value"
+            }
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "checked_subtraction.compact",
+        "line": 11,
+        "column": 1
+      }
+    }
+  ]
+}

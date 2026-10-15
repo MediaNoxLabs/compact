@@ -1,0 +1,38 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger calls: Counter;
+export ledger last: Field;
+witness left(): Boolean;
+witness right(): Boolean;
+witness marker(): Field;
+circuit both(a: Boolean, b: Boolean): [] {
+  assert(a, "left guard");
+  assert(b, "right guard");
+}
+circuit nested(a: Boolean, b: Boolean): [] { both(a, b); }
+circuit bump(): [] { calls.increment(1); }
+circuit first_value(a: Boolean): Boolean {
+  assert(a, "first pure argument");
+  return a;
+}
+circuit second_value(b: Boolean): Boolean {
+  assert(b, "second pure argument");
+  return b;
+}
+export circuit run(selected: Boolean): [] {
+  bump();
+  if (disclose(selected)) {
+    const a = disclose(left());
+    const b = disclose(right());
+    nested(a, b);
+  }
+  last = disclose(marker());
+  bump();
+}
+export circuit argument_order(a: Boolean, b: Boolean): [] {
+  bump();
+  both(first_value(disclose(a)), second_value(disclose(b)));
+  bump();
+}

@@ -1,0 +1,26 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger calls: Counter;
+export struct Outcome { different: Boolean; }
+export struct Payload { text: Opaque<"string">; bytes: Opaque<"Uint8Array">; }
+export struct OwnedResult { different: Boolean; original: Payload; }
+witness left(): Uint<64>;
+witness right(): Uint<64>;
+export circuit compare(a: Uint<64>, b: Uint<64>): Outcome {
+  calls.increment(1);
+  return Outcome { different: a != b };
+}
+export circuit witnessed(selected: Boolean): Outcome {
+  calls.increment(1);
+  const different = disclose(selected)
+    ? (disclose(left()) != disclose(right()))
+    : false;
+  return Outcome { different: different };
+}
+export circuit owned(a: Payload, b: Payload): OwnedResult {
+  calls.increment(1);
+  const different = a != b;
+  return OwnedResult { different: different, original: a };
+}

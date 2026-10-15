@@ -2,6 +2,8 @@
 
 **Technical qualification passed.** The qualified implementation is `f9a496660a4a69f4dd7c7927111767ad5c0c12b2`. Documentation publication and milestone closure have separate provenance; no release tag, registry publication or deployment is implied.
 
+This page is the retained **0.3.0 qualification epoch**. It does not qualify the current recording-effect branch. See the [checked recording guide](checked-recording.md) for current gates, reuse premises and pending closure.
+
 ## Local execution
 
 Qualification combines **423 successful commands** from the unchanged `551f065c` run with three recovery commands at `f9a49666`: 151 Python harness tests, fresh DID relation proofs, and the remaining generic Jubjub gate. The earlier full run remains failed because its relation harness omitted the key-output directory. ADR0366/#503 repairs that directory setup and tests the fresh path. This is an explicit combination of source-identical evidence and repaired checks, not a claim that one complete run passed at the successor.

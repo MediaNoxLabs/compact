@@ -88,12 +88,17 @@ fn direct_boolean_witness_assertion_records_before_cell_write() {
     let assertion = recorded.find("AssertionFailed(\"write denied\"").unwrap();
     let write = recorded.find(".record_write(frame,").unwrap();
     assert!(witness < assertion && assertion < write);
-    assert!(recorded.contains("let __compact_recorded_arg_0: bool = __compact_param_0;"));
+    let body =
+        super::lifecycle_recording::generated_body(&rendered.source, "recorded", "checked_write");
+    // The root Boolean is captured before the witnessed call; SSA naming is
+    // internal to the recording owner.
+    assert!(body.find("__compact_param_0").unwrap() < body.find("try_witness_metered").unwrap());
+    assert!(body.contains("witnesses . echo"), "{body}");
     assert!(recorded.contains("pub fn checked_write_call<'observed, Private>"));
 }
 
 #[test]
-fn standalone_unit_witness_is_recorded_only_with_its_exact_signature() {
+fn standalone_witness_values_may_be_discarded_but_signatures_remain_checked() {
     let mut contract = Contract {
         schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
@@ -137,40 +142,39 @@ fn standalone_unit_witness_is_recorded_only_with_its_exact_signature() {
     let rendered = render_with_capabilities(&contract).unwrap();
     assert!(rendered.capabilities.circuits[0].recorded);
     assert!(rendered.capabilities.circuits[0].observed_call);
-    let counter = rendered
-        .source
-        .find("record_increment(frame, 1u16)")
-        .unwrap();
-    let witness = rendered.source.find(".try_witness_metered").unwrap();
+    let recorded = rendered.source.split("pub mod recorded").nth(1).unwrap();
+    let counter = recorded.find(".record_increment(frame,").unwrap();
+    let witness = recorded.find(".try_witness_metered").unwrap();
     assert!(counter < witness);
-    assert!(rendered.source.contains(".private_increment("));
+    assert_eq!(recorded.matches(".private_increment(").count(), 1);
 
+    // An expression statement may discard a well-typed non-Unit result.
     contract.witnesses[0].result = Type::Boolean;
-    let rejected = render_with_capabilities(&contract).unwrap();
-    assert!(!rejected.capabilities.circuits[0].recorded);
-    assert_eq!(
-        rejected.capabilities.circuits[0]
-            .recording_unavailable
-            .as_ref()
-            .unwrap()
-            .path,
-        "actions[1]"
-    );
-    contract.witnesses[0].result = Type::Unit;
+    let boolean = render_with_capabilities(&contract).unwrap();
+    assert!(boolean.capabilities.circuits[0].recorded);
+    assert!(boolean.capabilities.circuits[0].observed_call);
+    let recorded = boolean.source.split("pub mod recorded").nth(1).unwrap();
+    assert_eq!(recorded.matches(".private_increment(").count(), 1);
+
+    let mut wrong_arity = contract.clone();
+    wrong_arity.witnesses[0].parameters.push(Parameter {
+        name: "missing".into(),
+        ty: Type::Field,
+    });
+    assert!(render_with_capabilities(&wrong_arity).is_err());
+
     contract.stateful_circuits[0].actions[1] = StateAction::Expression {
         value: Expr::Boolean { value: true },
     };
-    assert!(
-        !render_with_capabilities(&contract)
-            .unwrap()
-            .capabilities
-            .circuits[0]
-            .recorded
-    );
+    let discarded = render_with_capabilities(&contract).unwrap();
+    assert!(discarded.capabilities.circuits[0].recorded);
+    let recorded = discarded.source.split("pub mod recorded").nth(1).unwrap();
+    assert!(recorded.contains(".record_increment(frame,"));
+    assert!(!recorded.contains(".try_witness_metered"));
 }
 
 #[test]
-fn standalone_field_witness_records_typed_argument_but_rejects_nested_effects() {
+fn nested_field_witness_arguments_record_once_before_the_enclosing_call() {
     let mut contract = Contract {
         schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
@@ -217,8 +221,12 @@ fn standalone_field_witness_records_typed_argument_but_rejects_nested_effects() 
     let rendered = render_with_capabilities(&contract).unwrap();
     assert!(rendered.capabilities.circuits[0].recorded);
     assert!(rendered.capabilities.circuits[0].observed_call);
-    assert!(rendered.source.contains("__compact_recorded_witness_arg_0"));
-    assert!(rendered.source.contains(".try_witness_metered"));
+    let recorded = rendered.source.split("pub mod recorded").nth(1).unwrap();
+    assert_eq!(recorded.matches(".secret(").count(), 1);
+    assert!(
+        recorded.find(".try_witness_metered").unwrap()
+            < recorded.find(".record_increment(frame,").unwrap()
+    );
 
     let StateAction::Expression {
         value: Expr::WitnessCall { arguments, .. },
@@ -230,11 +238,32 @@ fn standalone_field_witness_records_typed_argument_but_rejects_nested_effects() 
         name: "secret".into(),
         arguments: vec![Expr::FieldLiteral { value: "2".into() }],
     };
-    let rejected = render_with_capabilities(&contract).unwrap();
-    let gap = rejected.capabilities.circuits[0]
-        .recording_unavailable
-        .as_ref()
-        .unwrap();
-    assert_eq!(gap.code.as_str(), "unsupported_expression");
-    assert_eq!(gap.path, "actions[0].value.arguments[0]");
+    let nested = render_with_capabilities(&contract).unwrap();
+    assert!(nested.capabilities.circuits[0].recorded);
+    assert!(nested.capabilities.circuits[0].observed_call);
+    let recorded = nested.source.split("pub mod recorded").nth(1).unwrap();
+    assert_eq!(recorded.matches(".try_witness_metered").count(), 2);
+    assert_eq!(recorded.matches(".secret(").count(), 2);
+    assert!(
+        recorded.rfind(".secret(").unwrap() < recorded.find(".record_increment(frame,").unwrap()
+    );
+
+    let mut wrong_type = contract.clone();
+    let StateAction::Expression {
+        value: Expr::WitnessCall { arguments, .. },
+    } = &mut wrong_type.stateful_circuits[0].actions[0]
+    else {
+        unreachable!()
+    };
+    arguments[0] = Expr::Boolean { value: true };
+    assert!(render_with_capabilities(&wrong_type).is_err());
+
+    let StateAction::Expression {
+        value: Expr::WitnessCall { arguments, .. },
+    } = &mut contract.stateful_circuits[0].actions[0]
+    else {
+        unreachable!()
+    };
+    arguments.clear();
+    assert!(render_with_capabilities(&contract).is_err());
 }

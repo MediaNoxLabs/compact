@@ -6,6 +6,12 @@ This is the canonical published **Rust engineering decision collection** for `Me
 
 These are implementation decisions on this branch. Their status does **not** imply upstream LFDT/TSC acceptance, a CoIP number or a released language feature. The separate [CoIP process](../../../coips/coip-0001.md) and [CoIP register](../../../coips/README.md) retain their own governance and numbering.
 
+## Recording-effect decision publication
+
+The next reviewed publication batch consists of **133 assigned vault records, 0367–0499**, with source fingerprints and explicit historical amendments. The original 360 published records and manifests remain unchanged. Add the new batch register and publication manifest only after final root review; this draft does not assert those records are already published or the initiative is closed.
+
+ADRs 0498 and 0499 record bounded historical-source orchestration and the recording/proof-applicability qualification correction. Independent coding-agent review is distinct from a human security audit. No upstream CoIP number or language specification change is implied.
+
 ## Milestone 0.3.0 decision collection
 
 The [0.3.0 register](index-0.3.0.md) lists 121 decisions: 0241–0353 except 0260, plus 0358–0366. [Reference conventions](references-0.3.0.md) distinguish retained historical evidence from current developer instructions. Per-record source hashes and dated amendments preserve the sequence of decisions, including bounded deliveries, scope removal and rejected experiments.
